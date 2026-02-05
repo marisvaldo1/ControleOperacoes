@@ -1,0 +1,66 @@
+/* Estilos especificos para pagina Crypto */
+
+/* Cores especificas crypto */
+.text-btc {
+    color: #f7931a;
+}
+
+.bg-btc {
+    background-color: #f7931a;
+}
+
+/* Card crypto icon */
+#cardTotalCrypto {
+    font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+    font-size: 1.5rem;
+}
+
+/* Icones dos cards */
+.card-body svg {
+    opacity: 0.6;
+}
+
+[data-bs-theme="dark"] .card-body svg {
+    opacity: 0.4;
+}
+
+/* Tabela crypto */
+#tableMesAtual .badge,
+#tableHistorico .badge {
+    min-width: 60px;
+    font-weight: 600;
+}
+
+/* Grafico anual */
+#chartAnual {
+    max-height: 400px;
+}
+
+/* Historico cards */
+#historicoContainer .card {
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+#historicoContainer .card:hover {
+    transform: translateX(4px);
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.15);
+}
+
+[data-bs-theme="dark"] #historicoContainer .card:hover {
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.5);
+}
+
+/* Badges coloridos */
+.badge.bg-warning {
+    background-color: #f59f00 !important;
+    color: #000;
+}
+
+.badge.bg-success {
+    background-color: #2fb344 !important;
+}
+
+.badge.bg-danger {
+    background-color: #d63939 !important;
+}

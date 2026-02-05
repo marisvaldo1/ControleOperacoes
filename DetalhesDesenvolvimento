@@ -1,0 +1,165 @@
+**PRD**
+- **Visão do produto**: Sistema interno para controle de operações em cripto e opções, com dashboards, histórico, simulação e apoio de IA, focado em eficiência operacional e visão de resultados. Baseado no escopo descrito em README e nos fluxos reais do frontend/backend. Referências: [README.md](file:///d:/Sistemas/python/ControleOperacoes/README.md), [server.py](file:///d:/Sistemas/python/ControleOperacoes/backend/server.py#L33-L80), [opcoes.html](file:///d:/Sistemas/python/ControleOperacoes/frontend/html/opcoes.html), [opcoes.js](file:///d:/Sistemas/python/ControleOperacoes/frontend/js/opcoes.js), [crypto.js](file:///d:/Sistemas/python/ControleOperacoes/frontend/js/crypto.js)
+- **Objetivos de negócio**
+  - Centralizar operações em um único painel com métricas por mês, histórico e anual.
+  - Reduzir tempo de cadastro com busca automática de dados e simulação.
+  - Padronizar tomada de decisão com regras automáticas de status e análise por IA.
+- **Usuários**
+  - Trader/investidor que lança operações e acompanha P&L.
+  - Usuário avançado que simula estratégias antes de registrar.
+- **Escopo funcional**
+  - **Opções (ações)**: CRUD de operações, dashboards, histórico, auto-atualização de status, simulação, análise IA, detalhes de operação e integração com Oplab. Referências: [opcoes.html](file:///d:/Sistemas/python/ControleOperacoes/frontend/html/opcoes.html), [opcoes.js](file:///d:/Sistemas/python/ControleOperacoes/frontend/js/opcoes.js), [server.py](file:///d:/Sistemas/python/ControleOperacoes/backend/server.py#L57-L72)
+  - **Crypto**: CRUD de operações, dashboards, histórico e atualização de cotações via Binance proxy. Referências: [crypto.js](file:///d:/Sistemas/python/ControleOperacoes/frontend/js/crypto.js), [server.py](file:///d:/Sistemas/python/ControleOperacoes/backend/server.py#L37-L55)
+  - **Configurações**: seleção da IA, persistência local e no backend. Referências: [opcoes.html](file:///d:/Sistemas/python/ControleOperacoes/frontend/html/opcoes.html#L177-L245), [opcoes.js](file:///d:/Sistemas/python/ControleOperacoes/frontend/js/opcoes.js#L217-L232), [server.py](file:///d:/Sistemas/python/ControleOperacoes/backend/server.py#L74-L80)
+  - **Proxy APIs**: Binance e Oplab para bypass de CORS. Referência: [README.md](file:///d:/Sistemas/python/ControleOperacoes/README.md#L139-L156)
+- **Regras de negócio**
+  - **Opções**  
+    - Tipos permitidos: CALL e PUT.  
+    - Status: ABERTA, FECHADA, EXERCIDA.  
+    - **Auto-fechamento após vencimento**: se vencimento passou e status era ABERTA, o sistema define FECHADA ou EXERCIDA conforme ITM/OTM. Regra: PUT é exercida se preço atual < strike; CALL é exercida se preço atual > strike. Referência: [opcoes.js](file:///d:/Sistemas/python/ControleOperacoes/frontend/js/opcoes.js#L247-L285)  
+    - Quantidade mínima 100 e múltiplo de 100, com ajuste automático. Referência: [opcoes.js](file:///d:/Sistemas/python/ControleOperacoes/frontend/js/opcoes.js#L143-L168)
+    - Resultado calculado no UI com base em preço de entrada, preço atual e quantidade.
+  - **Crypto**  
+    - Tipos permitidos: CALL e PUT.  
+    - Status de exercício manual: SIM/NAO.  
+    - Resultados e totais calculados a partir dos campos registrados. Referência: [crypto.js](file:///d:/Sistemas/python/ControleOperacoes/frontend/js/crypto.js#L35-L85)
+  - **Configurações**  
+    - Preferência de IA persistida no backend e replicada no localStorage. Referências: [opcoes.js](file:///d:/Sistemas/python/ControleOperacoes/frontend/js/opcoes.js#L217-L232), [server.py](file:///d:/Sistemas/python/ControleOperacoes/backend/server.py#L99-L135)
+- **Requisitos funcionais**
+  - **Cadastro de operação (Opções)**  
+    - Modal com campos: ativo base, ativo, tipo, data, quantidade, preços, strike, vencimento, prêmio, resultado, status.  
+    - Busca de opções disponíveis por ativo base; seleção em modal com filtros.  
+    - Atualização manual de dados da opção.  
+    - Exibição de notional e barras de progresso de meta/saldo. Referência: [opcoes.html](file:///d:/Sistemas/python/ControleOperacoes/frontend/html/opcoes.html#L255-L371)
+  - **Simulação (Opções)**  
+    - Modal com lista de opções, filtros, seleção de CALL/PUT e Compra/Venda, gráficos e análise IA.  
+    - Aplicar simulação para pré-preencher cadastro. Referência: [opcoes.html](file:///d:/Sistemas/python/ControleOperacoes/frontend/html/opcoes.html#L480-L689)
+  - **Detalhes da operação**  
+    - Modal com P&L, PoP, dias restantes, atualização de dados e timestamps. Referência: [opcoes.html](file:///d:/Sistemas/python/ControleOperacoes/frontend/html/opcoes.html#L694-L770)
+  - **Dashboard**  
+    - Cards principais, abas Mês Atual/Histórico/Anual/Configurações, gráficos e tabelas DataTables. Referências: [opcoes.html](file:///d:/Sistemas/python/ControleOperacoes/frontend/html/opcoes.html#L88-L176), [crypto.html](file:///d:/Sistemas/python/ControleOperacoes/frontend/html/crypto.html#L85-L173)
+- **Requisitos não-funcionais**
+  - UI responsiva (Tabler.io).  
+  - CORS via proxy backend.  
+  - Persistência em SQLite. Referências: [README.md](file:///d:/Sistemas/python/ControleOperacoes/README.md#L7-L25), [server.py](file:///d:/Sistemas/python/ControleOperacoes/backend/server.py#L33-L80)
+- **Métricas sugeridas**
+  - Operações registradas por mês, % exercidas, tempo médio até fechamento, taxa de uso de simulação, taxa de uso de IA.
+
+**Esquema Prisma**
+- **Assumptions**: provider SQLite para manter aderência ao SQLite atual e aos campos existentes. Datas são armazenadas como strings no formato YYYY-MM-DD, mantendo compatibilidade com o frontend.
+  
+```prisma
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model OperacaoCrypto {
+  id              Int      @id @default(autoincrement())
+  ativo           String
+  tipo            String
+  cotacao_atual   Float?
+  abertura        Float?
+  tae             Float?
+  strike          Float?
+  distancia       Float?
+  prazo           Int?
+  crypto          Float?
+  premio_us       Float?
+  resultado       Float?
+  exercicio       String?
+  dias            Int?
+  exercicio_status String?
+  data_operacao   String?
+  created_at      DateTime @default(now())
+
+  @@map("operacoes_crypto")
+}
+
+model OperacaoOpcao {
+  id            Int      @id @default(autoincrement())
+  ativo_base    String?
+  ativo         String
+  tipo          String
+  quantidade    Int?
+  preco_entrada Float?
+  preco_atual   Float?
+  strike        Float?
+  vencimento    String?
+  premio        Float?
+  resultado     Float?
+  status        String?
+  data_operacao String?
+  created_at    DateTime @default(now())
+
+  @@map("operacoes_opcoes")
+}
+
+model Configuracao {
+  id         Int      @id @default(autoincrement())
+  chave      String   @unique
+  valor      String?
+  updated_at DateTime @default(now())
+
+  @@map("configuracoes")
+}
+```
+
+**Flowchart Mermaid (UX completa)**
+```mermaid
+flowchart TD
+  A[Usuário abre index.html] --> B[Redireciona para opcoes.html]
+  B --> C[Carrega layout + libs + configurações]
+  C --> D[Carrega operações e atualiza dashboards]
+
+  D --> E{Aba selecionada}
+  E -->|Mês Atual| F[Tabela mês atual + cards]
+  E -->|Histórico| G[Resumo mensal + tabela histórica]
+  E -->|Anual| H[Gráfico anual + resumo]
+  E -->|Configurações| I[Selecionar IA + salvar/testar]
+
+  F --> J[Botão Nova Operação]
+  J --> K[Modal Nova/Editar Operação]
+  K --> K1[Digita Ativo Base]
+  K1 --> K2[Busca opções disponíveis]
+  K2 --> K3[Modal Selecionar Opção]
+  K3 --> K4[Filtra por vencimento/código]
+  K4 --> K5[Seleciona opção]
+  K5 --> K6[Preenche ativo e dados]
+  K6 --> K7[Calcula notional, metas e saldo]
+  K7 --> K8[Salvar operação]
+  K8 --> K9[POST/PUT backend]
+  K9 --> K10[Toast sucesso/erro]
+  K10 --> D
+
+  F --> L[Ações na tabela]
+  L -->|Editar| K
+  L -->|Excluir| M[Confirmação SweetAlert]
+  M -->|Confirmar| N[DELETE backend]
+  N --> K10
+
+  F --> O[Detalhes da operação]
+  O --> P[Modal Detalhes]
+  P --> Q[Atualizar dados]
+  Q --> D
+
+  F --> R[Simular]
+  R --> S[Modal Simulação]
+  S --> S1[Define ativo, tipo, posição e quantidade]
+  S1 --> S2[Listagem de opções]
+  S2 --> S3[Seleciona opção]
+  S3 --> S4[Exibe gráficos e métricas]
+  S4 --> S5[Análise Técnica]
+  S4 --> S6[Análise IA]
+  S6 --> S7[/api/analyze com IA escolhida]
+  S7 --> S8[Exibe recomendação]
+  S4 --> S9[Aplicar Simulação]
+  S9 --> K
+
+  B --> T[Botão Atualizar Cotações]
+  T --> U[Chama proxy Binance/Oplab]
+  U --> V[Toast com cotação]

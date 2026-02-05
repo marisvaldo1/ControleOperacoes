@@ -1,0 +1,159 @@
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        ARQUITETURA - ANÁLISE TÉCNICA                        │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  FRONTEND - Interface do Usuário                                           │
+│                                                                             │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │  opcoes.html - Modal de Análise Técnica                            │   │
+│  │                                                                     │   │
+│  │  ┌────────────────────────────────────────────────────────────┐    │   │
+│  │  │  Header: Timeframe Selector + Título                      │    │   │
+│  │  └────────────────────────────────────────────────────────────┘    │   │
+│  │                                                                     │   │
+│  │  ┌────────────────────────────────────────────────────────────┐    │   │
+│  │  │  Card: Recomendação Geral                                 │    │   │
+│  │  │  (COMPRA FORTE / COMPRA / NEUTRO / VENDA / VENDA FORTE)   │    │   │
+│  │  └────────────────────────────────────────────────────────────┘    │   │
+│  │                                                                     │   │
+│  │  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐         │   │
+│  │  │  Gauge        │  │  Osciladores  │  │  Médias       │         │   │
+│  │  │  de Força     │  │  (Barras)     │  │  Móveis       │         │   │
+│  │  │  -100 a +100  │  │               │  │  (Barras)     │         │   │
+│  │  └───────────────┘  └───────────────┘  └───────────────┘         │   │
+│  │                                                                     │   │
+│  │  ┌───────────────────────┐  ┌───────────────────────┐             │   │
+│  │  │  Tabela: Osciladores  │  │  Tabela: Médias       │             │   │
+│  │  │  - RSI                │  │  - SMA 10-200         │             │   │
+│  │  │  - Stochastic         │  │  - EMA 10-200         │             │   │
+│  │  │  - CCI                │  │  - VWMA               │             │   │
+│  │  │  - ADX                │  │  - HullMA             │             │   │
+│  │  │  - Williams %R        │  │  - Ichimoku           │             │   │
+│  │  │  - MACD               │  │                       │             │   │
+│  │  └───────────────────────┘  └───────────────────────┘             │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  JAVASCRIPT - Lógica de Controle (opcoes.js)                               │
+│                                                                             │
+│  openTechnicalAnalysisModal()                                              │
+│    │                                                                        │
+│    ├─► loadAndAnalyzeTechnicalData(ticker, timeframe)                     │
+│    │     │                                                                 │
+│    │     ├─► generateMockHistoricalData()  [TODO: API real]              │
+│    │     │                                                                 │
+│    │     └─► technicalAnalyzer.analyzeAll(highs, lows, closes, volumes)  │
+│    │                                                                        │
+│    └─► updateTechnicalAnalysisUI(formatted, analysis)                     │
+│          │                                                                  │
+│          ├─► createGaugeChart()                                            │
+│          ├─► createOscillatorsChart()                                      │
+│          ├─► createMovingAveragesChart()                                   │
+│          ├─► fillOscillatorsTable()                                        │
+│          └─► fillMovingAveragesTable()                                     │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  JAVASCRIPT - Engine de Cálculos (technical-analysis.js)                   │
+│                                                                             │
+│  class TechnicalAnalysis {                                                 │
+│                                                                             │
+│    ┌─────────────────────────────────────────────────────────────────┐    │
+│    │  OSCILADORES                                                    │    │
+│    │  ├─ calculateRSI(data, period=14)                              │    │
+│    │  ├─ calculateMACD(data, 12, 26, 9)                             │    │
+│    │  ├─ calculateStochastic(highs, lows, closes, 14, 3)            │    │
+│    │  ├─ calculateCCI(highs, lows, closes, 20)                      │    │
+│    │  ├─ calculateADX(highs, lows, closes, 14)                      │    │
+│    │  ├─ calculateWilliamsR(highs, lows, closes, 14)                │    │
+│    │  └─ calculateBullBearPower(highs, lows, closes, 13)            │    │
+│    └─────────────────────────────────────────────────────────────────┘    │
+│                                                                             │
+│    ┌─────────────────────────────────────────────────────────────────┐    │
+│    │  MÉDIAS MÓVEIS                                                  │    │
+│    │  ├─ calculateSMA(data, period)                                 │    │
+│    │  ├─ calculateEMA(data, period)                                 │    │
+│    │  ├─ calculateWMA(data, period)                                 │    │
+│    │  ├─ calculateVWMA(closes, volumes, period)                     │    │
+│    │  ├─ calculateHullMA(data, period)                              │    │
+│    │  └─ calculateIchimoku(highs, lows, closes)                     │    │
+│    └─────────────────────────────────────────────────────────────────┘    │
+│                                                                             │
+│    ┌─────────────────────────────────────────────────────────────────┐    │
+│    │  ANÁLISE CONSOLIDADA                                            │    │
+│    │  ├─ analyzeAll(highs, lows, closes, volumes)                   │    │
+│    │  │    ├─► Calcula todos os indicadores                         │    │
+│    │  │    ├─► evaluateOscillators()                                │    │
+│    │  │    ├─► evaluateMovingAverages()                             │    │
+│    │  │    └─► calculateOverallSignal()                             │    │
+│    │  │                                                              │    │
+│    │  └─ formatAnalysisForDisplay(analysis)                         │    │
+│    │       └─► Formata para apresentação na UI                      │    │
+│    └─────────────────────────────────────────────────────────────────┘    │
+│  }                                                                          │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  BIBLIOTECA DE GRÁFICOS - Chart.js                                         │
+│                                                                             │
+│  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐               │
+│  │  Gauge Chart   │  │  Bar Chart     │  │  Bar Chart     │               │
+│  │  (Doughnut)    │  │  (Horizontal)  │  │  (Horizontal)  │               │
+│  │                │  │                │  │                │               │
+│  │  Força -100    │  │  Osciladores   │  │  Médias        │               │
+│  │  até +100      │  │  Buy/Sell/Neut │  │  Buy/Sell/Neut │               │
+│  └────────────────┘  └────────────────┘  └────────────────┘               │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  FLUXO DE DADOS                                                             │
+│                                                                             │
+│  1. Usuário seleciona opção na simulação                                   │
+│  2. Clica em "Análise Técnica"                                             │
+│  3. Modal abre com loading                                                 │
+│  4. Sistema busca/gera dados históricos (mock por enquanto)                │
+│  5. TechnicalAnalysis calcula 24+ indicadores                              │
+│  6. Sistema consolida sinais (Buy/Sell/Neutral)                            │
+│  7. UI atualiza com:                                                        │
+│     - Recomendação geral                                                   │
+│     - 3 gráficos visuais                                                   │
+│     - 2 tabelas detalhadas                                                 │
+│  8. Usuário pode alterar timeframe → Recalcula tudo                        │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  INTERPRETAÇÃO DOS SINAIS                                                   │
+│                                                                             │
+│  COMPRA FORTE    │ >60% indicadores recomendam compra                      │
+│  ──────────────────────────────────────────────────────────────────────────│
+│  COMPRA          │ 50-60% indicadores recomendam compra                    │
+│  ──────────────────────────────────────────────────────────────────────────│
+│  NEUTRO          │ Sinais mistos ou ambíguos                               │
+│  ──────────────────────────────────────────────────────────────────────────│
+│  VENDA           │ 50-60% indicadores recomendam venda                     │
+│  ──────────────────────────────────────────────────────────────────────────│
+│  VENDA FORTE     │ >60% indicadores recomendam venda                       │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  CUSTOMIZAÇÃO                                                               │
+│                                                                             │
+│  CSS (opcoes.css)                                                           │
+│  ├─ Cores e temas (dark/light)                                             │
+│  ├─ Layout responsivo                                                       │
+│  ├─ Estilos de tabelas e badges                                            │
+│  └─ Animações e transições                                                 │
+│                                                                             │
+│  HTML (opcoes.html)                                                         │
+│  ├─ Estrutura do modal                                                     │
+│  ├─ Canvas para gráficos                                                   │
+│  ├─ Tabelas de indicadores                                                 │
+│  └─ Selector de timeframe                                                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
