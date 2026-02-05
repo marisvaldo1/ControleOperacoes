@@ -1,0 +1,433 @@
+
+    <!-- Modal Detalhes da Operação (Updated from y2.html) -->
+    <div class="modal modal-blur fade" id="modalDetalhesOperacao" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" role="document" style="max-width: 1400px;">
+        <div class="modal-content">
+          <div class="modal-body p-0">
+            <div class="y2-wrapper">
+                <div class="container">
+                    <!-- Header -->
+                    <div class="header">
+                        <div class="header-left">
+                            <h1>
+                                <span id="y2-ticker">PETRN369W1</span>
+                                <span class="badge badge-red" id="y2-badge-side">VENDA - PUT</span>
+                                <span class="badge badge-green" id="y2-badge-status">Sem Exercício</span>
+                            </h1>
+                            <div class="header-info">
+                                <span id="y2-vencimento">📅 Vencimento: -</span>
+                                <span id="y2-strike">💰 Strike: -</span>
+                                <span id="y2-premio">💵 Premio: -</span>
+                                <span id="y2-qtd">📊 Quantidade: -</span>
+                            </div>
+                        </div>
+                        <div class="header-buttons">
+                            <button class="btn btn-refresh" id="btn-y2-refresh">🔄 Atualizar</button>
+                            <button class="btn btn-close" data-bs-dismiss="modal">✕ Fechar</button>
+                        </div>
+                    </div>
+
+                    <!-- Tabs -->
+                    <div class="tabs">
+                        <button class="tab active" onclick="openY2Tab(event, 'y2-performance')">📊 Performance</button>
+                        <button class="tab" onclick="openY2Tab(event, 'y2-detalhes')">ℹ️ Detalhes</button>
+                        <button class="tab" onclick="openY2Tab(event, 'y2-simulacao')">📋 Simulacao</button>
+                        <button class="tab" onclick="openY2Tab(event, 'y2-graficos')">📈 Graficos</button>
+                        <button class="tab" onclick="openY2Tab(event, 'y2-risco')">⚠️ Risco</button>
+                    </div>
+
+                    <!-- Performance Tab -->
+                    <div class="tab-content active" id="y2-performance">
+                        <div class="grid grid-3">
+                            <!-- Card 1: Cotações -->
+                            <div class="card">
+                                <div class="card-title">📈 Cotacoes Atuais</div>
+                                <div class="value-row">
+                                    <div>
+                                        <div class="value-label">Ativo Base</div>
+                                        <div class="value-text" id="y2-ativo-base">-</div>
+                                    </div>
+                                    <div style="text-align: right;">
+                                        <div class="value-number gray" id="y2-ativo-preco">-</div>
+                                        <div class="red" style="font-size: 12px;" id="y2-ativo-var">-</div>
+                                    </div>
+                                </div>
+                                <div class="value-row">
+                                    <div>
+                                        <div class="value-label">Opcao</div>
+                                        <div class="value-text" id="y2-opcao-ticker">-</div>
+                                    </div>
+                                    <div style="text-align: right;">
+                                        <div class="value-number gray" id="y2-opcao-preco">-</div>
+                                        <div class="red" style="font-size: 12px;" id="y2-opcao-var">-</div>
+                                    </div>
+                                </div>
+                                <div class="stats-grid">
+                                    <div class="stat-box">
+                                        <div class="stat-value" id="y2-stat-strike">-</div>
+                                        <div class="stat-label">Strike</div>
+                                    </div>
+                                    <div class="stat-box">
+                                        <div class="stat-value" id="y2-stat-dist">-</div>
+                                        <div class="stat-label">Distancia</div>
+                                    </div>
+                                </div>
+                                <div class="stats-grid" style="margin-top: 10px;">
+                                     <div class="stat-box" style="width: 100%; grid-column: span 2;">
+                                        <div class="stat-value" id="y2-stat-dias">-</div>
+                                        <div class="stat-label">Vencimento</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Card 2: Resultado Financeiro -->
+                            <div class="card">
+                                <div class="card-title blue">💰 Resultado Financeiro</div>
+                                <div class="result-box blue">
+                                    <div class="result-icon">💵</div>
+                                    <div class="result-header">
+                                        <div class="result-small-text">LUCRO ATUAL (MTM)</div>
+                                    </div>
+                                    <div class="result-value blue" id="y2-lucro-atual">-</div>
+                                    <div class="result-subtitle" id="y2-lucro-percent">-</div>
+                                    <div class="pill pill-blue" id="y2-status-pill">EM ANDAMENTO</div>
+                                </div>
+                                <div class="value-row">
+                                    <span class="value-label">No Fechamento (Estimado)</span>
+                                    <span class="value-text green" id="y2-res-fechamento">-</span>
+                                </div>
+                                <div class="value-row">
+                                    <span class="value-label">Mark to Market</span>
+                                    <span class="value-text blue" id="y2-res-mtm">-</span>
+                                </div>
+                            </div>
+
+                            <!-- Card 3: Detalhes do Prêmio -->
+                            <div class="card">
+                                <div class="card-title purple">📊 Detalhes do Prêmio</div>
+                                <div class="value-row">
+                                    <span class="value-label">Prêmio na Abertura</span>
+                                    <span class="value-text" id="y2-premio-abertura">-</span>
+                                </div>
+                                <div class="value-row">
+                                    <span class="value-label">Custo Recompra</span>
+                                    <span class="value-text red" id="y2-custo-recompra">-</span>
+                                </div>
+                                <div class="value-row">
+                                    <span class="value-label">Resultado Líquido</span>
+                                    <span class="value-text green" id="y2-res-liquido">-</span>
+                                </div>
+                                <div class="progress-wrapper">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" id="y2-premio-bar" style="width: 0%"></div>
+                                    </div>
+                                    <div class="progress-text" id="y2-premio-text">0% do prêmio captado</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Full Width Charts or Details -->
+                        <div class="grid grid-2">
+                             <div class="card">
+                                <div class="card-title">📉 Evolução do Resultado</div>
+                                <div class="chart-container">
+                                    <canvas id="y2-evolution-chart"></canvas>
+                                </div>
+                             </div>
+                             <div class="card">
+                                <div class="card-title yellow">📊 Previsão no Vencimento</div>
+                                <div class="chart-container">
+                                    <canvas id="y2-projection-chart"></canvas>
+                                </div>
+                                <div class="chart-footer">
+                                    <div class="chart-stat red">
+                                        <div class="chart-stat-value" id="y2-pior-caso">-</div>
+                                        <div class="chart-stat-label">Pior Caso</div>
+                                    </div>
+                                    <div class="chart-stat blue">
+                                        <div class="chart-stat-value" id="y2-atual-caso">-</div>
+                                        <div class="chart-stat-label">Atual</div>
+                                    </div>
+                                    <div class="chart-stat green">
+                                        <div class="chart-stat-value" id="y2-melhor-caso">-</div>
+                                        <div class="chart-stat-label">Melhor Caso</div>
+                                    </div>
+                                </div>
+                             </div>
+                        </div>
+
+                        <div class="bottom-bar">
+                            <div class="bottom-item">
+                                <div class="bottom-label">Saldo Atual</div>
+                                <div class="bottom-value" id="y2-saldo-atual">-</div>
+                            </div>
+                            <div class="bottom-item">
+                                <div class="bottom-label">Saldo Projetado</div>
+                                <div class="bottom-value green" id="y2-saldo-projetado">-</div>
+                            </div>
+                            <div class="bottom-item align-right">
+                                <div class="bottom-label">Retorno Esperado</div>
+                                <div class="bottom-value green" id="y2-retorno-esperado">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detalhes Tab -->
+                    <div class="tab-content" id="y2-detalhes">
+                        <div class="grid grid-2">
+                            <div class="card">
+                                <div class="card-title green">➡️ Valores na Abertura</div>
+                                <table>
+                                    <tr>
+                                        <td>Preço Ativo Base</td>
+                                        <td class="align-right value-text" id="y2-det-abertura-ativo">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Prêmio Unitário</td>
+                                        <td class="align-right value-text" id="y2-det-abertura-premio">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Distância Strike</td>
+                                        <td class="align-right value-text" id="y2-det-abertura-dist">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Quantidade</td>
+                                        <td class="align-right value-text" id="y2-det-abertura-qtd">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Total Recebido</td>
+                                        <td class="align-right value-text green" id="y2-det-abertura-total">-</td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="card">
+                                <div class="card-title blue">🔄 Valores Atuais</div>
+                                <table>
+                                    <tr>
+                                        <td>Preço Ativo Base</td>
+                                        <td class="align-right value-text" id="y2-det-atual-ativo">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Prêmio Unitário</td>
+                                        <td class="align-right value-text" id="y2-det-atual-premio">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Distância Strike</td>
+                                        <td class="align-right value-text" id="y2-det-atual-dist">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>% Prêmio Atual</td>
+                                        <td class="align-right value-text orange" id="y2-det-atual-premio-pct">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Custo Recompra</td>
+                                        <td class="align-right value-text red" id="y2-det-atual-recompra">-</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="card" style="margin-top: 20px;">
+                            <div class="card-title yellow">ℹ️ Informações da Operação</div>
+                            <div class="operation-grid">
+                                <div class="operation-card">
+                                    <div class="operation-value red" id="y2-info-tipo">VENDA</div>
+                                    <div class="operation-label">Tipo Operação</div>
+                                </div>
+                                <div class="operation-card">
+                                    <div class="operation-value red" id="y2-info-opcao">PUT</div>
+                                    <div class="operation-label">Tipo Opção</div>
+                                </div>
+                                <div class="operation-card">
+                                    <div class="operation-value orange" id="y2-info-strike">-</div>
+                                    <div class="operation-label">Strike</div>
+                                </div>
+                                <div class="operation-card">
+                                    <div class="operation-value orange" id="y2-info-vencimento">-</div>
+                                    <div class="operation-label">Vencimento</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Simulacao Tab -->
+                    <div class="tab-content" id="y2-simulacao">
+                        <div class="slider-section">
+                            <div class="slider-section-title">🎚️ Simulador de Preço no Vencimento</div>
+                            <div class="slider-header">
+                                <div class="slider-title">Ajuste o preço do ativo no vencimento</div>
+                                <div class="slider-value-display" id="y2-sim-price-display">R$ 36,90</div>
+                            </div>
+                            <div class="slider-track">
+                                <div class="strike-marker"></div>
+                                <div class="strike-label" id="y2-sim-strike-label">Strike: R$ 36,90</div>
+                                <input type="range" min="30" max="45" step="0.1" value="36.90" id="y2-sim-range">
+                            </div>
+                            <div class="slider-labels">
+                                <span id="y2-sim-min">R$ 30,00</span>
+                                <span id="y2-sim-max">R$ 45,00</span>
+                            </div>
+                        </div>
+
+                        <div class="simulated-result">
+                            <div class="simulated-left">
+                                <div class="result-small-text">RESULTADO SIMULADO</div>
+                                <div class="simulated-value" id="y2-sim-result">R$ 240,00</div>
+                            </div>
+                            <div class="simulated-right">
+                                <div class="scenario-label-text">Cenário</div>
+                                <div class="scenario-pill" id="y2-sim-cenario">Lucro Máximo</div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-4 scenario-grid" style="margin-top: 20px;">
+                             <!-- Scenarios populated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Graficos Tab -->
+                    <div class="tab-content" id="y2-graficos">
+                         <div class="grid grid-2">
+                            <div class="card">
+                                <div class="card-title blue">📊 Volatilidade Implícita</div>
+                                <div class="chart-container" style="height: 250px;">
+                                    <canvas id="y2-vol-chart"></canvas>
+                                </div>
+                            </div>
+                            <div class="card">
+                                <div class="card-title green">📉 Gregas</div>
+                                <div class="greek-item">
+                                    <div class="greek-header">
+                                        <div class="greek-label blue">Delta</div>
+                                        <div class="greek-bar-container">
+                                            <div class="greek-bar">
+                                                <div class="greek-bar-fill blue" style="width: 40%" id="y2-greek-delta-bar"></div>
+                                            </div>
+                                        </div>
+                                        <div class="greek-value blue" id="y2-greek-delta">-0.15</div>
+                                    </div>
+                                    <div class="greek-desc">Sensibilidade ao preço</div>
+                                </div>
+                                <div class="greek-item">
+                                    <div class="greek-header">
+                                        <div class="greek-label green">Gamma</div>
+                                        <div class="greek-bar-container">
+                                            <div class="greek-bar">
+                                                <div class="greek-bar-fill green" style="width: 20%" id="y2-greek-gamma-bar"></div>
+                                            </div>
+                                        </div>
+                                        <div class="greek-value green" id="y2-greek-gamma">0.08</div>
+                                    </div>
+                                    <div class="greek-desc">Aceleração do Delta</div>
+                                </div>
+                                <div class="greek-item">
+                                    <div class="greek-header">
+                                        <div class="greek-label orange">Theta</div>
+                                        <div class="greek-bar-container">
+                                            <div class="greek-bar">
+                                                <div class="greek-bar-fill orange" style="width: 60%" id="y2-greek-theta-bar"></div>
+                                            </div>
+                                        </div>
+                                        <div class="greek-value orange" id="y2-greek-theta">0.05</div>
+                                    </div>
+                                    <div class="greek-desc">Decaimento temporal</div>
+                                </div>
+                                <div class="greek-item">
+                                    <div class="greek-header">
+                                        <div class="greek-label red">Vega</div>
+                                        <div class="greek-bar-container">
+                                            <div class="greek-bar">
+                                                <div class="greek-bar-fill red" style="width: 30%" id="y2-greek-vega-bar"></div>
+                                            </div>
+                                        </div>
+                                        <div class="greek-value red" id="y2-greek-vega">0.03</div>
+                                    </div>
+                                    <div class="greek-desc">Sensibilidade à volatilidade</div>
+                                </div>
+                            </div>
+                         </div>
+                    </div>
+
+                    <!-- Risco Tab -->
+                    <div class="tab-content" id="y2-risco">
+                        <div class="risk-grid">
+                            <div class="risk-card">
+                                <div class="risk-icon red">⬇️</div>
+                                <div class="risk-label">Perda Máxima</div>
+                                <div class="risk-value red" id="y2-risk-loss">-</div>
+                            </div>
+                            <div class="risk-card">
+                                <div class="risk-icon green">⬆️</div>
+                                <div class="risk-label">Ganho Máximo</div>
+                                <div class="risk-value green" id="y2-risk-gain">-</div>
+                            </div>
+                            <div class="risk-card">
+                                <div class="risk-icon yellow">🎯</div>
+                                <div class="risk-label">Break-even</div>
+                                <div class="risk-value yellow" id="y2-risk-breakeven">-</div>
+                            </div>
+                            <div class="risk-card">
+                                <div class="risk-icon blue">📊</div>
+                                <div class="risk-label">Prob. Lucro</div>
+                                <div class="risk-value blue" id="y2-risk-prob">-</div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-2">
+                            <div class="card">
+                                <div class="card-title red">🛡️ Análise de Risco</div>
+                                <table>
+                                    <tr>
+                                        <td>Capital em Risco</td>
+                                        <td class="align-right value-text red" id="y2-risk-capital">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Margem Requerida</td>
+                                        <td class="align-right value-text" id="y2-risk-margin">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Risco/Retorno</td>
+                                        <td class="align-right value-text" id="y2-risk-ratio">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Retorno s/ Margem</td>
+                                        <td class="align-right value-text green" id="y2-risk-return">-</td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="card">
+                                <div class="card-title yellow">⚠️ Cenários de Risco</div>
+                                <div class="scenario-box green">
+                                    <div class="scenario-box-header">
+                                        <span class="scenario-box-title">Cenário Otimista</span>
+                                    </div>
+                                    <div class="scenario-box-text" id="y2-risk-scenario-opt">
+                                        Ativo acima do strike no vencimento. Lucro máximo.
+                                    </div>
+                                </div>
+                                <div class="scenario-box yellow">
+                                    <div class="scenario-box-header">
+                                        <span class="scenario-box-title">Cenário Neutro</span>
+                                    </div>
+                                    <div class="scenario-box-text" id="y2-risk-scenario-neu">
+                                        Ativo próximo ao strike. Possível exercício.
+                                    </div>
+                                </div>
+                                <div class="scenario-box red">
+                                    <div class="scenario-box-header">
+                                        <span class="scenario-box-title">Cenário Pessimista</span>
+                                    </div>
+                                    <div class="scenario-box-text" id="y2-risk-scenario-pes">
+                                        Ativo cai significativamente. Prejuízo máximo.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>

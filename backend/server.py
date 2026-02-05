@@ -607,6 +607,15 @@ def get_crypto():
     conn.close()
     return jsonify([dict(o) for o in ops])
 
+@app.route('/api/crypto/<int:id>', methods=['GET'])
+def get_crypto_item(id):
+    conn = get_db()
+    op = conn.execute('SELECT * FROM operacoes_crypto WHERE id=?', (id,)).fetchone()
+    conn.close()
+    if op:
+        return jsonify(dict(op))
+    return jsonify({'error': 'Operação não encontrada'}), 404
+
 @app.route('/api/crypto', methods=['POST'])
 def create_crypto():
     data = request.json
@@ -655,6 +664,15 @@ def get_opcoes():
     ops = conn.execute('SELECT * FROM operacoes_opcoes ORDER BY data_operacao DESC').fetchall()
     conn.close()
     return jsonify([dict(o) for o in ops])
+
+@app.route('/api/opcoes/<int:id>', methods=['GET'])
+def get_opcao(id):
+    conn = get_db()
+    op = conn.execute('SELECT * FROM operacoes_opcoes WHERE id=?', (id,)).fetchone()
+    conn.close()
+    if op:
+        return jsonify(dict(op))
+    return jsonify({'error': 'Operação não encontrada'}), 404
 
 @app.route('/api/opcoes', methods=['POST'])
 def create_opcoes():

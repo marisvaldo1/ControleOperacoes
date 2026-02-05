@@ -653,18 +653,30 @@ function setupDetalhesTabs() {
     const modal = document.getElementById('modalDetalhesOperacao');
     if (!modal) return;
     
+    // Use delegation for better performance and dynamic content support
     modal.addEventListener('click', (event) => {
+        // Handle Y2 Tabs
+        const tabBtn = event.target.closest('.nav-tabs .nav-link[data-y2-tab]');
+        if (tabBtn) {
+            const targetId = tabBtn.getAttribute('data-y2-tab');
+            if (targetId) {
+                openY2Tab(event, targetId);
+            }
+            return;
+        }
+
+        // Handle old .detalhes-x tabs (legacy support if needed)
         const tab = event.target.closest('.detalhes-x .tab');
-        if (!tab) return;
-        
-        const target = tab.getAttribute('data-tab');
-        if (!target) return;
-        
-        const tabs = modal.querySelectorAll('.detalhes-x .tab');
-        const contents = modal.querySelectorAll('.detalhes-x .tab-content');
-        
-        tabs.forEach(t => t.classList.toggle('active', t === tab));
-        contents.forEach(c => c.classList.toggle('active', c.getAttribute('data-tab-content') === target));
+        if (tab) {
+            const target = tab.getAttribute('data-tab');
+            if (!target) return;
+            
+            const tabs = modal.querySelectorAll('.detalhes-x .tab');
+            const contents = modal.querySelectorAll('.detalhes-x .tab-content');
+            
+            tabs.forEach(t => t.classList.toggle('active', t === tab));
+            contents.forEach(c => c.classList.toggle('active', c.getAttribute('data-tab-content') === target));
+        }
     });
 }
 
@@ -688,46 +700,24 @@ async function openDetalhesOperacao(id) {
     const op = allOperacoes.find(o => o.id == id);
     if (!op) return;
     
-    // Helper function to safely set content
-    const setContent = (id, content, isHTML = false) => {
-        const el = document.getElementById(id);
-        if (el) {
-            if (isHTML) el.innerHTML = content;
-            else el.textContent = content;
-        }
-    };
-    
-    setContent('detalhesOpcaoTitle', op.ativo);
-    setContent('detalhesAtivoBase', op.ativo_base || '-');
-    setContent('detalhesAtivoBaseCodigo', op.ativo_base || '-');
-    setContent('detalhesOpcaoCodigo', op.ativo || '-');
-    setContent('detalhesPremioOriginal', formatCurrency(parseFloatSafe(op.premio || 0)));
-    
-    // Inicializar campos com loading ou valores existentes
-    setContent('detalhesCotacaoAtual', '<div class="spinner-border spinner-border-sm text-secondary" role="status"></div>', true);
-    setContent('detalhesOpcaoPrecoAtual', '<div class="spinner-border spinner-border-sm text-secondary" role="status"></div>', true);
-    setContent('detalhesPoP', '-');
-    setContent('detalhesDelta', '-');
-    setContent('detalhesVencimento', formatDate(op.vencimento));
-    setContent('detalhesAtivoBaseAbertura', '-');
-    setContent('detalhesOpcaoAbertura', '-');
-    setContent('detalhesAtivoBaseVar', '-');
-    setContent('detalhesOpcaoVar', '-');
-    
-    // Inicializar Resultado e P&L com loading
-    setContent('detalhesResultado', '<div class="spinner-border spinner-border-sm text-secondary" role="status"></div>', true);
-    setContent('detalhesPL', '<div class="spinner-border spinner-border-sm text-secondary" role="status"></div>', true);
-    
-    setContent('detalhesUltimaAtualizacao', '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Última atualização: -', true);
-    
-    const modal = new bootstrap.Modal(document.getElementById('modalDetalhesOperacao'));
+    const modalEl = document.getElementById('modalDetalhesOperacao');
+    if (!modalEl) return;
+
+    // Show modal
+    // Check if instance exists
+    let modal = bootstrap.Modal.getInstance(modalEl);
+    if (!modal) {
+        modal = new bootstrap.Modal(modalEl);
+    }
     modal.show();
-    resetDetalhesTabs();
     
-    // Atualizar status do mercado no modal
-    updateModalMarketStatus('modalDetalhesMarketStatus');
+    // Reset tabs to first one
+    openY2Tab(null, 'y2-performance');
     
-    // Buscar dados atualizados
+    // Initial populate with what we have (offline data)
+    updateY2Fields(op, {});
+    
+    // Fetch fresh data
     await refreshDetalhesOperacao();
 }
 
@@ -1344,8 +1334,8 @@ let evolutionChartInstance = null;
 let volatilityChartInstance = null;
 let payoffChartInstances = {};
 
-function renderEvolutionChart(color) {
-    const ctx = document.getElementById('evolutionChart');
+function renderEvolutionChart(color, targetId = 'evolutionChart', dataPoints = null, labels = null) {
+    const ctx = document.getElementById(targetId);
     if (!ctx) return;
     
     if (evolutionChartInstance) {
@@ -1353,30 +1343,40 @@ function renderEvolutionChart(color) {
     }
 
     // Generate realistic result progression (from y.html style)
-    const dataPoints = [250, 200, 150, 100, 50, -40, -72]; // Baseado em y.html
-    const labels = ['6d atrás', '5d', '4d', '3d', '2d', 'Hoje', 'Previsão'];
+    const chartDataPoints = dataPoints || [250, 200, 150, 100, 50, -40, -72];
+    const chartLabels = labels || ['6d atrás', '5d', '4d', '3d', '2d', 'Hoje', 'Previsão'];
+    const lineColor = color || '#3b82f6';
+    const toRgba = (hex, alpha) => {
+        if (!hex || typeof hex !== 'string' || !hex.startsWith('#')) return `rgba(59, 130, 246, ${alpha})`;
+        const clean = hex.replace('#', '');
+        const full = clean.length === 3 ? clean.split('').map(c => c + c).join('') : clean;
+        const r = parseInt(full.slice(0, 2), 16);
+        const g = parseInt(full.slice(2, 4), 16);
+        const b = parseInt(full.slice(4, 6), 16);
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    };
 
     evolutionChartInstance = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: labels,
+            labels: chartLabels,
             datasets: [{
                 label: 'Resultado (R$)',
-                data: dataPoints,
-                borderColor: '#3b82f6',
+                data: chartDataPoints,
+                borderColor: lineColor,
                 backgroundColor: function(context) {
                     const chart = context.chart;
                     const {ctx, chartArea} = chart;
                     if (!chartArea) return null;
                     const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-                    gradient.addColorStop(0, 'rgba(59, 130, 246, 0.2)');
-                    gradient.addColorStop(1, 'rgba(59, 130, 246, 0.02)');
+                    gradient.addColorStop(0, toRgba(lineColor, 0.2));
+                    gradient.addColorStop(1, toRgba(lineColor, 0.02));
                     return gradient;
                 },
                 borderWidth: 3,
                 tension: 0.4,
                 pointRadius: 5,
-                pointBackgroundColor: '#3b82f6',
+                pointBackgroundColor: lineColor,
                 pointHoverRadius: 8,
                 fill: true
             }]
@@ -1794,8 +1794,8 @@ function renderRiskDistChart(pop) {
 }
 
 // Projection Chart (3 scenarios)
-function renderProjectionChart(S, K, premium, days, isCall, isShort) {
-    const ctx = document.getElementById('projectionChart');
+function renderProjectionChart(S, K, premium, days, isCall, isShort, targetId = 'projectionChart') {
+    const ctx = document.getElementById(targetId);
     if (!ctx) return;
 
     if (projectionChartInstance) {
@@ -6065,4 +6065,302 @@ function getSignalColor(signal) {
     if (signal === 'Compra') return 'success';
     if (signal === 'Venda') return 'danger';
     return 'secondary';
+}
+
+// ==========================================
+// Y2 MODAL INTEGRATION
+// ==========================================
+
+function openY2Tab(evt, tabName) {
+    var i, tabcontent, tablinks;
+    // Get all tab-content elements
+    tabcontent = document.getElementsByClassName("tab-content");
+    
+    // Hide all tab contents inside the modal
+    for (i = 0; i < tabcontent.length; i++) {
+        // Scope to modal to avoid hiding other tabs on the page
+        if (tabcontent[i].closest('#modalDetalhesOperacao')) {
+            tabcontent[i].classList.remove("active");
+            tabcontent[i].style.display = "none"; 
+        }
+    }
+    
+    // Remove active class from all tab links in the modal
+    tablinks = document.querySelectorAll("#modalDetalhesOperacao .nav-tabs .nav-link");
+    for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].classList.remove("active");
+    }
+    
+    // Show the specific tab content
+    const targetTab = document.getElementById(tabName);
+    if (targetTab) {
+        targetTab.classList.add("active");
+        targetTab.style.display = "block";
+    }
+    
+    // Add active class to the button that opened the tab
+    const targetLink = document.querySelector(`#modalDetalhesOperacao .nav-tabs .nav-link[data-y2-tab="${tabName}"]`);
+    if (targetLink) {
+        targetLink.classList.add("active");
+        return;
+    }
+    if (evt && evt.currentTarget) {
+        evt.currentTarget.classList.add("active");
+    } else if (evt && evt.target) {
+        evt.target.classList.add("active");
+    }
+}
+
+// Redefine refreshDetalhesOperacao to use new IDs
+async function refreshDetalhesOperacao() {
+    if (!currentDetalhesOpId) return;
+    
+    const btn = document.getElementById('btn-y2-refresh');
+    let originalText = '🔄 Atualizar';
+    if(btn) {
+        originalText = btn.innerHTML;
+        btn.innerHTML = '⏳ Carregando...';
+        btn.disabled = true;
+    }
+
+    try {
+        const res = await fetch(`${API_BASE}/api/opcoes/${currentDetalhesOpId}`);
+        if (!res.ok) throw new Error('Failed to fetch operation');
+        const op = await res.json();
+        
+        // Fetch market data
+        let marketData = {};
+        try {
+            // Get option data (includes underlying price usually)
+            const resMarket = await fetch(`${API_BASE}/api/cotacao/opcoes?symbol=${op.ativo}`);
+            const data = await resMarket.json();
+            
+            if (Array.isArray(data)) marketData = data[0];
+            else if (data.opcoes) marketData = data.opcoes[0];
+            else marketData = data;
+            
+            // If we have underlying price in response, use it
+            if (data.spot_price) marketData.spot_price = parseFloat(data.spot_price);
+            
+        } catch(e) { console.error('Error fetching market data:', e); }
+        
+        updateY2Fields(op, marketData);
+        
+    } catch(e) {
+        console.error('Error refreshing details:', e);
+        iziToast.error({title: 'Erro', message: 'Erro ao atualizar dados: ' + e.message});
+    } finally {
+        if(btn) {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+}
+
+function updateY2Fields(op, marketData) {
+    const setText = (id, val) => {
+        const el = document.getElementById(id);
+        if(el) el.textContent = val;
+    };
+    
+    const setHtml = (id, val) => {
+        const el = document.getElementById(id);
+        if(el) el.innerHTML = val;
+    };
+
+    // --- Parse Data ---
+    const qtd = parseFloat(op.quantidade);
+    const strike = parseFloat(op.strike);
+    const premioAbertura = parseFloat(op.premio);
+    const tipo = op.tipo;
+    const isVenda = qtd < 0;
+    const qtdAbs = Math.abs(qtd);
+    const isCall = tipo === 'CALL';
+    
+    // Market Data
+    let precoAtivo = marketData.spot_price || parseFloat(op.preco_atual_ativo || 0); // Fallback
+    // If marketData has preco_ativo_base, use it
+    if (marketData.preco_ativo_base) precoAtivo = parseFloat(marketData.preco_ativo_base);
+    
+    let precoOpcao = parseFloat(marketData.premio || marketData.price || marketData.last || 0);
+    // Fallback to op.preco_atual if market data failed
+    if (!precoOpcao && op.preco_atual) precoOpcao = parseFloat(op.preco_atual);
+    
+    // Greeks
+    const delta = parseFloat(marketData.delta || 0);
+    const gamma = parseFloat(marketData.gamma || 0);
+    const theta = parseFloat(marketData.theta || 0);
+    const vega = parseFloat(marketData.vega || 0);
+    const iv = parseFloat(marketData.implied_volatility || 0);
+
+    // --- Calculations ---
+    
+    // Vencimento
+    const diasInfo = calcularDias(op.vencimento);
+    const diasRestantes = diasInfo.corridos;
+    
+    // Distance
+    const distancia = precoAtivo > 0 ? ((precoAtivo / strike) - 1) * 100 : 0;
+    
+    // Financials
+    const totalRecebido = premioAbertura * qtdAbs; // If sell
+    const custoRecompra = precoOpcao * qtdAbs;
+    
+    let resultadoLiquido = 0;
+    if (isVenda) {
+        resultadoLiquido = totalRecebido - custoRecompra;
+    } else {
+        resultadoLiquido = (precoOpcao * qtdAbs) - (premioAbertura * qtdAbs);
+    }
+    
+    const lucroPercent = premioAbertura > 0 ? (resultadoLiquido / (premioAbertura * qtdAbs)) * 100 : 0;
+    
+    // --- Update UI ---
+    
+    // Header
+    setText('y2-ticker', op.ativo);
+    setText('y2-badge-side', `${isVenda ? 'VENDA' : 'COMPRA'} - ${tipo}`);
+    const badgeSide = document.getElementById('y2-badge-side');
+    if(badgeSide) {
+        badgeSide.className = `badge ${isVenda ? 'badge-red' : 'badge-green'}`;
+    }
+    
+    setText('y2-badge-status', op.status);
+    setText('y2-vencimento', `📅 Vencimento: ${formatDate(op.vencimento)} (${diasRestantes} dias)`);
+    setText('y2-strike', `💰 Strike: ${formatCurrency(strike)}`);
+    setText('y2-premio', `💵 Premio: ${formatCurrency(premioAbertura)}`);
+    setText('y2-qtd', `📊 Quantidade: ${qtd}`);
+    
+    // Performance Tab
+    setText('y2-ativo-base', op.ativo_base);
+    setText('y2-ativo-preco', formatCurrency(precoAtivo));
+    
+    // Var Ativo (Simulated as we don't have open price of asset easily, assume 0 for now or fetch history)
+    // For now, let's use 0% or N/A
+    setText('y2-ativo-var', '0.00%'); 
+    
+    setText('y2-opcao-ticker', op.ativo);
+    setText('y2-opcao-preco', formatCurrency(precoOpcao));
+    
+    // Var Opcao (Current vs Open)
+    const varOpcao = premioAbertura > 0 ? ((precoOpcao - premioAbertura) / premioAbertura) * 100 : 0;
+    const varOpcaoFormatted = `${varOpcao > 0 ? '⬆️' : '⬇️'} ${varOpcao.toFixed(2)}%`;
+    setText('y2-opcao-var', varOpcaoFormatted);
+    const varOpcaoEl = document.getElementById('y2-opcao-var');
+    if(varOpcaoEl) varOpcaoEl.className = varOpcao > 0 ? 'green' : 'red';
+    
+    setText('y2-stat-strike', formatCurrency(strike));
+    setText('y2-stat-dist', `${distancia.toFixed(2)}%`);
+    setText('y2-stat-dias', `${diasRestantes}d`);
+    
+    // Result Box
+    setText('y2-lucro-atual', formatCurrency(resultadoLiquido));
+    const resultValEl = document.getElementById('y2-lucro-atual');
+    if(resultValEl) {
+        resultValEl.className = `result-value ${resultadoLiquido >= 0 ? 'green' : 'red'}`; // Actually y2 uses blue for value, but logic might vary
+        // y2.html uses green for positive result usually
+        if(resultadoLiquido < 0) resultValEl.style.color = 'var(--red)';
+        else resultValEl.style.color = 'var(--green)';
+    }
+    
+    setText('y2-lucro-percent', `${lucroPercent > 0 ? '+' : ''}${lucroPercent.toFixed(2)}%`);
+    
+    // Result Details
+    setText('y2-res-fechamento', formatCurrency(isVenda ? totalRecebido : '---')); // Estimado se virar pó (venda)
+    setText('y2-res-mtm', formatCurrency(resultadoLiquido));
+    
+    // Premio Details
+    setText('y2-premio-abertura', formatCurrency(premioAbertura));
+    setText('y2-custo-recompra', formatCurrency(custoRecompra)); // Usually negative for cost
+    setText('y2-res-liquido', formatCurrency(resultadoLiquido));
+    
+    // Progress Bar (Premio Captado for Short)
+    if (isVenda) {
+        // Captured = (Premio Abertura - Premio Atual) / Premio Abertura
+        const captured = Math.max(0, (premioAbertura - precoOpcao) / premioAbertura);
+        const capturedPct = captured * 100;
+        const bar = document.getElementById('y2-premio-bar');
+        if(bar) bar.style.width = `${capturedPct}%`;
+        setText('y2-premio-text', `${capturedPct.toFixed(2)}% do prêmio captado`);
+    }
+    
+    // Detalhes Tab
+    setText('y2-det-abertura-ativo', 'R$ -'); // Don't have historical asset price easily
+    setText('y2-det-abertura-premio', formatCurrency(premioAbertura));
+    setText('y2-det-abertura-qtd', qtd);
+    setText('y2-det-abertura-total', formatCurrency(Math.abs(totalRecebido)));
+    
+    setText('y2-det-atual-ativo', formatCurrency(precoAtivo));
+    setText('y2-det-atual-premio', formatCurrency(precoOpcao));
+    setText('y2-det-atual-dist', `${distancia.toFixed(2)}%`);
+    setText('y2-det-atual-premio-pct', `${((precoOpcao/premioAbertura)*100).toFixed(2)}%`);
+    setText('y2-det-atual-recompra', formatCurrency(custoRecompra));
+    
+    setText('y2-info-tipo', isVenda ? 'VENDA' : 'COMPRA');
+    setText('y2-info-opcao', tipo);
+    setText('y2-info-strike', formatCurrency(strike));
+    setText('y2-info-vencimento', formatDate(op.vencimento));
+    
+    // Gregas
+    setText('y2-greek-delta', delta.toFixed(4));
+    setText('y2-greek-gamma', gamma.toFixed(4));
+    setText('y2-greek-theta', theta.toFixed(4));
+    setText('y2-greek-vega', vega.toFixed(4));
+    
+    // Update bars
+    const setBar = (id, val) => {
+        const bar = document.getElementById(id);
+        if(bar) bar.style.width = `${Math.min(100, Math.abs(val)*100)}%`; // Simple normalization
+    };
+    setBar('y2-greek-delta-bar', delta);
+    setBar('y2-greek-gamma-bar', gamma * 10); // Scale up
+    setBar('y2-greek-theta-bar', theta * 10);
+    setBar('y2-greek-vega-bar', vega * 10);
+
+    const basePrice = precoAtivo > 0 ? precoAtivo : strike;
+    const pessimistaPrice = basePrice * 0.9;
+    const otimistaPrice = basePrice * 1.1;
+    const calcResultado = (price) => {
+        const intrinsic = isCall ? Math.max(0, price - strike) : Math.max(0, strike - price);
+        return isVenda ? (premioAbertura - intrinsic) * qtdAbs : (intrinsic - premioAbertura) * qtdAbs;
+    };
+    const resultadoPessimista = calcResultado(pessimistaPrice);
+    const resultadoAtual = calcResultado(basePrice);
+    const resultadoOtimista = calcResultado(otimistaPrice);
+
+    setText('y2-pior-caso', formatCurrency(Math.min(resultadoPessimista, resultadoAtual, resultadoOtimista)));
+    setText('y2-atual-caso', formatCurrency(resultadoAtual));
+    setText('y2-melhor-caso', formatCurrency(Math.max(resultadoPessimista, resultadoAtual, resultadoOtimista)));
+
+    const chartColor = resultadoLiquido >= 0 ? '#10b981' : '#ef4444';
+    const amplitude = Math.max(10, Math.abs(resultadoLiquido) * 0.5);
+    const evolutionPoints = [
+        resultadoLiquido + amplitude,
+        resultadoLiquido + amplitude * 0.6,
+        resultadoLiquido + amplitude * 0.3,
+        resultadoLiquido,
+        resultadoLiquido - amplitude * 0.2,
+        resultadoLiquido - amplitude * 0.4,
+        resultadoLiquido + amplitude * 0.1
+    ];
+    renderEvolutionChart(chartColor, 'y2-evolution-chart', evolutionPoints, ['6d atrás', '5d', '4d', '3d', '2d', 'Hoje', 'Previsão']);
+    renderProjectionChart(basePrice, strike, premioAbertura, Math.max(diasRestantes, 1), isCall, isVenda, 'y2-projection-chart');
+    
+    // Risco (Basic simulation)
+    // Perda Máxima (Short Put: Strike - Premio) * Qtd
+    // Ganho Máximo (Short Put: Premio) * Qtd
+    let maxGain = 0;
+    let maxLoss = 0;
+    let breakeven = 0;
+    
+    if (isVenda && tipo === 'PUT') {
+        maxGain = totalRecebido;
+        maxLoss = (strike * qtdAbs) - totalRecebido; // Worst case stock goes to 0
+        breakeven = strike - premioAbertura;
+    }
+    // Add logic for other types if needed
+    
+    setText('y2-risk-gain', formatCurrency(maxGain));
+    setText('y2-risk-loss', formatCurrency(-maxLoss)); // Show as negative
+    setText('y2-risk-breakeven', formatCurrency(breakeven));
 }
