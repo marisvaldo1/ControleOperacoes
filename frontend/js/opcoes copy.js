@@ -57,7 +57,6 @@ document.addEventListener('layoutReady', function() {
     
     // Botão de refresh detalhes
     document.getElementById('btnRefreshDetalhes')?.addEventListener('click', refreshDetalhesOperacao);
-    setupDetalhesTabs();
     
     // Configurações de IA
     document.getElementById('btnSalvarConfigIA').addEventListener('click', salvarConfigIA);
@@ -601,24 +600,6 @@ async function editOperacao(id) {
     updateModalMarketStatus('modalOperacaoMarketStatus');
 }
 
-function cdf(x) {
-    var mean = 0;
-    var sigma = 1;
-    var z = (x - mean) / Math.sqrt(2 * sigma * sigma);
-    var t = 1 / (1 + 0.3275911 * Math.abs(z));
-    var a1 = 0.254829592;
-    var a2 = -0.284496736;
-    var a3 = 1.421413741;
-    var a4 = -1.453152027;
-    var a5 = 1.061405429;
-    var erf = 1 - ((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t * Math.exp(-z * z);
-    var sign = 1;
-    if (z < 0) {
-        sign = -1;
-    }
-    return (1 / 2) * (1 + sign * erf);
-}
-
 async function deleteOperacao(id) {
     // Usar SweetAlert2 em vez de confirm()
     const result = await Swal.fire({
@@ -649,80 +630,31 @@ async function deleteOperacao(id) {
 // MODAL DE DETALHES
 // ====================
 
-function setupDetalhesTabs() {
-    const modal = document.getElementById('modalDetalhesOperacao');
-    if (!modal) return;
-    
-    modal.addEventListener('click', (event) => {
-        const tab = event.target.closest('.detalhes-x .tab');
-        if (!tab) return;
-        
-        const target = tab.getAttribute('data-tab');
-        if (!target) return;
-        
-        const tabs = modal.querySelectorAll('.detalhes-x .tab');
-        const contents = modal.querySelectorAll('.detalhes-x .tab-content');
-        
-        tabs.forEach(t => t.classList.toggle('active', t === tab));
-        contents.forEach(c => c.classList.toggle('active', c.getAttribute('data-tab-content') === target));
-    });
-}
-
-function resetDetalhesTabs() {
-    const modal = document.getElementById('modalDetalhesOperacao');
-    if (!modal) return;
-    
-    const tabs = Array.from(modal.querySelectorAll('.detalhes-x .tab'));
-    const contents = Array.from(modal.querySelectorAll('.detalhes-x .tab-content'));
-    if (tabs.length === 0 || contents.length === 0) return;
-    
-    const firstTab = tabs[0];
-    const target = firstTab.getAttribute('data-tab');
-    
-    tabs.forEach(t => t.classList.toggle('active', t === firstTab));
-    contents.forEach(c => c.classList.toggle('active', c.getAttribute('data-tab-content') === target));
-}
-
 async function openDetalhesOperacao(id) {
     currentDetalhesOpId = id;
     const op = allOperacoes.find(o => o.id == id);
     if (!op) return;
     
-    // Helper function to safely set content
-    const setContent = (id, content, isHTML = false) => {
-        const el = document.getElementById(id);
-        if (el) {
-            if (isHTML) el.innerHTML = content;
-            else el.textContent = content;
-        }
-    };
+    document.getElementById('detalhesOpcaoTitle').textContent = op.ativo;
+    document.getElementById('detalhesAtivoBase').textContent = op.ativo_base || '-';
     
-    setContent('detalhesOpcaoTitle', op.ativo);
-    setContent('detalhesAtivoBase', op.ativo_base || '-');
-    setContent('detalhesAtivoBaseCodigo', op.ativo_base || '-');
-    setContent('detalhesOpcaoCodigo', op.ativo || '-');
-    setContent('detalhesPremioOriginal', formatCurrency(parseFloatSafe(op.premio || 0)));
+    // Exibir prêmio do banco no cabeçalho
+    document.getElementById('detalhesPremioOriginal').textContent = formatCurrency(parseFloatSafe(op.premio || 0));
     
     // Inicializar campos com loading ou valores existentes
-    setContent('detalhesCotacaoAtual', '<div class="spinner-border spinner-border-sm text-secondary" role="status"></div>', true);
-    setContent('detalhesOpcaoPrecoAtual', '<div class="spinner-border spinner-border-sm text-secondary" role="status"></div>', true);
-    setContent('detalhesPoP', '-');
-    setContent('detalhesDelta', '-');
-    setContent('detalhesVencimento', formatDate(op.vencimento));
-    setContent('detalhesAtivoBaseAbertura', '-');
-    setContent('detalhesOpcaoAbertura', '-');
-    setContent('detalhesAtivoBaseVar', '-');
-    setContent('detalhesOpcaoVar', '-');
+    document.getElementById('detalhesCotacaoAtual').innerHTML = '<div class="spinner-border spinner-border-sm text-secondary" role="status"></div>';
+    document.getElementById('detalhesPoP').textContent = '-';
+    document.getElementById('detalhesDelta').textContent = '-';
+    document.getElementById('detalhesVencimento').textContent = formatDate(op.vencimento);
     
-    // Inicializar Resultado e P&L com loading
-    setContent('detalhesResultado', '<div class="spinner-border spinner-border-sm text-secondary" role="status"></div>', true);
-    setContent('detalhesPL', '<div class="spinner-border spinner-border-sm text-secondary" role="status"></div>', true);
+    // Inicializar Resultado e P&L com loading - valores serão calculados após atualização
+    document.getElementById('detalhesResultado').innerHTML = '<div class="spinner-border spinner-border-sm text-secondary" role="status"></div>';
+    document.getElementById('detalhesPL').innerHTML = '<div class="spinner-border spinner-border-sm text-secondary" role="status"></div>';
     
-    setContent('detalhesUltimaAtualizacao', '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Última atualização: -', true);
+    document.getElementById('detalhesUltimaAtualizacao').innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Última atualização: -';
     
     const modal = new bootstrap.Modal(document.getElementById('modalDetalhesOperacao'));
     modal.show();
-    resetDetalhesTabs();
     
     // Atualizar status do mercado no modal
     updateModalMarketStatus('modalDetalhesMarketStatus');
@@ -790,15 +722,6 @@ async function refreshDetalhesOperacao() {
 }
 
 function updateDetalhesUI(op, spotPrice, optionPrice) {
-    // Helper function to safely set content
-    const setContent = (id, content, isHTML = false) => {
-        const el = document.getElementById(id);
-        if (el) {
-            if (isHTML) el.innerHTML = content;
-            else el.textContent = content;
-        }
-    };
-    
     const isCall = op.tipo === 'CALL';
     const qty = parseFloat(op.quantidade);
     const isShort = qty < 0; 
@@ -808,1569 +731,184 @@ function updateDetalhesUI(op, spotPrice, optionPrice) {
     const T = Math.max(T_days / 365.0, 0.0001);
     const r = 0.1075; // Risk-free rate (approx)
 
-    // --- 1. Financial Calculations ---
-    const unitEntry = parseFloatSafe(op.premio || 0);
+    // Update Prices Display
+    document.getElementById('detalhesCotacaoAtual').textContent = formatCurrency(optionPrice);
+    
+    // Update Ativo Base display to show price
+    const ativoBaseEl = document.getElementById('detalhesAtivoBase');
+    if(ativoBaseEl) {
+        ativoBaseEl.innerHTML = `${op.ativo_base}<br><span class="text-muted small">${formatCurrency(spotPrice)}</span>`;
+    }
+    
+    // Update Result and PnL - CORRIGIDO
+    // Para opções, o custo base SEMPRE é o prêmio pago/recebido
+    const unitEntry = parseFloat(op.premio || 0);
     const unitCurrent = optionPrice;
     
     let pnl = 0;
     let costBasis = 0;
     
     if (isShort) {
+        // Short: Vendeu a opção (recebeu o prêmio)
+        // Lucro se o preço atual for menor (compra mais barato para fechar)
         costBasis = unitEntry * Math.abs(qty); 
         const currentValueToClose = unitCurrent * Math.abs(qty);
         pnl = costBasis - currentValueToClose;
     } else {
+        // Long: Comprou a opção (pagou o prêmio)
+        // Lucro se o preço atual for maior (vende mais caro)
         costBasis = unitEntry * Math.abs(qty);
         const currentValue = unitCurrent * Math.abs(qty);
         pnl = currentValue - costBasis;
     }
     
     const pnlPercent = costBasis !== 0 ? (pnl / costBasis) * 100 : 0;
+    
+    const divResultado = document.getElementById('detalhesResultado');
+    divResultado.textContent = formatCurrency(pnl);
+    divResultado.className = `fw-bold ${pnl >= 0 ? 'text-success' : 'text-danger'}`;
+    
+    const divPL = document.getElementById('detalhesPL');
+    divPL.textContent = `${pnlPercent > 0 ? '+' : ''}${pnlPercent.toFixed(2)}%`;
+    divPL.className = `fw-bold ${pnlPercent >= 0 ? 'text-success' : 'text-danger'}`;
+    
+    // Update Time
+    document.getElementById('detalhesTempo').textContent = `${T_days} dias`;
 
-    // Notional & Margin
+    // Calcular e exibir informações financeiras (Notional, Saldo, Margem)
     const strikeValue = parseFloatSafe(op.strike);
     const quantity = Math.abs(qty);
     const notional = strikeValue * quantity;
     
+    // Obter saldo da corretora
     const config = JSON.parse(localStorage.getItem('appConfig') || '{}');
     const saldoCorretora = parseFloat(config.saldoAcoes || 0);
     const margemDisponivel = saldoCorretora - notional;
     const utilizacaoPercent = saldoCorretora > 0 ? (notional / saldoCorretora * 100) : 0;
-
-    // --- 2. Basic Info na Aba Detalhes ---
-    setContent('detalhesPrecoAbertura', formatCurrency(parseFloatSafe(op.premio)));
-    setContent('detalhesPrecoAtual', formatCurrency(optionPrice));
-    setContent('detalhesVariacao', `${((optionPrice - parseFloatSafe(op.premio)) / parseFloatSafe(op.premio) * 100).toFixed(2)}%`);
-    setContent('detalhesStrike', formatCurrency(K));
-    setContent('detalhesVencimento', formatDate(op.vencimento));
-    setContent('detalhesDiasVencimento', T_days.toString());
-    setContent('detalhesQuantidade', Math.abs(qty).toString());
-    setContent('detalhesCustoTotal', formatCurrency(costBasis));
-    setContent('detalhesNotionalValue', formatCurrency(notional));
-
-    let graphColor = '#94a3b8';
-    const marginState = margemDisponivel < 0 ? 'red' : margemDisponivel > 0 ? 'green' : 'gray';
-    const resultState = pnl >= 0 ? 'green' : 'red';
-    const pnlState = pnlPercent >= 0 ? 'green' : 'red';
-    graphColor = resultState === 'green' ? '#48bb78' : '#f56565';
-
-    // Atualizar aba Performance (tab 1)
-    setContent('detalhesResultadoFechamento', formatCurrency(pnl));
-    setContent('detalhesLucroAtual', formatCurrency(pnl));
-    setContent('detalhesPremioPercent', `${pnlPercent > 0 ? '+' : ''}${pnlPercent.toFixed(2)}%`);
-    setContent('detalhesLucroMaximo', formatCurrency(isShort ? (unitEntry * Math.abs(qty)) : 0));
-    setContent('detalhesPrejuizoMaximo', formatCurrency(isShort ? 0 : (unitEntry * Math.abs(qty))));
     
-    // Barra de progresso do P&L
-    const plProgressBar = document.getElementById('detalhesProgressBar');
-    if (plProgressBar) {
-        const absPercent = Math.min(Math.abs(pnlPercent), 100);
-        plProgressBar.style.width = `${absPercent}%`;
-        plProgressBar.className = pnlPercent >= 0 ? 'progress-bar bg-success' : 'progress-bar bg-danger';
+    // Atualizar elementos
+    document.getElementById('detalhesNotional').textContent = formatCurrency(notional);
+    document.getElementById('detalhesSaldo').textContent = formatCurrency(saldoCorretora);
+    
+    const margemEl = document.getElementById('detalhesMargem');
+    margemEl.textContent = formatCurrency(margemDisponivel);
+    margemEl.className = `h3 mb-0 ${margemDisponivel >= 0 ? 'text-success' : 'text-danger'}`;
+    
+    document.getElementById('detalhesUtilizacao').textContent = `${utilizacaoPercent.toFixed(1)}%`;
+    
+    const progressBar = document.getElementById('detalhesNotionalBar');
+    progressBar.style.width = `${Math.min(utilizacaoPercent, 100)}%`;
+    
+    // Cor da barra baseada no P&L (mesma lógica do card)
+    if (pnl > 0) {
+        progressBar.className = 'progress-bar bg-success';
+    } else if (pnl < 0) {
+        progressBar.className = 'progress-bar bg-danger';
+    } else {
+        progressBar.className = 'progress-bar bg-warning';
     }
     
-    // Atualizar header
-    setContent('detalhesAtivoBaseLabel', op.ativo_base || '-');
-    setContent('detalhesAtivoBasePreco', formatCurrency(spotPrice));
-    
-    const varPercent = op.preco_ativo_base ? ((spotPrice - op.preco_ativo_base) / op.preco_ativo_base * 100) : 0;
-    const varElement = document.getElementById('detalhesAtivoBaseVar');
-    if (varElement) {
-        varElement.textContent = `${varPercent > 0 ? '+' : ''}${varPercent.toFixed(2)}%`;
-        varElement.className = varPercent >= 0 ? 'badge bg-success' : 'badge bg-danger';
+    // Atualizar cor da borda do card baseado na situação financeira
+    const financialCard = document.querySelector('#modalDetalhesOperacao .card.border-warning');
+    if (financialCard) {
+        // Lógica: Verde se tudo positivo (PnL > 0, Margem > 0, Prob > 50%)
+        // Vermelho se situação ruim (PnL < 0 OU Margem < 0)
+        // Amarelo se neutro
+        const cardStatus = financialCard.querySelector('.card-status-top');
+        
+        if (pnl > 0 && margemDisponivel > 0) {
+            // Situação positiva
+            financialCard.className = 'card mb-3 border-success';
+            cardStatus.className = 'card-status-top bg-success';
+        } else if (pnl < 0 || margemDisponivel < 0) {
+            // Situação negativa
+            financialCard.className = 'card mb-3 border-danger';
+            cardStatus.className = 'card-status-top bg-danger';
+        } else {
+            // Situação neutra
+            financialCard.className = 'card mb-3 border-warning';
+            cardStatus.className = 'card-status-top bg-warning';
+        }
     }
-    
-    setContent('detalhesOpcaoLabel', op.ativo || '-');
-    setContent('detalhesOpcaoPrecoAtual', formatCurrency(optionPrice));
-    setContent('detalhesStrikeMini', formatCurrency(K));
-    setContent('detalhesDistanciaMini', `${((spotPrice - K) / K * 100).toFixed(1)}%`);
-    setContent('detalhesDiasMini', T_days.toString());
 
-    // --- 4. Greeks & PoP ---
-    let sigma = 0.3;
-    let prob = 0;
-    let greeks = { delta: 0, theta: 0, gamma: 0, vega: 0, rho: 0 };
-    
+    // Greeks Calculation
     if (spotPrice > 0 && K > 0 && T > 0 && optionPrice > 0) {
-        sigma = calculateIV(optionPrice, spotPrice, K, T, r, op.tipo);
-        greeks = calculateGreeks(spotPrice, K, T, r, sigma, op.tipo);
+        // Calculate IV based on current option price
+        const sigma = calculateIV(optionPrice, spotPrice, K, T, r, op.tipo);
+        const greeks = calculateGreeks(spotPrice, K, T, r, sigma, op.tipo);
         
-        // Atualizar Greeks na aba Gráficos
-        setContent('greekDelta', greeks.delta.toFixed(4));
-        setContent('greekTheta', greeks.theta.toFixed(4));
-        setContent('greekGamma', greeks.gamma.toFixed(4));
-        setContent('greekVega', greeks.vega.toFixed(4));
-        setContent('greekRho', greeks.rho ? greeks.rho.toFixed(4) : '0.0000');
-        setContent('greekIV', `${(sigma * 100).toFixed(2)}%`);
-        
-        // Barras de progresso dos Greeks
-        const updateGreekBar = (barId, value, maxValue = 1) => {
-            const bar = document.getElementById(barId);
-            if (bar) {
-                const percent = Math.min(Math.abs(value) / maxValue * 100, 100);
-                bar.style.width = `${percent}%`;
-                bar.className = value >= 0 ? 'progress-bar bg-success' : 'progress-bar bg-danger';
-            }
-        };
-        
-        updateGreekBar('greekDeltaBar', greeks.delta, 1);
-        updateGreekBar('greekThetaBar', greeks.theta, 0.1);
-        updateGreekBar('greekGammaBar', greeks.gamma, 0.01);
-        updateGreekBar('greekVegaBar', greeks.vega, 0.5);
-        updateGreekBar('greekRhoBar', greeks.rho || 0, 0.1);
-        updateGreekBar('greekIVBar', sigma, 1);
+        document.getElementById('detalhesDelta').textContent = greeks.delta.toFixed(4);
+        document.getElementById('detalhesTheta').textContent = greeks.theta.toFixed(4);
+        document.getElementById('detalhesGamma').textContent = greeks.gamma.toFixed(4);
+        document.getElementById('detalhesVega').textContent = greeks.vega.toFixed(4);
+        document.getElementById('detalhesIV').textContent = `${(sigma * 100).toFixed(2)}%`;
         
         // Break Even
         let be = 0;
         if (isCall) be = K + unitEntry;
         else be = K - unitEntry;
         
-        setContent('detalhesBreakEven', formatCurrency(be));
+        document.getElementById('detalhesBreakEven').textContent = formatCurrency(be);
         
-        // Distance
+        // Distance to Strike
         const dist = ((spotPrice - K) / K) * 100;
-        const distElement = document.getElementById('detalhesDistanciaMini');
-        if (distElement) {
-            distElement.textContent = `${dist > 0 ? '+' : ''}${dist.toFixed(2)}%`;
-        }
+        document.getElementById('detalhesDistancia').textContent = `${dist > 0 ? '+' : ''}${dist.toFixed(2)}%`;
         
-        // Atualizar campos da aba Risco
-        setContent('riscoMaxGain', formatCurrency(isShort ? (unitEntry * Math.abs(qty)) : 0));
-        setContent('riscoMaxLoss', formatCurrency(isShort ? 0 : (unitEntry * Math.abs(qty))));
-        setContent('riscoBreakeven', formatCurrency(be));
-        setContent('riscoDelta', greeks.delta.toFixed(4));
+        // PoP (Probability of Profit) - com correção para NaN
+        const sigma_final = sigma || 0.3; // fallback
+        let prob = 0;
         
-        // PoP Logic
-        const sigma_final = sigma || 0.3;
-        
+        // Handle Break Even <= 0 cases or spotPrice <= 0 to avoid NaN in Math.log
         if (be <= 0.001 || spotPrice <= 0.001) {
-             if (!isCall && isShort) prob = 1;
-             else prob = 0;
+             if (!isCall && isShort) prob = 1; // Short Put with BE <= 0 is 100% win
+             else prob = 0; // Others (Long Put BE<=0 impossible to win, Call BE<=0 impossible)
         } else if (T <= 0.001) {
-            if (isCall) prob = (spotPrice > be) ? 1 : 0;
-            else prob = (spotPrice < be) ? 1 : 0;
+            // If expiration is today or past, check intrinsic value
+            if (isCall) {
+                prob = (spotPrice > be) ? 1 : 0;
+            } else {
+                prob = (spotPrice < be) ? 1 : 0;
+            }
         } else {
-            const d1 = (Math.log(spotPrice / K) + (r + sigma_final * sigma_final / 2) * T) / (sigma_final * Math.sqrt(T));
-            const d2 = d1 - sigma_final * Math.sqrt(T);
+            const d1_be = (Math.log(spotPrice / be) + (r + sigma_final * sigma_final / 2) * T) / (sigma_final * Math.sqrt(T));
+            const d2_be = d1_be - sigma_final * Math.sqrt(T);
             
-            if (isNaN(d1) || isNaN(d2)) {
-                if (isCall) prob = (spotPrice > K) ? 0.7 : 0.3;
-                else prob = (spotPrice < K) ? 0.7 : 0.3;
+            // Check for NaN before using
+            if (isNaN(d1_be) || isNaN(d2_be)) {
+                // Fallback to simple comparison
+                if (isCall) {
+                    prob = (spotPrice > be) ? 0.7 : 0.3;
+                } else {
+                    prob = (spotPrice < be) ? 0.7 : 0.3;
+                }
             } else {
                 if (isCall) {
-                    if (!isShort) prob = cdf(d2); // Long Call: Profit if ITM
-                    else prob = cdf(-d2); // Short Call: Profit if OTM
+                    // Long Call: Profit if ST > BE
+                    if (!isShort) prob = cdf(d2_be);
+                    // Short Call: Profit if ST < BE
+                    else prob = cdf(-d2_be);
                 } else {
-                    if (!isShort) prob = cdf(-d2); // Long Put: Profit if ITM
-                    else prob = cdf(d2); // Short Put: Profit if OTM
+                    // Long Put: Profit if ST < BE
+                    if (!isShort) prob = cdf(-d2_be);
+                    // Short Put: Profit if ST > BE
+                    else prob = cdf(d2_be);
                 }
             }
         }
         
+        // Ensure prob is valid number between 0 and 1
         if (isNaN(prob) || prob < 0) prob = 0;
         if (prob > 1) prob = 1;
         
-        // Atualizar PoP na aba Risco
-        const popElement = document.getElementById('riscoProb');
-        if (popElement) {
-            popElement.textContent = `${(prob * 100).toFixed(1)}%`;
-        }
+        document.getElementById('detalhesPoP').textContent = `${(prob * 100).toFixed(1)}%`;
         
-        // Recommendations & Payoff
+        // Recommendations & Chart
         generateRecommendation(pnlPercent, T_days, prob, isCall, isShort, spotPrice, K, be);
-        renderPayoffChart(spotPrice, K, unitEntry, isCall, isShort, spotPrice, optionPrice, 'payoffChartSim');
+        renderPayoffChart(spotPrice, K, unitEntry, isCall, isShort, spotPrice, optionPrice);
     } else {
-        // Se não houver dados suficientes, definir valores padrão
-        const popElement = document.getElementById('riscoProb');
-        if (popElement) popElement.textContent = '-';
-        
-        setContent('greekIV', '-');
+        document.getElementById('detalhesPoP').textContent = '-';
+        document.getElementById('detalhesIV').textContent = '-';
     }
-
-    // --- 5. Render All Charts ---
-    renderEvolutionChart(graphColor);
-    renderVolatilityChart(sigma, graphColor);
-    renderThetaChart(greeks.theta, T_days);
-    renderRiskDistChart(prob * 100);
-    renderProjectionChart(spotPrice, K, unitEntry, T_days, isCall, isShort);
-    renderProbabilityChart(spotPrice, K);
-    renderScenarioChart(spotPrice, K, unitEntry, isCall, isShort);
-    renderPriceHistoryChart(spotPrice);
-    renderVolumeChart();
-    renderReturnsChart();
-    
-    const delta = parseFloat(document.getElementById('detalhesDelta')?.textContent || 0);
-    const gamma = parseFloat(document.getElementById('detalhesGamma')?.textContent || 0);
-    const theta = parseFloat(document.getElementById('detalhesTheta')?.textContent || 0);
-    const vega = parseFloat(document.getElementById('detalhesVega')?.textContent || 0);
-    renderGreeksChart(delta, gamma, theta, vega);
-    renderStressChart(spotPrice, K, unitEntry, isCall, isShort);
-    
-    // --- 6. Populate Additional Fields ---
-    updateAdditionalFields(op, spotPrice, K, unitEntry, unitCurrent, quantity, isCall, isShort, T_days, sigma, prob, pnl, notional, saldoCorretora);
-}
-
-function updateAdditionalFields(op, spotPrice, K, unitEntry, unitCurrent, quantity, isCall, isShort, T_days, sigma, prob, pnl, notional, saldoCorretora) {
-    // Helper function to safely set text content
-    const setTextContent = (id, value) => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = value;
-    };
-    const setPercentage = (id, value) => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        const isPositive = value >= 0;
-        el.className = `percentage ${isPositive ? 'positive' : 'negative'}`;
-        el.textContent = `${isPositive ? '+' : ''}${value.toFixed(2)}%`;
-    };
-    const setVariationValue = (id, value) => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        const isPositive = value >= 0;
-        el.textContent = `${isPositive ? '+' : ''}${formatCurrency(Math.abs(value))}`;
-        el.className = 'quotation-item-value';
-        el.style.color = isPositive ? '#10b981' : '#ef4444';
-    };
-    const setValueClass = (id, className) => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.classList.remove('positive', 'negative', 'warning');
-        if (className) el.classList.add(className);
-    };
-    
-    // Performance tab - Additional fields
-    setTextContent('detalhesAtivoBaseLabel', op.ativo_base || 'Ativo Base');
-    setTextContent('detalhesAtivoBasePreco', formatCurrency(spotPrice));
-    
-    const baseOpen = parseFloatSafe(op.preco_ativo_base || spotPrice);
-    const baseDiff = spotPrice - baseOpen;
-    const baseVar = baseOpen > 0 ? (baseDiff / baseOpen) * 100 : 0;
-    setTextContent('detalhesAtivoBaseAbertura', formatCurrency(baseOpen));
-    setVariationValue('detalhesAtivoBaseVariacaoValor', baseDiff);
-    setPercentage('detalhesAtivoBaseVar', baseVar);
-    
-    const optionOpen = parseFloatSafe(op.preco_atual || op.premio || unitEntry || unitCurrent);
-    const optionDiff = unitCurrent - optionOpen;
-    const optionVar = optionOpen > 0 ? (optionDiff / optionOpen) * 100 : 0;
-    setTextContent('detalhesOpcaoAbertura', formatCurrency(optionOpen));
-    setTextContent('detalhesOpcaoPrecoAtual', formatCurrency(unitCurrent));
-    setVariationValue('detalhesOpcaoVariacaoValor', optionDiff);
-    setPercentage('detalhesOpcaoVar', optionVar);
-    setTextContent('detalhesStrikeMini', formatCurrency(K));
-    const distance = ((spotPrice - K) / K) * 100;
-    setTextContent('detalhesDistanciaMini', `${distance > 0 ? '+' : ''}${distance.toFixed(1)}%`);
-    setTextContent('detalhesDiasMini', `${T_days} dias`);
-    
-    // Resultado Financeiro - Cards
-    const premioTotal = unitEntry * quantity;
-    const resultadoFechamento = premioTotal; // Para SHORT, recebi o prêmio no fechamento
-    const pnlPercent = premioTotal !== 0 ? (pnl / premioTotal) * 100 : 0;
-    const resultadoFechamentoValor = isShort ? resultadoFechamento : -resultadoFechamento;
-    setTextContent('detalhesResultadoFechamento', `${resultadoFechamentoValor >= 0 ? '+' : '-'} ${formatCurrency(Math.abs(resultadoFechamentoValor))}`);
-    setValueClass('detalhesResultadoFechamento', resultadoFechamentoValor >= 0 ? 'positive' : 'negative');
-    setTextContent('detalhesVariacao', `${pnlPercent >= 0 ? '+' : ''}${pnlPercent.toFixed(2)}%`);
-    const variacaoEl = document.getElementById('detalhesVariacao');
-    if (variacaoEl) {
-        variacaoEl.classList.remove('positive', 'negative');
-        variacaoEl.classList.add(pnlPercent >= 0 ? 'positive' : 'negative');
-    }
-    setTextContent('detalhesPLTotal', `${pnlPercent >= 0 ? '+' : ''}${pnlPercent.toFixed(1)}%`);
-    
-    // Evolution Chart Stats
-    setTextContent('detalhesMaxResult', formatCurrency(premioTotal));
-    setTextContent('detalhesCurrentResult', formatCurrency(pnl));
-    const expectedResult = isShort ? premioTotal * 0.7 : -premioTotal * 0.5; // Estimativa
-    setTextContent('detalhesPrevResult', formatCurrency(expectedResult));
-    
-    // Detalhes tab - Info table
-    setTextContent('detalhesTipoOperacao', `${isShort ? 'VENDA' : 'COMPRA'} - ${op.tipo}`);
-    setTextContent('detalhesStrike', formatCurrency(K));
-    setTextContent('detalhesPremioAtual', formatCurrency(unitCurrent));
-    setTextContent('detalhesQuantidade', quantity.toString());
-    setTextContent('detalhesPremioTotal', formatCurrency(premioTotal));
-    setTextContent('detalhesNotional', formatCurrency(notional));
-    const premioPercent = notional > 0 ? (premioTotal / notional) * 100 : 0;
-    setTextContent('detalhesPremioPercent', `${premioPercent >= 0 ? '+' : ''}${premioPercent.toFixed(2)}%`);
-    setTextContent('detalhesDataExercicio', formatDate(op.vencimento));
-    setTextContent('detalhesDiasCorridos', `${T_days} dias`);
-    let exercicioStatus = '-';
-    if (T_days <= 0) {
-        const exercida = isCall ? spotPrice > K : spotPrice < K;
-        exercicioStatus = exercida ? 'SIM' : 'NÃO';
-    }
-    setTextContent('detalhesExercicioStatus', exercicioStatus);
-    
-    const delta = parseFloat(document.getElementById('detalhesDelta')?.textContent || 0);
-    const gamma = parseFloat(document.getElementById('detalhesGamma')?.textContent || 0);
-    const theta = parseFloat(document.getElementById('detalhesTheta')?.textContent || 0);
-    const vega = parseFloat(document.getElementById('detalhesVega')?.textContent || 0);
-    
-    setTextContent('detalhesDeltaInfo', delta.toFixed(4));
-    setTextContent('detalhesGammaInfo', gamma.toFixed(4));
-    setTextContent('detalhesVegaInfo', vega.toFixed(4));
-    setTextContent('detalhesThetaInfo', theta.toFixed(4));
-    
-    // Risk Distribution probabilities
-    const probOTM = prob * 100;
-    const probITM = 100 - probOTM;
-    setTextContent('detalhesOTM', `${probOTM.toFixed(1)}%`);
-    setTextContent('detalhesITM', `${probITM.toFixed(1)}%`);
-    setValueClass('detalhesPoP', prob >= 0.7 ? 'positive' : prob >= 0.3 ? 'warning' : 'negative');
-    
-    const operacaoLabel = `${isShort ? 'Venda' : 'Compra'} ${op.tipo}`;
-    const spotOpen = baseOpen;
-    const spotPrev = K;
-    const premioPrev = unitCurrent * 0.8;
-    const totalPremioPrev = premioPrev * quantity;
-    const distOpen = K > 0 ? ((spotOpen - K) / K) * 100 : 0;
-    const distPrev = 0;
-    const percentPremioOpen = notional > 0 ? (premioTotal / notional) * 100 : 0;
-    const percentPremioAtual = notional > 0 ? (unitCurrent * quantity / notional) * 100 : 0;
-    const percentPremioPrev = notional > 0 ? (totalPremioPrev / notional) * 100 : 0;
-    const resultadoPrev = expectedResult;
-    const setSimText = (id, value) => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = value;
-    };
-    const setSimResult = (id, value) => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.textContent = `${value >= 0 ? '+' : '-'} ${formatCurrency(Math.abs(value))}`;
-        el.classList.remove('positive', 'negative');
-        el.classList.add(value >= 0 ? 'positive' : 'negative');
-    };
-    
-    setSimText('simOperacaoAbertura', operacaoLabel);
-    setSimText('simOperacaoAtual', operacaoLabel);
-    setSimText('simOperacaoPrev', operacaoLabel);
-    setSimText('simValorAtivoAbertura', formatCurrency(spotOpen));
-    setSimText('simValorAtivoAtual', formatCurrency(spotPrice));
-    setSimText('simValorAtivoPrev', formatCurrency(spotPrev));
-    setSimText('simPremioAbertura', formatCurrency(unitEntry));
-    setSimText('simPremioAtual', formatCurrency(unitCurrent));
-    setSimText('simPremioPrev', formatCurrency(premioPrev));
-    setSimText('simStrikeAbertura', formatCurrency(K));
-    setSimText('simStrikeAtual', formatCurrency(K));
-    setSimText('simStrikePrev', formatCurrency(K));
-    setSimText('simDistanciaAbertura', `${distOpen >= 0 ? '+' : ''}${distOpen.toFixed(2)}%`);
-    setSimText('simDistanciaAtual', `${distance >= 0 ? '+' : ''}${distance.toFixed(2)}%`);
-    setSimText('simDistanciaPrev', `${distPrev.toFixed(2)}%`);
-    setSimText('simTotalPremioAbertura', formatCurrency(premioTotal));
-    setSimText('simTotalPremioAtual', formatCurrency(unitCurrent * quantity));
-    setSimText('simTotalPremioPrev', formatCurrency(totalPremioPrev));
-    setSimText('simPercentPremioAbertura', `${percentPremioOpen.toFixed(2)}%`);
-    setSimText('simPercentPremioAtual', `${percentPremioAtual.toFixed(2)}%`);
-    setSimText('simPercentPremioPrev', `${percentPremioPrev.toFixed(2)}%`);
-    setSimResult('simResultadoAbertura', isShort ? premioTotal : -premioTotal);
-    setSimResult('simResultadoAtual', pnl);
-    setSimResult('simResultadoPrev', resultadoPrev);
-    
-    setSimText('simResultadoAtualPercent', `${pnlPercent >= 0 ? '+' : ''}${pnlPercent.toFixed(2)}%`);
-    setValueClass('simResultadoAtualPercent', pnlPercent >= 0 ? 'positive' : 'negative');
-    setSimText('simSaldoAtual', `Saldo: ${formatCurrency(saldoCorretora)}`);
-    const seExercer = saldoCorretora - notional + (isShort ? premioTotal : -premioTotal);
-    setSimText('simSeExercerValor', formatCurrency(seExercer));
-    setSimText('simSeExercerLucro', `Lucro: ${pnlPercent >= 0 ? '+' : ''}${pnlPercent.toFixed(2)}%`);
-    const expectedPercent = premioTotal !== 0 ? (expectedResult / premioTotal) * 100 : 0;
-    setSimText('simPLEsperado', `${expectedPercent >= 0 ? '+' : ''}${expectedPercent.toFixed(2)}%`);
-    setValueClass('simPLEsperado', expectedPercent >= 0 ? 'positive' : 'negative');
-    
-    const slider = document.getElementById('simPriceSlider');
-    const priceValue = document.getElementById('simPriceValue');
-    const priceMin = document.getElementById('simPriceMin');
-    const priceMax = document.getElementById('simPriceMax');
-    const strikeLabel = document.getElementById('simStrikeLabel');
-    const simResultValue = document.getElementById('simSimulatedResult');
-    const simBadge = document.getElementById('simScenarioBadge');
-    
-    const updateSimResult = (price) => {
-        if (!simResultValue || !simBadge) return;
-        const result = calculateStressResult(price, K, unitEntry, isCall, isShort, quantity);
-        simResultValue.textContent = formatCurrency(result);
-        if (result >= 0) {
-            simResultValue.style.color = '#22c55e';
-            simBadge.textContent = 'Lucro Máximo';
-            simBadge.style.background = 'rgba(34, 197, 94, 0.15)';
-            simBadge.style.color = '#22c55e';
-        } else {
-            simResultValue.style.color = '#ef4444';
-            simBadge.textContent = 'Perda';
-            simBadge.style.background = 'rgba(239, 68, 68, 0.15)';
-            simBadge.style.color = '#ef4444';
-        }
-    };
-    
-    if (slider && priceValue && priceMin && priceMax && strikeLabel) {
-        const minPrice = K * 0.9;
-        const maxPrice = K * 1.1;
-        slider.min = minPrice.toFixed(2);
-        slider.max = maxPrice.toFixed(2);
-        slider.step = 0.01;
-        slider.value = spotPrice.toFixed(2);
-        priceValue.textContent = formatCurrency(spotPrice);
-        priceMin.textContent = formatCurrency(minPrice);
-        priceMax.textContent = formatCurrency(maxPrice);
-        strikeLabel.textContent = formatCurrency(K);
-        updateSimResult(spotPrice);
-        
-        slider.oninput = () => {
-            const price = parseFloat(slider.value);
-            priceValue.textContent = formatCurrency(price);
-            updateSimResult(price);
-        };
-    }
-    
-    const scenarios = [
-        K * 0.95,
-        K * 0.97,
-        K,
-        K * 1.02
-    ];
-    const scenarioIds = [
-        { title: 'simScenario1Title', value: 'simScenario1Result', prob: 'simScenario1Prob' },
-        { title: 'simScenario2Title', value: 'simScenario2Result', prob: 'simScenario2Prob' },
-        { title: 'simScenario3Title', value: 'simScenario3Result', prob: 'simScenario3Prob' },
-        { title: 'simScenario4Title', value: 'simScenario4Result', prob: 'simScenario4Prob' }
-    ];
-    const T = Math.max(T_days / 365.0, 0.0001);
-    scenarios.forEach((scenarioPrice, idx) => {
-        const titleEl = document.getElementById(scenarioIds[idx].title);
-        const valueEl = document.getElementById(scenarioIds[idx].value);
-        const probEl = document.getElementById(scenarioIds[idx].prob);
-        if (!titleEl || !valueEl || !probEl) return;
-        titleEl.textContent = `${op.ativo_base || 'Ativo'} @ ${formatCurrency(scenarioPrice)}`;
-        const result = calculateStressResult(scenarioPrice, K, unitEntry, isCall, isShort, quantity);
-        valueEl.textContent = `${result >= 0 ? '+' : '-'} ${formatCurrency(Math.abs(result))}`;
-        valueEl.classList.remove('positive', 'negative');
-        valueEl.classList.add(result >= 0 ? 'positive' : 'negative');
-        const z = (Math.log(scenarioPrice / spotPrice) / (sigma * Math.sqrt(T))) || 0;
-        const probValue = Math.min(Math.max(cdf(z) * 100, 2), 98);
-        probEl.style.width = `${probValue.toFixed(0)}%`;
-    });
-    
-    // Alertas e Recomendações
-    const analiseLista = document.getElementById('detalhesAnaliseLista');
-    if (analiseLista && !analiseLista.innerHTML.includes('list-group-item')) {
-        analiseLista.innerHTML = `
-            <div class="alert alert-info mb-3">
-                <i class="fas fa-info-circle me-2"></i>
-                <strong>Análise da Operação</strong>
-                <p class="mb-0 mt-2">Veja abaixo as recomendações baseadas na sua operação atual.</p>
-            </div>
-        `;
-    }
-    
-    // Risco tab - Métricas
-    const var95 = notional * 0.05; // 5% VaR simplificado
-    const margemSeguranca = K - spotPrice;
-    const stopLoss = K * (isCall ? 1.15 : 0.85);
-    const exposicaoMax = notional;
-    const beta = 1.2; // Exemplo
-    const sharpe = pnl > 0 ? 1.5 : -0.5;
-    
-    setTextContent('detalhesVaR', formatCurrency(var95));
-    setTextContent('detalhesMargemSeguranca', formatCurrency(Math.abs(margemSeguranca)));
-    setTextContent('detalhesStopLoss', formatCurrency(stopLoss));
-    setTextContent('detalhesExposicaoMax', formatCurrency(exposicaoMax));
-    setTextContent('detalhesBeta', beta.toFixed(2));
-    setTextContent('detalhesSharpe', sharpe.toFixed(2));
-    
-    // Stress test mini stats
-    const stress10 = calculateStressResult(spotPrice * 0.90, K, unitEntry, isCall, isShort, quantity);
-    const stress5 = calculateStressResult(spotPrice * 0.95, K, unitEntry, isCall, isShort, quantity);
-    const stressPlus5 = calculateStressResult(spotPrice * 1.05, K, unitEntry, isCall, isShort, quantity);
-    
-    setTextContent('detalhesStress10', formatCurrency(stress10));
-    setTextContent('detalhesStress5', formatCurrency(stress5));
-    setTextContent('detalhesStressPlus5', formatCurrency(stressPlus5));
-    
-    // Plano de Contingência
-    const contingenciaEl = document.getElementById('detalhesContingencia');
-    if (contingenciaEl) {
-        contingenciaEl.innerHTML = `
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <div class="alert alert-danger">
-                        <h6 class="mb-2"><i class="fas fa-exclamation-triangle me-2"></i>Cenário de Perda</h6>
-                        <p class="mb-2"><strong>Se o ativo cair ${isCall ? '10%' : '5%'}:</strong></p>
-                        <p class="mb-2">Perda estimada: ${formatCurrency(Math.abs(stress10))}</p>
-                        <p class="mb-0"><strong>Ação:</strong> ${isShort ? 'Considere recomprar a opção' : 'Encerre a posição'}</p>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="alert alert-success">
-                        <h6 class="mb-2"><i class="fas fa-check-circle me-2"></i>Cenário de Ganho</h6>
-                        <p class="mb-2"><strong>Se o ativo subir ${isCall ? '5%' : '10%'}:</strong></p>
-                        <p class="mb-2">Ganho estimado: ${formatCurrency(Math.abs(stressPlus5))}</p>
-                        <p class="mb-0"><strong>Ação:</strong> ${isShort ? 'Mantenha a posição' : 'Realize lucro parcial'}</p>
-                    </div>
-                </div>
-                <div class="col-12">
-                    <div class="alert alert-warning">
-                        <h6 class="mb-2"><i class="fas fa-lightbulb me-2"></i>Recomendação Geral</h6>
-                        <p class="mb-0">
-                            ${prob > 70 ? 
-                                'Alta probabilidade de lucro. Monitore diariamente e considere realizar lucros parciais.' : 
-                                prob > 30 ? 
-                                'Probabilidade moderada. Acompanhe de perto e defina stop loss.' :
-                                'Baixa probabilidade de lucro. Considere encerrar ou ajustar a posição.'}
-                        </p>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-}
-
-function calculateStressResult(newPrice, K, premium, isCall, isShort, quantity) {
-    let intrinsic = 0;
-    if (isCall) {
-        intrinsic = Math.max(0, newPrice - K);
-    } else {
-        intrinsic = Math.max(0, K - newPrice);
-    }
-    
-    let pl = 0;
-    if (isShort) {
-        pl = (premium - intrinsic) * quantity;
-    } else {
-        pl = (intrinsic - premium) * quantity;
-    }
-    return pl;
-}
-
-// Chart Instances
-let evolutionChartInstance = null;
-let volatilityChartInstance = null;
-let payoffChartInstances = {};
-
-function renderEvolutionChart(color) {
-    const ctx = document.getElementById('evolutionChart');
-    if (!ctx) return;
-    
-    if (evolutionChartInstance) {
-        evolutionChartInstance.destroy();
-    }
-
-    // Generate realistic result progression (from y.html style)
-    const dataPoints = [250, 200, 150, 100, 50, -40, -72]; // Baseado em y.html
-    const labels = ['6d atrás', '5d', '4d', '3d', '2d', 'Hoje', 'Previsão'];
-
-    evolutionChartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Resultado (R$)',
-                data: dataPoints,
-                borderColor: '#3b82f6',
-                backgroundColor: function(context) {
-                    const chart = context.chart;
-                    const {ctx, chartArea} = chart;
-                    if (!chartArea) return null;
-                    const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-                    gradient.addColorStop(0, 'rgba(59, 130, 246, 0.2)');
-                    gradient.addColorStop(1, 'rgba(59, 130, 246, 0.02)');
-                    return gradient;
-                },
-                borderWidth: 3,
-                tension: 0.4,
-                pointRadius: 5,
-                pointBackgroundColor: '#3b82f6',
-                pointHoverRadius: 8,
-                fill: true
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { 
-                legend: { display: false },
-                tooltip: {
-                    backgroundColor: 'rgba(30, 41, 59, 0.95)',
-                    titleColor: '#f8fafc',
-                    bodyColor: '#f8fafc',
-                    borderColor: '#3b82f6',
-                    borderWidth: 1,
-                    padding: 12,
-                    displayColors: false,
-                    callbacks: {
-                        label: function(context) {
-                            return 'Resultado: R$ ' + context.parsed.y.toFixed(2);
-                        }
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    grid: {
-                        color: 'rgba(148, 163, 184, 0.1)',
-                        drawBorder: false
-                    },
-                    ticks: {
-                        color: '#94a3b8',
-                        font: { size: 11 }
-                    }
-                },
-                y: {
-                    grid: {
-                        color: 'rgba(148, 163, 184, 0.1)',
-                        drawBorder: false
-                    },
-                    ticks: {
-                        color: '#94a3b8',
-                        font: { size: 11 },
-                        callback: function(value) {
-                            return 'R$ ' + value;
-                        }
-                    }
-                }
-            }
-        }
-    });
-}
-
-function renderVolatilityChart(currentIV, color) {
-    const ctx = document.getElementById('volatilityChart');
-    if (!ctx) return;
-    
-    if (volatilityChartInstance) {
-        volatilityChartInstance.destroy();
-    }
-
-    // IV history data (bar chart style from y.html)
-    const ivPercent = currentIV * 100;
-    const dataPoints = [
-        Math.max(20, Math.min(80, ivPercent + (Math.random() - 0.5) * 10)),
-        Math.max(20, Math.min(80, ivPercent + (Math.random() - 0.5) * 8)),
-        Math.max(20, Math.min(80, ivPercent + (Math.random() - 0.5) * 6)),
-        Math.max(20, Math.min(80, ivPercent + (Math.random() - 0.5) * 4)),
-        Math.max(20, Math.min(80, ivPercent + (Math.random() - 0.5) * 2)),
-        ivPercent
-    ];
-    
-    const labels = ['30d', '60d', '90d', '120d', '150d', 'Atual'];
-    
-    // Color bars based on value (blue for higher, red for lower than 50%)
-    const barColors = dataPoints.map(val => val > 50 ? 'rgba(59, 130, 246, 0.7)' : 'rgba(239, 68, 68, 0.7)');
-    const borderColors = dataPoints.map(val => val > 50 ? '#3b82f6' : '#ef4444');
-
-    volatilityChartInstance = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Volatilidade Implícita (%)',
-                data: dataPoints,
-                backgroundColor: barColors,
-                borderColor: borderColors,
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    backgroundColor: 'rgba(30, 41, 59, 0.95)',
-                    titleColor: '#f8fafc',
-                    bodyColor: '#f8fafc',
-                    borderColor: '#3b82f6',
-                    borderWidth: 1,
-                    padding: 12,
-                    displayColors: false,
-                    callbacks: {
-                        label: function(context) {
-                            return 'Volatilidade: ' + context.parsed.y.toFixed(1) + '%';
-                        }
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    grid: {
-                        color: 'rgba(148, 163, 184, 0.1)',
-                        drawBorder: false
-                    },
-                    ticks: {
-                        color: '#94a3b8',
-                        font: { size: 11 }
-                    }
-                },
-                y: {
-                    beginAtZero: true,
-                    max: 80,
-                    grid: {
-                        color: 'rgba(148, 163, 184, 0.1)',
-                        drawBorder: false
-                    },
-                    ticks: {
-                        color: '#94a3b8',
-                        font: { size: 11 },
-                        callback: function(value) {
-                            return value + '%';
-                        }
-                    }
-                }
-            }
-        }
-    });
-}
-
-function renderPayoffChart(spotPrice, strike, unitEntry, isCall, isShort, S, optionPrice, targetId = 'payoffChart') {
-    const ctx = document.getElementById(targetId);
-    if (!ctx) return;
-
-    if (payoffChartInstances[targetId]) {
-        payoffChartInstances[targetId].destroy();
-    }
-
-    const premium = optionPrice; // Current price as premium estimate or unitEntry? 
-    // Ideally unitEntry is the entry price, optionPrice is current. 
-    // Payoff at expiration uses entry price to calculate P&L? 
-    // Or is it "Payoff of holding this position to expiration"?
-    // Usually Payoff chart shows P&L at expiration based on Entry Price.
-    const entryPrice = Math.abs(parseFloatSafe(unitEntry)); 
-    const quantity = Math.abs(parseFloat(document.getElementById('detalhesNotional')?.textContent.replace(/[^0-9,.-]/g, '').replace(',', '.') || 0) / parseFloatSafe(strike) || 100);
-
-    const prices = [];
-    const payoffValues = [];
-    
-    // Range: +/- 20% of strike
-    const minPrice = strike * 0.8;
-    const maxPrice = strike * 1.2;
-    const step = (maxPrice - minPrice) / 20;
-
-    for (let price = minPrice; price <= maxPrice; price += step) {
-        prices.push(price.toFixed(2));
-        let intrinsic = 0;
-        if (isCall) {
-            intrinsic = Math.max(0, price - strike);
-        } else {
-            intrinsic = Math.max(0, strike - price);
-        }
-
-        let payoff = 0;
-        if (isShort) {
-            // Short: Received entryPrice. Pay intrinsic at expiration.
-            // P&L = EntryPrice - Intrinsic
-            payoff = (entryPrice - intrinsic) * quantity;
-        } else {
-            // Long: Paid entryPrice. Receive intrinsic at expiration.
-            // P&L = Intrinsic - EntryPrice
-            payoff = (intrinsic - entryPrice) * quantity;
-        }
-        payoffValues.push(payoff);
-    }
-
-    // Breakeven
-    let be = 0;
-    if (isCall) {
-        be = isShort ? strike + entryPrice : strike + entryPrice;
-    } else {
-        be = isShort ? strike - entryPrice : strike - entryPrice;
-    }
-
-    payoffChartInstances[targetId] = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: prices,
-            datasets: [{
-                label: 'Resultado no Vencimento',
-                data: payoffValues,
-                borderColor: '#8b5cf6',
-                segment: {
-                    borderColor: ctx => {
-                        if (!ctx.p1 || !ctx.p1.parsed) return '#8b5cf6';
-                        const value = ctx.p1.parsed.y;
-                        return value >= 0 ? '#10b981' : '#ef4444';
-                    }
-                },
-                backgroundColor: 'rgba(139, 92, 246, 0.1)',
-                borderWidth: 3,
-                pointRadius: 0,
-                tension: 0.3,
-                fill: true
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    backgroundColor: '#1e293b',
-                    titleColor: '#f1f5f9',
-                    bodyColor: '#cbd5e1',
-                    borderColor: '#334155',
-                    borderWidth: 1,
-                    padding: 12,
-                    displayColors: false,
-                    callbacks: {
-                        title: function(context) {
-                            return 'Preço: R$ ' + context[0].label;
-                        },
-                        label: function(context) {
-                            return 'Resultado: R$ ' + context.parsed.y.toFixed(2);
-                        }
-                    }
-                },
-                annotation: {
-                    annotations: {
-                        strike: {
-                            type: 'line',
-                            xMin: strike, // This needs to match the index or value depending on scale type
-                            // Chart.js line chart with category scale uses index.
-                            // We need linear scale for x-axis to map values correctly, or find index.
-                            // To keep it simple, we'll omit annotation or use simple index approximation if needed.
-                            // But x.html used annotation plugin. We assume it's available.
-                            // Since x-axis is labels (strings), we can't use value directly easily without linear scale.
-                            // Let's skip annotation for now to avoid breaking if plugin missing or scale mismatch.
-                        }
-                    }
-                }
-            },
-            scales: {
-                y: {
-                    grid: { color: '#1e293b', drawBorder: false },
-                    ticks: { color: '#94a3b8' }
-                },
-                x: {
-                    grid: { color: '#1e293b', drawBorder: false },
-                    ticks: { color: '#94a3b8', maxTicksLimit: 8 }
-                }
-            }
-        }
-    });
-}
-
-// ============================================================================
-// NOVOS GRÁFICOS - MODAL DETALHES
-// ============================================================================
-
-let thetaChartInstance = null;
-let riskDistChartInstance = null;
-let projectionChartInstance = null;
-let probabilityChartInstance = null;
-let scenarioChartInstance = null;
-let priceHistoryChartInstance = null;
-let volumeChartInstance = null;
-let returnsChartInstance = null;
-let greeksChartInstance = null;
-let stressChartInstance = null;
-
-// Theta Decay Chart
-function renderThetaChart(theta, days) {
-    const ctx = document.getElementById('thetaChart');
-    if (!ctx) return;
-
-    if (thetaChartInstance) {
-        thetaChartInstance.destroy();
-    }
-
-    // Gerar decaimento do theta ao longo dos dias
-    const labels = [];
-    const values = [];
-    
-    for (let i = days; i >= 0; i--) {
-        labels.push(i);
-        // Theta acelera próximo ao vencimento (modelo exponencial simplificado)
-        const decayFactor = Math.exp(-0.1 * i);
-        values.push(theta * decayFactor);
-    }
-
-    thetaChartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Theta Diário',
-                data: values,
-                borderColor: '#f59e0b',
-                backgroundColor: 'rgba(245, 158, 11, 0.1)',
-                borderWidth: 3,
-                pointRadius: 4,
-                pointBackgroundColor: '#f59e0b',
-                tension: 0.4,
-                fill: true
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    backgroundColor: '#1e293b',
-                    titleColor: '#f1f5f9',
-                    bodyColor: '#cbd5e1',
-                    borderColor: '#334155',
-                    borderWidth: 1,
-                    padding: 12,
-                    displayColors: false,
-                    callbacks: {
-                        title: function(context) {
-                            return 'Faltam ' + context[0].label + ' dias';
-                        },
-                        label: function(context) {
-                            return 'Theta: ' + context.parsed.y.toFixed(4);
-                        }
-                    }
-                }
-            },
-            scales: {
-                y: {
-                    grid: { color: '#1e293b', drawBorder: false },
-                    ticks: { color: '#94a3b8' }
-                },
-                x: {
-                    grid: { color: '#1e293b', drawBorder: false },
-                    ticks: { color: '#94a3b8', maxTicksLimit: 8 },
-                    reverse: true,
-                    title: {
-                        display: true,
-                        text: 'Dias até o Vencimento',
-                        color: '#94a3b8'
-                    }
-                }
-            }
-        }
-    });
-}
-
-// Risk Distribution Chart (Doughnut)
-function renderRiskDistChart(pop) {
-    const ctx = document.getElementById('riskDistChart');
-    if (!ctx) return;
-
-    if (riskDistChartInstance) {
-        riskDistChartInstance.destroy();
-    }
-
-    const probOTM = pop; // Probabilidade fora do dinheiro (lucro para vendedor)
-    const probITM = 100 - pop; // Probabilidade dentro do dinheiro
-
-    riskDistChartInstance = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: ['OTM (Lucro)', 'ITM (Prejuízo)'],
-            datasets: [{
-                data: [probOTM, probITM],
-                backgroundColor: ['#10b981', '#ef4444'],
-                borderColor: '#0f172a',
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'bottom',
-                    labels: {
-                        color: '#cbd5e1',
-                        padding: 15,
-                        font: { size: 12 }
-                    }
-                },
-                tooltip: {
-                    backgroundColor: '#1e293b',
-                    titleColor: '#f1f5f9',
-                    bodyColor: '#cbd5e1',
-                    borderColor: '#334155',
-                    borderWidth: 1,
-                    padding: 12,
-                    callbacks: {
-                        label: function(context) {
-                            return context.label + ': ' + context.parsed.toFixed(1) + '%';
-                        }
-                    }
-                }
-            }
-        }
-    });
-}
-
-// Projection Chart (3 scenarios)
-function renderProjectionChart(S, K, premium, days, isCall, isShort) {
-    const ctx = document.getElementById('projectionChart');
-    if (!ctx) return;
-
-    if (projectionChartInstance) {
-        projectionChartInstance.destroy();
-    }
-
-    const labels = [];
-    const otimista = [];
-    const atual = [];
-    const pessimista = [];
-
-    // Gerar 10 pontos de projeção
-    for (let i = 0; i <= 10; i++) {
-        const daysElapsed = (days / 10) * i;
-        labels.push(daysElapsed.toFixed(0));
-        
-        // Cenários de movimento do ativo
-        const otimistPrice = S * (1 + 0.02 * i); // +2% por período
-        const atualPrice = S; // Mantém preço
-        const pessimistaPrice = S * (1 - 0.02 * i); // -2% por período
-
-        // Calcular P&L para cada cenário
-        const calcPL = (price) => {
-            let intrinsic = 0;
-            if (isCall) {
-                intrinsic = Math.max(0, price - K);
-            } else {
-                intrinsic = Math.max(0, K - price);
-            }
-            
-            if (isShort) {
-                return (premium - intrinsic) * 100; // 100 ações por contrato
-            } else {
-                return (intrinsic - premium) * 100;
-            }
-        };
-
-        otimista.push(calcPL(otimistPrice));
-        atual.push(calcPL(atualPrice));
-        pessimista.push(calcPL(pessimistaPrice));
-    }
-
-    projectionChartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [
-                {
-                    label: 'Otimista',
-                    data: otimista,
-                    borderColor: '#10b981',
-                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                    borderWidth: 3,
-                    pointRadius: 4,
-                    tension: 0.4,
-                    fill: false
-                },
-                {
-                    label: 'Atual',
-                    data: atual,
-                    borderColor: '#3b82f6',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    borderWidth: 3,
-                    pointRadius: 4,
-                    tension: 0.4,
-                    fill: false
-                },
-                {
-                    label: 'Pessimista',
-                    data: pessimista,
-                    borderColor: '#ef4444',
-                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                    borderWidth: 3,
-                    pointRadius: 4,
-                    tension: 0.4,
-                    fill: false
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'top',
-                    labels: {
-                        color: '#cbd5e1',
-                        padding: 15,
-                        font: { size: 12 }
-                    }
-                },
-                tooltip: {
-                    backgroundColor: '#1e293b',
-                    titleColor: '#f1f5f9',
-                    bodyColor: '#cbd5e1',
-                    borderColor: '#334155',
-                    borderWidth: 1,
-                    padding: 12
-                }
-            },
-            scales: {
-                y: {
-                    grid: { color: '#1e293b', drawBorder: false },
-                    ticks: { color: '#94a3b8' },
-                    title: {
-                        display: true,
-                        text: 'P&L (R$)',
-                        color: '#94a3b8'
-                    }
-                },
-                x: {
-                    grid: { color: '#1e293b', drawBorder: false },
-                    ticks: { color: '#94a3b8' },
-                    title: {
-                        display: true,
-                        text: 'Dias Decorridos',
-                        color: '#94a3b8'
-                    }
-                }
-            }
-        }
-    });
-}
-
-// Probability Distribution Chart (Normal curve)
-function renderProbabilityChart(S, K) {
-    const ctx = document.getElementById('probabilityChart');
-    if (!ctx) return;
-
-    if (probabilityChartInstance) {
-        probabilityChartInstance.destroy();
-    }
-
-    const labels = [];
-    const values = [];
-    
-    // Gerar curva normal em torno do preço atual
-    const mean = S;
-    const stdDev = S * 0.15; // 15% de desvio padrão
-    
-    for (let x = S * 0.7; x <= S * 1.3; x += (S * 0.6 / 30)) {
-        labels.push(x.toFixed(2));
-        // Fórmula da distribuição normal
-        const prob = (1 / (stdDev * Math.sqrt(2 * Math.PI))) * 
-                     Math.exp(-0.5 * Math.pow((x - mean) / stdDev, 2));
-        values.push(prob * 100); // Normalizar para porcentagem
-    }
-
-    probabilityChartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Probabilidade',
-                data: values,
-                borderColor: '#8b5cf6',
-                backgroundColor: 'rgba(139, 92, 246, 0.2)',
-                borderWidth: 3,
-                pointRadius: 0,
-                tension: 0.4,
-                fill: true
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    backgroundColor: '#1e293b',
-                    titleColor: '#f1f5f9',
-                    bodyColor: '#cbd5e1',
-                    borderColor: '#334155',
-                    borderWidth: 1,
-                    padding: 12
-                }
-            },
-            scales: {
-                y: {
-                    grid: { color: '#1e293b', drawBorder: false },
-                    ticks: { color: '#94a3b8', display: false }
-                },
-                x: {
-                    grid: { color: '#1e293b', drawBorder: false },
-                    ticks: { color: '#94a3b8', maxTicksLimit: 6 },
-                    title: {
-                        display: true,
-                        text: 'Preço do Ativo (R$)',
-                        color: '#94a3b8'
-                    }
-                }
-            }
-        }
-    });
-}
-
-// Scenario Result Chart (Bar)
-function renderScenarioChart(S, K, premium, isCall, isShort) {
-    const ctx = document.getElementById('scenarioChart');
-    if (!ctx) return;
-
-    if (scenarioChartInstance) {
-        scenarioChartInstance.destroy();
-    }
-
-    const scenarios = ['Pior Caso\n-15%', 'Pessimista\n-10%', 'Moderado\n-5%', 'Atual\n0%', 
-                       'Otimista\n+5%', 'Muito Otimista\n+10%', 'Melhor Caso\n+15%'];
-    const changes = [-0.15, -0.10, -0.05, 0, 0.05, 0.10, 0.15];
-    const results = [];
-
-    changes.forEach(change => {
-        const price = S * (1 + change);
-        let intrinsic = 0;
-        if (isCall) {
-            intrinsic = Math.max(0, price - K);
-        } else {
-            intrinsic = Math.max(0, K - price);
-        }
-        
-        let pl = 0;
-        if (isShort) {
-            pl = (premium - intrinsic) * 100;
-        } else {
-            pl = (intrinsic - premium) * 100;
-        }
-        results.push(pl);
-    });
-
-    scenarioChartInstance = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: scenarios,
-            datasets: [{
-                label: 'P&L',
-                data: results,
-                backgroundColor: results.map(v => v >= 0 ? '#10b981' : '#ef4444'),
-                borderWidth: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    backgroundColor: '#1e293b',
-                    titleColor: '#f1f5f9',
-                    bodyColor: '#cbd5e1',
-                    borderColor: '#334155',
-                    borderWidth: 1,
-                    padding: 12,
-                    callbacks: {
-                        label: function(context) {
-                            return 'R$ ' + context.parsed.y.toFixed(2);
-                        }
-                    }
-                }
-            },
-            scales: {
-                y: {
-                    grid: { color: '#1e293b', drawBorder: false },
-                    ticks: { color: '#94a3b8' }
-                },
-                x: {
-                    grid: { display: false },
-                    ticks: { color: '#94a3b8', font: { size: 10 } }
-                }
-            }
-        }
-    });
-}
-
-// Price History Chart
-function renderPriceHistoryChart(S) {
-    const ctx = document.getElementById('priceHistoryChart');
-    if (!ctx) return;
-
-    if (priceHistoryChartInstance) {
-        priceHistoryChartInstance.destroy();
-    }
-
-    // Gerar histórico simulado de 30 dias
-    const labels = [];
-    const prices = [];
-    let currentPrice = S * 0.95; // Começa 5% abaixo
-
-    for (let i = 30; i >= 0; i--) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        labels.push(date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }));
-        
-        // Simulação random walk
-        const change = (Math.random() - 0.5) * 0.02; // +/- 1%
-        currentPrice = currentPrice * (1 + change);
-        prices.push(currentPrice);
-    }
-
-    priceHistoryChartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Preço',
-                data: prices,
-                borderColor: '#3b82f6',
-                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                borderWidth: 2,
-                pointRadius: 2,
-                pointBackgroundColor: '#3b82f6',
-                tension: 0.3,
-                fill: true
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    backgroundColor: '#1e293b',
-                    titleColor: '#f1f5f9',
-                    bodyColor: '#cbd5e1',
-                    borderColor: '#334155',
-                    borderWidth: 1,
-                    padding: 12
-                }
-            },
-            scales: {
-                y: {
-                    grid: { color: '#1e293b', drawBorder: false },
-                    ticks: { color: '#94a3b8' }
-                },
-                x: {
-                    grid: { color: '#1e293b', drawBorder: false },
-                    ticks: { color: '#94a3b8', maxTicksLimit: 8 }
-                }
-            }
-        }
-    });
-}
-
-// Volume Chart
-function renderVolumeChart() {
-    const ctx = document.getElementById('volumeChart');
-    if (!ctx) return;
-
-    if (volumeChartInstance) {
-        volumeChartInstance.destroy();
-    }
-
-    // Dados simulados
-    const labels = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex'];
-    const volumes = [12500, 18300, 15700, 21400, 19200];
-
-    volumeChartInstance = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Volume',
-                data: volumes,
-                backgroundColor: '#3b82f6',
-                borderWidth: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    backgroundColor: '#1e293b',
-                    titleColor: '#f1f5f9',
-                    bodyColor: '#cbd5e1',
-                    borderColor: '#334155',
-                    borderWidth: 1,
-                    padding: 12
-                }
-            },
-            scales: {
-                y: {
-                    grid: { color: '#1e293b', drawBorder: false },
-                    ticks: { color: '#94a3b8' }
-                },
-                x: {
-                    grid: { display: false },
-                    ticks: { color: '#94a3b8' }
-                }
-            }
-        }
-    });
-}
-
-// Returns Distribution Chart (Histogram)
-function renderReturnsChart() {
-    const ctx = document.getElementById('returnsChart');
-    if (!ctx) return;
-
-    if (returnsChartInstance) {
-        returnsChartInstance.destroy();
-    }
-
-    // Dados simulados de retornos diários
-    const labels = ['-3%', '-2%', '-1%', '0%', '+1%', '+2%', '+3%'];
-    const frequencies = [2, 5, 8, 12, 9, 4, 2];
-
-    returnsChartInstance = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Frequência',
-                data: frequencies,
-                backgroundColor: '#8b5cf6',
-                borderWidth: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    backgroundColor: '#1e293b',
-                    titleColor: '#f1f5f9',
-                    bodyColor: '#cbd5e1',
-                    borderColor: '#334155',
-                    borderWidth: 1,
-                    padding: 12
-                }
-            },
-            scales: {
-                y: {
-                    grid: { color: '#1e293b', drawBorder: false },
-                    ticks: { color: '#94a3b8' }
-                },
-                x: {
-                    grid: { display: false },
-                    ticks: { color: '#94a3b8' }
-                }
-            }
-        }
-    });
-}
-
-// Greeks Radar Chart
-function renderGreeksChart(delta, gamma, theta, vega) {
-    const ctx = document.getElementById('greeksChart');
-    if (!ctx) return;
-
-    if (greeksChartInstance) {
-        greeksChartInstance.destroy();
-    }
-
-    // Normalizar valores para 0-100
-    const deltaNorm = Math.abs(delta) * 100;
-    const gammaNorm = Math.abs(gamma) * 1000;
-    const thetaNorm = Math.abs(theta) * 10;
-    const vegaNorm = Math.abs(vega) * 10;
-
-    greeksChartInstance = new Chart(ctx, {
-        type: 'radar',
-        data: {
-            labels: ['Delta', 'Gamma', 'Theta', 'Vega'],
-            datasets: [{
-                label: 'Sensibilidade',
-                data: [deltaNorm, gammaNorm, thetaNorm, vegaNorm],
-                borderColor: '#8b5cf6',
-                backgroundColor: 'rgba(139, 92, 246, 0.2)',
-                borderWidth: 2,
-                pointRadius: 4,
-                pointBackgroundColor: '#8b5cf6'
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    backgroundColor: '#1e293b',
-                    titleColor: '#f1f5f9',
-                    bodyColor: '#cbd5e1',
-                    borderColor: '#334155',
-                    borderWidth: 1,
-                    padding: 12
-                }
-            },
-            scales: {
-                r: {
-                    grid: { color: '#1e293b' },
-                    angleLines: { color: '#1e293b' },
-                    ticks: { color: '#94a3b8', backdropColor: 'transparent' },
-                    pointLabels: { color: '#cbd5e1', font: { size: 12 } }
-                }
-            }
-        }
-    });
-}
-
-// Stress Test Chart
-function renderStressChart(S, K, premium, isCall, isShort) {
-    const ctx = document.getElementById('stressChart');
-    if (!ctx) return;
-
-    if (stressChartInstance) {
-        stressChartInstance.destroy();
-    }
-
-    const scenarios = ['-15%', '-10%', '-5%', '0%', '+5%', '+10%', '+15%'];
-    const changes = [-0.15, -0.10, -0.05, 0, 0.05, 0.10, 0.15];
-    const results = [];
-
-    changes.forEach(change => {
-        const price = S * (1 + change);
-        let intrinsic = 0;
-        if (isCall) {
-            intrinsic = Math.max(0, price - K);
-        } else {
-            intrinsic = Math.max(0, K - price);
-        }
-        
-        let pl = 0;
-        if (isShort) {
-            pl = (premium - intrinsic) * 100;
-        } else {
-            pl = (intrinsic - premium) * 100;
-        }
-        results.push(pl);
-    });
-
-    stressChartInstance = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: scenarios,
-            datasets: [{
-                label: 'Impacto (R$)',
-                data: results,
-                backgroundColor: results.map(v => v >= 0 ? '#10b981' : '#ef4444'),
-                borderWidth: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            indexAxis: 'y',
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    backgroundColor: '#1e293b',
-                    titleColor: '#f1f5f9',
-                    bodyColor: '#cbd5e1',
-                    borderColor: '#334155',
-                    borderWidth: 1,
-                    padding: 12,
-                    callbacks: {
-                        label: function(context) {
-                            return 'R$ ' + context.parsed.x.toFixed(2);
-                        }
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    grid: { color: '#1e293b', drawBorder: false },
-                    ticks: { color: '#94a3b8' }
-                },
-                y: {
-                    grid: { display: false },
-                    ticks: { color: '#94a3b8' }
-                }
-            }
-        }
-    });
 }
 
 function generateRecommendation(plPct, days, pop, isCall, isShort, S, K, be) {
@@ -2473,8 +1011,88 @@ function generateRecommendation(plPct, days, pop, isCall, isShort, S, K, be) {
     }
 }
 
-// Removed duplicate renderPayoffChart function
+function renderPayoffChart(S, K, premium, isCall, isShort, currentS, currentPrice) {
+    const ctxEl = document.getElementById('chartDetalhesPayoff');
+    if(!ctxEl) return;
+    const ctx = ctxEl.getContext('2d');
+    
+    if (chartDetalhesInstance) chartDetalhesInstance.destroy();
+    
+    const range = S * 0.2;
+    const start = S - range;
+    const end = S + range;
+    const steps = 20;
+    const stepSize = (end - start) / steps;
+    
+    const labels = [];
+    const dataPayoff = [];
+    
+    for (let i = 0; i <= steps; i++) {
+        const price = start + (i * stepSize);
+        labels.push(price.toFixed(2));
+        
+        let intrinsic = 0;
+        if (isCall) intrinsic = Math.max(0, price - K);
+        else intrinsic = Math.max(0, K - price);
+        
+        let profit = 0;
+        if (isShort) {
+            profit = premium - intrinsic;
+        } else {
+            profit = intrinsic - premium;
+        }
+        dataPayoff.push(profit);
+    }
 
+    // Check theme
+    const isDarkMode = document.body.getAttribute('data-bs-theme') === 'dark';
+    const textColor = isDarkMode ? '#f8f9fa' : '#666666';
+    const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)';
+    
+    // Determinar cor da linha baseado no lucro/prejuízo
+    // Calcular se a operação está em lucro no cenário atual
+    const currentProfit = dataPayoff[Math.floor(dataPayoff.length / 2)] || 0; // Ponto central (preço atual)
+    const lineColor = currentProfit >= 0 ? '#2fb344' : '#d63939'; // Verde para lucro, Vermelho para prejuízo
+    
+    chartDetalhesInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Payoff no Vencimento',
+                data: dataPayoff,
+                borderColor: lineColor,
+                backgroundColor: currentProfit >= 0 ? 'rgba(47, 179, 68, 0.1)' : 'rgba(214, 57, 57, 0.1)',
+                tension: 0.1,
+                fill: true,
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { 
+                    display: true, 
+                    labels: { 
+                        color: textColor,
+                        font: { weight: 'bold' }
+                    } 
+                }
+            },
+            scales: {
+                y: { 
+                    grid: { color: gridColor },
+                    ticks: { color: textColor }
+                },
+                x: { 
+                    grid: { color: gridColor },
+                    ticks: { color: textColor }
+                }
+            }
+        }
+    });
+}
 
 /**
  * Análise de operação com IA (Google Gemini) - USANDO DADOS CORRETOS DA OPERAÇÃO
@@ -5636,27 +4254,17 @@ function updateModalMarketStatus(elementId) {
     if (!element) return;
     
     const isOpen = isMarketOpen();
-    const isIndicator = element.classList.contains('status-indicator');
     
-    if (isIndicator) {
-        element.textContent = '';
-        element.style.background = isOpen ? '#48bb78' : '#f56565';
-        element.title = isOpen ? 'Mercado Aberto' : 'Mercado Fechado';
+    if (isOpen) {
+        element.textContent = '🟢';
+        element.title = 'Mercado Aberto';
     } else {
-        if (isOpen) {
-            element.textContent = '🟢';
-            element.title = 'Mercado Aberto';
-        } else {
-            element.textContent = '🔴';
-            element.title = 'Mercado Fechado';
-        }
+        element.textContent = '🔴';
+        element.title = 'Mercado Fechado';
     }
     
-    if (typeof bootstrap !== 'undefined') {
-        const existingTooltip = bootstrap.Tooltip.getInstance(element);
-        if (existingTooltip) existingTooltip.dispose();
-        new bootstrap.Tooltip(element);
-    }
+    // Inicializar tooltip do Bootstrap
+    new bootstrap.Tooltip(element);
 }
 
 /**

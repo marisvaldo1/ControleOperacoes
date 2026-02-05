@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes da Operação - PETRN369W1</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #0a1628;
+            color: #e2e8f0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: #1a2332;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .header {
+            background: #0f1a2b;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #2d3748;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .operation-badge {
+            background: #3182ce;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            background: #48bb78;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .close-btn {
+            background: transparent;
+            border: none;
+            color: #cbd5e0;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 5px 10px;
+        }
+
+        .close-btn:hover {
+            color: #fff;
+        }
+
+        .tabs {
+            display: flex;
+            background: #0f1a2b;
+            padding: 0 30px;
+            gap: 5px;
+            border-bottom: 1px solid #2d3748;
+        }
+
+        .tab {
+            padding: 14px 24px;
+            background: transparent;
+            border: none;
+            color: #a0aec0;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 500;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            color: #e2e8f0;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .tab.active {
+            color: #fff;
+            border-bottom-color: #3182ce;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #63b3ed;
+            margin-bottom: 15px;
+            padding-left: 10px;
+            border-left: 3px solid #3182ce;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .info-item {
+            background: #0f1a2b;
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 1px solid #2d3748;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: #a0aec0;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .info-detail {
+            font-size: 13px;
+            color: #718096;
+            margin-top: 4px;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .card {
+            background: linear-gradient(135deg, #1a2332 0%, #0f1a2b 100%);
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px solid;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-green {
+            border-color: #48bb78;
+        }
+
+        .card-blue {
+            border-color: #4299e1;
+        }
+
+        .card-orange {
+            border-color: #ed8936;
+        }
+
+        .card-red {
+            border-color: #f56565;
+        }
+
+        .card-gray {
+            border-color: #4a5568;
+        }
+
+        .card-header {
+            font-size: 12px;
+            color: #a0aec0;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .card-value {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .card-value.green {
+            color: #48bb78;
+        }
+
+        .card-value.red {
+            color: #f56565;
+        }
+
+        .card-value.blue {
+            color: #4299e1;
+        }
+
+        .card-value.orange {
+            color: #ed8936;
+        }
+
+        .card-subtitle {
+            font-size: 13px;
+            color: #718096;
+        }
+
+        .percentage {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-top: 6px;
+        }
+
+        .percentage.positive {
+            color: #48bb78;
+            background: rgba(72, 187, 120, 0.15);
+        }
+
+        .percentage.negative {
+            color: #f56565;
+            background: rgba(245, 101, 101, 0.15);
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+        }
+
+        .chart-container {
+            background: #0f1a2b;
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid #2d3748;
+        }
+
+        .chart-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #e2e8f0;
+            margin-bottom: 20px;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 280px;
+        }
+
+        .params-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            background: #0f1a2b;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #2d3748;
+        }
+
+        .param-item {
+            text-align: center;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+        }
+
+        .param-label {
+            font-size: 11px;
+            color: #a0aec0;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+
+        .param-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .operation-type-badge {
+            background: #ed8936;
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
+        .usage-bar {
+            width: 100%;
+            height: 8px;
+            background: #2d3748;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .usage-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #48bb78 0%, #38a169 100%);
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+
+        .quotation-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .quotation-card {
+            background: #0f1a2b;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #2d3748;
+        }
+
+        .quotation-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .quotation-name {
+            font-size: 14px;
+            color: #a0aec0;
+            text-transform: uppercase;
+        }
+
+        .quotation-code {
+            font-size: 18px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .quotation-values {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .quotation-item {
+            text-align: center;
+        }
+
+        .quotation-item-label {
+            font-size: 11px;
+            color: #718096;
+            margin-bottom: 4px;
+        }
+
+        .quotation-item-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .greeks-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+
+        .greek-card {
+            background: #0f1a2b;
+            padding: 18px;
+            border-radius: 10px;
+            border: 1px solid #2d3748;
+            text-align: center;
+        }
+
+        .greek-label {
+            font-size: 12px;
+            color: #a0aec0;
+            margin-bottom: 8px;
+        }
+
+        .greek-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #4299e1;
+        }
+
+        .payoff-container {
+            background: #0f1a2b;
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid #2d3748;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-left">
+                <h1 class="header-title">Detalhes da Operação</h1>
+                <span class="operation-badge">PETRN369W1</span>
+                <div class="status-indicator"></div>
+            </div>
+            <button class="close-btn" onclick="alert('Fechar')">×</button>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab(0)">Resumo</button>
+            <button class="tab" onclick="switchTab(1)">Análise</button>
+            <button class="tab" onclick="switchTab(2)">Gregas & Risco</button>
+            <button class="tab" onclick="switchTab(3)">Payoff</button>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <!-- Tab 1: Resumo -->
+            <div class="tab-content active">
+                <div class="section">
+                    <div class="section-title">Informações Gerais</div>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Ativo Base</div>
+                            <div class="info-value">PETR4</div>
+                            <div class="info-detail">PETRN369W1</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Vencimento</div>
+                            <div class="info-value">05/02/2026</div>
+                            <div class="info-detail">1 dia restante</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Prêmio</div>
+                            <div class="info-value">R$ 0,30</div>
+                            <div class="info-detail">Cotação Atual: <span style="color: #f56565;">●</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">Cotações</div>
+                    <div class="quotation-grid">
+                        <div class="quotation-card">
+                            <div class="quotation-header">
+                                <div>
+                                    <div class="quotation-name">Ativo Base</div>
+                                    <div class="quotation-code">PETR4</div>
+                                </div>
+                                <div class="percentage negative">
+                                    <span>▼</span>
+                                    <span>-0,32%</span>
+                                </div>
+                            </div>
+                            <div class="quotation-values">
+                                <div class="quotation-item">
+                                    <div class="quotation-item-label">Abertura</div>
+                                    <div class="quotation-item-value">R$ 37,52</div>
+                                </div>
+                                <div class="quotation-item">
+                                    <div class="quotation-item-label">Atual</div>
+                                    <div class="quotation-item-value" style="color: #f56565;">R$ 37,40</div>
+                                </div>
+                                <div class="quotation-item">
+                                    <div class="quotation-item-label">Variação</div>
+                                    <div class="quotation-item-value" style="color: #f56565;">-R$ 0,12</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="quotation-card">
+                            <div class="quotation-header">
+                                <div>
+                                    <div class="quotation-name">Opção</div>
+                                    <div class="quotation-code">PETRN369W1</div>
+                                </div>
+                                <div class="percentage negative">
+                                    <span>▼</span>
+                                    <span>-13,33%</span>
+                                </div>
+                            </div>
+                            <div class="quotation-values">
+                                <div class="quotation-item">
+                                    <div class="quotation-item-label">Abertura</div>
+                                    <div class="quotation-item-value">R$ 0,30</div>
+                                </div>
+                                <div class="quotation-item">
+                                    <div class="quotation-item-label">Atual</div>
+                                    <div class="quotation-item-value" style="color: #f56565;">R$ 0,26</div>
+                                </div>
+                                <div class="quotation-item">
+                                    <div class="quotation-item-label">Variação</div>
+                                    <div class="quotation-item-value" style="color: #f56565;">-R$ 0,04</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">Resultado Financeiro</div>
+                    <div class="cards-grid">
+                        <div class="card card-red">
+                            <div class="card-header">Atual (MTM)</div>
+                            <div class="card-value red">-R$ 40,00</div>
+                            <div class="card-subtitle">Mark-to-Market</div>
+                        </div>
+                        <div class="card card-red">
+                            <div class="card-header">P&L Total</div>
+                            <div class="card-value red">-16,67%</div>
+                            <div class="percentage negative">
+                                <span>▼</span>
+                                <span>Variação: -R$ 280,00</span>
+                            </div>
+                        </div>
+                        <div class="card card-orange">
+                            <div class="card-header">Prob. Lucro (PoP)</div>
+                            <div class="card-value orange">-</div>
+                            <div class="card-subtitle">A calcular</div>
+                        </div>
+                    </div>
+
+                    <div class="cards-grid">
+                        <div class="card card-green">
+                            <div class="card-header">Notional (Se Exercido)</div>
+                            <div class="card-value green">R$ 29.520,00</div>
+                            <div class="card-subtitle">Valor total se exercida</div>
+                        </div>
+                        <div class="card card-green">
+                            <div class="card-header">No Fechamento</div>
+                            <div class="card-value green">+R$ 240,00</div>
+                            <div class="card-subtitle">Lucro potencial (30% do prêmio)</div>
+                        </div>
+                        <div class="card card-blue">
+                            <div class="card-header">Saldo Corredor</div>
+                            <div class="card-value blue">R$ 31.179,12</div>
+                            <div class="card-subtitle">Saldo atual: 0,77%</div>
+                        </div>
+                    </div>
+
+                    <div class="card card-blue" style="margin-top: 20px;">
+                        <div class="card-header">Margem Disponível</div>
+                        <div class="card-value green">R$ 1.659,12</div>
+                        <div class="card-subtitle">Utilização do Saldo</div>
+                        <div class="usage-bar">
+                            <div class="usage-fill" style="width: 94.7%"></div>
+                        </div>
+                        <div style="text-align: right; margin-top: 6px; font-size: 12px; color: #a0aec0;">94,7%</div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">Parâmetros da Operação</div>
+                    <div class="operation-type-badge">VENDA - PUT</div>
+                    <div class="params-grid">
+                        <div class="param-item">
+                            <div class="param-label">Strike</div>
+                            <div class="param-value">R$ 36,90</div>
+                        </div>
+                        <div class="param-item">
+                            <div class="param-label">Distância</div>
+                            <div class="param-value" style="color: #48bb78;">1,34%</div>
+                        </div>
+                        <div class="param-item">
+                            <div class="param-label">Prêmio Total</div>
+                            <div class="param-value">R$ 240,00</div>
+                        </div>
+                        <div class="param-item">
+                            <div class="param-label">Quantidade</div>
+                            <div class="param-value">800</div>
+                        </div>
+                        <div class="param-item">
+                            <div class="param-label">% Prêmio</div>
+                            <div class="param-value">30,00%</div>
+                        </div>
+                        <div class="param-item">
+                            <div class="param-label">Data Exercício</div>
+                            <div class="param-value" style="font-size: 13px;">06/02/2026</div>
+                        </div>
+                        <div class="param-item">
+                            <div class="param-label">Corridos</div>
+                            <div class="param-value">1</div>
+                        </div>
+                        <div class="param-item">
+                            <div class="param-label">Exercício</div>
+                            <div class="param-value" style="color: #f56565;">NÃO</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">Evolução & Volatilidade</div>
+                    <div class="charts-grid">
+                        <div class="chart-container">
+                            <div class="chart-title">Evolução do Resultado</div>
+                            <div class="chart-wrapper">
+                                <canvas id="resultChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <div class="chart-title">Volatilidade Implícita</div>
+                            <div class="chart-wrapper">
+                                <canvas id="volatilityChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Análise -->
+            <div class="tab-content">
+                <div class="section">
+                    <div class="section-title">Análise Detalhada</div>
+                    <div class="chart-container">
+                        <div class="chart-title">Projeção até o Vencimento</div>
+                        <div class="chart-wrapper" style="height: 400px;">
+                            <canvas id="projectionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section" style="margin-top: 25px;">
+                    <div class="section-title">Cenários de Preço</div>
+                    <div class="charts-grid">
+                        <div class="chart-container">
+                            <div class="chart-title">Distribuição de Probabilidade</div>
+                            <div class="chart-wrapper">
+                                <canvas id="probabilityChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <div class="chart-title">Resultado por Cenário</div>
+                            <div class="chart-wrapper">
+                                <canvas id="scenarioChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 3: Gregas & Risco -->
+            <div class="tab-content">
+                <div class="section">
+                    <div class="section-title">Gregas da Opção</div>
+                    <div class="greeks-grid">
+                        <div class="greek-card">
+                            <div class="greek-label">Delta (Δ)</div>
+                            <div class="greek-value">-0,35</div>
+                            <div class="card-subtitle" style="margin-top: 8px;">Sensibilidade ao preço</div>
+                        </div>
+                        <div class="greek-card">
+                            <div class="greek-label">Gamma (Γ)</div>
+                            <div class="greek-value">0,08</div>
+                            <div class="card-subtitle" style="margin-top: 8px;">Taxa de mudança do Delta</div>
+                        </div>
+                        <div class="greek-card">
+                            <div class="greek-label">Theta (Θ)</div>
+                            <div class="greek-value">-12,50</div>
+                            <div class="card-subtitle" style="margin-top: 8px;">Decaimento temporal</div>
+                        </div>
+                        <div class="greek-card">
+                            <div class="greek-label">Vega (ν)</div>
+                            <div class="greek-value">18,25</div>
+                            <div class="card-subtitle" style="margin-top: 8px;">Sensibilidade à vol.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section" style="margin-top: 25px;">
+                    <div class="section-title">Análise de Risco</div>
+                    <div class="charts-grid">
+                        <div class="chart-container">
+                            <div class="chart-title">Exposição ao Delta</div>
+                            <div class="chart-wrapper">
+                                <canvas id="deltaChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <div class="chart-title">Decaimento do Theta</div>
+                            <div class="chart-wrapper">
+                                <canvas id="thetaChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 4: Payoff -->
+            <div class="tab-content">
+                <div class="section">
+                    <div class="section-title">Diagrama de Payoff</div>
+                    <div class="payoff-container">
+                        <div class="chart-wrapper" style="height: 450px;">
+                            <canvas id="payoffChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section" style="margin-top: 25px;">
+                    <div class="section-title">Pontos de Breakeven</div>
+                    <div class="cards-grid">
+                        <div class="card card-blue">
+                            <div class="card-header">Breakeven</div>
+                            <div class="card-value blue">R$ 36,60</div>
+                            <div class="card-subtitle">Ponto de equilíbrio</div>
+                        </div>
+                        <div class="card card-green">
+                            <div class="card-header">Lucro Máximo</div>
+                            <div class="card-value green">R$ 240,00</div>
+                            <div class="card-subtitle">Se PETR4 ≥ R$ 36,90</div>
+                        </div>
+                        <div class="card card-red">
+                            <div class="card-header">Prejuízo Máximo</div>
+                            <div class="card-value red">R$ 29.280,00</div>
+                            <div class="card-subtitle">Se PETR4 = R$ 0,00</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching
+        function switchTab(index) {
+            const tabs = document.querySelectorAll('.tab');
+            const contents = document.querySelectorAll('.tab-content');
+            
+            tabs.forEach((tab, i) => {
+                if (i === index) {
+                    tab.classList.add('active');
+                    contents[i].classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                    contents[i].classList.remove('active');
+                }
+            });
+        }
+
+        // Chart configurations
+        Chart.defaults.color = '#a0aec0';
+        Chart.defaults.borderColor = '#2d3748';
+
+        // Evolução do Resultado
+        const resultCtx = document.getElementById('resultChart').getContext('2d');
+        new Chart(resultCtx, {
+            type: 'line',
+            data: {
+                labels: ['06/02 08:00', '10:00', '12:00', '14:00', '16:00', '06/02 Atual'],
+                datasets: [{
+                    label: 'Resultado',
+                    data: [240, 180, 120, 60, -20, -40],
+                    borderColor: '#f56565',
+                    backgroundColor: 'rgba(245, 101, 101, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#f56565',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5
+                }, {
+                    label: 'Zona de Lucro',
+                    data: [0, 0, 0, 0, 0, 0],
+                    borderColor: '#48bb78',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    pointRadius: 0,
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += 'R$ ' + context.parsed.y.toFixed(2);
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return 'R$ ' + value;
+                            }
+                        },
+                        grid: {
+                            color: '#2d3748'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: '#2d3748'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Volatilidade
+        const volCtx = document.getElementById('volatilityChart').getContext('2d');
+        new Chart(volCtx, {
+            type: 'bar',
+            data: {
+                labels: ['30d', '60d', '90d', '120d', '150d', '180d'],
+                datasets: [{
+                    label: 'Volatilidade Implícita',
+                    data: [52, 58, 62, 65, 68, 70],
+                    backgroundColor: [
+                        '#48bb78',
+                        '#4299e1',
+                        '#ed8936',
+                        '#ed8936',
+                        '#ed8936',
+                        '#ed8936'
+                    ],
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        },
+                        grid: {
+                            color: '#2d3748'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+
+        // Projeção
+        const projCtx = document.getElementById('projectionChart').getContext('2d');
+        new Chart(projCtx, {
+            type: 'line',
+            data: {
+                labels: Array.from({length: 24}, (_, i) => i + ':00'),
+                datasets: [{
+                    label: 'Cenário Otimista',
+                    data: [-40, -30, -20, -10, 0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240, 240, 240, 240, 240, 240, 240, 240],
+                    borderColor: '#48bb78',
+                    backgroundColor: 'rgba(72, 187, 120, 0.1)',
+                    fill: false,
+                    tension: 0.4
+                }, {
+                    label: 'Cenário Atual',
+                    data: [-40, -35, -30, -25, -20, -15, -10, -5, 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150],
+                    borderColor: '#4299e1',
+                    backgroundColor: 'rgba(66, 153, 225, 0.1)',
+                    fill: false,
+                    tension: 0.4
+                }, {
+                    label: 'Cenário Pessimista',
+                    data: [-40, -45, -50, -60, -70, -80, -90, -100, -110, -120, -130, -140, -150, -160, -170, -180, -190, -200, -210, -220, -230, -240, -250, -260],
+                    borderColor: '#f56565',
+                    backgroundColor: 'rgba(245, 101, 101, 0.1)',
+                    fill: false,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    y: {
+                        ticks: {
+                            callback: function(value) {
+                                return 'R$ ' + value;
+                            }
+                        },
+                        grid: {
+                            color: '#2d3748'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: '#2d3748'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Distribuição de Probabilidade
+        const probCtx = document.getElementById('probabilityChart').getContext('2d');
+        new Chart(probCtx, {
+            type: 'line',
+            data: {
+                labels: ['32', '33', '34', '35', '36', '37', '38', '39', '40', '41', '42'],
+                datasets: [{
+                    label: 'Probabilidade',
+                    data: [2, 5, 10, 18, 25, 30, 25, 18, 10, 5, 2],
+                    borderColor: '#4299e1',
+                    backgroundColor: 'rgba(66, 153, 225, 0.2)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        },
+                        grid: {
+                            color: '#2d3748'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Preço PETR4'
+                        },
+                        grid: {
+                            color: '#2d3748'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Cenários
+        const scenCtx = document.getElementById('scenarioChart').getContext('2d');
+        new Chart(scenCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Muito Baixo\n(< 34)', 'Baixo\n(34-36)', 'Neutro\n(36-38)', 'Alto\n(38-40)', 'Muito Alto\n(> 40)'],
+                datasets: [{
+                    label: 'Resultado',
+                    data: [-2500, -800, 150, 240, 240],
+                    backgroundColor: function(context) {
+                        const value = context.parsed.y;
+                        return value < 0 ? '#f56565' : '#48bb78';
+                    },
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        ticks: {
+                            callback: function(value) {
+                                return 'R$ ' + value;
+                            }
+                        },
+                        grid: {
+                            color: '#2d3748'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+
+        // Delta Chart
+        const deltaCtx = document.getElementById('deltaChart').getContext('2d');
+        new Chart(deltaCtx, {
+            type: 'line',
+            data: {
+                labels: ['32', '33', '34', '35', '36', '37', '38', '39', '40'],
+                datasets: [{
+                    label: 'Delta',
+                    data: [-0.95, -0.85, -0.70, -0.50, -0.35, -0.20, -0.10, -0.05, -0.02],
+                    borderColor: '#4299e1',
+                    backgroundColor: 'rgba(66, 153, 225, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        grid: {
+                            color: '#2d3748'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Preço PETR4'
+                        },
+                        grid: {
+                            color: '#2d3748'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Theta Chart
+        const thetaCtx = document.getElementById('thetaChart').getContext('2d');
+        new Chart(thetaCtx, {
+            type: 'line',
+            data: {
+                labels: ['Hoje', '1 dia', '2 dias', '3 dias', '4 dias', '5 dias'],
+                datasets: [{
+                    label: 'Valor da Opção',
+                    data: [0.26, 0.18, 0.12, 0.08, 0.05, 0.02],
+                    borderColor: '#ed8936',
+                    backgroundColor: 'rgba(237, 137, 54, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return 'R$ ' + value.toFixed(2);
+                            }
+                        },
+                        grid: {
+                            color: '#2d3748'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: '#2d3748'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Payoff Chart
+        const payoffCtx = document.getElementById('payoffChart').getContext('2d');
+        new Chart(payoffCtx, {
+            type: 'line',
+            data: {
+                labels: ['30', '32', '34', '36', '36.60', '36.90', '38', '40', '42', '44'],
+                datasets: [{
+                    label: 'Payoff no Vencimento',
+                    data: [-6660, -4660, -2660, -660, 0, 240, 240, 240, 240, 240],
+                    borderColor: '#4299e1',
+                    backgroundColor: function(context) {
+                        const chart = context.chart;
+                        const {ctx, chartArea} = chart;
+                        if (!chartArea) return null;
+                        
+                        const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+                        gradient.addColorStop(0, 'rgba(245, 101, 101, 0.3)');
+                        gradient.addColorStop(0.5, 'rgba(66, 153, 225, 0.1)');
+                        gradient.addColorStop(1, 'rgba(72, 187, 120, 0.3)');
+                        return gradient;
+                    },
+                    fill: true,
+                    tension: 0.1,
+                    segment: {
+                        borderColor: ctx => {
+                            return ctx.p1.parsed.y >= 0 ? '#48bb78' : '#f56565';
+                        }
+                    },
+                    pointBackgroundColor: ctx => {
+                        return ctx.parsed.y >= 0 ? '#48bb78' : '#f56565';
+                    },
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 6
+                }, {
+                    label: 'Breakeven',
+                    data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    borderColor: '#a0aec0',
+                    borderWidth: 2,
+                    borderDash: [10, 5],
+                    pointRadius: 0,
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += 'R$ ' + context.parsed.y.toFixed(2);
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        ticks: {
+                            callback: function(value) {
+                                return 'R$ ' + value;
+                            }
+                        },
+                        grid: {
+                            color: '#2d3748'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Preço PETR4 no Vencimento'
+                        },
+                        grid: {
+                            color: '#2d3748'
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

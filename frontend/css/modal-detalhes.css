@@ -1,0 +1,536 @@
+/* ============================================
+   ESTILOS PARA MODAL DE DETALHES DA OPERAÇÃO
+   Baseado em y.html com design moderno e responsivo
+   ============================================ */
+
+/* Modal Detalhes - Configurações gerais */
+#modalDetalhesOperacao .modal-dialog {
+    max-width: 1200px !important;
+}
+
+#modalDetalhesOperacao .modal-content {
+    background-color: var(--tblr-bg-surface);
+    border-radius: 12px;
+    border: 1px solid var(--tblr-border-color);
+}
+
+#modalDetalhesOperacao .modal-header {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(59, 130, 246, 0.05));
+    border-bottom: 1px solid var(--tblr-border-color);
+    padding: 1.25rem 1.5rem;
+}
+
+#modalDetalhesOperacao .modal-body {
+    max-height: 70vh;
+    overflow-y: auto;
+    padding: 1.5rem;
+}
+
+/* Tabs Navigation - Estilo y.html */
+#modalDetalhesOperacao .nav-tabs {
+    border-bottom: 1px solid var(--tblr-border-color);
+    margin-bottom: 1.5rem;
+    gap: 5px;
+}
+
+#modalDetalhesOperacao .nav-tabs .nav-link {
+    padding: 14px 28px;
+    background-color: transparent;
+    color: var(--tblr-secondary);
+    border: none;
+    border-bottom: 3px solid transparent;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.3s;
+    border-radius: 8px 8px 0 0;
+    position: relative;
+}
+
+#modalDetalhesOperacao .nav-tabs .nav-link:hover {
+    color: var(--tblr-primary);
+    background-color: rgba(var(--tblr-primary-rgb), 0.05);
+}
+
+#modalDetalhesOperacao .nav-tabs .nav-link.active {
+    color: var(--tblr-primary);
+    border-bottom: 3px solid var(--tblr-primary);
+    background-color: rgba(var(--tblr-primary-rgb), 0.1);
+}
+
+/* Tab Badge */
+.nav-tabs .tab-badge {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background-color: var(--tblr-primary);
+    color: white;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 10px;
+}
+
+/* Section Title */
+#modalDetalhesOperacao .section {
+    margin-bottom: 2rem;
+}
+
+#modalDetalhesOperacao .section-title {
+    font-size: 18px;
+    color: var(--tblr-body-color);
+    margin-bottom: 1rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--tblr-border-color);
+}
+
+#modalDetalhesOperacao .section-title i {
+    color: var(--tblr-primary);
+}
+
+/* Financial Cards - Estilo y.html */
+.financial-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-bottom: 1rem;
+}
+
+.financial-card {
+    background: linear-gradient(135deg, rgba(var(--tblr-primary-rgb), 0.1), rgba(var(--tblr-primary-rgb), 0.05));
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    border: 1px solid rgba(var(--tblr-primary-rgb), 0.2);
+    transition: all 0.3s;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.financial-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.financial-card.positive {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05));
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+.financial-card.negative {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.financial-card.neutral {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(59, 130, 246, 0.05));
+    border-color: rgba(59, 130, 246, 0.2);
+}
+
+.financial-card-label {
+    font-size: 14px;
+    color: var(--tblr-secondary);
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.financial-card-value {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--tblr-body-color);
+}
+
+/* Charts Container */
+.charts-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-top: 1.5rem;
+}
+
+.chart-wrapper {
+    background-color: var(--tblr-bg-surface-secondary);
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid var(--tblr-border-color);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.chart-title {
+    font-size: 16px;
+    color: var(--tblr-body-color);
+    margin-bottom: 15px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.chart-canvas {
+    height: 200px !important;
+    max-height: 200px;
+}
+
+/* Gregas Grid - Estilo y.html */
+.gregas-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-bottom: 1.5rem;
+}
+
+.grega-item {
+    background-color: var(--tblr-bg-surface-secondary);
+    border-radius: 10px;
+    padding: 18px;
+    border: 1px solid var(--tblr-border-color);
+    transition: all 0.3s;
+}
+
+.grega-item:hover {
+    background-color: rgba(var(--tblr-primary-rgb), 0.05);
+    border-color: var(--tblr-primary);
+    transform: translateY(-2px);
+}
+
+.grega-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.grega-name {
+    font-weight: 700;
+    color: var(--tblr-primary);
+    font-size: 15px;
+}
+
+.grega-value {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--tblr-body-color);
+}
+
+.grega-description {
+    font-size: 12px;
+    color: var(--tblr-secondary);
+}
+
+/* Volatility Highlight - Estilo y.html */
+.volatility-highlight {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.05));
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    margin-bottom: 1.5rem;
+}
+
+.volatility-label {
+    font-size: 14px;
+    color: var(--tblr-secondary);
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.volatility-value {
+    font-size: 32px;
+    font-weight: 800;
+    color: #f59e0b;
+    margin-bottom: 8px;
+}
+
+.volatility-note {
+    font-size: 12px;
+    color: var(--tblr-secondary);
+}
+
+/* Breakeven Cards */
+.breakeven-cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+}
+
+.breakeven-card {
+    background-color: var(--tblr-bg-surface-secondary);
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    border: 1px solid var(--tblr-border-color);
+}
+
+.breakeven-label {
+    font-size: 14px;
+    color: var(--tblr-secondary);
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.breakeven-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--tblr-primary);
+}
+
+/* Payoff Wrapper */
+.payoff-wrapper {
+    background-color: var(--tblr-bg-surface-secondary);
+    border-radius: 12px;
+    padding: 24px;
+    border: 1px solid var(--tblr-border-color);
+}
+
+/* Quotation Table - Estilo melhorado */
+.quotation-table {
+    background-color: var(--tblr-bg-surface-secondary);
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 1rem;
+}
+
+.quotation-table .table {
+    margin-bottom: 0;
+}
+
+.quotation-table .table th {
+    background-color: rgba(var(--tblr-primary-rgb), 0.05);
+    font-weight: 600;
+    color: var(--tblr-secondary);
+    border-bottom: 2px solid var(--tblr-border-color);
+    padding: 12px;
+}
+
+.quotation-table .table td {
+    padding: 14px 12px;
+    border-bottom: 1px solid var(--tblr-border-color-translucent);
+}
+
+.quotation-table .table tr:hover {
+    background-color: rgba(var(--tblr-primary-rgb), 0.03);
+}
+
+.asset-name {
+    font-weight: 600;
+    color: var(--tblr-secondary);
+}
+
+/* Scenario Items (Análise Tab) */
+#detalhesAnaliseLista .scenario-item {
+    background-color: var(--tblr-bg-surface-secondary);
+    border-left: 4px solid var(--tblr-primary);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 15px;
+    transition: all 0.3s;
+}
+
+#detalhesAnaliseLista .scenario-item:hover {
+    background-color: rgba(var(--tblr-primary-rgb), 0.05);
+    transform: translateX(5px);
+}
+
+#detalhesAnaliseLista .scenario-item.success {
+    border-left-color: #10b981;
+    background: linear-gradient(90deg, rgba(16, 185, 129, 0.1), transparent);
+}
+
+#detalhesAnaliseLista .scenario-item.danger {
+    border-left-color: #ef4444;
+    background: linear-gradient(90deg, rgba(239, 68, 68, 0.1), transparent);
+}
+
+#detalhesAnaliseLista .scenario-item.warning {
+    border-left-color: #f59e0b;
+    background: linear-gradient(90deg, rgba(245, 158, 11, 0.1), transparent);
+}
+
+#detalhesAnaliseLista .scenario-item.info {
+    border-left-color: #3b82f6;
+    background: linear-gradient(90deg, rgba(59, 130, 246, 0.1), transparent);
+}
+
+.scenario-item h6 {
+    font-weight: 700;
+    margin-bottom: 8px;
+    font-size: 15px;
+}
+
+.scenario-item p {
+    margin-bottom: 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--tblr-secondary);
+}
+
+/* Progress Bar - Estilo y.html */
+#modalDetalhesOperacao .progress {
+    height: 10px;
+    background-color: rgba(var(--tblr-primary-rgb), 0.1);
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+#modalDetalhesOperacao .progress-bar {
+    position: relative;
+    overflow: hidden;
+}
+
+#modalDetalhesOperacao .progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background-image: linear-gradient(
+        -45deg, 
+        rgba(255, 255, 255, 0.2) 25%, 
+        transparent 25%, 
+        transparent 50%, 
+        rgba(255, 255, 255, 0.2) 50%, 
+        rgba(255, 255, 255, 0.2) 75%, 
+        transparent 75%, 
+        transparent
+    );
+    z-index: 1;
+    background-size: 20px 20px;
+    animation: move 2s linear infinite;
+}
+
+@keyframes move {
+    0% { background-position: 0 0; }
+    100% { background-position: 20px 0; }
+}
+
+/* Mini Stats (usado em vários locais) */
+.mini-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.mini-stat {
+    background-color: rgba(var(--tblr-primary-rgb), 0.05);
+    border-radius: 8px;
+    padding: 15px;
+    text-align: center;
+    border: 1px solid rgba(var(--tblr-border-color-translucent), 0.5);
+}
+
+.mini-stat-value {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 5px;
+    color: var(--tblr-body-color);
+}
+
+.mini-stat-label {
+    font-size: 12px;
+    color: var(--tblr-secondary);
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+    #modalDetalhesOperacao .modal-dialog {
+        max-width: 95% !important;
+    }
+    
+    .financial-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .charts-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .gregas-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .breakeven-cards {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    #modalDetalhesOperacao .nav-tabs .nav-link {
+        padding: 10px 15px;
+        font-size: 14px;
+    }
+    
+    .financial-cards {
+        grid-template-columns: 1fr;
+    }
+    
+    .financial-card-value {
+        font-size: 20px;
+    }
+    
+    .mini-stats {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Dark Mode Adjustments */
+[data-bs-theme="dark"] #modalDetalhesOperacao .modal-content {
+    background-color: #1e293b;
+}
+
+[data-bs-theme="dark"] .financial-card,
+[data-bs-theme="dark"] .chart-wrapper,
+[data-bs-theme="dark"] .grega-item,
+[data-bs-theme="dark"] .breakeven-card,
+[data-bs-theme="dark"] .payoff-wrapper,
+[data-bs-theme="dark"] .quotation-table {
+    background-color: #0f172a;
+}
+
+[data-bs-theme="dark"] .scenario-item {
+    background-color: #0f172a;
+}
+
+/* Animações */
+@keyframes fadeIn {
+    from { 
+        opacity: 0; 
+        transform: translateY(10px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
+
+.tab-pane {
+    animation: fadeIn 0.5s ease;
+}
+
+/* Status Badges melhorados */
+.status-badge {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+.status-open {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: white;
+}
+
+.status-current {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+}
+
+.status-closed {
+    background: linear-gradient(135deg, #6b7280, #4b5563);
+    color: white;
+}
