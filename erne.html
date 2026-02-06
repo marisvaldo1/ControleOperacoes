@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="theme-dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard PETRN369W1 - Tabler Dark</title>
+    
+    <!-- Tabler CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta17/dist/css/tabler.min.css">
+    <!-- Tabler Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    <!-- Google Fonts (Inter) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* Forçar fonte Inter no Tabler */
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* Ajustes finos para Dark Mode */
+        .modal-content {
+            background-color: #1d273b;
+            border-color: #334155;
+        }
+        .card {
+            background-color: #1d273b;
+            border-color: #334155;
+        }
+        .form-range::-webkit-slider-runnable-track {
+            background-color: #334155;
+        }
+        .text-mono { font-family: 'JetBrains Mono', 'Courier New', monospace; }
+    </style>
+</head>
+<body>
+
+    <!-- Botão de Acionamento -->
+    <div class="d-flex justify-content-center align-items-center min-vh-100 bg-dark">
+        <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#dashboardModal">
+            <i class="ti ti-chart-infographic me-2"></i> Abrir Dashboard
+        </button>
+    </div>
+
+    <!-- Modal Principal -->
+    <div class="modal modal-blur fade" id="dashboardModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+            <div class="modal-content">
+                
+                <!-- Header -->
+                <div class="modal-header">
+                    <div>
+                        <h5 class="modal-title d-flex align-items-center gap-2 fw-bold">
+                            PETRN369W1
+                            <span class="badge bg-red-lt text-red">PUT</span>
+                            <span class="badge bg-orange-lt text-orange">VENDA</span>
+                        </h5>
+                        <div class="text-muted small mt-1">
+                            Venc: 06/02 • Strike: <strong class="text-white">R$ 36,90</strong> • Qtd: 800
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <!-- Body com Abas -->
+                <div class="modal-body p-0">
+                    <div class="card-header border-bottom-0 pt-3 px-3">
+                        <ul class="nav nav-tabs card-header-tabs" data-bs-toggle="tabs">
+                            <li class="nav-item"><a href="#tab-perf" class="nav-link active"><i class="ti ti-activity me-1"></i>Performance</a></li>
+                            <li class="nav-item"><a href="#tab-det" class="nav-link"><i class="ti ti-list-details me-1"></i>Detalhes</a></li>
+                            <li class="nav-item"><a href="#tab-sim" class="nav-link"><i class="ti ti-calculator me-1"></i>Simulação</a></li>
+                            <li class="nav-item"><a href="#tab-chart" class="nav-link"><i class="ti ti-chart-dots me-1"></i>Gráfico</a></li>
+                            <li class="nav-item"><a href="#tab-risk" class="nav-link"><i class="ti ti-alert-triangle me-1"></i>Risco</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="tab-content p-3">
+                        
+                        <!-- ABA 1: PERFORMANCE -->
+                        <div class="tab-pane active show" id="tab-perf">
+                            <div class="row row-cards">
+                                <div class="col-md-4">
+                                    <div class="card card-sm">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center">
+                                                <span class="avatar bg-green me-3"><i class="ti ti-currency-real"></i></span>
+                                                <div>
+                                                    <div class="text-muted small">P&L Atual</div>
+                                                    <div class="h4 mb-0 text-green">+ R$ 88,00</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card card-sm">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center">
+                                                <span class="avatar bg-blue me-3"><i class="ti ti-percentage"></i></span>
+                                                <div>
+                                                    <div class="text-muted small">Captura do Prêmio</div>
+                                                    <div class="h4 mb-0 text-white">36,67%</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card card-sm">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center">
+                                                <span class="avatar bg-yellow me-3"><i class="ti ti-clock"></i></span>
+                                                <div>
+                                                    <div class="text-muted small">Dias Restantes</div>
+                                                    <div class="h4 mb-0 text-white">1</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span class="text-muted">Evolução do Theta</span>
+                                                <span class="text-white fw-bold">63% Concluído</span>
+                                            </div>
+                                            <div class="progress progress-sm">
+                                                <div class="progress-bar bg-primary" style="width: 63%"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="card">
+                                        <div class="card-header"><h3 class="card-title">Histórico P&L</h3></div>
+                                        <div class="card-body"><canvas id="chartPerf" height="100"></canvas></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ABA 2: DETALHES -->
+                        <div class="tab-pane" id="tab-det">
+                            <div class="row row-cards">
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header"><h3 class="card-title">Gregas</h3></div>
+                                        <div class="list-group list-group-flush">
+                                            <div class="list-group-item d-flex justify-content-between"><span class="text-muted">Delta</span> <span>-0.15</span></div>
+                                            <div class="list-group-item d-flex justify-content-between"><span class="text-muted">Gamma</span> <span>0.08</span></div>
+                                            <div class="list-group-item d-flex justify-content-between"><span class="text-muted">Theta</span> <span class="text-green">+0.05</span></div>
+                                            <div class="list-group-item d-flex justify-content-between"><span class="text-muted">Vega</span> <span>0.03</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header"><h3 class="card-title">Mercado</h3></div>
+                                        <table class="table table-vcenter card-table">
+                                            <tbody>
+                                                <tr><td>PETR4 Spot</td> <td class="text-end text-mono text-white">R$ 37,27 <span class="text-red">▼</span></td></tr>
+                                                <tr><td>Vol. Implícita</td> <td class="text-end text-mono text-white">32.5%</td></tr>
+                                                <tr><td>Preço Teórico</td> <td class="text-end text-mono text-white">R$ 0.18</td></tr>
+                                                <tr><td>Distância Strike</td> <td class="text-end text-mono text-white">0.99%</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ABA 3: SIMULAÇÃO -->
+                        <div class="tab-pane" id="tab-sim">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <h3 class="card-title mb-4">Simulador de Vencimento</h3>
+                                    
+                                    <div class="row align-items-center mb-4">
+                                        <div class="col-auto text-muted">R$ 34,00</div>
+                                        <div class="col">
+                                            <input type="range" class="form-range" min="34" max="40" step="0.01" value="37.27" id="simSlider" oninput="runSim(this.value)">
+                                        </div>
+                                        <div class="col-auto text-muted">R$ 40,00</div>
+                                    </div>
+
+                                    <div class="row mb-4">
+                                        <div class="col-6">
+                                            <div class="text-muted small">Preço Simulado</div>
+                                            <div class="h2 fw-bold text-white" id="simPrice">R$ 37,27</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="text-muted small">Resultado Estimado</div>
+                                            <div class="h2 fw-bold text-green" id="simResult">+ R$ 240,00</div>
+                                        </div>
+                                    </div>
+
+                                    <canvas id="chartSim" height="120"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ABA 4: GRÁFICO -->
+                        <div class="tab-pane" id="tab-chart">
+                            <div class="card">
+                                <div class="card-header"><h3 class="card-title">PETR4 vs Strike</h3></div>
+                                <div class="card-body"><canvas id="chartMain" height="150"></canvas></div>
+                            </div>
+                        </div>
+
+                        <!-- ABA 5: RISCO -->
+                        <div class="tab-pane" id="tab-risk">
+                            <div class="alert alert-success alert-dismissible mb-4" role="alert">
+                                <div class="d-flex align-items-center">
+                                    <i class="ti ti-check-circle me-2"></i>
+                                    <div><strong>Zona de Lucro.</strong> Opção está OTM (fora do dinheiro).</div>
+                                </div>
+                            </div>
+                            <div class="row row-cards">
+                                <div class="col-md-3">
+                                    <div class="card card-sm text-center">
+                                        <div class="card-body">
+                                            <div class="text-muted small">Perda Máx.</div>
+                                            <div class="h4 text-red mb-0">-R$ 29.280</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="card card-sm text-center">
+                                        <div class="card-body">
+                                            <div class="text-muted small">Ganho Máx.</div>
+                                            <div class="h4 text-green mb-0">+R$ 240</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="card card-sm text-center">
+                                        <div class="card-body">
+                                            <div class="text-muted small">Break-even</div>
+                                            <div class="h4 text-yellow mb-0">R$ 36,60</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="card card-sm text-center">
+                                        <div class="card-body">
+                                            <div class="text-muted small">Prob. Lucro</div>
+                                            <div class="h4 text-blue mb-0">68%</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="modal-footer">
+                    <div class="me-auto text-muted">Saldo: <strong class="text-white">R$ 31.179,92</strong></div>
+                    <button type="button" class="btn btn-link text-muted" data-bs-dismiss="modal">Fechar</button>
+                    <button type="button" class="btn btn-primary">Salvar Alterações</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta17/dist/js/tabler.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        // Configuração Global dos Gráficos para Dark Mode
+        Chart.defaults.color = '#94a3b8'; // slate-400
+        Chart.defaults.borderColor = '#334155'; // slate-700
+        Chart.defaults.font.family = 'Inter';
+
+        let chartSimInstance;
+
+        // Abrir Modal e Renderizar
+        document.addEventListener('DOMContentLoaded', () => {
+            const modal = new bootstrap.Modal(document.getElementById('dashboardModal'));
+            modal.show();
+            
+            // Pequeno delay para garantir que o canvas tenha dimensões
+            setTimeout(() => {
+                renderCharts();
+            }, 100);
+        });
+
+        function renderCharts() {
+            // 1. Performance Chart
+            new Chart(document.getElementById('chartPerf'), {
+                type: 'line',
+                data: {
+                    labels: ['D-5', 'D-4', 'D-3', 'D-2', 'D-1', 'Hoje'],
+                    datasets: [{
+                        label: 'P&L (R$)',
+                        data: [20, 45, 30, 60, 82, 88],
+                        borderColor: '#206bc4',
+                        backgroundColor: 'rgba(32, 107, 196, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+
+            // 2. Simulação Chart (Payoff)
+            const ctxSim = document.getElementById('chartSim').getContext('2d');
+            chartSimInstance = new Chart(ctxSim, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Resultado',
+                        data: [],
+                        borderColor: '#2fb344',
+                        borderWidth: 3,
+                        pointRadius: 0,
+                        fill: false
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, interaction: { intersect: false } }
+            });
+            runSim(37.27); // Inicializar
+
+            // 3. Gráfico Principal (Candle/Line)
+            new Chart(document.getElementById('chartMain'), {
+                type: 'line',
+                data: {
+                    labels: ['28/01', '29/01', '30/01', '31/01', '01/02', '02/02', '03/02'],
+                    datasets: [{
+                        label: 'PETR4',
+                        data: [38.2, 37.9, 37.5, 37.1, 36.8, 37.15, 37.27],
+                        borderColor: '#f8fafc',
+                        borderWidth: 2,
+                        tension: 0.3
+                    }, {
+                        label: 'Strike 36.90',

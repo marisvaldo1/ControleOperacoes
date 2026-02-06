@@ -695,6 +695,124 @@ function resetDetalhesTabs() {
     contents.forEach(c => c.classList.toggle('active', c.getAttribute('data-tab-content') === target));
 }
 
+/**
+ * Popula o modal de detalhes com os dados da operação
+ */
+function populateDetalhesModal(op) {
+    const setText = (id, text) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = text;
+    };
+    
+    const setHTML = (id, html) => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = html;
+    };
+    
+    // Header
+    setText('detTicker', op.ativo);
+    
+    const badgeSide = document.getElementById('detBadgeSide');
+    if (badgeSide) {
+        if (op.tipo_operacao === 'VENDA') {
+            badgeSide.className = 'badge bg-danger ms-2';
+            badgeSide.textContent = 'VENDA';
+        } else {
+            badgeSide.className = 'badge bg-success ms-2';
+            badgeSide.textContent = 'COMPRA';
+        }
+    }
+    
+    const badgeType = document.getElementById('detBadgeType');
+    if (badgeType) {
+        badgeType.textContent = op.tipo_opcao;
+    }
+    
+    // Tab Performance - Cotações Atuais
+    setText('detAtivoBase', op.ativo_base);
+    setText('detPrecoAtivo', `R$ ${parseFloat(op.preco_ativo_base || 0).toFixed(2)}`);
+    setText('detVarAtivo', '...');
+    setText('detOpcaoNome', op.ativo);
+    setText('detPrecoOpcao', `R$ ${parseFloat(op.preco_atual || 0).toFixed(2)}`);
+    setText('detVarOpcao', '...');
+    setText('detStrikeVal', `R$ ${parseFloat(op.strike).toFixed(2)}`);
+    setText('detDistancia', '...');
+    
+    const diasVenc = calcularDias(op.vencimento).uteis;
+    setText('detDiasVenc', `${diasVenc}d`);
+    
+    // Tab Performance - Resultado Financeiro
+    const premioTotal = parseFloat(op.premio_abertura) * parseInt(op.quantidade);
+    setText('detResFechamento', `+ R$ ${premioTotal.toFixed(2)}`);
+    setText('detMTM', '...');
+    setText('detLucroAtual', '...');
+    setText('detPercPremio', '...');
+    
+    // Tab Performance - Detalhes do Prêmio
+    setText('detPremioAbertura', `R$ ${premioTotal.toFixed(2)}`);
+    setText('detCustoRecompra', '...');
+    setText('detResultLiquido', '...');
+    setText('detPremioRestante', '...');
+    setText('detProgressLabel', '...');
+    setText('detValorExercicio', '...');
+    setText('detLucroEsperado', '...');
+    
+    // Tab Detalhes - Valores na Abertura
+    setText('detAtivoAbertura', op.ativo_base);
+    setText('detPrecoAbertura', `R$ ${parseFloat(op.preco_ativo_base || 0).toFixed(2)}`);
+    setText('detPremioUnitAbertura', `R$ ${parseFloat(op.premio_abertura).toFixed(2)}`);
+    setText('detDistanciaAbertura', '...');
+    setText('detQtdAbertura', op.quantidade);
+    setText('detTotalPremio', `R$ ${premioTotal.toFixed(2)}`);
+    
+    // Tab Detalhes - Valores Atuais
+    setText('detAtivoAtual', op.ativo_base);
+    setText('detPrecoAtual', `R$ ${parseFloat(op.preco_ativo_base || 0).toFixed(2)}`);
+    setText('detPremioUnitAtual', `R$ ${parseFloat(op.preco_atual || 0).toFixed(2)}`);
+    setText('detDistanciaAtual', '...');
+    setText('detPercPremioAtual', '...');
+    setText('detCustoRecompraTab', '...');
+    
+    // Tab Detalhes - Informações Gerais
+    setText('detTipoOp', op.tipo_operacao);
+    setText('detTipoOpcao', op.tipo_opcao);
+    setText('detStrikeInfo', `R$ ${parseFloat(op.strike).toFixed(2)}`);
+    setText('detVencimento', new Date(op.vencimento).toLocaleDateString('pt-BR'));
+    setText('detQtdInfo', op.quantidade);
+    setText('detStatusOp', op.status);
+    
+    // Tab Simulação - Strike no slider
+    setText('detStrikeSlider', parseFloat(op.strike).toFixed(2));
+    
+    // Tab Gráficos - Nome do ativo
+    setText('detAtivoChart', op.ativo_base);
+    
+    // Tab Risco - Valores
+    const capitalRisco = parseFloat(op.strike) * Math.abs(parseInt(op.quantidade));
+    setText('detCapitalRisco', `R$ ${capitalRisco.toFixed(2)}`);
+    setText('detMargem', '...');
+    setText('detRiscoRetorno', '...');
+    setText('detRetornoMargem', '...');
+    
+    setText('detPerdaMaxima', '...');
+    setText('detGanhoMaximo', `R$ ${premioTotal.toFixed(2)}`);
+    setText('detBreakeven', '...');
+    setText('detProbLucro', '...');
+    
+    // Tab Risco - Cenários
+    setText('detAtivoOtimista', op.ativo_base);
+    setText('detStrikeOtimista', parseFloat(op.strike).toFixed(2));
+    setText('detLucroOtimista', premioTotal.toFixed(2));
+    setText('detAtivoNeutro', op.ativo_base);
+    setText('detValorCompra', capitalRisco.toFixed(2));
+    setText('detAtivoPessimista', op.ativo_base);
+    setText('detPrejMaximo', '...');
+    
+    // Footer - Saldos
+    setText('detSaldoAtual', '...');
+    setText('detSaldoProjetado', '...');
+}
+
 async function openDetalhesOperacao(id) {
     currentDetalhesOpId = id;
     const op = allOperacoes.find(o => o.id == id);
@@ -711,11 +829,32 @@ async function openDetalhesOperacao(id) {
     }
     modal.show();
     
-    // Reset tabs to first one
-    openY2Tab(null, 'y2-performance');
+    // Reset tabs to performance (first tab)
+    const tabs = modalEl.querySelectorAll('.nav-link[data-tab]');
+    const tabContents = modalEl.querySelectorAll('.tab-content');
     
-    // Initial populate with what we have (offline data)
-    updateY2Fields(op, {});
+    tabs.forEach(t => t.classList.remove('active'));
+    tabContents.forEach(tc => tc.style.display = 'none');
+    
+    // Activate performance tab
+    const perfTab = modalEl.querySelector('.nav-link[data-tab="performance"]');
+    if (perfTab) perfTab.classList.add('active');
+    const perfContent = modalEl.querySelector('#performance');
+    if (perfContent) perfContent.style.display = 'block';
+    
+    // Populate modal with data
+    populateDetalhesModal(op);
+    
+    // Render charts
+    renderDetChart1(op);
+    renderDetChart2(op);
+    renderDetChart3(op);
+    renderDetChart4(op);
+    renderDetChart5(op);
+    
+    // Populate gregas and scenarios
+    populateGregasDisplay(op);
+    populateScenarioCards(op);
     
     // Fetch fresh data
     await refreshDetalhesOperacao();
@@ -726,9 +865,9 @@ async function refreshDetalhesOperacao() {
     const op = allOperacoes.find(o => o.id == currentDetalhesOpId);
     if (!op) return;
     
-    const btn = document.getElementById('btnRefreshDetalhes');
+    const btn = document.getElementById('btnDetRefresh');
     if(btn) {
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Atualizando...';
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>';
         btn.disabled = true;
     }
 
@@ -763,20 +902,152 @@ async function refreshDetalhesOperacao() {
         const now = new Date();
         const timestamp = `${now.toLocaleDateString('pt-BR')} ${now.toLocaleTimeString('pt-BR')}`;
         lastUpdateTimestamp[currentDetalhesOpId] = timestamp;
-        document.getElementById('detalhesUltimaAtualizacao').innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Última atualização: ${timestamp}`;
         
-        // Update UI
-        updateDetalhesUI(op, spotPrice, optionPrice);
+        // Update UI with live data
+        updateDetalhesModalWithLiveData(op, spotPrice, optionPrice);
+        
+        // Re-render charts with updated data
+        renderDetChart1(op);
+        renderDetChart2(op);
         
     } catch (e) {
         console.error(e);
         iziToast.error({title: 'Erro', message: 'Erro ao atualizar dados'});
     } finally {
         if(btn) {
-            btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-refresh" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" /><path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" /></svg> Atualizar`;
+            btn.innerHTML = '<i class="ti ti-refresh"></i>';
             btn.disabled = false;
         }
     }
+}
+
+/**
+ * Atualiza o modal de detalhes com dados ao vivo da API
+ */
+function updateDetalhesModalWithLiveData(op, spotPrice, optionPrice) {
+    const setText = (id, text) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = text;
+    };
+    
+    const setHTML = (id, html) => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = html;
+    };
+    
+    const strike = parseFloat(op.strike);
+    const premioAbertura = parseFloat(op.premio_abertura);
+    const precoAbertura = parseFloat(op.preco_ativo_base || spotPrice);
+    const qtd = parseInt(op.quantidade);
+    const isVenda = op.tipo_operacao === 'VENDA';
+    
+    // Calcular variações
+    const varAtivo = ((spotPrice - precoAbertura) / precoAbertura * 100);
+    const varOpcao = ((optionPrice - premioAbertura) / premioAbertura * 100);
+    
+    // Calcular distância do strike
+    const distancia = ((spotPrice - strike) / strike * 100);
+    
+    // Atualizar Tab Performance - Cotações Atuais
+    setText('detPrecoAtivo', `R$ ${spotPrice.toFixed(2)}`);
+    setHTML('detVarAtivo', `${varAtivo >= 0 ? '↑' : '↓'} ${Math.abs(varAtivo).toFixed(2)}%`);
+    document.getElementById('detVarAtivo').className = varAtivo >= 0 ? 'text-success small' : 'text-danger small';
+    
+    setText('detPrecoOpcao', `R$ ${optionPrice.toFixed(2)}`);
+    setHTML('detVarOpcao', `${varOpcao >= 0 ? '↑' : '↓'} ${Math.abs(varOpcao).toFixed(2)}%`);
+    document.getElementById('detVarOpcao').className = varOpcao >= 0 ? 'text-success small' : 'text-danger small';
+    
+    setText('detDistancia', `${distancia.toFixed(2)}%`);
+    
+    // Calcular P&L
+    let pnlFechamento = 0;
+    let mtm = 0;
+    let custoRecompra = 0;
+    
+    if (isVenda) {
+        // Venda: Ganho = Prêmio recebido - Custo de recompra
+        const premioTotal = premioAbertura * qtd;
+        custoRecompra = optionPrice * qtd;
+        mtm = premioTotal - custoRecompra;
+        pnlFechamento = premioTotal; // Se não houver exercício
+    } else {
+        // Compra: Ganho = Valor atual - Custo de entrada
+        const custoEntrada = premioAbertura * qtd;
+        const valorAtual = optionPrice * qtd;
+        mtm = valorAtual - custoEntrada;
+        custoRecompra = 0; // N/A para compra
+    }
+    
+    // Atualizar Tab Performance - Resultado Financeiro
+    setText('detResFechamento', `${pnlFechamento >= 0 ? '+ ' : '- '}R$ ${Math.abs(pnlFechamento).toFixed(2)}`);
+    setText('detMTM', `${mtm >= 0 ? '+ ' : '- '}R$ ${Math.abs(mtm).toFixed(2)}`);
+    setText('detLucroAtual', `R$ ${Math.abs(mtm).toFixed(2)}`);
+    
+    // Percentual do prêmio capturado (para venda)
+    let percPremio = 0;
+    if (isVenda && premioAbertura > 0) {
+        percPremio = 100 - (optionPrice / premioAbertura * 100);
+    }
+    setText('detPercPremio', `${percPremio >= 0 ? '+' : ''}${percPremio.toFixed(2)}%`);
+    document.getElementById('detPercPremio').className = percPremio >= 0 ? 'fw-bold text-success' : 'fw-bold text-danger';
+    
+    // Tab Performance - Detalhes do Prêmio
+    const premioTotal = premioAbertura * qtd;
+    setText('detPremioAbertura', `R$ ${premioTotal.toFixed(2)}`);
+    setText('detCustoRecompra', `R$ ${custoRecompra.toFixed(2)}`);
+    setText('detResultLiquido', `R$ ${Math.abs(mtm).toFixed(2)}`);
+    setText('detPremioRestante', `${(100 - percPremio).toFixed(2)}%`);
+    
+    // Progress bar
+    const progressBar = document.getElementById('detProgressBar');
+    if (progressBar) {
+        progressBar.style.width = `${Math.abs(percPremio)}%`;
+        progressBar.className = percPremio >= 0 ? 'progress-bar bg-success' : 'progress-bar bg-danger';
+    }
+    setText('detProgressLabel', `${Math.abs(percPremio).toFixed(2)}% do prêmio ${percPremio >= 0 ? 'já capturado' : 'perdido'}`);
+    
+    // Cenário de exercício
+    const valorExercicio = strike * qtd;
+    const lucroExercicio = ((spotPrice - strike) / strike * 100);
+    setText('detValorExercicio', `R$ ${valorExercicio.toFixed(2)}`);
+    setText('detLucroEsperado', `${lucroExercicio >= 0 ? '+' : ''}${lucroExercicio.toFixed(2)}%`);
+    
+    // Tab Detalhes - Valores Atuais
+    setText('detPrecoAtual', `R$ ${spotPrice.toFixed(2)}`);
+    setText('detPremioUnitAtual', `R$ ${optionPrice.toFixed(2)}`);
+    setText('detDistanciaAtual', `${distancia.toFixed(2)}%`);
+    setText('detPercPremioAtual', `${percPremio.toFixed(2)}%`);
+    setText('detCustoRecompraTab', `R$ ${custoRecompra.toFixed(2)}`);
+    
+    // Tab Detalhes - Distância na abertura
+    const distanciaAbertura = ((precoAbertura - strike) / strike * 100);
+    setText('detDistanciaAbertura', `${distanciaAbertura.toFixed(2)}%`);
+    
+    // Charts - atualizar valores nos cards de cenários
+    const piorCaso = isVenda ? -(strike * qtd - premioTotal) : -premioTotal;
+    const melhorCaso = isVenda ? premioTotal : (strike * qtd - premioTotal);
+    
+    setText('detPiorCaso', `${piorCaso >= 0 ? '+' : ''}R$ ${Math.abs(piorCaso).toFixed(2)}`);
+    setText('detCasoAtual', `${mtm >= 0 ? '+' : ''}R$ ${Math.abs(mtm).toFixed(2)}`);
+    setText('detMelhorCaso', `${melhorCaso >= 0 ? '+' : ''}R$ ${Math.abs(melhorCaso).toFixed(2)}`);
+    
+    // Tab Risco
+    const capitalRisco = strike * Math.abs(qtd);
+    const margem = capitalRisco * 0.25; // 25% aproximado
+    const riscoRetorno = premioTotal > 0 ? (capitalRisco / premioTotal).toFixed(2) : '0';
+    const retornoMargem = margem > 0 ? ((mtm / margem) * 100).toFixed(2) : '0';
+    
+    setText('detCapitalRisco', `R$ ${capitalRisco.toFixed(2)}`);
+    setText('detMargem', `R$ ${margem.toFixed(2)}`);
+    setText('detRiscoRetorno', `${riscoRetorno}:1`);
+    setText('detRetornoMargem', `${retornoMargem >= 0 ? '+' : ''}${retornoMargem}%`);
+    
+    setText('detPerdaMaxima', `-R$ ${Math.abs(piorCaso).toFixed(2)}`);
+    setText('detGanhoMaximo', `R$ ${Math.abs(melhorCaso).toFixed(2)}`);
+    setText('detBreakeven', `R$ ${(strike - premioAbertura).toFixed(2)}`);
+    setText('detProbLucro', `${(spotPrice > strike ? 65 : 35)}%`);
+    
+    setText('detPrejMaximo', Math.abs(piorCaso).toFixed(2));
 }
 
 function updateDetalhesUI(op, spotPrice, optionPrice) {
@@ -6364,3 +6635,697 @@ function updateY2Fields(op, marketData) {
     setText('y2-risk-loss', formatCurrency(-maxLoss)); // Show as negative
     setText('y2-risk-breakeven', formatCurrency(breakeven));
 }
+// Setup modal detalhes tab switching
+document.addEventListener('DOMContentLoaded', function() {
+    const modalDetalhes = document.getElementById('modalDetalhesOperacao');
+    if (modalDetalhes) {
+        modalDetalhes.addEventListener('shown.bs.modal', function() {
+            const tabs = modalDetalhes.querySelectorAll('.nav-link[data-tab]');
+            const tabContents = modalDetalhes.querySelectorAll('.tab-content');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const targetTab = this.getAttribute('data-tab');
+                    
+                    // Remove active from all
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tabContents.forEach(tc => tc.style.display = 'none');
+                    
+                    // Activate clicked tab
+                    this.classList.add('active');
+                    
+                    // Show content
+                    const content = modalDetalhes.querySelector(`#${targetTab}`);
+                    if (content) {
+                        content.style.display = 'block';
+                    }
+                });
+            });
+        });
+    }
+});
+
+// Chart instances for modal detalhes
+let detChart1 = null; // Evolução do Resultado
+let detChart2 = null; // Previsão por Preço no Vencimento
+let detChart3 = null; // Gráfico de Payoff
+let detChart4 = null; // Volatilidade
+let detChart5 = null; // Histórico de Preço
+
+/**
+ * Renderiza o gráfico de Evolução do Resultado (Chart 1)
+ * Mostra como o P&L evoluiu desde a abertura
+ */
+function renderDetChart1(operacao) {
+    const canvas = document.getElementById('detChart1');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    
+    // Destruir gráfico anterior
+    if (detChart1) {
+        detChart1.destroy();
+    }
+    
+    // Dados simulados de evolução do P&L ao longo do tempo
+    // TODO: Substituir por dados reais do histórico
+    const days = [];
+    const pnlValues = [];
+    const dataAbertura = new Date(operacao.data_abertura);
+    const hoje = new Date();
+    const diasDecorridos = Math.floor((hoje - dataAbertura) / (1000 * 60 * 60 * 24));
+    
+    for (let i = 0; i <= Math.min(diasDecorridos, 30); i++) {
+        const data = new Date(dataAbertura);
+        data.setDate(data.getDate() + i);
+        days.push(data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }));
+        
+        // Simulação: P&L cresce conforme passa o tempo (decay)
+        const progress = i / diasDecorridos;
+        const pnlAtual = parseFloat(document.getElementById('detMTM').textContent.replace(/[^\d,-]/g, '').replace(',', '.')) || 0;
+        pnlValues.push(pnlAtual * progress);
+    }
+    
+    detChart1 = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: days,
+            datasets: [{
+                label: 'P&L (R$)',
+                data: pnlValues,
+                borderColor: pnlValues[pnlValues.length - 1] >= 0 ? '#2fb344' : '#d63939',
+                backgroundColor: pnlValues[pnlValues.length - 1] >= 0 ? 'rgba(47, 179, 68, 0.1)' : 'rgba(214, 57, 57, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'P&L: R$ ' + context.parsed.y.toFixed(2);
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return 'R$ ' + value.toFixed(0);
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    }
+                }
+            }
+        }
+    });
+}
+
+/**
+ * Renderiza o gráfico de Previsão por Preço no Vencimento (Chart 2)
+ * Diagrama de payoff mostrando P&L em diferentes preços do ativo
+ */
+function renderDetChart2(operacao) {
+    const canvas = document.getElementById('detChart2');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    
+    if (detChart2) {
+        detChart2.destroy();
+    }
+    
+    const strike = parseFloat(operacao.strike);
+    const premioAbertura = parseFloat(operacao.premio_abertura);
+    const qtd = parseInt(operacao.quantidade);
+    const isVenda = operacao.tipo_operacao === 'VENDA';
+    const tipo = operacao.tipo_opcao;
+    
+    // Range de preços: ±20% do strike
+    const minPrice = strike * 0.8;
+    const maxPrice = strike * 1.2;
+    const step = (maxPrice - minPrice) / 50;
+    
+    const prices = [];
+    const pnlValues = [];
+    
+    for (let price = minPrice; price <= maxPrice; price += step) {
+        prices.push(price.toFixed(2));
+        
+        let pnl = 0;
+        if (isVenda && tipo === 'PUT') {
+            // Short Put: Ganho limitado ao prêmio, perda quando preço < strike
+            if (price >= strike) {
+                pnl = premioAbertura * qtd; // Prêmio retido
+            } else {
+                pnl = (premioAbertura * qtd) - ((strike - price) * qtd);
+            }
+        } else if (!isVenda && tipo === 'PUT') {
+            // Long Put
+            if (price >= strike) {
+                pnl = -(premioAbertura * qtd);
+            } else {
+                pnl = ((strike - price) * qtd) - (premioAbertura * qtd);
+            }
+        }
+        // TODO: Adicionar lógica para CALL
+        
+        pnlValues.push(pnl);
+    }
+    
+    detChart2 = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: prices,
+            datasets: [{
+                label: 'P&L no Vencimento (R$)',
+                data: pnlValues,
+                borderColor: '#206bc4',
+                backgroundColor: 'rgba(32, 107, 196, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.1,
+                pointRadius: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                annotation: {
+                    annotations: {
+                        line1: {
+                            type: 'line',
+                            yMin: 0,
+                            yMax: 0,
+                            borderColor: 'rgba(255, 255, 255, 0.3)',
+                            borderWidth: 1,
+                            borderDash: [5, 5]
+                        },
+                        line2: {
+                            type: 'line',
+                            xMin: strike,
+                            xMax: strike,
+                            borderColor: '#f59f00',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            label: {
+                                display: true,
+                                content: 'Strike',
+                                position: 'start'
+                            }
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return 'R$ ' + value.toFixed(0);
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        maxTicksLimit: 10,
+                        callback: function(value, index) {
+                            return 'R$ ' + this.getLabelForValue(value);
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+/**
+ * Renderiza gráfico de Payoff na aba Simulação (Chart 3)
+ * Similar ao Chart 2 mas na aba de simulação
+ */
+function renderDetChart3(operacao) {
+    const canvas = document.getElementById('detChart3');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    
+    if (detChart3) {
+        detChart3.destroy();
+    }
+    
+    // Reutilizar mesma lógica do Chart 2
+    const strike = parseFloat(operacao.strike);
+    const premioAbertura = parseFloat(operacao.premio_abertura);
+    const qtd = parseInt(operacao.quantidade);
+    const isVenda = operacao.tipo_operacao === 'VENDA';
+    const tipo = operacao.tipo_opcao;
+    
+    const minPrice = strike * 0.8;
+    const maxPrice = strike * 1.2;
+    const step = (maxPrice - minPrice) / 50;
+    
+    const prices = [];
+    const pnlValues = [];
+    
+    for (let price = minPrice; price <= maxPrice; price += step) {
+        prices.push(price.toFixed(2));
+        
+        let pnl = 0;
+        if (isVenda && tipo === 'PUT') {
+            if (price >= strike) {
+                pnl = premioAbertura * qtd;
+            } else {
+                pnl = (premioAbertura * qtd) - ((strike - price) * qtd);
+            }
+        }
+        
+        pnlValues.push(pnl);
+    }
+    
+    detChart3 = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: prices,
+            datasets: [{
+                label: 'Payoff (R$)',
+                data: pnlValues,
+                borderColor: '#2fb344',
+                backgroundColor: 'rgba(47, 179, 68, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.1,
+                pointRadius: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return 'R$ ' + value.toFixed(0);
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        maxTicksLimit: 10
+                    }
+                }
+            }
+        }
+    });
+}
+
+/**
+ * Renderiza gráfico de Volatilidade (Chart 4)
+ * Compara volatilidade implícita vs histórica
+ */
+function renderDetChart4(operacao) {
+    const canvas = document.getElementById('detChart4');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    
+    if (detChart4) {
+        detChart4.destroy();
+    }
+    
+    // Dados simulados de volatilidade
+    // TODO: Buscar dados reais de volatilidade
+    const days = [];
+    const ivData = [];
+    const hvData = [];
+    
+    for (let i = 30; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        days.push(date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }));
+        
+        // Simulação: IV geralmente maior que HV perto do vencimento
+        ivData.push(25 + Math.random() * 15);
+        hvData.push(20 + Math.random() * 10);
+    }
+    
+    detChart4 = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: days,
+            datasets: [
+                {
+                    label: 'Volatilidade Implícita (%)',
+                    data: ivData,
+                    borderColor: '#206bc4',
+                    backgroundColor: 'rgba(32, 107, 196, 0.1)',
+                    borderWidth: 2,
+                    fill: false,
+                    tension: 0.4
+                },
+                {
+                    label: 'Volatilidade Histórica (%)',
+                    data: hvData,
+                    borderColor: '#f59f00',
+                    backgroundColor: 'rgba(245, 159, 0, 0.1)',
+                    borderWidth: 2,
+                    fill: false,
+                    tension: 0.4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                }
+            },
+            scales: {
+                y: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return value.toFixed(0) + '%';
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        maxTicksLimit: 10
+                    }
+                }
+            }
+        }
+    });
+}
+
+/**
+ * Renderiza gráfico de Histórico de Preço (Chart 5)
+ * Mostra evolução do preço do ativo base
+ */
+function renderDetChart5(operacao) {
+    const canvas = document.getElementById('detChart5');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    
+    if (detChart5) {
+        detChart5.destroy();
+    }
+    
+    // Dados simulados de histórico de preço
+    // TODO: Buscar dados reais da API
+    const days = [];
+    const priceData = [];
+    const precoAtual = parseFloat(document.getElementById('detPrecoAtivo').textContent.replace(/[^\d,]/g, '').replace(',', '.'));
+    
+    for (let i = 30; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        days.push(date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }));
+        
+        // Simulação: variação aleatória ao redor do preço atual
+        const variation = (Math.random() - 0.5) * 0.1; // ±5%
+        priceData.push(precoAtual * (1 + variation));
+    }
+    
+    detChart5 = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: days,
+            datasets: [{
+                label: operacao.ativo_base,
+                data: priceData,
+                borderColor: '#2fb344',
+                backgroundColor: 'rgba(47, 179, 68, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return 'R$ ' + value.toFixed(2);
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        maxTicksLimit: 10
+                    }
+                }
+            }
+        }
+    });
+}
+
+/**
+ * Popula o container de gregas na aba Gráficos
+ */
+function populateGregasDisplay(operacao) {
+    const container = document.getElementById('gregasContainer');
+    if (!container) return;
+    
+    // Cálculos simulados de gregas
+    // TODO: Implementar Black-Scholes para cálculos reais
+    const gregas = {
+        delta: Math.random() * 0.5,      // 0 a 0.5 para PUT
+        gamma: Math.random() * 0.05,      // Menor perto do ATM
+        theta: -0.01 - Math.random() * 0.05, // Negativo (decay)
+        vega: 0.1 + Math.random() * 0.2,     // Sensibilidade à volatilidade
+        rho: -0.05 - Math.random() * 0.1     // Negativo para PUT
+    };
+    
+    container.innerHTML = `
+        <div class="mb-3">
+            <div class="d-flex justify-content-between mb-1">
+                <span>Delta</span>
+                <span class="fw-bold">${gregas.delta.toFixed(3)}</span>
+            </div>
+            <div class="progress" style="height: 8px;">
+                <div class="progress-bar bg-primary" style="width: ${Math.abs(gregas.delta) * 100}%"></div>
+            </div>
+            <small class="text-muted">Sensibilidade ao preço do ativo</small>
+        </div>
+        
+        <div class="mb-3">
+            <div class="d-flex justify-content-between mb-1">
+                <span>Gamma</span>
+                <span class="fw-bold">${gregas.gamma.toFixed(3)}</span>
+            </div>
+            <div class="progress" style="height: 8px;">
+                <div class="progress-bar bg-success" style="width: ${gregas.gamma * 2000}%"></div>
+            </div>
+            <small class="text-muted">Taxa de mudança do Delta</small>
+        </div>
+        
+        <div class="mb-3">
+            <div class="d-flex justify-content-between mb-1">
+                <span>Theta</span>
+                <span class="fw-bold text-danger">${gregas.theta.toFixed(3)}</span>
+            </div>
+            <div class="progress" style="height: 8px;">
+                <div class="progress-bar bg-danger" style="width: ${Math.abs(gregas.theta) * 1000}%"></div>
+            </div>
+            <small class="text-muted">Decaimento temporal (por dia)</small>
+        </div>
+        
+        <div class="mb-3">
+            <div class="d-flex justify-content-between mb-1">
+                <span>Vega</span>
+                <span class="fw-bold">${gregas.vega.toFixed(3)}</span>
+            </div>
+            <div class="progress" style="height: 8px;">
+                <div class="progress-bar bg-info" style="width: ${gregas.vega * 333}%"></div>
+            </div>
+            <small class="text-muted">Sensibilidade à volatilidade</small>
+        </div>
+        
+        <div class="mb-0">
+            <div class="d-flex justify-content-between mb-1">
+                <span>Rho</span>
+                <span class="fw-bold">${gregas.rho.toFixed(3)}</span>
+            </div>
+            <div class="progress" style="height: 8px;">
+                <div class="progress-bar bg-warning" style="width: ${Math.abs(gregas.rho) * 667}%"></div>
+            </div>
+            <small class="text-muted">Sensibilidade à taxa de juros</small>
+        </div>
+    `;
+}
+
+/**
+ * Popula os cenários pré-definidos na aba Simulação
+ */
+function populateScenarioCards(operacao) {
+    const container = document.getElementById('scenarioGrid');
+    if (!container) return;
+    
+    const strike = parseFloat(operacao.strike);
+    const premioAbertura = parseFloat(operacao.premio_abertura);
+    const qtd = parseInt(operacao.quantidade);
+    const isVenda = operacao.tipo_operacao === 'VENDA';
+    const tipo = operacao.tipo_opcao;
+    
+    // 4 cenários: muito baixo, abaixo strike, acima strike, muito alto
+    const scenarios = [
+        { label: 'Queda Forte', price: strike * 0.85, icon: '📉', color: 'danger' },
+        { label: 'Abaixo Strike', price: strike * 0.95, icon: '⚠️', color: 'warning' },
+        { label: 'Acima Strike', price: strike * 1.05, icon: '✅', color: 'success' },
+        { label: 'Alta Forte', price: strike * 1.15, icon: '📈', color: 'success' }
+    ];
+    
+    let html = '';
+    scenarios.forEach(scenario => {
+        let pnl = 0;
+        if (isVenda && tipo === 'PUT') {
+            if (scenario.price >= strike) {
+                pnl = premioAbertura * qtd;
+            } else {
+                pnl = (premioAbertura * qtd) - ((strike - scenario.price) * qtd);
+            }
+        }
+        
+        const pnlClass = pnl >= 0 ? 'text-success' : 'text-danger';
+        const pnlSign = pnl >= 0 ? '+' : '';
+        
+        html += `
+            <div class="col-md-3">
+                <div class="card" style="background: #1a2332; cursor: pointer;" onclick="updateSimulationPrice(${scenario.price})">
+                    <div class="card-body text-center">
+                        <div class="display-6 mb-2">${scenario.icon}</div>
+                        <div class="fw-bold">${scenario.label}</div>
+                        <div class="text-muted small">R$ ${scenario.price.toFixed(2)}</div>
+                        <div class="h5 mb-0 mt-2 ${pnlClass}">${pnlSign}R$ ${Math.abs(pnl).toFixed(2)}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
+/**
+ * Atualiza o simulador de preço quando slider é movido ou cenário clicado
+ */
+function updateSimulationPrice(price) {
+    const slider = document.getElementById('priceSlider');
+    if (slider) {
+        slider.value = price;
+    }
+    
+    // Recalcular P&L para o preço simulado
+    const operacao = allOperacoes.find(op => op.id === currentDetalhesOpId);
+    if (!operacao) return;
+    
+    const strike = parseFloat(operacao.strike);
+    const premioAbertura = parseFloat(operacao.premio_abertura);
+    const qtd = parseInt(operacao.quantidade);
+    const isVenda = operacao.tipo_operacao === 'VENDA';
+    const tipo = operacao.tipo_opcao;
+    
+    let pnl = 0;
+    let scenario = '';
+    
+    if (isVenda && tipo === 'PUT') {
+        if (price >= strike) {
+            pnl = premioAbertura * qtd;
+            scenario = 'Lucro Máximo';
+        } else {
+            pnl = (premioAbertura * qtd) - ((strike - price) * qtd);
+            scenario = price < strike * 0.9 ? 'Prejuízo Elevado' : 'Prejuízo Moderado';
+        }
+    }
+    
+    const pnlClass = pnl >= 0 ? 'text-success' : 'text-danger';
+    const pnlSign = pnl >= 0 ? '+' : '';
+    
+    const simulatedValue = document.getElementById('simulatedValue');
+    const scenarioLabel = document.getElementById('scenarioLabel');
+    
+    if (simulatedValue) {
+        simulatedValue.textContent = `${pnlSign}R$ ${Math.abs(pnl).toFixed(2)}`;
+        simulatedValue.className = `h3 mb-0 ${pnlClass}`;
+    }
+    
+    if (scenarioLabel) {
+        scenarioLabel.textContent = scenario;
+    }
+}
+
+// Event listener para o slider de simulação
+document.addEventListener('DOMContentLoaded', function() {
+    const priceSlider = document.getElementById('priceSlider');
+    if (priceSlider) {
+        priceSlider.addEventListener('input', function() {
+            updateSimulationPrice(parseFloat(this.value));
+        });
+    }
+    
+    // Event listener para o botão de refresh do modal detalhes
+    const btnDetRefresh = document.getElementById('btnDetRefresh');
+    if (btnDetRefresh) {
+        btnDetRefresh.addEventListener('click', refreshDetalhesOperacao);
+    }
+});
+

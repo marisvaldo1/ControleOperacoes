@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Opções Modal</title>
+    
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Tabler.io CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css">
+    
+    <!-- Tabler Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --tblr-font-sans-serif: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --chart-green: #40c057;
+            --chart-red: #fa5252;
+            --bg-body-dark: #111827; /* Fundo escuro profundo */
+            --card-bg-dark: #1f2937;  /* Cinza levemente mais claro */
+            --border-color-dark: #374151;
+        }
+        
+        body {
+            background-color: var(--bg-body-dark);
+            font-family: var(--tblr-font-sans-serif);
+            color: #e2e8f0;
+            /* Overflow hidden é importante para não quebrar o scroll do modal pai */
+            overflow-x: hidden; 
+            margin: 0; /* Remove margens padrão do body */
+            padding-bottom: 20px;
+        }
+
+        /* Estilização dos Cartões */
+        .card {
+            background-color: var(--card-bg-dark);
+            border-color: var(--border-color-dark);
+            color: #e2e8f0;
+            margin-bottom: 1rem; /* Espaçamento reduzido para modal */
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+        
+        .card-header {
+            background-color: rgba(255,255,255,0.03);
+            border-bottom-color: var(--border-color-dark);
+            padding: 0.75rem 1rem; /* Padding mais compacto */
+        }
+
+        .card-body {
+            padding: 1rem;
+        }
+
+        .card-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        /* Tabelas */
+        .table {
+            --tblr-table-color: #e2e8f0;
+            --tblr-table-bg: transparent;
+            --tblr-table-border-color: var(--border-color-dark);
+            --tblr-table-striped-bg: rgba(255,255,255,0.02);
+            --tblr-table-hover-bg: rgba(255,255,255,0.04);
+        }
+
+        /* Inputs Readonly */
+        .form-control:read-only {
+            background-color: rgba(0,0,0,0.2);
+            border-color: var(--border-color-dark);
+            color: #9ca3af;
+            font-size: 0.9rem;
+            padding: 0.5rem 0.75rem;
+        }
+        .form-label {
+            font-size: 0.8rem;
+            margin-bottom: 0.25rem;
+        }
+
+        /* Estilização das Abas */
+        .nav-tabs {
+            border-bottom-color: var(--border-color-dark);
+            background: var(--card-bg-dark);
+            padding-top: 0.5rem;
+            padding-left: 1rem;
+            border-radius: 0.5rem 0.5rem 0 0;
+        }
+        .nav-link {
+            color: #9ca3af;
+            border-bottom-color: transparent;
+            padding: 0.75rem 1.25rem; /* Padding compacto */
+            font-size: 0.9rem;
+        }
+        .nav-link:hover {
+            color: #fff;
+            background-color: rgba(255,255,255,0.05);
+            border-color: transparent;
+        }
+        .nav-link.active {
+            background-color: var(--card-bg-dark);
+            color: #339af0; 
+            border-bottom-color: #339af0;
+            font-weight: 600;
+        }
+
+        /* Slider */
+        input[type=range] {
+            background: #374151;
+            height: 6px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #339af0;
+            border: 2px solid #fff;
+            border-radius: 50%;
+        }
+
+        /* Cores de Texto e Badges */
+        .text-green { color: var(--chart-green) !important; }
+        .text-red { color: var(--chart-red) !important; }
+        .bg-green-lt { background-color: rgba(64, 192, 87, 0.15) !important; color: var(--chart-green) !important; }
+        .bg-red-lt { background-color: rgba(250, 82, 82, 0.15) !important; color: var(--chart-red) !important; }
+        .bg-blue-lt { background-color: rgba(51, 154, 240, 0.15) !important; color: #339af0 !important; }
+
+        /* Gráficos - Altura fixa para modal */
+        .chart-container {
+            position: relative;
+            height: 280px; /* Altura otimizada para modal */
+            width: 100%;
+        }
+        .chart-container-sm {
+            height: 180px;
+        }
+        
+        /* Listas */
+        .list-group-item {
+            background-color: transparent;
+            border-color: var(--border-color-dark);
+            color: #e2e8f0;
+            padding: 0.75rem 1rem;
+            font-size: 0.9rem;
+        }
+        .list-group-item:hover {
+            background-color: rgba(255,255,255,0.03);
+        }
+        
+        /* Cabeçalho da Modal View */
+        .modal-page-header {
+            padding: 0.5rem 1rem 1rem 1rem;
+            border-bottom: 1px solid var(--border-color-dark);
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Cabeçalho Compacto para dentro do Modal -->
+    <div class="modal-page-header d-flex justify-content-between align-items-center">
+        <div>
+            <h3 class="mb-0 fw-bold">PETRN369W1</h3>
+            <div class="text-muted small">Venda de Put • Venc: 06/02/2026</div>
+        </div>
+        <div class="text-end">
+            <div class="text-green fw-bold h4 mb-0">+R$ 88,00</div>
+            <div class="text-muted small">Resultado MTM</div>
+        </div>
+    </div>
+
+    <div class="container-fluid p-0"> <!-- Container fluid para ocupar largura total do modal -->
+        
+        <!-- Abas de Navegação -->
+        <ul class="nav nav-tabs mb-3" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="performance-tab" data-bs-toggle="tab" data-bs-target="#tabs-performance" type="button" role="tab">Performance</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="detalhes-tab" data-bs-toggle="tab" data-bs-target="#tabs-detalhes" type="button" role="tab">Detalhes</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="simulacao-tab" data-bs-toggle="tab" data-bs-target="#tabs-simulacao" type="button" role="tab">Simulação</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="grafico-tab" data-bs-toggle="tab" data-bs-target="#tabs-grafico" type="button" role="tab">Gráficos</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="risco-tab" data-bs-toggle="tab" data-bs-target="#tabs-risco" type="button" role="tab">Risco</button>
+            </li>
+        </ul>
+
+        <div class="tab-content bg-transparent" id="myTabContent">
+            
+            <!-- ABA 1: PERFORMANCE -->
+            <div class="tab-pane fade show active" id="tabs-performance" role="tabpanel">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h3 class="card-title">Evolução dos Resultados</h3>
+                            </div>
+                            <div class="card-body">
+                                <div id="chart-performance" class="chart-container"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body row align-items-center">
+                                <div class="col-md-4">
+                                    <div class="small text-muted text-uppercase fw-bold mb-1">Prêmio Inicial</div>
+                                    <div class="h3 text-green mb-0">R$ 240,00</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="small text-muted text-uppercase fw-bold mb-1">Preço Atual (PETR4)</div>
+                                    <div class="h3 mb-0">R$ 37,27 <span class="small text-red">-0.35%</span></div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="small text-muted text-uppercase fw-bold mb-1">Strike</div>
+                                    <div class="h3 mb-0">R$ 36,90</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ABA 2: DETALHES -->
+            <div class="tab-pane fade" id="tabs-detalhes" role="tabpanel">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header py-2">
+                                <h3 class="card-title">Valores na Abertura</h3>
+                            </div>
+                            <div class="list-group list-group-flush">
+                                <div class="list-group-item d-flex justify-content-between">
+                                    <span class="text-muted">Prêmio Unitário</span>
+                                    <span class="fw-bold">R$ 0,30</span>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between">
+                                    <span class="text-muted">Quantidade</span>
+                                    <span class="fw-bold">800</span>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between bg-green-lt">
+                                    <span class="text-muted">Prêmio Total</span>
+                                    <span class="fw-bold text-green">R$ 240,00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header py-2">
+                                <h3 class="card-title">Valores Atuais</h3>
+                            </div>
+                            <div class="list-group list-group-flush">
+                                <div class="list-group-item d-flex justify-content-between">
+                                    <span class="text-muted">Prêmio Unitário (Atu)</span>
+                                    <span class="fw-bold">R$ 0,19</span>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between">
+                                    <span class="text-muted">Custo Atual</span>
+                                    <span class="fw-bold">R$ 152,00</span>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between bg-green-lt">
+                                    <span class="text-muted">Resultado</span>
+                                    <span class="fw-bold text-green">+R$ 88,00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h3 class="card-title">Informações da Operação</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-2">
+                                    <div class="col-md-3">
+                                        <label class="form-label text-muted">Código</label>
+                                        <input type="text" class="form-control" value="PETRN369W1" readonly>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label text-muted">Tipo</label>
+                                        <input type="text" class="form-control" value="VENDA - PUT" readonly>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label text-muted">Strike</label>
+                                        <input type="text" class="form-control" value="R$ 36,90" readonly>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label text-muted">Vencimento</label>
+                                        <input type="text" class="form-control" value="06/02/2026" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ABA 3: SIMULAÇÃO -->
+            <div class="tab-pane fade" id="tabs-simulacao" role="tabpanel">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <div class="small text-muted text-uppercase mb-2">Preço no Vencimento</div>
+                                <div class="display-4 fw-bold mb-3" id="sim-price-display">R$ 40,00</div>
+                                
+                                <div class="mb-4">
+                                    <input type="range" id="price-slider" min="30" max="45" step="0.1" value="40">
+                                    <div class="d-flex justify-content-between text-muted mt-1" style="font-size: 0.75rem;">
+                                        <span>R$ 30</span>
+                                        <span>R$ 37,5</span>
+                                        <span>R$ 45</span>
+                                    </div>
+                                </div>
+
+                                <div class="alert alert-success mb-0 py-2" id="sim-result-alert">
+                                    <div class="d-flex flex-column align-items-center">
+                                        <h4 class="alert-title text-green mb-1 small fw-bold">RESULTADO</h4>
+                                        <span class="h2 fw-bold text-green" id="sim-result-value">R$ 240,00</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="list-group list-group-flush">
+                                <button class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-2" onclick="setScenario(35.0)">
+                                    <span class="small">R$ 35,00</span>
+                                    <span class="text-red fw-bold small">-R$ 1.520,00</span>
+                                </button>
+                                <button class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-2" onclick="setScenario(36.60)">
+                                    <span class="small">R$ 36,60 (Eq)</span>
+                                    <span class="text-green fw-bold small">R$ 0,00</span>
+                                </button>
+                                <button class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-2" onclick="setScenario(38.00)">
+                                    <span class="small">R$ 38,00</span>
+                                    <span class="text-green fw-bold small">+R$ 880,00</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="card h-100">
+                            <div class="card-header py-2">
+                                <h3 class="card-title">Gráfico de Payoff</h3>
+                            </div>
+                            <div class="card-body">
+                                <div id="chart-payoff" class="chart-container"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ABA 4: GRÁFICOS -->
+            <div class="tab-pane fade" id="tabs-grafico" role="tabpanel">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h3 class="card-title">Histórico PETR4</h3>
+                            </div>
+                            <div class="card-body">
+                                <div id="chart-history" class="chart-container"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h3 class="card-title">Gregas da Opção</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="row text-center g-2">
+                                    <div class="col-6">
+                                        <div class="small text-muted">Delta</div>
+                                        <div class="text-red fw-bold h5 mb-0">-0.15</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="small text-muted">Gamma</div>
+                                        <div class="text-green fw-bold h5 mb-0">0.08</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="small text-muted">Theta</div>
+                                        <div class="text-green fw-bold h5 mb-0">0.02</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="small text-muted">Vega</div>
+                                        <div class="fw-bold h5 mb-0">-0.05</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h3 class="card-title">Volatilidade</h3>
+                            </div>
+                            <div class="card-body">
+                                <div id="chart-volatility" class="chart-container-sm"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ABA 5: RISCO -->
+            <div class="tab-pane fade" id="tabs-risco" role="tabpanel">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="card bg-red-lt h-100 border-0">
+                            <div class="card-body text-center">
+                                <div class="small text-muted text-uppercase fw-bold">Perda Máxima</div>
+                                <div class="h2 text-red mt-2">-R$ 29.280,00</div>
+                                <div class="small text-muted mt-1">Se preço = R$ 0,00</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-green-lt h-100 border-0">
+                            <div class="card-body text-center">
+                                <div class="small text-muted text-uppercase fw-bold">Ganho Máximo</div>
+                                <div class="h2 text-green mt-2">R$ 240,00</div>
+                                <div class="small text-muted mt-1">Se preço > R$ 36,90</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                <div class="small text-muted text-uppercase fw-bold">Ponto de Equilíbrio</div>
+                                <div class="h2 mt-2">R$ 36,60</div>
+                                <div class="progress progress-sm mt-3" style="height: 6px;">
+                                    <div class="progress-bar bg-primary" style="width: 50%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h3 class="card-title">Cenários</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="row text-center">
+                                    <div class="col-md-4 mb-3 mb-md-0">
+                                        <div class="p-3 rounded bg-green-lt border border-success border-opacity-25 h-100">
+                                            <div class="text-success fw-bold">OTIMISTA</div>
+                                            <div class="small text-muted mt-1">Preço sobe acima do Strike</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 mb-3 mb-md-0">
+                                        <div class="p-3 rounded bg-blue-lt border border-primary border-opacity-25 h-100">
+                                            <div class="text-primary fw-bold">NEUTRO</div>
+                                            <div class="small text-muted mt-1">Preço estável no Breakeven</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="p-3 rounded bg-red-lt border border-danger border-opacity-25 h-100">
+                                            <div class="text-danger fw-bold">PESSIMISTA</div>
+                                            <div class="small text-muted mt-1">Queda acentuada do ativo</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div> <!-- End Tab Content -->
+    </div> <!-- End Container -->
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            // --- DADOS DA PLANILHA ---
+            const DATA = {
+                symbol: 'PETRN369W1',
+                quantity: 800,         // Da planilha
+                totalPremium: 240.00, // Da planilha
+                unitPremium: 0.30,    // 240 / 800
+                strike: 36.90,        // Breakeven(36.60) + Premium(0.30)
+                expiry: '06/02/2026'
+            };
+
+            // --- Configuração Padrão Dark Mode ---
+            const chartTheme = {
+                theme: { mode: 'dark' },
+                chart: {
+                    toolbar: { show: false },
+                    background: 'transparent',
+                    fontFamily: 'Inter, sans-serif',
+                    animations: { enabled: false } // Desabilita animação inicial para renderizar rápido no modal
+                },
+                grid: { borderColor: '#374151' },
+                dataLabels: { enabled: false },
+                tooltip: { theme: 'dark' },
+                xaxis: {
+                    axisBorder: { show: false },
+                    axisTicks: { show: false },
+                    labels: { style: { colors: '#9ca3af', fontSize: '11px' } }
+                },
+                yaxis: {
+                    labels: { style: { colors: '#9ca3af', fontSize: '11px' } }
+                }
+            };
+
+            let perfChart, payoffChart, histChart, volChart;
+
+            // --- Inicialização dos Gráficos ---
+            function initCharts() {
+                // 1. Performance
+                perfChart = new ApexCharts(document.querySelector("#chart-performance"), {
+                    ...chartTheme,
+                    series: [{ name: 'Resultado', data: [0, 50, 80, 120, 180, 220, 240, 210, 88] }],
+                    chart: { type: 'area', height: 280, ...chartTheme.chart },
+                    stroke: { curve: 'smooth', width: 2 },
+                    fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 90, 100] }},
+                    xaxis: { categories: ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:30'], ...chartTheme.xaxis }
+                });
+                perfChart.render();
+
+                // 2. Payoff (Inicial)
+                renderPayoffChart(40);
+
+                // 3. Histórico
+                histChart = new ApexCharts(document.querySelector("#chart-history"), {
+                    ...chartTheme,
+                    series: [{
+                        name: 'PETR4',
+                        data: [
+                            {x: new Date('2023-08-01').getTime(), y: [35.0, 35.5, 34.8, 35.2]},
+                            {x: new Date('2023-08-02').getTime(), y: [35.2, 35.8, 35.1, 35.6]},
+                            {x: new Date('2023-08-03').getTime(), y: [35.6, 36.0, 35.5, 35.9]},
+                            {x: new Date('2023-08-04').getTime(), y: [35.9, 36.4, 35.8, 36.1]},
+                            {x: new Date('2023-08-07').getTime(), y: [36.1, 36.5, 36.0, 36.3]},
+                            {x: new Date('2023-08-08').getTime(), y: [36.3, 36.9, 36.2, 36.7]},
+                            {x: new Date('2023-08-09').getTime(), y: [36.7, 37.3, 36.6, 37.27]}
+                        ]
+                    }],
+                    chart: { type: 'candlestick', height: 280, ...chartTheme.chart },
+                    plotOptions: { candlestick: { colors: { upward: '#40c057', downward: '#fa5252' } } },
+                    xaxis: { type: 'datetime', ...chartTheme.xaxis }
+                });
+                histChart.render();
+
+                // 4. Volatilidade
+                volChart = new ApexCharts(document.querySelector("#chart-volatility"), {
+                    ...chartTheme,
+                    series: [
+                        { name: 'Implícita', data: [30, 32, 35, 34, 36, 38, 37] },
+                        { name: 'Histórica', data: [28, 29, 30, 31, 30, 29, 28] }
+                    ],
+                    chart: { type: 'line', height: 180, ...chartTheme.chart },
+                    stroke: { curve: 'smooth', width: 2 },
+                    xaxis: { categories: ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'], ...chartTheme.xaxis }
+                });
+                volChart.render();
+            }
+
+            // --- Renderizar Payoff ---
+            function renderPayoffChart(currentPrice) {
+                const dataPoints = [];
+                for(let i = 30; i <= 45; i += 0.5) {
+                    let intrinsic = Math.max(0, DATA.strike - i);
+                    let profitPerShare = DATA.unitPremium - intrinsic;
+                    let totalProfit = profitPerShare * DATA.quantity;
+                    dataPoints({ x: i, y: totalProfit.toFixed(2) });
+                }
+
+                const options = {
+                    ...chartTheme,
+                    series: [{ name: 'Lucro/Prejuízo', data: dataPoints }],
+                    chart: { type: 'line', height: 280, ...chartTheme.chart },
+                    stroke: { width: 3, curve: 'monotoneCubic' },
+                    colors: ['#339af0'],
+                    annotations: {
+                        xaxis: [{
+                            x: currentPrice,
+                            borderColor: '#fa5252',
+                            label: { borderColor: '#fa5252', style: { color: '#fff', background: '#fa5252' }, text: 'Atual' }
+                        }],
+                        yaxis: [{ y: 0, borderColor: '#9ca3af', strokeDashArray: 4 }]
+                    },
+                    xaxis: { type: 'numeric', title: { text: 'Preço' }, ...chartTheme.xaxis },
+                    yaxis: { title: { text: 'Resultado' }, ...chartTheme.yaxis }
+                };
+                
+                if(payoffChart) payoffChart.destroy();
+                payoffChart = new ApexCharts(document.querySelector("#chart-payoff"), options);
+                payoffChart.render();
+            }
+
+            // Iniciar
+            initCharts();
+
+            // --- CORREÇÃO ESPECÍFICA PARA MODAL ---
+            // 1. Força resize quando a aba muda
+            const triggerTabList = document.querySelectorAll('#myTab button');
+            triggerTabList.forEach(triggerEl => {
+                triggerEl.addEventListener('shown.bs.tab', event => {
+                    const targetId = event.target.getAttribute('data-bs-target');
+                    setTimeout(() => {
+                        if(targetId === '#tabs-performance') perfChart.updateOptions({ chart: { height: 280 } });
+                        if(targetId === '#tabs-simulacao' && payoffChart) payoffChart.updateOptions({ chart: { height: 280 } });
+                        if(targetId === '#tabs-grafico') {
+                            histChart.updateOptions({ chart: { height: 280 } });
+                            volChart.updateOptions({ chart: { height: 180 } });
+                        }
+                    }, 50);
+                });
+            });
+
+            // 2. Força resize quando a janela/iframe é carregado (útil para modais)
+            window.addEventListener('load', () => {
+                setTimeout(() => {
+                    window.dispatchEvent(new Event('resize'));
+                }, 200);
+            });
+
+            // --- Lógica do Simulador ---
+            const slider = document.getElementById('price-slider');
+            const display = document.getElementById('sim-price-display');
+            const resultDisplay = document.getElementById('sim-result-value');
+            const alertBox = document.getElementById('sim-result-alert');
+
+            window.updateSimulation = function(price) {
+                display.innerText = `R$ ${parseFloat(price).toFixed(2)}`;
+                const intrinsic = Math.max(0, DATA.strike - price);
+                const profitPerShare = DATA.unitPremium - intrinsic;
+                const totalProfit = profitPerShare * DATA.quantity;
+                
+                resultDisplay.innerText = totalProfit.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                
+                if(totalProfit > 0) {
+                    resultDisplay.className = "h2 fw-bold text-green";
+                    alertBox.className = "alert alert-success mb-0 py-2";
+                } else {
+                    resultDisplay.className = "h2 fw-bold text-red";
+                    alertBox.className = "alert alert-danger mb-0 py-2";
+                }
+                renderPayoffChart(parseFloat(price));
+            }
+
+            slider.addEventListener('input', (e) => updateSimulation(e.target.value));
+
+            window.setScenario = function(price) {
+                slider.value = price;
+                updateSimulation(price);
+            };
+        });
+    </script>
+</body>
+</html>

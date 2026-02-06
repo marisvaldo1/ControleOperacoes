@@ -1,0 +1,741 @@
+<!doctype html>
+<html lang="pt-BR" data-bs-theme="dark">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <title>PETRN369W1 - Dashboard Dark</title>
+  
+  <!-- Tabler Core CSS (Dark Theme) -->
+  <link href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta21/dist/css/tabler.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.3.0/dist/tabler-icons.min.css" rel="stylesheet"/>
+  
+  <style>
+    /* Forçar tema dark em todos os elementos */
+    :root, html, body {
+      background-color: #0d1117 !important;
+      color: #f0f6fc !important;
+    }
+    
+    body {
+      background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+    }
+    
+    /* Customização dark */
+    .chart-container { height: 320px; position: relative; }
+    .chart-container.lg { height: 400px; }
+    .greek-progress { height: 8px; margin-top: 8px; }
+    .strike-marker { position: relative; height: 50px; margin-bottom: 16px; }
+    .strike-line { position: absolute; left: 48%; top: 50%; transform: translate(-50%, -50%); width: 2px; height: 40px; background: #f0ad4e; }
+    .strike-badge { position: absolute; left: 48%; top: 0; transform: translateX(-50%); white-space: nowrap; }
+    .scenario-border-danger { border-left: 3px solid #dc3545 !important; }
+    .scenario-border-warning { border-left: 3px solid #ffc107 !important; }
+    .scenario-border-success { border-left: 3px solid #28a745 !important; }
+    .demo-btn { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1050; }
+    
+    /* Cards com hover effects */
+    .card { transition: all 0.3s ease; border: 1px solid #30363d !important; }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.4) !important; }
+    .card-header { background-color: #161b22 !important; border-bottom: 1px solid #30363d !important; }
+    .card-body { background-color: #0d1117 !important; }
+    
+    /* Modal dark */
+    .modal-content { background-color: #0d1117 !important; border: 1px solid #30363d !important; }
+    .modal-header { background-color: #161b22 !important; border-bottom: 1px solid #30363d !important; }
+    .modal-footer { background-color: #161b22 !important; border-top: 1px solid #30363d !important; }
+    .modal-body { background-color: #0d1117 !important; }
+    
+    /* Tabelas dark */
+    .table { color: #f0f6fc !important; }
+    .table thead th { border-color: #30363d !important; color: #8b949e !important; }
+    .table tbody td { border-color: #30363d !important; }
+    .table tbody tr:hover { background-color: rgba(255,255,255,0.02) !important; }
+    
+    /* Alerts dark */
+    .alert { border: 1px solid #30363d !important; }
+    .alert-success { background-color: rgba(40, 167, 69, 0.1) !important; border-color: rgba(40, 167, 69, 0.3) !important; }
+    .alert-info { background-color: rgba(23, 162, 184, 0.1) !important; border-color: rgba(23, 162, 184, 0.3) !important; }
+    .alert-warning { background-color: rgba(255, 193, 7, 0.1) !important; border-color: rgba(255, 193, 7, 0.3) !important; }
+    .alert-danger { background-color: rgba(220, 53, 69, 0.1) !important; border-color: rgba(220, 53, 69, 0.3) !important; }
+    
+    /* Progress bars dark */
+    .progress { background-color: #30363d !important; }
+    
+    /* Nav tabs dark */
+    .nav-tabs { border-bottom: 1px solid #30363d !important; }
+    .nav-tabs .nav-link { color: #8b949e !important; }
+    .nav-tabs .nav-link:hover { color: #f0f6fc !important; background-color: rgba(255,255,255,0.02) !important; }
+    .nav-tabs .nav-link.active { color: #58a6ff !important; background-color: #0d1117 !important; border-color: #30363d #30363d transparent !important; }
+    
+    /* Badges */
+    .badge { font-weight: 600; }
+    
+    /* Text colors */
+    .text-success { color: #3fb950 !important; }
+    .text-danger { color: #f85149 !important; }
+    .text-warning { color: #d29922 !important; }
+    .text-info { color: #58a6ff !important; }
+    
+    /* Scrollbar dark */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #161b22; }
+    ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #484f58; }
+  </style>
+</head>
+
+<body class="theme-dark">
+  
+  <!-- Botão para abrir modal -->
+  <button class="btn btn-primary demo-btn" data-bs-toggle="modal" data-bs-target="#mainModal">
+    <i class="ti ti-layout-dashboard me-2"></i>Abrir Dashboard PETRN369W1
+  </button>
+
+  <!-- Modal Principal -->
+  <div class="modal modal-blur fade" id="mainModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+        
+        <!-- Header -->
+        <div class="modal-header">
+          <div class="d-flex flex-column gap-1">
+            <h5 class="modal-title m-0">
+              <span class="text-primary fw-bold">PETRN369W1</span>
+              <span class="badge bg-danger ms-2">VENDA PUT</span>
+              <span class="badge bg-success ms-1">Sem Exercício</span>
+              <span class="badge bg-info ms-1">1 dia útil</span>
+            </h5>
+            <div class="text-secondary small d-flex flex-wrap gap-3">
+              <span><i class="ti ti-calendar-event me-1"></i>Vencimento: <strong class="text-white">06/02/2026</strong></span>
+              <span><i class="ti ti-target-arrow me-1"></i>Strike: <strong class="text-white">R$ 36,90</strong></span>
+              <span><i class="ti ti-coin me-1"></i>Prêmio: <strong class="text-white">R$ 0,30</strong></span>
+              <span><i class="ti ti-stack-2 me-1"></i>Quantidade: <strong class="text-white">800</strong></span>
+            </div>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <!-- Body -->
+        <div class="modal-body">
+          <!-- Tabs -->
+          <ul class="nav nav-tabs mb-3" data-bs-toggle="tabs">
+            <li class="nav-item">
+              <a href="#tab-performance" class="nav-link active" data-bs-toggle="tab">
+                <i class="ti ti-chart-line me-2"></i>Performance
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="#tab-detalhes" class="nav-link" data-bs-toggle="tab">
+                <i class="ti ti-list-details me-2"></i>Detalhes
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="#tab-simulacao" class="nav-link" data-bs-toggle="tab">
+                <i class="ti ti-calculator me-2"></i>Simulação
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="#tab-graficos" class="nav-link" data-bs-toggle="tab">
+                <i class="ti ti-chart-dots me-2"></i>Gráficos
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="#tab-risco" class="nav-link" data-bs-toggle="tab">
+                <i class="ti ti-alert-triangle me-2"></i>Risco
+              </a>
+            </li>
+          </ul>
+
+          <div class="tab-content">
+            
+            <!-- TAB PERFORMANCE -->
+            <div class="tab-pane fade show active" id="tab-performance">
+              <!-- Stats -->
+              <div class="row row-cards mb-3">
+                <div class="col-sm-6 col-lg-3">
+                  <div class="card card-sm">
+                    <div class="card-body">
+                      <div class="row align-items-center">
+                        <div class="col-auto"><span class="bg-success text-white avatar"><i class="ti ti-cash"></i></span></div>
+                        <div class="col"><div class="fw-bold">R$ 240,00</div><div class="text-secondary small">Prêmio Recebido</div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                  <div class="card card-sm">
+                    <div class="card-body">
+                      <div class="row align-items-center">
+                        <div class="col-auto"><span class="bg-info text-white avatar"><i class="ti ti-trending-up"></i></span></div>
+                        <div class="col"><div class="fw-bold">R$ 88,00</div><div class="text-secondary small">Lucro Atual (MTM)</div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                  <div class="card card-sm">
+                    <div class="card-body">
+                      <div class="row align-items-center">
+                        <div class="col-auto"><span class="bg-warning text-white avatar"><i class="ti ti-target"></i></span></div>
+                        <div class="col"><div class="fw-bold">0,99%</div><div class="text-secondary small">Distância Strike</div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                  <div class="card card-sm">
+                    <div class="card-body">
+                      <div class="row align-items-center">
+                        <div class="col-auto"><span class="bg-danger text-white avatar"><i class="ti ti-clock"></i></span></div>
+                        <div class="col"><div class="fw-bold">1 dia</div><div class="text-secondary small">Vencimento</div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Main Cards -->
+              <div class="row row-cards">
+                <div class="col-lg-4">
+                  <div class="card">
+                    <div class="card-header"><h3 class="card-title"><i class="ti ti-chart-candle me-2"></i>Cotações Atuais</h3></div>
+                    <div class="card-body">
+                      <div class="d-flex justify-content-between mb-3">
+                        <div><div class="text-secondary small">Ativo Base</div><div class="fw-bold">PETR4</div></div>
+                        <div class="text-end"><div class="h3 mb-0">R$ 37,27</div><small class="text-danger"><i class="ti ti-arrow-down"></i> -0,35%</small></div>
+                      </div>
+                      <hr>
+                      <div class="d-flex justify-content-between mb-3">
+                        <div><div class="text-secondary small">Opção</div><div class="fw-bold">PETRN369W1</div></div>
+                        <div class="text-end"><div class="h3 mb-0">R$ 0,19</div><small class="text-danger"><i class="ti ti-arrow-down"></i> -36,67%</small></div>
+                      </div>
+                      <hr>
+                      <div class="d-flex justify-content-between mb-2">
+                        <span class="text-secondary small">Prêmio Capturado</span>
+                        <span class="text-success fw-bold">63,33%</span>
+                      </div>
+                      <div class="progress"><div class="progress-bar bg-success" style="width: 63.33%"></div></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-lg-4">
+                  <div class="card">
+                    <div class="card-header"><h3 class="card-title"><i class="ti ti-wallet me-2"></i>Resultado Financeiro</h3></div>
+                    <div class="card-body">
+                      <div class="alert alert-success">
+                        <div class="d-flex"><div><i class="ti ti-check icon alert-icon me-2"></i></div><div><h4 class="alert-title">No Fechamento</h4><div class="text-secondary small">Se não houver exercício</div><div class="h2 text-success mt-2">+ R$ 240,00</div></div></div>
+                      </div>
+                      <div class="alert alert-info mb-0">
+                        <div class="d-flex"><div><i class="ti ti-chart-line icon alert-icon me-2"></i></div><div><h4 class="alert-title">Atual (MTM)</h4><div class="text-secondary small">Baseado na cotação atual</div><div class="h2 text-info mt-2">+ R$ 88,00</div></div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-lg-4">
+                  <div class="card">
+                    <div class="card-header"><h3 class="card-title"><i class="ti ti-coin me-2"></i>Detalhes do Prêmio</h3></div>
+                    <div class="card-body">
+                      <table class="table table-sm table-borderless mb-0">
+                        <tbody>
+                          <tr><td class="text-secondary">Prêmio na Abertura</td><td class="text-end fw-bold text-success">R$ 240,00</td></tr>
+                          <tr><td class="text-secondary">Custo Atual (Recompra)</td><td class="text-end fw-bold text-danger">R$ 152,00</td></tr>
+                          <tr><td class="text-secondary">Resultado Líquido</td><td class="text-end fw-bold text-success">R$ 88,00</td></tr>
+                          <tr><td class="text-secondary">Prêmio Restante</td><td class="text-end fw-bold">36,67%</td></tr>
+                        </tbody>
+                      </table>
+                      <div class="alert alert-warning mt-3 mb-0">
+                        <div class="d-flex"><div><i class="ti ti-info-circle icon alert-icon me-2"></i></div><div class="w-100"><h4 class="alert-title">Cenário de Exercício</h4><div class="d-flex justify-content-between small"><span>Valor se exercer:</span><strong>R$ 29.520,00</strong></div><div class="d-flex justify-content-between small"><span>Lucro esperado:</span><strong class="text-success">+0,77%</strong></div></div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Charts -->
+              <div class="row row-cards mt-3">
+                <div class="col-lg-6">
+                  <div class="card">
+                    <div class="card-header"><h3 class="card-title"><i class="ti ti-trending-up me-2"></i>Evolução do Resultado</h3></div>
+                    <div class="card-body"><div class="chart-container"><canvas id="chartEvolucao"></canvas></div></div>
+                  </div>
+                </div>
+                <div class="col-lg-6">
+                  <div class="card">
+                    <div class="card-header"><h3 class="card-title"><i class="ti ti-chart-bar me-2"></i>Previsão por Preço</h3></div>
+                    <div class="card-body"><div class="chart-container"><canvas id="chartPrevisao"></canvas></div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB DETALHES -->
+            <div class="tab-pane fade" id="tab-detalhes">
+              <div class="row row-cards">
+                <div class="col-lg-6">
+                  <div class="card">
+                    <div class="card-status-top bg-success"></div>
+                    <div class="card-header"><h3 class="card-title"><i class="ti ti-arrow-right me-2 text-success"></i>Valores na Abertura</h3></div>
+                    <div class="card-body">
+                      <table class="table">
+                        <tbody>
+                          <tr><td class="text-secondary">Preço PETR4</td><td class="text-end fw-bold">R$ 37,40</td></tr>
+                          <tr><td class="text-secondary">Prêmio Unitário</td><td class="text-end fw-bold">R$ 0,30</td></tr>
+                          <tr><td class="text-secondary">Distância do Strike</td><td class="text-end fw-bold">1,34%</td></tr>
+                          <tr><td class="text-secondary">Quantidade</td><td class="text-end fw-bold">800</td></tr>
+                          <tr><td class="text-secondary">Total Prêmio Recebido</td><td class="text-end fw-bold text-success">R$ 240,00</td></tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-6">
+                  <div class="card">
+                    <div class="card-status-top bg-info"></div>
+                    <div class="card-header"><h3 class="card-title"><i class="ti ti-activity me-2 text-info"></i>Valores Atuais</h3></div>
+                    <div class="card-body">
+                      <table class="table">
+                        <tbody>
+                          <tr><td class="text-secondary">Preço PETR4</td><td class="text-end fw-bold">R$ 37,27</td></tr>
+                          <tr><td class="text-secondary">Prêmio Unitário</td><td class="text-end fw-bold">R$ 0,19</td></tr>
+                          <tr><td class="text-secondary">Distância do Strike</td><td class="text-end fw-bold">0,99%</td></tr>
+                          <tr><td class="text-secondary">% Prêmio Atual</td><td class="text-end fw-bold text-warning">36,67%</td></tr>
+                          <tr><td class="text-secondary">Custo de Recompra</td><td class="text-end fw-bold text-danger">R$ 152,00</td></tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card mt-3">
+                <div class="card-header"><h3 class="card-title"><i class="ti ti-info-circle me-2"></i>Informações da Operação</h3></div>
+                <div class="card-body">
+                  <div class="row text-center">
+                    <div class="col-sm-6 col-lg-3 mb-3"><div class="text-secondary small mb-1">Tipo Operação</div><div class="h2 text-danger mb-0">VENDA</div></div>
+                    <div class="col-sm-6 col-lg-3 mb-3"><div class="text-secondary small mb-1">Tipo Opção</div><div class="h2 text-warning mb-0">PUT</div></div>
+                    <div class="col-sm-6 col-lg-3 mb-3"><div class="text-secondary small mb-1">Strike</div><div class="h2 mb-0">R$ 36,90</div></div>
+                    <div class="col-sm-6 col-lg-3 mb-3"><div class="text-secondary small mb-1">Data Exercício</div><div class="h3 mb-0">06/02/2026</div></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card mt-3">
+                <div class="card-header"><h3 class="card-title"><i class="ti ti-arrows-diff me-2"></i>Comparativo Abertura vs Atual</h3></div>
+                <div class="card-body">
+                  <div class="table-responsive">
+                    <table class="table table-vcenter">
+                      <thead>
+                        <tr>
+                          <th>Métrica</th>
+                          <th class="text-end text-success">Na Abertura</th>
+                          <th class="text-end text-info">Atual</th>
+                          <th class="text-end">Variação</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr><td>Preço PETR4</td><td class="text-end">R$ 37,40</td><td class="text-end">R$ 37,27</td><td class="text-end text-danger">-0,35%</td></tr>
+                        <tr><td>Prêmio Unitário</td><td class="text-end">R$ 0,30</td><td class="text-end">R$ 0,19</td><td class="text-end text-danger">-36,67%</td></tr>
+                        <tr><td>Distância Strike</td><td class="text-end">1,34%</td><td class="text-end">0,99%</td><td class="text-end text-danger">-0,35%</td></tr>
+                        <tr class="table-success"><td class="fw-bold">Total Prêmio</td><td class="text-end fw-bold text-success">R$ 240,00</td><td class="text-end fw-bold text-danger">-R$ 152,00</td><td class="text-end fw-bold text-success">R$ 88,00</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB SIMULAÇÃO -->
+            <div class="tab-pane fade" id="tab-simulacao">
+              <div class="card">
+                <div class="card-header">
+                  <h3 class="card-title"><i class="ti ti-calculator me-2"></i>Simulador de Preço no Vencimento</h3>
+                  <div class="card-actions"><span class="badge bg-info fs-4" id="priceDisplay">R$ 40,00</span></div>
+                </div>
+                <div class="card-body">
+                  <div class="strike-marker">
+                    <div class="strike-line"></div>
+                    <span class="strike-badge badge bg-warning">Strike R$ 36,90</span>
+                  </div>
+                  <input type="range" class="form-range" id="priceSlider" min="34" max="40" step="0.01" value="40">
+                  <div class="d-flex justify-content-between text-secondary small mt-2">
+                    <span>R$ 34,00</span>
+                    <span class="text-warning">Strike R$ 36,90</span>
+                    <span>R$ 40,00</span>
+                  </div>
+                  <div class="alert alert-success mt-4 mb-0" id="resultAlert">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                      <div><div class="text-secondary small">Resultado Simulado</div><div class="display-6" id="simulatedValue">R$ 240,00</div></div>
+                      <span class="badge bg-success fs-4" id="scenarioLabel">Lucro Máximo</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card mt-3">
+                <div class="card-header"><h3 class="card-title"><i class="ti ti-list me-2"></i>Cenários Pré-definidos</h3></div>
+                <div class="card-body">
+                  <div class="row row-cards">
+                    <div class="col-md-6 col-lg-3"><div class="card scenario-border-danger"><div class="card-body"><div class="d-flex justify-content-between mb-2"><span class="text-secondary small">PETR4 @ R$ 35,00</span><span class="badge bg-info">5%</span></div><div class="h2 text-danger">-R$ 1.640</div><div class="progress mt-2"><div class="progress-bar bg-info" style="width: 5%"></div></div></div></div></div>
+                    <div class="col-md-6 col-lg-3"><div class="card scenario-border-danger"><div class="card-body"><div class="d-flex justify-content-between mb-2"><span class="text-secondary small">PETR4 @ R$ 35,50</span><span class="badge bg-info">8%</span></div><div class="h2 text-danger">-R$ 880</div><div class="progress mt-2"><div class="progress-bar bg-info" style="width: 8%"></div></div></div></div></div>
+                    <div class="col-md-6 col-lg-3"><div class="card scenario-border-warning"><div class="card-body"><div class="d-flex justify-content-between mb-2"><span class="text-secondary small">PETR4 @ R$ 36,50</span><span class="badge bg-info">18%</span></div><div class="h2 text-warning">-R$ 80</div><div class="progress mt-2"><div class="progress-bar bg-info" style="width: 18%"></div></div></div></div></div>
+                    <div class="col-md-6 col-lg-3"><div class="card scenario-border-success"><div class="card-body"><div class="d-flex justify-content-between mb-2"><span class="text-secondary small">PETR4 ≥ R$ 36,90</span><span class="badge bg-success">65%</span></div><div class="h2 text-success">R$ 240</div><div class="progress mt-2"><div class="progress-bar bg-success" style="width: 65%"></div></div></div></div></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card mt-3">
+                <div class="card-header"><h3 class="card-title"><i class="ti ti-chart-area me-2"></i>Gráfico de Payoff</h3></div>
+                <div class="card-body"><div class="chart-container lg"><canvas id="chartPayoff"></canvas></div></div>
+              </div>
+            </div>
+
+            <!-- TAB GRÁFICOS -->
+            <div class="tab-pane fade" id="tab-graficos">
+              <div class="row row-cards">
+                <div class="col-lg-6">
+                  <div class="card">
+                    <div class="card-header"><h3 class="card-title"><i class="ti ti-chart-dots me-2"></i>Volatilidade Implícita vs Histórica</h3></div>
+                    <div class="card-body"><div class="chart-container"><canvas id="chartVolatilidade"></canvas></div></div>
+                  </div>
+                </div>
+                <div class="col-lg-6">
+                  <div class="card">
+                    <div class="card-header"><h3 class="card-title"><i class="ti ti-math me-2"></i>Gregas da Opção</h3></div>
+                    <div class="card-body">
+                      <div class="mb-4">
+                        <div class="d-flex justify-content-between mb-1">
+                          <div><span class="fw-bold text-info">Delta (Δ)</span><div class="text-secondary small">Sensibilidade ao preço</div></div>
+                          <span class="fw-bold text-info">-0.1500</span>
+                        </div>
+                        <div class="progress greek-progress"><div class="progress-bar bg-info" style="width: 15%"></div></div>
+                      </div>
+                      <div class="mb-4">
+                        <div class="d-flex justify-content-between mb-1">
+                          <div><span class="fw-bold text-success">Gamma (Γ)</span><div class="text-secondary small">Taxa de variação do Delta</div></div>
+                          <span class="fw-bold text-success">0.0800</span>
+                        </div>
+                        <div class="progress greek-progress"><div class="progress-bar bg-success" style="width: 8%"></div></div>
+                      </div>
+                      <div class="mb-4">
+                        <div class="d-flex justify-content-between mb-1">
+                          <div><span class="fw-bold text-warning">Theta (Θ)</span><div class="text-secondary small">Decaimento temporal</div></div>
+                          <span class="fw-bold text-warning">0.0500</span>
+                        </div>
+                        <div class="progress greek-progress"><div class="progress-bar bg-warning" style="width: 5%"></div></div>
+                      </div>
+                      <div>
+                        <div class="d-flex justify-content-between mb-1">
+                          <div><span class="fw-bold text-info">Vega (ν)</span><div class="text-secondary small">Sensibilidade à volatilidade</div></div>
+                          <span class="fw-bold text-info">0.0300</span>
+                        </div>
+                        <div class="progress greek-progress"><div class="progress-bar bg-info" style="width: 3%"></div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card mt-3">
+                <div class="card-header"><h3 class="card-title"><i class="ti ti-chart-line me-2"></i>Histórico de Preço - PETR4</h3></div>
+                <div class="card-body"><div class="chart-container lg"><canvas id="chartHistorico"></canvas></div></div>
+              </div>
+            </div>
+
+            <!-- TAB RISCO -->
+            <div class="tab-pane fade" id="tab-risco">
+              <div class="row row-cards mb-3">
+                <div class="col-sm-6 col-lg-3">
+                  <div class="card">
+                    <div class="card-status-top bg-danger"></div>
+                    <div class="card-body text-center">
+                      <span class="avatar avatar-xl bg-danger-lt mb-3"><i class="ti ti-trending-down icon"></i></span>
+                      <div class="text-secondary small">Perda Máxima</div>
+                      <div class="h2 text-danger">-R$ 29.280</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                  <div class="card">
+                    <div class="card-status-top bg-success"></div>
+                    <div class="card-body text-center">
+                      <span class="avatar avatar-xl bg-success-lt mb-3"><i class="ti ti-trending-up icon"></i></span>
+                      <div class="text-secondary small">Ganho Máximo</div>
+                      <div class="h2 text-success">R$ 240,00</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                  <div class="card">
+                    <div class="card-status-top bg-warning"></div>
+                    <div class="card-body text-center">
+                      <span class="avatar avatar-xl bg-warning-lt mb-3"><i class="ti ti-target icon"></i></span>
+                      <div class="text-secondary small">Break-even</div>
+                      <div class="h2 text-warning">R$ 36,60</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                  <div class="card">
+                    <div class="card-status-top bg-info"></div>
+                    <div class="card-body text-center">
+                      <span class="avatar avatar-xl bg-info-lt mb-3"><i class="ti ti-percentage icon"></i></span>
+                      <div class="text-secondary small">Prob. Lucro</div>
+                      <div class="h2 text-info">65%</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row row-cards">
+                <div class="col-lg-6">
+                  <div class="card">
+                    <div class="card-header"><h3 class="card-title"><i class="ti ti-shield me-2"></i>Análise de Risco</h3></div>
+                    <div class="card-body">
+                      <table class="table">
+                        <tbody>
+                          <tr><td class="text-secondary">Capital em Risco</td><td class="text-end fw-bold text-danger">R$ 29.520,00</td></tr>
+                          <tr><td class="text-secondary">Margem Requerida</td><td class="text-end fw-bold">R$ 7.380,00</td></tr>
+                          <tr><td class="text-secondary">Risco/Retorno</td><td class="text-end fw-bold">0,82:1</td></tr>
+                          <tr><td class="text-secondary">Retorno sobre Margem</td><td class="text-end fw-bold text-success">+3,25%</td></tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-6">
+                  <div class="card">
+                    <div class="card-header"><h3 class="card-title"><i class="ti ti-alert-triangle me-2"></i>Cenários de Risco</h3></div>
+                    <div class="card-body">
+                      <div class="alert alert-success"><h4 class="alert-title">✅ Cenário Otimista</h4><div class="text-secondary small">PETR4 acima de R$ 36,90. Lucro máximo R$ 240,00.</div></div>
+                      <div class="alert alert-warning"><h4 class="alert-title">⚠️ Cenário Neutro</h4><div class="text-secondary small">PETR4 próximo ao strike. Possível exercício.</div></div>
+                      <div class="alert alert-danger mb-0"><h4 class="alert-title">❌ Cenário Pessimista</h4><div class="text-secondary small">PETR4 cai significativamente. Prejuízo potencial de até R$ 29.280.</div></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card mt-3">
+                <div class="card-header"><h3 class="card-title"><i class="ti ti-table me-2"></i>Matriz de Risco por Faixa de Preço</h3></div>
+                <div class="card-body">
+                  <div class="table-responsive">
+                    <table class="table table-vcenter">
+                      <thead>
+                        <tr>
+                          <th>Preço PETR4</th>
+                          <th class="text-end">Resultado</th>
+                          <th class="text-end">% ROI</th>
+                          <th class="text-end">Probabilidade</th>
+                          <th class="text-end">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>≤ R$ 35,00</td>
+                          <td class="text-end fw-bold text-danger">-R$ 1.640,00</td>
+                          <td class="text-end text-danger">-683%</td>
+                          <td class="text-end">5%</td>
+                          <td class="text-end"><span class="badge bg-danger">Alto Risco</span></td>
+                        </tr>
+                        <tr>
+                          <td>R$ 35,01 - R$ 36,00</td>
+                          <td class="text-end fw-bold text-danger">-R$ 720,00</td>
+                          <td class="text-end text-danger">-300%</td>
+                          <td class="text-end">12%</td>
+                          <td class="text-end"><span class="badge bg-warning">Risco Médio</span></td>
+                        </tr>
+                        <tr>
+                          <td>R$ 36,01 - R$ 36,60</td>
+                          <td class="text-end fw-bold text-danger">-R$ 240,00</td>
+                          <td class="text-end text-danger">-100%</td>
+                          <td class="text-end">18%</td>
+                          <td class="text-end"><span class="badge bg-info">Zona de Alerta</span></td>
+                        </tr>
+                        <tr class="table-success">
+                          <td class="fw-bold">≥ R$ 36,90</td>
+                          <td class="text-end fw-bold">R$ 240,00</td>
+                          <td class="text-end fw-bold">+100%</td>
+                          <td class="text-end fw-bold">65%</td>
+                          <td class="text-end"><span class="badge bg-success">Lucro Máximo</span></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="modal-footer">
+          <div class="row w-100 g-2">
+            <div class="col-md-4">
+              <div class="card mb-0">
+                <div class="card-body py-3 text-center">
+                  <div class="text-secondary small">Saldo Atual</div>
+                  <div class="h3 mb-0">R$ 31.179,92</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card mb-0">
+                <div class="card-body py-3 text-center">
+                  <div class="text-secondary small">Saldo Projetado</div>
+                  <div class="h3 mb-0 text-success">R$ 31.419,92</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card mb-0 border-success">
+                <div class="card-body py-3 text-center">
+                  <div class="text-secondary small">Resultado esperado</div>
+                  <div class="h3 mb-0 text-success">+0,77%</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta21/dist/js/tabler.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  
+  <script>
+    // Auto open modal
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(() => {
+        new bootstrap.Modal(document.getElementById('mainModal')).show();
+      }, 300);
+    });
+
+    // Slider simulation
+    const slider = document.getElementById('priceSlider');
+    const priceDisplay = document.getElementById('priceDisplay');
+    const simulatedValue = document.getElementById('simulatedValue');
+    const scenarioLabel = document.getElementById('scenarioLabel');
+    const resultAlert = document.getElementById('resultAlert');
+
+    function formatBRL(value) {
+      return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    function updateSimulation() {
+      const price = parseFloat(slider.value);
+      const strike = 36.90;
+      const qty = 800;
+      const premiumTotal = 240;
+      
+      priceDisplay.textContent = formatBRL(price);
+      
+      let result = price >= strike ? premiumTotal : premiumTotal - (strike - price) * qty;
+      
+      // Reset classes
+      resultAlert.classList.remove('alert-success', 'alert-warning', 'alert-danger');
+      scenarioLabel.classList.remove('bg-success', 'bg-warning', 'bg-danger');
+      simulatedValue.classList.remove('text-success', 'text-warning', 'text-danger');
+      
+      if (result >= premiumTotal * 0.9) {
+        resultAlert.classList.add('alert-success');
+        scenarioLabel.classList.add('bg-success');
+        scenarioLabel.textContent = 'Lucro Máximo';
+        simulatedValue.classList.add('text-success');
+      } else if (result >= 0) {
+        resultAlert.classList.add('alert-warning');
+        scenarioLabel.classList.add('bg-warning');
+        scenarioLabel.textContent = 'Lucro Parcial';
+        simulatedValue.classList.add('text-warning');
+      } else {
+        resultAlert.classList.add('alert-danger');
+        scenarioLabel.classList.add('bg-danger');
+        scenarioLabel.textContent = 'Prejuízo';
+        simulatedValue.classList.add('text-danger');
+      }
+      
+      simulatedValue.textContent = formatBRL(result);
+    }
+
+    slider.addEventListener('input', updateSimulation);
+    updateSimulation();
+
+    // Chart.js dark theme
+    Chart.defaults.color = '#8b949e';
+    Chart.defaults.borderColor = '#30363d';
+    const gridColor = 'rgba(255,255,255,0.05)';
+    const tickColor = '#8b949e';
+
+    // Chart: Evolução
+    new Chart(document.getElementById('chartEvolucao'), {
+      type: 'line',
+      data: {
+        labels: ['D-5','D-4','D-3','D-2','D-1','Hoje'],
+        datasets: [
+          { label: 'Resultado Real', data: [240,210,180,150,120,88], borderColor:'#58a6ff', backgroundColor:'rgba(88, 166, 255, 0.15)', tension:.4, fill:true, borderWidth:2 },
+          { label: 'Meta (Prêmio)', data: [240,240,240,240,240,240], borderColor:'#3fb950', borderDash:[5,5], borderWidth:2, pointRadius:0 }
+        ]
+      },
+      options: { 
+        responsive:true, 
+        maintainAspectRatio:false, 
+        plugins:{legend:{position:'bottom'}}, 
+        scales:{x:{grid:{color:gridColor}, ticks:{color:tickColor}}, y:{grid:{color:gridColor}, ticks:{color:tickColor, callback:v=>'R$ '+v}}} 
+      }
+    });
+
+    // Chart: Previsão
+    new Chart(document.getElementById('chartPrevisao'), {
+      type: 'bar',
+      data: { labels:['35','35.5','36','36.5','36.9','37','37.27','37.5','38'], datasets:[{ data:[-1640,-880,-720,-560,0,80,88,200,240], backgroundColor:ctx=>ctx.parsed.y<0?'#f85149':'#3fb950', borderRadius:4 }] },
+      options: { 
+        responsive:true, 
+        maintainAspectRatio:false, 
+        plugins:{legend:{display:false}}, 
+        scales:{x:{grid:{color:gridColor}, ticks:{color:tickColor}}, y:{grid:{color:gridColor}, ticks:{color:tickColor, callback:v=>'R$ '+v}}} 
+      }
+    });
+
+    // Chart: Payoff
+    const payoffLabels = []; const payoffData = [];
+    for (let p=34; p<=40; p+=0.1) { payoffLabels.push(p.toFixed(2)); payoffData.push(p<36.9?240-(36.9-p)*800:240); }
+    new Chart(document.getElementById('chartPayoff'), {
+      type: 'line',
+      data: { labels:payoffLabels, datasets:[{ data:payoffData, borderColor:'#3fb950', backgroundColor:'rgba(63, 185, 80, 0.15)', fill:true, tension:.1, pointRadius:0, segment:{borderColor:ctx=>ctx.p1.parsed.y<0?'#f85149':'#3fb950', backgroundColor:ctx=>ctx.p1.parsed.y<0?'rgba(248, 81, 73, 0.15)':'rgba(63, 185, 80, 0.15)'} }] },
+      options: { 
+        responsive:true, 
+        maintainAspectRatio:false, 
+        plugins:{legend:{display:false}}, 
+        scales:{x:{grid:{color:gridColor}, ticks:{color:tickColor, maxTicksLimit:12}}, y:{grid:{color:gridColor}, ticks:{color:tickColor, callback:v=>'R$ '+v}}} 
+      }
+    });
+
+    // Chart: Volatilidade
+    new Chart(document.getElementById('chartVolatilidade'), {
+      type: 'line',
+      data: { labels:['D-10','D-8','D-6','D-4','D-2','Hoje'], datasets:[{label:'Vol. Implícita', data:[45,48,52,55,57,58], borderColor:'#a371f7', backgroundColor:'rgba(163, 113, 247, 0.15)', tension:.4}, {label:'Vol. Histórica', data:[40,41,42,42,43,42], borderColor:'#d29922', backgroundColor:'rgba(210, 153, 34, 0.15)', tension:.4}] },
+      options: { 
+        responsive:true, 
+        maintainAspectRatio:false, 
+        plugins:{legend:{position:'bottom'}}, 
+        scales:{x:{grid:{color:gridColor}, ticks:{color:tickColor}}, y:{grid:{color:gridColor}, ticks:{color:tickColor, callback:v=>v+'%'}}} 
+      }
+    });
+
+    // Chart: Histórico
+    new Chart(document.getElementById('chartHistorico'), {
+      type: 'line',
+      data: { labels:['D-10','D-9','D-8','D-7','D-6','D-5','D-4','D-3','D-2','D-1','Hoje'], datasets:[{ data:[36.8,36.9,37.1,37.2,37.45,37.5,37.4,37.35,37.3,37.35,37.27], borderColor:'#58a6ff', backgroundColor:'rgba(88, 166, 255, 0.15)', fill:true, tension:.4 }] },
+      options: { 
+        responsive:true, 
+        maintainAspectRatio:false, 
+        plugins:{legend:{display:false}}, 
+        scales:{x:{grid:{color:gridColor}, ticks:{color:tickColor}}, y:{grid:{color:gridColor}, ticks:{color:tickColor, callback:v=>'R$ '+v.toFixed(2)}}} 
+      }
+    });
+  </script>
+</body>
+</html>

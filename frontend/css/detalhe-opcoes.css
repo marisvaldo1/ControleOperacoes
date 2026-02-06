@@ -1,0 +1,327 @@
+/* Detalhe de Opções - CSS (baseado em z.html) */
+
+/* Modal Dark Theme */
+#modalDetalheOpcao .modal-content {
+    background-color: #182433 !important;
+    color: #f5f7fb !important;
+    border: 1px solid #2d3748;
+    display: flex;
+    flex-direction: column;
+}
+
+#modalDetalheOpcao .modal-header {
+    background-color: #1a2332 !important;
+    border-bottom: 1px solid #2d3748;
+    color: #f5f7fb !important;
+    flex-shrink: 0;
+}
+
+#modalDetalheOpcao .modal-header .btn-icon {
+    color: #a0aec0 !important;
+    background: transparent !important;
+    border: none !important;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#modalDetalheOpcao .modal-header .btn-icon:hover {
+    color: #f5f7fb !important;
+    background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+#modalDetalheOpcao .modal-body {
+    background-color: #182433 !important;
+    flex: 1;
+    overflow-y: auto;
+}
+
+#modalDetalheOpcao .modal-footer {
+    background-color: #1a2332 !important;
+    border-top: 1px solid #2d3748;
+    flex-shrink: 0;
+}
+
+/* Cards Dark */
+#modalDetalheOpcao .card {
+    background-color: #1d2939 !important;
+    border-color: #2d3748 !important;
+    color: #f5f7fb !important;
+}
+
+#modalDetalheOpcao .card-header {
+    background-color: #1a2533 !important;
+    border-bottom-color: #2d3748 !important;
+    color: #f5f7fb !important;
+}
+
+#modalDetalheOpcao .card-body {
+    color: #f5f7fb !important;
+}
+
+#modalDetalheOpcao .card-sm .card-body {
+    background-color: #1d2939 !important;
+}
+
+/* Card Status Top */
+#modalDetalheOpcao .card-status-top {
+    height: 3px;
+}
+
+/* Tables Dark */
+#modalDetalheOpcao .table {
+    color: #f5f7fb !important;
+}
+
+#modalDetalheOpcao .table thead th {
+    border-color: #2d3748 !important;
+    color: #a0aec0 !important;
+}
+
+#modalDetalheOpcao .table tbody td {
+    border-color: #2d3748 !important;
+}
+
+#modalDetalheOpcao .table tbody tr:hover {
+    background-color: rgba(255,255,255,0.02) !important;
+}
+
+/* Alerts Dark */
+#modalDetalheOpcao .alert {
+    border-left-width: 3px;
+}
+
+#modalDetalheOpcao .alert-success {
+    background-color: rgba(47, 179, 68, 0.1) !important;
+    border-color: #2fb344 !important;
+    color: #2fb344 !important;
+}
+
+#modalDetalheOpcao .alert-info {
+    background-color: rgba(32, 107, 196, 0.1) !important;
+    border-color: #206bc4 !important;
+    color: #206bc4 !important;
+}
+
+#modalDetalheOpcao .alert-warning {
+    background-color: rgba(245, 159, 0, 0.1) !important;
+    border-color: #f59f00 !important;
+    color: #f59f00 !important;
+}
+
+#modalDetalheOpcao .alert-danger {
+    background-color: rgba(214, 57, 57, 0.1) !important;
+    border-color: #d63939 !important;
+    color: #d63939 !important;
+}
+
+/* Tabs */
+#modalDetalheOpcao .nav-tabs {
+    border-bottom-color: #2d3748 !important;
+}
+
+#modalDetalheOpcao .nav-tabs .nav-link {
+    color: #a0aec0 !important;
+    border-color: transparent !important;
+}
+
+#modalDetalheOpcao .nav-tabs .nav-link:hover {
+    color: #f5f7fb !important;
+    border-color: transparent !important;
+}
+
+#modalDetalheOpcao .nav-tabs .nav-link.active {
+    color: #206bc4 !important;
+    background-color: transparent !important;
+    border-color: #2d3748 #2d3748 transparent !important;
+}
+
+/* Badges */
+#modalDetalheOpcao .badge-pill {
+    border-radius: 10rem;
+}
+
+/* Text Colors */
+#modalDetalheOpcao .text-green {
+    color: #2fb344 !important;
+}
+
+#modalDetalheOpcao .text-red {
+    color: #d63939 !important;
+}
+
+#modalDetalheOpcao .text-yellow {
+    color: #f59f00 !important;
+}
+
+#modalDetalheOpcao .text-blue {
+    color: #206bc4 !important;
+}
+
+/* Border Colors */
+#modalDetalheOpcao .border-success {
+    border-color: #2fb344 !important;
+}
+
+#modalDetalheOpcao .border-danger {
+    border-color: #d63939 !important;
+}
+
+#modalDetalheOpcao .border-warning {
+    border-color: #f59f00 !important;
+}
+
+#modalDetalheOpcao .border-info {
+    border-color: #206bc4 !important;
+}
+
+/* Avatar */
+#modalDetalheOpcao .avatar {
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+}
+
+#modalDetalheOpcao .bg-green {
+    background-color: #2fb344 !important;
+}
+
+#modalDetalheOpcao .bg-blue {
+    background-color: #206bc4 !important;
+}
+
+#modalDetalheOpcao .bg-yellow {
+    background-color: #f59f00 !important;
+}
+
+#modalDetalheOpcao .bg-red {
+    background-color: #d63939 !important;
+}
+
+/* Datagrid */
+#modalDetalheOpcao .datagrid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+#modalDetalheOpcao .datagrid-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #2d3748;
+}
+
+#modalDetalheOpcao .datagrid-item:last-child {
+    border-bottom: none;
+}
+
+#modalDetalheOpcao .datagrid-title {
+    color: #a0aec0;
+    font-size: 0.875rem;
+}
+
+#modalDetalheOpcao .datagrid-content {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Slider */
+#modalDetalheOpcao .slider-container {
+    padding: 2rem 0;
+}
+
+#modalDetalheOpcao #detPriceSlider {
+    width: 100%;
+}
+
+#modalDetalheOpcao .strike-indicator {
+    position: relative;
+    height: 60px;
+}
+
+#modalDetalheOpcao .strike-line {
+    position: absolute;
+    top: 50%;
+    left: 48%;
+    width: 2px;
+    height: 40px;
+    background-color: #f76707;
+    transform: translateY(-50%);
+    box-shadow: 0 0 10px rgba(247, 103, 7, 0.5);
+}
+
+#modalDetalheOpcao .strike-label-top {
+    position: absolute;
+    top: 0;
+    left: 48%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    font-weight: 600;
+    color: #f76707;
+    white-space: nowrap;
+    background-color: rgba(247, 103, 7, 0.15);
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(247, 103, 7, 0.3);
+}
+
+/* Form Range Dark */
+#modalDetalheOpcao .form-range::-webkit-slider-thumb {
+    background-color: #206bc4;
+}
+
+#modalDetalheOpcao .form-range::-moz-range-thumb {
+    background-color: #206bc4;
+}
+
+#modalDetalheOpcao .form-range::-webkit-slider-runnable-track {
+    background-color: #2d3748;
+}
+
+#modalDetalheOpcao .form-range::-moz-range-track {
+    background-color: #2d3748;
+}
+
+/* Chart Container */
+#modalDetalheOpcao .chart-container {
+    min-height: 250px;
+}
+
+/* Progress Bar */
+#modalDetalheOpcao .progress {
+    background-color: #2d3748 !important;
+}
+
+#modalDetalheOpcao .progress-bar {
+    background-color: #2fb344 !important;
+}
+
+/* Button Refresh */
+#modalDetalheOpcao #btnDetalheRefresh {
+    min-width: 38px;
+}
+
+#modalDetalheOpcao #btnDetalheRefresh:hover {
+    transform: rotate(180deg);
+    transition: transform 0.3s ease;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    #modalDetalheOpcao .modal-dialog {
+        margin: 0.5rem;
+    }
+    
+    #modalDetalheOpcao .card-sm {
+        margin-bottom: 0.5rem;
+    }
+}
