@@ -66,10 +66,16 @@ def init_db():
         vencimento TEXT,
         premio REAL,
         resultado REAL,
+        saldo_abertura REAL,
         status TEXT,
         data_operacao TEXT,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )''')
+
+    # Garantir coluna saldo_abertura em bases existentes
+    cols = [row['name'] for row in c.execute('PRAGMA table_info(operacoes_opcoes)').fetchall()]
+    if 'saldo_abertura' not in cols:
+        c.execute('ALTER TABLE operacoes_opcoes ADD COLUMN saldo_abertura REAL')
     
     c.execute('''CREATE TABLE IF NOT EXISTS configuracoes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -680,11 +686,11 @@ def create_opcoes():
     conn = get_db()
     c = conn.cursor()
     c.execute('''INSERT INTO operacoes_opcoes 
-        (ativo_base, ativo, tipo, quantidade, preco_entrada, preco_atual, strike, vencimento, premio, resultado, status, data_operacao)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+        (ativo_base, ativo, tipo, quantidade, preco_entrada, preco_atual, strike, vencimento, premio, resultado, saldo_abertura, status, data_operacao)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
         (data.get('ativo_base'), data.get('ativo'), data.get('tipo'), data.get('quantidade'), data.get('preco_entrada'),
          data.get('preco_atual'), data.get('strike'), data.get('vencimento'), data.get('premio'),
-         data.get('resultado'), data.get('status'), data.get('data_operacao', datetime.now().strftime('%Y-%m-%d'))))
+         data.get('resultado'), data.get('saldo_abertura'), data.get('status'), data.get('data_operacao', datetime.now().strftime('%Y-%m-%d'))))
     conn.commit()
     conn.close()
     return jsonify({'success': True, 'id': c.lastrowid})
@@ -696,11 +702,11 @@ def update_opcoes(id):
     c = conn.cursor()
     c.execute('''UPDATE operacoes_opcoes SET
         ativo_base=?, ativo=?, tipo=?, quantidade=?, preco_entrada=?, preco_atual=?, strike=?, vencimento=?,
-        premio=?, resultado=?, status=?, data_operacao=?
+        premio=?, resultado=?, saldo_abertura=?, status=?, data_operacao=?
         WHERE id=?''',
         (data.get('ativo_base'), data.get('ativo'), data.get('tipo'), data.get('quantidade'), data.get('preco_entrada'),
          data.get('preco_atual'), data.get('strike'), data.get('vencimento'), data.get('premio'),
-         data.get('resultado'), data.get('status'), data.get('data_operacao'), id))
+         data.get('resultado'), data.get('saldo_abertura'), data.get('status'), data.get('data_operacao'), id))
     conn.commit()
     conn.close()
     return jsonify({'success': True})

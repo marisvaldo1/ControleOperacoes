@@ -1,15 +1,44 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Opções - PETRN369W1</title>
     
-    <!-- Tabler CSS -->
+    <!-- Tabler CSS com tema dark -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
     
     <style>
+        /* Reset e configurações de tema dark */
+        :root {
+            --tblr-border-color: rgba(255, 255, 255, 0.1);
+            --tblr-card-border-color: rgba(255, 255, 255, 0.1);
+            --tblr-modal-border-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        body {
+            background-color: var(--tblr-bg-surface-dark);
+            color: var(--tblr-body-color);
+        }
+        
+        /* Configuração do modal para tema dark */
+        .modal-content {
+            background-color: var(--tblr-bg-surface-dark);
+            border: 1px solid var(--tblr-border-color);
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.5);
+        }
+        
+        .modal-header {
+            border-bottom: 1px solid var(--tblr-border-color);
+            background-color: var(--tblr-bg-surface-secondary-dark);
+        }
+        
+        .modal-footer {
+            border-top: 1px solid var(--tblr-border-color);
+            background-color: var(--tblr-bg-surface-secondary-dark);
+        }
+        
         /* Ajustes para gráficos */
         .chart-wrapper {
             position: relative;
@@ -27,6 +56,7 @@
         /* Cards de cenário com borda lateral */
         .scenario-card {
             border-left: 4px solid transparent;
+            background-color: var(--tblr-bg-surface-secondary-dark);
         }
         .scenario-card.danger { border-left-color: var(--tblr-danger); }
         .scenario-card.warning { border-left-color: var(--tblr-warning); }
@@ -53,30 +83,144 @@
             transform: translateX(-50%);
             font-size: 11px;
             white-space: nowrap;
+            background-color: var(--tblr-bg-surface-dark);
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid var(--tblr-warning);
         }
         
         /* Transição suave nos cards */
         .card {
             transition: transform 0.2s ease, box-shadow 0.2s ease;
+            background-color: var(--tblr-bg-surface-secondary-dark);
+            border: 1px solid var(--tblr-border-color);
         }
         .card:hover {
             transform: translateY(-2px);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Estilo das abas para dark mode */
+        .nav-tabs {
+            border-bottom: 1px solid var(--tblr-border-color);
+        }
+        
+        .nav-tabs .nav-link {
+            color: var(--tblr-body-color);
+            border: 1px solid transparent;
+            margin-bottom: -1px;
+        }
+        
+        .nav-tabs .nav-link:hover {
+            color: var(--tblr-primary);
+            border-color: var(--tblr-border-color);
+        }
+        
+        .nav-tabs .nav-link.active {
+            color: var(--tblr-primary);
+            background-color: var(--tblr-bg-surface-dark);
+            border-color: var(--tblr-border-color) var(--tblr-border-color) var(--tblr-bg-surface-dark);
+        }
+        
+        /* Slider customizado para dark mode */
+        .form-range::-webkit-slider-thumb {
+            background-color: var(--tblr-primary);
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
+        }
+        
+        .form-range::-moz-range-thumb {
+            background-color: var(--tblr-primary);
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
+        }
+        
+        .form-range::-webkit-slider-track {
+            background-color: var(--tblr-border-color);
+        }
+        
+        .form-range::-moz-range-track {
+            background-color: var(--tblr-border-color);
+        }
+        
+        /* Ajustes de tabela para dark mode */
+        .table {
+            color: var(--tblr-body-color);
+        }
+        
+        .table-hover tbody tr:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+        
+        /* Ajuste para badges */
+        .badge {
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Botão de abrir modal */
+        .btn-open-modal {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            padding: 12px 24px;
+            font-weight: 600;
+        }
+        
+        /* Override do modal-blur para dark mode */
+        .modal-blur {
+            backdrop-filter: blur(4px);
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        
+        /* Contraste para textos importantes */
+        .text-important {
+            color: var(--tblr-body-color) !important;
+            font-weight: 600;
+        }
+        
+        /* Ajuste para ícones nas badges */
+        .badge i {
+            font-size: 0.9em;
+        }
+        
+        /* Melhor contraste para alertas */
+        .alert {
+            border: 1px solid;
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+        
+        .alert-success {
+            border-color: var(--tblr-success);
+            color: #a8e6a3;
+        }
+        
+        .alert-danger {
+            border-color: var(--tblr-danger);
+            color: #ffa8a8;
+        }
+        
+        .alert-warning {
+            border-color: var(--tblr-warning);
+            color: #ffd8a8;
+        }
+        
+        .alert-info {
+            border-color: var(--tblr-info);
+            color: #a8d8ff;
         }
     </style>
 </head>
 
-<body class="theme-dark">
+<body>
     
     <!-- Botão para abrir a Modal -->
-    <div class="d-flex align-items-center justify-content-center min-vh-100">
-        <button type="button" class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#dashboardModal">
-            <i class="ti ti-chart-line me-2"></i>
-            Abrir Dashboard PETRN369W1
-        </button>
-    </div>
+    <button type="button" class="btn btn-primary btn-open-modal" data-bs-toggle="modal" data-bs-target="#dashboardModal">
+        <i class="ti ti-chart-line me-2"></i>
+        Abrir Dashboard PETRN369W1
+    </button>
 
     <!-- MODAL PRINCIPAL -->
-    <div class="modal modal-blur fade" id="dashboardModal" tabindex="-1" role="dialog">
+    <div class="modal modal-blur fade" id="dashboardModal" tabindex="-1" role="dialog" aria-labelledby="dashboardModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" role="document">
             <div class="modal-content">
                 
@@ -86,18 +230,18 @@
                         <h4 class="modal-title d-flex align-items-center gap-2 mb-1">
                             <i class="ti ti-building-bank text-primary"></i>
                             PETRN369W1
-                            <span class="badge bg-red">PUT</span>
-                            <span class="badge bg-orange">VENDA</span>
-                            <span class="badge bg-green">Sem Exercício</span>
+                            <span class="badge bg-red"><i class="ti ti-arrow-down me-1"></i>PUT</span>
+                            <span class="badge bg-orange"><i class="ti ti-cash me-1"></i>VENDA</span>
+                            <span class="badge bg-green"><i class="ti ti-check me-1"></i>Sem Exercício</span>
                         </h4>
                         <div class="text-muted small">
-                            <i class="ti ti-calendar me-1"></i>Vencimento: <strong class="text-white">06/02/2026</strong> (1 dia útil)
+                            <i class="ti ti-calendar me-1"></i>Vencimento: <strong class="text-important">06/02/2026</strong> (1 dia útil)
                             <span class="mx-2">|</span>
-                            <i class="ti ti-target me-1"></i>Strike: <strong class="text-white">R$ 36,90</strong>
+                            <i class="ti ti-target me-1"></i>Strike: <strong class="text-important">R$ 36,90</strong>
                             <span class="mx-2">|</span>
-                            <i class="ti ti-coin me-1"></i>Prêmio: <strong class="text-white">R$ 0,30</strong>
+                            <i class="ti ti-coin me-1"></i>Prêmio: <strong class="text-important">R$ 0,30</strong>
                             <span class="mx-2">|</span>
-                            <i class="ti ti-stack me-1"></i>Qtd: <strong class="text-white">800</strong>
+                            <i class="ti ti-stack me-1"></i>Qtd: <strong class="text-important">800</strong>
                         </div>
                     </div>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
@@ -188,7 +332,7 @@
                                                 </div>
                                                 <div class="col">
                                                     <div class="text-muted small">Distância Strike</div>
-                                                    <div class="h3 mb-0">0,99%</div>
+                                                    <div class="h3 mb-0 text-yellow">0,99%</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -205,7 +349,7 @@
                                                 </div>
                                                 <div class="col">
                                                     <div class="text-muted small">Vencimento</div>
-                                                    <div class="h3 mb-0">1 dia</div>
+                                                    <div class="h3 mb-0 text-red">1 dia</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -225,7 +369,7 @@
                                         </div>
                                         <div class="card-body">
                                             <!-- PETR4 -->
-                                            <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
+                                            <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom border-dark">
                                                 <div>
                                                     <div class="text-muted small">Ativo Base</div>
                                                     <div class="fw-bold">PETR4</div>
@@ -238,7 +382,7 @@
                                                 </div>
                                             </div>
                                             <!-- Opção -->
-                                            <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
+                                            <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom border-dark">
                                                 <div>
                                                     <div class="text-muted small">Opção</div>
                                                     <div class="fw-bold">PETRN369W1</div>
@@ -328,7 +472,7 @@
                                                     </tr>
                                                     <tr>
                                                         <td class="text-muted">Prêmio Restante</td>
-                                                        <td class="text-end fw-bold">36,67%</td>
+                                                        <td class="text-end fw-bold text-yellow">36,67%</td>
                                                     </tr>
                                                 </tbody>
                                             </table>
@@ -338,7 +482,7 @@
                                                 </h4>
                                                 <div class="d-flex justify-content-between small">
                                                     <span>Valor se exercer:</span>
-                                                    <strong>R$ 29.520,00</strong>
+                                                    <strong class="text-important">R$ 29.520,00</strong>
                                                 </div>
                                                 <div class="d-flex justify-content-between small">
                                                     <span>Lucro esperado:</span>
@@ -482,7 +626,7 @@
                                         </div>
                                         <div class="col-6 col-lg-3 mb-3">
                                             <div class="text-muted small mb-1">Strike</div>
-                                            <div class="h2 mb-0">R$ 36,90</div>
+                                            <div class="h2 mb-0 text-important">R$ 36,90</div>
                                         </div>
                                         <div class="col-6 col-lg-3 mb-3">
                                             <div class="text-muted small mb-1">Data Exercício</div>
@@ -946,10 +1090,10 @@
                 <div class="modal-footer">
                     <div class="row w-100 g-2">
                         <div class="col-md-4">
-                            <div class="card mb-0 border">
+                            <div class="card mb-0 border border-dark">
                                 <div class="card-body py-2 text-center">
                                     <div class="text-muted small">Saldo Atual</div>
-                                    <div class="h4 mb-0">R$ 31.179,92</div>
+                                    <div class="h4 mb-0 text-important">R$ 31.179,92</div>
                                 </div>
                             </div>
                         </div>
@@ -985,10 +1129,20 @@
         // AUTO-ABRIR MODAL
         // ========================
         document.addEventListener('DOMContentLoaded', function() {
+            // Abrir modal automaticamente após um breve delay
             setTimeout(() => {
-                const modal = new bootstrap.Modal(document.getElementById('dashboardModal'));
-                modal.show();
-            }, 300);
+                const modalElement = document.getElementById('dashboardModal');
+                if (modalElement) {
+                    const modal = new bootstrap.Modal(modalElement);
+                    modal.show();
+                }
+            }, 500);
+            
+            // Inicializar tooltips se necessário
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
         });
 
         // ========================
@@ -1039,7 +1193,7 @@
         }
 
         slider.addEventListener('input', updateSimulation);
-        updateSimulation();
+        updateSimulation(); // Inicializar com valores padrão
 
         // ========================
         // CONFIGURAÇÃO CHART.JS (DARK THEME)
@@ -1077,10 +1231,23 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom' } },
+                plugins: { 
+                    legend: { 
+                        position: 'bottom',
+                        labels: {
+                            color: '#94a3b8'
+                        }
+                    } 
+                },
                 scales: {
-                    x: { grid: { color: gridColor }, ticks: { color: ticksColor } },
-                    y: { grid: { color: gridColor }, ticks: { color: ticksColor, callback: v => 'R$ ' + v } }
+                    x: { 
+                        grid: { color: gridColor }, 
+                        ticks: { color: ticksColor } 
+                    },
+                    y: { 
+                        grid: { color: gridColor }, 
+                        ticks: { color: ticksColor, callback: v => 'R$ ' + v } 
+                    }
                 }
             }
         });
@@ -1095,7 +1262,8 @@
                 datasets: [{
                     data: [-1640, -880, -720, -560, 0, 80, 88, 200, 240],
                     backgroundColor: ctx => ctx.parsed.y < 0 ? '#d63939' : '#2fb344',
-                    borderRadius: 4
+                    borderRadius: 4,
+                    borderWidth: 0
                 }]
             },
             options: {
@@ -1103,8 +1271,14 @@
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: {
-                    x: { grid: { color: gridColor }, ticks: { color: ticksColor } },
-                    y: { grid: { color: gridColor }, ticks: { color: ticksColor, callback: v => 'R$ ' + v } }
+                    x: { 
+                        grid: { color: gridColor }, 
+                        ticks: { color: ticksColor } 
+                    },
+                    y: { 
+                        grid: { color: gridColor }, 
+                        ticks: { color: ticksColor, callback: v => 'R$ ' + v } 
+                    }
                 }
             }
         });
@@ -1142,8 +1316,14 @@
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: {
-                    x: { grid: { color: gridColor }, ticks: { color: ticksColor, maxTicksLimit: 12 } },
-                    y: { grid: { color: gridColor }, ticks: { color: ticksColor, callback: v => 'R$ ' + v } }
+                    x: { 
+                        grid: { color: gridColor }, 
+                        ticks: { color: ticksColor, maxTicksLimit: 12 } 
+                    },
+                    y: { 
+                        grid: { color: gridColor }, 
+                        ticks: { color: ticksColor, callback: v => 'R$ ' + v } 
+                    }
                 }
             }
         });
@@ -1161,23 +1341,38 @@
                     borderColor: '#ae3ec9',
                     backgroundColor: 'rgba(174, 62, 201, 0.15)',
                     tension: 0.4,
-                    borderWidth: 2
+                    borderWidth: 2,
+                    fill: true
                 }, {
                     label: 'Vol. Histórica',
                     data: [40, 41, 42, 42, 43, 42],
                     borderColor: '#f76707',
                     backgroundColor: 'rgba(247, 103, 7, 0.15)',
                     tension: 0.4,
-                    borderWidth: 2
+                    borderWidth: 2,
+                    fill: true
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom' } },
+                plugins: { 
+                    legend: { 
+                        position: 'bottom',
+                        labels: {
+                            color: '#94a3b8'
+                        }
+                    } 
+                },
                 scales: {
-                    x: { grid: { color: gridColor }, ticks: { color: ticksColor } },
-                    y: { grid: { color: gridColor }, ticks: { color: ticksColor, callback: v => v + '%' } }
+                    x: { 
+                        grid: { color: gridColor }, 
+                        ticks: { color: ticksColor } 
+                    },
+                    y: { 
+                        grid: { color: gridColor }, 
+                        ticks: { color: ticksColor, callback: v => v + '%' } 
+                    }
                 }
             }
         });
@@ -1203,8 +1398,14 @@
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: {
-                    x: { grid: { color: gridColor }, ticks: { color: ticksColor } },
-                    y: { grid: { color: gridColor }, ticks: { color: ticksColor, callback: v => 'R$ ' + v.toFixed(2) } }
+                    x: { 
+                        grid: { color: gridColor }, 
+                        ticks: { color: ticksColor } 
+                    },
+                    y: { 
+                        grid: { color: gridColor }, 
+                        ticks: { color: ticksColor, callback: v => 'R$ ' + v.toFixed(2) } 
+                    }
                 }
             }
         });

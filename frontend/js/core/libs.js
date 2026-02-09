@@ -43,6 +43,7 @@ async function loadLibs() {
     for (const src of LIBS.js) {
         await loadJS(src);
     }
+    console.log('[Libs] Todas as bibliotecas carregadas, disparando evento libsLoaded');
     document.dispatchEvent(new Event('libsLoaded'));
 }
 

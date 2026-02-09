@@ -3,6 +3,8 @@ let tableMesAtual, tableHistorico;
 let chartAnual = null;
 let chartAccumulated = null;
 let chartAssetDist = null;
+let chartSaldoAcumulado = null;
+let chartSaldoTipo = null;
 let opcoesDisponiveis = [];
 let cotacaoAtivoBase = null;
 let currentChatHistory = [];
@@ -41,6 +43,7 @@ function parseFloatSafe(value) {
 }
 
 document.addEventListener('layoutReady', function() {
+    console.log('[Opcoes] Evento layoutReady recebido, carregando operações...');
     initDataTables();
     loadOperacoes();
     loadAvailableAIs(); // Carregar IAs disponíveis
@@ -55,9 +58,9 @@ document.addEventListener('layoutReady', function() {
     document.getElementById('btnSaveOperacao').addEventListener('click', saveOperacao);
     document.getElementById('btnRefresh')?.addEventListener('click', refreshQuotes);
     
-    // Botão de refresh detalhes
-    document.getElementById('btnRefreshDetalhes')?.addEventListener('click', refreshDetalhesOperacao);
-    setupDetalhesTabs();
+    // REMOVIDO: Botão de refresh detalhes agora está em detalhe-opcoes.js
+    // document.getElementById('btnRefreshDetalhes')?.addEventListener('click', refreshDetalhesOperacao);
+    // setupDetalhesTabs();
     
     // Configurações de IA
     document.getElementById('btnSalvarConfigIA').addEventListener('click', salvarConfigIA);
@@ -140,6 +143,16 @@ document.addEventListener('layoutReady', function() {
     
     // Init Currency Inputs
     initCurrencyInputs();
+
+    // Modal saldo corretora
+    const saldoCard = document.getElementById('cardSaldoCorretoraCard');
+    if (saldoCard) {
+        saldoCard.addEventListener('click', openSaldoCorretoraModal);
+        saldoCard.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') openSaldoCorretoraModal();
+        });
+    }
+    document.getElementById('btnFiltrarSaldo')?.addEventListener('click', updateSaldoCorretoraModal);
 
     // Validação do campo Quantidade
     document.getElementById('inputQuantidade').addEventListener('change', function() {
@@ -375,8 +388,8 @@ function updateUI() {
     document.getElementById('mesAtualTitle').textContent = `Operacoes - ${getMonthName(currentMonth).replace('-', ' 20')}`;
     
     // Tables
-    populateTable(tableMesAtual, mesAtualData, true, true); // showActions=true, updatePrices=true
-    populateTable(tableHistorico, allOperacoes, false, false); // showActions=false, updatePrices=false
+    populateTable(tableMesAtual, mesAtualData, true, true, false); // showActions=true, updatePrices=true, isHistorico=false
+    populateTable(tableHistorico, allOperacoes, true, false, true); // showActions=true, updatePrices=false, isHistorico=true
     
     // Historico mensal
     renderHistoricoMensal();
@@ -385,7 +398,7 @@ function updateUI() {
     renderChartAnual(anoData, currentYear);
 }
 
-function populateTable(dt, data, showActions = true, updatePrices = false) {
+function populateTable(dt, data, showActions = true, updatePrices = false, isHistorico = false) {
     dt.clear();
     data.forEach(op => {
         const diasInfo = calcularDias(op.vencimento);
@@ -416,17 +429,28 @@ function populateTable(dt, data, showActions = true, updatePrices = false) {
         
         let actionsHtml = '';
         if (showActions) {
-            actionsHtml = `<div class="btn-list flex-nowrap">
-                <button class="btn btn-sm btn-info btn-icon" onclick="openDetalhesOperacao('${op.id}')" title="Detalhes">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-                </button>
-                <button class="btn btn-sm btn-primary btn-icon" onclick="editOperacao('${op.id}')" title="Editar">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                </button>
-                <button class="btn btn-sm btn-danger btn-icon" onclick="deleteOperacao('${op.id}')" title="Excluir">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
-                </button>
-             </div>`;
+            if (isHistorico) {
+                // Histórico: apenas botão de detalhar
+                actionsHtml = `<div class="btn-list flex-nowrap">
+                    <button class="btn btn-sm btn-info btn-icon" onclick="openDetalheOperacao('${op.id}')" title="Detalhes">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                    </button>
+                 </div>`;
+            } else {
+                // Mês atual: todos os botões, mas ocultar exclusão se operação fechada
+                const isFechada = op.status && (op.status.toUpperCase() === 'FECHADA' || op.status.toUpperCase() === 'EXERCIDA' || op.status.toUpperCase() === 'VENCIDA');
+                actionsHtml = `<div class="btn-list flex-nowrap">
+                    <button class="btn btn-sm btn-info btn-icon" onclick="openDetalheOperacao('${op.id}')" title="Detalhes">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                    </button>
+                    <button class="btn btn-sm btn-primary btn-icon" onclick="editOperacao('${op.id}')" title="Editar">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                    ${!isFechada ? `<button class="btn btn-sm btn-danger btn-icon" onclick="deleteOperacao('${op.id}')" title="Excluir">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                    </button>` : ''}
+                 </div>`;
+            }
         }
 
         dt.row.add([
@@ -454,10 +478,25 @@ function calcularDias(vencimento) {
     const today = new Date();
     today.setHours(0,0,0,0);
     const venc = new Date(vencimento);
+    venc.setHours(0,0,0,0);
+    
+    // Dias Corridos
     const diffTime = venc - today;
-    const diffDays = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24))); 
-    // Simplified business days
-    const businessDays = Math.max(0, Math.floor(diffDays * 5 / 7));
+    const diffDays = venc >= today ? Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1 : 0;
+    
+    // Dias Úteis (Iteração mais precisa)
+    let businessDays = 0;
+    if (venc >= today) {
+        const cursor = new Date(today);
+        while (cursor <= venc) {
+            const diaSemana = cursor.getDay();
+            if (diaSemana !== 0 && diaSemana !== 6) {
+                businessDays += 1;
+            }
+            cursor.setDate(cursor.getDate() + 1);
+        }
+    }
+    
     return { uteis: businessDays, corridos: diffDays };
 }
 
@@ -489,6 +528,8 @@ function openNewModal() {
     
     // Set default date
     document.getElementById('inputDataOperacao').value = getCurrentDate();
+    const config = JSON.parse(localStorage.getItem('appConfig') || '{}');
+    document.getElementById('inputSaldoAbertura').value = parseFloat(config.saldoAcoes || 0);
     // Show save button by default
     document.getElementById('btnSaveOperacao').style.display = 'block';
 
@@ -535,6 +576,7 @@ async function saveOperacao() {
         resultado: parseCurrencyValue(document.getElementById('inputResultado').value),
         preco_atual: parseCurrencyValue(document.getElementById('inputPrecoAtual').value),
         vencimento: document.getElementById('inputVencimento').value,
+        saldo_abertura: parseFloat(document.getElementById('inputSaldoAbertura').value || 0),
         status: document.getElementById('inputStatus').value,
         // Salvar cotação do ativo base no momento da operação
         spot_price: cotacaoAtivoBase || parseCurrencyValue(document.getElementById('inputPrecoEntrada').value)
@@ -577,6 +619,7 @@ async function editOperacao(id) {
     }
     document.getElementById('inputVencimento').value = op.vencimento;
     document.getElementById('inputStatus').value = op.status;
+    document.getElementById('inputSaldoAbertura').value = op.saldo_abertura || 0;
     document.getElementById('modalOperacaoTitle').textContent = 'Editar Operação';
     
     // Atualizar badge com ativo e cotação
@@ -645,502 +688,291 @@ async function deleteOperacao(id) {
     }
 }
 
+// Modal detalhes functions moved to detalhe-opcoes.js
+
 // ====================
-// MODAL DE DETALHES
+// COTAÇÕES E API
 // ====================
 
-function setupDetalhesTabs() {
-    const modal = document.getElementById('modalDetalhesOperacao');
-    if (!modal) return;
+async function buscarCotacaoAtivoBase(ativo) {
+    if (!ativo) return;
     
-    // Use delegation for better performance and dynamic content support
-    modal.addEventListener('click', (event) => {
-        // Handle Y2 Tabs
-        const tabBtn = event.target.closest('.nav-tabs .nav-link[data-y2-tab]');
-        if (tabBtn) {
-            const targetId = tabBtn.getAttribute('data-y2-tab');
-            if (targetId) {
-                openY2Tab(event, targetId);
+    try {
+        const response = await fetch(`${API_BASE}/api/cotacao/opcoes?symbol=${ativo}`);
+        const data = await response.json();
+        
+        if (data && (data.price || data.cotacao || data.close || data.last)) {
+            cotacaoAtivoBase = parseFloat(data.price || data.cotacao || data.close || data.last);
+            const formatted = formatCurrency(cotacaoAtivoBase);
+            
+            // Atualizar badge no modal de operação
+            const ativoInfoBadge = document.getElementById('modalOperacaoAtivoInfo');
+            if (ativoInfoBadge) {
+                ativoInfoBadge.textContent = `${ativo}: ${formatted}`;
+                ativoInfoBadge.style.display = 'inline-block';
             }
-            return;
         }
-
-        // Handle old .detalhes-x tabs (legacy support if needed)
-        const tab = event.target.closest('.detalhes-x .tab');
-        if (tab) {
-            const target = tab.getAttribute('data-tab');
-            if (!target) return;
-            
-            const tabs = modal.querySelectorAll('.detalhes-x .tab');
-            const contents = modal.querySelectorAll('.detalhes-x .tab-content');
-            
-            tabs.forEach(t => t.classList.toggle('active', t === tab));
-            contents.forEach(c => c.classList.toggle('active', c.getAttribute('data-tab-content') === target));
-        }
-    });
-}
-
-function resetDetalhesTabs() {
-    const modal = document.getElementById('modalDetalhesOperacao');
-    if (!modal) return;
-    
-    const tabs = Array.from(modal.querySelectorAll('.detalhes-x .tab'));
-    const contents = Array.from(modal.querySelectorAll('.detalhes-x .tab-content'));
-    if (tabs.length === 0 || contents.length === 0) return;
-    
-    const firstTab = tabs[0];
-    const target = firstTab.getAttribute('data-tab');
-    
-    tabs.forEach(t => t.classList.toggle('active', t === firstTab));
-    contents.forEach(c => c.classList.toggle('active', c.getAttribute('data-tab-content') === target));
-}
-
-/**
- * Popula o modal de detalhes com os dados da operação
- */
-function populateDetalhesModal(op) {
-    const setText = (id, text) => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = text;
-    };
-    
-    const setHTML = (id, html) => {
-        const el = document.getElementById(id);
-        if (el) el.innerHTML = html;
-    };
-    
-    // Header
-    setText('detTicker', op.ativo);
-    
-    const badgeSide = document.getElementById('detBadgeSide');
-    if (badgeSide) {
-        if (op.tipo_operacao === 'VENDA') {
-            badgeSide.className = 'badge bg-danger ms-2';
-            badgeSide.textContent = 'VENDA';
-        } else {
-            badgeSide.className = 'badge bg-success ms-2';
-            badgeSide.textContent = 'COMPRA';
-        }
+    } catch (error) {
+        console.error('Erro ao buscar cotação:', error);
     }
-    
-    const badgeType = document.getElementById('detBadgeType');
-    if (badgeType) {
-        badgeType.textContent = op.tipo_opcao;
-    }
-    
-    // Tab Performance - Cotações Atuais
-    setText('detAtivoBase', op.ativo_base);
-    setText('detPrecoAtivo', `R$ ${parseFloat(op.preco_ativo_base || 0).toFixed(2)}`);
-    setText('detVarAtivo', '...');
-    setText('detOpcaoNome', op.ativo);
-    setText('detPrecoOpcao', `R$ ${parseFloat(op.preco_atual || 0).toFixed(2)}`);
-    setText('detVarOpcao', '...');
-    setText('detStrikeVal', `R$ ${parseFloat(op.strike).toFixed(2)}`);
-    setText('detDistancia', '...');
-    
-    const diasVenc = calcularDias(op.vencimento).uteis;
-    setText('detDiasVenc', `${diasVenc}d`);
-    
-    // Tab Performance - Resultado Financeiro
-    const premioTotal = parseFloat(op.premio_abertura) * parseInt(op.quantidade);
-    setText('detResFechamento', `+ R$ ${premioTotal.toFixed(2)}`);
-    setText('detMTM', '...');
-    setText('detLucroAtual', '...');
-    setText('detPercPremio', '...');
-    
-    // Tab Performance - Detalhes do Prêmio
-    setText('detPremioAbertura', `R$ ${premioTotal.toFixed(2)}`);
-    setText('detCustoRecompra', '...');
-    setText('detResultLiquido', '...');
-    setText('detPremioRestante', '...');
-    setText('detProgressLabel', '...');
-    setText('detValorExercicio', '...');
-    setText('detLucroEsperado', '...');
-    
-    // Tab Detalhes - Valores na Abertura
-    setText('detAtivoAbertura', op.ativo_base);
-    setText('detPrecoAbertura', `R$ ${parseFloat(op.preco_ativo_base || 0).toFixed(2)}`);
-    setText('detPremioUnitAbertura', `R$ ${parseFloat(op.premio_abertura).toFixed(2)}`);
-    setText('detDistanciaAbertura', '...');
-    setText('detQtdAbertura', op.quantidade);
-    setText('detTotalPremio', `R$ ${premioTotal.toFixed(2)}`);
-    
-    // Tab Detalhes - Valores Atuais
-    setText('detAtivoAtual', op.ativo_base);
-    setText('detPrecoAtual', `R$ ${parseFloat(op.preco_ativo_base || 0).toFixed(2)}`);
-    setText('detPremioUnitAtual', `R$ ${parseFloat(op.preco_atual || 0).toFixed(2)}`);
-    setText('detDistanciaAtual', '...');
-    setText('detPercPremioAtual', '...');
-    setText('detCustoRecompraTab', '...');
-    
-    // Tab Detalhes - Informações Gerais
-    setText('detTipoOp', op.tipo_operacao);
-    setText('detTipoOpcao', op.tipo_opcao);
-    setText('detStrikeInfo', `R$ ${parseFloat(op.strike).toFixed(2)}`);
-    setText('detVencimento', new Date(op.vencimento).toLocaleDateString('pt-BR'));
-    setText('detQtdInfo', op.quantidade);
-    setText('detStatusOp', op.status);
-    
-    // Tab Simulação - Strike no slider
-    setText('detStrikeSlider', parseFloat(op.strike).toFixed(2));
-    
-    // Tab Gráficos - Nome do ativo
-    setText('detAtivoChart', op.ativo_base);
-    
-    // Tab Risco - Valores
-    const capitalRisco = parseFloat(op.strike) * Math.abs(parseInt(op.quantidade));
-    setText('detCapitalRisco', `R$ ${capitalRisco.toFixed(2)}`);
-    setText('detMargem', '...');
-    setText('detRiscoRetorno', '...');
-    setText('detRetornoMargem', '...');
-    
-    setText('detPerdaMaxima', '...');
-    setText('detGanhoMaximo', `R$ ${premioTotal.toFixed(2)}`);
-    setText('detBreakeven', '...');
-    setText('detProbLucro', '...');
-    
-    // Tab Risco - Cenários
-    setText('detAtivoOtimista', op.ativo_base);
-    setText('detStrikeOtimista', parseFloat(op.strike).toFixed(2));
-    setText('detLucroOtimista', premioTotal.toFixed(2));
-    setText('detAtivoNeutro', op.ativo_base);
-    setText('detValorCompra', capitalRisco.toFixed(2));
-    setText('detAtivoPessimista', op.ativo_base);
-    setText('detPrejMaximo', '...');
-    
-    // Footer - Saldos
-    setText('detSaldoAtual', '...');
-    setText('detSaldoProjetado', '...');
 }
 
-async function openDetalhesOperacao(id) {
-    currentDetalhesOpId = id;
-    const op = allOperacoes.find(o => o.id == id);
-    if (!op) return;
+async function buscarDadosOpcao(ativo) {
+    if (!ativo) return;
     
-    const modalEl = document.getElementById('modalDetalhesOperacao');
-    if (!modalEl) return;
-
-    // Show modal
-    // Check if instance exists
-    let modal = bootstrap.Modal.getInstance(modalEl);
-    if (!modal) {
-        modal = new bootstrap.Modal(modalEl);
-    }
-    modal.show();
-    
-    // Reset tabs to performance (first tab)
-    const tabs = modalEl.querySelectorAll('.nav-link[data-tab]');
-    const tabContents = modalEl.querySelectorAll('.tab-content');
-    
-    tabs.forEach(t => t.classList.remove('active'));
-    tabContents.forEach(tc => tc.style.display = 'none');
-    
-    // Activate performance tab
-    const perfTab = modalEl.querySelector('.nav-link[data-tab="performance"]');
-    if (perfTab) perfTab.classList.add('active');
-    const perfContent = modalEl.querySelector('#performance');
-    if (perfContent) perfContent.style.display = 'block';
-    
-    // Populate modal with data
-    populateDetalhesModal(op);
-    
-    // Render charts
-    renderDetChart1(op);
-    renderDetChart2(op);
-    renderDetChart3(op);
-    renderDetChart4(op);
-    renderDetChart5(op);
-    
-    // Populate gregas and scenarios
-    populateGregasDisplay(op);
-    populateScenarioCards(op);
-    
-    // Fetch fresh data
-    await refreshDetalhesOperacao();
-}
-
-async function refreshDetalhesOperacao() {
-    if (!currentDetalhesOpId) return;
-    const op = allOperacoes.find(o => o.id == currentDetalhesOpId);
-    if (!op) return;
-    
-    const btn = document.getElementById('btnDetRefresh');
-    if(btn) {
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>';
+    const btn = document.getElementById('btnAtualizarDados');
+    const originalIcon = btn ? btn.innerHTML : '';
+    if (btn) {
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
         btn.disabled = true;
     }
 
     try {
-        // 1. Fetch Spot Price
-        let spotPrice = 0;
-        try {
-            const resSpot = await fetch(`${API_BASE}/api/cotacao/opcoes?symbol=${op.ativo_base}`);
-            if (resSpot.ok) {
-                const dataSpot = await resSpot.json();
-                spotPrice = parseFloat(dataSpot.price || dataSpot.cotacao || dataSpot.close || dataSpot.last || 0);
+        const response = await fetch(`${API_BASE}/api/cotacao/opcoes?symbol=${ativo}`);
+        const data = await response.json();
+        
+        let opcao = null;
+        if (Array.isArray(data)) opcao = data[0];
+        else if (data.opcoes && Array.isArray(data.opcoes)) opcao = data.opcoes[0];
+        else if (data.symbol) opcao = data;
+        
+        if (opcao) {
+            // Fill fields
+            const ativoBase = opcao.ativo_base || opcao.underlying || '';
+            const currentAtivoBase = document.getElementById('inputAtivoBase').value;
+            
+            // Only update Ativo Base if it's empty or if we want to force update
+            if (ativoBase && !currentAtivoBase) {
+                document.getElementById('inputAtivoBase').value = ativoBase;
+            } else if (ativoBase) {
+                 // Optional: Confirm overwrite? For now, let's just update it as user requested "must be filled"
+                 document.getElementById('inputAtivoBase').value = ativoBase;
             }
-        } catch(e) { console.error('Error fetching spot', e); }
 
-        // 2. Fetch Option Price
-        let optionPrice = 0;
-        try {
-            const resOp = await fetch(`${API_BASE}/api/cotacao/opcoes?symbol=${op.ativo}`);
-            if (resOp.ok) {
-                const dataOp = await resOp.json();
-                optionPrice = parseFloat(dataOp.price || dataOp.cotacao || dataOp.close || dataOp.last || 0);
+            document.getElementById('inputTipo').value = opcao.tipo || opcao.type || 'CALL';
+            const strikeValue = parseFloat(opcao.strike || opcao.strikePrice || 0);
+            if (strikeValue > 0) {
+                document.getElementById('inputStrike').value = strikeValue.toFixed(2);
             }
-        } catch(e) { console.error('Error fetching option', e); }
 
-        // Fallbacks
-        if (spotPrice === 0 && op.preco_ativo_base) spotPrice = parseFloat(op.preco_ativo_base); 
-        if (spotPrice === 0) spotPrice = parseFloat(op.strike); // Last resort approximation
+            const vencimento = opcao.vencimento || opcao.expiryDate;
+            if (vencimento) {
+                let vencimentoDate = new Date(vencimento);
+                if (!isNaN(vencimentoDate.getTime())) {
+                    document.getElementById('inputVencimento').value = vencimentoDate.toISOString().split('T')[0];
+                }
+            }
 
-        if (optionPrice === 0 && op.preco_atual) optionPrice = parseFloat(op.preco_atual);
-        
-        // Atualizar timestamp
-        const now = new Date();
-        const timestamp = `${now.toLocaleDateString('pt-BR')} ${now.toLocaleTimeString('pt-BR')}`;
-        lastUpdateTimestamp[currentDetalhesOpId] = timestamp;
-        
-        // Update UI with live data
-        updateDetalhesModalWithLiveData(op, spotPrice, optionPrice);
-        
-        // Re-render charts with updated data
-        renderDetChart1(op);
-        renderDetChart2(op);
-        
-    } catch (e) {
-        console.error(e);
-        iziToast.error({title: 'Erro', message: 'Erro ao atualizar dados'});
+            const premio = parseFloat(opcao.preco || opcao.price || opcao.close || opcao.last || 0);
+            if (premio > 0) {
+                document.getElementById('inputPremioAbertura').value = premio.toFixed(2);
+            }
+
+            iziToast.success({
+                title: 'Sucesso',
+                message: 'Dados atualizados!',
+                position: 'topRight'
+            });
+
+            // Buscar cotação do ativo base para atualizar display
+            if (ativoBase) {
+                buscarCotacaoAtivoBase(ativoBase);
+            }
+        }
+    } catch (error) {
+        console.error('Erro ao buscar dados da opção:', error);
+        iziToast.error({
+            title: 'Erro',
+            message: 'Erro ao buscar dados: ' + error.message,
+            position: 'topRight'
+        });
     } finally {
-        if(btn) {
-            btn.innerHTML = '<i class="ti ti-refresh"></i>';
+        if (btn) {
+            btn.innerHTML = originalIcon;
             btn.disabled = false;
         }
     }
 }
 
+// ====================
+// FUNÇÕES MATEMÁTICAS E CÁLCULOS
+// ====================
+
 /**
- * Atualiza o modal de detalhes com dados ao vivo da API
+ * Função de distribuição cumulativa normal
+ * @param {number} x
+ * @returns {number}
  */
-function updateDetalhesModalWithLiveData(op, spotPrice, optionPrice) {
-    const setText = (id, text) => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = text;
-    };
-    
-    const setHTML = (id, html) => {
-        const el = document.getElementById(id);
-        if (el) el.innerHTML = html;
-    };
-    
-    const strike = parseFloat(op.strike);
-    const premioAbertura = parseFloat(op.premio_abertura);
-    const precoAbertura = parseFloat(op.preco_ativo_base || spotPrice);
-    const qtd = parseInt(op.quantidade);
-    const isVenda = op.tipo_operacao === 'VENDA';
-    
-    // Calcular variações
-    const varAtivo = ((spotPrice - precoAbertura) / precoAbertura * 100);
-    const varOpcao = ((optionPrice - premioAbertura) / premioAbertura * 100);
-    
-    // Calcular distância do strike
-    const distancia = ((spotPrice - strike) / strike * 100);
-    
-    // Atualizar Tab Performance - Cotações Atuais
-    setText('detPrecoAtivo', `R$ ${spotPrice.toFixed(2)}`);
-    setHTML('detVarAtivo', `${varAtivo >= 0 ? '↑' : '↓'} ${Math.abs(varAtivo).toFixed(2)}%`);
-    document.getElementById('detVarAtivo').className = varAtivo >= 0 ? 'text-success small' : 'text-danger small';
-    
-    setText('detPrecoOpcao', `R$ ${optionPrice.toFixed(2)}`);
-    setHTML('detVarOpcao', `${varOpcao >= 0 ? '↑' : '↓'} ${Math.abs(varOpcao).toFixed(2)}%`);
-    document.getElementById('detVarOpcao').className = varOpcao >= 0 ? 'text-success small' : 'text-danger small';
-    
-    setText('detDistancia', `${distancia.toFixed(2)}%`);
-    
-    // Calcular P&L
-    let pnlFechamento = 0;
-    let mtm = 0;
-    let custoRecompra = 0;
-    
-    if (isVenda) {
-        // Venda: Ganho = Prêmio recebido - Custo de recompra
-        const premioTotal = premioAbertura * qtd;
-        custoRecompra = optionPrice * qtd;
-        mtm = premioTotal - custoRecompra;
-        pnlFechamento = premioTotal; // Se não houver exercício
-    } else {
-        // Compra: Ganho = Valor atual - Custo de entrada
-        const custoEntrada = premioAbertura * qtd;
-        const valorAtual = optionPrice * qtd;
-        mtm = valorAtual - custoEntrada;
-        custoRecompra = 0; // N/A para compra
-    }
-    
-    // Atualizar Tab Performance - Resultado Financeiro
-    setText('detResFechamento', `${pnlFechamento >= 0 ? '+ ' : '- '}R$ ${Math.abs(pnlFechamento).toFixed(2)}`);
-    setText('detMTM', `${mtm >= 0 ? '+ ' : '- '}R$ ${Math.abs(mtm).toFixed(2)}`);
-    setText('detLucroAtual', `R$ ${Math.abs(mtm).toFixed(2)}`);
-    
-    // Percentual do prêmio capturado (para venda)
-    let percPremio = 0;
-    if (isVenda && premioAbertura > 0) {
-        percPremio = 100 - (optionPrice / premioAbertura * 100);
-    }
-    setText('detPercPremio', `${percPremio >= 0 ? '+' : ''}${percPremio.toFixed(2)}%`);
-    document.getElementById('detPercPremio').className = percPremio >= 0 ? 'fw-bold text-success' : 'fw-bold text-danger';
-    
-    // Tab Performance - Detalhes do Prêmio
-    const premioTotal = premioAbertura * qtd;
-    setText('detPremioAbertura', `R$ ${premioTotal.toFixed(2)}`);
-    setText('detCustoRecompra', `R$ ${custoRecompra.toFixed(2)}`);
-    setText('detResultLiquido', `R$ ${Math.abs(mtm).toFixed(2)}`);
-    setText('detPremioRestante', `${(100 - percPremio).toFixed(2)}%`);
-    
-    // Progress bar
-    const progressBar = document.getElementById('detProgressBar');
-    if (progressBar) {
-        progressBar.style.width = `${Math.abs(percPremio)}%`;
-        progressBar.className = percPremio >= 0 ? 'progress-bar bg-success' : 'progress-bar bg-danger';
-    }
-    setText('detProgressLabel', `${Math.abs(percPremio).toFixed(2)}% do prêmio ${percPremio >= 0 ? 'já capturado' : 'perdido'}`);
-    
-    // Cenário de exercício
-    const valorExercicio = strike * qtd;
-    const lucroExercicio = ((spotPrice - strike) / strike * 100);
-    setText('detValorExercicio', `R$ ${valorExercicio.toFixed(2)}`);
-    setText('detLucroEsperado', `${lucroExercicio >= 0 ? '+' : ''}${lucroExercicio.toFixed(2)}%`);
-    
-    // Tab Detalhes - Valores Atuais
-    setText('detPrecoAtual', `R$ ${spotPrice.toFixed(2)}`);
-    setText('detPremioUnitAtual', `R$ ${optionPrice.toFixed(2)}`);
-    setText('detDistanciaAtual', `${distancia.toFixed(2)}%`);
-    setText('detPercPremioAtual', `${percPremio.toFixed(2)}%`);
-    setText('detCustoRecompraTab', `R$ ${custoRecompra.toFixed(2)}`);
-    
-    // Tab Detalhes - Distância na abertura
-    const distanciaAbertura = ((precoAbertura - strike) / strike * 100);
-    setText('detDistanciaAbertura', `${distanciaAbertura.toFixed(2)}%`);
-    
-    // Charts - atualizar valores nos cards de cenários
-    const piorCaso = isVenda ? -(strike * qtd - premioTotal) : -premioTotal;
-    const melhorCaso = isVenda ? premioTotal : (strike * qtd - premioTotal);
-    
-    setText('detPiorCaso', `${piorCaso >= 0 ? '+' : ''}R$ ${Math.abs(piorCaso).toFixed(2)}`);
-    setText('detCasoAtual', `${mtm >= 0 ? '+' : ''}R$ ${Math.abs(mtm).toFixed(2)}`);
-    setText('detMelhorCaso', `${melhorCaso >= 0 ? '+' : ''}R$ ${Math.abs(melhorCaso).toFixed(2)}`);
-    
-    // Tab Risco
-    const capitalRisco = strike * Math.abs(qtd);
-    const margem = capitalRisco * 0.25; // 25% aproximado
-    const riscoRetorno = premioTotal > 0 ? (capitalRisco / premioTotal).toFixed(2) : '0';
-    const retornoMargem = margem > 0 ? ((mtm / margem) * 100).toFixed(2) : '0';
-    
-    setText('detCapitalRisco', `R$ ${capitalRisco.toFixed(2)}`);
-    setText('detMargem', `R$ ${margem.toFixed(2)}`);
-    setText('detRiscoRetorno', `${riscoRetorno}:1`);
-    setText('detRetornoMargem', `${retornoMargem >= 0 ? '+' : ''}${retornoMargem}%`);
-    
-    setText('detPerdaMaxima', `-R$ ${Math.abs(piorCaso).toFixed(2)}`);
-    setText('detGanhoMaximo', `R$ ${Math.abs(melhorCaso).toFixed(2)}`);
-    setText('detBreakeven', `R$ ${(strike - premioAbertura).toFixed(2)}`);
-    setText('detProbLucro', `${(spotPrice > strike ? 65 : 35)}%`);
-    
-    setText('detPrejMaximo', Math.abs(piorCaso).toFixed(2));
+function cdf(x) {
+    // Aproximação de Abramowitz e Stegun
+    // https://en.wikipedia.org/wiki/Error_function#Approximation_with_elementary_functions
+    const a1 =  0.254829592;
+    const a2 = -0.284496736;
+    const a3 =  1.421413741;
+    const a4 = -1.453152027;
+    const a5 =  1.061405429;
+    const p  =  0.3275911;
+
+    const sign = x < 0 ? -1 : 1;
+    const x_abs = Math.abs(x);
+
+    const t = 1.0 / (1.0 + p * x_abs);
+    const y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x_abs * x_abs);
+
+    return 0.5 * (1.0 + sign * y);
 }
 
-function updateDetalhesUI(op, spotPrice, optionPrice) {
-    // Helper function to safely set content
-    const setContent = (id, content, isHTML = false) => {
-        const el = document.getElementById(id);
-        if (el) {
-            if (isHTML) el.innerHTML = content;
-            else el.textContent = content;
-        }
-    };
-    
-    const isCall = op.tipo === 'CALL';
-    const qty = parseFloat(op.quantidade);
-    const isShort = qty < 0; 
+/**
+ * Função de densidade de probabilidade normal
+ * @param {number} x
+ * @returns {number}
+ */
+function pdf(x) {
+    return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI);
+}
 
-    const K = parseFloatSafe(op.strike);
-    const T_days = calcularDias(op.vencimento).corridos;
-    const T = Math.max(T_days / 365.0, 0.0001);
-    const r = 0.1075; // Risk-free rate (approx)
-
-    // --- 1. Financial Calculations ---
-    const unitEntry = parseFloatSafe(op.premio || 0);
-    const unitCurrent = optionPrice;
+/**
+ * Cálculo de Black-Scholes para opções europeias
+ * @param {Object} params - Parâmetros para cálculo
+ */
+function blackScholes(params) {
+    const { S, K, T, r, sigma, isCall } = params;
     
-    let pnl = 0;
-    let costBasis = 0;
+    if (T <= 0) return { delta: 0, gamma: 0, theta: 0, vega: 0, price: isCall ? Math.max(S - K, 0) : Math.max(K - S, 0) };
     
-    if (isShort) {
-        costBasis = unitEntry * Math.abs(qty); 
-        const currentValueToClose = unitCurrent * Math.abs(qty);
-        pnl = costBasis - currentValueToClose;
+    const d1 = (Math.log(S / K) + (r + 0.5 * sigma * sigma) * T) / (sigma * Math.sqrt(T));
+    const d2 = d1 - sigma * Math.sqrt(T);
+    
+    const cdf_d1 = cdf(d1);
+    const cdf_d2 = cdf(d2);
+    const cdf_nd1 = cdf(-d1);
+    const cdf_nd2 = cdf(-d2);
+    const nd1 = pdf(d1);
+    
+    let delta, price, theta;
+    
+    if (isCall) {
+        delta = cdf_d1;
+        price = S * cdf_d1 - K * Math.exp(-r * T) * cdf_d2;
+        theta = (- (S * sigma * nd1) / (2 * Math.sqrt(T)) - r * K * Math.exp(-r * T) * cdf_d2) / 252.0;
     } else {
-        costBasis = unitEntry * Math.abs(qty);
-        const currentValue = unitCurrent * Math.abs(qty);
-        pnl = currentValue - costBasis;
+        delta = cdf_d1 - 1;
+        price = K * Math.exp(-r * T) * cdf_nd2 - S * cdf_nd1;
+        theta = (- (S * sigma * nd1) / (2 * Math.sqrt(T)) + r * K * Math.exp(-r * T) * cdf_nd2) / 252.0;
     }
     
-    const pnlPercent = costBasis !== 0 ? (pnl / costBasis) * 100 : 0;
-
-    // Notional & Margin
-    const strikeValue = parseFloatSafe(op.strike);
-    const quantity = Math.abs(qty);
-    const notional = strikeValue * quantity;
+    const gamma = nd1 / (S * sigma * Math.sqrt(T));
+    const vega = S * Math.sqrt(T) * nd1 / 100.0; // Vega is usually per 1% change
     
-    const config = JSON.parse(localStorage.getItem('appConfig') || '{}');
-    const saldoCorretora = parseFloat(config.saldoAcoes || 0);
-    const margemDisponivel = saldoCorretora - notional;
-    const utilizacaoPercent = saldoCorretora > 0 ? (notional / saldoCorretora * 100) : 0;
+    return { delta, gamma, theta, vega, price };
+}
 
-    // --- 2. Basic Info na Aba Detalhes ---
-    setContent('detalhesPrecoAbertura', formatCurrency(parseFloatSafe(op.premio)));
-    setContent('detalhesPrecoAtual', formatCurrency(optionPrice));
-    setContent('detalhesVariacao', `${((optionPrice - parseFloatSafe(op.premio)) / parseFloatSafe(op.premio) * 100).toFixed(2)}%`);
-    setContent('detalhesStrike', formatCurrency(K));
-    setContent('detalhesVencimento', formatDate(op.vencimento));
-    setContent('detalhesDiasVencimento', T_days.toString());
-    setContent('detalhesQuantidade', Math.abs(qty).toString());
-    setContent('detalhesCustoTotal', formatCurrency(costBasis));
-    setContent('detalhesNotionalValue', formatCurrency(notional));
+// ====================
+// SIMULAÇÃO E ANÁLISE
+// ====================
 
-    let graphColor = '#94a3b8';
-    const marginState = margemDisponivel < 0 ? 'red' : margemDisponivel > 0 ? 'green' : 'gray';
-    const resultState = pnl >= 0 ? 'green' : 'red';
-    const pnlState = pnlPercent >= 0 ? 'green' : 'red';
-    graphColor = resultState === 'green' ? '#48bb78' : '#f56565';
-
-    // Atualizar aba Performance (tab 1)
-    setContent('detalhesResultadoFechamento', formatCurrency(pnl));
-    setContent('detalhesLucroAtual', formatCurrency(pnl));
-    setContent('detalhesPremioPercent', `${pnlPercent > 0 ? '+' : ''}${pnlPercent.toFixed(2)}%`);
-    setContent('detalhesLucroMaximo', formatCurrency(isShort ? (unitEntry * Math.abs(qty)) : 0));
-    setContent('detalhesPrejuizoMaximo', formatCurrency(isShort ? 0 : (unitEntry * Math.abs(qty))));
+async function simularOperacao() {
+    const ativo = document.getElementById('inputAtivo').value;
+    const ativoBase = document.getElementById('inputAtivoBase').value;
+    const strike = parseFloat(document.getElementById('inputStrike').value);
+    const premio = parseFloat(document.getElementById('inputPremioAbertura').value);
+    const quantidade = parseInt(document.getElementById('inputQtd').value);
+    const tipoOperacao = document.getElementById('inputTipoOperacao').value;
+    const tipoOpcao = document.getElementById('inputTipo').value;
+    const vencimento = document.getElementById('inputVencimento').value;
     
-    // Barra de progresso do P&L
-    const plProgressBar = document.getElementById('detalhesProgressBar');
-    if (plProgressBar) {
-        const absPercent = Math.min(Math.abs(pnlPercent), 100);
-        plProgressBar.style.width = `${absPercent}%`;
-        plProgressBar.className = pnlPercent >= 0 ? 'progress-bar bg-success' : 'progress-bar bg-danger';
+    if (!ativo || !ativoBase || !strike || !premio || !quantidade || !vencimento) {
+        iziToast.error({title: 'Erro', message: 'Preencha todos os campos obrigatórios'});
+        return;
     }
     
-    // Atualizar header
-    setContent('detalhesAtivoBaseLabel', op.ativo_base || '-');
-    setContent('detalhesAtivoBasePreco', formatCurrency(spotPrice));
+    // Get current spot price
+    let spotPrice = cotacaoAtivoBase || strike;
     
-    const varPercent = op.preco_ativo_base ? ((spotPrice - op.preco_ativo_base) / op.preco_ativo_base * 100) : 0;
-    const varElement = document.getElementById('detalhesAtivoBaseVar');
-    if (varElement) {
-        varElement.textContent = `${varPercent > 0 ? '+' : ''}${varPercent.toFixed(2)}%`;
-        varElement.className = varPercent >= 0 ? 'badge bg-success' : 'badge bg-danger';
+    // Calculate scenarios
+    const scenarios = [];
+    const basePrice = spotPrice;
+    
+    for (let pct = -0.3; pct <= 0.3; pct += 0.05) {
+        const priceAtExpiry = basePrice * (1 + pct);
+        let optionValueAtExpiry = 0;
+        
+        if (tipoOpcao === 'CALL') {
+            optionValueAtExpiry = Math.max(priceAtExpiry - strike, 0);
+        } else {
+            optionValueAtExpiry = Math.max(strike - priceAtExpiry, 0);
+        }
+        
+        const premioRecebido = premio * quantidade;
+        let lucroOperacao;
+        
+        if (tipoOperacao === 'VENDA') {
+            // Vendemos a opção, recebemos o prêmio
+            // Lucro = prêmio recebido - valor da opção no vencimento
+            lucroOperacao = premioRecebido - (optionValueAtExpiry * quantidade);
+        } else {
+            // Compramos a opção, pagamos o prêmio
+            // Lucro = valor da opção no vencimento - prêmio pago
+            lucroOperacao = (optionValueAtExpiry * quantidade) - premioRecebido;
+        }
+        
+        scenarios.push({
+            priceChange: (pct * 100).toFixed(1) + '%',
+            priceAtExpiry: priceAtExpiry.toFixed(2),
+            optionValue: optionValueAtExpiry.toFixed(2),
+            profit: lucroOperacao.toFixed(2),
+            profitPct: ((lucroOperacao / Math.abs(premioRecebido)) * 100).toFixed(1) + '%'
+        });
     }
     
+    // Display results
+    const resultDiv = document.getElementById('simulationResults') || createSimulationResultsDiv();
+    resultDiv.innerHTML = `
+        <h5>Simulação de Cenários</h5>
+        <div class="table-responsive">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Variação</th>
+                        <th>Preço no Venc.</th>
+                        <th>Valor Opção</th>
+                        <th>Lucro/Prejuízo</th>
+                        <th>% Retorno</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${scenarios.map(s => `
+                        <tr class="${parseFloat(s.profit) >= 0 ? 'table-success' : 'table-danger'}">
+                            <td>${s.priceChange}</td>
+                            <td>R$ ${s.priceAtExpiry}</td>
+                            <td>R$ ${s.optionValue}</td>
+                            <td>R$ ${s.profit}</td>
+                            <td>${s.profitPct}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+    
+    resultDiv.style.display = 'block';
+}
+
+function createSimulationResultsDiv() {
+    const div = document.createElement('div');
+    div.id = 'simulationResults';
+    div.className = 'mt-3 p-3 border rounded';
+    div.style.display = 'none';
+    
+    const form = document.querySelector('.row.g-3');
+    if (form) {
+        form.appendChild(div);
+    }
+
+    return div;
+}
+
+/*
     setContent('detalhesOpcaoLabel', op.ativo || '-');
     setContent('detalhesOpcaoPrecoAtual', formatCurrency(optionPrice));
     setContent('detalhesStrikeMini', formatCurrency(K));
@@ -1910,15 +1742,6 @@ function renderPayoffChart(spotPrice, strike, unitEntry, isCall, isShort, S, opt
                 x: {
                     grid: { color: '#1e293b', drawBorder: false },
                     ticks: { color: '#94a3b8', maxTicksLimit: 8 }
-                }
-            }
-        }
-    });
-}
-
-// ============================================================================
-// NOVOS GRÁFICOS - MODAL DETALHES
-// ============================================================================
 
 let thetaChartInstance = null;
 let riskDistChartInstance = null;
@@ -2746,6 +2569,7 @@ function generateRecommendation(plPct, days, pop, isCall, isShort, S, K, be) {
 
 // Removed duplicate renderPayoffChart function
 
+*/
 
 /**
  * Análise de operação com IA (Google Gemini) - USANDO DADOS CORRETOS DA OPERAÇÃO
@@ -3022,11 +2846,11 @@ function calculateGreeks(S, K, T, r, sigma, type) {
     if (type === 'CALL') {
         delta = cdf_d1;
         price = S * cdf_d1 - K * Math.exp(-r * T) * cdf_d2;
-        theta = (- (S * sigma * nd1) / (2 * Math.sqrt(T)) - r * K * Math.exp(-r * T) * cdf_d2) / 365.0;
+        theta = (- (S * sigma * nd1) / (2 * Math.sqrt(T)) - r * K * Math.exp(-r * T) * cdf_d2) / 252.0;
     } else {
         delta = cdf_d1 - 1;
         price = K * Math.exp(-r * T) * cdf_nd2 - S * cdf_nd1;
-        theta = (- (S * sigma * nd1) / (2 * Math.sqrt(T)) + r * K * Math.exp(-r * T) * cdf_nd2) / 365.0;
+        theta = (- (S * sigma * nd1) / (2 * Math.sqrt(T)) + r * K * Math.exp(-r * T) * cdf_nd2) / 252.0;
     }
     
     const gamma = nd1 / (S * sigma * Math.sqrt(T));
@@ -3036,9 +2860,8 @@ function calculateGreeks(S, K, T, r, sigma, type) {
 }
 
 // ====================
-// FIM MODAL DE DETALHES
+// COTAÇÕES E API
 // ====================
-
 
 async function buscarCotacaoAtivoBase(ativo) {
     if (!ativo) return;
@@ -3153,8 +2976,26 @@ async function buscarDadosOpcao(ativo) {
 }
 
 
-function refreshQuotes() {
-    loadOperacoes();
+async function refreshQuotes() {
+    const btn = document.getElementById('btnRefresh');
+    const original = btn ? btn.innerHTML : null;
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+    }
+    try {
+        await loadOperacoes();
+        updateMarketStatus();
+        const modal = document.getElementById('modalDetalheOpcao');
+        if (modal && modal.classList.contains('show') && typeof refreshDetalheOperacao === 'function') {
+            await refreshDetalheOperacao();
+        }
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = original;
+        }
+    }
 }
 
 async function buscarOpcoesAPI() {
@@ -3374,7 +3215,7 @@ function renderModalSelecionarOpcoesList() {
 
              // Calculate Greeks if missing (Black-Scholes)
              if (Math.abs(callDelta) < 0.001 && cotacaoAtivoBase > 0 && call.premio > 0) {
-                 const T = diasCall.corridos / 365.0;
+                 const T = Math.max(diasCall.uteis / 252.0, 0.0001);
                  const r = 0.1075; 
                  const iv = calculateIV(call.premio, cotacaoAtivoBase, parseFloatSafe(call.strike), T, r, 'CALL');
                  const greeks = calculateGreeks(cotacaoAtivoBase, parseFloatSafe(call.strike), T, r, iv, 'CALL');
@@ -3405,7 +3246,7 @@ function renderModalSelecionarOpcoesList() {
 
              // Calculate Greeks if missing (Black-Scholes)
              if (Math.abs(putDelta) < 0.001 && cotacaoAtivoBase > 0 && put.premio > 0) {
-                 const T = diasPut.corridos / 365.0;
+                 const T = Math.max(diasPut.uteis / 252.0, 0.0001);
                  const r = 0.1075; 
                  const iv = calculateIV(put.premio, cotacaoAtivoBase, parseFloatSafe(put.strike), T, r, 'PUT');
                  const greeks = calculateGreeks(cotacaoAtivoBase, parseFloatSafe(put.strike), T, r, iv, 'PUT');
@@ -3501,6 +3342,10 @@ function renderChartAnual(data, year) {
     // Update Metrics
     updateAnnualMetrics(data, monthlyData);
 
+    const totalAnual = monthlyData.reduce((acc, v) => acc + v, 0);
+    const chartLabels = [...months, 'Total'];
+    const chartData = [...monthlyData, totalAnual];
+
     // Theme Config
     const isDarkMode = document.body.getAttribute('data-bs-theme') === 'dark';
     const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)';
@@ -3513,11 +3358,11 @@ function renderChartAnual(data, year) {
     chartAnual = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: months,
+            labels: chartLabels,
             datasets: [{
                 label: 'Resultado Mensal',
-                data: monthlyData,
-                backgroundColor: monthlyData.map(v => v >= 0 ? '#2fb344' : '#d63939')
+                data: chartData,
+                backgroundColor: chartData.map((v, idx) => idx === chartData.length - 1 ? '#206bc4' : (v >= 0 ? '#2fb344' : '#d63939'))
             }]
         },
         options: {
@@ -3541,6 +3386,321 @@ function renderChartAnual(data, year) {
 
     // Render Additional Charts
     renderAdditionalCharts(data, monthlyData, months, isDarkMode, textColor, gridColor);
+    renderAnnualTable(data);
+}
+
+function renderAnnualTable(data) {
+    const container = document.getElementById('anualTabelaContainer');
+    if (!container) return;
+
+    const config = JSON.parse(localStorage.getItem('appConfig') || '{}');
+    const saldoAtual = parseFloat(config.saldoAcoes || 0);
+    const saldoMap = computeSaldoAberturaFallback(data, saldoAtual);
+    persistSaldoAberturaEstimada(data, saldoMap);
+
+    const rows = [...data]
+        .sort((a, b) => (a.data_operacao || '').localeCompare(b.data_operacao || ''))
+        .map(op => {
+            const saldoInfo = getSaldoInfo(op, saldoMap);
+            const resultado = parseFloat(op.resultado || 0);
+            const perc = saldoInfo.saldo > 0 ? (resultado / saldoInfo.saldo) * 100 : 0;
+            const exercido = op.status === 'EXERCIDA' ? 'SIM' : 'NÃO';
+            const tipoBadge = op.tipo === 'CALL' ? 'bg-green text-green-fg' : 'bg-red text-red-fg';
+            const exercicioBadge = exercido === 'SIM' ? 'bg-red text-red-fg' : 'bg-green text-green-fg';
+
+            return `
+                <tr>
+                    <td>${formatDate(op.data_operacao)}</td>
+                    <td class="fw-bold">${op.ativo}</td>
+                    <td><span class="badge ${tipoBadge}">${op.tipo}</span></td>
+                    <td>${formatCurrency(parseFloatSafe(op.strike))}</td>
+                    <td><span class="badge ${exercicioBadge}">${exercido}</span></td>
+                    <td>${formatCurrency(saldoInfo.saldo)}${saldoInfo.estimado ? ' <span class="badge bg-yellow text-yellow-fg ms-1">estimado</span>' : ''}</td>
+                    <td class="${resultado >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(resultado)}</td>
+                    <td class="${perc >= 0 ? 'text-success' : 'text-danger'}">${perc.toFixed(2)}%</td>
+                    <td>
+                        <button class="btn btn-sm btn-info btn-icon" onclick="openDetalheOperacao('${op.id}')" title="Detalhes">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        })
+        .join('');
+
+    container.innerHTML = `
+        <div class="card mt-3">
+            <div class="card-header"><h3 class="card-title">Operações Detalhadas</h3></div>
+            <div class="table-responsive">
+                <table class="table table-vcenter card-table">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Ativo</th>
+                            <th>Tipo</th>
+                            <th>Strike</th>
+                            <th>Exercido</th>
+                            <th>Saldo Abertura</th>
+                            <th>Resultado</th>
+                            <th>%</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>
+        </div>
+    `;
+}
+
+function openSaldoCorretoraModal() {
+    const modalEl = document.getElementById('modalSaldoOperacoes');
+    if (!modalEl) return;
+
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+
+    const today = new Date();
+    const start = new Date(today.getFullYear(), 0, 1);
+    const inicioEl = document.getElementById('saldoInicio');
+    const fimEl = document.getElementById('saldoFim');
+    if (inicioEl && !inicioEl.value) inicioEl.value = start.toISOString().slice(0, 10);
+    if (fimEl && !fimEl.value) fimEl.value = today.toISOString().slice(0, 10);
+
+    updateSaldoCorretoraModal();
+}
+
+async function updateSaldoCorretoraModal() {
+    const inicio = document.getElementById('saldoInicio')?.value;
+    const fim = document.getElementById('saldoFim')?.value;
+    if (!inicio || !fim) return;
+
+    const res = await fetch(`${API_BASE}/api/opcoes?_=${Date.now()}`, { cache: 'no-store' });
+    const ops = await res.json();
+
+    const startDate = new Date(inicio);
+    const endDate = new Date(fim);
+    endDate.setHours(23, 59, 59, 999);
+
+    const filtered = ops.filter(op => {
+        const d = new Date(op.data_operacao || op.created_at || 0);
+        return d >= startDate && d <= endDate;
+    });
+
+    renderSaldoResumo(filtered);
+    renderSaldoCharts(filtered);
+    renderSaldoTabela(filtered);
+}
+
+function renderSaldoResumo(ops) {
+    const resumo = document.getElementById('saldoResumo');
+    if (!resumo) return;
+    const config = JSON.parse(localStorage.getItem('appConfig') || '{}');
+    const saldoAtual = parseFloat(config.saldoAcoes || 0);
+    const saldoMap = computeSaldoAberturaFallback(ops, saldoAtual);
+    persistSaldoAberturaEstimada(ops, saldoMap);
+    const totalOps = ops.length;
+    const totalResultado = ops.reduce((acc, op) => acc + (parseFloat(op.resultado) || 0), 0);
+    const percMedio = totalOps > 0 ? ops.reduce((acc, op) => {
+        const saldo = (saldoMap.get(op.id) ?? parseFloat(op.saldo_abertura || 0));
+        const res = parseFloat(op.resultado || 0);
+        return acc + (saldo > 0 ? (res / saldo) * 100 : 0);
+    }, 0) / totalOps : 0;
+
+    resumo.innerHTML = `
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="text-muted">Total de Operações</div>
+                    <div class="h2">${totalOps}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="text-muted">Resultado Total</div>
+                    <div class="h2 ${totalResultado >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(totalResultado)}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="text-muted">Rentabilidade Média</div>
+                    <div class="h2">${percMedio.toFixed(2)}%</div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function renderSaldoCharts(ops) {
+    if (typeof Chart === 'undefined') return;
+
+    const config = JSON.parse(localStorage.getItem('appConfig') || '{}');
+    const saldoAtual = parseFloat(config.saldoAcoes || 0);
+    const saldoMap = computeSaldoAberturaFallback(ops, saldoAtual);
+    persistSaldoAberturaEstimada(ops, saldoMap);
+
+    const sorted = [...ops].sort((a, b) => (a.data_operacao || '').localeCompare(b.data_operacao || ''));
+    let acumulado = 0;
+    const labels = [];
+    const data = [];
+    sorted.forEach(op => {
+        const res = parseFloat(op.resultado || 0);
+        acumulado += res;
+        labels.push(formatDate(op.data_operacao));
+        data.push(acumulado);
+    });
+
+    const canvasLine = document.getElementById('chartSaldoAcumulado');
+    if (canvasLine) {
+        if (chartSaldoAcumulado) chartSaldoAcumulado.destroy();
+        chartSaldoAcumulado = new Chart(canvasLine.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [{
+                    label: 'Acumulado',
+                    data,
+                    borderColor: '#2fb344',
+                    backgroundColor: 'rgba(47, 179, 68, 0.15)',
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } }
+            }
+        });
+    }
+
+    const callCount = ops.filter(op => op.tipo === 'CALL').length;
+    const putCount = ops.filter(op => op.tipo === 'PUT').length;
+    const canvasPie = document.getElementById('chartSaldoTipo');
+    if (canvasPie) {
+        if (chartSaldoTipo) chartSaldoTipo.destroy();
+        chartSaldoTipo = new Chart(canvasPie.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: ['CALL', 'PUT'],
+                datasets: [{
+                    data: [callCount, putCount],
+                    backgroundColor: ['#2fb344', '#d63939']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } }
+            }
+        });
+    }
+}
+
+function renderSaldoTabela(ops) {
+    const tbody = document.querySelector('#saldoTabela tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    const config = JSON.parse(localStorage.getItem('appConfig') || '{}');
+    const saldoAtual = parseFloat(config.saldoAcoes || 0);
+    const saldoMap = computeSaldoAberturaFallback(ops, saldoAtual);
+    persistSaldoAberturaEstimada(ops, saldoMap);
+
+    ops.sort((a, b) => (a.data_operacao || '').localeCompare(b.data_operacao || '')).forEach(op => {
+        const saldoInfo = getSaldoInfo(op, saldoMap);
+        const resultado = parseFloat(op.resultado || 0);
+        const perc = saldoInfo.saldo > 0 ? (resultado / saldoInfo.saldo) * 100 : 0;
+        const exercido = op.status === 'EXERCIDA' ? 'SIM' : 'NÃO';
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${formatDate(op.data_operacao)}</td>
+            <td class="fw-bold">${op.ativo}</td>
+            <td><span class="badge ${op.tipo === 'CALL' ? 'bg-green text-green-fg' : 'bg-red text-red-fg'}">${op.tipo}</span></td>
+            <td>${formatCurrency(parseFloatSafe(op.strike))}</td>
+            <td><span class="badge ${exercido === 'SIM' ? 'bg-red text-red-fg' : 'bg-green text-green-fg'}">${exercido}</span></td>
+            <td>${formatCurrency(saldoInfo.saldo)}${saldoInfo.estimado ? ' <span class="badge bg-yellow text-yellow-fg ms-1">estimado</span>' : ''}</td>
+            <td class="${resultado >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(resultado)}</td>
+            <td class="${perc >= 0 ? 'text-success' : 'text-danger'}">${perc.toFixed(2)}%</td>
+            <td>
+                <button class="btn btn-sm btn-info btn-icon" onclick="openDetalheOperacao('${op.id}')" title="Detalhes">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function computeSaldoAberturaFallback(ops, saldoAtual) {
+    const map = new Map();
+    if (!Array.isArray(ops) || ops.length === 0) return map;
+
+    const sorted = [...ops].sort((a, b) => {
+        const da = new Date(a.data_operacao || a.created_at || 0);
+        const db = new Date(b.data_operacao || b.created_at || 0);
+        return db - da;
+    });
+
+    let saldo = saldoAtual;
+    sorted.forEach(op => {
+        const existing = parseFloat(op.saldo_abertura || 0);
+        const saldoAbertura = existing > 0 ? existing : saldo;
+        map.set(op.id, saldoAbertura);
+
+        const premioUnit = parseFloat(op.premio || 0);
+        const qtdAbs = Math.abs(parseInt(op.quantidade || 0));
+        const premioTotal = premioUnit * qtdAbs;
+        const isVenda = parseInt(op.quantidade || 0) < 0;
+
+        if (existing <= 0 && premioTotal > 0) {
+            saldo = isVenda ? (saldo - premioTotal) : (saldo + premioTotal);
+        }
+    });
+
+    return map;
+}
+
+function getSaldoInfo(op, saldoMap) {
+    const existing = parseFloat(op.saldo_abertura || 0);
+    const fallback = saldoMap.get(op.id) ?? 0;
+    if (existing > 0) {
+        return { saldo: existing, estimado: false };
+    }
+    return { saldo: fallback, estimado: fallback > 0 };
+}
+
+async function persistSaldoAberturaEstimada(ops, saldoMap) {
+    if (!Array.isArray(ops) || ops.length === 0) return;
+
+    const updates = ops
+        .filter(op => !op.saldo_abertura || parseFloat(op.saldo_abertura) <= 0)
+        .map(op => ({
+            id: op.id,
+            saldo: saldoMap.get(op.id) || 0,
+            op
+        }))
+        .filter(item => item.saldo > 0);
+
+    for (const item of updates) {
+        try {
+            await fetch(`${API_BASE}/api/opcoes/${item.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ...item.op,
+                    saldo_abertura: item.saldo
+                })
+            });
+        } catch (e) {
+            console.warn('Falha ao persistir saldo_abertura estimado:', e.message);
+        }
+    }
 }
 
 function setupAnnualDashboard(canvas) {
@@ -4289,7 +4449,8 @@ function renderSimOpcoesList() {
         // If Delta is 0 and we have price, try to calculate
         if (Math.abs(deltaVal) < 0.001 && cotacaoAtivoBase > 0 && op.premio > 0) {
             const dias = calcularDias(op.vencimento);
-            const T = dias.corridos / 365.0;
+            // Use Business Days for Consistency
+            const T = Math.max(dias.uteis / 252.0, 0.0001);
             const r = 0.1075; // Risk-free rate (approx Selic)
             
             // Calculate IV first
@@ -4307,7 +4468,8 @@ function renderSimOpcoesList() {
         
         if (cotacaoAtivoBase > 0 && strikeVal > 0 && op.premio > 0) {
             const dias = calcularDias(op.vencimento);
-            const T = Math.max(dias.corridos / 365.0, 0.0001);
+            // Use Business Days for Black-Scholes (Professional Standard)
+            const T = Math.max(dias.uteis / 252.0, 0.0001);
             const r = 0.1075;
             const premio = parseFloatSafe(op.premio);
             
@@ -4445,10 +4607,10 @@ function calculateGreeks(S, K, T, r, v, type) {
     
     if (type === 'CALL') {
         delta = cdf(d1);
-        theta = (- (S * nd1 * v) / (2 * Math.sqrt(T)) - r * K * Math.exp(-r * T) * cdf(d2)) / 365;
+        theta = (- (S * nd1 * v) / (2 * Math.sqrt(T)) - r * K * Math.exp(-r * T) * cdf(d2)) / 252.0;
     } else {
         delta = cdf(d1) - 1;
-        theta = (- (S * nd1 * v) / (2 * Math.sqrt(T)) + r * K * Math.exp(-r * T) * cdf(-d2)) / 365;
+        theta = (- (S * nd1 * v) / (2 * Math.sqrt(T)) + r * K * Math.exp(-r * T) * cdf(-d2)) / 252.0;
     }
     
     gamma = nd1 / (S * v * Math.sqrt(T));
@@ -4707,7 +4869,7 @@ async function analyzeSimWithAI(forceRefresh = false) {
 
     // ============= CALCULAR OU OBTER GREGAS PRIMEIRO =============
     let gregas = {};
-    const T_calc = diasRestantes / 365.0;
+    const T_calc = Math.max(diasUteis / 252.0, 0.0001);
     const r_calc = 0.1075;
     
     // Verificar se já temos gregas calculadas (do renderSimOpcoesList)
@@ -4770,7 +4932,7 @@ async function analyzeSimWithAI(forceRefresh = false) {
     const distStrike = ((spotValue - strikeValue) / strikeValue) * 100;
     
     // Calcular PoP (Probability of Profit)
-    const T = Math.max(diasRestantes / 365.0, 0.0001);
+    const T = Math.max(diasUteis / 252.0, 0.0001);
     const r = 0.1075;
     let pop = 0;
     
@@ -5641,7 +5803,16 @@ async function openTechnicalAnalysisModal() {
         return;
     }
 
-    const modal = new bootstrap.Modal(document.getElementById('modalAnaliseTecnica'));
+    const modalEl = document.getElementById('modalAnaliseTecnica');
+    if (!modalEl) {
+        iziToast.error({
+            title: 'Erro',
+            message: 'Modal de analise tecnica nao encontrado na pagina.'
+        });
+        return;
+    }
+
+    const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
     modal.show();
 
     // Inicializar analisador
@@ -6339,9 +6510,8 @@ function getSignalColor(signal) {
 }
 
 // ==========================================
-// Y2 MODAL INTEGRATION
+// Y2 MODAL - Todo código movido para detalhe-opcoes.js
 // ==========================================
-
 function openY2Tab(evt, tabName) {
     var i, tabcontent, tablinks;
     // Get all tab-content elements
@@ -7321,11 +7491,4 @@ document.addEventListener('DOMContentLoaded', function() {
             updateSimulationPrice(parseFloat(this.value));
         });
     }
-    
-    // Event listener para o botão de refresh do modal detalhes
-    const btnDetRefresh = document.getElementById('btnDetRefresh');
-    if (btnDetRefresh) {
-        btnDetRefresh.addEventListener('click', refreshDetalhesOperacao);
-    }
 });
-

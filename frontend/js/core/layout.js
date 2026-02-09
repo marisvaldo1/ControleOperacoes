@@ -248,5 +248,6 @@ document.addEventListener('libsLoaded', function() {
         }
     }
     
+    console.log('[Layout] Disparando evento layoutReady');
     document.dispatchEvent(new Event('layoutReady'));
 });
