@@ -18,6 +18,15 @@ let lastSimModel = null;
 let chartDetalhesInstance = null;
 let currentDetalhesOpId = null;
 let lastUpdateTimestamp = {};
+let cotacoesCache = new Map(); // Cache de cotações para evitar múltiplas requisições
+
+// Limpar cache de cotações a cada 5 minutos para garantir dados atualizados
+setInterval(() => {
+    if (cotacoesCache && cotacoesCache.size > 0) {
+        cotacoesCache.clear();
+        console.log('Cache de cotações limpo');
+    }
+}, 5 * 60 * 1000); // 5 minutos
 
 /**
  * Converte string de valor monetário (brasileiro ou americano) para número
@@ -354,7 +363,7 @@ async function loadOperacoes() {
             iziToast.info({title: 'Atualizado', message: `${updatedCount} operações finalizadas automaticamente`});
         }
         
-        updateUI();
+        await updateUI();
     } catch (e) {
         iziToast.error({title: 'Erro', message: 'Erro ao buscar operações'});
         console.error(e);
@@ -377,7 +386,7 @@ function calcTotalsOpcoes(data) {
     };
 }
 
-function updateUI() {
+async function updateUI() {
     const currentMonth = getCurrentMonth();
     const currentYear = new Date().getFullYear().toString();
     
@@ -421,9 +430,9 @@ function updateUI() {
     `;
     document.getElementById('mesAtualTitle').textContent = `Operacoes - ${getMonthName(currentMonth).replace('-', ' 20')}`;
     
-    // Tables
-    populateTable(tableMesAtual, mesAtualData, true, true, false); // showActions=true, updatePrices=true, isHistorico=false
-    populateTable(tableHistorico, allOperacoes, true, false, true); // showActions=true, updatePrices=false, isHistorico=true
+    // Tables (agora são assíncronas)
+    await populateTable(tableMesAtual, mesAtualData, true, true, false); // showActions=true, updatePrices=true, isHistorico=false
+    await populateTable(tableHistorico, allOperacoes, true, false, true); // showActions=true, updatePrices=false, isHistorico=true
     
     // Historico mensal
     renderHistoricoMensal();
@@ -432,30 +441,87 @@ function updateUI() {
     renderChartAnual(anoData, currentYear);
 }
 
-function populateTable(dt, data, showActions = true, updatePrices = false, isHistorico = false) {
+// Função helper para buscar cotação de um ativo
+async function buscarCotacaoAtivo(ativo) {
+    if (!ativo) return null;
+    
+    // Verificar cache
+    if (cotacoesCache.has(ativo)) {
+        return cotacoesCache.get(ativo);
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE}/api/cotacao/opcoes?symbol=${ativo}`);
+        const data = await response.json();
+        
+        if (data && (data.price || data.cotacao || data.close || data.last)) {
+            const cotacao = parseFloat(data.price || data.cotacao || data.close || data.last);
+            cotacoesCache.set(ativo, cotacao);
+            return cotacao;
+        }
+    } catch (error) {
+        console.error(`Erro ao buscar cotação de ${ativo}:`, error);
+    }
+    
+    return null;
+}
+
+async function populateTable(dt, data, showActions = true, updatePrices = false, isHistorico = false) {
     dt.clear();
     const sorted = [...data].sort((a, b) => {
         const da = new Date(a.data_operacao || a.created_at || 0);
         const db = new Date(b.data_operacao || b.created_at || 0);
         return db - da;
     });
+    
+    // Se updatePrices=true, buscar cotações para operações abertas
+    if (updatePrices) {
+        // Obter lista única de ativos base das operações abertas
+        const ativosAbertos = new Set();
+        sorted.forEach(op => {
+            if (op.status === 'ABERTA' && op.ativo_base) {
+                ativosAbertos.add(op.ativo_base);
+            }
+        });
+        
+        // Buscar cotações em paralelo
+        const promises = Array.from(ativosAbertos).map(ativo => buscarCotacaoAtivo(ativo));
+        await Promise.all(promises);
+    }
+    
     sorted.forEach(op => {
         const diasInfo = calcularDias(op.vencimento);
         
-        // REGRA: Se updatePrices=false (HISTÓRICO), usar preco_atual do BANCO
-        // Se updatePrices=true (MÊS ATUAL), o preço já foi ou será atualizado pela API
-        const precoAtual = op.preco_atual;
+        // REGRA: Para operações ABERTAS, buscar preço atual da API
+        // Para operações FECHADAS/EXERCIDAS/VENCIDAS, usar preco_atual do BANCO
+        let precoAtual = op.preco_atual;
+        
+        if (updatePrices && op.status === 'ABERTA' && op.ativo_base) {
+            const cotacao = cotacoesCache.get(op.ativo_base);
+            if (cotacao) {
+                precoAtual = cotacao;
+            }
+        }
         
         // Lógica de Exercício: Calcular baseado em ITM/OTM
+        // Só calcula exercício para operações que ainda não venceram ou que estão no vencimento
         // PUT ITM: preço atual < strike (posso vender por mais que vale)
         // CALL ITM: preço atual > strike (posso comprar por menos que vale)
         let exercicio = false;
         
-        if (precoAtual && op.strike && op.tipo) {
+        if (precoAtual && op.strike && op.tipo && op.vencimento) {
             // Converter valores para numérico (suporta formato brasileiro e americano)
             const pa = parseFloatSafe(precoAtual);
             const str = parseFloatSafe(op.strike);
             
+            // Verificar se já venceu ou está no vencimento
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+            const parts = op.vencimento.split('-');
+            const vencimento = new Date(parts[0], parts[1] - 1, parts[2]);
+            vencimento.setHours(0, 0, 0, 0);
+            
+            // Calcular exercício baseado no tipo
             if (op.tipo === 'PUT') {
                 exercicio = (pa < str); // PUT ITM
             } else if (op.tipo === 'CALL') {
