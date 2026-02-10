@@ -15,8 +15,9 @@ function initDataTables() {
     const dtConfig = {
         language: {url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json'},
         pageLength: 10,
-        responsive: true,
-        order: [[0, 'desc']]
+        responsive: false,
+        scrollX: true,
+        order: [[11, 'desc']]
     };
     tableMesAtual = $('#tableMesAtual').DataTable(dtConfig);
     tableHistorico = $('#tableHistorico').DataTable(dtConfig);
@@ -86,7 +87,12 @@ function updateUI() {
 
 function populateTable(dt, data) {
     dt.clear();
-    data.forEach(op => {
+    const sorted = [...data].sort((a, b) => {
+        const da = new Date(a.exercicio || a.created_at || 0);
+        const db = new Date(b.exercicio || b.created_at || 0);
+        return db - da;
+    });
+    sorted.forEach(op => {
         dt.row.add([
             `<span class="badge bg-warning">${op.ativo || ''}</span>`,
             `<span class="badge ${op.tipo === 'CALL' ? 'bg-success' : 'bg-danger'}">${op.tipo || ''}</span>`,
@@ -99,7 +105,7 @@ function populateTable(dt, data) {
             op.crypto ? formatCrypto(op.crypto) : '-',
             op.premio_us ? formatCurrency(op.premio_us, 'USD') : '-',
             op.resultado ? `<span class="${op.resultado >= 0 ? 'text-success' : 'text-danger'}">${op.resultado.toFixed(2)}%</span>` : '-',
-            op.exercicio ? formatDate(op.exercicio) : '-',
+            op.exercicio ? formatDateCell(op.exercicio) : '-',
             op.dias || '-',
             op.exercicio_status || 'NAO',
             `<div class="btn-group">
@@ -113,6 +119,12 @@ function populateTable(dt, data) {
         ]);
     });
     dt.draw();
+}
+
+function formatDateCell(dateStr) {
+    if (!dateStr) return '-';
+    const ts = new Date(dateStr).getTime();
+    return `<span data-order="${Number.isFinite(ts) ? ts : ''}">${formatDate(dateStr)}</span>`;
 }
 
 function renderHistoricoMensal() {

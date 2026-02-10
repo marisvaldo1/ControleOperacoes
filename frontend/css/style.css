@@ -83,6 +83,11 @@ body {
     vertical-align: middle;
 }
 
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
 /* Badges */
 .badge {
     font-weight: 500;
@@ -152,6 +157,16 @@ body {
     padding: 0.375rem 0.75rem;
 }
 
+.dataTables_wrapper .dataTables_scroll,
+.dataTables_wrapper .dataTables_scrollBody {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+}
+
+.dataTables_wrapper table.dataTable {
+    width: 100% !important;
+}
+
 /* Responsivo */
 @media (max-width: 768px) {
     .card .h1 {
@@ -160,5 +175,23 @@ body {
     
     .btn-group .btn {
         padding: 0.25rem 0.5rem;
+    }
+
+    table {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    table thead,
+    table tbody,
+    table tr {
+        width: max-content;
+    }
+
+    table th,
+    table td {
+        white-space: nowrap;
     }
 }

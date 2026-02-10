@@ -1,0 +1,1890 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Options Dashboard - Dark Theme</title>
+    
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #1c2128;
+            --bg-card: #21262d;
+            --border-color: #30363d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-red: #f85149;
+            --accent-yellow: #d29922;
+            --accent-purple: #a371f7;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            color: var(--text-primary);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            margin-bottom: 20px;
+            border-radius: 12px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(0,0,0,0.6);
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px 12px 0 0 !important;
+            padding: 15px 20px;
+        }
+        
+        .card-body {
+            padding: 20px;
+        }
+        
+        /* Stat Cards */
+        .stat-card {
+            background: var(--bg-tertiary);
+            border-left: 4px solid;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            opacity: 0.1;
+            transition: all 0.3s;
+        }
+        
+        .stat-card:hover::before {
+            transform: scale(1.5);
+        }
+        
+        .stat-card.primary { border-left-color: var(--accent-blue); }
+        .stat-card.primary::before { background: var(--accent-blue); }
+        
+        .stat-card.success { border-left-color: var(--accent-green); }
+        .stat-card.success::before { background: var(--accent-green); }
+        
+        .stat-card.warning { border-left-color: var(--accent-yellow); }
+        .stat-card.warning::before { background: var(--accent-yellow); }
+        
+        .stat-card.danger { border-left-color: var(--accent-red); }
+        .stat-card.danger::before { background: var(--accent-red); }
+        
+        .stat-card.info { border-left-color: var(--accent-purple); }
+        .stat-card.info::before { background: var(--accent-purple); }
+        
+        .stat-icon {
+            font-size: 2rem;
+            opacity: 0.2;
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        /* Header */
+        .dashboard-header {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+        }
+        
+        .dashboard-title {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        /* Tabs */
+        .nav-tabs {
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+        
+        .nav-tabs .nav-link {
+            color: var(--text-secondary);
+            border: none;
+            padding: 12px 24px;
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .nav-tabs .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 3px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s;
+        }
+        
+        .nav-tabs .nav-link:hover::after {
+            width: 100%;
+        }
+        
+        .nav-tabs .nav-link.active {
+            background: transparent;
+            color: var(--accent-blue);
+            border: none;
+        }
+        
+        .nav-tabs .nav-link.active::after {
+            width: 100%;
+        }
+        
+        /* Tables */
+        .table {
+            color: var(--text-primary);
+            margin-bottom: 0;
+        }
+        
+        .table thead {
+            background: var(--bg-tertiary);
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .table tbody tr {
+            border-bottom: 1px solid var(--border-color);
+            transition: background 0.2s;
+        }
+        
+        .table tbody tr:hover {
+            background: var(--bg-tertiary);
+        }
+        
+        .table-dark {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+        
+        /* Badges */
+        .badge-call {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+        
+        .badge-put {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+        
+        /* Buttons */
+        .btn-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .btn-gradient:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-outline-custom {
+            border: 2px solid var(--accent-blue);
+            color: var(--accent-blue);
+            background: transparent;
+            border-radius: 8px;
+            padding: 8px 16px;
+            transition: all 0.3s;
+        }
+        
+        .btn-outline-custom:hover {
+            background: var(--accent-blue);
+            color: white;
+        }
+        
+        /* Forms */
+        .form-control, .form-select {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            border-radius: 8px;
+            padding: 10px 15px;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            background: var(--bg-tertiary);
+            border-color: var(--accent-blue);
+            color: var(--text-primary);
+            box-shadow: 0 0 0 0.2rem rgba(88, 166, 255, 0.25);
+        }
+        
+        .form-label {
+            color: var(--text-secondary);
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        /* Modal */
+        .modal-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+        }
+        
+        .modal-header {
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .modal-footer {
+            border-top: 1px solid var(--border-color);
+        }
+        
+        /* Links */
+        .saldo-link {
+            cursor: pointer;
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .saldo-link::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--accent-blue);
+            transition: width 0.3s;
+        }
+        
+        .saldo-link:hover {
+            color: var(--accent-purple);
+        }
+        
+        .saldo-link:hover::after {
+            width: 100%;
+            background: var(--accent-purple);
+        }
+        
+        /* Text Colors */
+        .text-profit {
+            color: var(--accent-green) !important;
+            font-weight: 700;
+        }
+        
+        .text-loss {
+            color: var(--accent-red) !important;
+            font-weight: 700;
+        }
+        
+        .text-muted {
+            color: var(--text-secondary) !important;
+        }
+        
+        /* Chart Container */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            padding: 10px;
+        }
+        
+        .chart-container-large {
+            height: 400px;
+        }
+        
+        /* Heatmap */
+        .heatmap {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .heatmap-cell {
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            color: white;
+            font-weight: bold;
+            transition: transform 0.3s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        
+        .heatmap-cell:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.5);
+        }
+        
+        /* Progress Bar */
+        .progress {
+            background: var(--bg-tertiary);
+            border-radius: 10px;
+            height: 25px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .progress-bar {
+            border-radius: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-weight: 600;
+        }
+        
+        /* Insights Cards */
+        .insight-card {
+            background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-card) 100%);
+            border-left: 4px solid var(--accent-blue);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .insight-icon {
+            font-size: 2rem;
+            margin-right: 15px;
+        }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 12px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 6px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-blue);
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        /* Metric Cards */
+        .metric-card {
+            background: var(--bg-tertiary);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            transition: all 0.3s;
+        }
+        
+        .metric-card:hover {
+            border-color: var(--accent-blue);
+            transform: translateY(-5px);
+        }
+        
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+        
+        .metric-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .metric-change {
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+        
+        /* Badge Custom */
+        .badge-custom {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        
+        /* Timeline */
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--border-color);
+        }
+        
+        .timeline-item {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -24px;
+            top: 5px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--accent-blue);
+            border: 3px solid var(--bg-card);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="dashboard-header fade-in">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h1 class="dashboard-title mb-0">
+                        <i class="fas fa-chart-line"></i> Trading Options Dashboard
+                    </h1>
+                    <p class="text-muted mb-0">Análise completa de operações com opções</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <button class="btn btn-outline-custom me-2">
+                        <i class="fas fa-download"></i> Exportar Relatório
+                    </button>
+                    <button class="btn btn-gradient">
+                        <i class="fas fa-plus"></i> Nova Operação
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="row fade-in">
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card stat-card primary">
+                    <div class="card-body position-relative">
+                        <i class="fas fa-wallet stat-icon"></i>
+                        <h6 class="text-muted mb-2">
+                            <i class="fas fa-wallet"></i> Saldo na Corretora
+                        </h6>
+                        <h2 class="mb-1">
+                            <a class="saldo-link" onclick="abrirModalOperacoes()">
+                                R$ 125.450,00
+                            </a>
+                        </h2>
+                        <small class="text-success">
+                            <i class="fas fa-arrow-up"></i> +8.5% no mês
+                        </small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card stat-card success">
+                    <div class="card-body position-relative">
+                        <i class="fas fa-chart-line stat-icon"></i>
+                        <h6 class="text-muted mb-2">
+                            <i class="fas fa-chart-line"></i> Resultado Mês
+                        </h6>
+                        <h2 class="text-success mb-1">R$ 5.430,00</h2>
+                        <small class="text-muted">15 operações realizadas</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card stat-card warning">
+                    <div class="card-body position-relative">
+                        <i class="fas fa-percentage stat-icon"></i>
+                        <h6 class="text-muted mb-2">
+                            <i class="fas fa-percentage"></i> Taxa de Acerto
+                        </h6>
+                        <h2 class="mb-1">73.3%</h2>
+                        <small class="text-muted">11 ganhos / 4 perdas</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card stat-card info">
+                    <div class="card-body position-relative">
+                        <i class="fas fa-coins stat-icon"></i>
+                        <h6 class="text-muted mb-2">
+                            <i class="fas fa-coins"></i> Prêmio Médio
+                        </h6>
+                        <h2 class="mb-1">R$ 362,00</h2>
+                        <small class="text-muted">por operação</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Metrics -->
+        <div class="row fade-in">
+            <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                <div class="metric-card">
+                    <div class="metric-label">Maior Ganho</div>
+                    <div class="metric-value text-profit">R$ 780</div>
+                    <div class="metric-change text-success">
+                        <i class="fas fa-arrow-up"></i> PETR4
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                <div class="metric-card">
+                    <div class="metric-label">Maior Perda</div>
+                    <div class="metric-value text-loss">R$ 320</div>
+                    <div class="metric-change text-danger">
+                        <i class="fas fa-arrow-down"></i> VALE3
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                <div class="metric-card">
+                    <div class="metric-label">Payoff Ratio</div>
+                    <div class="metric-value">2.43</div>
+                    <div class="metric-change text-muted">Ganho/Perda</div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                <div class="metric-card">
+                    <div class="metric-label">Drawdown</div>
+                    <div class="metric-value text-loss">-2.1%</div>
+                    <div class="metric-change text-muted">Máximo</div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                <div class="metric-card">
+                    <div class="metric-label">Sharpe Ratio</div>
+                    <div class="metric-value">1.87</div>
+                    <div class="metric-change text-success">Excelente</div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                <div class="metric-card">
+                    <div class="metric-label">Dias Médios</div>
+                    <div class="metric-value">18</div>
+                    <div class="metric-change text-muted">Por operação</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button">
+                    <i class="fas fa-tachometer-alt"></i> Visão Geral
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="anual-tab" data-bs-toggle="tab" data-bs-target="#anual" type="button">
+                    <i class="fas fa-calendar-alt"></i> Visão Anual
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="analytics-tab" data-bs-toggle="tab" data-bs-target="#analytics" type="button">
+                    <i class="fas fa-chart-bar"></i> Análise Avançada
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="insights-tab" data-bs-toggle="tab" data-bs-target="#insights" type="button">
+                    <i class="fas fa-lightbulb"></i> Insights
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content mt-3" id="myTabContent">
+            <!-- Tab Overview -->
+            <div class="tab-pane fade" id="overview" role="tabpanel">
+                <div class="row">
+                    <div class="col-lg-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-chart-line"></i> Curva de Capital</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container chart-container-large">
+                                    <canvas id="graficoCapital"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-balance-scale"></i> Win/Loss Ratio</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="graficoWinLoss"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Anual -->
+            <div class="tab-pane fade show active" id="anual" role="tabpanel">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-calendar-alt"></i> Resultado Anual - 2024
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <!-- Gráfico Principal -->
+                                <div class="chart-container chart-container-large">
+                                    <canvas id="graficoAnual"></canvas>
+                                </div>
+                                
+                                <!-- Tabela Detalhada -->
+                                <div class="table-responsive mt-4">
+                                    <table class="table table-hover table-sm">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>Mês</th>
+                                                <th class="text-center">Operações</th>
+                                                <th class="text-end">Prêmios Recebidos</th>
+                                                <th class="text-end">Custos</th>
+                                                <th class="text-end">Resultado</th>
+                                                <th class="text-center">Rentabilidade</th>
+                                                <th class="text-center">Taxa Acerto</th>
+                                                <th class="text-center">Progresso</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="corpoTabelaAnual"></tbody>
+                                        <tfoot class="table-dark">
+                                            <tr>
+                                                <th>TOTAL</th>
+                                                <th class="text-center" id="totalOps">0</th>
+                                                <th class="text-end" id="totalPremios">R$ 0,00</th>
+                                                <th class="text-end" id="totalCustos">R$ 0,00</th>
+                                                <th class="text-end" id="totalResultado">R$ 0,00</th>
+                                                <th class="text-center" id="totalRentabilidade">0%</th>
+                                                <th class="text-center" id="totalTaxaAcerto">0%</th>
+                                                <th></th>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+
+                                <!-- Heatmap de Rentabilidade -->
+                                <div class="mt-4">
+                                    <h6><i class="fas fa-fire"></i> Heatmap de Rentabilidade Mensal</h6>
+                                    <div class="heatmap" id="heatmap"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Analytics -->
+            <div class="tab-pane fade" id="analytics" role="tabpanel">
+                <div class="row">
+                    <!-- Distribuição de Resultados -->
+                    <div class="col-lg-6 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-chart-bar"></i> Distribuição de Resultados</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="graficoDistribuicao"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Performance por Ativo -->
+                    <div class="col-lg-6 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Performance por Ativo</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="graficoAtivos"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CALL vs PUT Performance -->
+                    <div class="col-lg-6 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-balance-scale"></i> CALL vs PUT - Análise Comparativa</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="graficoCallPut"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Rentabilidade Acumulada -->
+                    <div class="col-lg-6 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-chart-area"></i> Rentabilidade Acumulada (%)</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="graficoRentabilidade"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Exercidos vs Não Exercidos -->
+                    <div class="col-lg-6 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-check-circle"></i> Taxa de Exercício</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="graficoExercicio"></canvas>
+                                </div>
+                                <div class="row mt-3">
+                                    <div class="col-6 text-center">
+                                        <h6 class="text-muted">Exercidos</h6>
+                                        <h3 class="text-danger">28.6%</h3>
+                                        <small class="text-muted">7 de 24</small>
+                                    </div>
+                                    <div class="col-6 text-center">
+                                        <h6 class="text-muted">Não Exercidos</h6>
+                                        <h3 class="text-success">71.4%</h3>
+                                        <small class="text-muted">17 de 24</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Volume de Operações -->
+                    <div class="col-lg-6 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-chart-line"></i> Volume de Operações</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="graficoVolume"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Insights -->
+            <div class="tab-pane fade" id="insights" role="tabpanel">
+                <div class="row">
+                    <div class="col-lg-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-lightbulb"></i> Insights e Recomendações</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="insight-card">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-trophy insight-icon text-success"></i>
+                                        <div>
+                                            <h6 class="mb-1">Melhor Performance</h6>
+                                            <p class="mb-0 text-muted">
+                                                Suas operações com <strong>PETR4</strong> têm uma taxa de acerto de 85% 
+                                                com rentabilidade média de 3.2% por operação.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="insight-card" style="border-left-color: var(--accent-yellow);">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-exclamation-triangle insight-icon text-warning"></i>
+                                        <div>
+                                            <h6 class="mb-1">Atenção</h6>
+                                            <p class="mb-0 text-muted">
+                                                Você está em uma sequência de <strong>3 operações perdedoras</strong> em VALE3. 
+                                                Considere revisar sua estratégia para este ativo.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="insight-card" style="border-left-color: var(--accent-green);">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-chart-line insight-icon text-success"></i>
+                                        <div>
+                                            <h6 class="mb-1">Consistência</h6>
+                                            <p class="mb-0 text-muted">
+                                                Nos últimos 3 meses, você manteve uma taxa de acerto acima de 70%, 
+                                                demonstrando consistência na estratégia.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="insight-card" style="border-left-color: var(--accent-purple);">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-calendar-check insight-icon" style="color: var(--accent-purple);"></i>
+                                        <div>
+                                            <h6 class="mb-1">Timing Ideal</h6>
+                                            <p class="mb-0 text-muted">
+                                                Operações abertas nas <strong>quintas-feiras</strong> têm 15% mais 
+                                                rentabilidade que a média geral.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="insight-card" style="border-left-color: var(--accent-red);">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-shield-alt insight-icon text-danger"></i>
+                                        <div>
+                                            <h6 class="mb-1">Gestão de Risco</h6>
+                                            <p class="mb-0 text-muted">
+                                                Seu drawdown máximo de 2.1% está <strong>dentro do limite saudável</strong>. 
+                                                Continue mantendo o risco controlado.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Top Operações -->
+                        <div class="card mt-4">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-star"></i> Top 5 Melhores Operações</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Data</th>
+                                                <th>Ativo</th>
+                                                <th>Tipo</th>
+                                                <th class="text-end">Resultado</th>
+                                                <th class="text-end">Rentabilidade</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="topOperacoes"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <!-- Estatísticas Rápidas -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-tachometer-alt"></i> Estatísticas</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-4">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Meta Mensal</span>
+                                        <strong class="text-success">108%</strong>
+                                    </div>
+                                    <div class="progress">
+                                        <div class="progress-bar" role="progressbar" style="width: 108%">108%</div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Win Rate</span>
+                                        <strong>73.3%</strong>
+                                    </div>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: 73.3%">73.3%</div>
+                                    </div>
+                                </div>
+
+                                <hr>
+
+                                <h6 class="mt-4 mb-3">Comparação com Benchmarks</h6>
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span>vs CDI</span>
+                                        <strong class="text-success">+385%</strong>
+                                    </div>
+                                    <small class="text-muted">CDI: 0.92% | Você: 4.33%</small>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span>vs Ibovespa</span>
+                                        <strong class="text-success">+180%</strong>
+                                    </div>
+                                    <small class="text-muted">IBOV: 1.8% | Você: 4.33%</small>
+                                </div>
+
+                                <hr>
+
+                                <h6 class="mt-4 mb-3">Sequências</h6>
+                                <div class="mb-2">
+                                    <i class="fas fa-check-circle text-success"></i>
+                                    Maior sequência de ganhos: <strong>7</strong>
+                                </div>
+                                <div class="mb-2">
+                                    <i class="fas fa-times-circle text-danger"></i>
+                                    Maior sequência de perdas: <strong>2</strong>
+                                </div>
+                                <div class="mb-2">
+                                    <i class="fas fa-calendar-check" style="color: var(--accent-purple);"></i>
+                                    Sequência atual: <strong class="text-success">+4 ganhos</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Próximas Ações -->
+                        <div class="card mt-4">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-tasks"></i> Próximas Ações</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="timeline">
+                                    <div class="timeline-item">
+                                        <small class="text-muted">Amanhã</small>
+                                        <p class="mb-0">Vencimento PETR4 C40</p>
+                                    </div>
+                                    <div class="timeline-item">
+                                        <small class="text-muted">3 dias</small>
+                                        <p class="mb-0">Revisar posições VALE3</p>
+                                    </div>
+                                    <div class="timeline-item">
+                                        <small class="text-muted">1 semana</small>
+                                        <p class="mb-0">Análise mensal</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Operações Detalhadas -->
+    <div class="modal fade" id="modalOperacoes" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-chart-line"></i> Histórico Detalhado de Operações
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Filtros -->
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <label class="form-label">
+                                        <i class="fas fa-calendar-alt"></i> Data Início
+                                    </label>
+                                    <input type="date" class="form-control" id="filtroDataInicio" value="2024-01-01">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">
+                                        <i class="fas fa-calendar-alt"></i> Data Fim
+                                    </label>
+                                    <input type="date" class="form-control" id="filtroDataFim" value="2024-12-31">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">
+                                        <i class="fas fa-filter"></i> Tipo
+                                    </label>
+                                    <select class="form-select" id="filtroTipo">
+                                        <option value="">Todos</option>
+                                        <option value="CALL">CALL</option>
+                                        <option value="PUT">PUT</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">
+                                        <i class="fas fa-check-circle"></i> Status
+                                    </label>
+                                    <select class="form-select" id="filtroStatus">
+                                        <option value="">Todos</option>
+                                        <option value="exercido">Exercido</option>
+                                        <option value="nao_exercido">Não Exercido</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">&nbsp;</label>
+                                    <button class="btn btn-gradient w-100" onclick="filtrarOperacoes()">
+                                        <i class="fas fa-search"></i> Filtrar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cards de Resumo -->
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <div class="card stat-card primary text-center">
+                                <div class="card-body">
+                                    <h6 class="text-muted mb-2">Total de Operações</h6>
+                                    <h2 id="totalOperacoes">24</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card stat-card success text-center">
+                                <div class="card-body">
+                                    <h6 class="text-muted mb-2">Resultado Total</h6>
+                                    <h2 class="text-success" id="resultadoTotal">R$ 8.690,00</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card stat-card warning text-center">
+                                <div class="card-body">
+                                    <h6 class="text-muted mb-2">Rentabilidade Média</h6>
+                                    <h2 id="rentabilidadeMedia">2.85%</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card stat-card info text-center">
+                                <div class="card-body">
+                                    <h6 class="text-muted mb-2">Taxa de Acerto</h6>
+                                    <h2 id="taxaAcerto">70.8%</h2>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gráficos -->
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-chart-area"></i> Evolução do Resultado Acumulado
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-container">
+                                        <canvas id="graficoEvolucao"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-chart-pie"></i> Distribuição por Tipo
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-container">
+                                        <canvas id="graficoPizza"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tabela de Operações -->
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">
+                                <i class="fas fa-list"></i> Operações Detalhadas
+                            </h6>
+                            <button class="btn btn-success btn-sm" onclick="exportarExcel()">
+                                <i class="fas fa-file-excel"></i> Exportar Excel
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover table-sm">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Data</th>
+                                            <th>Ativo</th>
+                                            <th>Tipo</th>
+                                            <th class="text-end">Strike</th>
+                                            <th class="text-center">Exercido</th>
+                                            <th class="text-end">Saldo Abertura</th>
+                                            <th class="text-end">Resultado</th>
+                                            <th class="text-center">%</th>
+                                            <th class="text-center">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="corpoTabelaOperacoes"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Configuração global dos gráficos para tema dark
+        Chart.defaults.color = '#8b949e';
+        Chart.defaults.borderColor = '#30363d';
+
+        // Dados mockados
+        const dadosAnuais = [
+            { mes: 'Janeiro', ops: 8, premios: 2850, custos: 420, resultado: 2430, rent: 2.1, acerto: 75 },
+            { mes: 'Fevereiro', ops: 6, premios: 2180, custos: 380, resultado: 1800, rent: 1.6, acerto: 66.7 },
+            { mes: 'Março', ops: 9, premios: 3240, custos: 510, resultado: 2730, rent: 2.4, acerto: 77.8 },
+            { mes: 'Abril', ops: 7, premios: 2520, custos: 390, resultado: 2130, rent: 1.9, acerto: 71.4 },
+            { mes: 'Maio', ops: 10, premios: 3680, custos: 580, resultado: 3100, rent: 2.7, acerto: 80 },
+            { mes: 'Junho', ops: 5, premios: 1750, custos: 320, resultado: 1430, rent: 1.2, acerto: 60 },
+            { mes: 'Julho', ops: 8, premios: 2920, custos: 450, resultado: 2470, rent: 2.1, acerto: 75 },
+            { mes: 'Agosto', ops: 11, premios: 4010, custos: 640, resultado: 3370, rent: 2.9, acerto: 81.8 },
+            { mes: 'Setembro', ops: 6, premios: 2150, custos: 360, resultado: 1790, rent: 1.5, acerto: 66.7 },
+            { mes: 'Outubro', ops: 9, premios: 3310, custos: 520, resultado: 2790, rent: 2.4, acerto: 77.8 },
+            { mes: 'Novembro', ops: 7, premios: 2580, custos: 410, resultado: 2170, rent: 1.8, acerto: 71.4 },
+            { mes: 'Dezembro', ops: 4, premios: 1480, custos: 290, resultado: 1190, rent: 1.0, acerto: 50 }
+        ];
+
+        const operacoesMock = [
+            { id: 1, data: '2024-01-05', ativo: 'PETR4', tipo: 'CALL', strike: 38.50, exercido: false, saldo: 115000, resultado: 420 },
+            { id: 2, data: '2024-01-12', ativo: 'VALE3', tipo: 'PUT', strike: 65.00, exercido: true, saldo: 115420, resultado: -180 },
+            { id: 3, data: '2024-01-18', ativo: 'ITUB4', tipo: 'CALL', strike: 28.00, exercido: false, saldo: 115240, resultado: 350 },
+            { id: 4, data: '2024-01-25', ativo: 'BBDC4', tipo: 'CALL', strike: 15.50, exercido: false, saldo: 115590, resultado: 290 },
+            { id: 5, data: '2024-02-02', ativo: 'PETR4', tipo: 'PUT', strike: 37.00, exercido: false, saldo: 115880, resultado: 410 },
+            { id: 6, data: '2024-02-09', ativo: 'BBAS3', tipo: 'CALL', strike: 48.50, exercido: true, saldo: 116290, resultado: -220 },
+            { id: 7, data: '2024-02-16', ativo: 'VALE3', tipo: 'CALL', strike: 66.00, exercido: false, saldo: 116070, resultado: 380 },
+            { id: 8, data: '2024-02-23', ativo: 'ITUB4', tipo: 'PUT', strike: 27.50, exercido: false, saldo: 116450, resultado: 320 },
+            { id: 9, data: '2024-03-01', ativo: 'PETR4', tipo: 'CALL', strike: 39.00, exercido: false, saldo: 116770, resultado: 460 },
+            { id: 10, data: '2024-03-08', ativo: 'VALE3', tipo: 'CALL', strike: 67.50, exercido: false, saldo: 117230, resultado: 390 },
+            { id: 11, data: '2024-03-15', ativo: 'BBDC4', tipo: 'PUT', strike: 16.00, exercido: true, saldo: 117620, resultado: -150 },
+            { id: 12, data: '2024-03-22', ativo: 'ITUB4', tipo: 'CALL', strike: 29.00, exercido: false, saldo: 117470, resultado: 430 },
+            { id: 13, data: '2024-03-29', ativo: 'PETR4', tipo: 'CALL', strike: 40.00, exercido: false, saldo: 117900, resultado: 780 },
+            { id: 14, data: '2024-04-05', ativo: 'VALE3', tipo: 'PUT', strike: 64.50, exercido: false, saldo: 118270, resultado: 340 },
+            { id: 15, data: '2024-04-12', ativo: 'BBAS3', tipo: 'CALL', strike: 49.00, exercido: false, saldo: 118610, resultado: 410 },
+            { id: 16, data: '2024-04-19', ativo: 'ITUB4', tipo: 'CALL', strike: 28.50, exercido: true, saldo: 119020, resultado: -190 },
+            { id: 17, data: '2024-04-26', ativo: 'PETR4', tipo: 'PUT', strike: 38.00, exercido: false, saldo: 118830, resultado: 380 },
+            { id: 18, data: '2024-05-03', ativo: 'VALE3', tipo: 'CALL', strike: 68.00, exercido: false, saldo: 119210, resultado: 450 },
+            { id: 19, data: '2024-05-10', ativo: 'BBDC4', tipo: 'CALL', strike: 16.50, exercido: false, saldo: 119660, resultado: 360 },
+            { id: 20, data: '2024-05-17', ativo: 'ITUB4', tipo: 'PUT', strike: 27.00, exercido: false, saldo: 120020, resultado: 420 },
+            { id: 21, data: '2024-05-24', ativo: 'PETR4', tipo: 'CALL', strike: 39.50, exercido: false, saldo: 120440, resultado: 590 },
+            { id: 22, data: '2024-05-31', ativo: 'VALE3', tipo: 'CALL', strike: 66.50, exercido: true, saldo: 120830, resultado: -320 },
+            { id: 23, data: '2024-06-07', ativo: 'BBAS3', tipo: 'PUT', strike: 47.50, exercido: false, saldo: 120660, resultado: 310 },
+            { id: 24, data: '2024-06-14', ativo: 'ITUB4', tipo: 'CALL', strike: 28.00, exercido: false, saldo: 120970, resultado: 340 }
+        ];
+
+        // ==================== GRÁFICO ANUAL ====================
+        function renderizarGraficoAnual() {
+            const meses = dadosAnuais.map(d => d.mes.substring(0, 3));
+            meses.push('TOTAL');
+            
+            const valores = dadosAnuais.map(d => d.resultado);
+            const total = valores.reduce((a, b) => a + b, 0);
+            valores.push(total);
+            
+            const cores = valores.map((v, i) => {
+                if (i === valores.length - 1) {
+                    return v >= 0 ? 'rgba(88, 166, 255, 0.9)' : 'rgba(248, 81, 73, 0.9)';
+                }
+                return v >= 0 ? 'rgba(63, 185, 80, 0.8)' : 'rgba(248, 81, 73, 0.8)';
+            });
+            
+            const ctx = document.getElementById('graficoAnual').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: meses,
+                    datasets: [{
+                        label: 'Resultado Mensal',
+                        data: valores,
+                        backgroundColor: cores,
+                        borderColor: cores.map(c => c.replace('0.8', '1').replace('0.9', '1')),
+                        borderWidth: 2,
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(33, 38, 45, 0.95)',
+                            titleColor: '#e6edf3',
+                            bodyColor: '#8b949e',
+                            borderColor: '#30363d',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: (context) => 'R$ ' + context.parsed.y.toLocaleString('pt-BR', {minimumFractionDigits: 2})
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: '#30363d'
+                            },
+                            ticks: {
+                                callback: (value) => 'R$ ' + value.toLocaleString('pt-BR')
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ==================== TABELA ANUAL ====================
+        function renderizarTabelaAnual() {
+            const tbody = document.getElementById('corpoTabelaAnual');
+            tbody.innerHTML = '';
+            
+            let totalOps = 0, totalPremios = 0, totalCustos = 0, totalResultado = 0;
+            let somaRent = 0, somaAcerto = 0;
+            
+            dadosAnuais.forEach(dado => {
+                totalOps += dado.ops;
+                totalPremios += dado.premios;
+                totalCustos += dado.custos;
+                totalResultado += dado.resultado;
+                somaRent += dado.rent;
+                somaAcerto += dado.acerto;
+                
+                const classeResultado = dado.resultado >= 0 ? 'text-profit' : 'text-loss';
+                const progressWidth = Math.min((dado.acerto / 100) * 100, 100);
+                const progressColor = dado.acerto >= 70 ? 'bg-success' : dado.acerto >= 60 ? 'bg-warning' : 'bg-danger';
+                
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${dado.mes}</strong></td>
+                        <td class="text-center">${dado.ops}</td>
+                        <td class="text-end">R$ ${dado.premios.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                        <td class="text-end">R$ ${dado.custos.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                        <td class="text-end ${classeResultado}">R$ ${dado.resultado.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                        <td class="text-center">${dado.rent.toFixed(1)}%</td>
+                        <td class="text-center">${dado.acerto.toFixed(1)}%</td>
+                        <td>
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar ${progressColor}" role="progressbar" style="width: ${progressWidth}%">
+                                    ${dado.acerto.toFixed(0)}%
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            document.getElementById('totalOps').textContent = totalOps;
+            document.getElementById('totalPremios').textContent = `R$ ${totalPremios.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            document.getElementById('totalCustos').textContent = `R$ ${totalCustos.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            document.getElementById('totalResultado').textContent = `R$ ${totalResultado.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            document.getElementById('totalRentabilidade').textContent = `${(somaRent / 12).toFixed(1)}%`;
+            document.getElementById('totalTaxaAcerto').textContent = `${(somaAcerto / 12).toFixed(1)}%`;
+        }
+
+        // ==================== HEATMAP ====================
+        function renderizarHeatmap() {
+            const heatmap = document.getElementById('heatmap');
+            heatmap.innerHTML = '';
+            
+            dadosAnuais.forEach(dado => {
+                const cor = dado.rent >= 2.5 ? '#3fb950' :
+                           dado.rent >= 2.0 ? '#56d364' :
+                           dado.rent >= 1.5 ? '#d29922' :
+                           dado.rent >= 1.0 ? '#db6d28' : '#f85149';
+                
+                heatmap.innerHTML += `
+                    <div class="heatmap-cell" style="background-color: ${cor}">
+                        <div style="font-size: 0.9em; opacity: 0.9;">${dado.mes.substring(0, 3)}</div>
+                        <div style="font-size: 1.5em; margin: 5px 0;">${dado.rent.toFixed(1)}%</div>
+                        <div style="font-size: 0.8em; opacity: 0.8;">${dado.ops} ops</div>
+                    </div>
+                `;
+            });
+        }
+
+        // ==================== GRÁFICOS ADICIONAIS ====================
+        
+        // Curva de Capital
+        function renderizarGraficoCapital() {
+            let saldo = 115000;
+            const labels = [];
+            const valores = [];
+            
+            operacoesMock.forEach(op => {
+                saldo += op.resultado;
+                labels.push(new Date(op.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }));
+                valores.push(saldo);
+            });
+            
+            const ctx = document.getElementById('graficoCapital').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Capital',
+                        data: valores,
+                        borderColor: '#58a6ff',
+                        backgroundColor: 'rgba(88, 166, 255, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        borderWidth: 3,
+                        pointRadius: 0,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(33, 38, 45, 0.95)',
+                            callbacks: {
+                                label: (context) => 'R$ ' + context.parsed.y.toLocaleString('pt-BR', {minimumFractionDigits: 2})
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            grid: { color: '#30363d' },
+                            ticks: {
+                                callback: (value) => 'R$ ' + (value / 1000).toFixed(0) + 'k'
+                            }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Win/Loss Ratio
+        function renderizarGraficoWinLoss() {
+            const ganhos = operacoesMock.filter(op => op.resultado > 0).length;
+            const perdas = operacoesMock.filter(op => op.resultado < 0).length;
+            
+            const ctx = document.getElementById('graficoWinLoss').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Ganhos', 'Perdas'],
+                    datasets: [{
+                        data: [ganhos, perdas],
+                        backgroundColor: ['#3fb950', '#f85149'],
+                        borderWidth: 3,
+                        borderColor: '#21262d'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#e6edf3', padding: 15 }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Distribuição de Resultados (Histograma)
+        function renderizarGraficoDistribuicao() {
+            const ranges = ['-500 a -300', '-300 a -100', '-100 a 0', '0 a 200', '200 a 400', '400 a 600', '600+'];
+            const counts = [1, 2, 4, 8, 6, 2, 1];
+            
+            const ctx = document.getElementById('graficoDistribuicao').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ranges,
+                    datasets: [{
+                        label: 'Quantidade',
+                        data: counts,
+                        backgroundColor: '#a371f7',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#30363d' },
+                            ticks: { stepSize: 2 }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Performance por Ativo
+        function renderizarGraficoAtivos() {
+            const ativos = ['PETR4', 'VALE3', 'ITUB4', 'BBDC4', 'BBAS3'];
+            const resultados = [2640, 780, 1520, 800, 950];
+            
+            const ctx = document.getElementById('graficoAtivos').getContext('2d');
+            new Chart(ctx, {
+                type: 'polarArea',
+                data: {
+                    labels: ativos,
+                    datasets: [{
+                        data: resultados,
+                        backgroundColor: [
+                            'rgba(88, 166, 255, 0.7)',
+                            'rgba(63, 185, 80, 0.7)',
+                            'rgba(210, 153, 34, 0.7)',
+                            'rgba(163, 113, 247, 0.7)',
+                            'rgba(240, 147, 251, 0.7)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: { color: '#e6edf3' }
+                        }
+                    },
+                    scales: {
+                        r: {
+                            grid: { color: '#30363d' },
+                            ticks: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // CALL vs PUT
+        function renderizarGraficoCallPut() {
+            const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'];
+            const callData = [1200, 950, 1350, 1100, 1580, 720];
+            const putData = [1230, 850, 1380, 1030, 1520, 710];
+            
+            const ctx = document.getElementById('graficoCallPut').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: meses,
+                    datasets: [
+                        {
+                            label: 'CALL',
+                            data: callData,
+                            borderColor: '#667eea',
+                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            borderWidth: 3
+                        },
+                        {
+                            label: 'PUT',
+                            data: putData,
+                            borderColor: '#f093fb',
+                            backgroundColor: 'rgba(240, 147, 251, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            borderWidth: 3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: { color: '#e6edf3' }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            grid: { color: '#30363d' }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Rentabilidade Acumulada
+        function renderizarGraficoRentabilidade() {
+            const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'];
+            let acumulado = 0;
+            const valores = [2.1, 1.6, 2.4, 1.9, 2.7, 1.2].map(v => {
+                acumulado += v;
+                return acumulado;
+            });
+            
+            const ctx = document.getElementById('graficoRentabilidade').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: meses,
+                    datasets: [{
+                        label: 'Rentabilidade Acumulada %',
+                        data: valores,
+                        borderColor: '#3fb950',
+                        backgroundColor: 'rgba(63, 185, 80, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        borderWidth: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            grid: { color: '#30363d' },
+                            ticks: {
+                                callback: (value) => value.toFixed(1) + '%'
+                            }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Taxa de Exercício
+        function renderizarGraficoExercicio() {
+            const ctx = document.getElementById('graficoExercicio').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Não Exercidos', 'Exercidos'],
+                    datasets: [{
+                        data: [71.4, 28.6],
+                        backgroundColor: ['#3fb950', '#f85149'],
+                        borderWidth: 3,
+                        borderColor: '#21262d'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#e6edf3', padding: 15 }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Volume de Operações
+        function renderizarGraficoVolume() {
+            const meses = dadosAnuais.map(d => d.mes.substring(0, 3));
+            const volumes = dadosAnuais.map(d => d.ops);
+            
+            const ctx = document.getElementById('graficoVolume').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: meses,
+                    datasets: [{
+                        label: 'Número de Operações',
+                        data: volumes,
+                        backgroundColor: '#58a6ff',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#30363d' },
+                            ticks: { stepSize: 2 }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ==================== MODAL ====================
+        function abrirModalOperacoes() {
+            const modal = new bootstrap.Modal(document.getElementById('modalOperacoes'));
+            modal.show();
+            
+            setTimeout(() => {
+                preencherTabelaOperacoes();
+                renderizarGraficoEvolucao();
+                renderizarGraficoPizza();
+            }, 300);
+        }
+
+        function preencherTabelaOperacoes() {
+            const tbody = document.getElementById('corpoTabelaOperacoes');
+            tbody.innerHTML = '';
+            
+            operacoesMock.forEach(op => {
+                const percentual = (op.resultado / op.saldo * 100).toFixed(2);
+                const classeResultado = op.resultado >= 0 ? 'text-profit' : 'text-loss';
+                
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${new Date(op.data).toLocaleDateString('pt-BR')}</td>
+                        <td><strong>${op.ativo}</strong></td>
+                        <td><span class="badge badge-${op.tipo.toLowerCase()}">${op.tipo}</span></td>
+                        <td class="text-end">R$ ${op.strike.toFixed(2)}</td>
+                        <td class="text-center">
+                            ${op.exercido ? 
+                                '<span class="badge bg-danger">Sim</span>' : 
+                                '<span class="badge bg-success">Não</span>'
+                            }
+                        </td>
+                        <td class="text-end">R$ ${op.saldo.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                        <td class="text-end ${classeResultado}">
+                            R$ ${op.resultado.toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+                        </td>
+                        <td class="text-center ${classeResultado}">${percentual}%</td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-info" title="Ver detalhes">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function renderizarGraficoEvolucao() {
+            let acumulado = 0;
+            const labels = [];
+            const valores = [];
+            
+            operacoesMock.forEach(op => {
+                acumulado += op.resultado;
+                labels.push(new Date(op.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }));
+                valores.push(acumulado);
+            });
+            
+            const ctx = document.getElementById('graficoEvolucao').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Resultado Acumulado',
+                        data: valores,
+                        borderColor: '#3fb950',
+                        backgroundColor: 'rgba(63, 185, 80, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        borderWidth: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(33, 38, 45, 0.95)',
+                            callbacks: {
+                                label: (context) => 'R$ ' + context.parsed.y.toLocaleString('pt-BR', {minimumFractionDigits: 2})
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            grid: { color: '#30363d' },
+                            ticks: {
+                                callback: (value) => 'R$ ' + value.toLocaleString('pt-BR')
+                            }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderizarGraficoPizza() {
+            const calls = operacoesMock.filter(op => op.tipo === 'CALL').length;
+            const puts = operacoesMock.filter(op => op.tipo === 'PUT').length;
+            
+            const ctx = document.getElementById('graficoPizza').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['CALL', 'PUT'],
+                    datasets: [{
+                        data: [calls, puts],
+                        backgroundColor: ['#667eea', '#f093fb'],
+                        borderWidth: 3,
+                        borderColor: '#21262d'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#e6edf3', padding: 15 }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Top Operações
+        function renderizarTopOperacoes() {
+            const tbody = document.getElementById('topOperacoes');
+            const top5 = [...operacoesMock]
+                .sort((a, b) => b.resultado - a.resultado)
+                .slice(0, 5);
+            
+            top5.forEach(op => {
+                const rent = (op.resultado / op.saldo * 100).toFixed(2);
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${new Date(op.data).toLocaleDateString('pt-BR')}</td>
+                        <td><strong>${op.ativo}</strong></td>
+                        <td><span class="badge badge-${op.tipo.toLowerCase()}">${op.tipo}</span></td>
+                        <td class="text-end text-profit">R$ ${op.resultado.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                        <td class="text-end text-profit">${rent}%</td>
+                    </tr>
+                `;
+            });
+        }
+
+        // Funções auxiliares
+        function filtrarOperacoes() {
+            alert('Filtros aplicados! (Implementar integração com backend)');
+        }
+
+        function exportarExcel() {
+            alert('Exportando para Excel... (Implementar integração com backend)');
+        }
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', function() {
+            renderizarTabelaAnual();
+            renderizarGraficoAnual();
+            renderizarHeatmap();
+            renderizarGraficoCapital();
+            renderizarGraficoWinLoss();
+            renderizarGraficoDistribuicao();
+            renderizarGraficoAtivos();
+            renderizarGraficoCallPut();
+            renderizarGraficoRentabilidade();
+            renderizarGraficoExercicio();
+            renderizarGraficoVolume();
+            renderizarTopOperacoes();
+        });
+    </script>
+</body>
+</html>

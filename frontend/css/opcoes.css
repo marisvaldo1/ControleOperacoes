@@ -798,6 +798,153 @@
     margin-top: 4px;
 }
 
+#modalAnaliseTecnica .modal-dialog {
+    max-width: 1200px;
+}
+
+#modalAnaliseTecnica .card {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+#modalAnaliseTecnica .card-header {
+    background-color: transparent;
+    border-bottom: 1px solid rgba(98, 105, 118, 0.16);
+    padding: 0.75rem 1rem;
+}
+
+[data-bs-theme="dark"] #modalAnaliseTecnica .card {
+    background-color: #1f2937;
+    border-color: #374151;
+}
+
+[data-bs-theme="dark"] #modalAnaliseTecnica .card-header {
+    border-bottom-color: #374151;
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+#modalAnaliseTecnica .badge {
+    padding: 0.35em 0.65em;
+    font-size: 0.85rem;
+}
+
+#tableOscillators,
+#tableMovingAverages {
+    font-size: 0.9rem;
+}
+
+#tableOscillators thead th,
+#tableMovingAverages thead th {
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    color: #64748b;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+[data-bs-theme="dark"] #tableOscillators thead th,
+[data-bs-theme="dark"] #tableMovingAverages thead th {
+    color: #94a3b8;
+    border-bottom-color: #374151;
+}
+
+#tableOscillators tbody tr:hover,
+#tableMovingAverages tbody tr:hover {
+    background-color: rgba(99, 102, 241, 0.05);
+}
+
+[data-bs-theme="dark"] #tableOscillators tbody tr:hover,
+[data-bs-theme="dark"] #tableMovingAverages tbody tr:hover {
+    background-color: rgba(99, 102, 241, 0.1);
+}
+
+#timeframeButtons {
+    gap: 0.375rem;
+}
+
+#timeframeButtons .btn {
+    border-radius: 0.5rem !important;
+    padding: 0.375rem 0.875rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    border: 1px solid #4a5568;
+    background-color: #2d3748;
+    color: #cbd5e0;
+    transition: all 0.2s ease-in-out;
+}
+
+#timeframeButtons .btn:hover {
+    background-color: #374151;
+    border-color: #5a6778;
+    color: #e2e8f0;
+}
+
+#timeframeButtons .btn-check:checked + .btn {
+    background-color: #3b82f6 !important;
+    border-color: #3b82f6 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+[data-bs-theme="dark"] #timeframeButtons .btn-outline-primary {
+    border-color: #4a5568;
+    color: #cbd5e0;
+}
+
+[data-bs-theme="dark"] #timeframeButtons .btn-check:checked + .btn {
+    background-color: #3b82f6 !important;
+    border-color: #3b82f6 !important;
+    color: #ffffff !important;
+}
+
+#modalSelecionarOpcao .modal-content {
+    background-color: #182433;
+    color: #f5f7fb;
+    border: 1px solid #2d3748;
+}
+
+#modalSelecionarOpcao .modal-header {
+    border-bottom: 1px solid #2d3748;
+}
+
+#modalSelecionarOpcao .modal-footer {
+    border-top: 1px solid #2d3748;
+}
+
+#modalSelecionarOpcao .form-label,
+#modalSelecionarOpcao .text-muted {
+    color: #cbd5e1;
+}
+
+#modalSelecionarOpcao .form-control,
+#modalSelecionarOpcao .form-select {
+    background-color: #111827;
+    border-color: #2d3748;
+    color: #f5f7fb;
+}
+
+#modalSelecionarOpcao .form-control::placeholder {
+    color: #94a3b8;
+}
+
+#modalSelecionarOpcao .table thead th {
+    color: #e2e8f0;
+    background-color: #1a2332;
+    border-bottom: 1px solid #2d3748;
+}
+
+#modalSelecionarOpcao .table tbody td {
+    border-color: #2d3748;
+}
+
+#modalSelecionarOpcao .alert {
+    background-color: #1d2939;
+    border-color: #2d3748;
+    color: #f5f7fb;
+}
+
 .detalhes-x .cards-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -1337,7 +1484,7 @@
     color: var(--text-primary);
     padding: 24px;
     line-height: 1.6;
-    border-radius: 8px; /* Optional: for the modal look */
+    border-radius: 8px; /* Optional: for the modal look *
     max-width: 100%;
     width: 100%;
 }
