@@ -218,11 +218,11 @@ async function openDetalheOperacao(id) {
     // Popular dados iniciais
     populateDetalheModal(operacao);
     
-    // Mostrar badge de dados locais inicialmente
-    const badgeDataSource = document.getElementById('detBadgeDataSource');
-    if (badgeDataSource) {
-        badgeDataSource.classList.remove('d-none');
-    }
+    // Badge de dados locais removido - API de cotações já implementada
+    // const badgeDataSource = document.getElementById('detBadgeDataSource');
+    // if (badgeDataSource) {
+    //     badgeDataSource.classList.remove('d-none');
+    // }
     
     // Adicionar event listeners
     setupEventListeners();
@@ -599,32 +599,26 @@ async function refreshDetalheOperacao(requestId = null) {
             elTimestamp.textContent = timestamp;
         }
         
-        // Atualizar badge de fonte de dados
-        const badgeDataSource = document.getElementById('detBadgeDataSource');
-        if (badgeDataSource) {
-            if (apiError) {
-                badgeDataSource.classList.remove('d-none');
-            } else {
-                badgeDataSource.classList.add('d-none');
-            }
-        }
+        // Badge de dados locais e toast removidos - API de cotações já implementada
+        // const badgeDataSource = document.getElementById('detBadgeDataSource');
+        // if (badgeDataSource) {
+        //     if (apiError) {
+        //         badgeDataSource.classList.remove('d-none');
+        //     } else {
+        //         badgeDataSource.classList.add('d-none');
+        //     }
+        // }
         
-        if (apiError) {
-            iziToast.info({
-                title: 'Dados Locais',
-                message: 'API de cotações em tempo real ainda não implementada. Usando dados da abertura da operação.',
-                position: 'topRight',
-                timeout: 4000,
-                icon: 'ti ti-database'
-            });
-        } else {
-            iziToast.success({
-                title: 'Atualizado',
-                message: 'Cotações atualizadas em tempo real',
-                position: 'topRight',
-                timeout: 2000
-            });
-        }
+        // if (apiError) {
+        //     iziToast.info({
+        //         title: 'Dados Locais',
+        //         message: 'API de cotações em tempo real ainda não implementada. Usando dados da abertura da operação.',
+        //         position: 'topRight',
+        //         timeout: 4000,
+        //         icon: 'ti ti-database'
+        //     });
+        // }
+        // Removido toast de sucesso - já tem loading indicator
         
     } catch(e) {
         console.error('Erro ao atualizar dados:', e);

@@ -28,10 +28,10 @@ echo [2/2] Iniciando sistema na porta 8888...
 echo.
 echo Acessar: http://localhost:8888/html/opcoes.html
 echo.
-echo Abrindo navegador...
-start http://localhost:8888/html/opcoes.html
 
-echo.
+REM Iniciar script que abre navegador com delay (em background)
+start /MIN cmd /c "timeout /t 3 /nobreak >nul & start http://localhost:8888/html/opcoes.html & exit"
+
 echo ========================================
 echo  SERVIDOR RODANDO (CTRL+C para parar)
 echo ========================================

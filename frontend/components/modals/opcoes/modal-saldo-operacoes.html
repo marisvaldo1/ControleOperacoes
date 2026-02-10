@@ -1,0 +1,113 @@
+<!-- Modal Historico de Operacoes (Saldo) -->
+<div class="modal modal-blur fade" id="modalSaldoOperacoes" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Histórico de Resultado sobre Saldo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Data Início</label>
+                        <input type="date" class="form-control" id="saldoInicio">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Data Fim</label>
+                        <input type="date" class="form-control" id="saldoFim">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Período</label>
+                        <select class="form-select" id="saldoPeriodo">
+                            <option value="custom">Personalizado</option>
+                            <option value="7">Últimos 7 dias</option>
+                            <option value="30">Últimos 30 dias</option>
+                            <option value="60">Últimos 60 dias</option>
+                            <option value="90">Últimos 90 dias</option>
+                            <option value="month">Mês atual</option>
+                            <option value="12">Últimos 12 meses</option>
+                            <option value="year">Ano atual</option>
+                            <option value="lastYear">Ano passado</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Tipo</label>
+                        <select class="form-select" id="saldoTipo">
+                            <option value="ALL">Todos</option>
+                            <option value="CALL">CALL</option>
+                            <option value="PUT">PUT</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 align-self-end">
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-primary flex-grow-1" id="btnFiltrarSaldo">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                                Filtrar
+                            </button>
+                            <button class="btn btn-primary btn-icon" id="btnSaldoInsights" title="Insights">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row row-cards mb-3" id="saldoResumo"></div>
+
+                <div class="row row-cards">
+                    <div class="col-md-7">
+                        <div class="card">
+                            <div class="card-header"><h3 class="card-title">Evolução do Resultado Acumulado</h3></div>
+                            <div class="card-body">
+                                <div class="chart-container" style="position: relative; height: 260px;">
+                                    <canvas id="chartSaldoAcumulado"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-5">
+                        <div class="card">
+                            <div class="card-header"><h3 class="card-title">Distribuição por Tipo</h3></div>
+                            <div class="card-body">
+                                <div class="chart-container" style="position: relative; height: 260px;">
+                                    <canvas id="chartSaldoTipo"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion mt-3" id="saldoOperacoesAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingSaldoOperacoes">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSaldoOperacoes" aria-expanded="false" aria-controls="collapseSaldoOperacoes">
+                                🔎 Operações Detalhadas
+                            </button>
+                        </h2>
+                        <div id="collapseSaldoOperacoes" class="accordion-collapse collapse" aria-labelledby="headingSaldoOperacoes" data-bs-parent="#saldoOperacoesAccordion">
+                            <div class="accordion-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-vcenter card-table mb-0" id="saldoTabela">
+                                        <thead>
+                                            <tr>
+                                                <th>Data</th>
+                                                <th>Ativo</th>
+                                                <th>Tipo</th>
+                                                <th>Strike</th>
+                                                <th>Exercido</th>
+                                                <th>Saldo Abertura</th>
+                                                <th>Resultado</th>
+                                                <th>%</th>
+                                                <th>Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

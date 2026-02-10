@@ -2,10 +2,12 @@ let allOperacoes = [];
 let tableMesAtual, tableHistorico;
 let chartAnual = null;
 let chartAccumulated = null;
+let chartCapitalEvolution = null;
 let chartAssetDist = null;
 let chartSaldoAcumulado = null;
 let chartSaldoTipo = null;
 let chartInsightsDistribuicao = null;
+let chartInsightsEvolution = null;
 let opcoesDisponiveis = [];
 let cotacaoAtivoBase = null;
 let currentChatHistory = [];
@@ -235,6 +237,10 @@ function initDataTables() {
         responsive: false,
         scrollX: true,
         order: [[9, 'desc']],
+        columnDefs: [{
+            targets: 9,
+            orderDataType: 'dom-data-order'
+        }],
         createdRow: function(row, data, dataIndex) {
             const statusHtml = data[12];
             if (statusHtml && (statusHtml.includes('FECHADA') || statusHtml.includes('EXERCIDA'))) {
@@ -242,6 +248,15 @@ function initDataTables() {
             }
         }
     };
+    
+    // Adicionar ordenação customizada para usar data-order attribute
+    $.fn.dataTable.ext.order['dom-data-order'] = function(settings, col) {
+        return this.api().column(col, {order: 'index'}).nodes().map(function(td) {
+            const span = $(td).find('span[data-order]');
+            return span.length ? span.attr('data-order') : '';
+        });
+    };
+    
     tableMesAtual = $('#tableMesAtual').DataTable(dtConfig);
     tableHistorico = $('#tableHistorico').DataTable(dtConfig);
 }
@@ -270,6 +285,7 @@ async function loadOperacoes() {
     try {
         const res = await fetch(`${API_BASE}/api/opcoes`);
         allOperacoes = await res.json();
+        window.allOperacoes = allOperacoes; // Make available globally
         
         // Verificação de Status Automática (Fechada/Exercida)
         const today = new Date();
@@ -486,7 +502,7 @@ function populateTable(dt, data, showActions = true, updatePrices = false, isHis
             formatCurrency(parseFloatSafe(op.strike)),
             formatCurrency(parseFloatSafe(op.premio)),
             `<span class="${parseFloatSafe(op.resultado) >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(parseFloatSafe(op.resultado))}</span>`,
-            formatDateCell(op.vencimento),
+            formatDateCell(op.vencimento),  // Vencimento com timestamp para ordenação correta
             `${diasInfo.uteis} / ${diasInfo.corridos}`,
             exercicio ? '<span class="badge bg-red text-red-fg">SIM</span>' : '<span class="badge bg-green text-green-fg">NÃO</span>',
             `<span class="badge ${op.status === 'ABERTA' ? 'bg-green text-green-fg' : 'bg-default text-default-fg'}">${op.status}</span>`,
@@ -3422,8 +3438,7 @@ function renderChartAnual(data, year) {
 
 function renderAnnualResumo(data, year) {
     const container = document.getElementById('anualResumoContainer');
-    const cardsContainer = document.getElementById('anualMesCards');
-    if (!container || !cardsContainer) return;
+    if (!container) return;
 
     const grouped = groupByMonth(data);
     const config = JSON.parse(localStorage.getItem('appConfig') || '{}');
@@ -3436,7 +3451,6 @@ function renderAnnualResumo(data, year) {
     let totalPremios = 0;
     let totalCustos = 0;
     let totalResultado = 0;
-    let totalSaldo = 0;
     let totalWins = 0;
 
     const rows = [];
@@ -3457,27 +3471,36 @@ function renderAnnualResumo(data, year) {
             return acc + (res < 0 ? Math.abs(res) : 0);
         }, 0);
         const winsMes = ops.filter(op => (parseFloat(op.resultado || 0) > 0)).length;
-        const saldoMes = ops.reduce((acc, op) => {
-            const info = getSaldoInfo(op, saldoMap);
-            return acc + (info.saldo || 0);
-        }, 0);
-        const rentabilidade = saldoMes > 0 ? (resultadoMes / saldoMes) * 100 : 0;
+        
+        // Ordenar operações do mês por data (crescente) para pegar saldo inicial
+        const opsOrdenadas = [...ops].sort((a, b) => {
+            const da = new Date(a.data_operacao || a.created_at || 0);
+            const db = new Date(b.data_operacao || b.created_at || 0);
+            return da - db; // Crescente: mais antiga primeiro
+        });
+        
+        // Saldo inicial do mês = saldo da primeira operação do mês
+        const saldoInicialMes = opsOrdenadas.length > 0 ? getSaldoInfo(opsOrdenadas[0], saldoMap).saldo : 0;
+        const rentabilidade = saldoInicialMes > 0 ? (resultadoMes / saldoInicialMes) * 100 : 0;
         const taxaAcerto = opsCount > 0 ? (winsMes / opsCount) * 100 : 0;
-        const progresso = meta > 0 ? (resultadoMes / meta) * 100 : 0;
-        const progressoPct = Math.max(0, Math.min(100, progresso));
+        
+        // Barra de progresso baseada em rentabilidade (não meta)
+        const rentabilidadeAbs = Math.abs(rentabilidade);
+        const rentabilidadeBar = Math.min(100, rentabilidadeAbs);
+        const rentBarClass = rentabilidade >= 5 ? 'bg-green' : rentabilidade >= 2 ? 'bg-blue' : rentabilidade >= 0 ? 'bg-yellow' : 'bg-red';
 
         totalOps += opsCount;
         totalPremios += totalPremioMes;
         totalCustos += custosMes;
         totalResultado += resultadoMes;
-        totalSaldo += saldoMes;
         totalWins += winsMes;
 
-        const barClass = progressoPct >= 100 ? 'bg-green' : progressoPct >= 70 ? 'bg-blue' : progressoPct >= 40 ? 'bg-yellow' : 'bg-red';
+        const rowAttrs = opsCount > 0 ? `class="cursor-pointer" onclick="showMonthOperations(${year}, ${i})" style="cursor: pointer;"` : '';
         rows.push(`
-            <tr>
+            <tr ${rowAttrs}>
                 <td>${getMonthName(monthKey).split('-')[0]}</td>
                 <td class="text-end">${formatNumber(opsCount)}</td>
+                <td class="text-end">${opsCount > 0 ? formatCurrency(saldoInicialMes) : '-'}</td>
                 <td class="text-end">${formatCurrency(totalPremioMes)}</td>
                 <td class="text-end">${formatCurrency(custosMes)}</td>
                 <td class="text-end ${resultadoMes >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(resultadoMes)}</td>
@@ -3485,68 +3508,291 @@ function renderAnnualResumo(data, year) {
                 <td class="text-end">${taxaAcerto.toFixed(1)}%</td>
                 <td>
                     <div class="d-flex align-items-center">
-                        <div class="progress progress-sm flex-grow-1 me-2">
-                            <div class="progress-bar ${barClass}" style="width: ${progressoPct.toFixed(0)}%"></div>
+                        <div class="progress progress-sm flex-grow-1 me-2" data-bs-toggle="tooltip" title="Rentabilidade sobre saldo inicial: ${formatCurrency(saldoInicialMes)}">
+                            <div class="progress-bar ${rentBarClass}" style="width: ${rentabilidadeBar.toFixed(0)}%"></div>
                         </div>
-                        <span class="text-muted small">${meta > 0 ? progressoPct.toFixed(0) + '%' : '-'}</span>
+                        <span class="text-muted small">${rentabilidade.toFixed(1)}%</span>
                     </div>
                 </td>
             </tr>
         `);
 
-        const cardClass = rentabilidade >= 0 ? 'bg-green-lt' : 'bg-red-lt';
-        const textClass = rentabilidade >= 0 ? 'text-success' : 'text-danger';
-        cards.push(`
-            <div class="col-6 col-sm-4 col-md-3 col-lg-2">
-                <div class="card card-sm ${cardClass}">
-                    <div class="card-body text-center">
-                        <div class="text-muted">${getMonthName(monthKey).split('-')[0].substring(0, 3)}</div>
-                        <div class="h3 mb-0 ${textClass}">${rentabilidade.toFixed(1)}%</div>
-                        <div class="text-muted small">${opsCount} ops</div>
+        // Card com resultados (vermelho se negativo, verde se positivo) - só mostrar se tiver operações
+        if (opsCount > 0) {
+            const cardClass = resultadoMes >= 0 ? 'bg-green-lt' : 'bg-red-lt';
+            const textClass = resultadoMes >= 0 ? 'text-success' : 'text-danger';
+            cards.push(`
+                <div class="col-6 col-sm-4 col-md-3 col-lg-2">
+                    <div class="card card-sm ${cardClass}" onclick="showMonthOperations(${year}, ${i})" style="cursor: pointer;">
+                        <div class="card-body text-center">
+                            <div class="text-muted small">${getMonthName(monthKey).split('-')[0].substring(0, 3)}</div>
+                            <div class="h3 mb-0 ${textClass}">${rentabilidade.toFixed(1)}%</div>
+                            <div class="text-muted small">${opsCount} ops</div>
+                            <div class="${textClass} fw-bold small">${formatCurrency(resultadoMes)}</div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        `);
+            `);
+        }
     }
 
-    const totalRent = totalSaldo > 0 ? (totalResultado / totalSaldo) * 100 : 0;
+    // Rentabilidade total anual = resultado total / saldo inicial do ano (primeira operação do ano)
+    const allYearOps = [...data].sort((a, b) => {
+        const da = new Date(a.data_operacao || a.created_at || 0);
+        const db = new Date(b.data_operacao || b.created_at || 0);
+        return da - db; // Crescente: mais antiga primeiro
+    });
+    const saldoInicialAno = allYearOps.length > 0 ? getSaldoInfo(allYearOps[0], saldoMap).saldo : 0;
+    const totalRent = saldoInicialAno > 0 ? (totalResultado / saldoInicialAno) * 100 : 0;
     const totalTaxa = totalOps > 0 ? (totalWins / totalOps) * 100 : 0;
 
     container.innerHTML = `
-        <div class="card">
-            <div class="card-header"><h3 class="card-title">Resumo Mensal</h3></div>
-            <div class="table-responsive">
-                <table class="table table-vcenter card-table mb-0">
-                    <thead>
-                        <tr>
-                            <th>Mês</th>
-                            <th class="text-end">Operações</th>
-                            <th class="text-end">Prêmios Recebidos</th>
-                            <th class="text-end">Custos</th>
-                            <th class="text-end">Resultado</th>
-                            <th class="text-end">Rentabilidade</th>
-                            <th class="text-end">Taxa Acerto</th>
-                            <th>Progresso</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${rows.join('')}
-                        <tr class="fw-bold">
-                            <td>Total</td>
-                            <td class="text-end">${formatNumber(totalOps)}</td>
-                            <td class="text-end">${formatCurrency(totalPremios)}</td>
-                            <td class="text-end">${formatCurrency(totalCustos)}</td>
-                            <td class="text-end ${totalResultado >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(totalResultado)}</td>
-                            <td class="text-end ${totalRent >= 0 ? 'text-success' : 'text-danger'}">${totalRent.toFixed(1)}%</td>
-                            <td class="text-end">${totalTaxa.toFixed(1)}%</td>
-                            <td>${meta > 0 ? formatCurrency(meta) : '-'}</td>
-                        </tr>
-                    </tbody>
-                </table>
+        <div class="accordion" id="accordionResumoMensal">
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingResumoMensal">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseResumoMensal" aria-expanded="false" aria-controls="collapseResumoMensal">
+                        Resumo Mensal
+                    </button>
+                </h2>
+                <div id="collapseResumoMensal" class="accordion-collapse collapse" aria-labelledby="headingResumoMensal" data-bs-parent="#accordionResumoMensal">
+                    <div class="accordion-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-vcenter card-table mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Mês</th>
+                                        <th class="text-end">Operações</th>
+                                        <th class="text-end">Saldo Inicial</th>
+                                        <th class="text-end">Prêmios Recebidos</th>
+                                        <th class="text-end">Custos</th>
+                                        <th class="text-end">Resultado</th>
+                                        <th class="text-end">Rentabilidade</th>
+                                        <th class="text-end">Taxa Acerto</th>
+                                        <th>Progresso</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${rows.join('')}
+                                    <tr class="fw-bold">
+                                        <td>Total</td>
+                                        <td class="text-end">${formatNumber(totalOps)}</td>
+                                        <td class="text-end">${formatCurrency(saldoInicialAno)}</td>
+                                        <td class="text-end">${formatCurrency(totalPremios)}</td>
+                                        <td class="text-end">${formatCurrency(totalCustos)}</td>
+                                        <td class="text-end ${totalResultado >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(totalResultado)}</td>
+                                        <td class="text-end ${totalRent >= 0 ? 'text-success' : 'text-danger'}">${totalRent.toFixed(1)}%</td>
+                                        <td class="text-end">${totalTaxa.toFixed(1)}%</td>
+                                        <td>${meta > 0 ? formatCurrency(meta) : '-'}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="row row-cards mt-3 p-3 justify-content-center">
+                            ${cards.join('')}
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     `;
-    cardsContainer.innerHTML = cards.join('');
+    
+    // Inicializar tooltips do Bootstrap
+    setTimeout(() => {
+        const tooltipTriggerList = container.querySelectorAll('[data-bs-toggle="tooltip"]');
+        [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+    }, 100);
+}
+
+function showMonthOperations(year, month) {
+    // Ensure modal exists in DOM
+    let modalEl = document.getElementById('modalMonthOperations');
+    if (!modalEl) {
+        const modalHTML = `
+            <div class="modal modal-blur fade" id="modalMonthOperations" tabindex="-1">
+                <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="modalMonthOperationsTitle">Operações do Mês</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div id="modalMonthOperationsContent"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        modalEl = document.getElementById('modalMonthOperations');
+    }
+
+    // Get operations for the month
+    const monthKey = `${year}-${String(month).padStart(2, '0')}`;
+    const allOps = window.allOperacoes || [];
+    const monthOps = allOps.filter(op => {
+        const opDate = new Date(op.data_operacao || op.created_at);
+        const opMonth = `${opDate.getFullYear()}-${String(opDate.getMonth() + 1).padStart(2, '0')}`;
+        return opMonth === monthKey;
+    });
+
+    // Sort by date descending
+    monthOps.sort((a, b) => {
+        const da = new Date(a.data_operacao || a.created_at || 0);
+        const db = new Date(b.data_operacao || b.created_at || 0);
+        return db - da;
+    });
+
+    // Build table HTML
+    const config = JSON.parse(localStorage.getItem('appConfig') || '{}');
+    const saldoAtual = parseFloat(config.saldoAcoes || 0);
+    const saldoMap = computeSaldoAberturaFallback(allOps, saldoAtual);
+
+    const rows = monthOps.map(op => {
+        const saldoInfo = getSaldoInfo(op, saldoMap);
+        const resultado = parseFloat(op.resultado || 0);
+        const perc = saldoInfo.saldo > 0 ? (resultado / saldoInfo.saldo) * 100 : 0;
+        const exercido = op.status === 'EXERCIDA' ? 'SIM' : 'NÃO';
+        const tipoBadge = op.tipo === 'CALL' ? 'bg-green text-green-fg' : 'bg-red text-red-fg';
+        const exercicioBadge = exercido === 'SIM' ? 'bg-red text-red-fg' : 'bg-green text-green-fg';
+
+        return `
+            <tr>
+                <td>${formatDateCell(op.data_operacao)}</td>
+                <td class="fw-bold">${op.ativo}</td>
+                <td><span class="badge ${tipoBadge}">${op.tipo}</span></td>
+                <td>${formatCurrency(parseFloatSafe(op.strike))}</td>
+                <td><span class="badge ${exercicioBadge}">${exercido}</span></td>
+                <td>${formatCurrency(saldoInfo.saldo)}${saldoInfo.estimado ? ' <span class="badge bg-yellow text-yellow-fg ms-1">estimado</span>' : ''}</td>
+                <td class="${resultado >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(resultado)}</td>
+                <td class="${perc >= 0 ? 'text-success' : 'text-danger'}">${perc.toFixed(2)}%</td>
+                <td>
+                    <button class="btn btn-sm btn-info btn-icon" onclick="openDetalheFromMonthModal('${op.id}')" title="Detalhes">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    // Calculate totals
+    const totalResultado = monthOps.reduce((acc, op) => acc + parseFloat(op.resultado || 0), 0);
+    const totalPremios = monthOps.reduce((acc, op) => {
+        const premio = parseFloatSafe(op.premio);
+        const qtd = Math.abs(parseInt(op.quantidade || 0));
+        return acc + (premio * (qtd || 1));
+    }, 0);
+
+    // Calculate initial balance (first operation of month)
+    const monthOpsSorted = [...monthOps].sort((a, b) => {
+        const da = new Date(a.data_operacao || a.created_at || 0);
+        const db = new Date(b.data_operacao || b.created_at || 0);
+        return da - db; // Crescente: mais antiga primeiro
+    });
+    const saldoInicialMes = monthOpsSorted.length > 0 ? getSaldoInfo(monthOpsSorted[0], saldoMap).saldo : 0;
+    const rentabilidadeMes = saldoInicialMes > 0 ? (totalResultado / saldoInicialMes) * 100 : 0;
+
+    // Update modal title
+    const titleEl = document.getElementById('modalMonthOperationsTitle');
+    if (titleEl) {
+        titleEl.textContent = `Operações de ${getMonthName(monthKey)} - ${monthOps.length} operação${monthOps.length !== 1 ? 'ões' : ''}`;
+    }
+
+    // Update modal content
+    const contentEl = document.getElementById('modalMonthOperationsContent');
+    if (contentEl) {
+        contentEl.innerHTML = `
+            <div class="row mb-3">
+                <div class="col-6 col-lg-3 mb-2">
+                    <div class="card">
+                        <div class="card-body p-2">
+                            <div class="d-flex align-items-center">
+                                <div class="subheader small">Total de Operações</div>
+                                <div class="ms-auto lh-1">
+                                    <div class="h2 mb-0">${monthOps.length}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3 mb-2">
+                    <div class="card">
+                        <div class="card-body p-2">
+                            <div class="d-flex align-items-center">
+                                <div class="subheader small">Saldo Inicial</div>
+                                <div class="ms-auto lh-1">
+                                    <div class="h2 mb-0">${formatCurrency(saldoInicialMes)}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3 mb-2">
+                    <div class="card">
+                        <div class="card-body p-2">
+                            <div class="d-flex align-items-center">
+                                <div class="subheader small">Resultado Total</div>
+                                <div class="ms-auto lh-1">
+                                    <div class="h2 mb-0 ${totalResultado >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(totalResultado)}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3 mb-2">
+                    <div class="card">
+                        <div class="card-body p-2">
+                            <div class="d-flex align-items-center">
+                                <div class="subheader small">Rentabilidade</div>
+                                <div class="ms-auto lh-1">
+                                    <div class="h2 mb-0 ${rentabilidadeMes >= 0 ? 'text-success' : 'text-danger'}">${rentabilidadeMes.toFixed(2)}%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-vcenter card-table">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Ativo</th>
+                            <th>Tipo</th>
+                            <th>Strike</th>
+                            <th>Exercida</th>
+                            <th>Saldo Abertura</th>
+                            <th>Resultado</th>
+                            <th>%</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows || '<tr><td colspan="9" class="text-center text-muted">Nenhuma operação neste mês</td></tr>'}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+
+    // Show modal
+    const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+    modal.show();
+}
+
+function openDetalheFromMonthModal(opId) {
+    // Fechar modal de operações do mês
+    const modalMonthEl = document.getElementById('modalMonthOperations');
+    if (modalMonthEl) {
+        const modalMonth = bootstrap.Modal.getInstance(modalMonthEl);
+        if (modalMonth) {
+            modalMonth.hide();
+        }
+    }
+    
+    // Aguardar um momento para a modal fechar e então abrir a modal de detalhes
+    setTimeout(() => {
+        openDetalheOperacao(opId);
+    }, 300);
 }
 
 function renderAnnualTable(data) {
@@ -3773,7 +4019,11 @@ function renderSaldoCharts(ops) {
     const saldoMap = computeSaldoAberturaFallback(ops, saldoAtual);
     persistSaldoAberturaEstimada(ops, saldoMap);
 
-    const sorted = [...ops].sort((a, b) => (a.data_operacao || '').localeCompare(b.data_operacao || ''));
+    const sorted = [...ops].sort((a, b) => {
+        const da = new Date(a.data_operacao || a.created_at || 0);
+        const db = new Date(b.data_operacao || b.created_at || 0);
+        return da - db; // ordem crescente (mais antiga primeiro) para gráfico acumulado
+    });
     let acumulado = 0;
     const labels = [];
     const data = [];
@@ -3929,6 +4179,13 @@ function updateSaldoInsights(ops) {
     const winRate = totalOps > 0 ? (wins / totalOps) * 100 : 0;
     const mediaDias = countDias > 0 ? Math.round(totalDias / countDias) : null;
 
+    console.log('[Insights] Cálculos:', {
+        totalOps, wins, losses,
+        sumPos, sumNeg, avgWin, avgLoss,
+        payoff, profitFactor,
+        totalResultado, totalSaldo
+    });
+
     let maxDrawdown = 0;
     let maxDrawdownPct = 0;
     if (ops.length > 0) {
@@ -3973,10 +4230,18 @@ function updateSaldoInsights(ops) {
     if (maiorGanhoEl) maiorGanhoEl.textContent = maxResultado === null ? '-' : formatCurrency(maxResultado);
     if (maiorPerdaEl) maiorPerdaEl.textContent = minResultado === null ? '-' : formatCurrency(minResultado);
     if (expectativaEl) expectativaEl.textContent = `${expectativa.toFixed(2)}%`;
-    if (payoffEl) payoffEl.textContent = payoff > 0 ? payoff.toFixed(2) : '-';
+    if (payoffEl) {
+        if (losses === 0) {
+            payoffEl.textContent = 'N/A';
+            payoffEl.title = 'Sem operações negativas para calcular payoff';
+        } else {
+            payoffEl.textContent = payoff > 0 ? payoff.toFixed(2) : '-';
+            payoffEl.title = '';
+        }
+    }
     if (profitFactorEl) profitFactorEl.textContent = Number.isFinite(profitFactor) ? profitFactor.toFixed(2) : '∞';
-    if (drawdownEl) drawdownEl.textContent = maxDrawdown !== 0 ? formatCurrency(maxDrawdown) : '-';
-    if (drawdownPctEl) drawdownPctEl.textContent = maxDrawdownPct !== 0 ? `${maxDrawdownPct.toFixed(1)}%` : '';
+    if (drawdownEl) drawdownEl.textContent = maxDrawdown !== 0 ? formatCurrency(maxDrawdown) : 'R$ 0,00';
+    if (drawdownPctEl) drawdownPctEl.textContent = maxDrawdownPct !== 0 ? `${maxDrawdownPct.toFixed(1)}%` : '0%';
     if (sharpeEl) sharpeEl.textContent = sharpe !== 0 ? sharpe.toFixed(2) : '-';
     if (resultadoTotalEl) resultadoTotalEl.textContent = formatCurrency(totalResultado);
     if (taxaAcertoEl) taxaAcertoEl.textContent = `${winRate.toFixed(1)}%`;
@@ -4007,6 +4272,45 @@ function updateSaldoInsights(ops) {
     if (riscoEl) riscoEl.innerHTML = `<span class="${riscoClass}">${riscoLabel}</span>`;
     if (eficienciaEl) eficienciaEl.innerHTML = `<span class="${eficienciaClass}">${eficienciaLabel}</span>`;
 
+    // Populate new metric cards (left column)
+    const setTextSafe = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value;
+    };
+    setTextSafe('metricSharpe', sharpe !== 0 ? sharpe.toFixed(2) : '-');
+    setTextSafe('metricTaxaAcerto', `${winRate.toFixed(1)}%`);
+    setTextSafe('metricTaxaAcertoStatus', winRate === 100 ? 'Perfeito no período' : winRate >= 70 ? 'Excelente' : winRate >= 55 ? 'Bom' : 'Irregular');
+    setTextSafe('metricDrawdown', maxDrawdown !== 0 ? formatCurrency(maxDrawdown) : 'R$ 0,00');
+    setTextSafe('metricExposicao', riscoLabel);
+    setTextSafe('metricResultadoTotal', formatCurrency(totalResultado));
+    setTextSafe('metricResultadoPorOp', `+${expectativa.toFixed(2)}% por operação`);
+    setTextSafe('metricDuracao', mediaDias !== null ? `${mediaDias} dias` : '-');
+    setTextSafe('metricFatorLucro', Number.isFinite(profitFactor) ? profitFactor.toFixed(2) : '∞');
+    setTextSafe('metricEficiencia', eficienciaLabel);
+
+    // Populate insight cards (right column)
+    setTextSafe('perfMaiorGanho', maxResultado === null ? '-' : formatCurrency(maxResultado));
+    setTextSafe('perfMenorGanho', minResultado === null ? '-' : formatCurrency(minResultado));
+    setTextSafe('perfResultadoMedio', formatCurrency(resultadoMedio));
+    setTextSafe('perfExpectativa', `+${expectativa.toFixed(2)}%`);
+    
+    setTextSafe('riscoSharpe', sharpe !== 0 ? sharpe.toFixed(2) : '-');
+    setTextSafe('riscoDrawdown', maxDrawdown !== 0 ? formatCurrency(maxDrawdown) : 'R$ 0,00');
+    setTextSafe('riscoExposicao', riscoLabel);
+    if (losses === 0) {
+        setTextSafe('riscoPayoff', 'N/A*');
+        setTextSafe('riscoPayoffNote', '* Payoff não calculável devido à ausência de perdas');
+    } else {
+        setTextSafe('riscoPayoff', payoff > 0 ? payoff.toFixed(2) : '-');
+        setTextSafe('riscoPayoffNote', '');
+    }
+    
+    setTextSafe('opTotalOps', totalOps.toString());
+    setTextSafe('opDuracao', mediaDias !== null ? `${mediaDias} dias` : '-');
+    setTextSafe('opEficiencia', eficienciaLabel);
+    setTextSafe('opFatorLucro', Number.isFinite(profitFactor) ? profitFactor.toFixed(2) : '∞');
+
+    // Old elements (keep for compatibility)
     const callCount = ops.filter(op => (op.tipo || '').toUpperCase() === 'CALL').length;
     const putCount = ops.filter(op => (op.tipo || '').toUpperCase() === 'PUT').length;
     const callPct = totalOps > 0 ? (callCount / totalOps) * 100 : 0;
@@ -4054,23 +4358,62 @@ function updateSaldoInsights(ops) {
         });
     }
 
-    const recentesBody = document.getElementById('insightRecentesBody');
-    if (recentesBody) {
-        const recentes = [...ops].sort((a, b) => new Date(b.data_operacao || b.created_at || 0) - new Date(a.data_operacao || a.created_at || 0)).slice(0, 5);
-        recentesBody.innerHTML = recentes.map(op => {
-            const info = getSaldoInfo(op, saldoMap);
-            const rent = info.saldo > 0 ? (parseFloat(op.resultado || 0) / info.saldo) * 100 : 0;
-            const tipoBadge = (op.tipo || '').toUpperCase() === 'CALL' ? 'bg-green text-green-fg' : 'bg-red text-red-fg';
-            const resVal = parseFloat(op.resultado || 0);
-            return `
-                <tr>
-                    <td>${op.ativo || '-'}</td>
-                    <td><span class="badge ${tipoBadge}">${op.tipo || '-'}</span></td>
-                    <td class="${resVal >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(resVal)}</td>
-                    <td class="${rent >= 0 ? 'text-success' : 'text-danger'}">${rent.toFixed(2)}%</td>
-                </tr>
-            `;
-        }).join('');
+    // Remove old recentes table population (replaced with Visualizações chart)
+    // Populate visualizações accordion
+    const vizCanvas = document.getElementById('insightEvolutionChart');
+    if (vizCanvas && typeof Chart !== 'undefined') {
+        if (chartInsightsEvolution) chartInsightsEvolution.destroy();
+        
+        // Build evolution data
+        const sorted = [...ops].sort((a, b) => new Date(a.data_operacao || a.created_at || 0) - new Date(b.data_operacao || b.created_at || 0));
+        const config = JSON.parse(localStorage.getItem('appConfig') || '{}');
+        const saldoInicial = parseFloat(config.saldoAcoes || 0);
+        let equity = saldoInicial;
+        const dates = [];
+        const values = [];
+        
+        sorted.forEach(op => {
+            equity += parseFloat(op.resultado || 0);
+            const dt = new Date(op.data_operacao || op.created_at || 0);
+            dates.push(dt.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }));
+            values.push(equity);
+        });
+        
+        chartInsightsEvolution = new Chart(vizCanvas.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: dates,
+                datasets: [{
+                    label: 'Capital Acumulado (R$)',
+                    data: values,
+                    borderColor: '#8b5cf6',
+                    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#8b5cf6',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: true, position: 'bottom' }
+                },
+                scales: {
+                    y: {
+                        ticks: {
+                            callback: function(value) {
+                                return 'R$ ' + value.toLocaleString('pt-BR');
+                            }
+                        }
+                    }
+                }
+            }
+        });
     }
 
     const autoList = document.getElementById('insightAutoList');
@@ -4232,24 +4575,46 @@ function ensureAnnualExtraCharts() {
     if (container.dataset.ready === 'true') return;
 
     container.innerHTML = `
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header"><h3 class="card-title">Evolução Acumulada</h3></div>
-                <div class="card-body">
-                    <div class="chart-container" style="position: relative; height: 250px;">
-                        <canvas id="chartAccumulated"></canvas>
+        <div class="col-12">
+            <div class="accordion" id="accordionAnualCharts">
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingEvolution">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEvolution" aria-expanded="false" aria-controls="collapseEvolution">
+                            📊 Evolução do Resultado
+                        </button>
+                    </h2>
+                    <div id="collapseEvolution" class="accordion-collapse collapse" aria-labelledby="headingEvolution" data-bs-parent="#accordionAnualCharts">
+                        <div class="accordion-body">
+                            <div class="row">
+                                <div class="col-12 col-lg-6 mb-3">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h3 class="card-title">Resultado Mensal</h3>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="chart-container" style="position: relative; height: 300px;">
+                                                <canvas id="chartAccumulated"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-lg-6 mb-3">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h3 class="card-title">Evolução do Capital Acumulado</h3>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="chart-container" style="position: relative; height: 300px;">
+                                                <canvas id="chartCapitalEvolution"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header"><h3 class="card-title">Resultado por Ativo Base</h3></div>
-                <div class="card-body">
-                    <div class="chart-container" style="position: relative; height: 250px;">
-                        <canvas id="chartAssetDist"></canvas>
-                    </div>
-                </div>
+
             </div>
         </div>
     `;
@@ -4349,26 +4714,20 @@ function updateAnnualMetrics(data, monthlyData) {
 }
 
 function renderAdditionalCharts(data, monthlyData, months, isDarkMode, textColor, gridColor) {
-    // 1. Accumulated Profit (Line Chart)
+    // 1. Monthly Result Evolution (Line Chart) - mostra evolução mês a mês
     if (chartAccumulated) chartAccumulated.destroy();
     const ctxAcc = document.getElementById('chartAccumulated');
     
     if (ctxAcc) {
-        let acc = 0;
-        const accData = monthlyData.map(val => {
-            acc += val;
-            return acc;
-        });
-        
         chartAccumulated = new Chart(ctxAcc.getContext('2d'), {
             type: 'line',
             data: {
                 labels: months,
                 datasets: [{
-                    label: 'Acumulado',
-                    data: accData,
-                    borderColor: '#4299e1',
-                    backgroundColor: 'rgba(66, 153, 225, 0.1)',
+                    label: 'Resultado Mensal',
+                    data: monthlyData,
+                    borderColor: '#48bb78',
+                    backgroundColor: 'rgba(72, 187, 120, 0.1)',
                     fill: true,
                     tension: 0.4
                 }]
@@ -4376,9 +4735,103 @@ function renderAdditionalCharts(data, monthlyData, months, isDarkMode, textColor
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'R$ ' + context.parsed.y.toFixed(2);
+                            }
+                        }
+                    }
+                },
                 scales: {
                     y: { grid: { color: gridColor }, ticks: { color: textColor } },
+                    x: { grid: { color: gridColor }, ticks: { color: textColor } }
+                }
+            }
+        });
+    }
+
+    // Capital Evolution Chart - Evolução acumulada do capital
+    if (chartCapitalEvolution) chartCapitalEvolution.destroy();
+    const ctxCapital = document.getElementById('chartCapitalEvolution');
+    
+    if (ctxCapital) {
+        // Calcular evolução acumulada do capital baseado no saldo inicial + resultados
+        const config = JSON.parse(localStorage.getItem('appConfig') || '{}');
+        const saldoMap = computeSaldoAberturaFallback(data, parseFloat(config.saldoAcoes || 0));
+        
+        let capitalData = [];
+        let currentCapital = 0;
+        
+        for (let i = 1; i <= 12; i++) {
+            const monthKey = `2026-${String(i).padStart(2, '0')}`;
+            const ops = data.filter(op => {
+                const d = new Date(op.data_operacao || op.created_at);
+                return d.getFullYear() === 2026 && (d.getMonth() + 1) === i;
+            });
+            
+            if (ops.length > 0) {
+                // Saldo inicial do mês
+                const opsOrdenadas = [...ops].sort((a, b) => {
+                    const da = new Date(a.data_operacao || a.created_at || 0);
+                    const db = new Date(b.data_operacao || b.created_at || 0);
+                    return da - db;
+                });
+                
+                const saldoInicialMes = getSaldoInfo(opsOrdenadas[0], saldoMap).saldo;
+                const resultadoMes = ops.reduce((acc, op) => acc + parseFloat(op.resultado || 0), 0);
+                
+                if (currentCapital === 0) {
+                    currentCapital = saldoInicialMes;
+                }
+                currentCapital += resultadoMes;
+                capitalData.push(currentCapital);
+            } else {
+                // Se não houver operações no mês, mantém o capital anterior
+                capitalData.push(currentCapital || null);
+            }
+        }
+        
+        chartCapitalEvolution = new Chart(ctxCapital.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: months,
+                datasets: [{
+                    label: 'Capital Acumulado',
+                    data: capitalData,
+                    borderColor: '#4299e1',
+                    backgroundColor: 'rgba(66, 153, 225, 0.2)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'Capital: R$ ' + context.parsed.y.toFixed(2);
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        grid: { color: gridColor },
+                        ticks: {
+                            color: textColor,
+                            callback: function(value) {
+                                return 'R$ ' + value.toFixed(0);
+                            }
+                        }
+                    },
                     x: { grid: { color: gridColor }, ticks: { color: textColor } }
                 }
             }

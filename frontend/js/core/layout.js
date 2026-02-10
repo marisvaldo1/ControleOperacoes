@@ -108,12 +108,10 @@ document.addEventListener('libsLoaded', function() {
     
     const footer = `
     <footer class="footer footer-transparent d-print-none">
-        <div class="container-fluid">
-            <div class="row text-center align-items-center flex-row-reverse">
-                <div class="col-12 col-lg-auto mt-3 mt-lg-0">
-                    <ul class="list-inline list-inline-dots mb-0">
-                        <li class="list-inline-item">Controle de Investimentos &copy; 2026</li>
-                    </ul>
+        <div class="container-xl">
+            <div class="row text-center align-items-center">
+                <div class="col-12">
+                    <span class="text-muted">Controle de Investimentos © 2026 | <span class="badge bg-blue-lt" id="footerVersion">carregando...</span></span>
                 </div>
             </div>
         </div>
@@ -126,6 +124,21 @@ document.addEventListener('libsLoaded', function() {
         wrapper.insertAdjacentHTML('beforeend', footer);
     }
     document.body.insertAdjacentHTML('beforeend', offcanvasConfig);
+    
+    // Buscar versão do sistema
+    fetch(API_BASE + '/api/version')
+        .then(r => r.json())
+        .then(data => {
+            const versionEl = document.getElementById('footerVersion');
+            if (versionEl && data.version) {
+                versionEl.textContent = 'v' + data.version;
+            }
+        })
+        .catch(err => {
+            console.error('Erro ao carregar versão:', err);
+            const versionEl = document.getElementById('footerVersion');
+            if (versionEl) versionEl.textContent = 'v?.?.?';
+        });
     
     // Theme toggle
     document.getElementById('btnTheme').addEventListener('click', function() {

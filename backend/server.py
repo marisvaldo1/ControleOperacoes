@@ -16,10 +16,18 @@ load_dotenv(os.path.join(BASE_DIR, '.env'))
 app = Flask(__name__, static_folder='../frontend', static_url_path='')
 CORS(app)
 
+# Versão do sistema
+VERSION = "1.1.5"
+
 # Rota principal para servir o index.html
 @app.route('/')
 def index():
     return send_from_directory(app.static_folder, 'index.html')
+
+# Rota para obter versão do sistema
+@app.route('/api/version')
+def get_version():
+    return jsonify({'version': VERSION})
 
 # Usar caminho absoluto para o banco de dados
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))

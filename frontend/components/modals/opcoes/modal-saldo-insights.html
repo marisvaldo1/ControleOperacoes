@@ -1,0 +1,191 @@
+<!-- Modal Insights -->
+<div class="modal modal-blur fade" id="modalSaldoInsights" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Insights</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row row-cards mb-3">
+                    <div class="col-sm-6 col-lg-3">
+                        <div class="card card-sm">
+                            <div class="card-body">
+                                <div class="text-muted">Payoff</div>
+                                <div class="h3" id="insightPayoff">-</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-lg-3">
+                        <div class="card card-sm">
+                            <div class="card-body">
+                                <div class="text-muted">Fator de Lucro</div>
+                                <div class="h3" id="insightProfitFactor">-</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-lg-3">
+                        <div class="card card-sm">
+                            <div class="card-body">
+                                <div class="text-muted">Drawdown Máximo</div>
+                                <div class="h3 text-danger" id="insightMaxDrawdown">-</div>
+                                <div class="text-muted small" id="insightMaxDrawdownPct"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-lg-3">
+                        <div class="card card-sm">
+                            <div class="card-body">
+                                <div class="text-muted">Índice Sharpe</div>
+                                <div class="h3" id="insightSharpe">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row row-cards mb-3">
+                    <div class="col-sm-6 col-lg-3">
+                        <div class="card card-sm">
+                            <div class="card-body">
+                                <div class="text-muted">Resultado Total</div>
+                                <div class="h3" id="insightResultadoTotal">-</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-lg-3">
+                        <div class="card card-sm">
+                            <div class="card-body">
+                                <div class="text-muted">Resultado médio por operação</div>
+                                <div class="h3" id="insightResultadoMedio">-</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-lg-3">
+                        <div class="card card-sm">
+                            <div class="card-body">
+                                <div class="text-muted">Taxa de Acerto</div>
+                                <div class="h3 text-success" id="insightTaxaAcerto">-</div>
+                                <div class="text-muted small" id="insightTotalOps">-</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-lg-3">
+                        <div class="card card-sm">
+                            <div class="card-body">
+                                <div class="text-muted">Expectativa</div>
+                                <div class="h3" id="insightExpectativa">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row row-cards mb-3">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="text-muted">Exposição ao Risco</div>
+                                <div class="h3" id="insightExposicaoRisco">-</div>
+                                <div class="text-muted mt-2">Eficiência Operacional</div>
+                                <div class="h3" id="insightEficiencia">-</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="text-muted">Maior ganho no período</div>
+                                <div class="h3 text-success" id="insightMaiorGanho">-</div>
+                                <div class="text-muted mt-2">Maior perda no período</div>
+                                <div class="h3 text-danger" id="insightMaiorPerda">-</div>
+                                <div class="text-muted mt-2">Duração média</div>
+                                <div class="h3" id="insightMediaDias">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h3 class="card-title">Distribuição de Resultados</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-7">
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span>CALL</span>
+                                        <span id="insightCallPct">0%</span>
+                                    </div>
+                                    <div class="progress progress-sm">
+                                        <div class="progress-bar bg-green" id="insightCallBar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span>PUT</span>
+                                        <span id="insightPutPct">0%</span>
+                                    </div>
+                                    <div class="progress progress-sm">
+                                        <div class="progress-bar bg-red" id="insightPutBar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span>Positivas</span>
+                                        <span id="insightPosPct">0%</span>
+                                    </div>
+                                    <div class="progress progress-sm">
+                                        <div class="progress-bar bg-green" id="insightPosBar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span>Negativas</span>
+                                        <span id="insightNegPct">0%</span>
+                                    </div>
+                                    <div class="progress progress-sm">
+                                        <div class="progress-bar bg-red" id="insightNegBar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-5">
+                                <div style="position: relative; height: 220px;">
+                                    <canvas id="insightDistribuicaoChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h3 class="card-title">Operações Recentes</h3>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-vcenter card-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Ativo</th>
+                                    <th>Tipo</th>
+                                    <th>Resultado</th>
+                                    <th>Rent.</th>
+                                </tr>
+                            </thead>
+                            <tbody id="insightRecentesBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Insights Automáticos</h3>
+                    </div>
+                    <div class="card-body" id="insightAutoList"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>

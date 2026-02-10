@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Investimentos - Opcoes</title>
-    <link rel="stylesheet" href="../css/style.css?v=1.0.7">
-    <link rel="stylesheet" href="../css/opcoes.css?v=1.0.7">
-    <link rel="stylesheet" href="../css/modal-detalhes.css?v=1.0.7">
-    <link rel="stylesheet" href="../css/detalhe-opcoes.css?v=1.0.7">
+    <link rel="stylesheet" href="../css/style.css?v=1.1.5">
+    <link rel="stylesheet" href="../css/opcoes.css?v=1.1.5">
+    <link rel="stylesheet" href="../css/modal-detalhes.css?v=1.1.5">
+    <link rel="stylesheet" href="../css/detalhe-opcoes.css?v=1.1.5">
 </head>
 
 <body data-bs-theme="dark">
@@ -178,7 +178,6 @@
                                     </div>
                                 </div>
                                 <div id="anualResumoContainer" class="mt-3"></div>
-                                <div class="row row-cards mt-3" id="anualMesCards"></div>
                                 <div id="anualTabelaContainer"></div>
                                 <div class="row row-cards mt-3" id="anualExtraCharts"></div>
                             </div>
@@ -533,7 +532,7 @@
                                     Filtrar
                                 </button>
                                 <button class="btn btn-primary btn-icon" id="btnSaldoInsights" title="Insights">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>
                                 </button>
                             </div>
                         </div>
@@ -608,6 +607,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
+                    <!-- Cards Superiores (4 colunas) -->
                     <div class="row row-cards mb-3">
                         <div class="col-sm-6 col-lg-3">
                             <div class="card card-sm">
@@ -644,144 +644,434 @@
                         </div>
                     </div>
 
-                    <div class="row row-cards mb-3">
-                        <div class="col-sm-6 col-lg-3">
-                            <div class="card card-sm">
-                                <div class="card-body">
-                                    <div class="text-muted">Resultado Total</div>
-                                    <div class="h3" id="insightResultadoTotal">-</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-sm-6 col-lg-3">
-                            <div class="card card-sm">
-                                <div class="card-body">
-                                    <div class="text-muted">Resultado médio por operação</div>
-                                    <div class="h3" id="insightResultadoMedio">-</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-sm-6 col-lg-3">
-                            <div class="card card-sm">
-                                <div class="card-body">
-                                    <div class="text-muted">Taxa de Acerto</div>
-                                    <div class="h3 text-success" id="insightTaxaAcerto">-</div>
-                                    <div class="text-muted small" id="insightTotalOps">-</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-sm-6 col-lg-3">
-                            <div class="card card-sm">
-                                <div class="card-body">
-                                    <div class="text-muted">Expectativa</div>
-                                    <div class="h3" id="insightExpectativa">-</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row row-cards mb-3">
-                        <div class="col-md-6">
+                    <!-- Layout de 2 Colunas -->
+                    <div class="row">
+                        <!-- Coluna Esquerda: Métricas de Performance -->
+                        <div class="col-lg-6 mb-3">
                             <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="icon me-2" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><rect x="3" y="12" width="6" height="8" rx="1"/><rect x="9" y="8" width="6" height="12" rx="1"/><rect x="15" y="4" width="6" height="16" rx="1"/></svg>
+                                        Métricas de Performance
+                                    </h3>
+                                </div>
                                 <div class="card-body">
-                                    <div class="text-muted">Exposição ao Risco</div>
-                                    <div class="h3" id="insightExposicaoRisco">-</div>
-                                    <div class="text-muted mt-2">Eficiência Operacional</div>
-                                    <div class="h3" id="insightEficiencia">-</div>
+                                    <div class="row g-3">
+                                        <!-- Índice Sharpe -->
+                                        <div class="col-md-6">
+                                            <div class="card bg-success-lt">
+                                                <div class="card-body p-3">
+                                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                                        <div class="text-uppercase text-muted small">ÍNDICE SHARPE</div>
+                                                        <div class="text-success">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+                                                        </div>
+                                                    </div>
+                                                    <div class="h2 mb-1" id="metricSharpe">-</div>
+                                                    <div class="text-success small">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trending-up" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/></svg>
+                                                        Excelente Retorno/Risco
+                                                    </div>
+                                                    <div class="text-muted small mt-1">Medida de retorno ajustado ao risco</div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Taxa de Acerto -->
+                                        <div class="col-md-6">
+                                            <div class="card bg-success-lt">
+                                                <div class="card-body p-3">
+                                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                                        <div class="text-uppercase text-muted small">TAXA DE ACERTO</div>
+                                                        <div class="text-success">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 11l3 3l8 -8"/><path d="M20 12v6a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h9"/></svg>
+                                                        </div>
+                                                    </div>
+                                                    <div class="h2 mb-1" id="metricTaxaAcerto">-</div>
+                                                    <div class="text-success small">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trending-up" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/></svg>
+                                                        <span id="metricTaxaAcertoStatus">-</span>
+                                                    </div>
+                                                    <div class="text-muted small mt-1">Porcentagem de operações positivas</div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Drawdown Máximo -->
+                                        <div class="col-md-6">
+                                            <div class="card bg-warning-lt">
+                                                <div class="card-body p-3">
+                                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                                        <div class="text-uppercase text-muted small">DRAWDOWN MÁXIMO</div>
+                                                        <div class="text-warning">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v2m0 4v.01"/><path d="M5 19h14a2 2 0 0 0 1.84 -2.75l-7.1 -12.25a2 2 0 0 0 -3.5 0l-7.1 12.25a2 2 0 0 0 1.75 2.75"/></svg>
+                                                        </div>
+                                                    </div>
+                                                    <div class="h2 mb-1" id="metricDrawdown">-</div>
+                                                    <div class="text-warning small">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-shield" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3"/></svg>
+                                                        Risco Controlado
+                                                    </div>
+                                                    <div class="text-muted small mt-1">Maior perda acumulada</div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Exposição ao Risco -->
+                                        <div class="col-md-6">
+                                            <div class="card bg-warning-lt">
+                                                <div class="card-body p-3">
+                                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                                        <div class="text-uppercase text-muted small">EXPOSIÇÃO AO RISCO</div>
+                                                        <div class="text-warning">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><circle cx="12" cy="12" r="9"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+                                                        </div>
+                                                    </div>
+                                                    <div class="h2 mb-1" id="metricExposicao">-</div>
+                                                    <div class="text-success small">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-thumb-up" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 11v8a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1v-7a1 1 0 0 1 1 -1h3a4 4 0 0 0 4 -4v-1a2 2 0 0 1 4 0v5h3a2 2 0 0 1 2 2l-1 5a2 3 0 0 1 -2 2h-7a3 3 0 0 1 -3 -3"/></svg>
+                                                        Gestão Conservadora
+                                                    </div>
+                                                    <div class="text-muted small mt-1">Nível geral de risco</div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Resultado Total -->
+                                        <div class="col-md-6">
+                                            <div class="card bg-info-lt">
+                                                <div class="card-body p-3">
+                                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                                        <div class="text-uppercase text-muted small">RESULTADO TOTAL</div>
+                                                        <div class="text-info">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M16.7 8a3 3 0 0 0 -2.7 -2h-4a3 3 0 0 0 0 6h4a3 3 0 0 1 0 6h-4a3 3 0 0 1 -2.7 -2"/><path d="M12 3v3m0 12v3"/></svg>
+                                                        </div>
+                                                    </div>
+                                                    <div class="h2 mb-1" id="metricResultadoTotal">-</div>
+                                                    <div class="text-success small">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trending-up" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/></svg>
+                                                        <span id="metricResultadoPorOp">-</span>
+                                                    </div>
+                                                    <div class="text-muted small mt-1">Soma dos resultados</div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Duração Média -->
+                                        <div class="col-md-6">
+                                            <div class="card bg-info-lt">
+                                                <div class="card-body p-3">
+                                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                                        <div class="text-uppercase text-muted small">DURAÇÃO MÉDIA</div>
+                                                        <div class="text-info">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+                                                        </div>
+                                                    </div>
+                                                    <div class="h2 mb-1" id="metricDuracao">-</div>
+                                                    <div class="text-info small">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-bolt" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><polyline points="13 3 13 10 19 10 11 21 11 14 5 14 13 3"/></svg>
+                                                        Operações Ágeis
+                                                    </div>
+                                                    <div class="text-muted small mt-1">Tempo médio de permanência</div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Fator de Lucro Card Grande -->
+                                        <div class="col-md-6">
+                                            <div class="card bg-purple-lt">
+                                                <div class="card-body p-3">
+                                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                                        <div class="text-uppercase text-muted small">FATOR DE LUCRO</div>
+                                                        <div class="text-purple">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 15l-6-6l-6 6h12" fill="currentColor"/></svg>
+                                                        </div>
+                                                    </div>
+                                                    <div class="h2 mb-1" id="metricFatorLucro">-</div>
+                                                    <div class="text-success small">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-star" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z"/></svg>
+                                                        Excelência Absoluta
+                                                    </div>
+                                                    <div class="text-muted small mt-1">Relação ganhos/perdas</div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Eficiência Operacional -->
+                                        <div class="col-md-6">
+                                            <div class="card bg-purple-lt">
+                                                <div class="card-body p-3">
+                                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                                        <div class="text-uppercase text-muted small">EFICIÊNCIA OPERACIONAL</div>
+                                                        <div class="text-purple">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/><path d="M16 11h6m-3 -3v6"/></svg>
+                                                        </div>
+                                                    </div>
+                                                    <div class="h2 mb-1" id="metricEficiencia">-</div>
+                                                    <div class="text-success small">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trophy" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/><line x1="7" y1="4" x2="17" y2="4"/><path d="M17 4v8a5 5 0 0 1 -10 0v-8"/><circle cx="5" cy="9" r="2"/><circle cx="19" cy="9" r="2"/></svg>
+                                                        Top Performance
+                                                    </div>
+                                                    <div class="text-muted small mt-1">Avaliação geral</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
+
+                        <!-- Coluna Direita: Insights e Análises -->
+                        <div class="col-lg-6 mb-3">
                             <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="icon me-2" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2"/><rect x="9" y="3" width="6" height="4" rx="2"/><path d="M9 12l2 2l4 -4"/></svg>
+                                        Insights e Análises
+                                    </h3>
+                                </div>
                                 <div class="card-body">
-                                    <div class="text-muted">Maior ganho no período</div>
-                                    <div class="h3 text-success" id="insightMaiorGanho">-</div>
-                                    <div class="text-muted mt-2">Maior perda no período</div>
-                                    <div class="h3 text-danger" id="insightMaiorPerda">-</div>
-                                    <div class="text-muted mt-2">Duração média</div>
-                                    <div class="h3" id="insightMediaDias">-</div>
+                                    <div class="row g-3">
+                                        <!-- Performance Excepcional -->
+                                        <div class="col-12">
+                                            <div class="card bg-success-lt mb-0">
+                                                <div class="card-body p-3">
+                                                    <div class="d-flex align-items-center mb-3">
+                                                        <div class="me-3">
+                                                            <div class="bg-success text-white rounded" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-lg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><circle cx="12" cy="6" r="2"/><polyline points="12 8 12 12 15 15"/><path d="M6 18h12"/><path d="M6 20h12"/><path d="M8 14h8"/></svg>
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <h4 class="mb-0">🏆 Performance Excepcional</h4>
+                                                            <div class="text-muted small">100% de acerto com retorno consistente</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row g-2">
+                                                        <div class="col-6">
+                                                            <div class="d-flex justify-content-between">
+                                                                <span class="text-muted small">Maior Ganho</span>
+                                                                <strong class="text-success" id="perfMaiorGanho">-</strong>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <div class="d-flex justify-content-between">
+                                                                <span class="text-muted small">Menor Ganho</span>
+                                                                <strong class="text-success" id="perfMenorGanho">-</strong>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <div class="d-flex justify-content-between">
+                                                                <span class="text-muted small">Resultado Médio</span>
+                                                                <strong id="perfResultadoMedio">-</strong>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <div class="d-flex justify-content-between">
+                                                                <span class="text-muted small">Expectativa</span>
+                                                                <strong class="text-success" id="perfExpectativa">-</strong>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Gestão de Risco -->
+                                        <div class="col-12">
+                                            <div class="card bg-info-lt mb-0">
+                                                <div class="card-body p-3">
+                                                    <div class="d-flex align-items-center mb-3">
+                                                        <div class="me-3">
+                                                            <div class="bg-info text-white rounded" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-lg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3"/></svg>
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <h4 class="mb-0">🛡️ Gestão de Risco Iminente</h4>
+                                                            <div class="text-muted small">Drawdown zero com Sharpe elevado</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row g-2">
+                                                        <div class="col-6">
+                                                            <div class="d-flex justify-content-between">
+                                                                <span class="text-muted small">Índice Sharpe</span>
+                                                                <strong class="text-success" id="riscoSharpe">-</strong>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <div class="d-flex justify-content-between">
+                                                                <span class="text-muted small">Drawdown</span>
+                                                                <strong class="text-success" id="riscoDrawdown">-</strong>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <div class="d-flex justify-content-between">
+                                                                <span class="text-muted small">Exposição</span>
+                                                                <strong id="riscoExposicao">-</strong>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <div class="d-flex justify-content-between">
+                                                                <span class="text-muted small">Payoff</span>
+                                                                <strong class="text-warning" id="riscoPayoff">-</strong>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="text-muted small mt-2">
+                                                        <span id="riscoPayoffNote"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Análise Operacional -->
+                                        <div class="col-12">
+                                            <div class="card bg-warning-lt mb-0">
+                                                <div class="card-body p-3">
+                                                    <div class="d-flex align-items-center mb-3">
+                                                        <div class="me-3">
+                                                            <div class="bg-warning text-white rounded" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-lg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><circle cx="12" cy="12" r="9"/><path d="M14.5 9a3.5 4 0 1 0 0 6"/></svg>
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <h4 class="mb-0">📊 Análise Operacional</h4>
+                                                            <div class="text-muted small">Eficiência excelente com margem de melhoria</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row g-2">
+                                                        <div class="col-6">
+                                                            <div class="d-flex justify-content-between">
+                                                                <span class="text-muted small">Total Operações</span>
+                                                                <strong id="opTotalOps">-</strong>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <div class="d-flex justify-content-between">
+                                                                <span class="text-muted small">Duração Média</span>
+                                                                <strong id="opDuracao">-</strong>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <div class="d-flex justify-content-between">
+                                                                <span class="text-muted small">Eficiência</span>
+                                                                <strong class="text-success" id="opEficiencia">-</strong>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <div class="d-flex justify-content-between">
+                                                                <span class="text-muted small">Fator de Lucro</span>
+                                                                <strong class="text-success" id="opFatorLucro">-</strong>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="card mb-3">
-                        <div class="card-header">
-                            <h3 class="card-title">Distribuição de Resultados</h3>
-                        </div>
-                        <div class="card-body">
-                            <div class="row g-3">
-                                <div class="col-md-7">
-                                    <div class="mb-3">
-                                        <div class="d-flex justify-content-between mb-1">
-                                            <span>CALL</span>
-                                            <span id="insightCallPct">0%</span>
+                    <!-- Accordions -->
+                    <div class="accordion" id="accordionInsights">
+                        <!-- Visualizações de Dados -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingVisualizacoes">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseVisualizacoes" aria-expanded="false" aria-controls="collapseVisualizacoes">
+                                    📊 Visualizações de Dados
+                                </button>
+                            </h2>
+                            <div id="collapseVisualizacoes" class="accordion-collapse collapse" aria-labelledby="headingVisualizacoes" data-bs-parent="#accordionInsights">
+                                <div class="accordion-body">
+                                    <div class="row g-3">
+                                        <!-- Distribuição de Resultados -->
+                                        <div class="col-md-6">
+                                            <div class="card mb-0">
+                                                <div class="card-header">
+                                                    <h3 class="card-title">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="icon me-2" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><circle cx="12" cy="12" r="9"/><path d="M12 3v9l4 4"/></svg>
+                                                        Distribuição de Resultados
+                                                    </h3>
+                                                </div>
+                                                <div class="card-body">
+                                                    <div style="position: relative; height: 220px; margin-bottom: 20px;">
+                                                        <canvas id="insightDistribuicaoChart"></canvas>
+                                                    </div>
+                                                    <div class="mb-2">
+                                                        <div class="d-flex justify-content-between mb-1">
+                                                            <span class="small">CALL</span>
+                                                            <span class="small fw-bold" id="insightCallPct">0%</span>
+                                                        </div>
+                                                        <div class="progress progress-sm">
+                                                            <div class="progress-bar bg-green" id="insightCallBar" style="width: 0%"></div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="mb-2">
+                                                        <div class="d-flex justify-content-between mb-1">
+                                                            <span class="small">PUT</span>
+                                                            <span class="small fw-bold" id="insightPutPct">0%</span>
+                                                        </div>
+                                                        <div class="progress progress-sm">
+                                                            <div class="progress-bar bg-red" id="insightPutBar" style="width: 0%"></div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="mb-2">
+                                                        <div class="d-flex justify-content-between mb-1">
+                                                            <span class="small">Positivas</span>
+                                                            <span class="small fw-bold" id="insightPosPct">0%</span>
+                                                        </div>
+                                                        <div class="progress progress-sm">
+                                                            <div class="progress-bar bg-green" id="insightPosBar" style="width: 0%"></div>
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <div class="d-flex justify-content-between mb-1">
+                                                            <span class="small">Negativas</span>
+                                                            <span class="small fw-bold" id="insightNegPct">0%</span>
+                                                        </div>
+                                                        <div class="progress progress-sm">
+                                                            <div class="progress-bar bg-red" id="insightNegBar" style="width: 0%"></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div class="progress progress-sm">
-                                            <div class="progress-bar bg-green" id="insightCallBar" style="width: 0%"></div>
+
+                                        <!-- Evolução do Capital -->
+                                        <div class="col-md-6">
+                                            <div class="card mb-0">
+                                                <div class="card-header">
+                                                    <h3 class="card-title">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="icon me-2" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/></svg>
+                                                        Evolução do Capital
+                                                    </h3>
+                                                </div>
+                                                <div class="card-body">
+                                                    <div style="position: relative; height: 300px;">
+                                                        <canvas id="insightEvolutionChart"></canvas>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="mb-3">
-                                        <div class="d-flex justify-content-between mb-1">
-                                            <span>PUT</span>
-                                            <span id="insightPutPct">0%</span>
-                                        </div>
-                                        <div class="progress progress-sm">
-                                            <div class="progress-bar bg-red" id="insightPutBar" style="width: 0%"></div>
-                                        </div>
-                                    </div>
-                                    <div class="mb-3">
-                                        <div class="d-flex justify-content-between mb-1">
-                                            <span>Positivas</span>
-                                            <span id="insightPosPct">0%</span>
-                                        </div>
-                                        <div class="progress progress-sm">
-                                            <div class="progress-bar bg-green" id="insightPosBar" style="width: 0%"></div>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="d-flex justify-content-between mb-1">
-                                            <span>Negativas</span>
-                                            <span id="insightNegPct">0%</span>
-                                        </div>
-                                        <div class="progress progress-sm">
-                                            <div class="progress-bar bg-red" id="insightNegBar" style="width: 0%"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-5">
-                                    <div style="position: relative; height: 220px;">
-                                        <canvas id="insightDistribuicaoChart"></canvas>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="card mb-3">
-                        <div class="card-header">
-                            <h3 class="card-title">Operações Recentes</h3>
+                        <!-- Insights Automáticos -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingAuto">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAuto" aria-expanded="false" aria-controls="collapseAuto">
+                                    Insights Automáticos
+                                </button>
+                            </h2>
+                            <div id="collapseAuto" class="accordion-collapse collapse" aria-labelledby="headingAuto" data-bs-parent="#accordionInsights">
+                                <div class="accordion-body" id="insightAutoList"></div>
+                            </div>
                         </div>
-                        <div class="table-responsive">
-                            <table class="table table-vcenter card-table mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>Ativo</th>
-                                        <th>Tipo</th>
-                                        <th>Resultado</th>
-                                        <th>Rent.</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="insightRecentesBody"></tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Insights Automáticos</h3>
-                        </div>
-                        <div class="card-body" id="insightAutoList"></div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -1213,12 +1503,12 @@
     <!-- Include Modal Detalhe Opcao -->
     <div id="modalDetalheOpcaoContainer"></div>
 
-    <script src="../js/core/libs.js?v=1.0.7"></script>
-    <script src="../js/core/global.js?v=1.0.7"></script>
-    <script src="../js/core/layout.js?v=1.0.7"></script>
-    <script src="../js/technical-analysis.js?v=1.0.7"></script>
-    <script src="../js/opcoes.js?v=1.0.7"></script>
-    <script src="../js/detalhe-opcoes.js?v=1.0.7"></script>
+    <script src="../js/core/libs.js?v=1.1.5"></script>
+    <script src="../js/core/global.js?v=1.1.4"></script>
+    <script src="../js/core/layout.js?v=1.1.4"></script>
+    <script src="../js/technical-analysis.js?v=1.1.4"></script>
+    <script src="../js/opcoes.js?v=1.1.4"></script>
+    <script src="../js/detalhe-opcoes.js?v=1.1.4"></script>
     <script>
         // Carregar modal de detalhes
         fetch('detalhe-opcoes.html')

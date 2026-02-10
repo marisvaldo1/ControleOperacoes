@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Investimentos - Opcoes (Modular)</title>
+    <link rel="stylesheet" href="../css/style.css?v=1.0.8">
+    <link rel="stylesheet" href="../css/opcoes.css?v=1.0.8">
+    <link rel="stylesheet" href="../css/modal-detalhes.css?v=1.0.8">
+    <link rel="stylesheet" href="../css/detalhe-opcoes.css?v=1.0.8">
+</head>
+
+<body data-bs-theme="dark">
+    <div class="page-wrapper">
+        <div class="page-body">
+            <div class="container-fluid">
+                <!-- CONTEÚDO DA PÁGINA AQUI -->
+                <!-- ... Cards, tabelas, etc ... -->
+                
+                <!-- Exemplo de estrutura simplificada -->
+                <div class="page-header d-print-none mb-4">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <h2 class="page-title">Controle de Investimentos - Opcoes</h2>
+                            <div class="text-muted">Opcoes de Acoes</div>
+                        </div>
+                        <div class="col-auto ms-auto d-flex align-items-center gap-3">
+                            <button class="btn btn-info me-2" id="btnSimularOperacao">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><path d="M2 12h10"/><path d="M9 4v16"/><path d="M3 9l3 3-3 3"/><path d="M14 9l3 3-3 3"/></svg>
+                                Simular
+                            </button>
+                            <button class="btn btn-primary" id="btnNovaOperacao">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><path d="M12 5v14M5 12h14"/></svg>
+                                Nova Operacao
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ... RESTO DO CONTEÚDO ... -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================
+         CONTAINERS DOS MODAIS (Carregamento Dinâmico)
+         ======================================== -->
+    
+    <!-- Modais Críticos (carregados imediatamente) -->
+    <div id="modalOperacaoContainer"></div>
+    <div id="modalSelecionarOpcaoContainer"></div>
+
+    <!-- Modais Secundários (carregados sob demanda) -->
+    <div id="modalSaldoOperacoesContainer"></div>
+    <div id="modalSaldoInsightsContainer"></div>
+    <div id="modalAnaliseTecnicaContainer"></div>
+    <div id="modalSimulacaoContainer"></div>
+
+    <!-- Modal de Detalhe (já existe, manter como está) -->
+    <div id="modalDetalheOpcaoContainer"></div>
+
+    <!-- ========================================
+         SCRIPTS
+         ======================================== -->
+    
+    <!-- Bibliotecas Core -->
+    <script src="../js/core/libs.js?v=1.0.8"></script>
+    <script src="../js/core/global.js?v=1.0.8"></script>
+    <script src="../js/core/layout.js?v=1.0.8"></script>
+    
+    <!-- Sistema de Carregamento de Modais -->
+    <script src="../js/core/modal-loader.js?v=1.0.8"></script>
+    
+    <!-- Scripts da Aplicação -->
+    <script src="../js/technical-analysis.js?v=1.0.8"></script>
+    <script src="../js/opcoes.js?v=1.0.8"></script>
+    <script src="../js/detalhe-opcoes.js?v=1.0.8"></script>
+
+    <!-- ========================================
+         INICIALIZAÇÃO DO SISTEMA DE MODAIS
+         ======================================== -->
+    <script>
+        (async function initializeModalSystem() {
+            try {
+                console.log('🚀 Iniciando sistema de modais modulares...');
+
+                // 1. ESTRATÉGIA: Carregar modais críticos imediatamente
+                await initializeModals('critical');
+                console.log('✅ Modais críticos carregados');
+
+                // 2. ESTRATÉGIA: Carregar modais secundários em background (opcional)
+                // Descomente a linha abaixo para pré-carregar todos após 2 segundos
+                // setTimeout(() => initializeModals('all'), 2000);
+
+                // 3. CONFIGURAR TRIGGERS PARA MODAIS SECUNDÁRIOS (Lazy Loading)
+                setupSecondaryModalTriggers();
+
+                console.log('✅ Sistema de modais inicializado com sucesso');
+
+            } catch (error) {
+                console.error('❌ Erro ao inicializar sistema de modais:', error);
+            }
+        })();
+
+        /**
+         * Configura os triggers para carregar modais secundários sob demanda
+         */
+        function setupSecondaryModalTriggers() {
+            // Modal Histórico de Operações
+            const btnHistorico = document.getElementById('cardSaldoCorretoraCard');
+            if (btnHistorico) {
+                btnHistorico.addEventListener('click', async function() {
+                    await loadModalOnDemand('saldo-operacoes');
+                    // Aguardar um frame para garantir que o modal está no DOM
+                    requestAnimationFrame(() => {
+                        const modalEl = document.getElementById('modalSaldoOperacoes');
+                        if (modalEl) {
+                            new bootstrap.Modal(modalEl).show();
+                        }
+                    });
+                });
+            }
+
+            // Modal Insights
+            // Observe que este botão está DENTRO do modal Saldo Operações
+            // Então precisa ser configurado DEPOIS do modal ser carregado
+            document.addEventListener('click', async function(e) {
+                if (e.target && e.target.id === 'btnSaldoInsights') {
+                    await loadModalOnDemand('saldo-insights');
+                    requestAnimationFrame(() => {
+                        const modalEl = document.getElementById('modalSaldoInsights');
+                        if (modalEl) {
+                            new bootstrap.Modal(modalEl).show();
+                        }
+                    });
+                }
+            });
+
+            // Modal Análise Técnica
+            document.addEventListener('click', async function(e) {
+                if (e.target && (e.target.id === 'btnAnaliseTecnica' || e.target.closest('#btnAnaliseTecnica'))) {
+                    await loadModalOnDemand('analise-tecnica');
+                    requestAnimationFrame(() => {
+                        const modalEl = document.getElementById('modalAnaliseTecnica');
+                        if (modalEl) {
+                            new bootstrap.Modal(modalEl).show();
+                        }
+                    });
+                }
+            });
+
+            // Modal Simulação
+            const btnSimular = document.getElementById('btnSimularOperacao');
+            if (btnSimular) {
+                btnSimular.addEventListener('click', async function() {
+                    await loadModalOnDemand('simulacao');
+                    requestAnimationFrame(() => {
+                        const modalEl = document.getElementById('modalSimulacao');
+                        if (modalEl) {
+                            new bootstrap.Modal(modalEl).show();
+                        }
+                    });
+                });
+            }
+
+            console.log('✅ Triggers de modais secundários configurados');
+        }
+
+        /**
+         * HELPER: Abre um modal garantindo que ele está carregado
+         * Uso: await openModal('saldo-operacoes')
+         */
+        async function openModal(modalName) {
+            await loadModalOnDemand(modalName);
+            return new Promise((resolve) => {
+                requestAnimationFrame(() => {
+                    const modalId = 'modal' + modalName.split('-').map(w => 
+                        w.charAt(0).toUpperCase() + w.slice(1)
+                    ).join('');
+                    const modalEl = document.getElementById(modalId);
+                    if (modalEl) {
+                        const modal = new bootstrap.Modal(modalEl);
+                        modal.show();
+                        resolve(modal);
+                    } else {
+                        console.error(`Modal ${modalId} não encontrado no DOM`);
+                        resolve(null);
+                    }
+                });
+            });
+        }
+    </script>
+
+    <!-- Carregar modal de detalhes (mantém comportamento existente) -->
+    <script>
+        fetch('detalhe-opcoes.html')
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('modalDetalheOpcaoContainer').innerHTML = html;
+            })
+            .catch(error => console.error('Erro ao carregar modal:', error));
+    </script>
+
+</body>
+</html>
