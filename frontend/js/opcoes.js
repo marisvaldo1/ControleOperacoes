@@ -246,10 +246,16 @@ function initDataTables() {
         responsive: false,
         scrollX: true,
         order: [[9, 'desc']],
-        columnDefs: [{
-            targets: 9,
-            orderDataType: 'dom-data-order'
-        }],
+        columnDefs: [
+            {
+                targets: 9,
+                orderDataType: 'dom-data-order'
+            },
+            {
+                targets: 13,
+                orderable: false
+            }
+        ],
         createdRow: function(row, data, dataIndex) {
             const statusHtml = data[12];
             if (statusHtml && (statusHtml.includes('FECHADA') || statusHtml.includes('EXERCIDA'))) {

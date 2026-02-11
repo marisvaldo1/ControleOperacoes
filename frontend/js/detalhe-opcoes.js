@@ -324,8 +324,13 @@ function populateDetalheModal(op) {
     }
     setText('detTipoOperacao', isVenda ? 'VENDA' : 'COMPRA');
     
-    // Tipo de opção
-    const tipoOpcao = op.tipo || (op.ativo?.includes('PUT') ? 'PUT' : 'CALL');
+    // Status do exercício
+    const strike = Number.parseFloat(op.strike);
+    // Preço do ativo base - usar preco_atual (preço do ativo base, não o prêmio!)
+    const spotPrice = Number.parseFloat(op.preco_atual || op.preco_ativo_base || op.strike || strike);
+    const tipoOpcao = String(op.tipo || 'CALL').toUpperCase();
+    
+    // Badge de tipo de opção
     const badgeType = document.getElementById('detBadgeType');
     if (badgeType) {
         badgeType.textContent = tipoOpcao;
@@ -333,21 +338,27 @@ function populateDetalheModal(op) {
     }
     setText('detTipoOpcao', tipoOpcao);
     
-    // Status do exercício
-    const strike = Number.parseFloat(op.strike);
-    // Preço do ativo base - NÃO usar preco_entrada que é o prêmio!
-    const spotPrice = Number.parseFloat(op.preco_ativo_base || op.strike || strike);
+    // Calcular exercício baseado no tipo de opção
+    // PUT ITM: preço atual < strike (posso vender por mais que vale) -> Exercida
+    // CALL ITM: preço atual > strike (posso comprar por menos que vale) -> Exercida
+    let exercida = false;
+    if (tipoOpcao === 'PUT') {
+        exercida = (spotPrice < strike);
+    } else if (tipoOpcao === 'CALL') {
+        exercida = (spotPrice > strike);
+    }
+    
     const badgeExercicio = document.getElementById('detBadgeExercicio');
     if (badgeExercicio) {
-        if (spotPrice > strike) {
+        if (exercida) {
+            badgeExercicio.textContent = 'Exercício Potencial';
+            badgeExercicio.className = 'badge bg-red text-red-fg ms-1';
+        } else {
             badgeExercicio.textContent = 'Sem Exercício';
             badgeExercicio.className = 'badge bg-green text-green-fg ms-1';
-        } else {
-            badgeExercicio.textContent = 'Exercício Potencial';
-            badgeExercicio.className = 'badge bg-orange text-orange-fg ms-1';
         }
     }
-    setText('detBadgeExercicio', spotPrice > strike ? 'Sem Exercício' : 'Exercício Potencial');
+    setText('detBadgeExercicio', exercida ? 'Exercício Potencial' : 'Sem Exercício');
     
     // Dias para vencimento
     const diasVenc = calcularDiasUteisRestantes(op.vencimento);

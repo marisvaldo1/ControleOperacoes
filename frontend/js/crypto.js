@@ -17,7 +17,13 @@ function initDataTables() {
         pageLength: 10,
         responsive: false,
         scrollX: true,
-        order: [[11, 'desc']]
+        order: [[11, 'desc']],
+        columnDefs: [
+            {
+                targets: 14,
+                orderable: false
+            }
+        ]
     };
     tableMesAtual = $('#tableMesAtual').DataTable(dtConfig);
     tableHistorico = $('#tableHistorico').DataTable(dtConfig);
