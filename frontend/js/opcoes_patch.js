@@ -92,7 +92,7 @@ function updateY2Fields(op, marketData) {
     const strike = parseFloat(op.strike);
     const premioAbertura = Math.abs(parseFloat(op.premio)); // Sempre positivo
     const tipo = op.tipo;
-    const isVenda = qtd < 0;
+    const isVenda = op.tipo_operacao === 'VENDA' || (op.tipo_operacao === undefined && qtd < 0);
     const qtdAbs = Math.abs(qtd);
     
     // Market Data

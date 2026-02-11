@@ -107,7 +107,7 @@ document.addEventListener('libsLoaded', function() {
     </div>`;
     
     const footer = `
-    <footer class="footer footer-transparent d-print-none">
+    <footer class="footer footer-transparent d-print-none" style="padding: 0.5rem 0;">
         <div class="container-xl">
             <div class="row text-center align-items-center">
                 <div class="col-12">

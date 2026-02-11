@@ -2599,3 +2599,8 @@
     outline: 2px solid var(--tblr-primary);
     outline-offset: 2px;
 }
+
+/* ========================================= */
+/* Modais Empilhadas (Simulação + Análise)  */
+/* ========================================= */
+/* Gerenciamento feito via JavaScript - não adicionar regras CSS aqui */

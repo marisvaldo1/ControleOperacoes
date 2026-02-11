@@ -67,6 +67,7 @@ def init_db():
         ativo_base TEXT,
         ativo TEXT NOT NULL,
         tipo TEXT NOT NULL,
+        tipo_operacao TEXT DEFAULT 'VENDA',
         quantidade INTEGER,
         preco_entrada REAL,
         preco_atual REAL,
@@ -80,10 +81,13 @@ def init_db():
         created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )''')
 
-    # Garantir coluna saldo_abertura em bases existentes
+    # Garantir colunas em bases existentes
     cols = [row['name'] for row in c.execute('PRAGMA table_info(operacoes_opcoes)').fetchall()]
     if 'saldo_abertura' not in cols:
         c.execute('ALTER TABLE operacoes_opcoes ADD COLUMN saldo_abertura REAL')
+    if 'tipo_operacao' not in cols:
+        c.execute('ALTER TABLE operacoes_opcoes ADD COLUMN tipo_operacao TEXT DEFAULT "VENDA"')
+        c.execute('UPDATE operacoes_opcoes SET tipo_operacao = "VENDA" WHERE tipo_operacao IS NULL')
     
     c.execute('''CREATE TABLE IF NOT EXISTS configuracoes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -694,9 +698,9 @@ def create_opcoes():
     conn = get_db()
     c = conn.cursor()
     c.execute('''INSERT INTO operacoes_opcoes 
-        (ativo_base, ativo, tipo, quantidade, preco_entrada, preco_atual, strike, vencimento, premio, resultado, saldo_abertura, status, data_operacao)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-        (data.get('ativo_base'), data.get('ativo'), data.get('tipo'), data.get('quantidade'), data.get('preco_entrada'),
+        (ativo_base, ativo, tipo, tipo_operacao, quantidade, preco_entrada, preco_atual, strike, vencimento, premio, resultado, saldo_abertura, status, data_operacao)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+        (data.get('ativo_base'), data.get('ativo'), data.get('tipo'), data.get('tipo_operacao', 'VENDA'), data.get('quantidade'), data.get('preco_entrada'),
          data.get('preco_atual'), data.get('strike'), data.get('vencimento'), data.get('premio'),
          data.get('resultado'), data.get('saldo_abertura'), data.get('status'), data.get('data_operacao', datetime.now().strftime('%Y-%m-%d'))))
     conn.commit()
@@ -709,10 +713,10 @@ def update_opcoes(id):
     conn = get_db()
     c = conn.cursor()
     c.execute('''UPDATE operacoes_opcoes SET
-        ativo_base=?, ativo=?, tipo=?, quantidade=?, preco_entrada=?, preco_atual=?, strike=?, vencimento=?,
+        ativo_base=?, ativo=?, tipo=?, tipo_operacao=?, quantidade=?, preco_entrada=?, preco_atual=?, strike=?, vencimento=?,
         premio=?, resultado=?, saldo_abertura=?, status=?, data_operacao=?
         WHERE id=?''',
-        (data.get('ativo_base'), data.get('ativo'), data.get('tipo'), data.get('quantidade'), data.get('preco_entrada'),
+        (data.get('ativo_base'), data.get('ativo'), data.get('tipo'), data.get('tipo_operacao', 'VENDA'), data.get('quantidade'), data.get('preco_entrada'),
          data.get('preco_atual'), data.get('strike'), data.get('vencimento'), data.get('premio'),
          data.get('resultado'), data.get('saldo_abertura'), data.get('status'), data.get('data_operacao'), id))
     conn.commit()

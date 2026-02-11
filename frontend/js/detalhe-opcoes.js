@@ -315,8 +315,8 @@ function populateDetalheModal(op) {
     // Header
     setText('detTicker', op.ativo);
     
-    // Determinar se é VENDA ou COMPRA baseado na quantidade
-    const isVenda = Number.parseInt(op.quantidade) < 0;
+    // Usar tipo_operacao do banco se disponível, senão inferir da quantidade
+    const isVenda = op.tipo_operacao === 'VENDA' || (op.tipo_operacao === undefined && Number.parseInt(op.quantidade) < 0);
     const badgeSide = document.getElementById('detBadgeSide');
     if (badgeSide) {
         badgeSide.textContent = isVenda ? 'VENDA' : 'COMPRA';
@@ -329,6 +329,7 @@ function populateDetalheModal(op) {
     // Preço do ativo base - usar preco_atual (preço do ativo base, não o prêmio!)
     const spotPrice = Number.parseFloat(op.preco_atual || op.preco_ativo_base || op.strike || strike);
     const tipoOpcao = String(op.tipo || 'CALL').toUpperCase();
+    const statusOperacao = String(op.status || 'ABERTA').toUpperCase();
     
     // Badge de tipo de opção
     const badgeType = document.getElementById('detBadgeType');
@@ -338,27 +339,19 @@ function populateDetalheModal(op) {
     }
     setText('detTipoOpcao', tipoOpcao);
     
-    // Calcular exercício baseado no tipo de opção
-    // PUT ITM: preço atual < strike (posso vender por mais que vale) -> Exercida
-    // CALL ITM: preço atual > strike (posso comprar por menos que vale) -> Exercida
-    let exercida = false;
-    if (tipoOpcao === 'PUT') {
-        exercida = (spotPrice < strike);
-    } else if (tipoOpcao === 'CALL') {
-        exercida = (spotPrice > strike);
-    }
+    // Usar função global para calcular exercício
+    const exercida = calcularExercicio(tipoOpcao, spotPrice, strike);
     
+    // Atualizar badge de exercício usando função global
     const badgeExercicio = document.getElementById('detBadgeExercicio');
     if (badgeExercicio) {
-        if (exercida) {
-            badgeExercicio.textContent = 'Exercício Potencial';
-            badgeExercicio.className = 'badge bg-red text-red-fg ms-1';
-        } else {
-            badgeExercicio.textContent = 'Sem Exercício';
-            badgeExercicio.className = 'badge bg-green text-green-fg ms-1';
-        }
+        const badgeHTML = gerarBadgeExercicio(exercida, statusOperacao);
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = badgeHTML;
+        const newBadge = tempDiv.firstElementChild;
+        badgeExercicio.textContent = newBadge.textContent;
+        badgeExercicio.className = newBadge.className;
     }
-    setText('detBadgeExercicio', exercida ? 'Exercício Potencial' : 'Sem Exercício');
     
     // Dias para vencimento
     const diasVenc = calcularDiasUteisRestantes(op.vencimento);
@@ -673,8 +666,9 @@ function updateDetalheUI(op, spotPrice, optionPrice) {
     const precoAbertura = Number.parseFloat(op.preco_ativo_base || op.strike || strike);
     const qtd = Number.parseInt(op.quantidade);
     const qtdAbs = Math.abs(qtd);
-    const isVenda = qtd < 0;
+    const isVenda = op.tipo_operacao === 'VENDA' || (op.tipo_operacao === undefined && qtd < 0);
     const tipo = op.tipo || (op.ativo && op.ativo.includes('PUT') ? 'PUT' : 'CALL');
+    const statusOperacao = String(op.status || 'ABERTA').toUpperCase();
     
     // Calcular variações
     const varAtivo = precoAbertura > 0 ? ((spotPrice - precoAbertura) / precoAbertura * 100) : 0;
@@ -684,12 +678,32 @@ function updateDetalheUI(op, spotPrice, optionPrice) {
     const distancia = spotPrice > 0 ? Math.abs((strike - spotPrice) / spotPrice * 100) : 0;
     const distanciaAbertura = precoAbertura > 0 ? Math.abs((strike - precoAbertura) / precoAbertura * 100) : 0;
     
+    // ===== ATUALIZAR BADGE DE EXERCÍCIO COM COTAÇÃO ATUAL =====
+    // Usar função global para calcular e gerar badge de exercício
+    const exercida = calcularExercicio(tipo, spotPrice, strike);
+    
+    const badgeExercicio = document.getElementById('detBadgeExercicio');
+    if (badgeExercicio) {
+        const badgeHTML = gerarBadgeExercicio(exercida, statusOperacao);
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = badgeHTML;
+        const newBadge = tempDiv.firstElementChild;
+        badgeExercicio.textContent = newBadge.textContent;
+        badgeExercicio.className = newBadge.className;
+    }
+    // ========================================================
+    
     // Atualizar cotações
     setText('detPrecoAtivo', formatCurrencyBR(spotPrice));
     setText('detPrecoAtivoAtual', formatCurrencyBR(spotPrice));
     setText('detPrecoAtualComp', formatCurrencyBR(spotPrice));
     
-    const setaAtivo = varAtivo >= 0 ? '▲' : '▼';
+    // Atualizar indicador visual ao lado do preço usando ícone SVG
+    const indicadorAtivo = document.getElementById('detIndicadorAtivo');
+    if (indicadorAtivo) {
+        indicadorAtivo.innerHTML = gerarIconeSeta(varAtivo >= 0);
+    }
+    
     const corAtivo = varAtivo >= 0 ? '#2fb344' : '#d63939';
     setHTML('detVarAtivo', `<span style="color: ${corAtivo}"><i class="ti ti-arrow-${varAtivo >= 0 ? 'up' : 'down'}"></i> ${Math.abs(varAtivo).toFixed(2)}%</span>`);
     
@@ -756,7 +770,8 @@ function updateDetalheUI(op, spotPrice, optionPrice) {
     setText('detResultMTM', `${mtm >= 0 ? '+ ' : '- '}${mtmAbsFormatted}`);
     
     const premioTotalFormatted = formatCurrencyBR(premioTotal);
-    const premioTotalDisplay = isVenda ? premioTotalFormatted : `-${premioTotalFormatted}`;
+    // Prêmio sempre positivo para venda (é recebido)
+    const premioTotalDisplay = isVenda ? `+ ${premioTotalFormatted}` : `-${premioTotalFormatted}`;
     setText('detPremioRecebido', premioTotalDisplay);
     setText('detPremioRecebidoCard', premioTotalDisplay);
     setText('detTotalPremioAbertura', premioTotalDisplay);
@@ -967,7 +982,7 @@ function updateSimulation(op, currentPrice) {
 function updateRiskMatrix(op, spotPrice, premioTotal, capitalRisco) {
     const strike = Number.parseFloat(op.strike);
     const qtdAbs = Math.abs(Number.parseInt(op.quantidade));
-    const isVenda = Number.parseInt(op.quantidade) < 0;
+    const isVenda = op.tipo_operacao === 'VENDA' || (op.tipo_operacao === undefined && Number.parseInt(op.quantidade) < 0);
     const premioAbertura = Number.parseFloat(op.premio || op.preco_entrada || 0);
     const tipo = op.tipo || (op.ativo && op.ativo.includes('PUT') ? 'PUT' : 'CALL');
     
@@ -1155,7 +1170,7 @@ function renderDetalhePayoffBarChart(op) {
     const strike = Number.parseFloat(op.strike);
     const premioAbertura = Number.parseFloat(op.premio || op.preco_entrada || 0);
     const qtd = Math.abs(Number.parseInt(op.quantidade));
-    const isVenda = Number.parseInt(op.quantidade) < 0;
+    const isVenda = op.tipo_operacao === 'VENDA' || (op.tipo_operacao === undefined && Number.parseInt(op.quantidade) < 0);
     const tipo = op.tipo || (op.ativo && op.ativo.includes('PUT') ? 'PUT' : 'CALL');
     const isCall = tipo === 'CALL';
     
@@ -1261,7 +1276,7 @@ function renderDetalhePayoffFullChart(op) {
         const strike = Number.parseFloat(op.strike);
         const premioAbertura = Number.parseFloat(op.premio || op.preco_entrada || 0);
         const qtd = Math.abs(Number.parseInt(op.quantidade));
-        const isVenda = Number.parseInt(op.quantidade) < 0;
+        const isVenda = op.tipo_operacao === 'VENDA' || (op.tipo_operacao === undefined && Number.parseInt(op.quantidade) < 0);
         const tipo = op.tipo || (op.ativo && op.ativo.includes('PUT') ? 'PUT' : 'CALL');
         const isCall = tipo === 'CALL';
         
@@ -1572,7 +1587,7 @@ async function renderDetalheGregas(op, spotPrice, optionPrice) {
     const strike = Number.parseFloat(op.strike);
     const S = Number.parseFloat(spotPrice || op.preco_ativo_base || op.strike || 0);
     const tipo = op.tipo || (op.ativo && op.ativo.includes('PUT') ? 'PUT' : 'CALL');
-    const isVenda = Number.parseInt(op.quantidade) < 0;
+    const isVenda = op.tipo_operacao === 'VENDA' || (op.tipo_operacao === undefined && Number.parseInt(op.quantidade) < 0);
     const diasRestantes = calcularDiasUteisRestantes(op.vencimento);
     const T = Math.max(diasRestantes / 252.0, 1 / 252);
     const r = 0.1075;
@@ -1681,26 +1696,8 @@ window.openDetalhesOperacao = function(id) {
     openDetalheOperacao(id);
 };
 
-// Standard Normal cumulative distribution function (helper for PoP)
-function cdf(x) {
-    var a1 =  0.254829592;
-    var a2 = -0.284496736;
-    var a3 =  1.421413741;
-    var a4 = -1.453152027;
-    var a5 =  1.061405429;
-    var p  =  0.3275911;
-
-    var sign = 1;
-    if (x < 0)
-        sign = -1;
-    x = Math.abs(x)/Math.sqrt(2.0);
-
-    var t = 1.0/(1.0 + p*x);
-    var y = 1.0 - (((((a5*t + a4)*t) + a3)*t + a2)*t + a1)*t*Math.exp(-x*x);
-
-    return 0.5*(1.0 + sign*y);
-}
-
-function normalPdf(x) {
+// Fun\u00e7\u00f5es matem\u00e1ticas movidas para global.js: cdf(), pdf()
+// normalPdf() \u00e9 a mesma que pdf() do global.js
+const normalPdf = function(x) {
     return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI);
-}
+};

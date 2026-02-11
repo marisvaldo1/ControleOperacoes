@@ -127,11 +127,7 @@ function populateTable(dt, data) {
     dt.draw();
 }
 
-function formatDateCell(dateStr) {
-    if (!dateStr) return '-';
-    const ts = new Date(dateStr).getTime();
-    return `<span data-order="${Number.isFinite(ts) ? ts : ''}">${formatDate(dateStr)}</span>`;
-}
+// formatDateCell() movida para global.js
 
 function renderHistoricoMensal() {
     const grouped = groupByMonth(allOperacoes);
