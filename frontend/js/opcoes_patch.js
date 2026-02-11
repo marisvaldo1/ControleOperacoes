@@ -90,7 +90,7 @@ function updateY2Fields(op, marketData) {
     // --- Parse Data ---
     const qtd = parseFloat(op.quantidade);
     const strike = parseFloat(op.strike);
-    const premioAbertura = parseFloat(op.premio);
+    const premioAbertura = Math.abs(parseFloat(op.premio)); // Sempre positivo
     const tipo = op.tipo;
     const isVenda = qtd < 0;
     const qtdAbs = Math.abs(qtd);
@@ -162,7 +162,7 @@ function updateY2Fields(op, marketData) {
     
     // Var Opcao (Current vs Open)
     const varOpcao = premioAbertura > 0 ? ((precoOpcao - premioAbertura) / premioAbertura) * 100 : 0;
-    const varOpcaoFormatted = `${varOpcao > 0 ? '↑' : '↓'} ${varOpcao.toFixed(2)}%`;
+    const varOpcaoFormatted = `${varOpcao > 0 ? '↑' : '↓'} ${Math.abs(varOpcao).toFixed(2)}%`;
     setText('y2-opcao-var', varOpcaoFormatted);
     const varOpcaoEl = document.getElementById('y2-opcao-var');
     if(varOpcaoEl) varOpcaoEl.className = varOpcao > 0 ? 'green' : 'red';
@@ -175,10 +175,12 @@ function updateY2Fields(op, marketData) {
     setText('y2-lucro-atual', formatCurrency(resultadoLiquido));
     const resultValEl = document.getElementById('y2-lucro-atual');
     if(resultValEl) {
-        resultValEl.className = `result-value ${resultadoLiquido >= 0 ? 'green' : 'red'}`; // Actually y2 uses blue for value, but logic might vary
-        // y2.html uses green for positive result usually
-        if(resultadoLiquido < 0) resultValEl.style.color = 'var(--red)';
-        else resultValEl.style.color = 'var(--green)';
+        // Aplicar cor baseado no resultado
+        if(resultadoLiquido >= 0) {
+            resultValEl.style.color = 'var(--tblr-success)';
+        } else {
+            resultValEl.style.color = 'var(--tblr-danger)';
+        }
     }
     
     setText('y2-lucro-percent', `${lucroPercent > 0 ? '+' : ''}${lucroPercent.toFixed(2)}%`);

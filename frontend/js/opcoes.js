@@ -274,6 +274,15 @@ function initDataTables() {
     
     tableMesAtual = $('#tableMesAtual').DataTable(dtConfig);
     tableHistorico = $('#tableHistorico').DataTable(dtConfig);
+    
+    // Ajustar colunas quando a aba do histórico for mostrada
+    $('a[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+        if (e.target.getAttribute('href') === '#tab-historico') {
+            tableHistorico.columns.adjust().draw();
+        } else if (e.target.getAttribute('href') === '#tab-mes-atual') {
+            tableMesAtual.columns.adjust().draw();
+        }
+    });
 }
 
 async function loadConfig() {
@@ -406,7 +415,11 @@ async function updateUI() {
     const saldoCorretora = parseFloat(config.saldoAcoes || 0);
     
     document.getElementById('cardTotalOps').textContent = totals.totalOperacoes;
+    const saldoClass = saldoCorretora >= 0 ? 'text-success' : 'text-danger';
+    const resClass = totals.resultadoTotal >= 0 ? 'text-success' : 'text-danger';
+    document.getElementById('cardSaldoCorretora').className = `h1 mb-0 ${saldoClass}`;
     document.getElementById('cardSaldoCorretora').textContent = formatCurrency(saldoCorretora, 'BRL');
+    document.getElementById('cardResultadoTotal').className = `h1 mb-0 ${resClass}`;
     document.getElementById('cardResultadoTotal').textContent = formatCurrency(totals.resultadoTotal, 'BRL');
     document.getElementById('cardResultadoMedio').textContent = totals.resultadoMedio.toFixed(2) + '%';
     
@@ -497,6 +510,8 @@ async function populateTable(dt, data, showActions = true, updatePrices = false,
     
     sorted.forEach(op => {
         const diasInfo = calcularDias(op.vencimento);
+        const qtd = parseFloat(op.quantidade);
+        const qtdAbs = Math.abs(qtd);
         
         // REGRA: Para operações ABERTAS, buscar preço atual da API
         // Para operações FECHADAS/EXERCIDAS/VENCIDAS, usar preco_atual do BANCO
@@ -564,15 +579,20 @@ async function populateTable(dt, data, showActions = true, updatePrices = false,
             }
         }
 
+        // Define se é venda (quantidade negativa) ou compra
+        const isVenda = qtd < 0;
+        const premioAbs = Math.abs(parseFloatSafe(op.premio));
+        const premioValue = premioAbs * qtdAbs;
+        
         dt.row.add([
             op.ativo_base ? `<span class="badge bg-azure text-azure-fg">${op.ativo_base}</span>` : '-',
-            precoAtual && !isNaN(parseFloatSafe(precoAtual)) ? formatCurrency(parseFloatSafe(precoAtual)) : 'R$ 0,00',
-            formatCurrency(parseFloatSafe(op.preco_entrada)),
+            precoAtual && !isNaN(parseFloatSafe(precoAtual)) ? `<span class="${parseFloatSafe(precoAtual) >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(parseFloatSafe(precoAtual))}</span>` : 'R$ 0,00',
+            `<span class="${parseFloatSafe(op.preco_entrada) >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(parseFloatSafe(op.preco_entrada))}</span>`,
             op.ativo,
             `<span class="badge ${op.tipo === 'CALL' ? 'bg-green text-green-fg' : 'bg-red text-red-fg'}">${op.tipo}</span>`,
             op.quantidade,
             formatCurrency(parseFloatSafe(op.strike)),
-            formatCurrency(parseFloatSafe(op.premio)),
+            `<span class="${premioValue >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(premioAbs)}</span>`,
             `<span class="${parseFloatSafe(op.resultado) >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(parseFloatSafe(op.resultado))}</span>`,
             formatDateCell(op.vencimento),  // Vencimento com timestamp para ordenação correta
             `${diasInfo.uteis} / ${diasInfo.corridos}`,
@@ -663,8 +683,12 @@ function openNewModal() {
 
 function calcularResultado() {
     const qtd = parseInt(document.getElementById('inputQuantidade').value) || 0;
-    const premio = parseCurrencyValue(document.getElementById('inputPremio').value);
-    const res = qtd * premio;
+    const premio = Math.abs(parseCurrencyValue(document.getElementById('inputPremio').value));
+    
+    // Se quantidade negativa = VENDA (recebe prêmio)
+    // Se quantidade positiva = COMPRA (paga prêmio)
+    const isVenda = qtd < 0;
+    const res = Math.abs(qtd) * premio * (isVenda ? 1 : -1);
     
     // Set formatted result
     document.getElementById('inputResultado').value = formatCurrency(res);
@@ -681,6 +705,9 @@ async function saveOperacao() {
         return;
     }
 
+    // Garantir que o prêmio seja sempre um valor absoluto (positivo)
+    const premioValue = Math.abs(parseCurrencyValue(document.getElementById('inputPremio').value));
+
     const data = {
         ativo_base: ativoBase,
         ativo: ativo,
@@ -689,7 +716,7 @@ async function saveOperacao() {
         quantidade: parseInt(document.getElementById('inputQuantidade').value),
         preco_entrada: parseCurrencyValue(document.getElementById('inputPrecoEntrada').value),
         strike: parseCurrencyValue(document.getElementById('inputStrike').value),
-        premio: parseCurrencyValue(document.getElementById('inputPremio').value),
+        premio: premioValue,
         resultado: parseCurrencyValue(document.getElementById('inputResultado').value),
         preco_atual: parseCurrencyValue(document.getElementById('inputPrecoAtual').value),
         vencimento: document.getElementById('inputVencimento').value,
@@ -729,7 +756,7 @@ async function editOperacao(id) {
     document.getElementById('inputQuantidade').value = op.quantidade;
     document.getElementById('inputPrecoEntrada').value = op.preco_entrada ? formatCurrency(parseFloatSafe(op.preco_entrada)) : '';
     document.getElementById('inputStrike').value = op.strike ? formatCurrency(parseFloatSafe(op.strike)) : '';
-    document.getElementById('inputPremio').value = op.premio ? formatCurrency(parseFloatSafe(op.premio)) : '';
+    document.getElementById('inputPremio').value = op.premio ? formatCurrency(Math.abs(parseFloatSafe(op.premio))) : '';
     document.getElementById('inputResultado').value = op.resultado ? formatCurrency(parseFloatSafe(op.resultado)) : '';
     if (document.getElementById('inputPrecoAtual')) {
         document.getElementById('inputPrecoAtual').value = op.preco_atual ? formatCurrency(parseFloatSafe(op.preco_atual)) : '';
@@ -3040,7 +3067,7 @@ async function buscarDadosOpcao(ativo) {
             const strikeVal = parseFloat(opcao.strike || opcao.strike_price || 0);
             document.getElementById('inputStrike').value = strikeVal ? formatCurrency(strikeVal) : '';
             
-            const premioVal = parseFloat(opcao.premio || opcao.price || 0);
+            const premioVal = Math.abs(parseFloat(opcao.premio || opcao.price || 0));
             document.getElementById('inputPremio').value = premioVal ? formatCurrency(premioVal) : '';
             
             // Handle Vencimento Date Format
@@ -3402,17 +3429,17 @@ function selecionarOpcao(ativoOrOp) {
     document.getElementById('inputTipo').value = op.tipo;
     document.getElementById('inputStrike').value = formatCurrency(parseFloatSafe(op.strike));
     document.getElementById('inputVencimento').value = op.vencimento;
-    document.getElementById('inputPremio').value = formatCurrency(parseFloatSafe(op.premio));
+    document.getElementById('inputPremio').value = formatCurrency(Math.abs(parseFloatSafe(op.premio)));
     
     // CORREÇÃO: preco_atual deve ser o prêmio no momento da criação da operação
     // Quando buscar do OpLab, usar op.preco_atual (preço do mercado)
     // Se não tiver, usar o próprio prêmio (que é o preço atual no momento da compra)
-    const precoAtualOpcao = op.preco_atual || op.premio;
-    document.getElementById('inputPrecoAtual').value = formatCurrency(parseFloatSafe(precoAtualOpcao));
+    const precoAtualOpcao = Math.abs(parseFloatSafe(op.preco_atual || op.premio));
+    document.getElementById('inputPrecoAtual').value = formatCurrency(precoAtualOpcao);
     
     // Preencher Preço de Entrada com a cotação do ativo base (spot price)
     // Se spot_price existir, usar ele; senão usar premio como fallback
-    const precoEntrada = op.spot_price || cotacaoAtivoBase || op.premio;
+    const precoEntrada = op.spot_price || cotacaoAtivoBase || Math.abs(parseFloatSafe(op.premio));
     document.getElementById('inputPrecoEntrada').value = formatCurrency(parseFloatSafe(precoEntrada));
     
     // Preencher Ativo Base se disponível
@@ -5647,7 +5674,7 @@ function selectSimOption(op) {
     document.getElementById('simOpcaoNome').textContent = op.ativo;
     document.getElementById('simOpcaoVencimento').textContent = formatDate(op.vencimento);
     document.getElementById('simOpcaoStrike').textContent = formatCurrency(parseFloatSafe(op.strike));
-    document.getElementById('simOpcaoPremio').textContent = formatCurrency(parseFloatSafe(op.premio));
+    document.getElementById('simOpcaoPremio').textContent = formatCurrency(Math.abs(parseFloatSafe(op.premio)));
     
     const dias = calcularDias(op.vencimento);
     document.getElementById('simOpcaoDias').textContent = `${dias.corridos}/${dias.uteis}`;
@@ -6489,11 +6516,11 @@ function aplicarSimulacao() {
         document.getElementById('inputTipo').value = simSelectedOption.tipo;
         document.getElementById('inputQuantidade').value = document.getElementById('simQuantidade').value;
         document.getElementById('inputStrike').value = formatCurrency(parseFloatSafe(simSelectedOption.strike));
-        document.getElementById('inputPremio').value = formatCurrency(parseFloatSafe(simSelectedOption.premio));
+        document.getElementById('inputPremio').value = formatCurrency(Math.abs(parseFloatSafe(simSelectedOption.premio)));
         document.getElementById('inputVencimento').value = simSelectedOption.vencimento;
         
         // Preencher Preço de Entrada e Cotação Atual
-        document.getElementById('inputPrecoEntrada').value = formatCurrency(parseFloatSafe(simSelectedOption.premio));
+        document.getElementById('inputPrecoEntrada').value = formatCurrency(Math.abs(parseFloatSafe(simSelectedOption.premio)));
         
         // Cotação Atual: usar cotação do ativo base ou preco_atual da opção
         const cotacaoAtual = cotacaoAtivoBase || parseFloat(simSelectedOption.preco_atual || 0) || parseFloat(simSelectedOption.preco_ativo_base || 0);
@@ -6503,8 +6530,10 @@ function aplicarSimulacao() {
         document.getElementById('inputQuantidade').dispatchEvent(new Event('change'));
         // Trigger blur to fetch details if needed, or just calculate result
         const qtd = parseInt(document.getElementById('simQuantidade').value);
-        const premio = parseFloat(simSelectedOption.premio);
-        document.getElementById('inputResultado').value = formatCurrency(qtd * premio);
+        const premio = Math.abs(parseFloat(simSelectedOption.premio));
+        // Para calcular o resultado correto, considerar se é venda (qtd negativa) ou compra
+        const resultado = qtd * premio * (qtd < 0 ? 1 : -1);
+        document.getElementById('inputResultado').value = formatCurrency(resultado);
         
         // Switch to "Mes Atual" tab if not already
         const tabMes = document.querySelector('a[href="#tab-mes-atual"]');

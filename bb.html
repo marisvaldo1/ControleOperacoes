@@ -1,2309 +1,652 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Options Trading Dashboard - Professional</title>
-    
-    <!-- Bootstrap 5 -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
-    
+    <title>Insights · Dashboard Profissional</title>
+    <!-- Chart.js para gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root {
-            --bg-primary: #0a0e27;
-            --bg-secondary: #0f1535;
-            --bg-tertiary: #151b3d;
-            --bg-card: #1a2142;
-            --border-color: #2d3561;
-            --text-primary: #e8eaf6;
-            --text-secondary: #9fa8da;
-            --accent-blue: #2196f3;
-            --accent-green: #00e676;
-            --accent-red: #ff1744;
-            --accent-yellow: #ffc400;
-            --accent-purple: #7c4dff;
-            --accent-cyan: #00e5ff;
-        }
-        
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif;
         }
-        
+
         body {
-            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
-            color: var(--text-primary);
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: radial-gradient(circle at 80% 20%, #0a0d14, #030507);
+            color: #edf5ff;
+            padding: 40px 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             min-height: 100vh;
-            overflow-x: hidden;
         }
-        
-        /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: var(--bg-secondary);
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: var(--border-color);
-            border-radius: 4px;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--accent-blue);
-        }
-        
-        /* Header */
-        .top-bar {
-            background: var(--bg-card);
-            border-bottom: 1px solid var(--border-color);
-            padding: 15px 0;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            backdrop-filter: blur(10px);
-        }
-        
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-        }
-        
-        /* Cards */
-        .card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 24px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
-        }
-        
-        .card:hover {
-            border-color: var(--accent-blue);
-            box-shadow: 0 8px 32px rgba(33, 150, 243, 0.15);
-            transform: translateY(-2px);
-        }
-        
-        .card-title {
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .card-value {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-        
-        .card-subtitle {
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-        }
-        
-        /* KPI Cards */
-        .kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        
-        .kpi-card {
-            background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-card) 100%);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 20px;
-            position: relative;
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
-        
-        .kpi-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 4px;
-            height: 100%;
-            background: linear-gradient(180deg, var(--accent-blue), var(--accent-purple));
-        }
-        
-        .kpi-card:hover {
-            transform: translateX(4px);
-            border-color: var(--accent-blue);
-        }
-        
-        .kpi-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 12px;
-            font-size: 1.5rem;
-        }
-        
-        .kpi-label {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
-        }
-        
-        .kpi-value {
-            font-size: 1.75rem;
-            font-weight: 700;
-            margin-bottom: 4px;
-        }
-        
-        .kpi-change {
-            font-size: 0.875rem;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-        
-        /* Status Colors */
-        .status-excellent { color: var(--accent-green); }
-        .status-good { color: var(--accent-cyan); }
-        .status-warning { color: var(--accent-yellow); }
-        .status-danger { color: var(--accent-red); }
-        
-        .bg-excellent { background: rgba(0, 230, 118, 0.1); }
-        .bg-good { background: rgba(0, 229, 255, 0.1); }
-        .bg-warning { background: rgba(255, 196, 0, 0.1); }
-        .bg-danger { background: rgba(255, 23, 68, 0.1); }
-        
-        /* Chart Container */
-        .chart-wrapper {
-            position: relative;
-            background: var(--bg-tertiary);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        
-        .chart-container {
-            position: relative;
-            height: 350px;
-        }
-        
-        .chart-container-small {
-            height: 250px;
-        }
-        
-        /* Tabs */
-        .nav-pills {
-            background: var(--bg-tertiary);
-            padding: 6px;
-            border-radius: 12px;
-            margin-bottom: 24px;
-        }
-        
-        .nav-pills .nav-link {
-            color: var(--text-secondary);
-            border-radius: 8px;
-            padding: 12px 24px;
-            transition: all 0.3s ease;
-            border: none;
-            font-weight: 600;
-        }
-        
-        .nav-pills .nav-link:hover {
-            background: var(--bg-card);
-            color: var(--text-primary);
-        }
-        
-        .nav-pills .nav-link.active {
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-            color: white;
-        }
-        
-        /* Table */
-        .table-modern {
+
+        .dashboard {
+            max-width: 1440px;
             width: 100%;
-            border-collapse: separate;
-            border-spacing: 0 8px;
-        }
-        
-        .table-modern thead th {
-            background: var(--bg-tertiary);
-            color: var(--text-secondary);
-            font-weight: 600;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            padding: 12px 16px;
-            border: none;
-        }
-        
-        .table-modern thead th:first-child {
-            border-radius: 8px 0 0 8px;
-        }
-        
-        .table-modern thead th:last-child {
-            border-radius: 0 8px 8px 0;
-        }
-        
-        .table-modern tbody tr {
-            background: var(--bg-tertiary);
-            transition: all 0.2s ease;
-        }
-        
-        .table-modern tbody tr:hover {
-            background: var(--bg-card);
-            transform: scale(1.01);
-        }
-        
-        .table-modern tbody td {
-            padding: 16px;
-            border: none;
-            color: var(--text-primary);
-        }
-        
-        .table-modern tbody tr td:first-child {
-            border-radius: 8px 0 0 8px;
-        }
-        
-        .table-modern tbody tr td:last-child {
-            border-radius: 0 8px 8px 0;
-        }
-        
-        /* Badge */
-        .badge-custom {
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-weight: 600;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        .badge-call {
-            background: linear-gradient(135deg, #2196f3, #1976d2);
-            color: white;
-        }
-        
-        .badge-put {
-            background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
-            color: white;
-        }
-        
-        /* Progress Ring */
-        .progress-ring {
-            position: relative;
-            width: 120px;
-            height: 120px;
             margin: 0 auto;
         }
-        
-        .progress-ring svg {
-            transform: rotate(-90deg);
-        }
-        
-        .progress-ring-circle {
-            transition: stroke-dashoffset 0.5s ease;
-        }
-        
-        .progress-ring-text {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 1.5rem;
-            font-weight: 700;
-        }
-        
-        /* Metric Grid */
-        .metric-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 16px;
-            margin-top: 20px;
-        }
-        
-        .metric-item {
-            text-align: center;
-            padding: 16px;
-            background: var(--bg-tertiary);
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-        }
-        
-        .metric-item-label {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            margin-bottom: 8px;
-        }
-        
-        .metric-item-value {
-            font-size: 1.25rem;
-            font-weight: 700;
-        }
-        
-        /* Alert Box */
-        .alert-box {
-            background: linear-gradient(135deg, rgba(33, 150, 243, 0.1), rgba(124, 77, 255, 0.1));
-            border: 1px solid var(--accent-blue);
-            border-left: 4px solid var(--accent-blue);
-            border-radius: 8px;
-            padding: 16px;
-            margin-bottom: 16px;
-        }
-        
-        .alert-box.warning {
-            background: linear-gradient(135deg, rgba(255, 196, 0, 0.1), rgba(255, 152, 0, 0.1));
-            border-color: var(--accent-yellow);
-        }
-        
-        .alert-box.success {
-            background: linear-gradient(135deg, rgba(0, 230, 118, 0.1), rgba(0, 200, 83, 0.1));
-            border-color: var(--accent-green);
-        }
-        
-        /* Timeline */
-        .timeline {
-            position: relative;
-            padding-left: 40px;
-        }
-        
-        .timeline::before {
-            content: '';
-            position: absolute;
-            left: 15px;
-            top: 0;
-            bottom: 0;
-            width: 2px;
-            background: var(--border-color);
-        }
-        
-        .timeline-item {
-            position: relative;
-            margin-bottom: 24px;
-        }
-        
-        .timeline-item::before {
-            content: '';
-            position: absolute;
-            left: -29px;
-            top: 4px;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: var(--accent-blue);
-            border: 3px solid var(--bg-card);
-            box-shadow: 0 0 0 4px var(--bg-tertiary);
-        }
-        
-        .timeline-date {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            margin-bottom: 4px;
-        }
-        
-        .timeline-content {
-            background: var(--bg-tertiary);
-            padding: 12px 16px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-        }
-        
-        /* Performance Score */
-        .performance-score {
-            text-align: center;
-            padding: 30px;
-        }
-        
-        .score-circle {
-            width: 160px;
-            height: 160px;
-            margin: 0 auto 20px;
-            border-radius: 50%;
+
+        /* Título principal */
+        .section-title {
+            font-size: 26px;
+            font-weight: 650;
+            letter-spacing: -0.02em;
+            margin-bottom: 30px;
             display: flex;
             align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-card));
-            border: 8px solid var(--border-color);
-            position: relative;
-        }
-        
-        .score-value {
-            font-size: 3rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            gap: 14px;
+            background: linear-gradient(145deg, #d6e4ff, #a3c6ff);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        
-        .score-label {
-            font-size: 0.875rem;
-            color: var(--text-secondary);
+
+        .section-title span {
+            background: #1a2637;
+            padding: 8px 20px;
+            border-radius: 60px;
+            font-size: 16px;
+            font-weight: 500;
+            color: #b8d6ff;
+            -webkit-text-fill-color: #b8d6ff;
+            border: 0.5px solid #334a66;
         }
-        
-        /* Buttons */
-        .btn-primary-custom {
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-            border: none;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-primary-custom:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 16px rgba(33, 150, 243, 0.3);
-        }
-        
-        .btn-outline-custom {
-            border: 2px solid var(--accent-blue);
-            color: var(--accent-blue);
-            background: transparent;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-outline-custom:hover {
-            background: var(--accent-blue);
-            color: white;
-        }
-        
-        /* Modal */
-        .modal-content {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-        }
-        
-        .modal-header {
-            border-bottom: 1px solid var(--border-color);
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-            color: white;
-            border-radius: 16px 16px 0 0;
-        }
-        
-        .modal-body {
-            padding: 24px;
-        }
-        
-        /* Form Controls */
-        .form-control, .form-select {
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
-            color: var(--text-primary);
-            border-radius: 8px;
-            padding: 12px 16px;
-        }
-        
-        .form-control:focus, .form-select:focus {
-            background: var(--bg-tertiary);
-            border-color: var(--accent-blue);
-            color: var(--text-primary);
-            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
-        }
-        
-        .form-label {
-            color: var(--text-secondary);
-            font-weight: 600;
-            margin-bottom: 8px;
-            font-size: 0.875rem;
-        }
-        
-        /* Heatmap Modern */
-        .heatmap-grid {
+
+        /* GRADE DAS MÉTRICAS DE PERFORMANCE — 2 linhas, 4 colunas */
+        .metrics-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
+            gap: 24px;
+            margin-bottom: 48px;
         }
-        
-        .heatmap-cell {
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 20px;
-            text-align: center;
-            transition: all 0.3s ease;
-            position: relative;
+
+        .metric-card {
+            background: linear-gradient(165deg, #121b28, #0c111e);
+            border-radius: 28px;
+            padding: 26px 22px;
+            border: 0.6px solid #263449;
+            box-shadow: 0 18px 30px -12px #00000070;
+            backdrop-filter: blur(4px);
+            transition: 0.2s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .metric-card:hover {
+            border-color: #3d5a7c;
+            transform: translateY(-3px);
+        }
+
+        .metric-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #a7c0e6;
+            font-size: 15px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 14px;
+        }
+
+        .metric-value {
+            font-size: 40px;
+            font-weight: 800;
+            color: white;
+            line-height: 1;
+            margin-bottom: 12px;
+        }
+
+        .metric-label {
+            font-size: 15px;
+            font-weight: 500;
+            color: #cbdbf2;
+            margin-bottom: 6px;
+        }
+
+        .metric-desc {
+            font-size: 13px;
+            color: #8ea5c9;
+            line-height: 1.5;
+        }
+
+        .badge {
+            background: #1f3142;
+            padding: 6px 14px;
+            border-radius: 60px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #d5e6ff;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            width: fit-content;
+            margin-top: 12px;
+            border: 0.3px solid #44668850;
+        }
+
+        .badge i { font-style: normal; color: #92caff; }
+
+        /* CARDS DE INSIGHTS E ANÁLISES (3 cards horizontais) */
+        .insights-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 28px;
+            margin-bottom: 50px;
+        }
+
+        .insight-card {
+            background: #0f1726;
+            border-radius: 30px;
+            padding: 28px;
+            border: 0.6px solid #28384b;
+            box-shadow: 0 12px 28px -8px black;
+        }
+
+        .insight-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #ecf5ff;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 22px;
+            border-bottom: 0.8px solid #334e6e;
+            padding-bottom: 16px;
+        }
+
+        .insight-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 18px;
+        }
+
+        .insight-label {
+            color: #a5bedb;
+            font-size: 15px;
+        }
+
+        .insight-number {
+            font-weight: 700;
+            color: white;
+            font-size: 20px;
+        }
+
+        .insight-divider {
+            height: 0.5px;
+            background: #2e4057;
+            margin: 22px 0;
+        }
+
+        .small-stat {
+            display: flex;
+            gap: 20px;
+            margin-top: 12px;
+        }
+
+        .small-stat div {
+            flex: 1;
+        }
+
+        .stat-caption {
+            font-size: 13px;
+            color: #9bb2d3;
+        }
+
+        /* ACORDEÃO DE INSIGHTS AUTOMÁTICOS — inicialmente fechado */
+        .accordion {
+            background: #0d1322;
+            border-radius: 32px;
+            border: 0.6px solid #2c405a;
+            margin-top: 20px;
             overflow: hidden;
         }
-        
-        .heatmap-cell::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            opacity: 0;
-            transition: opacity 0.3s ease;
+
+        .accordion-header {
+            padding: 24px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            background: linear-gradient(145deg, #131e30, #0b121f);
+            user-select: none;
         }
-        
-        .heatmap-cell:hover::before {
-            opacity: 1;
+
+        .accordion-header h2 {
+            font-size: 24px;
+            font-weight: 650;
+            color: #ecf5ff;
+            display: flex;
+            align-items: center;
+            gap: 14px;
         }
-        
-        .heatmap-cell:hover {
-            transform: scale(1.05);
-            z-index: 10;
+
+        .accordion-icon {
+            font-size: 28px;
+            transition: transform 0.3s;
+            color: #a5d0ff;
         }
-        
-        .heatmap-month {
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-            margin-bottom: 8px;
-            position: relative;
-            z-index: 1;
+
+        .accordion-content {
+            padding: 0 32px 32px 32px;
+            display: none;
+            grid-template-columns: 1.2fr 1.5fr 1.2fr;
+            gap: 30px;
+            background: #0a101e;
         }
-        
-        .heatmap-value {
-            font-size: 1.5rem;
+
+        .accordion.open .accordion-content {
+            display: grid;
+        }
+
+        .accordion.open .accordion-icon {
+            transform: rotate(90deg);
+        }
+
+        /* Gráficos e gauges */
+        .gauge-container {
+            background: #0f1a28;
+            border-radius: 24px;
+            padding: 24px;
+            border: 0.5px solid #2a4058;
+        }
+
+        .gauge-title {
+            font-size: 16px;
+            color: #b3d0ff;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .gauge {
+            width: 100%;
+            height: 16px;
+            background: #1f3145;
+            border-radius: 40px;
+            overflow: hidden;
+            margin-bottom: 14px;
+        }
+
+        .gauge-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #5fa0ff, #9f7afa);
+            border-radius: 40px;
+            box-shadow: 0 0 12px #3b82f680;
+        }
+
+        .gauge-fill.green {
+            background: linear-gradient(90deg, #48b884, #28c76c);
+        }
+
+        .progress-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 20px;
             font-weight: 700;
-            position: relative;
-            z-index: 1;
+            color: white;
         }
-        
-        .heatmap-ops {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            margin-top: 4px;
-            position: relative;
-            z-index: 1;
+
+        .progress-label {
+            color: #92adcf;
+            font-size: 13px;
         }
-        
-        /* Sparkline */
-        .sparkline {
-            height: 40px;
-            margin-top: 8px;
+
+        .mini-chart {
+            background: #0f1824;
+            border-radius: 22px;
+            padding: 18px;
+            height: 140px;
+            margin-bottom: 16px;
         }
-        
-        /* Loading */
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+
+        .chip {
+            background: #1e2e44;
+            border-radius: 60px;
+            padding: 8px 18px;
+            font-size: 14px;
+            color: #d1e2fc;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: 0.5px solid #3d5e83;
         }
-        
-        .loading {
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+
+        .btn-close {
+            margin-top: 40px;
+            display: flex;
+            justify-content: flex-end;
         }
-        
-        /* Responsive */
-        @media (max-width: 768px) {
-            .kpi-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
-            .heatmap-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
-            .chart-container {
-                height: 250px;
-            }
+
+        .btn {
+            background: #1e2c40;
+            padding: 12px 32px;
+            border-radius: 60px;
+            color: #ddeaff;
+            border: 0.5px solid #3e5b7a;
+            font-size: 15px;
+            font-weight: 500;
+            transition: 0.15s;
         }
-        
-        /* Utility Classes */
-        .text-gradient {
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+
+        .btn:hover {
+            background: #263e5a;
         }
-        
-        .icon-gradient {
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+
+        @media (max-width: 1200px) {
+            .metrics-grid { grid-template-columns: repeat(2,1fr); }
+            .insights-cards { grid-template-columns: 1fr; }
+            .accordion-content { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 700px) {
+            .metrics-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
+    <div class="dashboard">
+        <!-- MÉTRICAS DE PERFORMANCE — 2 linhas × 4 colunas (exatamente como a imagem) -->
+        <div class="section-title">
+            📊 Métricas de Performance
+            <span>últimos 3 meses</span>
+        </div>
 
-    <!-- Top Bar -->
-    <div class="top-bar">
-        <div class="container-fluid">
-            <div class="row align-items-center">
-                <div class="col-md-4">
-                    <div class="logo">
-                        <i class="fas fa-chart-line"></i> Options Tracker Pro
-                    </div>
+        <div class="metrics-grid">
+            <!-- 1. ÍNDICE SHARPE -->
+            <div class="metric-card">
+                <div class="metric-header">🎯 ÍNDICE SHARPE</div>
+                <div class="metric-value">8,94</div>
+                <div class="metric-label">Excelente Retorno/Risco</div>
+                <div class="metric-desc">Medida de retorno ajustado ao risco</div>
+                <div class="badge"><i>↗</i> +8.94</div>
+            </div>
+            <!-- 2. DRAWDOWN MÁXIMO -->
+            <div class="metric-card">
+                <div class="metric-header">📉 DRAWDOWN MÁXIMO</div>
+                <div class="metric-value">R$ 0,00</div>
+                <div class="metric-label">Risco Controlado</div>
+                <div class="metric-desc">Maior perda acumulada</div>
+                <div class="badge"><i>🛡️</i> 0%</div>
+            </div>
+            <!-- 3. RESULTADO TOTAL -->
+            <div class="metric-card">
+                <div class="metric-header">💰 RESULTADO TOTAL</div>
+                <div class="metric-value">R$ 962,00</div>
+                <div class="metric-label">+0,76% por operação</div>
+                <div class="metric-desc">Soma dos resultados</div>
+                <div class="badge"><i>📈</i> 4 trades</div>
+            </div>
+            <!-- 4. FATOR DE LUCRO + EXCELÊNCIA ABSOLUTA (unidos no mesmo card) -->
+            <div class="metric-card">
+                <div class="metric-header">⚖️ FATOR DE LUCRO</div>
+                <div class="metric-value">∞</div>
+                <div class="metric-label">Excelência Absoluta</div>
+                <div class="metric-desc">Relação ganhos/perdas</div>
+                <div class="badge"><i>🏆</i> infinito</div>
+            </div>
+            <!-- 5. TAXA DE ACERTO -->
+            <div class="metric-card">
+                <div class="metric-header">✅ TAXA DE ACERTO</div>
+                <div class="metric-value">100,0%</div>
+                <div class="metric-label">Perfeito no período</div>
+                <div class="metric-desc">Porcentagem de operações positivas</div>
+                <div class="badge"><i>🎲</i> 4/4</div>
+            </div>
+            <!-- 6. EXPOSIÇÃO AO RISCO -->
+            <div class="metric-card">
+                <div class="metric-header">⚠️ EXPOSIÇÃO AO RISCO</div>
+                <div class="metric-value" style="font-size:34px;">Baixo</div>
+                <div class="metric-label">Gestão Conservadora</div>
+                <div class="metric-desc">Nível geral de risco</div>
+                <div class="badge"><i>🔒</i> Payoff N/A</div>
+            </div>
+            <!-- 7. DURAÇÃO MÉDIA -->
+            <div class="metric-card">
+                <div class="metric-header">⏳ DURAÇÃO MÉDIA</div>
+                <div class="metric-value">2 dias</div>
+                <div class="metric-label">Operações Ágeis</div>
+                <div class="metric-desc">Tempo médio de permanência</div>
+                <div class="badge"><i>⚡</i> rápido</div>
+            </div>
+            <!-- 8. EFICIÊNCIA OPERACIONAL + TOP PERFORMANCE -->
+            <div class="metric-card">
+                <div class="metric-header">⚙️ EFICIÊNCIA OPERACIONAL</div>
+                <div class="metric-value" style="font-size:34px;">Excelente</div>
+                <div class="metric-label">Top Performance</div>
+                <div class="metric-desc">Avaliação geral</div>
+                <div class="badge"><i>💎</i> 98%</div>
+            </div>
+        </div>
+
+        <!-- INSIGHTS E ANÁLISES — 3 cards lado a lado (Performance, Gestão de Risco, Análise Operacional) -->
+        <div class="section-title" style="margin-bottom:24px;">
+            🔍 Insights e Análises
+        </div>
+
+        <div class="insights-cards">
+            <!-- Card 1: Performance Excepcional -->
+            <div class="insight-card">
+                <div class="insight-title">🏁 Performance Excepcional</div>
+                <div style="color:#b8e2ff; margin-bottom:20px;">100% de acerto com retorno consistente</div>
+                <div class="insight-row">
+                    <span class="insight-label">Maior Ganho</span>
+                    <span class="insight-number">R$ 320,00</span>
                 </div>
-                <div class="col-md-4 text-center">
-                    <div class="d-flex justify-content-center gap-3">
-                        <button class="btn btn-outline-custom btn-sm">
-                            <i class="fas fa-download"></i> Exportar
-                        </button>
-                        <button class="btn btn-primary-custom btn-sm">
-                            <i class="fas fa-plus"></i> Nova Operação
-                        </button>
-                    </div>
+                <div class="insight-row">
+                    <span class="insight-label">Menor Ganho</span>
+                    <span class="insight-number">R$ 162,00</span>
                 </div>
-                <div class="col-md-4">
-                    <div class="user-info justify-content-end">
-                        <div class="text-end">
-                            <div style="font-size: 0.875rem; font-weight: 600;">João Silva</div>
-                            <div style="font-size: 0.75rem; color: var(--text-secondary);">Trader Pro</div>
+                <div class="insight-row">
+                    <span class="insight-label">Resultado Médio</span>
+                    <span class="insight-number">R$ 240,50</span>
+                </div>
+                <div style="margin-top:20px; background:#1c2a3c; padding:14px; border-radius:18px;">
+                    <span style="color:#b2f0a0;">↗ +0,76%</span> expectativa por operação
+                </div>
+            </div>
+            <!-- Card 2: Gestão de Risco Iminente -->
+            <div class="insight-card">
+                <div class="insight-title">🛡️ Gestão de Risco Iminente</div>
+                <div style="color:#b8e2ff; margin-bottom:20px;">Drawdown zero com Sharpe elevado</div>
+                <div class="insight-row">
+                    <span class="insight-label">Índice Sharpe</span>
+                    <span class="insight-number">8,94</span>
+                </div>
+                <div class="insight-row">
+                    <span class="insight-label">Drawdown</span>
+                    <span class="insight-number">R$ 0,00</span>
+                </div>
+                <div class="insight-row">
+                    <span class="insight-label">Exposição</span>
+                    <span class="insight-number">Baixo</span>
+                </div>
+                <div class="insight-row">
+                    <span class="insight-label">Payoff</span>
+                    <span class="insight-number" style="color:#b0d0ff;">N/A*</span>
+                </div>
+                <div style="margin-top:18px; font-size:13px; color:#a1c0e0; background:#0d1a28; padding:12px; border-radius:16px;">
+                    *Payoff não calculável devido à ausência de perdas
+                </div>
+            </div>
+            <!-- Card 3: Análise Operacional -->
+            <div class="insight-card">
+                <div class="insight-title">🔧 Análise Operacional</div>
+                <div style="color:#b8e2ff; margin-bottom:20px;">Eficiência excelente com margem de melhoria</div>
+                <div class="insight-row">
+                    <span class="insight-label">Total Operações</span>
+                    <span class="insight-number">4</span>
+                </div>
+                <div class="insight-row">
+                    <span class="insight-label">Duração Média</span>
+                    <span class="insight-number">2 dias</span>
+                </div>
+                <div class="insight-row">
+                    <span class="insight-label">Eficiência</span>
+                    <span class="insight-number">Excelente</span>
+                </div>
+                <div class="insight-row">
+                    <span class="insight-label">Fator de Lucro</span>
+                    <span class="insight-number" style="color:#9effa0;">∞</span>
+                </div>
+                <div style="margin-top:20px; display:flex; gap:8px;">
+                    <span class="chip">📊 4 trades</span>
+                    <span class="chip">⚡ ágil</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ACORDEÃO: INSIGHTS AUTOMÁTICOS (inicialmente fechado) COM GRÁFICOS, GAUGES E BARRAS -->
+        <div class="accordion" id="accordionInsights">
+            <div class="accordion-header" onclick="toggleAccordion()">
+                <h2>
+                    <span style="background:#1e314a; padding:10px 16px; border-radius:60px;">🤖</span>
+                    Insights Automáticos
+                </h2>
+                <span class="accordion-icon" id="accordionIcon">▶</span>
+            </div>
+            <div class="accordion-content" id="accordionContent">
+                <!-- COLUNA 1: Consistência / Gauge de acerto -->
+                <div class="gauge-container">
+                    <div class="gauge-title">
+                        <span>✅ Consistência excelente</span>
+                        <span style="color:#b4f0b4;">4/4 positivas</span>
+                    </div>
+                    <div style="display:flex; align-items: baseline; gap:10px; margin-bottom:8px;">
+                        <span style="font-size:44px; font-weight:800; color:#fff;">100%</span>
+                        <span style="color:#93c5fd;">acerto</span>
+                    </div>
+                    <div class="gauge">
+                        <div class="gauge-fill green" style="width:100%;"></div>
+                    </div>
+                    <div style="display:flex; justify-content: space-between; margin-top:14px;">
+                        <span class="progress-label">0%</span>
+                        <span class="progress-label">100%</span>
+                    </div>
+                    <div style="margin-top:28px;">
+                        <div class="gauge-title">📊 Distribuição dos Ganhos</div>
+                        <div style="height:100px;" id="chartDonutContainer">
+                            <canvas id="donutChart" style="width:100%; height:100px;"></canvas>
                         </div>
-                        <div class="user-avatar">JS</div>
+                    </div>
+                </div>
+
+                <!-- COLUNA 2: Payoff / Fator de lucro + barra de eficiência -->
+                <div class="gauge-container">
+                    <div class="gauge-title">
+                        <span>⚖️ Payoff a melhorar</span>
+                        <span style="color:#ffe5a3;">Fator ∞</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:16px; margin-bottom:20px;">
+                        <div style="background:#1e2e42; padding:12px 22px; border-radius:60px;">
+                            <span style="font-size:26px; font-weight:800; color:#ffe18a;">N/A</span>
+                        </div>
+                        <div>
+                            <div style="color:#bad7ff;">Payoff</div>
+                            <div style="font-size:13px; color:#95b8e3;">sem perdas</div>
+                        </div>
+                    </div>
+                    <div style="margin-bottom:24px;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                            <span class="progress-label">Fator de Lucro</span>
+                            <span style="color:#b2ffb2; font-weight:700; font-size:24px;">∞</span>
+                        </div>
+                        <div class="gauge">
+                            <div class="gauge-fill" style="width:100%; background:linear-gradient(90deg,#a078ff,#c26eff);"></div>
+                        </div>
+                    </div>
+                    <div style="background:#0f1c2c; border-radius:20px; padding:16px;">
+                        <span style="color:#ffd966;">📌</span> Payoff não calculável devido à ausência de perdas
+                    </div>
+                </div>
+
+                <!-- COLUNA 3: Risco controlado + Sharpe + Drawdown -->
+                <div class="gauge-container">
+                    <div class="gauge-title">
+                        <span>🛡️ Risco controlado</span>
+                        <span style="color:#a3e0ff;">Drawdown 0</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:22px;">
+                        <div>
+                            <div style="font-size:32px; font-weight:800; color:#fff;">R$ 0,00</div>
+                            <div style="color:#aad0ff;">máx. perda</div>
+                        </div>
+                        <div style="background:#0e3340; padding:12px; border-radius:60px;">
+                            <span style="font-size:28px;">🛡️</span>
+                        </div>
+                    </div>
+                    <div style="margin-bottom:22px;">
+                        <div class="gauge-title">Sharpe Ratio</div>
+                        <div style="display:flex; align-items: baseline; gap:8px;">
+                            <span style="font-size:38px; font-weight:800; color:#fff;">8.94</span>
+                            <span style="color:#b1d6ff;">/10</span>
+                        </div>
+                        <div class="gauge" style="margin-top:14px;">
+                            <div class="gauge-fill" style="width:89.4%;"></div>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:20px;">
+                        <div>
+                            <span class="progress-label">Exposição</span>
+                            <div style="font-weight:700; color:#fff;">Baixo</div>
+                        </div>
+                        <div>
+                            <span class="progress-label">Eficiência</span>
+                            <div style="font-weight:700; color:#b4ffb4;">Excelente</div>
+                        </div>
                     </div>
                 </div>
             </div>
+        </div>
+
+        <!-- BOTÃO FECHAR (meramente ilustrativo) -->
+        <div class="btn-close">
+            <div class="btn">✕ Fechar painel</div>
         </div>
     </div>
 
-    <div class="container-fluid" style="padding: 30px;">
-        
-        <!-- Main KPIs -->
-        <div class="kpi-grid">
-            <div class="kpi-card">
-                <div class="kpi-icon bg-excellent">
-                    <i class="fas fa-wallet" style="color: var(--accent-green);"></i>
-                </div>
-                <div class="kpi-label">Saldo Total</div>
-                <div class="kpi-value">
-                    <a href="#" onclick="abrirModalOperacoes()" style="color: inherit; text-decoration: none;">
-                        R$ 125.450
-                    </a>
-                </div>
-                <div class="kpi-change status-excellent">
-                    <i class="fas fa-arrow-up"></i> +8.5% no mês
-                </div>
-            </div>
-
-            <div class="kpi-card">
-                <div class="kpi-icon bg-good">
-                    <i class="fas fa-chart-line" style="color: var(--accent-cyan);"></i>
-                </div>
-                <div class="kpi-label">Resultado Mensal</div>
-                <div class="kpi-value status-excellent">R$ 9.850</div>
-                <div class="kpi-change">
-                    <span class="text-secondary">vs meta: R$ 9.000</span>
-                </div>
-            </div>
-
-            <div class="kpi-card">
-                <div class="kpi-icon bg-warning">
-                    <i class="fas fa-bullseye" style="color: var(--accent-yellow);"></i>
-                </div>
-                <div class="kpi-label">Expectativa Matemática</div>
-                <div class="kpi-value status-excellent">R$ 362</div>
-                <div class="kpi-change status-excellent">
-                    <i class="fas fa-check"></i> Positiva
-                </div>
-            </div>
-
-            <div class="kpi-card">
-                <div class="kpi-icon" style="background: rgba(124, 77, 255, 0.1);">
-                    <i class="fas fa-percentage" style="color: var(--accent-purple);"></i>
-                </div>
-                <div class="kpi-label">Win Rate</div>
-                <div class="kpi-value">73.3%</div>
-                <div class="kpi-change">
-                    <span class="text-secondary">17/24 operações</span>
-                </div>
-            </div>
-
-            <div class="kpi-card">
-                <div class="kpi-icon bg-excellent">
-                    <i class="fas fa-rocket" style="color: var(--accent-green);"></i>
-                </div>
-                <div class="kpi-label">Fator de Lucro</div>
-                <div class="kpi-value status-excellent">3.42</div>
-                <div class="kpi-change status-excellent">
-                    <i class="fas fa-star"></i> Excelente
-                </div>
-            </div>
-
-            <div class="kpi-card">
-                <div class="kpi-icon bg-good">
-                    <i class="fas fa-shield-alt" style="color: var(--accent-cyan);"></i>
-                </div>
-                <div class="kpi-label">Sharpe Ratio</div>
-                <div class="kpi-value status-good">2.87</div>
-                <div class="kpi-change status-good">
-                    <i class="fas fa-check"></i> Muito bom
-                </div>
-            </div>
-
-            <div class="kpi-card">
-                <div class="kpi-icon bg-warning">
-                    <i class="fas fa-chart-area" style="color: var(--accent-yellow);"></i>
-                </div>
-                <div class="kpi-label">Drawdown Máx.</div>
-                <div class="kpi-value status-good">-2.1%</div>
-                <div class="kpi-change status-good">
-                    <i class="fas fa-info-circle"></i> Sob controle
-                </div>
-            </div>
-
-            <div class="kpi-card">
-                <div class="kpi-icon" style="background: rgba(124, 77, 255, 0.1);">
-                    <i class="fas fa-fire" style="color: var(--accent-purple);"></i>
-                </div>
-                <div class="kpi-label">Sequência Atual</div>
-                <div class="kpi-value status-excellent">+5</div>
-                <div class="kpi-change status-excellent">
-                    <i class="fas fa-trophy"></i> Vitórias
-                </div>
-            </div>
-        </div>
-
-        <!-- Navigation Pills -->
-        <ul class="nav nav-pills" id="mainTab" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="overview-tab" data-bs-toggle="pill" data-bs-target="#overview">
-                    <i class="fas fa-tachometer-alt"></i> Visão Geral
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="performance-tab" data-bs-toggle="pill" data-bs-target="#performance">
-                    <i class="fas fa-chart-line"></i> Performance
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="risk-tab" data-bs-toggle="pill" data-bs-target="#risk">
-                    <i class="fas fa-shield-alt"></i> Risco & Qualidade
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="analytics-tab" data-bs-toggle="pill" data-bs-target="#analytics">
-                    <i class="fas fa-brain"></i> Análise Avançada
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="goals-tab" data-bs-toggle="pill" data-bs-target="#goals">
-                    <i class="fas fa-flag-checkered"></i> Metas & Objetivos
-                </button>
-            </li>
-        </ul>
-
-        <div class="tab-content" id="mainTabContent">
-            
-            <!-- OVERVIEW TAB -->
-            <div class="tab-pane fade show active" id="overview" role="tabpanel">
-                <div class="row">
-                    
-                    <!-- Curva de Patrimônio -->
-                    <div class="col-lg-8">
-                        <div class="card">
-                            <div class="card-title">
-                                <i class="fas fa-chart-area"></i> Evolução do Patrimônio
-                            </div>
-                            <div class="chart-wrapper">
-                                <canvas id="graficoPatrimonio"></canvas>
-                            </div>
-                            
-                            <!-- Métricas de Performance -->
-                            <div class="metric-grid">
-                                <div class="metric-item">
-                                    <div class="metric-item-label">Retorno Total</div>
-                                    <div class="metric-item-value status-excellent">+9.08%</div>
-                                </div>
-                                <div class="metric-item">
-                                    <div class="metric-item-label">Retorno Anualizado</div>
-                                    <div class="metric-item-value status-excellent">+18.16%</div>
-                                </div>
-                                <div class="metric-item">
-                                    <div class="metric-item-label">Melhor Mês</div>
-                                    <div class="metric-item-value status-excellent">+2.9%</div>
-                                </div>
-                                <div class="metric-item">
-                                    <div class="metric-item-label">Volatilidade</div>
-                                    <div class="metric-item-value">6.3%</div>
-                                </div>
-                                <div class="metric-item">
-                                    <div class="metric-item-label">Consistência</div>
-                                    <div class="metric-item-value status-excellent">91.7%</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Performance Score & Quick Stats -->
-                    <div class="col-lg-4">
-                        <div class="card">
-                            <div class="card-title">
-                                <i class="fas fa-star"></i> Performance Score
-                            </div>
-                            <div class="performance-score">
-                                <div class="score-circle">
-                                    <div class="score-value">8.7</div>
-                                    <div class="score-label">de 10</div>
-                                </div>
-                                <div style="color: var(--accent-green); font-weight: 600; margin-bottom: 20px;">
-                                    <i class="fas fa-trophy"></i> Desempenho Excelente
-                                </div>
-                                
-                                <div class="text-start">
-                                    <div class="alert-box success">
-                                        <div style="font-weight: 600; margin-bottom: 8px;">
-                                            <i class="fas fa-check-circle"></i> Pontos Fortes
-                                        </div>
-                                        <ul style="margin: 0; padding-left: 20px; font-size: 0.875rem;">
-                                            <li>Alta taxa de acerto (73%)</li>
-                                            <li>Excelente fator de lucro</li>
-                                            <li>Risco controlado</li>
-                                        </ul>
-                                    </div>
-                                    
-                                    <div class="alert-box warning">
-                                        <div style="font-weight: 600; margin-bottom: 8px;">
-                                            <i class="fas fa-exclamation-triangle"></i> Pontos de Atenção
-                                        </div>
-                                        <ul style="margin: 0; padding-left: 20px; font-size: 0.875rem;">
-                                            <li>Diversificar ativos</li>
-                                            <li>Reduzir concentração em PETR4</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Distribuição de Resultados e Análise -->
-                <div class="row">
-                    <div class="col-lg-6">
-                        <div class="card">
-                            <div class="card-title">
-                                <i class="fas fa-chart-bar"></i> Distribuição de Resultados
-                            </div>
-                            <div class="chart-wrapper">
-                                <canvas id="graficoDistribuicao"></canvas>
-                            </div>
-                            <div class="metric-grid" style="margin-top: 20px;">
-                                <div class="metric-item">
-                                    <div class="metric-item-label">Média Ganhos</div>
-                                    <div class="metric-item-value status-excellent">R$ 425</div>
-                                </div>
-                                <div class="metric-item">
-                                    <div class="metric-item-label">Média Perdas</div>
-                                    <div class="metric-item-value status-danger">R$ 197</div>
-                                </div>
-                                <div class="metric-item">
-                                    <div class="metric-item-label">Payoff Ratio</div>
-                                    <div class="metric-item-value status-excellent">2.16</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-lg-6">
-                        <div class="card">
-                            <div class="card-title">
-                                <i class="fas fa-clock"></i> Performance por Período de Manutenção
-                            </div>
-                            <div class="chart-wrapper">
-                                <canvas id="graficoDuracao"></canvas>
-                            </div>
-                            <div class="metric-grid" style="margin-top: 20px;">
-                                <div class="metric-item">
-                                    <div class="metric-item-label">Duração Média</div>
-                                    <div class="metric-item-value">18 dias</div>
-                                </div>
-                                <div class="metric-item">
-                                    <div class="metric-item-label">Melhor Período</div>
-                                    <div class="metric-item-value">15-20 dias</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Heatmap Mensal -->
-                <div class="card">
-                    <div class="card-title">
-                        <i class="fas fa-fire"></i> Heatmap de Performance Mensal
-                    </div>
-                    <div class="heatmap-grid" id="heatmapMensal"></div>
-                </div>
-
-            </div>
-
-            <!-- PERFORMANCE TAB -->
-            <div class="tab-pane fade" id="performance" role="tabpanel">
-                <div class="row">
-                    
-                    <div class="col-lg-8">
-                        <div class="card">
-                            <div class="card-title">
-                                <i class="fas fa-chart-line"></i> Resultado Mensal - 2024
-                            </div>
-                            <div class="chart-wrapper">
-                                <canvas id="graficoMensal"></canvas>
-                            </div>
-                        </div>
-
-                        <!-- Tabela Detalhada Mensal -->
-                        <div class="card">
-                            <div class="card-title">
-                                <i class="fas fa-table"></i> Análise Mensal Detalhada
-                            </div>
-                            <div class="table-responsive">
-                                <table class="table-modern">
-                                    <thead>
-                                        <tr>
-                                            <th>Mês</th>
-                                            <th class="text-center">Ops</th>
-                                            <th class="text-end">Resultado</th>
-                                            <th class="text-center">Rent. %</th>
-                                            <th class="text-center">Win Rate</th>
-                                            <th class="text-center">Fator Lucro</th>
-                                            <th class="text-center">Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="tabelaMensal"></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-lg-4">
-                        <!-- Performance por Ativo -->
-                        <div class="card">
-                            <div class="card-title">
-                                <i class="fas fa-chart-pie"></i> Performance por Ativo
-                            </div>
-                            <div class="chart-wrapper">
-                                <canvas id="graficoAtivos"></canvas>
-                            </div>
-                        </div>
-
-                        <!-- Top Performers -->
-                        <div class="card">
-                            <div class="card-title">
-                                <i class="fas fa-trophy"></i> Top Ativos
-                            </div>
-                            <div id="topAtivos"></div>
-                        </div>
-
-                        <!-- CALL vs PUT -->
-                        <div class="card">
-                            <div class="card-title">
-                                <i class="fas fa-balance-scale"></i> CALL vs PUT
-                            </div>
-                            <div class="chart-wrapper chart-container-small">
-                                <canvas id="graficoCallPut"></canvas>
-                            </div>
-                            <div class="metric-grid">
-                                <div class="metric-item">
-                                    <div class="metric-item-label">CALL Win Rate</div>
-                                    <div class="metric-item-value status-excellent">78.5%</div>
-                                </div>
-                                <div class="metric-item">
-                                    <div class="metric-item-label">PUT Win Rate</div>
-                                    <div class="metric-item-value status-good">66.7%</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-
-            <!-- RISK & QUALITY TAB -->
-            <div class="tab-pane fade" id="risk" role="tabpanel">
-                <div class="row">
-                    
-                    <div class="col-lg-8">
-                        <!-- Drawdown Analysis -->
-                        <div class="card">
-                            <div class="card-title">
-                                <i class="fas fa-chart-area"></i> Análise de Drawdown
-                            </div>
-                            <div class="chart-wrapper">
-                                <canvas id="graficoDrawdown"></canvas>
-                            </div>
-                            <div class="metric-grid">
-                                <div class="metric-item">
-                                    <div class="metric-item-label">Drawdown Atual</div>
-                                    <div class="metric-item-value status-excellent">0%</div>
-                                </div>
-                                <div class="metric-item">
-                                    <div class="metric-item-label">Drawdown Máximo</div>
-                                    <div class="metric-item-value status-good">-2.1%</div>
-                                </div>
-                                <div class="metric-item">
-                                    <div class="metric-item-label">Recuperação Média</div>
-                                    <div class="metric-item-value">5 dias</div>
-                                </div>
-                                <div class="metric-item">
-                                    <div class="metric-item-label">Maior Recuperação</div>
-                                    <div class="metric-item-value">12 dias</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Métricas de Risco -->
-                        <div class="card">
-                            <div class="card-title">
-                                <i class="fas fa-shield-alt"></i> Métricas de Risco & Qualidade
-                            </div>
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <div style="background: var(--bg-tertiary); padding: 20px; border-radius: 12px;">
-                                        <h6 style="color: var(--text-secondary); margin-bottom: 16px;">Índices de Qualidade</h6>
-                                        <div class="mb-3">
-                                            <div class="d-flex justify-content-between mb-2">
-                                                <span>Sharpe Ratio</span>
-                                                <strong class="status-excellent">2.87</strong>
-                                            </div>
-                                            <div class="progress" style="height: 8px;">
-                                                <div class="progress-bar" style="width: 95%; background: var(--accent-green);"></div>
-                                            </div>
-                                            <small class="text-secondary">Excelente (>2.0)</small>
-                                        </div>
-                                        <div class="mb-3">
-                                            <div class="d-flex justify-content-between mb-2">
-                                                <span>Sortino Ratio</span>
-                                                <strong class="status-excellent">3.42</strong>
-                                            </div>
-                                            <div class="progress" style="height: 8px;">
-                                                <div class="progress-bar" style="width: 98%; background: var(--accent-green);"></div>
-                                            </div>
-                                            <small class="text-secondary">Excepcional (>2.5)</small>
-                                        </div>
-                                        <div class="mb-3">
-                                            <div class="d-flex justify-content-between mb-2">
-                                                <span>Calmar Ratio</span>
-                                                <strong class="status-good">8.65</strong>
-                                            </div>
-                                            <div class="progress" style="height: 8px;">
-                                                <div class="progress-bar" style="width: 90%; background: var(--accent-cyan);"></div>
-                                            </div>
-                                            <small class="text-secondary">Muito bom (>3.0)</small>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div style="background: var(--bg-tertiary); padding: 20px; border-radius: 12px;">
-                                        <h6 style="color: var(--text-secondary); margin-bottom: 16px;">Gestão de Risco</h6>
-                                        <div class="mb-3">
-                                            <div class="d-flex justify-content-between mb-2">
-                                                <span>R-múltiplo Médio</span>
-                                                <strong class="status-excellent">2.16</strong>
-                                            </div>
-                                            <small class="text-secondary">Ganho médio / Perda média</small>
-                                        </div>
-                                        <div class="mb-3">
-                                            <div class="d-flex justify-content-between mb-2">
-                                                <span>Risco por Operação</span>
-                                                <strong class="status-good">1.2%</strong>
-                                            </div>
-                                            <small class="text-secondary">Do capital total</small>
-                                        </div>
-                                        <div class="mb-3">
-                                            <div class="d-flex justify-content-between mb-2">
-                                                <span>VaR (95%)</span>
-                                                <strong>R$ 1.890</strong>
-                                            </div>
-                                            <small class="text-secondary">Perda máxima esperada</small>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-lg-4">
-                        <!-- Análise de Sequências -->
-                        <div class="card">
-                            <div class="card-title">
-                                <i class="fas fa-fire"></i> Análise de Sequências
-                            </div>
-                            <div class="mb-4">
-                                <div class="metric-item">
-                                    <div class="metric-item-label">Sequência Atual</div>
-                                    <div class="metric-item-value status-excellent">+5 Vitórias</div>
-                                </div>
-                            </div>
-                            <div style="background: var(--bg-tertiary); padding: 16px; border-radius: 8px; margin-bottom: 16px;">
-                                <h6 style="color: var(--text-secondary); font-size: 0.75rem; margin-bottom: 12px;">VITÓRIAS</h6>
-                                <div class="d-flex justify-content-between mb-2">
-                                    <span>Maior sequência</span>
-                                    <strong class="status-excellent">8</strong>
-                                </div>
-                                <div class="d-flex justify-content-between">
-                                    <span>Média</span>
-                                    <strong>3.2</strong>
-                                </div>
-                            </div>
-                            <div style="background: var(--bg-tertiary); padding: 16px; border-radius: 8px;">
-                                <h6 style="color: var(--text-secondary); font-size: 0.75rem; margin-bottom: 12px;">DERROTAS</h6>
-                                <div class="d-flex justify-content-between mb-2">
-                                    <span>Maior sequência</span>
-                                    <strong class="status-danger">2</strong>
-                                </div>
-                                <div class="d-flex justify-content-between">
-                                    <span>Média</span>
-                                    <strong>1.3</strong>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Exercício de Opções -->
-                        <div class="card">
-                            <div class="card-title">
-                                <i class="fas fa-check-circle"></i> Taxa de Exercício
-                            </div>
-                            <div class="chart-wrapper chart-container-small">
-                                <canvas id="graficoExercicio"></canvas>
-                            </div>
-                            <div class="alert-box" style="margin-top: 16px;">
-                                <div style="font-size: 0.875rem;">
-                                    <strong>28.6%</strong> das suas opções foram exercidas.
-                                    Isso significa que <strong>71.4%</strong> expiraram sem valor,
-                                    gerando lucro total de prêmio.
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Volatilidade -->
-                        <div class="card">
-                            <div class="card-title">
-                                <i class="fas fa-wave-square"></i> Análise de Volatilidade
-                            </div>
-                            <div class="metric-grid">
-                                <div class="metric-item">
-                                    <div class="metric-item-label">Vol. Retornos</div>
-                                    <div class="metric-item-value">6.3%</div>
-                                </div>
-                                <div class="metric-item">
-                                    <div class="metric-item-label">Vol. Anualizada</div>
-                                    <div class="metric-item-value">12.6%</div>
-                                </div>
-                            </div>
-                            <div class="chart-wrapper chart-container-small" style="margin-top: 16px;">
-                                <canvas id="graficoVolatilidade"></canvas>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-
-            <!-- ADVANCED ANALYTICS TAB -->
-            <div class="tab-pane fade" id="analytics" role="tabpanel">
-                <div class="row">
-                    
-                    <div class="col-lg-6">
-                        <!-- Performance por Dia da Semana -->
-                        <div class="card">
-                            <div class="card-title">
-                                <i class="fas fa-calendar-week"></i> Performance por Dia da Semana
-                            </div>
-                            <div class="chart-wrapper">
-                                <canvas id="graficoDiaSemana"></canvas>
-                            </div>
-                            <div class="alert-box success" style="margin-top: 16px;">
-                                <strong>Insight:</strong> Suas melhores operações são abertas às <strong>Quintas-feiras</strong>
-                                com rentabilidade média 15% superior.
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-lg-6">
-                        <!-- Performance por Distância do Strike -->
-                        <div class="card">
-                            <div class="card-title">
-                                <i class="fas fa-bullseye"></i> Performance por Distância do Strike (OTM)
-                            </div>
-                            <div class="chart-wrapper">
-                                <canvas id="graficoStrike"></canvas>
-                            </div>
-                            <div class="alert-box" style="margin-top: 16px;">
-                                <strong>Insight:</strong> Strikes entre <strong>5-10% OTM</strong> apresentam
-                                melhor relação risco/retorno na sua estratégia.
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-lg-6">
-                        <!-- Correlação entre Ativos -->
-                        <div class="card">
-                            <div class="card-title">
-                                <i class="fas fa-project-diagram"></i> Matriz de Correlação - Resultados por Ativo
-                            </div>
-                            <div id="matrizCorrelacao"></div>
-                        </div>
-                    </div>
-
-                    <div class="col-lg-6">
-                        <!-- Análise de Prêmios -->
-                        <div class="card">
-                            <div class="card-title">
-                                <i class="fas fa-coins"></i> Análise de Prêmios Recebidos
-                            </div>
-                            <div class="chart-wrapper">
-                                <canvas id="graficoPremios"></canvas>
-                            </div>
-                            <div class="metric-grid" style="margin-top: 16px;">
-                                <div class="metric-item">
-                                    <div class="metric-item-label">Prêmio Médio</div>
-                                    <div class="metric-item-value">R$ 362</div>
-                                </div>
-                                <div class="metric-item">
-                                    <div class="metric-item-label">Prêmio Máximo</div>
-                                    <div class="metric-item-value">R$ 890</div>
-                                </div>
-                                <div class="metric-item">
-                                    <div class="metric-item-label">Total Recebido</div>
-                                    <div class="metric-item-value">R$ 8.688</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-lg-12">
-                        <!-- Análise de Probabilidade -->
-                        <div class="card">
-                            <div class="card-title">
-                                <i class="fas fa-chart-scatter"></i> Distribuição de Probabilidade dos Resultados
-                            </div>
-                            <div class="row">
-                                <div class="col-lg-8">
-                                    <div class="chart-wrapper">
-                                        <canvas id="graficoProbabilidade"></canvas>
-                                    </div>
-                                </div>
-                                <div class="col-lg-4">
-                                    <h6 style="color: var(--text-secondary); margin-bottom: 16px;">Estatísticas</h6>
-                                    <div style="background: var(--bg-tertiary); padding: 16px; border-radius: 8px; margin-bottom: 12px;">
-                                        <div class="d-flex justify-content-between mb-2">
-                                            <span>Média</span>
-                                            <strong class="status-excellent">R$ 362</strong>
-                                        </div>
-                                        <div class="d-flex justify-content-between mb-2">
-                                            <span>Mediana</span>
-                                            <strong>R$ 350</strong>
-                                        </div>
-                                        <div class="d-flex justify-content-between mb-2">
-                                            <span>Desvio Padrão</span>
-                                            <strong>R$ 287</strong>
-                                        </div>
-                                        <div class="d-flex justify-content-between">
-                                            <span>Assimetria</span>
-                                            <strong class="status-excellent">+0.42</strong>
-                                        </div>
-                                    </div>
-                                    <div class="alert-box success">
-                                        <small>
-                                            <strong>Distribuição Positiva:</strong> Seus resultados mostram
-                                            assimetria positiva, indicando maior frequência de ganhos acima da média.
-                                        </small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-
-            <!-- GOALS & OBJECTIVES TAB -->
-            <div class="tab-pane fade" id="goals" role="tabpanel">
-                <div class="row">
-                    
-                    <div class="col-lg-8">
-                        <!-- Progresso de Metas -->
-                        <div class="card">
-                            <div class="card-title">
-                                <i class="fas fa-flag-checkered"></i> Progresso das Metas 2024
-                            </div>
-                            
-                            <div style="background: var(--bg-tertiary); padding: 20px; border-radius: 12px; margin-bottom: 20px;">
-                                <div class="d-flex justify-content-between mb-3">
-                                    <div>
-                                        <h6 style="color: var(--text-secondary); margin-bottom: 4px;">Meta Anual</h6>
-                                        <h4 class="mb-0">R$ 100.000,00</h4>
-                                    </div>
-                                    <div class="text-end">
-                                        <h6 style="color: var(--text-secondary); margin-bottom: 4px;">Realizado</h6>
-                                        <h4 class="mb-0 status-excellent">R$ 27.400,00</h4>
-                                    </div>
-                                </div>
-                                <div class="progress" style="height: 30px;">
-                                    <div class="progress-bar" style="width: 27.4%; background: linear-gradient(90deg, var(--accent-green), var(--accent-cyan));">
-                                        <strong>27.4%</strong>
-                                    </div>
-                                </div>
-                                <div class="d-flex justify-content-between mt-2">
-                                    <small class="text-secondary">Janeiro a Junho</small>
-                                    <small class="text-secondary">Faltam R$ 72.600</small>
-                                </div>
-                            </div>
-
-                            <!-- Metas Mensais -->
-                            <h6 style="color: var(--text-secondary); margin-bottom: 16px;">Metas Mensais</h6>
-                            <div class="row g-3">
-                                <div class="col-md-4">
-                                    <div style="background: var(--bg-tertiary); padding: 16px; border-radius: 8px;">
-                                        <div class="d-flex justify-content-between mb-2">
-                                            <span>Meta Mês</span>
-                                            <strong>R$ 9.000</strong>
-                                        </div>
-                                        <div class="progress" style="height: 8px; margin-bottom: 8px;">
-                                            <div class="progress-bar bg-success" style="width: 109%"></div>
-                                        </div>
-                                        <small class="status-excellent">
-                                            <i class="fas fa-check"></i> Meta atingida (109%)
-                                        </small>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div style="background: var(--bg-tertiary); padding: 16px; border-radius: 8px;">
-                                        <div class="d-flex justify-content-between mb-2">
-                                            <span>Win Rate Mín.</span>
-                                            <strong>70%</strong>
-                                        </div>
-                                        <div class="progress" style="height: 8px; margin-bottom: 8px;">
-                                            <div class="progress-bar bg-success" style="width: 104.7%"></div>
-                                        </div>
-                                        <small class="status-excellent">
-                                            <i class="fas fa-check"></i> 73.3% (104.7%)
-                                        </small>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div style="background: var(--bg-tertiary); padding: 16px; border-radius: 8px;">
-                                        <div class="d-flex justify-content-between mb-2">
-                                            <span>Operações</span>
-                                            <strong>20 ops</strong>
-                                        </div>
-                                        <div class="progress" style="height: 8px; margin-bottom: 8px;">
-                                            <div class="progress-bar" style="width: 120%; background: var(--accent-blue);"></div>
-                                        </div>
-                                        <small style="color: var(--accent-blue);">
-                                            <i class="fas fa-arrow-up"></i> 24 realizadas (120%)
-                                        </small>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Projeção -->
-                            <div class="card" style="margin-top: 24px; background: linear-gradient(135deg, rgba(33, 150, 243, 0.05), rgba(124, 77, 255, 0.05));">
-                                <div class="card-title">
-                                    <i class="fas fa-chart-line"></i> Projeção para 2024
-                                </div>
-                                <div class="chart-wrapper">
-                                    <canvas id="graficoProjecao"></canvas>
-                                </div>
-                                <div class="alert-box success" style="margin-top: 16px;">
-                                    <strong>Projeção Otimista:</strong> Mantendo o ritmo atual, você pode alcançar
-                                    <strong class="status-excellent">R$ 118.200</strong> até dezembro de 2024,
-                                    superando sua meta em <strong>18.2%</strong>.
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-lg-4">
-                        <!-- Próximas Ações -->
-                        <div class="card">
-                            <div class="card-title">
-                                <i class="fas fa-tasks"></i> Próximas Ações
-                            </div>
-                            <div class="timeline">
-                                <div class="timeline-item">
-                                    <div class="timeline-date">Amanhã</div>
-                                    <div class="timeline-content">
-                                        <strong>Vencimento PETR4 C40</strong>
-                                        <div style="font-size: 0.875rem; color: var(--text-secondary); margin-top: 4px;">
-                                            Prêmio: R$ 420 | Status: Fora do dinheiro
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="timeline-item">
-                                    <div class="timeline-date">3 dias</div>
-                                    <div class="timeline-content">
-                                        <strong>Revisar posições VALE3</strong>
-                                        <div style="font-size: 0.875rem; color: var(--text-secondary); margin-top: 4px;">
-                                            3 operações perdedoras consecutivas
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="timeline-item">
-                                    <div class="timeline-date">1 semana</div>
-                                    <div class="timeline-content">
-                                        <strong>Análise mensal completa</strong>
-                                        <div style="font-size: 0.875rem; color: var(--text-secondary); margin-top: 4px;">
-                                            Revisar estratégias e ajustar metas
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="timeline-item">
-                                    <div class="timeline-date">2 semanas</div>
-                                    <div class="timeline-content">
-                                        <strong>Vencimento em lote</strong>
-                                        <div style="font-size: 0.875rem; color: var(--text-secondary); margin-top: 4px;">
-                                            5 opções vencem dia 21/06
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Benchmarks -->
-                        <div class="card">
-                            <div class="card-title">
-                                <i class="fas fa-chart-bar"></i> Comparação com Benchmarks
-                            </div>
-                            <div style="background: var(--bg-tertiary); padding: 16px; border-radius: 8px; margin-bottom: 12px;">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <span>Seu Retorno</span>
-                                    <strong class="status-excellent">+18.16%</strong>
-                                </div>
-                                <div class="progress" style="height: 8px;">
-                                    <div class="progress-bar bg-success" style="width: 100%"></div>
-                                </div>
-                            </div>
-                            <div style="background: var(--bg-tertiary); padding: 16px; border-radius: 8px; margin-bottom: 12px;">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <span>CDI (a.a.)</span>
-                                    <strong>+11.65%</strong>
-                                </div>
-                                <div class="progress" style="height: 8px;">
-                                    <div class="progress-bar" style="width: 64%; background: var(--accent-yellow);"></div>
-                                </div>
-                                <small class="text-secondary">Você está +55.9% acima</small>
-                            </div>
-                            <div style="background: var(--bg-tertiary); padding: 16px; border-radius: 8px; margin-bottom: 12px;">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <span>IBOV (a.a.)</span>
-                                    <strong class="status-danger">-3.2%</strong>
-                                </div>
-                                <div class="progress" style="height: 8px;">
-                                    <div class="progress-bar bg-danger" style="width: 20%"></div>
-                                </div>
-                                <small class="text-secondary">Você está +21.36p.p. acima</small>
-                            </div>
-                        </div>
-
-                        <!-- Recordes -->
-                        <div class="card">
-                            <div class="card-title">
-                                <i class="fas fa-award"></i> Seus Recordes
-                            </div>
-                            <div style="background: var(--bg-tertiary); padding: 16px; border-radius: 8px; margin-bottom: 12px;">
-                                <div class="d-flex align-items-center gap-3">
-                                    <div style="font-size: 2rem;">🏆</div>
-                                    <div>
-                                        <div style="font-size: 0.75rem; color: var(--text-secondary);">Melhor Operação</div>
-                                        <strong class="status-excellent">R$ 890</strong>
-                                        <div style="font-size: 0.75rem; color: var(--text-secondary);">PETR4 - 29/03/2024</div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div style="background: var(--bg-tertiary); padding: 16px; border-radius: 8px; margin-bottom: 12px;">
-                                <div class="d-flex align-items-center gap-3">
-                                    <div style="font-size: 2rem;">🔥</div>
-                                    <div>
-                                        <div style="font-size: 0.75rem; color: var(--text-secondary);">Maior Sequência</div>
-                                        <strong class="status-excellent">8 vitórias</strong>
-                                        <div style="font-size: 0.75rem; color: var(--text-secondary);">Abril 2024</div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div style="background: var(--bg-tertiary); padding: 16px; border-radius: 8px;">
-                                <div class="d-flex align-items-center gap-3">
-                                    <div style="font-size: 2rem;">📈</div>
-                                    <div>
-                                        <div style="font-size: 0.75rem; color: var(--text-secondary);">Melhor Mês</div>
-                                        <strong class="status-excellent">+2.9%</strong>
-                                        <div style="font-size: 0.75rem; color: var(--text-secondary);">Agosto 2024</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-
-        </div>
-    </div>
-
-    <!-- Modal Operações (simplificado) -->
-    <div class="modal fade" id="modalOperacoes" tabindex="-1">
-        <div class="modal-dialog modal-xl">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i class="fas fa-list"></i> Histórico Completo de Operações
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <p class="text-center text-secondary">Conteúdo da modal aqui...</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Configuração global Chart.js
-        Chart.defaults.color = '#9fa8da';
-        Chart.defaults.borderColor = '#2d3561';
-        Chart.defaults.font.family = "'Inter', sans-serif";
+        // Accordion toggle
+        function toggleAccordion() {
+            const accordion = document.getElementById('accordionInsights');
+            accordion.classList.toggle('open');
+            const icon = document.getElementById('accordionIcon');
+            if (accordion.classList.contains('open')) {
+                icon.textContent = '▼';
+            } else {
+                icon.textContent = '▶';
+            }
+        }
 
-        // Dados mockados
-        const dadosMensais = [
-            { mes: 'Jan', ops: 8, resultado: 2430, rent: 2.1, winRate: 75, fatorLucro: 3.2 },
-            { mes: 'Fev', ops: 6, resultado: 1800, rent: 1.6, winRate: 66.7, fatorLucro: 2.8 },
-            { mes: 'Mar', ops: 9, resultado: 2730, rent: 2.4, winRate: 77.8, fatorLucro: 3.5 },
-            { mes: 'Abr', ops: 7, resultado: 2130, rent: 1.9, winRate: 71.4, fatorLucro: 3.1 },
-            { mes: 'Mai', ops: 10, resultado: 3100, rent: 2.7, winRate: 80, fatorLucro: 4.2 },
-            { mes: 'Jun', ops: 5, resultado: 1430, rent: 1.2, winRate: 60, fatorLucro: 2.3 },
-        ];
-
-        // ==================== GRÁFICO DE PATRIMÔNIO ====================
-        function renderGraficoPatrimonio() {
-            const ctx = document.getElementById('graficoPatrimonio').getContext('2d');
-            
-            const labels = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'];
-            let capital = 115000;
-            const valores = [capital];
-            
-            dadosMensais.forEach(mes => {
-                capital += mes.resultado;
-                valores.push(capital);
-            });
-            
+        // Gráfico de donut (distribuição dos ganhos) — demo com 4 operações: duas fatias apenas para ilustrar maiores/menores
+        window.onload = function() {
+            const ctx = document.getElementById('donutChart').getContext('2d');
             new Chart(ctx, {
-                type: 'line',
+                type: 'doughnut',
                 data: {
-                    labels: ['Inicial', ...labels],
+                    labels: ['Maior Ganho', 'Menor Ganho', 'Outros'],
                     datasets: [{
-                        label: 'Patrimônio',
-                        data: valores,
-                        borderColor: '#2196f3',
-                        backgroundColor: (context) => {
-                            const ctx = context.chart.ctx;
-                            const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-                            gradient.addColorStop(0, 'rgba(33, 150, 243, 0.3)');
-                            gradient.addColorStop(1, 'rgba(33, 150, 243, 0)');
-                            return gradient;
-                        },
-                        tension: 0.4,
-                        fill: true,
-                        borderWidth: 3,
-                        pointRadius: 6,
-                        pointHoverRadius: 8,
-                        pointBackgroundColor: '#2196f3',
-                        pointBorderColor: '#0a0e27',
-                        pointBorderWidth: 2
+                        data: [320, 162, 480], // 320+162+480=962 (total)
+                        backgroundColor: ['#4b9fff', '#6dc6a0', '#425e8a'],
+                        borderColor: '#0a101e',
+                        borderWidth: 2,
+                        borderRadius: 6
                     }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
+                    cutout: '70%',
                     plugins: {
                         legend: { display: false },
-                        tooltip: {
-                            backgroundColor: 'rgba(26, 33, 66, 0.95)',
-                            titleColor: '#e8eaf6',
-                            bodyColor: '#9fa8da',
-                            borderColor: '#2d3561',
-                            borderWidth: 1,
-                            padding: 12,
-                            displayColors: false,
-                            callbacks: {
-                                label: (context) => 'R$ ' + context.parsed.y.toLocaleString('pt-BR', {minimumFractionDigits: 2})
-                            }
-                        }
+                        tooltip: { backgroundColor: '#111c2e' }
                     },
-                    scales: {
-                        y: {
-                            grid: { color: '#2d3561', drawBorder: false },
-                            ticks: {
-                                callback: (value) => 'R$ ' + (value / 1000).toFixed(0) + 'k'
-                            }
-                        },
-                        x: {
-                            grid: { display: false, drawBorder: false }
-                        }
-                    }
+                    maintainAspectRatio: false
                 }
             });
-        }
-
-        // ==================== DISTRIBUIÇÃO DE RESULTADOS ====================
-        function renderGraficoDistribuicao() {
-            const ctx = document.getElementById('graficoDistribuicao').getContext('2d');
-            
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['-500 a -300', '-300 a -100', '-100 a 100', '100 a 300', '300 a 500', '500 a 700', '700+'],
-                    datasets: [{
-                        label: 'Quantidade de Operações',
-                        data: [1, 2, 4, 8, 6, 2, 1],
-                        backgroundColor: (context) => {
-                            const value = context.parsed.y;
-                            if (context.dataIndex < 2) return '#ff1744';
-                            if (context.dataIndex === 2) return '#ffc400';
-                            return '#00e676';
-                        },
-                        borderRadius: 8,
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: { color: '#2d3561', drawBorder: false },
-                            ticks: { stepSize: 2 }
-                        },
-                        x: {
-                            grid: { display: false, drawBorder: false }
-                        }
-                    }
-                }
-            });
-        }
-
-        // ==================== DURAÇÃO ====================
-        function renderGraficoDuracao() {
-            const ctx = document.getElementById('graficoDuracao').getContext('2d');
-            
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['0-5 dias', '5-10 dias', '10-15 dias', '15-20 dias', '20-25 dias', '25-30 dias', '30+ dias'],
-                    datasets: [{
-                        label: 'Resultado Médio',
-                        data: [180, 250, 320, 480, 410, 360, 290],
-                        backgroundColor: '#7c4dff',
-                        borderRadius: 8
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
-                    scales: {
-                        y: {
-                            grid: { color: '#2d3561', drawBorder: false },
-                            ticks: {
-                                callback: (value) => 'R$ ' + value
-                            }
-                        },
-                        x: {
-                            grid: { display: false, drawBorder: false }
-                        }
-                    }
-                }
-            });
-        }
-
-        // ==================== HEATMAP ====================
-        function renderHeatmap() {
-            const container = document.getElementById('heatmapMensal');
-            
-            dadosMensais.forEach(mes => {
-                const cor = mes.rent >= 2.5 ? '#00e676' :
-                           mes.rent >= 2.0 ? '#00e5ff' :
-                           mes.rent >= 1.5 ? '#ffc400' :
-                           mes.rent >= 1.0 ? '#ff9800' : '#ff1744';
-                
-                container.innerHTML += `
-                    <div class="heatmap-cell" style="background: linear-gradient(135deg, ${cor}15, ${cor}05); border-color: ${cor};">
-                        <div class="heatmap-month">${mes.mes}</div>
-                        <div class="heatmap-value" style="color: ${cor};">${mes.rent.toFixed(1)}%</div>
-                        <div class="heatmap-ops">${mes.ops} operações</div>
-                    </div>
-                `;
-            });
-        }
-
-        // ==================== RESULTADO MENSAL ====================
-        function renderGraficoMensal() {
-            const ctx = document.getElementById('graficoMensal').getContext('2d');
-            const meses = dadosMensais.map(d => d.mes);
-            const valores = dadosMensais.map(d => d.resultado);
-            const total = valores.reduce((a, b) => a + b, 0);
-            
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: [...meses, 'TOTAL'],
-                    datasets: [{
-                        label: 'Resultado',
-                        data: [...valores, total],
-                        backgroundColor: [...valores.map(v => v >= 0 ? '#00e676' : '#ff1744'), '#2196f3'],
-                        borderRadius: 8,
-                        borderWidth: 2,
-                        borderColor: [...valores.map(v => v >= 0 ? '#00c853' : '#d50000'), '#1976d2']
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
-                    scales: {
-                        y: {
-                            grid: { color: '#2d3561', drawBorder: false },
-                            ticks: {
-                                callback: (value) => 'R$ ' + value.toLocaleString('pt-BR')
-                            }
-                        },
-                        x: {
-                            grid: { display: false, drawBorder: false }
-                        }
-                    }
-                }
-            });
-        }
-
-        // ==================== TABELA MENSAL ====================
-        function renderTabelaMensal() {
-            const tbody = document.getElementById('tabelaMensal');
-            
-            dadosMensais.forEach(mes => {
-                const statusClass = mes.winRate >= 75 ? 'status-excellent' :
-                                   mes.winRate >= 65 ? 'status-good' :
-                                   mes.winRate >= 55 ? 'status-warning' : 'status-danger';
-                
-                const statusText = mes.winRate >= 75 ? 'Excelente' :
-                                  mes.winRate >= 65 ? 'Bom' :
-                                  mes.winRate >= 55 ? 'Regular' : 'Atenção';
-                
-                tbody.innerHTML += `
-                    <tr>
-                        <td><strong>${mes.mes}</strong></td>
-                        <td class="text-center">${mes.ops}</td>
-                        <td class="text-end ${mes.resultado >= 0 ? 'status-excellent' : 'status-danger'}">
-                            R$ ${mes.resultado.toLocaleString('pt-BR', {minimumFractionDigits: 2})}
-                        </td>
-                        <td class="text-center">${mes.rent.toFixed(1)}%</td>
-                        <td class="text-center">${mes.winRate.toFixed(1)}%</td>
-                        <td class="text-center">${mes.fatorLucro.toFixed(2)}</td>
-                        <td class="text-center">
-                            <span class="badge-custom ${statusClass}">${statusText}</span>
-                        </td>
-                    </tr>
-                `;
-            });
-        }
-
-        // ==================== ATIVOS ====================
-        function renderGraficoAtivos() {
-            const ctx = document.getElementById('graficoAtivos').getContext('2d');
-            
-            new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['PETR4', 'VALE3', 'ITUB4', 'BBDC4', 'BBAS3'],
-                    datasets: [{
-                        data: [2640, 780, 1520, 800, 950],
-                        backgroundColor: ['#2196f3', '#00e676', '#ffc400', '#7c4dff', '#ff1744'],
-                        borderWidth: 3,
-                        borderColor: '#1a2142'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: { padding: 15, font: { size: 11 } }
-                        }
-                    }
-                }
-            });
-        }
-
-        // ==================== TOP ATIVOS ====================
-        function renderTopAtivos() {
-            const container = document.getElementById('topAtivos');
-            const ativos = [
-                { nome: 'PETR4', resultado: 2640, ops: 8, winRate: 87.5 },
-                { nome: 'ITUB4', resultado: 1520, ops: 6, winRate: 83.3 },
-                { nome: 'BBDC4', resultado: 800, ops: 4, winRate: 75.0 },
-                { nome: 'BBAS3', resultado: 950, ops: 3, winRate: 66.7 },
-                { nome: 'VALE3', resultado: 780, ops: 3, winRate: 33.3 }
-            ];
-            
-            ativos.forEach((ativo, index) => {
-                const cor = index === 0 ? '#FFD700' : index === 1 ? '#C0C0C0' : index === 2 ? '#CD7F32' : '#2196f3';
-                
-                container.innerHTML += `
-                    <div style="background: var(--bg-tertiary); padding: 16px; border-radius: 8px; margin-bottom: 12px; border-left: 4px solid ${cor};">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <div>
-                                <strong>${index + 1}. ${ativo.nome}</strong>
-                                <div style="font-size: 0.75rem; color: var(--text-secondary);">${ativo.ops} operações</div>
-                            </div>
-                            <div class="text-end">
-                                <strong class="status-excellent">R$ ${ativo.resultado.toLocaleString('pt-BR')}</strong>
-                                <div style="font-size: 0.75rem; color: var(--text-secondary);">${ativo.winRate.toFixed(1)}% win rate</div>
-                            </div>
-                        </div>
-                        <div class="progress" style="height: 6px;">
-                            <div class="progress-bar" style="width: ${ativo.winRate}%; background: ${cor};"></div>
-                        </div>
-                    </div>
-                `;
-            });
-        }
-
-        // ==================== CALL vs PUT ====================
-        function renderGraficoCallPut() {
-            const ctx = document.getElementById('graficoCallPut').getContext('2d');
-            
-            new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['CALL', 'PUT'],
-                    datasets: [{
-                        data: [14, 10],
-                        backgroundColor: ['#2196f3', '#ff1744'],
-                        borderWidth: 3,
-                        borderColor: '#1a2142'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: { padding: 15 }
-                        }
-                    }
-                }
-            });
-        }
-
-        // ==================== DRAWDOWN ====================
-        function renderGraficoDrawdown() {
-            const ctx = document.getElementById('graficoDrawdown').getContext('2d');
-            
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
-                    datasets: [{
-                        label: 'Drawdown %',
-                        data: [0, -0.8, -0.3, -1.2, -0.5, -2.1],
-                        borderColor: '#ff1744',
-                        backgroundColor: 'rgba(255, 23, 68, 0.1)',
-                        tension: 0.4,
-                        fill: true,
-                        borderWidth: 3
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
-                    scales: {
-                        y: {
-                            grid: { color: '#2d3561', drawBorder: false },
-                            ticks: {
-                                callback: (value) => value + '%'
-                            }
-                        },
-                        x: {
-                            grid: { display: false, drawBorder: false }
-                        }
-                    }
-                }
-            });
-        }
-
-        // ==================== EXERCÍCIO ====================
-        function renderGraficoExercicio() {
-            const ctx = document.getElementById('graficoExercicio').getContext('2d');
-            
-            new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Não Exercidos', 'Exercidos'],
-                    datasets: [{
-                        data: [71.4, 28.6],
-                        backgroundColor: ['#00e676', '#ff1744'],
-                        borderWidth: 3,
-                        borderColor: '#1a2142'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: { padding: 15 }
-                        }
-                    }
-                }
-            });
-        }
-
-        // ==================== VOLATILIDADE ====================
-        function renderGraficoVolatilidade() {
-            const ctx = document.getElementById('graficoVolatilidade').getContext('2d');
-            
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
-                    datasets: [{
-                        label: 'Volatilidade %',
-                        data: [5.2, 6.8, 5.9, 7.2, 6.1, 6.3],
-                        borderColor: '#ffc400',
-                        backgroundColor: 'rgba(255, 196, 0, 0.1)',
-                        tension: 0.4,
-                        fill: true,
-                        borderWidth: 3
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
-                    scales: {
-                        y: {
-                            grid: { color: '#2d3561', drawBorder: false },
-                            ticks: {
-                                callback: (value) => value + '%'
-                            }
-                        },
-                        x: {
-                            grid: { display: false, drawBorder: false }
-                        }
-                    }
-                }
-            });
-        }
-
-        // ==================== DIA DA SEMANA ====================
-        function renderGraficoDiaSemana() {
-            const ctx = document.getElementById('graficoDiaSemana').getContext('2d');
-            
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta'],
-                    datasets: [{
-                        label: 'Resultado Médio',
-                        data: [310, 345, 385, 520, 380],
-                        backgroundColor: ['#7c4dff', '#7c4dff', '#7c4dff', '#00e676', '#7c4dff'],
-                        borderRadius: 8
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
-                    scales: {
-                        y: {
-                            grid: { color: '#2d3561', drawBorder: false },
-                            ticks: {
-                                callback: (value) => 'R$ ' + value
-                            }
-                        },
-                        x: {
-                            grid: { display: false, drawBorder: false }
-                        }
-                    }
-                }
-            });
-        }
-
-        // ==================== STRIKE ====================
-        function renderGraficoStrike() {
-            const ctx = document.getElementById('graficoStrike').getContext('2d');
-            
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['0-2% OTM', '2-5% OTM', '5-10% OTM', '10-15% OTM', '15%+ OTM'],
-                    datasets: [{
-                        label: 'Resultado Médio',
-                        data: [280, 350, 480, 420, 310],
-                        backgroundColor: ['#7c4dff', '#2196f3', '#00e676', '#2196f3', '#7c4dff'],
-                        borderRadius: 8
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
-                    scales: {
-                        y: {
-                            grid: { color: '#2d3561', drawBorder: false },
-                            ticks: {
-                                callback: (value) => 'R$ ' + value
-                            }
-                        },
-                        x: {
-                            grid: { display: false, drawBorder: false }
-                        }
-                    }
-                }
-            });
-        }
-
-        // ==================== MATRIZ CORRELAÇÃO ====================
-        function renderMatrizCorrelacao() {
-            const container = document.getElementById('matrizCorrelacao');
-            const ativos = ['PETR4', 'VALE3', 'ITUB4', 'BBDC4', 'BBAS3'];
-            const correlacao = [
-                [1.00, 0.65, 0.42, 0.38, 0.51],
-                [0.65, 1.00, 0.33, 0.28, 0.44],
-                [0.42, 0.33, 1.00, 0.82, 0.67],
-                [0.38, 0.28, 0.82, 1.00, 0.71],
-                [0.51, 0.44, 0.67, 0.71, 1.00]
-            ];
-            
-            let html = '<div style="overflow-x: auto;"><table class="table-modern" style="font-size: 0.875rem; min-width: 100%;"><thead><tr><th></th>';
-            ativos.forEach(ativo => html += `<th class="text-center">${ativo}</th>`);
-            html += '</tr></thead><tbody>';
-            
-            ativos.forEach((ativo, i) => {
-                html += `<tr><td><strong>${ativo}</strong></td>`;
-                correlacao[i].forEach(corr => {
-                    const cor = corr >= 0.7 ? '#ff1744' : corr >= 0.4 ? '#ffc400' : '#00e676';
-                    html += `<td class="text-center" style="background: ${cor}20; color: ${cor}; font-weight: 600;">${corr.toFixed(2)}</td>`;
-                });
-                html += '</tr>';
-            });
-            
-            html += '</tbody></table></div>';
-            container.innerHTML = html;
-        }
-
-        // ==================== PRÊMIOS ====================
-        function renderGraficoPremios() {
-            const ctx = document.getElementById('graficoPremios').getContext('2d');
-            
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
-                    datasets: [{
-                        label: 'Prêmio Médio',
-                        data: [356, 363, 360, 378, 368, 286],
-                        borderColor: '#ffc400',
-                        backgroundColor: 'rgba(255, 196, 0, 0.1)',
-                        tension: 0.4,
-                        fill: true,
-                        borderWidth: 3
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
-                    scales: {
-                        y: {
-                            grid: { color: '#2d3561', drawBorder: false },
-                            ticks: {
-                                callback: (value) => 'R$ ' + value
-                            }
-                        },
-                        x: {
-                            grid: { display: false, drawBorder: false }
-                        }
-                    }
-                }
-            });
-        }
-
-        // ==================== PROBABILIDADE ====================
-        function renderGraficoProbabilidade() {
-            const ctx = document.getElementById('graficoProbabilidade').getContext('2d');
-            
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: ['-500', '-400', '-300', '-200', '-100', '0', '100', '200', '300', '400', '500', '600', '700', '800', '900'],
-                    datasets: [{
-                        label: 'Densidade de Probabilidade',
-                        data: [0.5, 1.0, 2.0, 3.5, 5.0, 6.2, 8.5, 9.8, 10.2, 8.7, 6.5, 4.2, 2.8, 1.5, 0.8],
-                        borderColor: '#7c4dff',
-                        backgroundColor: 'rgba(124, 77, 255, 0.2)',
-                        tension: 0.4,
-                        fill: true,
-                        borderWidth: 3,
-                        pointRadius: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
-                    scales: {
-                        y: {
-                            grid: { color: '#2d3561', drawBorder: false },
-                            ticks: { display: false }
-                        },
-                        x: {
-                            grid: { display: false, drawBorder: false },
-                            ticks: {
-                                callback: (value, index) => index % 3 === 0 ? 'R$ ' + this.getLabelForValue(value) : ''
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        // ==================== PROJEÇÃO ====================
-        function renderGraficoProjecao() {
-            const ctx = document.getElementById('graficoProjecao').getContext('2d');
-            
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
-                    datasets: [
-                        {
-                            label: 'Real',
-                            data: [2430, 4230, 6960, 9090, 12190, 13620, null, null, null, null, null, null],
-                            borderColor: '#2196f3',
-                            backgroundColor: 'rgba(33, 150, 243, 0.1)',
-                            tension: 0.4,
-                            fill: true,
-                            borderWidth: 3
-                        },
-                        {
-                            label: 'Projeção',
-                            data: [null, null, null, null, null, 13620, 16250, 19120, 21850, 24600, 27180, 29840],
-                            borderColor: '#00e676',
-                            backgroundColor: 'rgba(0, 230, 118, 0.1)',
-                            borderDash: [5, 5],
-                            tension: 0.4,
-                            fill: true,
-                            borderWidth: 3
-                        },
-                        {
-                            label: 'Meta',
-                            data: Array(12).fill(25000),
-                            borderColor: '#ffc400',
-                            borderDash: [10, 5],
-                            borderWidth: 2,
-                            pointRadius: 0
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                            labels: { padding: 15 }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            grid: { color: '#2d3561', drawBorder: false },
-                            ticks: {
-                                callback: (value) => 'R$ ' + (value / 1000).toFixed(0) + 'k'
-                            }
-                        },
-                        x: {
-                            grid: { display: false, drawBorder: false }
-                        }
-                    }
-                }
-            });
-        }
-
-        // Função para abrir modal
-        function abrirModalOperacoes() {
-            const modal = new bootstrap.Modal(document.getElementById('modalOperacoes'));
-            modal.show();
-        }
-
-        // Inicializar todos os gráficos
-        document.addEventListener('DOMContentLoaded', function() {
-            renderGraficoPatrimonio();
-            renderGraficoDistribuicao();
-            renderGraficoDuracao();
-            renderHeatmap();
-            renderGraficoMensal();
-            renderTabelaMensal();
-            renderGraficoAtivos();
-            renderTopAtivos();
-            renderGraficoCallPut();
-            renderGraficoDrawdown();
-            renderGraficoExercicio();
-            renderGraficoVolatilidade();
-            renderGraficoDiaSemana();
-            renderGraficoStrike();
-            renderMatrizCorrelacao();
-            renderGraficoPremios();
-            renderGraficoProbabilidade();
-            renderGraficoProjecao();
-        });
+        };
     </script>
 </body>
 </html>

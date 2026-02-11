@@ -381,7 +381,7 @@ function populateDetalheModal(op) {
     setText('detStrikeNeutro', formatNumberBR(strike * 0.99));
     setText('detStrikeNeutro2', formatNumberBR(strike));
     
-    const premioUnitario = Number.parseFloat(op.premio || op.preco_entrada || 0);
+    const premioUnitario = Math.abs(Number.parseFloat(op.premio || op.preco_entrada || 0));
     setText('detPremio', formatCurrencyBR(premioUnitario));
     
     const qtdAbs = Math.abs(Number.parseInt(op.quantidade));
@@ -667,7 +667,7 @@ function updateDetalheUI(op, spotPrice, optionPrice) {
     };
     
     const strike = Number.parseFloat(op.strike);
-    const premioAbertura = Number.parseFloat(op.premio || op.preco_entrada || 0);
+    const premioAbertura = Math.abs(Number.parseFloat(op.premio || op.preco_entrada || 0));
     // Preço do ativo base na abertura - NÃO usar preco_entrada que é o prêmio!
     // Se não tiver preco_ativo_base, usar o strike como aproximação inicial
     const precoAbertura = Number.parseFloat(op.preco_ativo_base || op.strike || strike);

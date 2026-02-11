@@ -32,6 +32,41 @@
     border-color: #2d3748;
 }
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* Cores para valores positivos e negativos */
+.value-positive {
+    color: #2fb344 !important;
+}
+
+.value-negative {
+    color: #d63939 !important;
+}
+
+/* Modal Insights - Cards com mesma altura */
+#modalSaldoInsights .row-cards .card {
+    height: 100%;
+    min-height: 120px;
+}
+
+#modalSaldoInsights .card-body {
+    display: flex;
+    flex-direction: column;
+}
+
+#modalSaldoInsights .card-body .mt-auto {
+    margin-top: auto !important;
+}
+
+/* Insights Automáticos */
+#modalSaldoInsights .accordion-body .card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+#modalSaldoInsights .accordion-body .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
 /* Estilos especificos para pagina Opcoes */
 }
 
