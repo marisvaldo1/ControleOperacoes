@@ -67,7 +67,24 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* Estilos especificos para pagina Opcoes */
+#modalSimulacao .table tbody tr.sim-row-highlight {
+    background-color: #182c4d;
+    --bs-table-accent-bg: #182c4d;
+}
+
+#modalSimulacao .table tbody tr.sim-row-highlight td {
+    color: #f1f5f9;
+    font-weight: 600;
+    background-color: #182c4d;
+}
+
+#modalSimulacao .table tbody tr.sim-row-highlight td:first-child {
+    box-shadow: inset 4px 0 0 #3b82f6;
+}
+
+#modalSimulacao .table tbody tr.sim-row-highlight:hover {
+    background-color: #182c4d;
+    --bs-table-accent-bg: #182c4d;
 }
 
 .quotation-table thead {

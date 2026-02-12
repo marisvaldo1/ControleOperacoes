@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import sqlite3
 import requests
+from requests.exceptions import SSLError
 import os
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
@@ -37,6 +38,33 @@ def get_db():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
+
+def get_oplab_verify_mode():
+    mode = os.environ.get('OPLAB_SSL_VERIFY', 'auto').lower()
+    if mode in ('false', '0', 'no'):
+        return False
+    if mode in ('true', '1', 'yes'):
+        return True
+    return 'auto'
+
+def oplab_get(url, headers=None, timeout=10):
+    mode = get_oplab_verify_mode()
+    if mode in (True, False):
+        return requests.get(url, headers=headers, timeout=timeout, verify=mode)
+    try:
+        return requests.get(url, headers=headers, timeout=timeout, verify=True)
+    except SSLError:
+        return requests.get(url, headers=headers, timeout=timeout, verify=False)
+
+def normalize_flask_response(response):
+    if isinstance(response, tuple):
+        resp = response[0]
+        status = response[1] if len(response) > 1 else None
+    else:
+        resp = response
+        status = getattr(resp, 'status_code', None)
+    data = resp.get_json() if hasattr(resp, 'get_json') else resp
+    return resp, status, data
 
 def init_db():
     conn = get_db()
@@ -341,7 +369,7 @@ def proxy_stocks(ticker):
     api_key = os.environ.get('OPLAB_API_KEY', '')
     headers = {'Access-Token': api_key}
     try:
-        r = requests.get(f'https://api.oplab.com.br/v3/market/stocks/{ticker}', headers=headers, timeout=10)
+        r = oplab_get(f'https://api.oplab.com.br/v3/market/stocks/{ticker}', headers=headers, timeout=10)
         return jsonify(r.json()), r.status_code
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -361,7 +389,7 @@ def proxy_options(ticker):
     try:
         # Endpoint 1: options (lista de opções)
         try:
-            r1 = requests.get(f'https://api.oplab.com.br/v3/market/options/{ticker}', headers=headers, timeout=15)
+            r1 = oplab_get(f'https://api.oplab.com.br/v3/market/options/{ticker}', headers=headers, timeout=15)
             if r1.status_code == 200:
                 data1 = r1.json()
                 items = []
@@ -383,7 +411,7 @@ def proxy_options(ticker):
         
         # Endpoint 2: options/details (detalhes das opções - prioridade para dados como volatilidade)
         try:
-            r2 = requests.get(f'https://api.oplab.com.br/v3/market/options/details/{ticker}', headers=headers, timeout=15)
+            r2 = oplab_get(f'https://api.oplab.com.br/v3/market/options/details/{ticker}', headers=headers, timeout=15)
             if r2.status_code == 200:
                 data2 = r2.json()
                 items = []
@@ -409,7 +437,7 @@ def proxy_options(ticker):
         
         # Endpoint 3: Tentar buscar por série (se disponível)
         try:
-            r3 = requests.get(f'https://api.oplab.com.br/v3/market/options/{ticker}/series', headers=headers, timeout=15)
+            r3 = oplab_get(f'https://api.oplab.com.br/v3/market/options/{ticker}/series', headers=headers, timeout=15)
             if r3.status_code == 200:
                 data3 = r3.json()
                 if isinstance(data3, list):
@@ -428,7 +456,7 @@ def proxy_options(ticker):
         # Buscar cotação do ativo base para referência (ATM)
         spot_price = 0.0
         try:
-            r_spot = requests.get(f'https://api.oplab.com.br/v3/market/stocks/{ticker}', headers=headers, timeout=5)
+            r_spot = oplab_get(f'https://api.oplab.com.br/v3/market/stocks/{ticker}', headers=headers, timeout=5)
             if r_spot.status_code == 200:
                 d_spot = r_spot.json()
                 spot_price = float(d_spot.get('close') or d_spot.get('price') or d_spot.get('last') or 0.0)
@@ -516,9 +544,9 @@ def get_hybrid_quote(ticker):
     try:
         # 1. Buscar ativo base em tempo real (yfinance)
         realtime_response = get_realtime_quote(ticker)
-        realtime_data = realtime_response.get_json()
+        _, realtime_status, realtime_data = normalize_flask_response(realtime_response)
         
-        if realtime_response.status_code != 200:
+        if realtime_status and realtime_status != 200:
             # Fallback: usar apenas OpLab
             print(f'Fallback para OpLab - erro yfinance: {realtime_data}')
             return proxy_options(ticker)
@@ -527,12 +555,15 @@ def get_hybrid_quote(ticker):
         
         # 2. Buscar opções (OpLab) - usar função existente
         options_response = proxy_options(ticker)
-        options_data = options_response.get_json()
+        _, options_status, options_data = normalize_flask_response(options_response)
         
-        if options_response.status_code != 200:
+        if options_status and options_status != 200:
             return jsonify({'error': 'Erro ao buscar opções'}), 500
         
-        opcoes = options_data.get('options', [])
+        if isinstance(options_data, dict):
+            opcoes = options_data.get('options', []) or options_data.get('opcoes', [])
+        else:
+            opcoes = options_data or []
         
         # 3. Atualizar preço spot nas opções
         for opcao in opcoes:
@@ -598,13 +629,13 @@ def get_cotacao_opcao():
     
     try:
         # Tentar buscar como stock (muitas vezes funciona para opções individuais)
-        r = requests.get(f'https://api.oplab.com.br/v3/market/stocks/{symbol}', headers=headers, timeout=10)
+        r = oplab_get(f'https://api.oplab.com.br/v3/market/stocks/{symbol}', headers=headers, timeout=10)
         if r.status_code == 200:
             data = r.json()
             return jsonify(data)
             
         # Se falhar, tentar buscar detalhes de opções
-        r2 = requests.get(f'https://api.oplab.com.br/v3/market/options/details/{symbol}', headers=headers, timeout=10)
+        r2 = oplab_get(f'https://api.oplab.com.br/v3/market/options/details/{symbol}', headers=headers, timeout=10)
         if r2.status_code == 200:
             data2 = r2.json()
             # Oplab pode retornar lista ou dict
@@ -815,14 +846,14 @@ def refresh_opcoes_quotes():
         try:
             # Tentar buscar cotação
             # 1. Tentar como stock/option direta
-            r = requests.get(f'https://api.oplab.com.br/v3/market/stocks/{ticker}', headers=headers, timeout=5)
+            r = oplab_get(f'https://api.oplab.com.br/v3/market/stocks/{ticker}', headers=headers, timeout=5)
             if r.status_code == 200:
                 data = r.json()
                 price = data.get('close') or data.get('price') or data.get('last')
             
             # 2. Se falhar, tentar detalhes de opção
             if price is None:
-                r2 = requests.get(f'https://api.oplab.com.br/v3/market/options/details/{ticker}', headers=headers, timeout=5)
+                r2 = oplab_get(f'https://api.oplab.com.br/v3/market/options/details/{ticker}', headers=headers, timeout=5)
                 if r2.status_code == 200:
                     data2 = r2.json()
                     if isinstance(data2, list) and len(data2) > 0:

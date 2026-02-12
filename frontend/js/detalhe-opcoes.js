@@ -42,11 +42,13 @@ function calcularDiasUteisRestantes(dataVencimento) {
     if (!dataVencimento) return 0;
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
-    const vencimento = new Date(dataVencimento);
+    const vencimento = parseDateInput(dataVencimento);
+    if (!vencimento || Number.isNaN(vencimento.getTime())) return 0;
     vencimento.setHours(0, 0, 0, 0);
-    if (vencimento < hoje) return 0;
+    if (vencimento <= hoje) return 0;
     let diasUteis = 0;
     const cursor = new Date(hoje);
+    cursor.setDate(cursor.getDate() + 1);
     while (cursor <= vencimento) {
         const diaSemana = cursor.getDay();
         if (diaSemana !== 0 && diaSemana !== 6) {
@@ -364,8 +366,8 @@ function populateDetalheModal(op) {
     setText('detDiasVencimentoRisco', `${diasVenc} dia${diasVenc !== 1 ? 's' : ''} útil${diasVenc !== 1 ? 's' : ''}`);
     
     // Informações básicas
-    setText('detVencimento', new Date(op.vencimento).toLocaleDateString('pt-BR'));
-    setText('detVencimentoInfo', new Date(op.vencimento).toLocaleDateString('pt-BR'));
+    setText('detVencimento', formatDate(op.vencimento));
+    setText('detVencimentoInfo', formatDate(op.vencimento));
     setText('detStrike', formatCurrencyBR(strike));
     setText('detStrikeCard', formatCurrencyBR(strike));
     setText('detStrikeInfo', formatCurrencyBR(strike));
@@ -406,7 +408,7 @@ function populateDetalheModal(op) {
     setText('detPremioAtualComp', formatCurrencyBR(premioUnitario));
     
     // Data da abertura
-    setText('detDataAbertura', new Date(op.data_operacao).toLocaleDateString('pt-BR'));
+    setText('detDataAbertura', formatDate(op.data_operacao));
     
     // Saldos
     const config = JSON.parse(localStorage.getItem('appConfig') || '{}');
@@ -483,9 +485,12 @@ async function refreshDetalheOperacao(requestId = null) {
         // Verificar se a opção está vencida
         const hoje = new Date();
         hoje.setHours(0, 0, 0, 0);
-        const vencimento = new Date(operacao.vencimento);
-        vencimento.setHours(0, 0, 0, 0);
-        const opcaoVencida = vencimento < hoje;
+        const vencimento = parseDateInput(operacao.vencimento);
+        let opcaoVencida = false;
+        if (vencimento && !Number.isNaN(vencimento.getTime())) {
+            vencimento.setHours(0, 0, 0, 0);
+            opcaoVencida = vencimento < hoje;
+        }
         
         let spotPrice = 0;
         let optionPrice = 0;

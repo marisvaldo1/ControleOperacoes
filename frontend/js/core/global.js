@@ -15,6 +15,12 @@ document.addEventListener('libsLoaded', function() {
             resetOnHover: true
         });
     }
+    if (typeof bootstrap !== 'undefined') {
+        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        tooltipTriggerList.forEach((tooltipTriggerEl) => {
+            new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    }
 });
 
 // Formatar moeda
@@ -54,17 +60,35 @@ function getCurrentDate() {
     return new Date().toISOString().split('T')[0];
 }
 
+function parseDateInput(value) {
+    if (!value) return null;
+    if (value instanceof Date) return value;
+    if (typeof value === 'number') return new Date(value);
+    const str = String(value).trim();
+    const isoDateOnly = /^(\d{4})-(\d{2})-(\d{2})$/;
+    const match = str.match(isoDateOnly);
+    if (match) {
+        const year = Number(match[1]);
+        const month = Number(match[2]) - 1;
+        const day = Number(match[3]);
+        return new Date(year, month, day);
+    }
+    return new Date(str);
+}
+
 // Formatar data para exibicao
 function formatDate(dateStr) {
     if (!dateStr) return '-';
-    const date = new Date(dateStr);
+    const date = parseDateInput(dateStr);
+    if (!date || Number.isNaN(date.getTime())) return '-';
     return date.toLocaleDateString('pt-BR');
 }
 
 // Formatar data para c\u00e9lula de tabela DataTables com atributo data-order
 function formatDateCell(dateStr) {
     if (!dateStr) return '-';
-    const ts = new Date(dateStr).getTime();
+    const date = parseDateInput(dateStr);
+    const ts = date ? date.getTime() : NaN;
     return `<span data-order="${Number.isFinite(ts) ? ts : ''}">${formatDate(dateStr)}</span>`;
 }
 

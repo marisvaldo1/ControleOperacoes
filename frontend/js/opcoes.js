@@ -216,6 +216,45 @@ function forcarUppercase(e) {
     e.target.value = e.target.value.toUpperCase();
 }
 
+const closedFilterState = new Map();
+let closedFilterRegistered = false;
+
+function getStatusText(value) {
+    if (!value) return '';
+    return String(value).replace(/<[^>]*>/g, '').trim().toUpperCase();
+}
+
+function registerClosedFilter() {
+    if (closedFilterRegistered) return;
+    $.fn.dataTable.ext.search.push(function(settings, data) {
+        const tableId = settings.nTable ? settings.nTable.getAttribute('id') : '';
+        const hideClosed = closedFilterState.get(tableId);
+        if (!hideClosed) return true;
+        const statusText = getStatusText(data[13]);
+        return !['FECHADA', 'EXERCIDA', 'VENCIDA'].includes(statusText);
+    });
+    closedFilterRegistered = true;
+}
+
+function addClosedFilterToggle(tableId, dt) {
+    const filterWrap = document.getElementById(`${tableId}_filter`);
+    if (!filterWrap || filterWrap.querySelector('.toggle-fechadas')) return;
+    filterWrap.classList.add('d-flex', 'align-items-center', 'gap-2');
+    const toggle = document.createElement('label');
+    toggle.className = 'form-check form-switch ms-3 d-inline-flex align-items-center toggle-fechadas';
+    toggle.innerHTML = `
+        <input class="form-check-input" type="checkbox" id="${tableId}-toggle-fechadas">
+        <span class="form-check-label ms-2">Operações fechadas</span>
+    `;
+    filterWrap.appendChild(toggle);
+    const checkbox = document.getElementById(`${tableId}-toggle-fechadas`);
+    closedFilterState.set(tableId, false);
+    checkbox.addEventListener('change', () => {
+        closedFilterState.set(tableId, checkbox.checked);
+        dt.draw();
+    });
+}
+
 function initDataTables() {
     const dtConfig = {
         language: {
@@ -245,19 +284,19 @@ function initDataTables() {
         pageLength: 10,
         responsive: false,
         scrollX: true,
-        order: [[9, 'desc']],
+        order: [[10, 'desc']],
         columnDefs: [
             {
-                targets: 9,
+                targets: 10,
                 orderDataType: 'dom-data-order'
             },
             {
-                targets: 13,
+                targets: 14,
                 orderable: false
             }
         ],
         createdRow: function(row, data, dataIndex) {
-            const statusHtml = data[12];
+            const statusHtml = data[13];
             if (statusHtml && (statusHtml.includes('FECHADA') || statusHtml.includes('EXERCIDA'))) {
                 $(row).addClass('op-fechada');
             }
@@ -274,6 +313,9 @@ function initDataTables() {
     
     tableMesAtual = $('#tableMesAtual').DataTable(dtConfig);
     tableHistorico = $('#tableHistorico').DataTable(dtConfig);
+    registerClosedFilter();
+    addClosedFilterToggle('tableMesAtual', tableMesAtual);
+    addClosedFilterToggle('tableHistorico', tableHistorico);
     
     // Ajustar colunas quando a aba do histórico for mostrada
     $('a[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
@@ -450,8 +492,8 @@ async function updateUI() {
     document.getElementById('mesAtualTitle').textContent = `Operacoes - ${getMonthName(currentMonth).replace('-', ' 20')}`;
     
     // Tables (agora são assíncronas)
-    await populateTable(tableMesAtual, mesAtualData, true, true, false); // showActions=true, updatePrices=true, isHistorico=false
-    await populateTable(tableHistorico, allOperacoes, true, false, true); // showActions=true, updatePrices=false, isHistorico=true
+    await populateTable(tableMesAtual, mesAtualData, true, true, false);
+    await populateTable(tableHistorico, allOperacoes, true, true, true);
     
     // Historico mensal
     renderHistoricoMensal();
@@ -485,6 +527,10 @@ async function buscarCotacaoAtivo(ativo) {
     return null;
 }
 
+function getLoadingCell() {
+    return '<span class="spinner-border spinner-border-sm"></span>';
+}
+
 async function populateTable(dt, data, showActions = true, updatePrices = false, isHistorico = false) {
     dt.clear();
     const sorted = [...data].sort((a, b) => {
@@ -502,27 +548,17 @@ async function populateTable(dt, data, showActions = true, updatePrices = false,
                 ativosAbertos.add(op.ativo_base);
             }
         });
-        
-        // Buscar cotações em paralelo
-        const promises = Array.from(ativosAbertos).map(ativo => buscarCotacaoAtivo(ativo));
-        await Promise.all(promises);
-    }
-    
-    sorted.forEach(op => {
+
+        const loadingCell = getLoadingCell();
+        const rowNodes = new Map();
+        sorted.forEach(op => {
         const diasInfo = calcularDias(op.vencimento);
         const qtd = parseFloat(op.quantidade);
         const qtdAbs = Math.abs(qtd);
         
-        // REGRA: Para operações ABERTAS, buscar preço atual da API
+        // REGRA: Para operações ABERTAS, preço atual vem da API (loading até buscar)
         // Para operações FECHADAS/EXERCIDAS/VENCIDAS, usar preco_atual do BANCO
         let precoAtual = op.preco_atual;
-        
-        if (updatePrices && op.status === 'ABERTA' && op.ativo_base) {
-            const cotacao = cotacoesCache.get(op.ativo_base);
-            if (cotacao) {
-                precoAtual = cotacao;
-            }
-        }
         
         // Lógica de Exercício: Calcular baseado em ITM/OTM
         // Só calcula exercício para operações que ainda não venceram ou que estão no vencimento
@@ -580,9 +616,25 @@ async function populateTable(dt, data, showActions = true, updatePrices = false,
         const premioAbs = Math.abs(parseFloatSafe(op.premio));
         const premioValue = premioAbs * qtdAbs;
         
-        dt.row.add([
+        let popCell = '-';
+        let priceCell = precoAtual && !isNaN(parseFloatSafe(precoAtual)) ? `<span class="${parseFloatSafe(precoAtual) >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(parseFloatSafe(precoAtual))}</span>` : '-';
+        const isAbertaComApi = op.status === 'ABERTA' && op.ativo_base;
+        if (isAbertaComApi) {
+            priceCell = loadingCell;
+            popCell = loadingCell;
+        } else {
+            const precoAtualValue = parseFloatSafe(precoAtual);
+            if (op.status === 'ABERTA' && precoAtualValue > 0) {
+                const popValue = calcularPoP(op, precoAtualValue);
+                if (popValue !== null) {
+                    popCell = `${popValue.toFixed(1)}%`;
+                }
+            }
+        }
+        
+        const rowNode = dt.row.add([
             op.ativo_base ? `<span class="badge bg-azure text-azure-fg">${op.ativo_base}</span>` : '-',
-            precoAtual && !isNaN(parseFloatSafe(precoAtual)) ? `<span class="${parseFloatSafe(precoAtual) >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(parseFloatSafe(precoAtual))}</span>` : 'R$ 0,00',
+            priceCell,
             `<span class="${parseFloatSafe(op.preco_entrada) >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(parseFloatSafe(op.preco_entrada))}</span>`,
             op.ativo,
             `<span class="badge ${op.tipo === 'CALL' ? 'bg-green text-green-fg' : 'bg-red text-red-fg'}">${op.tipo}</span>`,
@@ -590,7 +642,103 @@ async function populateTable(dt, data, showActions = true, updatePrices = false,
             formatCurrency(parseFloatSafe(op.strike)),
             `<span class="${premioValue >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(premioAbs)}</span>`,
             `<span class="${parseFloatSafe(op.resultado) >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(parseFloatSafe(op.resultado))}</span>`,
+            popCell,
             formatDateCell(op.vencimento),  // Vencimento com timestamp para ordenação correta
+            `${diasInfo.uteis} / ${diasInfo.corridos}`,
+            gerarBadgeExercicio(exercicio, op.status),
+            `<span class="badge ${op.status === 'ABERTA' ? 'bg-green text-green-fg' : 'bg-default text-default-fg'}">${op.status}</span>`,
+            actionsHtml
+        ]).node();
+        if (rowNode) {
+            rowNode.dataset.opId = op.id;
+            rowNodes.set(String(op.id), rowNode);
+        }
+    });
+        dt.draw();
+        
+        if (ativosAbertos.size > 0) {
+            const promises = Array.from(ativosAbertos).map(ativo => buscarCotacaoAtivo(ativo));
+            await Promise.all(promises);
+        }
+        
+        sorted.forEach(op => {
+            if (op.status !== 'ABERTA' || !op.ativo_base) return;
+            const rowNode = rowNodes.get(String(op.id));
+            if (!rowNode) return;
+            const cotacao = cotacoesCache.get(op.ativo_base);
+            const precoAtualValue = parseFloatSafe(cotacao);
+            const priceCellUpdated = Number.isFinite(precoAtualValue) && precoAtualValue > 0
+                ? `<span class="${precoAtualValue >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(precoAtualValue)}</span>`
+                : '-';
+            let popCellUpdated = '-';
+            if (precoAtualValue > 0) {
+                const popValue = calcularPoP(op, precoAtualValue);
+                if (popValue !== null) {
+                    popCellUpdated = `${popValue.toFixed(1)}%`;
+                }
+            }
+            dt.cell(rowNode, 1).data(priceCellUpdated);
+            dt.cell(rowNode, 9).data(popCellUpdated);
+        });
+        dt.draw(false);
+        return;
+    }
+    
+    sorted.forEach(op => {
+        const diasInfo = calcularDias(op.vencimento);
+        const qtd = parseFloat(op.quantidade);
+        const qtdAbs = Math.abs(qtd);
+        
+        let precoAtual = op.preco_atual;
+        let popCell = '-';
+        const precoAtualValue = parseFloatSafe(precoAtual);
+        if (op.status === 'ABERTA' && precoAtualValue > 0) {
+            const popValue = calcularPoP(op, precoAtualValue);
+            if (popValue !== null) {
+                popCell = `${popValue.toFixed(1)}%`;
+            }
+        }
+        
+        let actionsHtml = '';
+        if (showActions) {
+            if (isHistorico) {
+                actionsHtml = `<div class="btn-list flex-nowrap">
+                    <button class="btn btn-sm btn-info btn-icon" onclick="openDetalheOperacao('${op.id}')" title="Detalhes">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                    </button>
+                 </div>`;
+            } else {
+                const isFechada = op.status && (op.status.toUpperCase() === 'FECHADA' || op.status.toUpperCase() === 'EXERCIDA' || op.status.toUpperCase() === 'VENCIDA');
+                actionsHtml = `<div class="btn-list flex-nowrap">
+                    <button class="btn btn-sm btn-info btn-icon" onclick="openDetalheOperacao('${op.id}')" title="Detalhes">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                    </button>
+                    <button class="btn btn-sm btn-primary btn-icon" onclick="editOperacao('${op.id}')" title="Editar">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                    ${!isFechada ? `<button class="btn btn-sm btn-danger btn-icon" onclick="deleteOperacao('${op.id}')" title="Excluir">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                    </button>` : ''}
+                 </div>`;
+            }
+        }
+        
+        const isVenda = op.tipo_operacao === 'VENDA' || (op.tipo_operacao === undefined && qtd < 0);
+        const premioAbs = Math.abs(parseFloatSafe(op.premio));
+        const premioValue = premioAbs * qtdAbs;
+        
+        dt.row.add([
+            op.ativo_base ? `<span class="badge bg-azure text-azure-fg">${op.ativo_base}</span>` : '-',
+            precoAtual && !isNaN(parseFloatSafe(precoAtual)) ? `<span class="${parseFloatSafe(precoAtual) >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(parseFloatSafe(precoAtual))}</span>` : '-',
+            `<span class="${parseFloatSafe(op.preco_entrada) >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(parseFloatSafe(op.preco_entrada))}</span>`,
+            op.ativo,
+            `<span class="badge ${op.tipo === 'CALL' ? 'bg-green text-green-fg' : 'bg-red text-red-fg'}">${op.tipo}</span>`,
+            op.quantidade,
+            formatCurrency(parseFloatSafe(op.strike)),
+            `<span class="${premioValue >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(premioAbs)}</span>`,
+            `<span class="${parseFloatSafe(op.resultado) >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(parseFloatSafe(op.resultado))}</span>`,
+            popCell,
+            formatDateCell(op.vencimento),
             `${diasInfo.uteis} / ${diasInfo.corridos}`,
             gerarBadgeExercicio(exercicio, op.status),
             `<span class="badge ${op.status === 'ABERTA' ? 'bg-green text-green-fg' : 'bg-default text-default-fg'}">${op.status}</span>`,
@@ -606,27 +754,79 @@ function calcularDias(vencimento) {
     if (!vencimento) return { uteis: '-', corridos: '-' };
     const today = new Date();
     today.setHours(0,0,0,0);
-    const venc = new Date(vencimento);
+    const venc = parseDateInput(vencimento);
+    if (!venc || Number.isNaN(venc.getTime())) return { uteis: '-', corridos: '-' };
     venc.setHours(0,0,0,0);
+    if (venc <= today) return { uteis: 0, corridos: 0 };
     
     // Dias Corridos
     const diffTime = venc - today;
-    const diffDays = venc >= today ? Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1 : 0;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
     // Dias Úteis (Iteração mais precisa)
     let businessDays = 0;
-    if (venc >= today) {
-        const cursor = new Date(today);
-        while (cursor <= venc) {
-            const diaSemana = cursor.getDay();
-            if (diaSemana !== 0 && diaSemana !== 6) {
-                businessDays += 1;
-            }
-            cursor.setDate(cursor.getDate() + 1);
+    const cursor = new Date(today);
+    cursor.setDate(cursor.getDate() + 1);
+    while (cursor <= venc) {
+        const diaSemana = cursor.getDay();
+        if (diaSemana !== 0 && diaSemana !== 6) {
+            businessDays += 1;
         }
+        cursor.setDate(cursor.getDate() + 1);
     }
     
     return { uteis: businessDays, corridos: diffDays };
+}
+
+function normalizeSigma(value) {
+    if (!value && value !== 0) return null;
+    let sigma = parseFloatSafe(value);
+    if (!Number.isFinite(sigma) || sigma <= 0) return null;
+    if (sigma > 3) sigma = sigma / 100;
+    return sigma;
+}
+
+function calcularPoP(op, spotPrice) {
+    const strike = parseFloatSafe(op.strike);
+    const premioEntry = parseFloatSafe(op.premio || op.preco_entrada || 0);
+    const qtd = parseFloatSafe(op.quantidade);
+    const tipo = op.tipo || (op.ativo && op.ativo.includes('PUT') ? 'PUT' : 'CALL');
+    if (!strike || !spotPrice || !tipo) return null;
+    const isVenda = op.tipo_operacao === 'VENDA' || (op.tipo_operacao === undefined && qtd < 0);
+    const diasUteis = calcularDias(op.vencimento).uteis;
+    const T = Math.max(diasUteis / 252.0, 0.0001);
+    const r = 0.1075;
+    const sigma = normalizeSigma(op.implied_volatility || op.iv || 0.3) || 0.3;
+    let be = 0;
+    
+    if (tipo === 'PUT') {
+        be = strike - premioEntry;
+    } else {
+        be = strike + premioEntry;
+    }
+    
+    let prob = 0;
+    if (be <= 0.001 || spotPrice <= 0.001) {
+        if (!isVenda && tipo === 'PUT') prob = 0;
+        else if (isVenda && tipo === 'PUT') prob = 1;
+        else prob = 0;
+    } else if (T <= 0.001) {
+        if (tipo === 'CALL') {
+            prob = isVenda ? (spotPrice <= be ? 1 : 0) : (spotPrice >= be ? 1 : 0);
+        } else {
+            prob = isVenda ? (spotPrice >= be ? 1 : 0) : (spotPrice <= be ? 1 : 0);
+        }
+    } else {
+        const d1_be = (Math.log(spotPrice / be) + (r + sigma * sigma / 2) * T) / (sigma * Math.sqrt(T));
+        const d2_be = d1_be - sigma * Math.sqrt(T);
+        if (tipo === 'CALL') {
+            prob = isVenda ? cdf(-d2_be) : cdf(d2_be);
+        } else {
+            prob = isVenda ? cdf(d2_be) : cdf(-d2_be);
+        }
+    }
+    
+    return Math.max(0, Math.min(1, prob)) * 100;
 }
 function openNewModal() {
     document.getElementById('formOperacao').reset();
@@ -882,9 +1082,12 @@ async function buscarDadosOpcao(ativo) {
 
             const vencimento = opcao.vencimento || opcao.expiryDate;
             if (vencimento) {
-                let vencimentoDate = new Date(vencimento);
-                if (!isNaN(vencimentoDate.getTime())) {
-                    document.getElementById('inputVencimento').value = vencimentoDate.toISOString().split('T')[0];
+                let vencimentoDate = parseDateInput(vencimento);
+                if (vencimentoDate && !isNaN(vencimentoDate.getTime())) {
+                    const yyyy = vencimentoDate.getFullYear();
+                    const mm = String(vencimentoDate.getMonth() + 1).padStart(2, '0');
+                    const dd = String(vencimentoDate.getDate()).padStart(2, '0');
+                    document.getElementById('inputVencimento').value = `${yyyy}-${mm}-${dd}`;
                 } else {
                     document.getElementById('inputVencimento').value = originalValues['inputVencimento'];
                 }
@@ -1310,6 +1513,7 @@ async function refreshQuotes() {
         btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
     }
     try {
+        cotacoesCache.clear();
         await loadOperacoes();
         updateMarketStatus();
         const modal = document.getElementById('modalDetalheOpcao');
@@ -2474,8 +2678,11 @@ function updateSaldoInsights(ops) {
         totalSaldo += saldoInfo.saldo;
 
         if (op.data_operacao && op.vencimento) {
-            const inicio = new Date(op.data_operacao);
-            const fim = new Date(op.vencimento);
+            const inicio = parseDateInput(op.data_operacao);
+            const fim = parseDateInput(op.vencimento);
+            if (!inicio || !fim || Number.isNaN(inicio.getTime()) || Number.isNaN(fim.getTime())) {
+                return;
+            }
             const diff = Math.round((fim - inicio) / (1000 * 60 * 60 * 24));
             if (!isNaN(diff)) {
                 totalDias += diff;
@@ -3411,7 +3618,7 @@ async function buscarOpcoesSimulacaoHibrida() {
             vencimentos.forEach(venc => {
                 const opt = document.createElement('option');
                 opt.value = venc;
-                opt.textContent = new Date(venc + 'T00:00:00').toLocaleDateString('pt-BR');
+                opt.textContent = formatDate(venc);
                 if (venc === nextVenc) opt.selected = true;
                 selectVencimento.appendChild(opt);
             });
@@ -3737,9 +3944,7 @@ function renderSimOpcoesList() {
         tr.onclick = () => selectSimOption(op);
         
         if (isATM) {
-            // Apply style to TR and force all TD children to inherit or match
-            tr.setAttribute('style', 'background-color: #ffffff !important; color: #000000 !important; font-weight: bold; --bs-table-accent-bg: #ffffff !important; cursor: pointer !important;');
-            tr.className = 'table-light fw-bold text-dark'; // Bootstrap classes as backup
+            tr.classList.add('sim-row-highlight');
             tr.id = 'simAtmRow'; // Mark for scrolling
         }
 
@@ -3820,14 +4025,14 @@ function renderSimOpcoesList() {
         }
 
         tr.innerHTML = `
-            <td ${isATM ? 'style="color: #000 !important;"' : ''}>${op.ativo}</td>
-            <td ${isATM ? 'style="color: #000 !important;"' : ''}>${strikeVal.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})}</td>
-            <td ${isATM ? 'style="color: #000 !important;"' : ''}>${parseFloat(op.premio || 0).toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})}</td>
-            <td ${isATM ? 'style="color: #000 !important;"' : ''}>
+            <td>${op.ativo}</td>
+            <td>${strikeVal.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})}</td>
+            <td>${parseFloat(op.premio || 0).toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})}</td>
+            <td>
                 ${deltaVal.toFixed(2)}
                 <span style="cursor: pointer; margin-left: 5px;" onclick="event.stopPropagation(); mostrarDetalhesOpcao('${op.ativo}')">📋</span>
             </td>
-            <td ${isATM ? 'style="color: #000 !important;"' : ''}>${popPercent}</td>
+            <td>${popPercent}</td>
         `;
         tbody.appendChild(tr);
     });
