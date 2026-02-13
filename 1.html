@@ -1,0 +1,2345 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Financeiro - Hero Expandido</title>
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <style>
+        :root {
+            --profit: #2fb344;
+            --loss: #d63939;
+            --neutral: #626976;
+        }
+        
+        .modal-xxl { max-width: 1400px; }
+        
+        /* ===== HERO SECTION ===== */
+        .hero-section {
+            background: linear-gradient(135deg, #1a2744 0%, #0f172a 100%);
+            border-radius: 16px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--tblr-primary), var(--profit), var(--tblr-primary));
+        }
+        
+        .hero-section.negative::before {
+            background: linear-gradient(90deg, var(--loss), #ff6b6b, var(--loss));
+        }
+        
+        .hero-main-value {
+            font-size: 2.75rem;
+            font-weight: 700;
+            letter-spacing: -1px;
+            line-height: 1;
+        }
+        
+        .hero-label {
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.6);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .hero-divider {
+            width: 1px;
+            background: rgba(255,255,255,0.1);
+            align-self: stretch;
+            margin: 0 1.5rem;
+        }
+        
+        .hero-stat {
+            text-align: center;
+        }
+        
+        .hero-stat-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .hero-stat-label {
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.5);
+            text-transform: uppercase;
+        }
+        
+        /* ===== STREAK BADGE ===== */
+        .streak-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            animation: pulse-glow 2s infinite;
+        }
+        
+        .streak-badge.hot {
+            background: linear-gradient(135deg, rgba(255, 136, 0, 0.25) 0%, rgba(255, 68, 0, 0.15) 100%);
+            border: 1px solid rgba(255, 136, 0, 0.5);
+            color: #ff9500;
+        }
+        
+        .streak-badge.cold {
+            background: rgba(59, 130, 246, 0.15);
+            border: 1px solid rgba(59, 130, 246, 0.4);
+            color: #60a5fa;
+        }
+        
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 15px rgba(255, 136, 0, 0.2); }
+            50% { box-shadow: 0 0 25px rgba(255, 136, 0, 0.4); }
+        }
+        
+        /* ===== PERIOD SELECTOR ===== */
+        .period-selector {
+            display: flex;
+            gap: 4px;
+            padding: 4px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            border: 1px solid var(--tblr-border-color);
+        }
+        
+        .period-btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--tblr-muted);
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .period-btn:hover {
+            color: var(--tblr-body-color);
+            background: rgba(255,255,255,0.05);
+        }
+        
+        .period-btn.active {
+            background: var(--tblr-primary);
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(32, 107, 196, 0.4);
+        }
+        
+        /* ===== KPI CARDS ===== */
+        .kpi-card {
+            background: var(--tblr-bg-surface);
+            border: 1px solid var(--tblr-border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+            height: 100%;
+            transition: all 0.25s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .kpi-card:hover {
+            border-color: var(--tblr-primary);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+        
+        .kpi-card.highlight {
+            border-color: var(--profit);
+            background: linear-gradient(135deg, rgba(47, 179, 68, 0.08) 0%, transparent 100%);
+        }
+        
+        .kpi-card.warning {
+            border-color: var(--tblr-warning);
+            background: linear-gradient(135deg, rgba(245, 159, 0, 0.08) 0%, transparent 100%);
+        }
+        
+        .kpi-card.danger {
+            border-color: var(--loss);
+            background: linear-gradient(135deg, rgba(214, 57, 57, 0.08) 0%, transparent 100%);
+        }
+        
+        .kpi-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+        }
+        
+        .kpi-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+        
+        .kpi-label {
+            font-size: 0.75rem;
+            color: var(--tblr-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .kpi-change {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            padding: 3px 8px;
+            border-radius: 6px;
+            margin-top: 0.5rem;
+        }
+        
+        .kpi-change.up {
+            background: rgba(47, 179, 68, 0.15);
+            color: var(--profit);
+        }
+        
+        .kpi-change.down {
+            background: rgba(214, 57, 57, 0.15);
+            color: var(--loss);
+        }
+        
+        .kpi-tooltip {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            color: var(--tblr-muted);
+            cursor: help;
+            font-size: 0.875rem;
+        }
+        
+        /* ===== PROGRESS RING ===== */
+        .progress-ring-wrapper {
+            position: relative;
+            width: 130px;
+            height: 130px;
+        }
+        
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+        
+        .progress-ring-bg {
+            fill: none;
+            stroke: var(--tblr-border-color);
+            stroke-width: 10;
+        }
+        
+        .progress-ring-fill {
+            fill: none;
+            stroke-width: 10;
+            stroke-linecap: round;
+            stroke-dasharray: 377;
+            transition: stroke-dashoffset 1s ease;
+        }
+        
+        .progress-ring-fill.success { stroke: var(--profit); }
+        .progress-ring-fill.danger { stroke: var(--loss); }
+        
+        .progress-ring-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+        
+        .progress-ring-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+        
+        .progress-ring-label {
+            font-size: 0.65rem;
+            color: var(--tblr-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        /* ===== SPARKLINE ===== */
+        .sparkline-container {
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+            padding: 1rem;
+        }
+        
+        .sparkline {
+            display: flex;
+            align-items: flex-end;
+            gap: 3px;
+            height: 60px;
+        }
+        
+        .sparkline-bar {
+            flex: 1;
+            border-radius: 3px 3px 0 0;
+            min-height: 4px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .sparkline-bar:hover {
+            transform: scaleY(1.1);
+            filter: brightness(1.2);
+        }
+        
+        .sparkline-bar.win { background: linear-gradient(to top, var(--profit), #4ade80); }
+        .sparkline-bar.loss { background: linear-gradient(to top, var(--loss), #f87171); }
+        
+        /* ===== RATIO BAR ===== */
+        .ratio-bar {
+            display: flex;
+            height: 10px;
+            border-radius: 5px;
+            overflow: hidden;
+            background: var(--tblr-border-color);
+        }
+        
+        .ratio-segment {
+            transition: width 0.5s ease;
+        }
+        
+        .ratio-segment.win { background: var(--profit); }
+        .ratio-segment.loss { background: var(--loss); }
+        
+        /* ===== TABS CUSTOM ===== */
+        .nav-tabs-custom {
+            border-bottom: 2px solid var(--tblr-border-color);
+            gap: 0;
+        }
+        
+        .nav-tabs-custom .nav-link {
+            border: none;
+            border-bottom: 3px solid transparent;
+            border-radius: 0;
+            padding: 1rem 1.5rem;
+            color: var(--tblr-muted);
+            font-weight: 500;
+            margin-bottom: -2px;
+            transition: all 0.2s ease;
+        }
+        
+        .nav-tabs-custom .nav-link:hover {
+            color: var(--tblr-body-color);
+            border-bottom-color: rgba(32, 107, 196, 0.3);
+        }
+        
+        .nav-tabs-custom .nav-link.active {
+            color: var(--tblr-primary);
+            border-bottom-color: var(--tblr-primary);
+            background: transparent;
+        }
+        
+        .nav-tabs-custom .nav-link i {
+            margin-right: 8px;
+        }
+        
+        /* ===== RECORD CARDS ===== */
+        .record-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--tblr-border-color);
+            margin-bottom: 0.75rem;
+            transition: all 0.2s ease;
+        }
+        
+        .record-item:hover {
+            background: rgba(255,255,255,0.04);
+            border-color: var(--tblr-primary);
+        }
+        
+        .record-item.best {
+            border-left: 4px solid var(--profit);
+        }
+        
+        .record-item.worst {
+            border-left: 4px solid var(--loss);
+        }
+        
+        .record-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+        }
+        
+        .record-value {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+        
+        .record-label {
+            font-size: 0.75rem;
+            color: var(--tblr-muted);
+        }
+        
+        .record-meta {
+            font-size: 0.7rem;
+            color: var(--tblr-muted);
+        }
+        
+        /* ===== COMPARISON TABLE ===== */
+        .comparison-row {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr 1fr 100px;
+            gap: 1rem;
+            padding: 0.875rem 0;
+            border-bottom: 1px solid var(--tblr-border-color);
+            align-items: center;
+        }
+        
+        .comparison-row:last-child {
+            border-bottom: none;
+        }
+        
+        .comparison-row .metric-name {
+            font-weight: 500;
+        }
+        
+        .comparison-row .prev-value {
+            color: var(--tblr-muted);
+        }
+        
+        .comparison-row .curr-value {
+            font-weight: 600;
+        }
+        
+        .comparison-change {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+        
+        .comparison-change.positive {
+            background: rgba(47, 179, 68, 0.15);
+            color: var(--profit);
+        }
+        
+        .comparison-change.negative {
+            background: rgba(214, 57, 57, 0.15);
+            color: var(--loss);
+        }
+        
+        /* ===== ASSET ROW ===== */
+        .asset-card {
+            padding: 1.25rem;
+            border-radius: 12px;
+            background: var(--tblr-bg-surface);
+            border: 1px solid var(--tblr-border-color);
+            margin-bottom: 1rem;
+            transition: all 0.2s ease;
+        }
+        
+        .asset-card:hover {
+            border-color: var(--tblr-primary);
+        }
+        
+        .asset-badge {
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+        
+        /* ===== INSIGHT CARD ===== */
+        .insight-card {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem 1.25rem;
+            border-radius: 10px;
+            border-left: 4px solid;
+            background: rgba(255,255,255,0.02);
+            margin-bottom: 0.875rem;
+            transition: all 0.2s ease;
+        }
+        
+        .insight-card:hover {
+            background: rgba(255,255,255,0.04);
+        }
+        
+        .insight-card.success { border-left-color: var(--profit); }
+        .insight-card.warning { border-left-color: var(--tblr-warning); }
+        .insight-card.danger { border-left-color: var(--loss); }
+        .insight-card.info { border-left-color: var(--tblr-info); }
+        
+        .insight-icon {
+            font-size: 1.5rem;
+            line-height: 1;
+        }
+        
+        .insight-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .insight-text {
+            font-size: 0.875rem;
+            color: var(--tblr-muted);
+            line-height: 1.5;
+        }
+        
+        /* ===== HEAT CALENDAR ===== */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+        }
+        
+        .calendar-day {
+            aspect-ratio: 1;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            position: relative;
+        }
+        
+        .calendar-day:hover {
+            transform: scale(1.15);
+            z-index: 5;
+        }
+        
+        .calendar-day.p5 { background: var(--profit); color: #fff; box-shadow: 0 0 10px rgba(47, 179, 68, 0.4); }
+        .calendar-day.p4 { background: rgba(47, 179, 68, 0.8); color: #fff; }
+        .calendar-day.p3 { background: rgba(47, 179, 68, 0.6); }
+        .calendar-day.p2 { background: rgba(47, 179, 68, 0.4); }
+        .calendar-day.p1 { background: rgba(47, 179, 68, 0.2); }
+        .calendar-day.n { background: var(--tblr-border-color); color: var(--tblr-muted); }
+        .calendar-day.l1 { background: rgba(214, 57, 57, 0.2); }
+        .calendar-day.l2 { background: rgba(214, 57, 57, 0.4); }
+        .calendar-day.l3 { background: rgba(214, 57, 57, 0.6); }
+        .calendar-day.l4 { background: rgba(214, 57, 57, 0.8); color: #fff; }
+        .calendar-day.l5 { background: var(--loss); color: #fff; box-shadow: 0 0 10px rgba(214, 57, 57, 0.4); }
+        
+        /* ===== RANKING LIST ===== */
+        .ranking-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--tblr-border-color);
+            margin-bottom: 0.5rem;
+            transition: all 0.2s ease;
+        }
+        
+        .ranking-item:hover {
+            background: rgba(255,255,255,0.04);
+            border-color: var(--tblr-primary);
+        }
+        
+        .ranking-position {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.875rem;
+        }
+        
+        .ranking-position.gold { 
+            background: linear-gradient(135deg, #ffd700, #ffaa00); 
+            color: #000; 
+            box-shadow: 0 2px 10px rgba(255, 215, 0, 0.4);
+        }
+        .ranking-position.silver { background: linear-gradient(135deg, #e8e8e8, #b8b8b8); color: #000; }
+        .ranking-position.bronze { background: linear-gradient(135deg, #cd7f32, #b87333); color: #fff; }
+        .ranking-position.default { background: var(--tblr-border-color); color: var(--tblr-muted); }
+        
+        /* ===== GOAL CARD ===== */
+        .goal-card {
+            padding: 1.25rem;
+            border-radius: 12px;
+            background: var(--tblr-bg-surface);
+            border: 1px solid var(--tblr-border-color);
+        }
+        
+        .goal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .goal-title {
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .goal-percentage {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+        
+        .goal-progress {
+            height: 8px;
+            border-radius: 4px;
+            background: var(--tblr-border-color);
+            overflow: hidden;
+            margin-bottom: 0.75rem;
+        }
+        
+        .goal-progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        
+        .goal-progress-fill.success {
+            background: linear-gradient(90deg, var(--tblr-primary), var(--profit));
+        }
+        
+        .goal-progress-fill.warning {
+            background: linear-gradient(90deg, var(--tblr-warning), #fbbf24);
+        }
+        
+        .goal-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: var(--tblr-muted);
+        }
+        
+        /* ===== STATUS LIVE ===== */
+        .status-live {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            color: var(--profit);
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--profit);
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.9); }
+        }
+        
+        /* ===== SECTION HEADER ===== */
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--tblr-border-color);
+        }
+        
+        .section-header h4 {
+            margin: 0;
+            font-weight: 600;
+        }
+        
+        .section-header .section-icon {
+            color: var(--tblr-primary);
+            font-size: 1.25rem;
+        }
+        
+        /* ===== QUICK STATS GRID ===== */
+        .quick-stat {
+            text-align: center;
+            padding: 1rem;
+            background: rgba(255,255,255,0.02);
+            border-radius: 10px;
+            border: 1px solid var(--tblr-border-color);
+        }
+        
+        .quick-stat:hover {
+            border-color: var(--tblr-primary);
+        }
+        
+        .quick-stat-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 0.5rem;
+            font-size: 1.1rem;
+        }
+        
+        .quick-stat-value {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+        
+        .quick-stat-label {
+            font-size: 0.7rem;
+            color: var(--tblr-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container py-5 text-center">
+    <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#dashboardHero">
+        <i class="ti ti-chart-pie me-2"></i>Dashboard Hero Expandido
+    </button>
+</div>
+
+<!-- MODAL PRINCIPAL -->
+<div class="modal modal-blur fade" id="dashboardHero" tabindex="-1">
+    <div class="modal-dialog modal-xxl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            
+            <!-- ===== HEADER ===== -->
+            <div class="modal-header border-0 pb-0">
+                <div class="d-flex align-items-center gap-3">
+                    <span class="avatar avatar-lg bg-primary">
+                        <i class="ti ti-report-analytics fs-2"></i>
+                    </span>
+                    <div>
+                        <h3 class="modal-title mb-0">Central de Performance</h3>
+                        <div class="d-flex align-items-center gap-3 mt-1">
+                            <span class="status-live">
+                                <span class="status-dot"></span>
+                                Tempo real
+                            </span>
+                            <span class="text-muted small">
+                                Atualizado há 2 min
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <div class="period-selector">
+                        <button class="period-btn">7D</button>
+                        <button class="period-btn active">30D</button>
+                        <button class="period-btn">60D</button>
+                        <button class="period-btn">90D</button>
+                        <button class="period-btn">MTD</button>
+                        <button class="period-btn">YTD</button>
+                        <button class="period-btn">12M</button>
+                        <button class="period-btn">
+                            <i class="ti ti-calendar"></i>
+                        </button>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn btn-icon btn-ghost-secondary" data-bs-toggle="dropdown">
+                            <i class="ti ti-dots-vertical"></i>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end">
+                            <a class="dropdown-item" href="#">
+                                <i class="ti ti-download me-2"></i>Exportar PDF
+                            </a>
+                            <a class="dropdown-item" href="#">
+                                <i class="ti ti-file-spreadsheet me-2"></i>Exportar Excel
+                            </a>
+                            <a class="dropdown-item" href="#">
+                                <i class="ti ti-share me-2"></i>Compartilhar
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="#">
+                                <i class="ti ti-printer me-2"></i>Imprimir
+                            </a>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+            </div>
+            
+            <!-- ===== HERO SECTION ===== -->
+            <div class="modal-body pt-3 pb-0">
+                <div class="hero-section mb-4">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-4">
+                        <!-- Resultado Principal -->
+                        <div>
+                            <div class="hero-label">Resultado do Período</div>
+                            <div class="d-flex align-items-end gap-3">
+                                <span class="hero-main-value text-success">+ R$ 2.340,00</span>
+                                <span class="streak-badge hot">
+                                    <i class="ti ti-flame"></i>
+                                    5 wins seguidos
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="hero-divider d-none d-lg-block"></div>
+                        
+                        <!-- Stats Row -->
+                        <div class="d-flex gap-4 flex-wrap">
+                            <div class="hero-stat">
+                                <div class="hero-stat-value">R$ 15.847</div>
+                                <div class="hero-stat-label">
+                                    <i class="ti ti-wallet me-1"></i>Saldo Atual
+                                </div>
+                            </div>
+                            <div class="hero-stat">
+                                <div class="hero-stat-value text-success">+17,3%</div>
+                                <div class="hero-stat-label">
+                                    <i class="ti ti-trending-up me-1"></i>ROI
+                                </div>
+                            </div>
+                            <div class="hero-stat">
+                                <div class="hero-stat-value">42</div>
+                                <div class="hero-stat-label">
+                                    <i class="ti ti-list-numbers me-1"></i>Operações
+                                </div>
+                            </div>
+                            <div class="hero-stat">
+                                <div class="hero-stat-value text-success">68,4%</div>
+                                <div class="hero-stat-label">
+                                    <i class="ti ti-target me-1"></i>Win Rate
+                                </div>
+                            </div>
+                            <div class="hero-stat">
+                                <div class="hero-stat-value">3.05x</div>
+                                <div class="hero-stat-label">
+                                    <i class="ti ti-scale me-1"></i>Profit Factor
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- ===== TABS ===== -->
+            <div class="px-4">
+                <ul class="nav nav-tabs-custom" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" data-bs-toggle="tab" href="#tabOverview">
+                            <i class="ti ti-layout-dashboard"></i>Visão Geral
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#tabMetrics">
+                            <i class="ti ti-calculator"></i>Métricas
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#tabCharts">
+                            <i class="ti ti-chart-area"></i>Gráficos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#tabAnalysis">
+                            <i class="ti ti-bulb"></i>Análise
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#tabCalendar">
+                            <i class="ti ti-calendar-stats"></i>Calendário
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#tabRecords">
+                            <i class="ti ti-trophy"></i>Recordes
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#tabGoals">
+                            <i class="ti ti-target"></i>Metas
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#tabHistory">
+                            <i class="ti ti-history"></i>Histórico
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- ===== TAB CONTENT ===== -->
+            <div class="modal-body" style="max-height: 55vh; overflow-y: auto;">
+                <div class="tab-content">
+                    
+                    <!-- TAB: Visão Geral -->
+                    <div class="tab-pane active" id="tabOverview">
+                        <div class="row g-4">
+                            <!-- KPI Cards - Primeira Linha -->
+                            <div class="col-lg-3 col-md-6">
+                                <div class="kpi-card highlight">
+                                    <span class="kpi-tooltip" title="Total de ganhos no período">
+                                        <i class="ti ti-info-circle"></i>
+                                    </span>
+                                    <div class="d-flex align-items-center gap-3 mb-2">
+                                        <div class="kpi-icon bg-success-lt text-success">
+                                            <i class="ti ti-trending-up"></i>
+                                        </div>
+                                        <div>
+                                            <div class="kpi-value text-success">R$ 3.480</div>
+                                            <div class="kpi-label">Total Gains</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-muted small">29 operações vencedoras</div>
+                                    <div class="kpi-change up">
+                                        <i class="ti ti-arrow-up"></i>+18,5% vs anterior
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-lg-3 col-md-6">
+                                <div class="kpi-card danger">
+                                    <span class="kpi-tooltip" title="Total de perdas no período">
+                                        <i class="ti ti-info-circle"></i>
+                                    </span>
+                                    <div class="d-flex align-items-center gap-3 mb-2">
+                                        <div class="kpi-icon bg-danger-lt text-danger">
+                                            <i class="ti ti-trending-down"></i>
+                                        </div>
+                                        <div>
+                                            <div class="kpi-value text-danger">R$ 1.140</div>
+                                            <div class="kpi-label">Total Losses</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-muted small">13 operações perdedoras</div>
+                                    <div class="kpi-change down">
+                                        <i class="ti ti-arrow-down"></i>-12,3% vs anterior
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-lg-3 col-md-6">
+                                <div class="kpi-card">
+                                    <span class="kpi-tooltip" title="Ganhos totais / Perdas totais">
+                                        <i class="ti ti-info-circle"></i>
+                                    </span>
+                                    <div class="d-flex align-items-center gap-3 mb-2">
+                                        <div class="kpi-icon bg-primary-lt text-primary">
+                                            <i class="ti ti-scale"></i>
+                                        </div>
+                                        <div>
+                                            <div class="kpi-value">3.05x</div>
+                                            <div class="kpi-label">Profit Factor</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-muted small">Excelente (&gt;2.0)</div>
+                                    <div class="kpi-change up">
+                                        <i class="ti ti-arrow-up"></i>+0.35 vs anterior
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-lg-3 col-md-6">
+                                <div class="kpi-card warning">
+                                    <span class="kpi-tooltip" title="Maior queda do pico ao vale">
+                                        <i class="ti ti-info-circle"></i>
+                                    </span>
+                                    <div class="d-flex align-items-center gap-3 mb-2">
+                                        <div class="kpi-icon bg-warning-lt text-warning">
+                                            <i class="ti ti-chart-arrows-vertical"></i>
+                                        </div>
+                                        <div>
+                                            <div class="kpi-value">-4,2%</div>
+                                            <div class="kpi-label">Max Drawdown</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-muted small">R$ -665,00</div>
+                                    <div class="kpi-change up">
+                                        <i class="ti ti-arrow-up"></i>Melhor que anterior
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Win Rate Ring + Sparkline -->
+                            <div class="col-lg-5">
+                                <div class="card h-100">
+                                    <div class="card-header">
+                                        <h4 class="card-title">
+                                            <i class="ti ti-target me-2 text-primary"></i>Taxa de Acerto
+                                        </h4>
+                                        <div class="card-actions">
+                                            <span class="badge bg-success-lt text-success">Acima da média</span>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row align-items-center">
+                                            <div class="col-auto">
+                                                <div class="progress-ring-wrapper">
+                                                    <svg class="progress-ring" width="130" height="130" viewBox="0 0 130 130">
+                                                        <circle class="progress-ring-bg" cx="65" cy="65" r="60"/>
+                                                        <circle class="progress-ring-fill success" cx="65" cy="65" r="60" 
+                                                                style="stroke-dashoffset: 119;"/>
+                                                    </svg>
+                                                    <div class="progress-ring-center">
+                                                        <div class="progress-ring-value text-success">68,4%</div>
+                                                        <div class="progress-ring-label">Win Rate</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col">
+                                                <div class="mb-3">
+                                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                                        <span>
+                                                            <i class="ti ti-circle-check text-success me-2"></i>
+                                                            Operações Vencedoras
+                                                        </span>
+                                                        <strong class="text-success">29</strong>
+                                                    </div>
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <span>
+                                                            <i class="ti ti-circle-x text-danger me-2"></i>
+                                                            Operações Perdedoras
+                                                        </span>
+                                                        <strong class="text-danger">13</strong>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="ratio-bar mb-2">
+                                                    <div class="ratio-segment win" style="width: 68.4%"></div>
+                                                    <div class="ratio-segment loss" style="width: 31.6%"></div>
+                                                </div>
+                                                <div class="d-flex justify-content-between small text-muted">
+                                                    <span>Wins: 68,4%</span>
+                                                    <span>Losses: 31,6%</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Sparkline Últimas Operações -->
+                            <div class="col-lg-7">
+                                <div class="card h-100">
+                                    <div class="card-header">
+                                        <h4 class="card-title">
+                                            <i class="ti ti-activity me-2 text-primary"></i>Últimas 25 Operações
+                                        </h4>
+                                        <div class="card-actions">
+                                            <span class="badge bg-success-lt text-success">72% win rate</span>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="sparkline-container">
+                                            <div class="sparkline mb-3">
+                                                <div class="sparkline-bar win" style="height: 65%"></div>
+                                                <div class="sparkline-bar win" style="height: 50%"></div>
+                                                <div class="sparkline-bar loss" style="height: 35%"></div>
+                                                <div class="sparkline-bar win" style="height: 80%"></div>
+                                                <div class="sparkline-bar win" style="height: 45%"></div>
+                                                <div class="sparkline-bar win" style="height: 55%"></div>
+                                                <div class="sparkline-bar loss" style="height: 40%"></div>
+                                                <div class="sparkline-bar loss" style="height: 30%"></div>
+                                                <div class="sparkline-bar win" style="height: 70%"></div>
+                                                <div class="sparkline-bar win" style="height: 48%"></div>
+                                                <div class="sparkline-bar win" style="height: 60%"></div>
+                                                <div class="sparkline-bar loss" style="height: 38%"></div>
+                                                <div class="sparkline-bar win" style="height: 85%"></div>
+                                                <div class="sparkline-bar win" style="height: 42%"></div>
+                                                <div class="sparkline-bar win" style="height: 52%"></div>
+                                                <div class="sparkline-bar loss" style="height: 25%"></div>
+                                                <div class="sparkline-bar win" style="height: 68%"></div>
+                                                <div class="sparkline-bar win" style="height: 90%"></div>
+                                                <div class="sparkline-bar win" style="height: 58%"></div>
+                                                <div class="sparkline-bar win" style="height: 75%"></div>
+                                                <div class="sparkline-bar loss" style="height: 32%"></div>
+                                                <div class="sparkline-bar win" style="height: 62%"></div>
+                                                <div class="sparkline-bar win" style="height: 78%"></div>
+                                                <div class="sparkline-bar win" style="height: 55%"></div>
+                                                <div class="sparkline-bar win" style="height: 82%"></div>
+                                            </div>
+                                            <div class="d-flex justify-content-between">
+                                                <span class="small text-muted">25 operações atrás</span>
+                                                <span class="small text-muted">Mais recente →</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Quick Stats Grid -->
+                            <div class="col-12">
+                                <div class="row g-3">
+                                    <div class="col-lg-2 col-md-4 col-6">
+                                        <div class="quick-stat">
+                                            <div class="quick-stat-icon bg-success-lt text-success">
+                                                <i class="ti ti-cash"></i>
+                                            </div>
+                                            <div class="quick-stat-value text-success">R$ 120</div>
+                                            <div class="quick-stat-label">Média Gain</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-2 col-md-4 col-6">
+                                        <div class="quick-stat">
+                                            <div class="quick-stat-icon bg-danger-lt text-danger">
+                                                <i class="ti ti-cash-off"></i>
+                                            </div>
+                                            <div class="quick-stat-value text-danger">R$ 87,69</div>
+                                            <div class="quick-stat-label">Média Loss</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-2 col-md-4 col-6">
+                                        <div class="quick-stat">
+                                            <div class="quick-stat-icon bg-cyan-lt text-cyan">
+                                                <i class="ti ti-math-function"></i>
+                                            </div>
+                                            <div class="quick-stat-value text-success">R$ 55,71</div>
+                                            <div class="quick-stat-label">Expectancy</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-2 col-md-4 col-6">
+                                        <div class="quick-stat">
+                                            <div class="quick-stat-icon bg-purple-lt text-purple">
+                                                <i class="ti ti-clock"></i>
+                                            </div>
+                                            <div class="quick-stat-value">12 min</div>
+                                            <div class="quick-stat-label">Tempo Médio</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-2 col-md-4 col-6">
+                                        <div class="quick-stat">
+                                            <div class="quick-stat-icon bg-orange-lt text-orange">
+                                                <i class="ti ti-calendar-event"></i>
+                                            </div>
+                                            <div class="quick-stat-value">3,2</div>
+                                            <div class="quick-stat-label">Ops/Dia</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-2 col-md-4 col-6">
+                                        <div class="quick-stat">
+                                            <div class="quick-stat-icon bg-indigo-lt text-indigo">
+                                                <i class="ti ti-arrows-exchange"></i>
+                                            </div>
+                                            <div class="quick-stat-value">1:1.37</div>
+                                            <div class="quick-stat-label">Risk/Reward</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Recordes Rápidos -->
+                            <div class="col-lg-3 col-md-6">
+                                <div class="record-item best">
+                                    <div class="record-icon bg-success text-white">
+                                        <i class="ti ti-trophy"></i>
+                                    </div>
+                                    <div class="flex-fill">
+                                        <div class="record-label">Maior Gain</div>
+                                        <div class="record-value text-success">+ R$ 892,00</div>
+                                        <div class="record-meta">WING24 • 15/01</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6">
+                                <div class="record-item worst">
+                                    <div class="record-icon bg-danger text-white">
+                                        <i class="ti ti-arrow-down"></i>
+                                    </div>
+                                    <div class="flex-fill">
+                                        <div class="record-label">Maior Loss</div>
+                                        <div class="record-value text-danger">- R$ 340,00</div>
+                                        <div class="record-meta">WDOH24 • 08/01</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6">
+                                <div class="record-item best">
+                                    <div class="record-icon bg-primary text-white">
+                                        <i class="ti ti-flame"></i>
+                                    </div>
+                                    <div class="flex-fill">
+                                        <div class="record-label">Maior Sequência</div>
+                                        <div class="record-value">8 wins</div>
+                                        <div class="record-meta">Recorde pessoal</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6">
+                                <div class="record-item best">
+                                    <div class="record-icon bg-warning text-white">
+                                        <i class="ti ti-calendar-star"></i>
+                                    </div>
+                                    <div class="flex-fill">
+                                        <div class="record-label">Melhor Dia</div>
+                                        <div class="record-value text-success">+ R$ 892,00</div>
+                                        <div class="record-meta">15/01/2024</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- TAB: Métricas -->
+                    <div class="tab-pane" id="tabMetrics">
+                        <div class="row g-4">
+                            <!-- Métricas de Resultado -->
+                            <div class="col-lg-4">
+                                <div class="card h-100">
+                                    <div class="card-header">
+                                        <h4 class="card-title">
+                                            <i class="ti ti-coin text-success me-2"></i>Resultados Financeiros
+                                        </h4>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="datagrid">
+                                            <div class="datagrid-item">
+                                                <div class="datagrid-title">Total de Gains</div>
+                                                <div class="datagrid-content text-success fw-bold">+ R$ 3.480,00</div>
+                                            </div>
+                                            <div class="datagrid-item">
+                                                <div class="datagrid-title">Total de Losses</div>
+                                                <div class="datagrid-content text-danger fw-bold">- R$ 1.140,00</div>
+                                            </div>
+                                            <div class="datagrid-item">
+                                                <div class="datagrid-title">Resultado Líquido</div>
+                                                <div class="datagrid-content text-success fw-bold">+ R$ 2.340,00</div>
+                                            </div>
+                                            <div class="datagrid-item">
+                                                <div class="datagrid-title">Resultado por Dia</div>
+                                                <div class="datagrid-content text-success fw-bold">+ R$ 180,00</div>
+                                            </div>
+                                            <div class="datagrid-item">
+                                                <div class="datagrid-title">ROI do Período</div>
+                                                <div class="datagrid-content text-success fw-bold">+17,3%</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Métricas de Performance -->
+                            <div class="col-lg-4">
+                                <div class="card h-100">
+                                    <div class="card-header">
+                                        <h4 class="card-title">
+                                            <i class="ti ti-rocket text-primary me-2"></i>Performance
+                                        </h4>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="datagrid">
+                                            <div class="datagrid-item">
+                                                <div class="datagrid-title">Profit Factor</div>
+                                                <div class="datagrid-content fw-bold">3.05x</div>
+                                            </div>
+                                            <div class="datagrid-item">
+                                                <div class="datagrid-title">Win Rate</div>
+                                                <div class="datagrid-content text-success fw-bold">68,4%</div>
+                                            </div>
+                                            <div class="datagrid-item">
+                                                <div class="datagrid-title">Expectancy</div>
+                                                <div class="datagrid-content text-success fw-bold">R$ 55,71</div>
+                                            </div>
+                                            <div class="datagrid-item">
+                                                <div class="datagrid-title">Recovery Factor</div>
+                                                <div class="datagrid-content fw-bold">3.52</div>
+                                            </div>
+                                            <div class="datagrid-item">
+                                                <div class="datagrid-title">Sharpe Ratio</div>
+                                                <div class="datagrid-content fw-bold">1.85</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Métricas de Risco -->
+                            <div class="col-lg-4">
+                                <div class="card h-100">
+                                    <div class="card-header">
+                                        <h4 class="card-title">
+                                            <i class="ti ti-shield text-warning me-2"></i>Gestão de Risco
+                                        </h4>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="datagrid">
+                                            <div class="datagrid-item">
+                                                <div class="datagrid-title">Max Drawdown</div>
+                                                <div class="datagrid-content text-warning fw-bold">-4,2%</div>
+                                            </div>
+                                            <div class="datagrid-item">
+                                                <div class="datagrid-title">Drawdown Médio</div>
+                                                <div class="datagrid-content fw-bold">-1,8%</div>
+                                            </div>
+                                            <div class="datagrid-item">
+                                                <div class="datagrid-title">Risk/Reward</div>
+                                                <div class="datagrid-content fw-bold">1:1.37</div>
+                                            </div>
+                                            <div class="datagrid-item">
+                                                <div class="datagrid-title">Maior Seq. Losses</div>
+                                                <div class="datagrid-content text-danger fw-bold">3</div>
+                                            </div>
+                                            <div class="datagrid-item">
+                                                <div class="datagrid-title">Volatilidade</div>
+                                                <div class="datagrid-content fw-bold">2,3%</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Médias -->
+                            <div class="col-lg-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h4 class="card-title">
+                                            <i class="ti ti-chart-bar text-cyan me-2"></i>Médias
+                                        </h4>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row g-4">
+                                            <div class="col-md-6">
+                                                <div class="datagrid">
+                                                    <div class="datagrid-item">
+                                                        <div class="datagrid-title">Média por Operação</div>
+                                                        <div class="datagrid-content fw-bold">R$ 55,71</div>
+                                                    </div>
+                                                    <div class="datagrid-item">
+                                                        <div class="datagrid-title">Média de Gains</div>
+                                                        <div class="datagrid-content text-success fw-bold">R$ 120,00</div>
+                                                    </div>
+                                                    <div class="datagrid-item">
+                                                        <div class="datagrid-title">Média de Losses</div>
+                                                        <div class="datagrid-content text-danger fw-bold">R$ 87,69</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="datagrid">
+                                                    <div class="datagrid-item">
+                                                        <div class="datagrid-title">Operações por Dia</div>
+                                                        <div class="datagrid-content fw-bold">3,2</div>
+                                                    </div>
+                                                    <div class="datagrid-item">
+                                                        <div class="datagrid-title">Tempo Médio</div>
+                                                        <div class="datagrid-content fw-bold">12 minutos</div>
+                                                    </div>
+                                                    <div class="datagrid-item">
+                                                        <div class="datagrid-title">Dias Operados</div>
+                                                        <div class="datagrid-content fw-bold">13 dias</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Comparativo -->
+                            <div class="col-lg-6">
+                                <div class="card h-100">
+                                    <div class="card-header">
+                                        <h4 class="card-title">
+                                            <i class="ti ti-arrows-exchange text-purple me-2"></i>vs Período Anterior
+                                        </h4>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="comparison-row">
+                                            <span class="metric-name">Lucro</span>
+                                            <span class="prev-value">R$ 1.615</span>
+                                            <span class="curr-value text-success">R$ 2.340</span>
+                                            <span class="comparison-change positive">
+                                                <i class="ti ti-arrow-up"></i>+44,9%
+                                            </span>
+                                        </div>
+                                        <div class="comparison-row">
+                                            <span class="metric-name">Win Rate</span>
+                                            <span class="prev-value">62,1%</span>
+                                            <span class="curr-value text-success">68,4%</span>
+                                            <span class="comparison-change positive">
+                                                <i class="ti ti-arrow-up"></i>+6,3%
+                                            </span>
+                                        </div>
+                                        <div class="comparison-row">
+                                            <span class="metric-name">Operações</span>
+                                            <span class="prev-value">38</span>
+                                            <span class="curr-value">42</span>
+                                            <span class="comparison-change positive">
+                                                <i class="ti ti-arrow-up"></i>+10,5%
+                                            </span>
+                                        </div>
+                                        <div class="comparison-row">
+                                            <span class="metric-name">Profit Factor</span>
+                                            <span class="prev-value">2.70x</span>
+                                            <span class="curr-value">3.05x</span>
+                                            <span class="comparison-change positive">
+                                                <i class="ti ti-arrow-up"></i>+13%
+                                            </span>
+                                        </div>
+                                        <div class="comparison-row">
+                                            <span class="metric-name">Max DD</span>
+                                            <span class="prev-value">-5,8%</span>
+                                            <span class="curr-value text-warning">-4,2%</span>
+                                            <span class="comparison-change positive">
+                                                <i class="ti ti-arrow-up"></i>Melhor
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- TAB: Gráficos -->
+                    <div class="tab-pane" id="tabCharts">
+                        <div class="row g-4">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h4 class="card-title">
+                                            <i class="ti ti-chart-line me-2 text-primary"></i>Evolução do Patrimônio
+                                        </h4>
+                                        <div class="card-actions">
+                                            <div class="btn-group btn-group-sm">
+                                                <button class="btn btn-outline-secondary active">Área</button>
+                                                <button class="btn btn-outline-secondary">Linha</button>
+                                                <button class="btn btn-outline-secondary">Candle</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="chartEquity"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h4 class="card-title">
+                                            <i class="ti ti-chart-donut me-2 text-primary"></i>Distribuição Win/Loss
+                                        </h4>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="chartDonut"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h4 class="card-title">
+                                            <i class="ti ti-clock me-2 text-primary"></i>Performance por Horário
+                                        </h4>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="chartHourly"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h4 class="card-title">
+                                            <i class="ti ti-calendar me-2 text-primary"></i>Performance por Dia
+                                        </h4>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="chartWeekday"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h4 class="card-title">
+                                            <i class="ti ti-chart-histogram me-2 text-primary"></i>Distribuição de Resultados
+                                        </h4>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="chartHistogram"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- TAB: Análise -->
+                    <div class="tab-pane" id="tabAnalysis">
+                        <div class="row g-4">
+                            <!-- Insights -->
+                            <div class="col-lg-6">
+                                <div class="section-header">
+                                    <i class="ti ti-bulb section-icon"></i>
+                                    <h4>Insights Inteligentes</h4>
+                                </div>
+                                
+                                <div class="insight-card success">
+                                    <span class="insight-icon">💪</span>
+                                    <div>
+                                        <div class="insight-title">Consistência Excelente</div>
+                                        <div class="insight-text">
+                                            Seu win rate está 18% acima da sua média histórica. Sua estratégia está funcionando muito bem!
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="insight-card info">
+                                    <span class="insight-icon">⏰</span>
+                                    <div>
+                                        <div class="insight-title">Melhor Horário: 10h-11h</div>
+                                        <div class="insight-text">
+                                            78% das suas operações neste horário são vencedoras. Considere concentrar mais operações neste período.
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="insight-card warning">
+                                    <span class="insight-icon">⚠️</span>
+                                    <div>
+                                        <div class="insight-title">Atenção às Quartas-feiras</div>
+                                        <div class="insight-text">
+                                            Win rate de apenas 45% neste dia. Considere reduzir a frequência ou revisar sua estratégia.
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="insight-card success">
+                                    <span class="insight-icon">🎯</span>
+                                    <div>
+                                        <div class="insight-title">WIN é seu Melhor Ativo</div>
+                                        <div class="insight-text">
+                                            71% de acerto no Mini Índice vs 64% no Mini Dólar. Seu edge é claramente maior no WIN.
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="insight-card danger">
+                                    <span class="insight-icon">🚨</span>
+                                    <div>
+                                        <div class="insight-title">Evite Overtrading</div>
+                                        <div class="insight-text">
+                                            Nos dias com mais de 5 operações, seu win rate cai para 52%. Qualidade é melhor que quantidade.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Performance por Ativo -->
+                            <div class="col-lg-6">
+                                <div class="section-header">
+                                    <i class="ti ti-building-bank section-icon"></i>
+                                    <h4>Performance por Ativo</h4>
+                                </div>
+                                
+                                <div class="asset-card">
+                                    <div class="row align-items-center mb-3">
+                                        <div class="col-auto">
+                                            <span class="asset-badge bg-blue text-white">WIN</span>
+                                        </div>
+                                        <div class="col">
+                                            <strong>Mini Índice</strong>
+                                        </div>
+                                        <div class="col-auto text-success fw-bold fs-4">
+                                            + R$ 1.840
+                                        </div>
+                                    </div>
+                                    <div class="row text-center mb-3">
+                                        <div class="col">
+                                            <div class="h4 mb-0">28</div>
+                                            <small class="text-muted">Operações</small>
+                                        </div>
+                                        <div class="col">
+                                            <div class="h4 mb-0 text-success">71%</div>
+                                            <small class="text-muted">Win Rate</small>
+                                        </div>
+                                        <div class="col">
+                                            <div class="h4 mb-0">R$ 65,71</div>
+                                            <small class="text-muted">Média/Op</small>
+                                        </div>
+                                        <div class="col">
+                                            <div class="h4 mb-0">2.8x</div>
+                                            <small class="text-muted">Fator</small>
+                                        </div>
+                                    </div>
+                                    <div class="progress" style="height: 8px;">
+                                        <div class="progress-bar bg-success" style="width: 71%"></div>
+                                        <div class="progress-bar bg-danger" style="width: 29%"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="asset-card">
+                                    <div class="row align-items-center mb-3">
+                                        <div class="col-auto">
+                                            <span class="asset-badge bg-purple text-white">WDO</span>
+                                        </div>
+                                        <div class="col">
+                                            <strong>Mini Dólar</strong>
+                                        </div>
+                                        <div class="col-auto text-success fw-bold fs-4">
+                                            + R$ 500
+                                        </div>
+                                    </div>
+                                    <div class="row text-center mb-3">
+                                        <div class="col">
+                                            <div class="h4 mb-0">14</div>
+                                            <small class="text-muted">Operações</small>
+                                        </div>
+                                        <div class="col">
+                                            <div class="h4 mb-0 text-success">64%</div>
+                                            <small class="text-muted">Win Rate</small>
+                                        </div>
+                                        <div class="col">
+                                            <div class="h4 mb-0">R$ 35,71</div>
+                                            <small class="text-muted">Média/Op</small>
+                                        </div>
+                                        <div class="col">
+                                            <div class="h4 mb-0">2.1x</div>
+                                            <small class="text-muted">Fator</small>
+                                        </div>
+                                    </div>
+                                    <div class="progress" style="height: 8px;">
+                                        <div class="progress-bar bg-success" style="width: 64%"></div>
+                                        <div class="progress-bar bg-danger" style="width: 36%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- TAB: Calendário -->
+                    <div class="tab-pane" id="tabCalendar">
+                        <div class="card">
+                            <div class="card-header">
+                                <h4 class="card-title">
+                                    <i class="ti ti-calendar me-2 text-primary"></i>Janeiro 2024
+                                </h4>
+                                <div class="card-actions">
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-icon btn-outline-secondary">
+                                            <i class="ti ti-chevron-left"></i>
+                                        </button>
+                                        <button class="btn btn-outline-secondary">Hoje</button>
+                                        <button class="btn btn-icon btn-outline-secondary">
+                                            <i class="ti ti-chevron-right"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <!-- Legenda -->
+                                <div class="d-flex justify-content-center gap-4 mb-4 flex-wrap">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="calendar-day p5" style="width: 20px; height: 20px; font-size: 0;"></div>
+                                        <small class="text-muted">Alto Lucro</small>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="calendar-day p2" style="width: 20px; height: 20px; font-size: 0;"></div>
+                                        <small class="text-muted">Lucro</small>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="calendar-day n" style="width: 20px; height: 20px; font-size: 0;"></div>
+                                        <small class="text-muted">Sem Op.</small>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="calendar-day l2" style="width: 20px; height: 20px; font-size: 0;"></div>
+                                        <small class="text-muted">Perda</small>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="calendar-day l5" style="width: 20px; height: 20px; font-size: 0;"></div>
+                                        <small class="text-muted">Alta Perda</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="row justify-content-center">
+                                    <div class="col-lg-8">
+                                        <!-- Dias da semana -->
+                                        <div class="row text-center mb-2">
+                                            <div class="col text-muted small fw-bold">Seg</div>
+                                            <div class="col text-muted small fw-bold">Ter</div>
+                                            <div class="col text-muted small fw-bold">Qua</div>
+                                            <div class="col text-muted small fw-bold">Qui</div>
+                                            <div class="col text-muted small fw-bold">Sex</div>
+                                            <div class="col text-muted small fw-bold">Sáb</div>
+                                            <div class="col text-muted small fw-bold">Dom</div>
+                                        </div>
+                                        <!-- Calendário -->
+                                        <div class="calendar-grid">
+                                            <div class="calendar-day p5" title="+R$ 520">1</div>
+                                            <div class="calendar-day p3" title="+R$ 280">2</div>
+                                            <div class="calendar-day l2" title="-R$ 90">3</div>
+                                            <div class="calendar-day p4" title="+R$ 420">4</div>
+                                            <div class="calendar-day p2" title="+R$ 150">5</div>
+                                            <div class="calendar-day n">6</div>
+                                            <div class="calendar-day n">7</div>
+                                            <div class="calendar-day l4" title="-R$ 220">8</div>
+                                            <div class="calendar-day p5" title="+R$ 580">9</div>
+                                            <div class="calendar-day p3" title="+R$ 310">10</div>
+                                            <div class="calendar-day p2" title="+R$ 125">11</div>
+                                            <div class="calendar-day p5" title="+R$ 650">12</div>
+                                            <div class="calendar-day n">13</div>
+                                            <div class="calendar-day n">14</div>
+                                            <div class="calendar-day p5" title="+R$ 892">15</div>
+                                            <div class="calendar-day p3" title="+R$ 295">16</div>
+                                            <div class="calendar-day l5" title="-R$ 340">17</div>
+                                            <div class="calendar-day p2" title="+R$ 180">18</div>
+                                            <div class="calendar-day p3" title="+R$ 245">19</div>
+                                            <div class="calendar-day n">20</div>
+                                            <div class="calendar-day n">21</div>
+                                            <div class="calendar-day p4" title="+R$ 445">22</div>
+                                            <div class="calendar-day p2" title="+R$ 138">23</div>
+                                            <div class="calendar-day p3" title="+R$ 275">24</div>
+                                            <div class="calendar-day l1" title="-R$ 45">25</div>
+                                            <div class="calendar-day p2" title="+R$ 165">26</div>
+                                            <div class="calendar-day n">27</div>
+                                            <div class="calendar-day n">28</div>
+                                            <div class="calendar-day p3" title="+R$ 310">29</div>
+                                            <div class="calendar-day p2" title="+R$ 195">30</div>
+                                            <div class="calendar-day p4" title="+R$ 385">31</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <hr class="my-4">
+                                
+                                <!-- Resumo do mês -->
+                                <div class="row text-center">
+                                    <div class="col-md-3">
+                                        <div class="h2 mb-0 text-success">17</div>
+                                        <small class="text-muted">Dias Positivos</small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="h2 mb-0 text-danger">4</div>
+                                        <small class="text-muted">Dias Negativos</small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="h2 mb-0">81%</div>
+                                        <small class="text-muted">Taxa de Dias Positivos</small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="h2 mb-0 text-primary">R$ 111</div>
+                                        <small class="text-muted">Média por Dia</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- TAB: Recordes -->
+                    <div class="tab-pane" id="tabRecords">
+                        <div class="row g-4">
+                            <!-- Melhores -->
+                            <div class="col-md-6">
+                                <div class="section-header">
+                                    <i class="ti ti-trophy section-icon text-warning"></i>
+                                    <h4>Melhores Resultados</h4>
+                                </div>
+                                
+                                <div class="ranking-item">
+                                    <div class="ranking-position gold">1</div>
+                                    <div class="record-icon bg-success-lt text-success">
+                                        <i class="ti ti-crown"></i>
+                                    </div>
+                                    <div class="flex-fill">
+                                        <div class="fw-bold">Maior Gain</div>
+                                        <small class="text-muted">WING24 • 15/01/2024 • 10:32</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="h4 mb-0 text-success">+ R$ 892</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="ranking-item">
+                                    <div class="ranking-position silver">2</div>
+                                    <div class="record-icon bg-success-lt text-success">
+                                        <i class="ti ti-calendar-star"></i>
+                                    </div>
+                                    <div class="flex-fill">
+                                        <div class="fw-bold">Melhor Dia</div>
+                                        <small class="text-muted">15/01/2024 • 3 operações</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="h4 mb-0 text-success">+ R$ 892</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="ranking-item">
+                                    <div class="ranking-position bronze">3</div>
+                                    <div class="record-icon bg-primary-lt text-primary">
+                                        <i class="ti ti-flame"></i>
+                                    </div>
+                                    <div class="flex-fill">
+                                        <div class="fw-bold">Maior Sequência Win</div>
+                                        <small class="text-muted">10/01 - 12/01/2024</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="h4 mb-0">8 ops</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="ranking-item">
+                                    <div class="ranking-position default">4</div>
+                                    <div class="record-icon bg-cyan-lt text-cyan">
+                                        <i class="ti ti-bolt"></i>
+                                    </div>
+                                    <div class="flex-fill">
+                                        <div class="fw-bold">Op. mais Rápida (Win)</div>
+                                        <small class="text-muted">WIN • 22/01 • +R$ 120</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="h4 mb-0">47s</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Piores -->
+                            <div class="col-md-6">
+                                <div class="section-header">
+                                    <i class="ti ti-alert-triangle section-icon text-danger"></i>
+                                    <h4>Piores Resultados</h4>
+                                </div>
+                                
+                                <div class="ranking-item">
+                                    <div class="ranking-position" style="background: #d63939; color: white;">1</div>
+                                    <div class="record-icon bg-danger-lt text-danger">
+                                        <i class="ti ti-trending-down"></i>
+                                    </div>
+                                    <div class="flex-fill">
+                                        <div class="fw-bold">Maior Loss</div>
+                                        <small class="text-muted">WDOH24 • 08/01/2024 • 14:45</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="h4 mb-0 text-danger">- R$ 340</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="ranking-item">
+                                    <div class="ranking-position" style="background: #ef4444; color: white;">2</div>
+                                    <div class="record-icon bg-danger-lt text-danger">
+                                        <i class="ti ti-calendar-x"></i>
+                                    </div>
+                                    <div class="flex-fill">
+                                        <div class="fw-bold">Pior Dia</div>
+                                        <small class="text-muted">17/01/2024 • 2 operações</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="h4 mb-0 text-danger">- R$ 340</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="ranking-item">
+                                    <div class="ranking-position" style="background: #f87171; color: white;">3</div>
+                                    <div class="record-icon bg-warning-lt text-warning">
+                                        <i class="ti ti-mood-sad"></i>
+                                    </div>
+                                    <div class="flex-fill">
+                                        <div class="fw-bold">Maior Sequência Loss</div>
+                                        <small class="text-muted">06/01 - 08/01/2024</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="h4 mb-0">3 ops</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="ranking-item">
+                                    <div class="ranking-position default">4</div>
+                                    <div class="record-icon bg-warning-lt text-warning">
+                                        <i class="ti ti-chart-arrows-vertical"></i>
+                                    </div>
+                                    <div class="flex-fill">
+                                        <div class="fw-bold">Maior Drawdown</div>
+                                        <small class="text-muted">06/01 - 08/01/2024</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="h4 mb-0 text-warning">-4,2%</div>
+                                        <small class="text-muted">R$ 665</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- TAB: Metas -->
+                    <div class="tab-pane" id="tabGoals">
+                        <div class="row g-4">
+                            <div class="col-md-4">
+                                <div class="goal-card">
+                                    <div class="goal-header">
+                                        <span class="goal-title">
+                                            <i class="ti ti-coin text-success"></i>
+                                            Meta Mensal
+                                        </span>
+                                        <span class="goal-percentage text-success">78%</span>
+                                    </div>
+                                    <div class="goal-progress">
+                                        <div class="goal-progress-fill success" style="width: 78%"></div>
+                                    </div>
+                                    <div class="goal-meta">
+                                        <span>R$ 2.340 / R$ 3.000</span>
+                                        <span class="text-success">Faltam R$ 660</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="goal-card">
+                                    <div class="goal-header">
+                                        <span class="goal-title">
+                                            <i class="ti ti-target text-primary"></i>
+                                            Win Rate Alvo
+                                        </span>
+                                        <span class="goal-percentage text-success">114%</span>
+                                    </div>
+                                    <div class="goal-progress">
+                                        <div class="goal-progress-fill success" style="width: 100%"></div>
+                                    </div>
+                                    <div class="goal-meta">
+                                        <span>68,4% / 60%</span>
+                                        <span class="text-success">✓ Meta atingida!</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="goal-card">
+                                    <div class="goal-header">
+                                        <span class="goal-title">
+                                            <i class="ti ti-list-numbers text-cyan"></i>
+                                            Operações/Mês
+                                        </span>
+                                        <span class="goal-percentage text-warning">84%</span>
+                                    </div>
+                                    <div class="goal-progress">
+                                        <div class="goal-progress-fill warning" style="width: 84%"></div>
+                                    </div>
+                                    <div class="goal-meta">
+                                        <span>42 / 50 operações</span>
+                                        <span>Faltam 8</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="goal-card">
+                                    <div class="goal-header">
+                                        <span class="goal-title">
+                                            <i class="ti ti-scale text-purple"></i>
+                                            Profit Factor
+                                        </span>
+                                        <span class="goal-percentage text-success">122%</span>
+                                    </div>
+                                    <div class="goal-progress">
+                                        <div class="goal-progress-fill success" style="width: 100%"></div>
+                                    </div>
+                                    <div class="goal-meta">
+                                        <span>3.05x / 2.5x</span>
+                                        <span class="text-success">✓ Meta atingida!</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="goal-card">
+                                    <div class="goal-header">
+                                        <span class="goal-title">
+                                            <i class="ti ti-shield text-warning"></i>
+                                            Max DD Limite
+                                        </span>
+                                        <span class="goal-percentage text-success">42%</span>
+                                    </div>
+                                    <div class="goal-progress">
+                                        <div class="goal-progress-fill success" style="width: 42%"></div>
+                                    </div>
+                                    <div class="goal-meta">
+                                        <span>-4,2% / -10% limite</span>
+                                        <span class="text-success">✓ Dentro do limite</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="goal-card">
+                                    <div class="goal-header">
+                                        <span class="goal-title">
+                                            <i class="ti ti-calendar-check text-orange"></i>
+                                            Dias Positivos
+                                        </span>
+                                        <span class="goal-percentage text-success">116%</span>
+                                    </div>
+                                    <div class="goal-progress">
+                                        <div class="goal-progress-fill success" style="width: 100%"></div>
+                                    </div>
+                                    <div class="goal-meta">
+                                        <span>81% / 70% alvo</span>
+                                        <span class="text-success">✓ Meta atingida!</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- TAB: Histórico -->
+                    <div class="tab-pane" id="tabHistory">
+                        <div class="card">
+                            <div class="card-header">
+                                <h4 class="card-title">
+                                    <i class="ti ti-list me-2"></i>Histórico de Operações
+                                </h4>
+                                <div class="card-actions">
+                                    <div class="input-group input-group-sm" style="width: 200px;">
+                                        <span class="input-group-text">
+                                            <i class="ti ti-search"></i>
+                                        </span>
+                                        <input type="text" class="form-control" placeholder="Buscar...">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-vcenter table-hover card-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Data/Hora</th>
+                                            <th>Ativo</th>
+                                            <th>Tipo</th>
+                                            <th>Entrada</th>
+                                            <th>Saída</th>
+                                            <th>Pts</th>
+                                            <th>Resultado</th>
+                                            <th>Duração</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>
+                                                <div class="fw-bold">Hoje</div>
+                                                <small class="text-muted">10:32</small>
+                                            </td>
+                                            <td><span class="badge bg-blue-lt">WIN</span></td>
+                                            <td><span class="badge bg-success-lt text-success">COMPRA</span></td>
+                                            <td>127.450</td>
+                                            <td>127.530</td>
+                                            <td class="text-success fw-bold">+8</td>
+                                            <td class="text-success fw-bold">+ R$ 160</td>
+                                            <td>8 min</td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <div class="fw-bold">Hoje</div>
+                                                <small class="text-muted">09:45</small>
+                                            </td>
+                                            <td><span class="badge bg-purple-lt">WDO</span></td>
+                                            <td><span class="badge bg-danger-lt text-danger">VENDA</span></td>
+                                            <td>4.925,5</td>
+                                            <td>4.921,0</td>
+                                            <td class="text-success fw-bold">+4,5</td>
+                                            <td class="text-success fw-bold">+ R$ 90</td>
+                                            <td>12 min</td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <div class="fw-bold">Ontem</div>
+                                                <small class="text-muted">15:20</small>
+                                            </td>
+                                            <td><span class="badge bg-blue-lt">WIN</span></td>
+                                            <td><span class="badge bg-success-lt text-success">COMPRA</span></td>
+                                            <td>127.200</td>
+                                            <td>127.140</td>
+                                            <td class="text-danger fw-bold">-3</td>
+                                            <td class="text-danger fw-bold">- R$ 60</td>
+                                            <td>5 min</td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <div class="fw-bold">Ontem</div>
+                                                <small class="text-muted">11:05</small>
+                                            </td>
+                                            <td><span class="badge bg-blue-lt">WIN</span></td>
+                                            <td><span class="badge bg-danger-lt text-danger">VENDA</span></td>
+                                            <td>127.380</td>
+                                            <td>127.290</td>
+                                            <td class="text-success fw-bold">+9</td>
+                                            <td class="text-success fw-bold">+ R$ 180</td>
+                                            <td>15 min</td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <div class="fw-bold">Ontem</div>
+                                                <small class="text-muted">09:30</small>
+                                            </td>
+                                            <td><span class="badge bg-blue-lt">WIN</span></td>
+                                            <td><span class="badge bg-success-lt text-success">COMPRA</span></td>
+                                            <td>127.150</td>
+                                            <td>127.220</td>
+                                            <td class="text-success fw-bold">+7</td>
+                                            <td class="text-success fw-bold">+ R$ 140</td>
+                                            <td>10 min</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="card-footer d-flex justify-content-between align-items-center">
+                                <div class="text-muted">
+                                    Mostrando 5 de 42 operações
+                                </div>
+                                <ul class="pagination mb-0">
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#">
+                                            <i class="ti ti-chevron-left"></i>
+                                        </a>
+                                    </li>
+                                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                                    <li class="page-item"><a class="page-link" href="#">2</a></li>
+                                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="#">
+                                            <i class="ti ti-chevron-right"></i>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+            
+            <!-- ===== FOOTER ===== -->
+            <div class="modal-footer">
+                <div class="d-flex justify-content-between align-items-center w-100">
+                    <span class="text-muted small">
+                        <i class="ti ti-info-circle me-1"></i>
+                        42 operações analisadas no período selecionado
+                    </span>
+                    <div class="btn-list">
+                        <button class="btn btn-ghost-secondary">
+                            <i class="ti ti-printer me-1"></i>Imprimir
+                        </button>
+                        <button class="btn btn-ghost-secondary">
+                            <i class="ti ti-file-type-pdf me-1"></i>PDF
+                        </button>
+                        <button class="btn btn-ghost-secondary">
+                            <i class="ti ti-file-spreadsheet me-1"></i>Excel
+                        </button>
+                        <button class="btn btn-primary">
+                            <i class="ti ti-share me-1"></i>Compartilhar
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/js/tabler.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Period selector
+    document.querySelectorAll('.period-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+    
+    // Chart colors
+    const colors = {
+        primary: '#206bc4',
+        success: '#2fb344',
+        danger: '#d63939',
+        warning: '#f59f00',
+        text: '#a8aeb7',
+        grid: '#2c3035',
+        bg: '#1e2227'
+    };
+    
+    // Initialize charts
+    document.querySelector('a[href="#tabCharts"]').addEventListener('shown.bs.tab', function() {
+        // Equity Chart
+        if (!document.querySelector("#chartEquity")?._rendered) {
+            new ApexCharts(document.querySelector("#chartEquity"), {
+                series: [{
+                    name: 'Saldo',
+                    data: [13500, 14020, 13930, 14350, 14930, 14710, 15290, 15585, 15245, 15640, 15805, 15847]
+                }],
+                chart: {
+                    type: 'area',
+                    height: 320,
+                    background: 'transparent',
+                    toolbar: { show: true }
+                },
+                colors: [colors.primary],
+                fill: {
+                    type: 'gradient',
+                    gradient: {
+                        shadeIntensity: 1,
+                        opacityFrom: 0.5,
+                        opacityTo: 0.1,
+                        stops: [0, 90, 100]
+                    }
+                },
+                stroke: { curve: 'smooth', width: 3 },
+                grid: { borderColor: colors.grid, strokeDashArray: 4 },
+                xaxis: {
+                    categories: ['01/01', '03/01', '05/01', '08/01', '10/01', '12/01', '15/01', '17/01', '19/01', '22/01', '24/01', '25/01'],
+                    labels: { style: { colors: colors.text } },
+                    axisBorder: { color: colors.grid }
+                },
+                yaxis: {
+                    labels: {
+                        style: { colors: colors.text },
+                        formatter: val => 'R$ ' + val.toLocaleString('pt-BR')
+                    }
+                },
+                tooltip: { theme: 'dark' },
+                annotations: {
+                    yaxis: [{
+                        y: 13500,
+                        borderColor: colors.text,
+                        strokeDashArray: 5,
+                        label: {
+                            text: 'Início: R$ 13.500',
+                            style: { color: '#fff', background: colors.primary }
+                        }
+                    }]
+                }
+            }).render();
+            document.querySelector("#chartEquity")._rendered = true;
+        }
+        
+        // Donut Chart
+        if (!document.querySelector("#chartDonut")?._rendered) {
+            new ApexCharts(document.querySelector("#chartDonut"), {
+                series: [29, 13],
+                chart: { type: 'donut', height: 280, background: 'transparent' },
+                labels: ['Wins', 'Losses'],
+                colors: [colors.success, colors.danger],
+                plotOptions: {
+                    pie: {
+                        donut: {
+                            size: '75%',
+                            labels: {
+                                show: true,
+                                total: {
+                                    show: true,
+                                    label: 'Win Rate',
+                                    color: colors.text,
+                                    formatter: () => '68,4%'
+                                }
+                            }
+                        }
+                    }
+                },
+                legend: { position: 'bottom', labels: { colors: colors.text } },
+                stroke: { show: false }
+            }).render();
+            document.querySelector("#chartDonut")._rendered = true;
+        }
+        
+        // Hourly Chart
+        if (!document.querySelector("#chartHourly")?._rendered) {
+            new ApexCharts(document.querySelector("#chartHourly"), {
+                series: [{ name: 'Resultado', data: [180, 520, 750, 280, -120, -80, 180, 230] }],
+                chart: { type: 'bar', height: 260, background: 'transparent', toolbar: { show: false } },
+                plotOptions: {
+                    bar: {
+                        borderRadius: 6,
+                        columnWidth: '60%',
+                        colors: {
+                            ranges: [
+                                { from: -1000, to: 0, color: colors.danger },
+                                { from: 0, to: 1000, color: colors.success }
+                            ]
+                        }
+                    }
+                },
+                grid: { borderColor: colors.grid },
+                xaxis: {
+                    categories: ['9h', '10h', '11h', '12h', '13h', '14h', '15h', '16h'],
+                    labels: { style: { colors: colors.text } }
+                },
+                yaxis: {
+                    labels: {
+                        style: { colors: colors.text },
+                        formatter: val => 'R$ ' + val
+                    }
+                },
+                tooltip: { theme: 'dark' }
+            }).render();
+            document.querySelector("#chartHourly")._rendered = true;
+        }
+        
+        // Weekday Chart
+        if (!document.querySelector("#chartWeekday")?._rendered) {
+            new ApexCharts(document.querySelector("#chartWeekday"), {
+                series: [{ name: 'Resultado', data: [620, 780, -180, 890, 580] }],
+                chart: { type: 'bar', height: 260, background: 'transparent', toolbar: { show: false } },
+                plotOptions: {
+                    bar: {
+                        horizontal: true,
+                        borderRadius: 6,
+                        barHeight: '60%',
+                        colors: {
+                            ranges: [
+                                { from: -1000, to: 0, color: colors.danger },
+                                { from: 0, to: 1000, color: colors.success }
+                            ]
+                        }
+                    }
+                },
+                grid: { borderColor: colors.grid },
+                xaxis: {
+                    labels: {
+                        style: { colors: colors.text },
+                        formatter: val => 'R$ ' + val
+                    }
+                },
+                yaxis: {
+                    categories: ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta'],
+                    labels: { style: { colors: colors.text } }
+                },
+                tooltip: { theme: 'dark' }
+            }).render();
+            document.querySelector("#chartWeekday")._rendered = true;
+        }
+        
+        // Histogram Chart
+        if (!document.querySelector("#chartHistogram")?._rendered) {
+            new ApexCharts(document.querySelector("#chartHistogram"), {
+                series: [{ name: 'Operações', data: [2, 4, 7, 12, 9, 5, 3] }],
+                chart: { type: 'bar', height: 260, background: 'transparent', toolbar: { show: false } },
+                colors: [colors.primary],
+                plotOptions: { bar: { borderRadius: 6, columnWidth: '70%' } },
+                grid: { borderColor: colors.grid },
+                xaxis: {
+                    categories: ['-300 a -200', '-200 a -100', '-100 a 0', '0 a 100', '100 a 200', '200 a 300', '300+'],
+                    labels: { style: { colors: colors.text, fontSize: '10px' } }
+                },
+                yaxis: { labels: { style: { colors: colors.text } } },
+                tooltip: { theme: 'dark' }
+            }).render();
+            document.querySelector("#chartHistogram")._rendered = true;
+        }
+    });
+});
+</script>
+
+</body>
+</html>

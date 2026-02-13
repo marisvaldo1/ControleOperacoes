@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="../css/opcoes.css?v=1.1.5">
     <link rel="stylesheet" href="../css/modal-detalhes.css?v=1.1.5">
     <link rel="stylesheet" href="../css/detalhe-opcoes.css?v=1.1.5">
+    <link rel="stylesheet" href="../css/modal-resultado-total.css?v=1.1.5">
 </head>
 
 <body data-bs-theme="dark">
@@ -61,7 +62,7 @@
                         </div>
                     </div>
                     <div class="col-sm-6 col-lg-3">
-                        <div class="card">
+                        <div class="card card-clickable" id="cardResultadoTotalCard" role="button" tabindex="0" title="Ver análise temporal">
                             <div class="card-body">
                                 <div class="d-flex align-items-center">
                                     <div class="subheader">Resultado Total</div>
@@ -1629,7 +1630,7 @@
         </div>
     </div>
 
-    <!-- Include Modal Detalhe Opcao -->
+    <div id="modalResultadoTotalContainer"></div>
     <div id="modalDetalheOpcaoContainer"></div>
 
     <script src="../js/core/libs.js?v=1.1.5"></script>
@@ -1637,6 +1638,7 @@
     <script src="../js/core/layout.js?v=1.1.4"></script>
     <script src="../js/technical-analysis.js?v=1.1.4"></script>
     <script src="../js/opcoes.js?v=1.1.4"></script>
+    <script src="../js/modal-resultado-total.js?v=1.1.4"></script>
     <script src="../js/detalhe-opcoes.js?v=1.1.4"></script>
     <script>
         // Carregar modal de detalhes

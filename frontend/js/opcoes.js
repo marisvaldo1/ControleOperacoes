@@ -2275,6 +2275,187 @@ function showMonthOperations(year, month) {
     modal.show();
 }
 
+function showWeekOperations(startDate, endDate) {
+    let modalEl = document.getElementById('modalMonthOperations');
+    if (!modalEl) {
+        const modalHTML = `
+            <div class="modal modal-blur fade" id="modalMonthOperations" tabindex="-1">
+                <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="modalMonthOperationsTitle">Operações da Semana</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div id="modalMonthOperationsContent"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        modalEl = document.getElementById('modalMonthOperations');
+    }
+
+    const start = parseDateInput(startDate);
+    const end = parseDateInput(endDate);
+    if (!start || !end || Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return;
+    start.setHours(0, 0, 0, 0);
+    end.setHours(23, 59, 59, 999);
+
+    const allOps = window.allOperacoes || [];
+    const weekOps = allOps.filter(op => {
+        let rawDate = op.data_operacao || op.created_at;
+        if (typeof rawDate === 'string' && rawDate.includes('T')) {
+            rawDate = rawDate.slice(0, 10);
+        }
+        const opDate = parseDateInput(rawDate);
+        return opDate && opDate >= start && opDate <= end;
+    });
+
+    weekOps.sort((a, b) => {
+        const da = new Date(a.data_operacao || a.created_at || 0);
+        const db = new Date(b.data_operacao || b.created_at || 0);
+        return db - da;
+    });
+
+    const config = JSON.parse(localStorage.getItem('appConfig') || '{}');
+    const saldoAtual = parseFloat(config.saldoAcoes || 0);
+    const saldoMap = computeSaldoAberturaFallback(allOps, saldoAtual);
+
+    const rows = weekOps.map(op => {
+        const saldoInfo = getSaldoInfo(op, saldoMap);
+        const resultado = parseFloat(op.resultado || 0);
+        const perc = saldoInfo.saldo > 0 ? (resultado / saldoInfo.saldo) * 100 : 0;
+        const exercida = calcularExercicio(op.tipo, parseFloatSafe(op.preco_atual), parseFloatSafe(op.strike));
+        const exercicioBadgeHTML = gerarBadgeExercicio(exercida, op.status);
+        const tipoBadge = op.tipo === 'CALL' ? 'bg-green text-green-fg' : 'bg-red text-red-fg';
+        const isVenda = op.tipo_operacao === 'VENDA' || (op.tipo_operacao === undefined && Number.parseInt(op.quantidade) < 0);
+        const tipoOpBadge = isVenda ? 'bg-red text-red-fg' : 'bg-green text-green-fg';
+        const tipoOpText = isVenda ? 'VENDA' : 'COMPRA';
+
+        return `
+            <tr>
+                <td>${formatDateCell(op.data_operacao)}</td>
+                <td class="fw-bold">
+                    ${op.ativo}
+                    <span class="badge ${tipoOpBadge} ms-1">${tipoOpText}</span>
+                </td>
+                <td><span class="badge ${tipoBadge}">${op.tipo}</span></td>
+                <td>${formatCurrency(parseFloatSafe(op.strike))}</td>
+                <td>${exercicioBadgeHTML}</td>
+                <td>${formatCurrency(saldoInfo.saldo)}${saldoInfo.estimado ? ' <span class="badge bg-yellow text-yellow-fg ms-1">estimado</span>' : ''}</td>
+                <td class="${resultado >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(resultado)}</td>
+                <td class="${perc >= 0 ? 'text-success' : 'text-danger'}">${perc.toFixed(2)}%</td>
+                <td>
+                    <button class="btn btn-sm btn-info btn-icon" onclick="openDetalheFromMonthModal('${op.id}')" title="Detalhes">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    const totalResultado = weekOps.reduce((acc, op) => acc + parseFloat(op.resultado || 0), 0);
+    const totalPremios = weekOps.reduce((acc, op) => {
+        const premio = parseFloatSafe(op.premio);
+        const qtd = Math.abs(parseInt(op.quantidade || 0));
+        return acc + (premio * (qtd || 1));
+    }, 0);
+
+    const weekOpsSorted = [...weekOps].sort((a, b) => {
+        const da = new Date(a.data_operacao || a.created_at || 0);
+        const db = new Date(b.data_operacao || b.created_at || 0);
+        return da - db;
+    });
+    const saldoInicialSemana = weekOpsSorted.length > 0 ? getSaldoInfo(weekOpsSorted[0], saldoMap).saldo : 0;
+    const rentabilidadeSemana = saldoInicialSemana > 0 ? (totalResultado / saldoInicialSemana) * 100 : 0;
+
+    const titleEl = document.getElementById('modalMonthOperationsTitle');
+    if (titleEl) {
+        titleEl.textContent = `Operações da Semana (${formatDate(start)} a ${formatDate(end)}) - ${weekOps.length} operação${weekOps.length !== 1 ? 'ões' : ''}`;
+    }
+
+    const contentEl = document.getElementById('modalMonthOperationsContent');
+    if (contentEl) {
+        contentEl.innerHTML = `
+            <div class="row mb-3">
+                <div class="col-6 col-lg-3 mb-2">
+                    <div class="card">
+                        <div class="card-body p-2">
+                            <div class="d-flex align-items-center">
+                                <div class="subheader small">Total de Operações</div>
+                                <div class="ms-auto lh-1">
+                                    <div class="h2 mb-0">${weekOps.length}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3 mb-2">
+                    <div class="card">
+                        <div class="card-body p-2">
+                            <div class="d-flex align-items-center">
+                                <div class="subheader small">Saldo Inicial</div>
+                                <div class="ms-auto lh-1">
+                                    <div class="h2 mb-0">${formatCurrency(saldoInicialSemana)}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3 mb-2">
+                    <div class="card">
+                        <div class="card-body p-2">
+                            <div class="d-flex align-items-center">
+                                <div class="subheader small">Resultado Total</div>
+                                <div class="ms-auto lh-1">
+                                    <div class="h2 mb-0 ${totalResultado >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(totalResultado)}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3 mb-2">
+                    <div class="card">
+                        <div class="card-body p-2">
+                            <div class="d-flex align-items-center">
+                                <div class="subheader small">Rentabilidade</div>
+                                <div class="ms-auto lh-1">
+                                    <div class="h2 mb-0 ${rentabilidadeSemana >= 0 ? 'text-success' : 'text-danger'}">${rentabilidadeSemana.toFixed(2)}%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-vcenter card-table">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Ativo</th>
+                            <th>Tipo</th>
+                            <th>Strike</th>
+                            <th>Exercida</th>
+                            <th>Saldo Abertura</th>
+                            <th>Resultado</th>
+                            <th>%</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows || '<tr><td colspan="9" class="text-center text-muted">Nenhuma operação nesta semana</td></tr>'}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+
+    const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+    modal.show();
+}
+
 function openDetalheFromMonthModal(opId) {
     // Fechar modal de operações do mês
     const modalMonthEl = document.getElementById('modalMonthOperations');

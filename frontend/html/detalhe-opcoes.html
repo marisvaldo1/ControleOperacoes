@@ -19,13 +19,6 @@
           </h5>
         </div>
         <div class="d-flex align-items-center">
-          <button type="button" class="btn btn-icon me-4" id="btnDetalheRefresh" title="Atualizar dados">
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-              <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-              <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" />
-              <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
-            </svg>
-          </button>
           <button type="button" class="btn-close ms-1" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
       </div>
@@ -57,11 +50,20 @@
             </div>
             <div class="fw-bold" id="detQuantidade">800 contratos</div>
           </div>
-          <div class="col">
-            <div class="text-muted small">
-              <i class="ti ti-percentage me-1"></i>PoP <span class="text-decoration-none cursor-help" data-bs-toggle="tooltip" title="Probabilidade de sucesso da operação">❓</span>
+          <div class="col d-flex align-items-center justify-content-between">
+            <div>
+              <div class="text-muted small">
+                <i class="ti ti-percentage me-1"></i>PoP <span class="text-decoration-none cursor-help" data-bs-toggle="tooltip" title="Probabilidade de sucesso da operação">❓</span>
+              </div>
+              <div class="fw-bold" id="detPoPResumo">0%</div>
             </div>
-            <div class="fw-bold" id="detPoPResumo">0%</div>
+            <button type="button" class="btn btn-icon" id="btnDetalheRefresh" title="Atualizar dados">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" />
+                <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
+              </svg>
+            </button>
           </div>
         </div>
       </div>
