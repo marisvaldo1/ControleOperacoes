@@ -66,12 +66,23 @@ function parseDateInput(value) {
     if (typeof value === 'number') return new Date(value);
     const str = String(value).trim();
     const isoDateOnly = /^(\d{4})-(\d{2})-(\d{2})$/;
+    const brDate = /^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2})(?::(\d{2}))?)?$/;
     const match = str.match(isoDateOnly);
     if (match) {
         const year = Number(match[1]);
         const month = Number(match[2]) - 1;
         const day = Number(match[3]);
         return new Date(year, month, day);
+    }
+    const brMatch = str.match(brDate);
+    if (brMatch) {
+        const day = Number(brMatch[1]);
+        const month = Number(brMatch[2]) - 1;
+        const year = Number(brMatch[3]);
+        const hour = Number(brMatch[4] || 0);
+        const minute = Number(brMatch[5] || 0);
+        const second = Number(brMatch[6] || 0);
+        return new Date(year, month, day, hour, minute, second);
     }
     return new Date(str);
 }

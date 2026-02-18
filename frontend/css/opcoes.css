@@ -41,6 +41,167 @@
 #modalSaldoOperacoes .table tbody td {
     border-color: #2d3748;
 }
+
+#modalSaldoOperacoes .saldo-dashboard {
+    font-family: 'Inter', sans-serif;
+}
+
+#modalSaldoOperacoes .metric-card {
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    height: 100%;
+}
+
+#modalSaldoOperacoes .metric-icon {
+    position: absolute;
+    right: 20px;
+    top: 20px;
+    font-size: 24px;
+    opacity: 0.3;
+}
+
+#modalSaldoOperacoes .metric-value-lg {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+#modalSaldoOperacoes .metric-label-lg {
+    color: #94a3b8;
+    font-size: 14px;
+}
+
+#modalSaldoOperacoes .saldo-metric-success {
+    background: linear-gradient(135deg, #064e3b, #065f46);
+    border-color: #10b981;
+}
+
+#modalSaldoOperacoes .saldo-metric-primary {
+    background: linear-gradient(135deg, #1e3a8a, #1e40af);
+    border-color: #3b82f6;
+}
+
+#modalSaldoOperacoes .saldo-metric-warning {
+    background: linear-gradient(135deg, #78350f, #92400e);
+    border-color: #f59e0b;
+}
+
+#modalSaldoOperacoes .saldo-metric-purple {
+    background: linear-gradient(135deg, #4c1d95, #5b21b6);
+    border-color: #8b5cf6;
+}
+
+#modalSaldoOperacoes .comparison-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+#modalSaldoOperacoes .badge-up {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+}
+
+#modalSaldoOperacoes .badge-down {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+#modalSaldoOperacoes .heatmap-month {
+    margin-bottom: 16px;
+}
+
+#modalSaldoOperacoes .heatmap-month-title {
+    color: #94a3b8;
+    font-size: 12px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+
+#modalSaldoOperacoes .heatmap-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+}
+
+#modalSaldoOperacoes .heatmap-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 6px;
+    text-align: center;
+    font-size: 11px;
+    color: #94a3b8;
+}
+
+#modalSaldoOperacoes .heatmap-weekday {
+    padding: 2px 0;
+}
+
+#modalSaldoOperacoes .heatmap-day {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: #cbd5e1;
+}
+
+#modalSaldoOperacoes .heatmap-profit-high { background: #10b981; }
+#modalSaldoOperacoes .heatmap-profit-med { background: rgba(16, 185, 129, 0.6); }
+#modalSaldoOperacoes .heatmap-profit-low { background: rgba(16, 185, 129, 0.3); }
+#modalSaldoOperacoes .heatmap-neutral { background: rgba(148, 163, 184, 0.15); }
+#modalSaldoOperacoes .heatmap-loss-low { background: rgba(239, 68, 68, 0.3); }
+#modalSaldoOperacoes .heatmap-loss-med { background: rgba(239, 68, 68, 0.6); }
+#modalSaldoOperacoes .heatmap-loss-high { background: #ef4444; }
+
+#modalSaldoOperacoes .saldo-legend-box {
+    width: 18px;
+    height: 18px;
+    display: inline-block;
+    border-radius: 4px;
+}
+
+#modalSaldoOperacoes .saldo-hourly-heatmap {
+    display: grid;
+    gap: 6px;
+}
+
+#modalSaldoOperacoes .saldo-hourly-header {
+    display: grid;
+    grid-template-columns: 70px repeat(5, 1fr);
+    gap: 6px;
+    font-size: 12px;
+    color: #94a3b8;
+    text-align: center;
+}
+
+#modalSaldoOperacoes .saldo-hourly-row {
+    display: grid;
+    grid-template-columns: 70px repeat(5, 1fr);
+    gap: 6px;
+    align-items: center;
+}
+
+#modalSaldoOperacoes .saldo-hourly-label {
+    font-size: 12px;
+    color: #cbd5e1;
+}
+
+#modalSaldoOperacoes .saldo-hourly-cell {
+    height: 28px;
+    border-radius: 6px;
+}
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 /* Cores para valores positivos e negativos */

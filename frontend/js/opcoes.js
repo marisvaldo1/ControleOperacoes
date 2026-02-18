@@ -6,6 +6,7 @@ let chartCapitalEvolution = null;
 let chartAssetDist = null;
 let chartSaldoAcumulado = null;
 let chartSaldoTipo = null;
+let chartSaldoComparison = null;
 let chartInsightsDistribuicao = null;
 let chartInsightsEvolution = null;
 let opcoesDisponiveis = [];
@@ -52,6 +53,26 @@ function parseFloatSafe(value) {
         // Formato americano: "37.65" ou "1234.56" -> direto
         return parseFloat(str);
     }
+}
+
+function normalizeResultadoOperacao(op) {
+    if (!op) return op;
+    const status = String(op.status || '').toUpperCase();
+    const tipoOperacao = String(op.tipo_operacao || '').toUpperCase();
+    const qtd = parseFloatSafe(op.quantidade);
+    const premio = parseFloatSafe(op.premio);
+    const resultado = parseFloatSafe(op.resultado);
+    const isVenda = tipoOperacao === 'VENDA' || (!tipoOperacao && qtd < 0);
+    if (status !== 'ABERTA' || !isVenda) return op;
+    const esperado = Math.abs(qtd) * Math.abs(premio);
+    if (esperado > 0) {
+        if (!Number.isFinite(resultado) || resultado === 0 || resultado < 0) {
+            op.resultado = esperado;
+        }
+    } else if (resultado < 0) {
+        op.resultado = Math.abs(resultado);
+    }
+    return op;
 }
 
 document.addEventListener('layoutReady', function() {
@@ -176,10 +197,12 @@ document.addEventListener('layoutReady', function() {
     document.getElementById('saldoInicio')?.addEventListener('change', function() {
         const periodoEl = document.getElementById('saldoPeriodo');
         if (periodoEl) periodoEl.value = 'custom';
+        updateSaldoCorretoraModal();
     });
     document.getElementById('saldoFim')?.addEventListener('change', function() {
         const periodoEl = document.getElementById('saldoPeriodo');
         if (periodoEl) periodoEl.value = 'custom';
+        updateSaldoCorretoraModal();
     });
 
     // Validação do campo Quantidade
@@ -350,7 +373,8 @@ async function loadOperacoes() {
     
     try {
         const res = await fetch(`${API_BASE}/api/opcoes`);
-        allOperacoes = await res.json();
+        const data = await res.json();
+        allOperacoes = Array.isArray(data) ? data.map(op => normalizeResultadoOperacao(op)) : [];
         window.allOperacoes = allOperacoes; // Make available globally
         
         // Verificação de Status Automática (Fechada/Exercida)
@@ -515,8 +539,16 @@ async function buscarCotacaoAtivo(ativo) {
         const response = await fetch(`${API_BASE}/api/cotacao/opcoes?symbol=${ativo}`);
         const data = await response.json();
         
-        if (data && (data.price || data.cotacao || data.close || data.last)) {
-            const cotacao = parseFloat(data.price || data.cotacao || data.close || data.last);
+        if (data && (data.spot_price || data.price || data.cotacao || data.close || data.last || data.underlying_price || data.preco_ativo_base)) {
+            const cotacao = parseFloat(
+                data.spot_price ||
+                data.price ||
+                data.cotacao ||
+                data.close ||
+                data.last ||
+                data.underlying_price ||
+                data.preco_ativo_base
+            );
             cotacoesCache.set(ativo, cotacao);
             return cotacao;
         }
@@ -863,10 +895,9 @@ function openNewModal() {
 function calcularResultado() {
     const qtd = parseInt(document.getElementById('inputQuantidade').value) || 0;
     const premio = Math.abs(parseCurrencyValue(document.getElementById('inputPremio').value));
-    
-    // Se quantidade negativa = VENDA (recebe prêmio)
-    // Se quantidade positiva = COMPRA (paga prêmio)
-    const isVenda = qtd < 0;
+    const tipoOperacaoEl = document.getElementById('inputTipoOperacao');
+    const tipoOperacao = tipoOperacaoEl ? String(tipoOperacaoEl.value || '').toUpperCase() : '';
+    const isVenda = tipoOperacao === 'VENDA' || qtd < 0;
     const res = Math.abs(qtd) * premio * (isVenda ? 1 : -1);
     
     // Set formatted result
@@ -1010,8 +1041,16 @@ async function buscarCotacaoAtivoBase(ativo) {
         const response = await fetch(`${API_BASE}/api/cotacao/opcoes?symbol=${ativo}`);
         const data = await response.json();
         
-        if (data && (data.price || data.cotacao || data.close || data.last)) {
-            cotacaoAtivoBase = parseFloat(data.price || data.cotacao || data.close || data.last);
+        if (data && (data.spot_price || data.price || data.cotacao || data.close || data.last || data.underlying_price || data.preco_ativo_base)) {
+            cotacaoAtivoBase = parseFloat(
+                data.spot_price ||
+                data.price ||
+                data.cotacao ||
+                data.close ||
+                data.last ||
+                data.underlying_price ||
+                data.preco_ativo_base
+            );
             const formatted = formatCurrency(cotacaoAtivoBase);
             
             // Atualizar badge no modal de operação
@@ -2115,15 +2154,16 @@ function showMonthOperations(year, month) {
     const monthKey = `${year}-${String(month).padStart(2, '0')}`;
     const allOps = window.allOperacoes || [];
     const monthOps = allOps.filter(op => {
-        const opDate = new Date(op.data_operacao || op.created_at);
+        const opDate = getSaldoOpDate(op);
+        if (!opDate) return false;
         const opMonth = `${opDate.getFullYear()}-${String(opDate.getMonth() + 1).padStart(2, '0')}`;
         return opMonth === monthKey;
     });
 
     // Sort by date descending
     monthOps.sort((a, b) => {
-        const da = new Date(a.data_operacao || a.created_at || 0);
-        const db = new Date(b.data_operacao || b.created_at || 0);
+        const da = getSaldoOpDate(a) || 0;
+        const db = getSaldoOpDate(b) || 0;
         return db - da;
     });
 
@@ -2180,9 +2220,9 @@ function showMonthOperations(year, month) {
 
     // Calculate initial balance (first operation of month)
     const monthOpsSorted = [...monthOps].sort((a, b) => {
-        const da = new Date(a.data_operacao || a.created_at || 0);
-        const db = new Date(b.data_operacao || b.created_at || 0);
-        return da - db; // Crescente: mais antiga primeiro
+        const da = getSaldoOpDate(a) || 0;
+        const db = getSaldoOpDate(b) || 0;
+        return da - db;
     });
     const saldoInicialMes = monthOpsSorted.length > 0 ? getSaldoInfo(monthOpsSorted[0], saldoMap).saldo : 0;
     const rentabilidadeMes = saldoInicialMes > 0 ? (totalResultado / saldoInicialMes) * 100 : 0;
@@ -2373,7 +2413,10 @@ function showWeekOperations(startDate, endDate) {
 
     const titleEl = document.getElementById('modalMonthOperationsTitle');
     if (titleEl) {
-        titleEl.textContent = `Operações da Semana (${formatDate(start)} a ${formatDate(end)}) - ${weekOps.length} operação${weekOps.length !== 1 ? 'ões' : ''}`;
+        const sameDay = start.toDateString() === end.toDateString();
+        titleEl.textContent = sameDay
+            ? `Operações do Dia (${formatDate(start)}) - ${weekOps.length} operação${weekOps.length !== 1 ? 'ões' : ''}`
+            : `Operações da Semana (${formatDate(start)} a ${formatDate(end)}) - ${weekOps.length} operação${weekOps.length !== 1 ? 'ões' : ''}`;
     }
 
     const contentEl = document.getElementById('modalMonthOperationsContent');
@@ -2563,6 +2606,444 @@ function renderAnnualTable(data) {
 
 let lastSaldoFilteredOps = [];
 
+function getSaldoOpDate(op) {
+    const raw = op.data_operacao || op.created_at || op.data_fechamento || op.vencimento || 0;
+    if (!raw) return null;
+    if (typeof raw === 'string') {
+        const str = raw.trim();
+        const isoDateOnly = /^\d{4}-\d{2}-\d{2}$/;
+        const isoDateTime = /^\d{4}-\d{2}-\d{2}T/;
+        const brDate = /^\d{2}\/\d{2}\/\d{4}/;
+        if (isoDateOnly.test(str)) {
+            const parsed = parseDateInput(str);
+            if (parsed && !Number.isNaN(parsed.getTime())) return parsed;
+        }
+        if (isoDateTime.test(str)) {
+            const parsed = parseDateInput(str.slice(0, 10));
+            if (parsed && !Number.isNaN(parsed.getTime())) return parsed;
+        }
+        if (brDate.test(str)) {
+            const parsed = parseDateInput(str);
+            if (parsed && !Number.isNaN(parsed.getTime())) return parsed;
+        }
+    }
+    const parsed = parseDateInput(raw);
+    if (!parsed || Number.isNaN(parsed.getTime())) return null;
+    return parsed;
+}
+
+function getDateKey(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function filterOpsByRange(ops, startDate, endDate, tipoFiltro) {
+    return ops.filter(op => {
+        const d = getSaldoOpDate(op);
+        if (!d) return false;
+        const matchTipo = tipoFiltro === 'ALL' || op.tipo === tipoFiltro;
+        return d >= startDate && d <= endDate && matchTipo;
+    });
+}
+
+function computeDailyResults(ops) {
+    const map = new Map();
+    ops.forEach(op => {
+        const date = getSaldoOpDate(op);
+        if (!date) return;
+        const key = getDateKey(date);
+        const value = (map.get(key) || 0) + (parseFloat(op.resultado) || 0);
+        map.set(key, value);
+    });
+    return map;
+}
+
+function getHeatmapClass(value, maxPos, maxNeg) {
+    if (!value) return 'heatmap-neutral';
+    if (value > 0) {
+        const ratio = maxPos > 0 ? value / maxPos : 0;
+        if (ratio >= 0.66) return 'heatmap-profit-high';
+        if (ratio >= 0.33) return 'heatmap-profit-med';
+        return 'heatmap-profit-low';
+    }
+    const ratio = maxNeg > 0 ? Math.abs(value) / maxNeg : 0;
+    if (ratio >= 0.66) return 'heatmap-loss-high';
+    if (ratio >= 0.33) return 'heatmap-loss-med';
+    return 'heatmap-loss-low';
+}
+
+function renderSaldoHeatmap(ops, startDate, endDate) {
+    const container = document.getElementById('saldoHeatmap');
+    if (!container) return;
+
+    const dailyMap = computeDailyResults(ops);
+    let maxPos = 0;
+    let maxNeg = 0;
+    dailyMap.forEach(value => {
+        if (value > maxPos) maxPos = value;
+        if (value < 0) maxNeg = Math.min(maxNeg, value);
+    });
+    maxNeg = Math.abs(maxNeg);
+
+    const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    const weekdayLabels = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
+    const monthsWithOps = new Set();
+    ops.forEach(op => {
+        const date = getSaldoOpDate(op);
+        if (!date) return;
+        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        monthsWithOps.add(key);
+    });
+    const html = [];
+    const start = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+    const end = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
+    let current = new Date(start);
+
+    html.push('<div class="accordion" id="saldoHeatmapAccordion">');
+    while (current <= end) {
+        const year = current.getFullYear();
+        const month = current.getMonth();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
+        if (!monthsWithOps.has(monthKey)) {
+            current = new Date(year, month + 1, 1);
+            continue;
+        }
+        const monthTitle = `${monthNames[month]} ${year}`;
+        const accordionId = `saldo-heatmap-${monthKey}`;
+        html.push(`
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="heading-${accordionId}">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-${accordionId}" aria-expanded="false" aria-controls="collapse-${accordionId}">
+                        ${monthTitle}
+                    </button>
+                </h2>
+                <div id="collapse-${accordionId}" class="accordion-collapse collapse" aria-labelledby="heading-${accordionId}" data-bs-parent="#saldoHeatmapAccordion">
+                    <div class="accordion-body">
+                        <div class="heatmap-month">
+                                      <div class="heatmap-weekdays">
+                                          ${weekdayLabels.map(label => `<span class="heatmap-weekday">${label}</span>`).join('')}
+                                      </div>
+                            <div class="heatmap-grid">
+        `);
+        for (let day = 1; day <= daysInMonth; day += 1) {
+            const date = new Date(year, month, day);
+            const inRange = date >= startDate && date <= endDate;
+            if (!inRange) {
+                html.push('<span class="heatmap-day heatmap-neutral"></span>');
+                continue;
+            }
+            const key = getDateKey(date);
+            const value = dailyMap.get(key) || 0;
+            const cssClass = getHeatmapClass(value, maxPos, maxNeg);
+            const title = `${day}/${String(month + 1).padStart(2, '0')} - ${formatCurrency(value)}`;
+            html.push(`<span class="heatmap-day ${cssClass}" data-date="${key}" title="${title}">${day}</span>`);
+        }
+        html.push(`
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `);
+        current = new Date(year, month + 1, 1);
+    }
+    html.push('</div>');
+
+    container.innerHTML = html.join('');
+    if (!container.dataset.clickBound) {
+        container.addEventListener('click', event => {
+            const target = event.target;
+            if (!(target instanceof HTMLElement)) return;
+            if (!target.classList.contains('heatmap-day')) return;
+            const dateKey = target.dataset.date;
+            if (!dateKey) return;
+            showWeekOperations(dateKey, dateKey);
+        });
+        container.dataset.clickBound = 'true';
+    }
+}
+
+function renderSaldoHourlyHeatmap(ops) {
+    const container = document.getElementById('saldoHourlyHeatmap');
+    if (!container) return;
+
+    const hours = [10, 11, 12, 14, 15];
+    const weekdays = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta'];
+    const results = {};
+    weekdays.forEach(day => {
+        results[day] = {};
+        hours.forEach(hour => {
+            results[day][hour] = 0;
+        });
+    });
+
+    ops.forEach(op => {
+        const date = getSaldoOpDate(op);
+        if (!date) return;
+        const dayIndex = date.getDay();
+        const hour = date.getHours();
+        const weekdayIndex = dayIndex === 0 ? -1 : dayIndex - 1;
+        if (weekdayIndex < 0 || weekdayIndex > 4 || !hours.includes(hour)) return;
+        const label = weekdays[weekdayIndex];
+        results[label][hour] += parseFloat(op.resultado) || 0;
+    });
+
+    let maxPos = 0;
+    let maxNeg = 0;
+    weekdays.forEach(day => {
+        hours.forEach(hour => {
+            const value = results[day][hour];
+            if (value > maxPos) maxPos = value;
+            if (value < 0) maxNeg = Math.min(maxNeg, value);
+        });
+    });
+    maxNeg = Math.abs(maxNeg);
+
+    const headerCells = ['<div></div>', ...hours.map(hour => `<div>${hour}h</div>`)];
+    const html = [`<div class="saldo-hourly-header">${headerCells.join('')}</div>`];
+
+    weekdays.forEach(day => {
+        const cells = [`<div class="saldo-hourly-label">${day}</div>`];
+        hours.forEach(hour => {
+            const value = results[day][hour];
+            const cssClass = getHeatmapClass(value, maxPos, maxNeg);
+            const title = `${day} ${hour}h - ${formatCurrency(value)}`;
+            cells.push(`<div class="saldo-hourly-cell ${cssClass}" title="${title}"></div>`);
+        });
+        html.push(`<div class="saldo-hourly-row">${cells.join('')}</div>`);
+    });
+
+    container.innerHTML = html.join('');
+}
+
+function renderSaldoComparisonChart(currentStats, previousStats) {
+    const canvas = document.getElementById('chartSaldoComparison');
+    if (!canvas || typeof Chart === 'undefined') return;
+    if (chartSaldoComparison) chartSaldoComparison.destroy();
+
+    chartSaldoComparison = new Chart(canvas.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: ['Resultado', 'Win Rate', 'Operações'],
+            datasets: [
+                {
+                    label: 'Período Atual',
+                    data: [currentStats.totalResultado, currentStats.winRate, currentStats.totalOps],
+                    backgroundColor: 'rgba(59, 130, 246, 0.7)'
+                },
+                {
+                    label: 'Período Anterior',
+                    data: [previousStats.totalResultado, previousStats.winRate, previousStats.totalOps],
+                    backgroundColor: 'rgba(148, 163, 184, 0.6)'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+function renderSaldoTopAssets(ops) {
+    const tbody = document.getElementById('saldoTopAssetsBody');
+    if (!tbody) return;
+    const map = new Map();
+    ops.forEach(op => {
+        const key = op.ativo_base || op.ativo || 'N/D';
+        if (!map.has(key)) {
+            map.set(key, { ativo: key, totalResultado: 0, wins: 0, totalOps: 0 });
+        }
+        const entry = map.get(key);
+        const resultado = parseFloat(op.resultado) || 0;
+        entry.totalResultado += resultado;
+        entry.totalOps += 1;
+        if (resultado > 0) entry.wins += 1;
+    });
+    const items = Array.from(map.values()).sort((a, b) => b.totalResultado - a.totalResultado).slice(0, 5);
+    if (items.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-muted text-center">Sem dados no período</td></tr>';
+        return;
+    }
+    tbody.innerHTML = items.map((item, index) => {
+        const winRate = item.totalOps > 0 ? (item.wins / item.totalOps) * 100 : 0;
+        const ticketMedio = item.totalOps > 0 ? item.totalResultado / item.totalOps : 0;
+        return `<tr>
+            <td>#${index + 1}</td>
+            <td class="fw-bold">${item.ativo}</td>
+            <td>${item.totalOps}</td>
+            <td>${winRate.toFixed(1)}%</td>
+            <td class="${item.totalResultado >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(item.totalResultado)}</td>
+            <td>${formatCurrency(ticketMedio)}</td>
+        </tr>`;
+    }).join('');
+}
+
+function renderSaldoConsistency(dailyMap) {
+    const positiveDays = Array.from(dailyMap.values()).filter(v => v > 0).length;
+    const negativeDays = Array.from(dailyMap.values()).filter(v => v < 0).length;
+    const totalDays = positiveDays + negativeDays;
+    const positivePct = totalDays > 0 ? (positiveDays / totalDays) * 100 : 0;
+    const negativePct = totalDays > 0 ? (negativeDays / totalDays) * 100 : 0;
+    const stabilityPct = totalDays > 0 ? Math.max(0, 100 - negativePct) : 0;
+
+    const posValue = document.getElementById('saldoConsPositiveValue');
+    const posBar = document.getElementById('saldoConsPositiveBar');
+    const negValue = document.getElementById('saldoConsNegativeValue');
+    const negBar = document.getElementById('saldoConsNegativeBar');
+    const stabValue = document.getElementById('saldoConsStabilityValue');
+    const stabBar = document.getElementById('saldoConsStabilityBar');
+
+    if (posValue) posValue.textContent = `${positivePct.toFixed(0)}%`;
+    if (posBar) posBar.style.width = `${positivePct}%`;
+    if (negValue) negValue.textContent = `${negativePct.toFixed(0)}%`;
+    if (negBar) negBar.style.width = `${negativePct}%`;
+    if (stabValue) stabValue.textContent = `${stabilityPct.toFixed(0)}%`;
+    if (stabBar) stabBar.style.width = `${stabilityPct}%`;
+}
+
+function renderSaldoProbabilities(ops, stats) {
+    const callOps = ops.filter(op => op.tipo === 'CALL');
+    const putOps = ops.filter(op => op.tipo === 'PUT');
+    const callWins = callOps.filter(op => (parseFloat(op.resultado) || 0) > 0).length;
+    const putWins = putOps.filter(op => (parseFloat(op.resultado) || 0) > 0).length;
+    const callRate = callOps.length > 0 ? (callWins / callOps.length) * 100 : 0;
+    const putRate = putOps.length > 0 ? (putWins / putOps.length) * 100 : 0;
+    const expectancy = stats.totalOps > 0 ? stats.totalResultado / stats.totalOps : 0;
+    const avgWin = stats.wins > 0 ? stats.sumPos / stats.wins : 0;
+    const avgLoss = stats.losses > 0 ? Math.abs(stats.sumNeg) / stats.losses : 0;
+    const riskReward = avgLoss > 0 ? (avgWin / avgLoss) : null;
+
+    const callEl = document.getElementById('saldoProbCall');
+    const putEl = document.getElementById('saldoProbPut');
+    const expEl = document.getElementById('saldoExpectativa');
+    const rrEl = document.getElementById('saldoRiskReward');
+
+    if (callEl) callEl.textContent = `${callRate.toFixed(0)}%`;
+    if (putEl) putEl.textContent = `${putRate.toFixed(0)}%`;
+    if (expEl) expEl.textContent = formatCurrency(expectancy);
+    if (rrEl) rrEl.textContent = riskReward === null ? 'N/A' : `1:${riskReward.toFixed(2)}`;
+}
+
+function renderSaldoGoals(stats) {
+    const config = JSON.parse(localStorage.getItem('appConfig') || '{}');
+    const metaMensal = parseFloat(config.metaMensal || config.meta_mensal || 2000);
+    const metaWinRate = parseFloat(config.metaWinRate || config.meta_win_rate || 70);
+    const metaTrades = parseFloat(config.metaTrades || config.meta_trades || 20);
+
+    const metaMensalValue = document.getElementById('saldoMetaMensalValue');
+    const metaMensalBar = document.getElementById('saldoMetaMensalBar');
+    const metaMensalInfo = document.getElementById('saldoMetaMensalInfo');
+
+    const metaWinRateValue = document.getElementById('saldoMetaWinRateValue');
+    const metaWinRateBar = document.getElementById('saldoMetaWinRateBar');
+    const metaWinRateInfo = document.getElementById('saldoMetaWinRateInfo');
+
+    const metaTradesValue = document.getElementById('saldoMetaTradesValue');
+    const metaTradesBar = document.getElementById('saldoMetaTradesBar');
+    const metaTradesInfo = document.getElementById('saldoMetaTradesInfo');
+
+    const progressMensal = metaMensal > 0 ? Math.min(100, (stats.totalResultado / metaMensal) * 100) : 0;
+    if (metaMensalValue) metaMensalValue.textContent = formatCurrency(metaMensal);
+    if (metaMensalBar) metaMensalBar.style.width = `${Math.max(0, progressMensal)}%`;
+    if (metaMensalInfo) metaMensalInfo.textContent = `${formatCurrency(stats.totalResultado)} de ${formatCurrency(metaMensal)}`;
+
+    const winRatePct = stats.winRate;
+    const winRateProgress = metaWinRate > 0 ? Math.min(100, (winRatePct / metaWinRate) * 100) : 0;
+    if (metaWinRateValue) metaWinRateValue.textContent = `${metaWinRate.toFixed(0)}%`;
+    if (metaWinRateBar) metaWinRateBar.style.width = `${Math.max(0, winRateProgress)}%`;
+    if (metaWinRateInfo) metaWinRateInfo.textContent = winRatePct >= metaWinRate ? 'Meta atingida' : `${winRatePct.toFixed(1)}% atual`;
+
+    const tradesProgress = metaTrades > 0 ? Math.min(100, (stats.totalOps / metaTrades) * 100) : 0;
+    if (metaTradesValue) metaTradesValue.textContent = `${metaTrades.toFixed(0)}`;
+    if (metaTradesBar) metaTradesBar.style.width = `${Math.max(0, tradesProgress)}%`;
+    if (metaTradesInfo) metaTradesInfo.textContent = `${stats.totalOps} de ${metaTrades.toFixed(0)} operações`;
+}
+
+function renderSaldoMetrics(currentStats, previousStats) {
+    const saldoEl = document.getElementById('saldoMetricSaldo');
+    const saldoDeltaEl = document.getElementById('saldoMetricSaldoDelta');
+    const resultadoEl = document.getElementById('saldoMetricResultado');
+    const resultadoDeltaEl = document.getElementById('saldoMetricResultadoDelta');
+    const winRateEl = document.getElementById('saldoMetricWinRate');
+    const winLossEl = document.getElementById('saldoMetricWinLoss');
+    const opsEl = document.getElementById('saldoMetricOps');
+    const opsDeltaEl = document.getElementById('saldoMetricOpsDelta');
+
+    const config = JSON.parse(localStorage.getItem('appConfig') || '{}');
+    const saldoAtual = parseFloat(config.saldoAcoes || 0);
+    if (saldoEl) saldoEl.textContent = formatCurrency(saldoAtual);
+    if (resultadoEl) resultadoEl.textContent = formatCurrency(currentStats.totalResultado);
+    if (winRateEl) winRateEl.textContent = `${currentStats.winRate.toFixed(1)}%`;
+    if (winLossEl) winLossEl.textContent = `${currentStats.wins}W / ${currentStats.losses}L`;
+    if (opsEl) opsEl.textContent = `${currentStats.totalOps}`;
+
+    const saldoDelta = previousStats.totalResultado === 0 ? 0 : ((currentStats.totalResultado - previousStats.totalResultado) / Math.abs(previousStats.totalResultado)) * 100;
+    const resultadoDelta = saldoDelta;
+    const opsDelta = currentStats.totalOps - previousStats.totalOps;
+
+    if (saldoDeltaEl) {
+        const isUp = saldoDelta >= 0;
+        saldoDeltaEl.className = `comparison-badge ${isUp ? 'badge-up' : 'badge-down'}`;
+        saldoDeltaEl.textContent = `${isUp ? '↗' : '↘'} ${Math.abs(saldoDelta).toFixed(1)}%`;
+    }
+    if (resultadoDeltaEl) {
+        const isUp = resultadoDelta >= 0;
+        resultadoDeltaEl.className = `comparison-badge ${isUp ? 'badge-up' : 'badge-down'}`;
+        resultadoDeltaEl.textContent = `${isUp ? '↗' : '↘'} ${Math.abs(resultadoDelta).toFixed(1)}%`;
+    }
+    if (opsDeltaEl) {
+        const isUp = opsDelta >= 0;
+        opsDeltaEl.className = `comparison-badge ${isUp ? 'badge-up' : 'badge-down'}`;
+        opsDeltaEl.textContent = `${isUp ? '↗' : '↘'} ${Math.abs(opsDelta)} ops`;
+    }
+}
+
+function renderSaldoDashboard(ops, startDate, endDate, allOps, tipoFiltro) {
+    const totalOps = ops.length;
+    const totalResultado = ops.reduce((acc, op) => acc + (parseFloat(op.resultado) || 0), 0);
+    const wins = ops.filter(op => (parseFloat(op.resultado) || 0) > 0).length;
+    const losses = ops.filter(op => (parseFloat(op.resultado) || 0) < 0).length;
+    const winRate = totalOps > 0 ? (wins / totalOps) * 100 : 0;
+    const sumPos = ops.filter(op => (parseFloat(op.resultado) || 0) > 0).reduce((acc, op) => acc + (parseFloat(op.resultado) || 0), 0);
+    const sumNeg = ops.filter(op => (parseFloat(op.resultado) || 0) < 0).reduce((acc, op) => acc + (parseFloat(op.resultado) || 0), 0);
+    const currentStats = { totalOps, totalResultado, wins, losses, winRate, sumPos, sumNeg };
+
+    const diffMs = endDate.getTime() - startDate.getTime();
+    const prevEnd = new Date(startDate.getTime() - 1);
+    const prevStart = new Date(prevEnd.getTime() - diffMs);
+    const prevOps = filterOpsByRange(allOps, prevStart, prevEnd, tipoFiltro);
+    const prevTotalResultado = prevOps.reduce((acc, op) => acc + (parseFloat(op.resultado) || 0), 0);
+    const prevWins = prevOps.filter(op => (parseFloat(op.resultado) || 0) > 0).length;
+    const prevLosses = prevOps.filter(op => (parseFloat(op.resultado) || 0) < 0).length;
+    const prevWinRate = prevOps.length > 0 ? (prevWins / prevOps.length) * 100 : 0;
+    const prevSumPos = prevOps.filter(op => (parseFloat(op.resultado) || 0) > 0).reduce((acc, op) => acc + (parseFloat(op.resultado) || 0), 0);
+    const prevSumNeg = prevOps.filter(op => (parseFloat(op.resultado) || 0) < 0).reduce((acc, op) => acc + (parseFloat(op.resultado) || 0), 0);
+    const previousStats = { totalOps: prevOps.length, totalResultado: prevTotalResultado, wins: prevWins, losses: prevLosses, winRate: prevWinRate, sumPos: prevSumPos, sumNeg: prevSumNeg };
+
+    renderSaldoMetrics(currentStats, previousStats);
+    renderSaldoHeatmap(ops, startDate, endDate);
+    renderSaldoComparisonChart(currentStats, previousStats);
+    renderSaldoHourlyHeatmap(ops);
+    renderSaldoTopAssets(ops);
+    renderSaldoConsistency(computeDailyResults(ops));
+    renderSaldoProbabilities(ops, currentStats);
+    renderSaldoGoals(currentStats);
+}
+
 function openSaldoCorretoraModal() {
     const modalEl = document.getElementById('modalSaldoOperacoes');
     if (!modalEl) return;
@@ -2629,17 +3110,19 @@ async function updateSaldoCorretoraModal() {
     const res = await fetch(`${API_BASE}/api/opcoes?_=${Date.now()}`, { cache: 'no-store' });
     const ops = await res.json();
 
-    const startDate = new Date(inicio);
-    const endDate = new Date(fim);
+    const startDate = parseDateInput(inicio);
+    const endDate = parseDateInput(fim);
+    if (!startDate || !endDate) return;
     endDate.setHours(23, 59, 59, 999);
 
     const filtered = ops.filter(op => {
-        const d = new Date(op.data_operacao || op.created_at || 0);
+        const d = getSaldoOpDate(op);
         const matchTipo = tipoFiltro === 'ALL' || op.tipo === tipoFiltro;
         return d >= startDate && d <= endDate && matchTipo;
     });
 
     lastSaldoFilteredOps = filtered;
+    renderSaldoDashboard(filtered, startDate, endDate, ops, tipoFiltro);
     renderSaldoResumo(filtered);
     renderSaldoCharts(filtered);
     renderSaldoTabela(filtered);
@@ -2707,18 +3190,14 @@ function renderSaldoCharts(ops) {
     const saldoMap = computeSaldoAberturaFallback(ops, saldoAtual);
     persistSaldoAberturaEstimada(ops, saldoMap);
 
-    const sorted = [...ops].sort((a, b) => {
-        const da = new Date(a.data_operacao || a.created_at || 0);
-        const db = new Date(b.data_operacao || b.created_at || 0);
-        return da - db; // ordem crescente (mais antiga primeiro) para gráfico acumulado
-    });
+    const sorted = [...ops].filter(op => getSaldoOpDate(op)).sort((a, b) => getSaldoOpDate(a) - getSaldoOpDate(b));
     let acumulado = 0;
     const labels = [];
     const data = [];
     sorted.forEach(op => {
         const res = parseFloat(op.resultado || 0);
         acumulado += res;
-        labels.push(formatDate(op.data_operacao));
+        labels.push(formatDate(getSaldoOpDate(op)));
         data.push(acumulado);
     });
 
@@ -5111,8 +5590,9 @@ function aplicarSimulacao() {
         // Trigger blur to fetch details if needed, or just calculate result
         const qtd = parseInt(document.getElementById('simQuantidade').value);
         const premio = Math.abs(parseFloat(simSelectedOption.premio));
-        // Para calcular o resultado correto, considerar se é venda (qtd negativa) ou compra
-        const resultado = qtd * premio * (qtd < 0 ? 1 : -1);
+        const tipoOperacao = String(document.getElementById('inputTipoOperacao')?.value || '').toUpperCase();
+        const isVenda = tipoOperacao === 'VENDA' || qtd < 0;
+        const resultado = Math.abs(qtd) * premio * (isVenda ? 1 : -1);
         document.getElementById('inputResultado').value = formatCurrency(resultado);
         
         // Switch to "Mes Atual" tab if not already

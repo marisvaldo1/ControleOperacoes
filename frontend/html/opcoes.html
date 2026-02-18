@@ -498,13 +498,13 @@
     <!-- Modal Historico de Operacoes (Saldo) -->
     <div class="modal modal-blur fade" id="modalSaldoOperacoes" tabindex="-1">
         <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-            <div class="modal-content">
+            <div class="modal-content saldo-dashboard">
                 <div class="modal-header">
-                    <h5 class="modal-title">Histórico de Resultado sobre Saldo</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h5 class="modal-title">🔥 Dashboard Avançado de Performance</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="row g-3 mb-3">
+                    <div class="row g-3 mb-4">
                         <div class="col-md-3">
                             <label class="form-label">Data Início</label>
                             <input type="date" class="form-control" id="saldoInicio">
@@ -513,7 +513,7 @@
                             <label class="form-label">Data Fim</label>
                             <input type="date" class="form-control" id="saldoFim">
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-3">
                             <label class="form-label">Período</label>
                             <select class="form-select" id="saldoPeriodo">
                                 <option value="custom">Personalizado</option>
@@ -527,7 +527,7 @@
                                 <option value="lastYear">Ano passado</option>
                             </select>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-3">
                             <label class="form-label">Tipo</label>
                             <select class="form-select" id="saldoTipo">
                                 <option value="ALL">Todos</option>
@@ -535,70 +535,220 @@
                                 <option value="PUT">PUT</option>
                             </select>
                         </div>
-                        <div class="col-md-2 align-self-end">
-                            <div class="d-flex gap-2">
-                                <button class="btn btn-primary flex-grow-1" id="btnFiltrarSaldo">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                                    Filtrar
-                                </button>
-                                <button class="btn btn-primary btn-icon" id="btnSaldoInsights" title="Insights">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>
-                                </button>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-3">
+                            <div class="card metric-card saldo-metric-success">
+                                <div class="metric-icon">💰</div>
+                                <div class="metric-value-lg" id="saldoMetricSaldo">R$ 0,00</div>
+                                <div class="metric-label-lg">Saldo na Corretora</div>
+                                <div class="mt-2">
+                                    <span class="comparison-badge badge-up" id="saldoMetricSaldoDelta">↗ +0%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card metric-card saldo-metric-primary">
+                                <div class="metric-icon">📈</div>
+                                <div class="metric-value-lg text-white" id="saldoMetricResultado">R$ 0,00</div>
+                                <div class="metric-label-lg">Resultado Período</div>
+                                <div class="mt-2">
+                                    <span class="comparison-badge badge-up" id="saldoMetricResultadoDelta">↗ +0%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card metric-card saldo-metric-warning">
+                                <div class="metric-icon">🎯</div>
+                                <div class="metric-value-lg text-dark" id="saldoMetricWinRate">0%</div>
+                                <div class="metric-label-lg text-dark">Taxa de Acerto</div>
+                                <div class="mt-2">
+                                    <span class="comparison-badge" id="saldoMetricWinLoss">0W / 0L</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card metric-card saldo-metric-purple">
+                                <div class="metric-icon">🔢</div>
+                                <div class="metric-value-lg" id="saldoMetricOps">0</div>
+                                <div class="metric-label-lg">Total de Operações</div>
+                                <div class="mt-2">
+                                    <span class="comparison-badge badge-down" id="saldoMetricOpsDelta">↘ 0 ops</span>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="row row-cards mb-3" id="saldoResumo"></div>
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="card-title">🗓️ Heatmap de Performance Diária</h3>
+                            <p class="text-muted mb-0 small">Visualize seus resultados dia a dia - Verde = Lucro | Vermelho = Prejuízo</p>
+                        </div>
+                        <div class="card-body">
+                            <div id="saldoHeatmap"></div>
+                            <div class="mt-3 d-flex gap-3 align-items-center saldo-legend">
+                                <span>Legenda:</span>
+                                <span><span class="heatmap-day heatmap-profit-high saldo-legend-box"></span> Lucro Alto</span>
+                                <span><span class="heatmap-day heatmap-profit-med saldo-legend-box"></span> Lucro Médio</span>
+                                <span><span class="heatmap-day heatmap-profit-low saldo-legend-box"></span> Lucro Baixo</span>
+                                <span><span class="heatmap-day heatmap-neutral saldo-legend-box"></span> Sem Operação</span>
+                                <span><span class="heatmap-day heatmap-loss-low saldo-legend-box"></span> Perda Baixa</span>
+                                <span><span class="heatmap-day heatmap-loss-med saldo-legend-box"></span> Perda Média</span>
+                            </div>
+                        </div>
+                    </div>
 
-                    <div class="row row-cards">
-                        <div class="col-md-7">
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
                             <div class="card">
-                                <div class="card-header"><h3 class="card-title">Evolução do Resultado Acumulado</h3></div>
+                                <div class="card-header">
+                                    <h3 class="card-title">📊 Comparação entre Períodos</h3>
+                                </div>
                                 <div class="card-body">
-                                    <div class="chart-container" style="position: relative; height: 260px;">
-                                        <canvas id="chartSaldoAcumulado"></canvas>
+                                    <div class="chart-container">
+                                        <canvas id="chartSaldoComparison"></canvas>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-5">
+
+                        <div class="col-md-6">
                             <div class="card">
-                                <div class="card-header"><h3 class="card-title">Distribuição por Tipo</h3></div>
+                                <div class="card-header">
+                                    <h3 class="card-title">⏰ Performance por Horário</h3>
+                                </div>
                                 <div class="card-body">
-                                    <div class="chart-container" style="position: relative; height: 260px;">
-                                        <canvas id="chartSaldoTipo"></canvas>
-                                    </div>
+                                    <div id="saldoHourlyHeatmap" class="saldo-hourly-heatmap"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="accordion mt-3" id="saldoOperacoesAccordion">
-                        <div class="accordion-item">
-                            <h2 class="accordion-header" id="headingSaldoOperacoes">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSaldoOperacoes" aria-expanded="false" aria-controls="collapseSaldoOperacoes">
-                                    🔎 Operações Detalhadas
-                                </button>
-                            </h2>
-                            <div id="collapseSaldoOperacoes" class="accordion-collapse collapse" aria-labelledby="headingSaldoOperacoes" data-bs-parent="#saldoOperacoesAccordion">
-                                <div class="accordion-body p-0">
-                                    <div class="table-responsive">
-                                        <table class="table table-vcenter card-table mb-0" id="saldoTabela">
-                                            <thead>
-                                                <tr>
-                                                    <th>Data</th>
-                                                    <th>Ativo</th>
-                                                    <th>Tipo</th>
-                                                    <th>Strike</th>
-                                                    <th>Exercido</th>
-                                                    <th>Saldo Abertura</th>
-                                                    <th>Resultado</th>
-                                                    <th>%</th>
-                                                    <th>Ações</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody></tbody>
-                                        </table>
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="card-title">🏆 Top 5 Ativos Mais Lucrativos</h3>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-vcenter card-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Posição</th>
+                                            <th>Ativo</th>
+                                            <th>Operações</th>
+                                            <th>Win Rate</th>
+                                            <th>Lucro Total</th>
+                                            <th>Ticket Médio</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="saldoTopAssetsBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">💪 Consistência</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span>Dias Lucrativos</span>
+                                            <strong class="text-success" id="saldoConsPositiveValue">0%</strong>
+                                        </div>
+                                        <div class="progress" style="height: 8px;">
+                                            <div class="progress-bar bg-success" id="saldoConsPositiveBar" style="width: 0%"></div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span>Dias Negativos</span>
+                                            <strong class="text-danger" id="saldoConsNegativeValue">0%</strong>
+                                        </div>
+                                        <div class="progress" style="height: 8px;">
+                                            <div class="progress-bar bg-danger" id="saldoConsNegativeBar" style="width: 0%"></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span>Estabilidade</span>
+                                            <strong class="text-info" id="saldoConsStabilityValue">0%</strong>
+                                        </div>
+                                        <div class="progress" style="height: 8px;">
+                                            <div class="progress-bar bg-info" id="saldoConsStabilityBar" style="width: 0%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">🎲 Probabilidades</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row text-center">
+                                        <div class="col-6 mb-3">
+                                            <div class="text-muted small">Prob. Acerto CALL</div>
+                                            <div class="h2 text-success mb-0" id="saldoProbCall">0%</div>
+                                        </div>
+                                        <div class="col-6 mb-3">
+                                            <div class="text-muted small">Prob. Acerto PUT</div>
+                                            <div class="h2 text-warning mb-0" id="saldoProbPut">0%</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="text-muted small">Expectativa Matemática</div>
+                                            <div class="h2 text-info mb-0" id="saldoExpectativa">R$ 0,00</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="text-muted small">Risco/Retorno</div>
+                                            <div class="h2 mb-0" id="saldoRiskReward">1:0</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">📌 Metas</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span>Meta Mensal</span>
+                                            <strong id="saldoMetaMensalValue">R$ 0,00</strong>
+                                        </div>
+                                        <div class="progress" style="height: 8px;">
+                                            <div class="progress-bar bg-success" id="saldoMetaMensalBar" style="width: 0%"></div>
+                                        </div>
+                                        <small class="text-muted" id="saldoMetaMensalInfo">R$ 0,00 de R$ 0,00</small>
+                                    </div>
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span>Win Rate Objetivo</span>
+                                            <strong id="saldoMetaWinRateValue">0%</strong>
+                                        </div>
+                                        <div class="progress" style="height: 8px;">
+                                            <div class="progress-bar bg-info" id="saldoMetaWinRateBar" style="width: 0%"></div>
+                                        </div>
+                                        <small class="text-success" id="saldoMetaWinRateInfo">-</small>
+                                    </div>
+                                    <div>
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span>Trades/Mês Ideal</span>
+                                            <strong id="saldoMetaTradesValue">0</strong>
+                                        </div>
+                                        <div class="progress" style="height: 8px;">
+                                            <div class="progress-bar bg-warning" id="saldoMetaTradesBar" style="width: 0%"></div>
+                                        </div>
+                                        <small class="text-muted" id="saldoMetaTradesInfo">0 de 0 operações</small>
                                     </div>
                                 </div>
                             </div>
@@ -608,6 +758,121 @@
             </div>
         </div>
     </div>
+
+    <template id="modalSaldoOperacoesBackup">
+        <div class="modal modal-blur fade" id="modalSaldoOperacoes" tabindex="-1">
+            <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Histórico de Resultado sobre Saldo</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-3">
+                                <label class="form-label">Data Início</label>
+                                <input type="date" class="form-control" id="saldoInicio">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Data Fim</label>
+                                <input type="date" class="form-control" id="saldoFim">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Período</label>
+                                <select class="form-select" id="saldoPeriodo">
+                                    <option value="custom">Personalizado</option>
+                                    <option value="7">Últimos 7 dias</option>
+                                    <option value="30">Últimos 30 dias</option>
+                                    <option value="60">Últimos 60 dias</option>
+                                    <option value="90">Últimos 90 dias</option>
+                                    <option value="month">Mês atual</option>
+                                    <option value="12">Últimos 12 meses</option>
+                                    <option value="year">Ano atual</option>
+                                    <option value="lastYear">Ano passado</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Tipo</label>
+                                <select class="form-select" id="saldoTipo">
+                                    <option value="ALL">Todos</option>
+                                    <option value="CALL">CALL</option>
+                                    <option value="PUT">PUT</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2 align-self-end">
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-primary flex-grow-1" id="btnFiltrarSaldo">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                                        Filtrar
+                                    </button>
+                                    <button class="btn btn-primary btn-icon" id="btnSaldoInsights" title="Insights">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row row-cards mb-3" id="saldoResumo"></div>
+
+                        <div class="row row-cards">
+                            <div class="col-md-7">
+                                <div class="card">
+                                    <div class="card-header"><h3 class="card-title">Evolução do Resultado Acumulado</h3></div>
+                                    <div class="card-body">
+                                        <div class="chart-container" style="position: relative; height: 260px;">
+                                            <canvas id="chartSaldoAcumulado"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-5">
+                                <div class="card">
+                                    <div class="card-header"><h3 class="card-title">Distribuição por Tipo</h3></div>
+                                    <div class="card-body">
+                                        <div class="chart-container" style="position: relative; height: 260px;">
+                                            <canvas id="chartSaldoTipo"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion mt-3" id="saldoOperacoesAccordion">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="headingSaldoOperacoes">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSaldoOperacoes" aria-expanded="false" aria-controls="collapseSaldoOperacoes">
+                                        🔎 Operações Detalhadas
+                                    </button>
+                                </h2>
+                                <div id="collapseSaldoOperacoes" class="accordion-collapse collapse" aria-labelledby="headingSaldoOperacoes" data-bs-parent="#saldoOperacoesAccordion">
+                                    <div class="accordion-body p-0">
+                                        <div class="table-responsive">
+                                            <table class="table table-vcenter card-table mb-0" id="saldoTabela">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Data</th>
+                                                        <th>Ativo</th>
+                                                        <th>Tipo</th>
+                                                        <th>Strike</th>
+                                                        <th>Exercido</th>
+                                                        <th>Saldo Abertura</th>
+                                                        <th>Resultado</th>
+                                                        <th>%</th>
+                                                        <th>Ações</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
 
     <div class="modal modal-blur fade" id="modalSaldoInsights" tabindex="-1">
         <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">

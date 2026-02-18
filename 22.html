@@ -1,0 +1,574 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <title>Dashboard Financeiro - Ideia 2 (Foco em Heatmap)</title>
+  <link href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta17/dist/css/tabler.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+  <style>
+    body {
+      background: #1e293b;
+    }
+    .modal-content {
+      background: #1e3a5f;
+      color: #fff;
+      border: 1px solid #2d4a6f;
+    }
+    .modal-header {
+      border-bottom: 1px solid #2d4a6f;
+    }
+    .card {
+      background: #243447;
+      border: 1px solid #2d4a6f;
+      color: #fff;
+    }
+    .card-header {
+      border-bottom: 1px solid #2d4a6f;
+    }
+    .text-green {
+      color: #2dd36f !important;
+    }
+    .text-red {
+      color: #eb445a !important;
+    }
+    .form-select, .form-control {
+      background: #1e3a5f;
+      border: 1px solid #2d4a6f;
+      color: #fff;
+    }
+    .metric-card {
+      padding: 1.5rem;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .metric-icon {
+      font-size: 3rem;
+      margin-bottom: 0.5rem;
+    }
+    .metric-value-lg {
+      font-size: 2.5rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .metric-label-lg {
+      font-size: 0.875rem;
+      opacity: 0.8;
+      margin-top: 0.5rem;
+    }
+    .heatmap-day {
+      display: inline-block;
+      width: 35px;
+      height: 35px;
+      margin: 2px;
+      border-radius: 4px;
+      text-align: center;
+      line-height: 35px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .heatmap-day:hover {
+      transform: scale(1.1);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+    .heatmap-profit-high { background: #2dd36f; color: #000; }
+    .heatmap-profit-med { background: #82d9a8; color: #000; }
+    .heatmap-profit-low { background: #b8eac7; color: #000; }
+    .heatmap-loss-low { background: #f5a5a8; color: #000; }
+    .heatmap-loss-med { background: #eb445a; color: #fff; }
+    .heatmap-loss-high { background: #c23b4a; color: #fff; }
+    .heatmap-neutral { background: #374151; color: #9ca3af; }
+    .comparison-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .badge-up {
+      background: rgba(45, 211, 111, 0.2);
+      color: #2dd36f;
+    }
+    .badge-down {
+      background: rgba(235, 68, 90, 0.2);
+      color: #eb445a;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="modal modal-blur fade show" style="display: block;" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">🔥 Dashboard Avançado de Performance</h5>
+          <button type="button" class="btn-close btn-close-white"></button>
+        </div>
+        <div class="modal-body">
+
+          <!-- Filtros -->
+          <div class="row mb-4">
+            <div class="col-md-3">
+              <label class="form-label">Data Início</label>
+              <input type="date" class="form-control" value="2026-01-01">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Data Fim</label>
+              <input type="date" class="form-control" value="2026-02-13">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Período</label>
+              <select class="form-select">
+                <option>Personalizado</option>
+                <option>Últimos 7 dias</option>
+                <option>Últimos 30 dias</option>
+                <option>Últimos 60 dias</option>
+                <option>Últimos 90 dias</option>
+                <option>Mês atual</option>
+                <option>Últimos 12 meses</option>
+                <option>Ano atual</option>
+                <option>Ano passado</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Tipo</label>
+              <select class="form-select">
+                <option>Todos</option>
+                <option>CALL</option>
+                <option>PUT</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Cards Principais com Ícones Grandes -->
+          <div class="row g-3 mb-4">
+            <div class="col-md-3">
+              <div class="card metric-card bg-gradient-success" style="background: linear-gradient(135deg, #2dd36f 0%, #1aa854 100%);">
+                <div class="metric-icon">💰</div>
+                <div class="metric-value-lg">R$ 15.420</div>
+                <div class="metric-label-lg">Saldo na Corretora</div>
+                <div class="mt-2">
+                  <span class="comparison-badge badge-up">↗ +12.5%</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-3">
+              <div class="card metric-card" style="background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);">
+                <div class="metric-icon">📈</div>
+                <div class="metric-value-lg text-white">R$ 962</div>
+                <div class="metric-label-lg">Resultado Período</div>
+                <div class="mt-2">
+                  <span class="comparison-badge badge-up">↗ +6.2%</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-3">
+              <div class="card metric-card" style="background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);">
+                <div class="metric-icon">🎯</div>
+                <div class="metric-value-lg text-dark">75%</div>
+                <div class="metric-label-lg text-dark">Taxa de Acerto</div>
+                <div class="mt-2">
+                  <span class="comparison-badge" style="background: rgba(0,0,0,0.2); color: #000;">3W / 1L</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-3">
+              <div class="card metric-card" style="background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);">
+                <div class="metric-icon">🔢</div>
+                <div class="metric-value-lg">4</div>
+                <div class="metric-label-lg">Total de Operações</div>
+                <div class="mt-2">
+                  <span class="comparison-badge badge-down">↘ -2 ops</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Heatmap de Performance Diária -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h3 class="card-title">🗓️ Heatmap de Performance Diária</h3>
+              <p class="text-muted mb-0" style="font-size: 0.875rem;">Visualize seus resultados dia a dia - Verde = Lucro | Vermelho = Prejuízo</p>
+            </div>
+            <div class="card-body">
+              <div class="mb-2">
+                <strong>Janeiro 2026</strong>
+              </div>
+              <div class="mb-3">
+                <span class="heatmap-day heatmap-neutral">1</span>
+                <span class="heatmap-day heatmap-neutral">2</span>
+                <span class="heatmap-day heatmap-neutral">3</span>
+                <span class="heatmap-day heatmap-neutral">4</span>
+                <span class="heatmap-day heatmap-neutral">5</span>
+                <span class="heatmap-day heatmap-neutral">6</span>
+                <span class="heatmap-day heatmap-neutral">7</span>
+                <span class="heatmap-day heatmap-neutral">8</span>
+                <span class="heatmap-day heatmap-neutral">9</span>
+                <span class="heatmap-day heatmap-neutral">10</span>
+                <span class="heatmap-day heatmap-neutral">11</span>
+                <span class="heatmap-day heatmap-neutral">12</span>
+                <span class="heatmap-day heatmap-neutral">13</span>
+                <span class="heatmap-day heatmap-neutral">14</span>
+                <span class="heatmap-day heatmap-neutral">15</span>
+                <span class="heatmap-day heatmap-neutral">16</span>
+                <span class="heatmap-day heatmap-neutral">17</span>
+                <span class="heatmap-day heatmap-neutral">18</span>
+                <span class="heatmap-day heatmap-neutral">19</span>
+                <span class="heatmap-day heatmap-neutral">20</span>
+                <span class="heatmap-day heatmap-neutral">21</span>
+                <span class="heatmap-day heatmap-profit-med" title="22/01 - R$ 450">22</span>
+                <span class="heatmap-day heatmap-neutral">23</span>
+                <span class="heatmap-day heatmap-neutral">24</span>
+                <span class="heatmap-day heatmap-profit-low" title="25/01 - R$ 150">25</span>
+                <span class="heatmap-day heatmap-neutral">26</span>
+                <span class="heatmap-day heatmap-neutral">27</span>
+                <span class="heatmap-day heatmap-neutral">28</span>
+                <span class="heatmap-day heatmap-neutral">29</span>
+                <span class="heatmap-day heatmap-profit-med" title="30/01 - R$ 380">30</span>
+                <span class="heatmap-day heatmap-neutral">31</span>
+              </div>
+              <div class="mb-2">
+                <strong>Fevereiro 2026</strong>
+              </div>
+              <div>
+                <span class="heatmap-day heatmap-neutral">1</span>
+                <span class="heatmap-day heatmap-neutral">2</span>
+                <span class="heatmap-day heatmap-neutral">3</span>
+                <span class="heatmap-day heatmap-neutral">4</span>
+                <span class="heatmap-day heatmap-profit-high" title="05/02 - R$ 580">5</span>
+                <span class="heatmap-day heatmap-neutral">6</span>
+                <span class="heatmap-day heatmap-neutral">7</span>
+                <span class="heatmap-day heatmap-loss-med" title="08/02 - R$ -488">8</span>
+                <span class="heatmap-day heatmap-neutral">9</span>
+                <span class="heatmap-day heatmap-neutral">10</span>
+                <span class="heatmap-day heatmap-neutral">11</span>
+                <span class="heatmap-day heatmap-neutral">12</span>
+                <span class="heatmap-day heatmap-neutral">13</span>
+              </div>
+              <div class="mt-3 d-flex gap-3 align-items-center" style="font-size: 0.75rem;">
+                <span>Legenda:</span>
+                <span><span class="heatmap-day heatmap-profit-high" style="width: 20px; height: 20px; line-height: 20px;"></span> Lucro Alto</span>
+                <span><span class="heatmap-day heatmap-profit-med" style="width: 20px; height: 20px; line-height: 20px;"></span> Lucro Médio</span>
+                <span><span class="heatmap-day heatmap-profit-low" style="width: 20px; height: 20px; line-height: 20px;"></span> Lucro Baixo</span>
+                <span><span class="heatmap-day heatmap-neutral" style="width: 20px; height: 20px; line-height: 20px;"></span> Sem Operação</span>
+                <span><span class="heatmap-day heatmap-loss-low" style="width: 20px; height: 20px; line-height: 20px;"></span> Perda Baixa</span>
+                <span><span class="heatmap-day heatmap-loss-med" style="width: 20px; height: 20px; line-height: 20px;"></span> Perda Média</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Análise Comparativa -->
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-header">
+                  <h3 class="card-title">📊 Comparação entre Períodos</h3>
+                </div>
+                <div class="card-body">
+                  <div id="chart-comparison"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-header">
+                  <h3 class="card-title">⏰ Performance por Horário</h3>
+                </div>
+                <div class="card-body">
+                  <div id="chart-hourly"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tabela de Ativos Mais Lucrativos -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h3 class="card-title">🏆 Top 5 Ativos Mais Lucrativos</h3>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-vcenter card-table">
+                  <thead>
+                    <tr>
+                      <th>Posição</th>
+                      <th>Ativo</th>
+                      <th>Operações</th>
+                      <th>Win Rate</th>
+                      <th>Lucro Total</th>
+                      <th>Ticket Médio</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><span class="badge bg-yellow text-dark">🥇 1º</span></td>
+                      <td><strong>PETR4</strong></td>
+                      <td>2</td>
+                      <td><span class="text-success">100%</span></td>
+                      <td><span class="text-success">R$ 850,00</span></td>
+                      <td>R$ 425,00</td>
+                    </tr>
+                    <tr>
+                      <td><span class="badge bg-secondary">🥈 2º</span></td>
+                      <td><strong>VALE3</strong></td>
+                      <td>1</td>
+                      <td><span class="text-danger">0%</span></td>
+                      <td><span class="text-danger">R$ -488,00</span></td>
+                      <td>R$ 488,00</td>
+                    </tr>
+                    <tr>
+                      <td><span class="badge bg-orange">🥉 3º</span></td>
+                      <td><strong>ITUB4</strong></td>
+                      <td>1</td>
+                      <td><span class="text-success">100%</span></td>
+                      <td><span class="text-success">R$ 380,00</span></td>
+                      <td>R$ 380,00</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Estatísticas Detalhadas -->
+          <div class="row g-3">
+            <div class="col-md-4">
+              <div class="card">
+                <div class="card-header">
+                  <h3 class="card-title">💪 Consistência</h3>
+                </div>
+                <div class="card-body">
+                  <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                      <span>Dias Lucrativos</span>
+                      <strong class="text-success">75%</strong>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                      <div class="progress-bar bg-success" style="width: 75%"></div>
+                    </div>
+                  </div>
+                  <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                      <span>Dias Negativos</span>
+                      <strong class="text-danger">25%</strong>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                      <div class="progress-bar bg-danger" style="width: 25%"></div>
+                    </div>
+                  </div>
+                  <div>
+                    <div class="d-flex justify-content-between mb-1">
+                      <span>Estabilidade</span>
+                      <strong class="text-info">82%</strong>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                      <div class="progress-bar bg-info" style="width: 82%"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <div class="card">
+                <div class="card-header">
+                  <h3 class="card-title">🎲 Probabilidades</h3>
+                </div>
+                <div class="card-body">
+                  <div class="row text-center">
+                    <div class="col-6 mb-3">
+                      <div class="text-muted small">Prob. Acerto CALL</div>
+                      <div class="h2 text-success mb-0">80%</div>
+                    </div>
+                    <div class="col-6 mb-3">
+                      <div class="text-muted small">Prob. Acerto PUT</div>
+                      <div class="h2 text-warning mb-0">67%</div>
+                    </div>
+                    <div class="col-6">
+                      <div class="text-muted small">Expectativa Matemática</div>
+                      <div class="h2 text-info mb-0">+R$ 240</div>
+                    </div>
+                    <div class="col-6">
+                      <div class="text-muted small">Risco/Retorno</div>
+                      <div class="h2 mb-0">1:2.3</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <div class="card">
+                <div class="card-header">
+                  <h3 class="card-title">📌 Metas</h3>
+                </div>
+                <div class="card-body">
+                  <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                      <span>Meta Mensal</span>
+                      <strong>R$ 2.000</strong>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                      <div class="progress-bar bg-success" style="width: 48%"></div>
+                    </div>
+                    <small class="text-muted">R$ 962 de R$ 2.000 (48%)</small>
+                  </div>
+                  <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                      <span>Win Rate Objetivo</span>
+                      <strong>70%</strong>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                      <div class="progress-bar bg-info" style="width: 107%"></div>
+                    </div>
+                    <small class="text-success">✓ Meta atingida (75%)</small>
+                  </div>
+                  <div>
+                    <div class="d-flex justify-content-between mb-1">
+                      <span>Trades/Mês Ideal</span>
+                      <strong>20</strong>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                      <div class="progress-bar bg-warning" style="width: 20%"></div>
+                    </div>
+                    <small class="text-muted">4 de 20 operações</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta17/dist/js/tabler.min.js"></script>
+  <script>
+    // Gráfico de Comparação entre Períodos
+    const chartComparison = new ApexCharts(document.getElementById('chart-comparison'), {
+      chart: {
+        type: 'bar',
+        height: 300,
+        background: 'transparent',
+        toolbar: { show: false }
+      },
+      series: [{
+        name: 'Período Atual',
+        data: [962, 75, 4]
+      }, {
+        name: 'Período Anterior',
+        data: [720, 65, 6]
+      }],
+      colors: ['#2dd36f', '#6c757d'],
+      plotOptions: {
+        bar: {
+          horizontal: false,
+          columnWidth: '60%',
+          dataLabels: { position: 'top' }
+        }
+      },
+      dataLabels: {
+        enabled: true,
+        style: { colors: ['#fff'] }
+      },
+      xaxis: {
+        categories: ['Resultado (R$)', 'Win Rate (%)', 'Operações'],
+        labels: { style: { colors: '#fff' } }
+      },
+      yaxis: {
+        labels: { style: { colors: '#fff' } }
+      },
+      grid: {
+        borderColor: '#2d4a6f'
+      },
+      legend: {
+        position: 'top',
+        labels: { colors: '#fff' }
+      },
+      tooltip: {
+        theme: 'dark'
+      }
+    });
+    chartComparison.render();
+
+    // Gráfico de Performance por Horário
+    const chartHourly = new ApexCharts(document.getElementById('chart-hourly'), {
+      chart: {
+        type: 'heatmap',
+        height: 300,
+        background: 'transparent',
+        toolbar: { show: false }
+      },
+      series: [{
+        name: 'Segunda',
+        data: [{x: '10h', y: 0}, {x: '11h', y: 0}, {x: '12h', y: 0}, {x: '14h', y: 0}, {x: '15h', y: 450}]
+      }, {
+        name: 'Terça',
+        data: [{x: '10h', y: 0}, {x: '11h', y: 380}, {x: '12h', y: 0}, {x: '14h', y: 0}, {x: '15h', y: 0}]
+      }, {
+        name: 'Quarta',
+        data: [{x: '10h', y: 580}, {x: '11h', y: 0}, {x: '12h', y: 0}, {x: '14h', y: -488}, {x: '15h', y: 0}]
+      }, {
+        name: 'Quinta',
+        data: [{x: '10h', y: 0}, {x: '11h', y: 0}, {x: '12h', y: 0}, {x: '14h', y: 0}, {x: '15h', y: 0}]
+      }, {
+        name: 'Sexta',
+        data: [{x: '10h', y: 0}, {x: '11h', y: 0}, {x: '12h', y: 0}, {x: '14h', y: 0}, {x: '15h', y: 0}]
+      }],
+      plotOptions: {
+        heatmap: {
+          colorScale: {
+            ranges: [{
+              from: -1000,
+              to: 0,
+              color: '#eb445a',
+              name: 'Prejuízo'
+            }, {
+              from: 1,
+              to: 300,
+              color: '#b8eac7',
+              name: 'Lucro Baixo'
+            }, {
+              from: 301,
+              to: 500,
+              color: '#82d9a8',
+              name: 'Lucro Médio'
+            }, {
+              from: 501,
+              to: 1000,
+              color: '#2dd36f',
+              name: 'Lucro Alto'
+            }]
+          }
+        }
+      },
+      dataLabels: {
+        enabled: false
+      },
+      xaxis: {
+        labels: { style: { colors: '#fff' } }
+      },
+      yaxis: {
+        labels: { style: { colors: '#fff' } }
+      },
+      tooltip: {
+        theme: 'dark',
+        y: {
+          formatter: (val) => val === 0 ? 'Sem operação' : 'R$ ' + val
+        }
+      }
+    });
+    chartHourly.render();
+  </script>
+
+</body>
+</html>

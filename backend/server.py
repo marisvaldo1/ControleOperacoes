@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import sqlite3
 import requests
+import certifi
 from requests.exceptions import SSLError
 import os
 from datetime import datetime, timedelta
@@ -50,9 +51,10 @@ def get_oplab_verify_mode():
 def oplab_get(url, headers=None, timeout=10):
     mode = get_oplab_verify_mode()
     if mode in (True, False):
-        return requests.get(url, headers=headers, timeout=timeout, verify=mode)
+        verify_value = certifi.where() if mode is True else False
+        return requests.get(url, headers=headers, timeout=timeout, verify=verify_value)
     try:
-        return requests.get(url, headers=headers, timeout=timeout, verify=True)
+        return requests.get(url, headers=headers, timeout=timeout, verify=certifi.where())
     except SSLError:
         return requests.get(url, headers=headers, timeout=timeout, verify=False)
 
@@ -360,6 +362,12 @@ def analyze_market():
 
         return jsonify({'analysis': response_text, 'agent': agent_used, 'model': model_used})
 
+    except SSLError as e:
+        return jsonify({
+            'error': 'Falha na verificação SSL ao acessar a OpLab.',
+            'details': str(e),
+            'hint': 'Instale certificados raiz ou defina OPLAB_SSL_VERIFY=false.'
+        }), 502
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -471,6 +479,14 @@ def proxy_options(ticker):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/market/opcoes/<ticker>')
+def market_opcoes_alias(ticker):
+    return proxy_options(ticker)
+
+@app.route('/api/opcoes/market/<ticker>')
+def opcoes_market_alias(ticker):
+    return proxy_options(ticker)
+
 # ==========================================
 # SISTEMA HÍBRIDO: TEMPO REAL + OPLAB
 # ==========================================
@@ -558,7 +574,22 @@ def get_hybrid_quote(ticker):
         _, options_status, options_data = normalize_flask_response(options_response)
         
         if options_status and options_status != 200:
-            return jsonify({'error': 'Erro ao buscar opções'}), 500
+            opcoes = []
+            return jsonify({
+                'ticker': ticker,
+                'spot_price': spot_price,
+                'spot_change': realtime_data.get('change'),
+                'spot_change_percent': realtime_data.get('change_percent'),
+                'spot_source': 'yfinance (5-10 min delay)',
+                'spot_timestamp': realtime_data.get('timestamp'),
+                'spot_from_cache': realtime_data.get('from_cache', False),
+                'options': opcoes,
+                'opcoes': opcoes,
+                'opcoes_source': 'OpLab indisponível',
+                'total_opcoes': 0,
+                'hybrid': True,
+                'recommendation': 'Spot em tempo real disponível; opções indisponíveis no momento'
+            })
         
         if isinstance(options_data, dict):
             opcoes = options_data.get('options', []) or options_data.get('opcoes', [])
@@ -618,35 +649,55 @@ def proxy_crypto(ticker):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+def fetch_cotacao_opcao(symbol):
+    api_key = os.environ.get('OPLAB_API_KEY', '')
+    headers = {'Access-Token': api_key}
+    try:
+        r = oplab_get(f'https://api.oplab.com.br/v3/market/stocks/{symbol}', headers=headers, timeout=10)
+        if r.status_code == 200:
+            data = r.json()
+            return jsonify(data)
+
+        r2 = oplab_get(f'https://api.oplab.com.br/v3/market/options/details/{symbol}', headers=headers, timeout=10)
+        if r2.status_code == 200:
+            data2 = r2.json()
+            if isinstance(data2, list) and len(data2) > 0:
+                return jsonify(data2[0])
+            return jsonify(data2)
+
+        try:
+            stock = yf.Ticker(f'{symbol}.SA')
+            hist = stock.history(period='1d', interval='1m')
+            if not hist.empty:
+                current_price = float(hist['Close'].iloc[-1])
+                return jsonify({'price': current_price, 'source': 'yfinance', 'delay_minutes': '5-10'})
+        except Exception:
+            pass
+
+        return jsonify({'error': 'Opção não encontrada'}), 404
+    except Exception as e:
+        try:
+            stock = yf.Ticker(f'{symbol}.SA')
+            hist = stock.history(period='1d', interval='1m')
+            if not hist.empty:
+                current_price = float(hist['Close'].iloc[-1])
+                return jsonify({'price': current_price, 'source': 'yfinance', 'delay_minutes': '5-10'})
+        except Exception:
+            pass
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/cotacao/opcoes')
 def get_cotacao_opcao():
     symbol = request.args.get('symbol')
     if not symbol:
         return jsonify({'error': 'Symbol required'}), 400
-        
-    api_key = os.environ.get('OPLAB_API_KEY', '')
-    headers = {'Access-Token': api_key}
-    
-    try:
-        # Tentar buscar como stock (muitas vezes funciona para opções individuais)
-        r = oplab_get(f'https://api.oplab.com.br/v3/market/stocks/{symbol}', headers=headers, timeout=10)
-        if r.status_code == 200:
-            data = r.json()
-            return jsonify(data)
-            
-        # Se falhar, tentar buscar detalhes de opções
-        r2 = oplab_get(f'https://api.oplab.com.br/v3/market/options/details/{symbol}', headers=headers, timeout=10)
-        if r2.status_code == 200:
-            data2 = r2.json()
-            # Oplab pode retornar lista ou dict
-            if isinstance(data2, list) and len(data2) > 0:
-                return jsonify(data2[0])
-            return jsonify(data2)
-            
-        return jsonify({'error': 'Opção não encontrada'}), 404
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    return fetch_cotacao_opcao(symbol)
+
+@app.route('/api/cotacao/opcoes/<symbol>')
+def get_cotacao_opcao_path(symbol):
+    if not symbol:
+        return jsonify({'error': 'Symbol required'}), 400
+    return fetch_cotacao_opcao(symbol)
 
 # CRUD Operacoes Crypto
 @app.route('/api/crypto', methods=['GET'])
@@ -706,21 +757,66 @@ def delete_crypto(id):
     conn.close()
     return jsonify({'success': True})
 
+def normalize_resultado_opcao(op):
+    try:
+        status = str(op.get('status') or '').upper()
+        tipo_operacao = str(op.get('tipo_operacao') or '').upper()
+        qtd = float(op.get('quantidade') or 0)
+        premio = float(op.get('premio') or 0)
+        resultado = op.get('resultado')
+        is_venda = tipo_operacao == 'VENDA' or (not tipo_operacao and qtd < 0)
+        if status != 'ABERTA' or not is_venda:
+            return op, False
+        expected = abs(qtd) * abs(premio)
+        if resultado is None:
+            if expected > 0:
+                op['resultado'] = expected
+                return op, True
+            return op, False
+        resultado_val = float(resultado)
+        if resultado_val < 0:
+            op['resultado'] = expected if expected > 0 else abs(resultado_val)
+            return op, True
+        if resultado_val == 0 and expected > 0:
+            op['resultado'] = expected
+            return op, True
+        return op, False
+    except Exception:
+        return op, False
+
 # CRUD Operacoes Opcoes
 @app.route('/api/opcoes', methods=['GET'])
 def get_opcoes():
     conn = get_db()
     ops = conn.execute('SELECT * FROM operacoes_opcoes ORDER BY data_operacao DESC').fetchall()
+    ops_list = []
+    updates = []
+    for op in ops:
+        data = dict(op)
+        normalized, changed = normalize_resultado_opcao(data)
+        ops_list.append(normalized)
+        if changed:
+            updates.append((normalized.get('resultado'), normalized.get('id')))
+    if updates:
+        c = conn.cursor()
+        c.executemany('UPDATE operacoes_opcoes SET resultado=? WHERE id=?', updates)
+        conn.commit()
     conn.close()
-    return jsonify([dict(o) for o in ops])
+    return jsonify(ops_list)
 
 @app.route('/api/opcoes/<int:id>', methods=['GET'])
 def get_opcao(id):
     conn = get_db()
     op = conn.execute('SELECT * FROM operacoes_opcoes WHERE id=?', (id,)).fetchone()
-    conn.close()
     if op:
-        return jsonify(dict(op))
+        data = dict(op)
+        normalized, changed = normalize_resultado_opcao(data)
+        if changed:
+            conn.execute('UPDATE operacoes_opcoes SET resultado=? WHERE id=?', (normalized.get('resultado'), id))
+            conn.commit()
+        conn.close()
+        return jsonify(normalized)
+    conn.close()
     return jsonify({'error': 'Operação não encontrada'}), 404
 
 @app.route('/api/opcoes', methods=['POST'])

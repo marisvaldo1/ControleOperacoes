@@ -11,11 +11,22 @@
         if (typeof parseDateInput === 'function') {
             const dateOnly = /^\d{4}-\d{2}-\d{2}$/;
             const dateTime = /^\d{4}-\d{2}-\d{2}T/;
+            const brDate = /^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2})(?::(\d{2}))?)?$/;
             const str = String(value).trim();
             if (dateOnly.test(str) || dateTime.test(str)) {
                 const dateStr = dateTime.test(str) ? str.slice(0, 10) : str;
                 const parsed = parseDateInput(dateStr);
                 if (parsed && !Number.isNaN(parsed.getTime())) return parsed;
+            }
+            const brMatch = str.match(brDate);
+            if (brMatch) {
+                const day = Number(brMatch[1]);
+                const month = Number(brMatch[2]) - 1;
+                const year = Number(brMatch[3]);
+                const hour = Number(brMatch[4] || 0);
+                const minute = Number(brMatch[5] || 0);
+                const second = Number(brMatch[6] || 0);
+                return new Date(year, month, day, hour, minute, second);
             }
         }
         const date = new Date(value);
@@ -26,6 +37,22 @@
     function getOpDate(op) {
         if (op.data_operacao) return parseDate(op.data_operacao);
         return parseDate(op.created_at) || parseDate(op.data_fechamento) || parseDate(op.vencimento);
+    }
+
+    function getOpResultado(op) {
+        const status = String(op.status || '').toUpperCase();
+        const tipoOperacao = String(op.tipo_operacao || '').toUpperCase();
+        const qtd = parseFloat(op.quantidade) || 0;
+        const premio = parseFloat(op.premio) || 0;
+        const resultado = parseFloat(op.resultado);
+        const isVenda = tipoOperacao === 'VENDA' || (!tipoOperacao && qtd < 0);
+        if (status === 'ABERTA' && isVenda) {
+            const esperado = Math.abs(qtd) * Math.abs(premio);
+            if (Number.isFinite(esperado) && esperado > 0) return esperado;
+            if (Number.isFinite(resultado)) return Math.abs(resultado);
+            return 0;
+        }
+        return Number.isFinite(resultado) ? resultado : 0;
     }
 
     function formatPercent(value) {
@@ -250,7 +277,7 @@
         const dailyMap = new Map();
 
         ops.forEach(op => {
-            const result = parseFloat(op.resultado) || 0;
+            const result = getOpResultado(op);
             totals.total += result;
             if (result > 0) {
                 totals.wins += 1;
@@ -494,7 +521,7 @@
         sorted.forEach(op => {
             const date = getOpDate(op);
             if (!date) return;
-            const value = parseFloat(op.resultado) || 0;
+            const value = getOpResultado(op);
             acc += value;
             labels.push(date.toLocaleDateString('pt-BR'));
             data.push(acc);
@@ -570,7 +597,7 @@
         let maxLossStreak = 0;
 
         sorted.forEach(op => {
-            const result = parseFloat(op.resultado) || 0;
+            const result = getOpResultado(op);
             equity += result;
             if (equity > peak) peak = equity;
             const dd = peak - equity;
@@ -761,7 +788,7 @@
         ops.forEach(op => {
             const key = op.ativo_base || op.ativo || 'N/A';
             const entry = map.get(key) || { total: 0, wins: 0, losses: 0, ops: 0 };
-            const result = parseFloat(op.resultado) || 0;
+            const result = getOpResultado(op);
             entry.total += result;
             entry.ops += 1;
             if (result > 0) entry.wins += 1;
@@ -799,12 +826,12 @@
         const bestContainer = document.getElementById('rtRecordsBest');
         const worstContainer = document.getElementById('rtRecordsWorst');
         if (!bestContainer || !worstContainer) return;
-        const sorted = [...ops].sort((a, b) => (parseFloat(b.resultado) || 0) - (parseFloat(a.resultado) || 0));
+        const sorted = [...ops].sort((a, b) => getOpResultado(b) - getOpResultado(a));
         const best = sorted.slice(0, 4);
         const worst = sorted.slice(-4).reverse();
 
         const buildCard = (op, tone) => {
-            const result = parseFloat(op.resultado) || 0;
+            const result = getOpResultado(op);
             const date = formatDateTime(op.data_operacao || op.created_at || op.data_fechamento || op.vencimento);
             return `
                 <div class="rt-record-card ${tone}">
@@ -885,7 +912,7 @@
             const type = getOpType(op);
             const isSell = String(op.tipo_operacao || '').toUpperCase() === 'VENDA' || Number.parseInt(op.quantidade) < 0;
             const points = entry !== null && exit !== null ? (exit - entry) * (isSell ? -1 : 1) : null;
-            const result = parseFloat(op.resultado) || 0;
+            const result = getOpResultado(op);
             const duration = (() => {
                 const start = getOpDate(op);
                 const end = getOpCloseDate(op);
