@@ -83,6 +83,30 @@ body {
     vertical-align: middle;
 }
 
+.table {
+    border-left: 1px solid var(--tblr-border-color);
+    border-right: 1px solid var(--tblr-border-color);
+}
+
+.dataTables_wrapper .dataTable,
+.dataTables_scrollHead table,
+.dataTables_scrollBody table {
+    border-left: 1px solid var(--tblr-border-color);
+    border-right: 1px solid var(--tblr-border-color);
+}
+
+.dataTables_scrollBody,
+.dataTables_scrollHead {
+    border-left: 1px solid var(--tblr-border-color);
+    border-right: 1px solid var(--tblr-border-color);
+}
+
+.dataTables_scroll {
+    border-left: 1px solid var(--tblr-border-color);
+    border-right: 1px solid var(--tblr-border-color);
+}
+
+
 .table-responsive {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;

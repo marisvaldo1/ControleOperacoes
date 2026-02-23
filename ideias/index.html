@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ideias – Modal Saldo Médio</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Inter',sans-serif; background:#060b14; color:#e2e8f0; min-height:100vh; padding:3rem 2rem; }
+        h1 { font-size:2rem; font-weight:800; letter-spacing:-.5px; margin-bottom:.5rem; }
+        .sub { color:#64748b; font-size:.9rem; margin-bottom:3rem; }
+        .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:1.5rem; max-width:1200px; margin:0 auto; }
+        .card {
+            background:#0f172a; border:1px solid #1e293b; border-radius:16px;
+            overflow:hidden; transition:all .25s; text-decoration:none; color:inherit;
+            display:flex; flex-direction:column;
+        }
+        .card:hover { transform:translateY(-4px); box-shadow:0 20px 60px rgba(0,0,0,.5); }
+        .card-thumb {
+            height:160px; display:flex; align-items:center; justify-content:center;
+            font-size:4rem; position:relative; overflow:hidden;
+        }
+        .card-body { padding:1.25rem; flex:1; }
+        .card-title { font-size:1rem; font-weight:700; margin-bottom:.4rem; }
+        .card-desc { font-size:.8rem; color:#64748b; line-height:1.5; }
+        .card-tag { display:inline-block; font-size:.65rem; font-weight:600; padding:2px 8px; border-radius:6px; margin-top:.875rem; text-transform:uppercase; letter-spacing:.5px; }
+        .card-footer { padding:1rem 1.25rem; border-top:1px solid #1e293b; }
+        .btn-open { display:block; text-align:center; padding:.625rem; border-radius:8px; font-size:.82rem; font-weight:600; text-decoration:none; transition:all .15s; }
+        .btn-open:hover { filter:brightness(1.15); }
+
+        .c1 { --accent:#206bc4; }
+        .c2 { --accent:#238636; }
+        .c3 { --accent:#0284c7; }
+        .c4 { --accent:#00a0ff; }
+        .c5 { --accent:#6366f1; }
+        .c6 { --accent:#2fb344; }
+
+        .card-thumb-c1 { background:linear-gradient(135deg,#0f172a 0%,#1a2744 100%); }
+        .card-thumb-c2 { background:linear-gradient(135deg,#0d1117 0%,#161b22 100%); }
+        .card-thumb-c3 { background:linear-gradient(135deg,#090e17 0%,#0d1525 100%); }
+        .card-thumb-c4 { background:linear-gradient(135deg,#050a10 0%,#040d18 100%); }
+        .card-thumb-c5 { background:linear-gradient(135deg,#070b14 0%,#0a0f20 100%); }
+        .card-thumb-c6 { background:linear-gradient(135deg,#070b14 0%,#091a14 100%); }
+
+        .tag-tabler  { background:rgba(32,107,196,.15); color:#4299e1; border:1px solid rgba(32,107,196,.3); }
+        .tag-github  { background:rgba(35,134,54,.15);  color:#4ade80; border:1px solid rgba(35,134,54,.3);  }
+        .tag-azul    { background:rgba(2,132,199,.15);  color:#38bdf8; border:1px solid rgba(2,132,199,.3);  }
+        .tag-cockpit { background:rgba(0,160,255,.12);  color:#00a0ff; border:1px solid rgba(0,160,255,.3);  }
+        .tag-glass   { background:rgba(99,102,241,.12); color:#818cf8; border:1px solid rgba(99,102,241,.3); }
+        .tag-fusion  { background:rgba(47,179,68,.1);   color:#4ade80; border:1px solid rgba(47,179,68,.3);  }
+
+        .header-center { text-align:center; margin-bottom:3rem; }
+        .badge-api { display:inline-flex; align-items:center; gap:6px; padding:5px 14px; border-radius:20px; font-size:.72rem; font-weight:600; background:rgba(16,185,129,.1); border:1px solid rgba(16,185,129,.25); color:#34d399; margin-top:.75rem; }
+    </style>
+</head>
+<body>
+<div class="header-center">
+    <h1>💡 Ideias · Modal Saldo Médio</h1>
+    <p class="sub">6 layouts diferentes para a janela modal disparada pelo card "Saldo Médio" na tela de Opções</p>
+    <div class="badge-api">✅ Dados mockados com schema de /api/opcoes · Pronto para integração real</div>
+</div>
+
+<div class="grid">
+
+    <div class="card c1">
+        <div class="card-thumb card-thumb-c1">🚀</div>
+        <div class="card-body">
+            <div class="card-title">Ideia 1 — Hero Dashboard</div>
+            <div class="card-desc">Layout inspirado no 1.html. Hero strip com saldo total, KPI cards com degradê, gráfico de área para evolução do capital, gauge SVG de PoP, tabela completa com exportação CSV e filtros por período.</div>
+            <span class="card-tag tag-tabler">Tabler UI · ApexCharts</span>
+        </div>
+        <div class="card-footer">
+            <a class="btn-open" style="background:rgba(32,107,196,.15);color:#4299e1;border:1px solid rgba(32,107,196,.3);" href="ideia1-hero-dashboard.html" target="_blank">Abrir Ideia 1 →</a>
+        </div>
+    </div>
+
+    <div class="card c2">
+        <div class="card-thumb card-thumb-c2">🧩</div>
+        <div class="card-body">
+            <div class="card-title">Ideia 2 — Blocos Compactos</div>
+            <div class="card-desc">Estilo GitHub-dark. Summary row com 5 métricas, anel PoP com breakdowns, cards de operação filtrável, insights automáticos gerados a partir dos dados, gráfico de resultado por ativo.</div>
+            <span class="card-tag tag-github">GitHub Dark · ApexCharts</span>
+        </div>
+        <div class="card-footer">
+            <a class="btn-open" style="background:rgba(35,134,54,.15);color:#4ade80;border:1px solid rgba(35,134,54,.3);" href="ideia2-blocos-compactos.html" target="_blank">Abrir Ideia 2 →</a>
+        </div>
+    </div>
+
+    <div class="card c3">
+        <div class="card-thumb card-thumb-c3">⏱</div>
+        <div class="card-body">
+            <div class="card-title">Ideia 3 — Timeline + Waterfall</div>
+            <div class="card-desc">Foco na evolução cronológica. Cascata de capital (waterfall chart) mostrando o impacto de cada operação + linha do tempo visual com indicadores de PoP, resultado e status ao lado.</div>
+            <span class="card-tag tag-azul">Timeline · Waterfall · Radar</span>
+        </div>
+        <div class="card-footer">
+            <a class="btn-open" style="background:rgba(2,132,199,.15);color:#38bdf8;border:1px solid rgba(2,132,199,.3);" href="ideia3-timeline-waterfall.html" target="_blank">Abrir Ideia 3 →</a>
+        </div>
+    </div>
+
+    <div class="card c4">
+        <div class="card-thumb card-thumb-c4">🛸</div>
+        <div class="card-body">
+            <div class="card-title">Ideia 4 — Cockpit / Gauges</div>
+            <div class="card-desc">Estética terminal/cockpit com fonte monospace. 4 gauges radiais (PoP, Win Rate, Retenção, Retorno). Tabela estilo log de sistema, relógio em tempo real, paleta verde/azul neon sobre fundo quase preto.</div>
+            <span class="card-tag tag-cockpit">Terminal · Gauges · Neon</span>
+        </div>
+        <div class="card-footer">
+            <a class="btn-open" style="background:rgba(0,160,255,.1);color:#00a0ff;border:1px solid rgba(0,160,255,.3);" href="ideia4-cockpit-gauges.html" target="_blank">Abrir Ideia 4 →</a>
+        </div>
+    </div>
+
+    <div class="card c5">
+        <div class="card-thumb card-thumb-c5">✨</div>
+        <div class="card-body">
+            <div class="card-title">Ideia 5 — Glass Minimal</div>
+            <div class="card-desc">Design glassmorphism com blur e orbs animados no fundo. Tipografia grande e bold, cards de operação com bordas coloridas por resultado, anel duplo PoP vs Win Rate, altamente elegante.</div>
+            <span class="card-tag tag-glass">Glassmorphism · Gradiente · Inter</span>
+        </div>
+        <div class="card-footer">
+            <a class="btn-open" style="background:rgba(99,102,241,.12);color:#818cf8;border:1px solid rgba(99,102,241,.3);" href="ideia5-glass-minimal.html" target="_blank">Abrir Ideia 5 →</a>
+        </div>
+    </div>
+
+    <div class="card c6">
+        <div class="card-thumb card-thumb-c6">⚡</div>
+        <div class="card-body">
+            <div class="card-title">Ideia 6 — Fusão Gauges + Glass</div>
+            <div class="card-desc">Melhor dos dois mundos: glassmorphism (Ideia 5) + 4 radial gauges + tabela log + status geral (Ideia 4). Cores Tabler padrão do site (azul, verde, âmbar, roxo), Inter font, cards de operação filtráveis, donut e barra horizontais.</div>
+            <span class="card-tag tag-fusion">Gauges · Glass · Tabler Colors</span>
+        </div>
+        <div class="card-footer">
+            <a class="btn-open" style="background:rgba(47,179,68,.1);color:#4ade80;border:1px solid rgba(47,179,68,.3);" href="ideia6-fusion.html" target="_blank">Abrir Ideia 6 →</a>
+        </div>
+    </div>
+
+</div>
+
+<div style="text-align:center;margin-top:3rem;color:#334155;font-size:.78rem;">
+    <p>Todos os arquivos usam dados mockados com o mesmo schema de <code style="color:#475569;">/api/opcoes</code></p>
+    <p style="margin-top:.3rem;">Para integrar: substitua <code style="color:#475569;">const MOCK_OPERACOES / OPS = [...]</code> por <code style="color:#475569;">fetch('/api/opcoes').then(r => r.json())</code></p>
+    <p style="margin-top:.3rem;">PoP em produção: <code style="color:#475569;">fetch('/api/proxy/options/:ativo_base')</code> → calcular por Black-Scholes ou usar campo da OpLab</p>
+</div>
+
+</body>
+</html>

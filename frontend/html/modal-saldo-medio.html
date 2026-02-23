@@ -1,0 +1,225 @@
+<!-- Modal Saldo Médio · Análise de Operações -->
+<div class="modal modal-blur fade" id="modalSaldoMedio" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content sm-modal-content">
+
+            <!-- gradient strip animado -->
+            <div class="sm-grad-strip"></div>
+
+            <!-- HEADER -->
+            <div class="modal-header sm-modal-header">
+                <div class="flex-grow-1">
+                    <div class="sm-eyebrow text-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24"
+                             fill="none" stroke="currentColor" stroke-width="2"
+                             stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                            <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+                            <polyline points="16 7 22 7 22 13"/>
+                        </svg>
+                        Saldo Médio · Análise de Operações
+                    </div>
+                    <div class="d-flex align-items-baseline gap-2 flex-wrap mt-1">
+                        <div class="sm-amount" id="smAmount">—</div>
+                        <div class="sm-pct text-muted" id="smPct"></div>
+                    </div>
+                    <div class="sm-sub text-muted" id="smSub"></div>
+                    <div class="sm-pills" id="smPills"></div>
+                </div>
+
+                <!-- Botões: X + Atualizar empilhados -->
+                <div class="d-flex flex-column align-items-center gap-2 ms-3">
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                    <button type="button"
+                            class="btn btn-sm btn-icon btn-outline-secondary sm-btn-refresh"
+                            id="btnRefreshSaldoMedio"
+                            title="Atualizar dados">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                             fill="none" stroke="currentColor" stroke-width="2"
+                             stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="23 4 23 10 17 10"/>
+                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- BODY -->
+            <div class="modal-body sm-modal-body">
+
+                <!-- ① 4 Radial Gauges -->
+                <div class="sm-gauge-row">
+                    <div class="sm-gauge-cell" style="--gc:#206bc4">
+                        <div class="sm-gauge-lbl">PoP Médio</div>
+                        <div id="smGPoP"></div>
+                        <div class="sm-gauge-sub" id="smGPoPsub"></div>
+                    </div>
+                    <div class="sm-gauge-cell" style="--gc:#2fb344">
+                        <div class="sm-gauge-lbl">Win Rate</div>
+                        <div id="smGWin"></div>
+                        <div class="sm-gauge-sub" id="smGWinsub"></div>
+                    </div>
+                    <div class="sm-gauge-cell" style="--gc:#f59f00">
+                        <div class="sm-gauge-lbl">Retenção Prêmio</div>
+                        <div id="smGRet"></div>
+                        <div class="sm-gauge-sub" id="smGRetsub"></div>
+                    </div>
+                    <div class="sm-gauge-cell" style="--gc:#6366f1">
+                        <div class="sm-gauge-lbl">Retorno / Saldo</div>
+                        <div id="smGRet2"></div>
+                        <div class="sm-gauge-sub" id="smGRet2sub"></div>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <span class="sm-section-lbl">Operações</span>
+                    <div class="sm-ftabs" id="smFtabs">
+                        <button class="sm-ftab active" onclick="smFilterCard('all',this)">Todas</button>
+                        <button class="sm-ftab" onclick="smFilterCard('ABERTA',this)">Abertas</button>
+                        <button class="sm-ftab" onclick="smFilterCard('FECHADA',this)">Fechadas</button>
+                        <button class="sm-ftab" onclick="smFilterCard('CALL',this)">CALL</button>
+                        <button class="sm-ftab" onclick="smFilterCard('PUT',this)">PUT</button>
+                    </div>
+                </div>
+                <div class="sm-op-strip" id="smOpStrip"></div>
+
+                <div class="accordion sm-charts-accordion" id="smMainAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="smOpsHeading">
+                            <button class="accordion-button collapsed sm-accordion-btn" type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#smOpsCollapse"
+                                    aria-expanded="false"
+                                    aria-controls="smOpsCollapse">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
+                                     fill="none" stroke="currentColor" stroke-width="2"
+                                     stroke-linecap="round" stroke-linejoin="round" class="me-2">
+                                    <line x1="8" y1="6" x2="21" y2="6"/>
+                                    <line x1="8" y1="12" x2="21" y2="12"/>
+                                    <line x1="8" y1="18" x2="21" y2="18"/>
+                                    <line x1="3" y1="6"  x2="3.01" y2="6"/>
+                                    <line x1="3" y1="12" x2="3.01" y2="12"/>
+                                    <line x1="3" y1="18" x2="3.01" y2="18"/>
+                                </svg>
+                                Operações · Log e Status
+                            </button>
+                        </h2>
+                        <div id="smOpsCollapse"
+                             class="accordion-collapse collapse"
+                             aria-labelledby="smOpsHeading"
+                             data-bs-parent="#smMainAccordion">
+                            <div class="accordion-body p-0">
+                                <div class="sm-data-grid">
+                                    <div class="sm-panel">
+                                        <div class="sm-panel-hdr">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                                 fill="none" stroke="var(--tblr-primary)" stroke-width="2"
+                                                 stroke-linecap="round" stroke-linejoin="round">
+                                                <line x1="8" y1="6" x2="21" y2="6"/>
+                                                <line x1="8" y1="12" x2="21" y2="12"/>
+                                                <line x1="8" y1="18" x2="21" y2="18"/>
+                                                <line x1="3" y1="6"  x2="3.01" y2="6"/>
+                                                <line x1="3" y1="12" x2="3.01" y2="12"/>
+                                                <line x1="3" y1="18" x2="3.01" y2="18"/>
+                                            </svg>
+                                            Operações · Log
+                                        </div>
+                                        <div style="overflow:auto;max-height:340px;">
+                                            <table class="sm-ops-tbl">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Ativo</th>
+                                                        <th>Tipo</th>
+                                                        <th>Prêmio</th>
+                                                        <th>%</th>
+                                                        <th>PoP</th>
+                                                        <th>Dias</th>
+                                                        <th>Resultado</th>
+                                                        <th>Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="smOpsTbody">
+                                                    <tr>
+                                                        <td colspan="8" class="text-center text-muted py-3">
+                                                            <div class="spinner-border spinner-border-sm me-2"></div>Carregando...
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <div class="sm-panel">
+                                        <div class="sm-panel-hdr">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                                 fill="none" stroke="var(--tblr-success)" stroke-width="2"
+                                                 stroke-linecap="round" stroke-linejoin="round">
+                                                <rect x="3"  y="12" width="6" height="8" rx="1"/>
+                                                <rect x="9"  y="8"  width="6" height="12" rx="1"/>
+                                                <rect x="15" y="4"  width="6" height="16" rx="1"/>
+                                            </svg>
+                                            Status Geral
+                                        </div>
+                                        <div class="sm-panel-body">
+                                            <div class="sm-metric-list" id="smMetricList"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="smChartsHeading">
+                            <button class="accordion-button collapsed sm-accordion-btn" type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#smChartsCollapse"
+                                    aria-expanded="false"
+                                    aria-controls="smChartsCollapse">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
+                                     fill="none" stroke="currentColor" stroke-width="2"
+                                     stroke-linecap="round" stroke-linejoin="round" class="me-2">
+                                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                    <path d="M3 9h18M9 3v18"/>
+                                </svg>
+                                Gráficos de Análise
+                                <small class="ms-2 text-muted fw-normal">Resultado por Tipo · Prêmio por Ativo Base</small>
+                            </button>
+                        </h2>
+                        <div id="smChartsCollapse"
+                             class="accordion-collapse collapse"
+                             aria-labelledby="smChartsHeading"
+                             data-bs-parent="#smMainAccordion">
+                            <div class="accordion-body p-0">
+                                <div class="sm-bottom-row">
+                                    <div class="sm-panel">
+                                        <div class="sm-panel-hdr">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                                 fill="none" stroke="var(--tblr-info)" stroke-width="2"
+                                                 stroke-linecap="round" stroke-linejoin="round">
+                                                <circle cx="12" cy="12" r="10"/>
+                                                <path d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72m2.54-15.38c-3.72 4.35-8.94 5.66-16.88 5.85m19.5 1.9c-3.5-.93-6.63-.82-8.94 0-2.58.92-5.01 2.86-7.44 6.32"/>
+                                            </svg>
+                                            Resultado por Tipo
+                                        </div>
+                                        <div style="padding:.75rem"><div id="smChartDonut"></div></div>
+                                    </div>
+                                    <div class="sm-panel">
+                                        <div class="sm-panel-hdr">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                                 fill="none" stroke="var(--tblr-warning)" stroke-width="2"
+                                                 stroke-linecap="round" stroke-linejoin="round">
+                                                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                                <path d="M3 9h18M3 15h18M9 3v18"/>
+                                            </svg>
+                                            Prêmio por Ativo Base
+                                        </div>
+                                        <div style="padding:.75rem"><div id="smChartBar"></div></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- /modal-body -->
+        </div><!-- /modal-content -->
+    </div><!-- /modal-dialog -->
+</div><!-- /modal -->

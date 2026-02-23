@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Operações · Visualizações</title>
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <style>
+        body { background: #0a0d12; font-family: 'Inter', system-ui; }
+        .modal-xxl { max-width: 1400px; }
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+            padding: 1rem 0;
+        }
+        .insight-card {
+            background: #1a212c;
+            border-radius: 24px;
+            padding: 1.5rem;
+            border: 1px solid #2d3848;
+            transition: 0.2s;
+            box-shadow: 0 10px 20px -10px #00000080;
+        }
+        .insight-card:hover {
+            border-color: #3e5068;
+            transform: translateY(-2px);
+        }
+        .card-header-custom {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.2rem;
+            font-weight: 600;
+            color: #d7e2f2;
+        }
+        .card-header-custom i { font-size: 1.6rem; color: #4f9cf7; }
+        .value-large {
+            font-size: 2.2rem;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #293240;
+        }
+        .metric-row:last-child { border: none; }
+        .badge-trend-up { background: #1b3b2a; color: #4ae97a; }
+        .badge-trend-down { background: #3f2628; color: #f47e7e; }
+        .gauge-container {
+            width: 100%;
+            height: 130px;
+            margin-top: 0.5rem;
+        }
+        .progress-custom {
+            background: #262f3d;
+            border-radius: 30px;
+            height: 12px;
+            overflow: hidden;
+        }
+        .progress-bar-custom { background: linear-gradient(90deg, #2fb344, #6fcf97); }
+        .table-mini td { padding: 0.4rem 0; border-bottom: 1px solid #253040; }
+        .table-mini tr:last-child td { border: none; }
+        .emoji-big { font-size: 2rem; }
+        .color-success { color: #2fb344; }
+        .color-danger { color: #d63939; }
+        .color-warning { color: #f0b400; }
+        .color-info { color: #4299e1; }
+        .divider { height: 1px; background: #283241; margin: 1rem 0; }
+    </style>
+</head>
+<body>
+<div class="container py-5 text-center">
+    <button class="btn btn-primary btn-pill" data-bs-toggle="modal" data-bs-target="#modalOpcoes">
+        <i class="ti ti-chart-infographic me-2"></i>Abrir galeria de visualizações
+    </button>
+</div>
+
+<!-- MODAL com 7 cards de visualização -->
+<div class="modal modal-blur fade" id="modalOpcoes" tabindex="-1">
+    <div class="modal-dialog modal-xxl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content" style="background: #121821;">
+            <div class="modal-header border-0">
+                <h3 class="modal-title fw-bold"><i class="ti ti-dashboard me-2"></i>Planilha viva · 7 visões diferentes</h3>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="dashboard-grid">
+
+                    <!-- CARD 1: Operação atual (detalhada com ícones e gauge) -->
+                    <div class="insight-card">
+                        <div class="card-header-custom">
+                            <i class="ti ti-coin"></i>
+                            <span>Operação PETR4 · CALL</span>
+                        </div>
+                        <div class="metric-row">
+                            <span><i class="ti ti-tag me-1 text-info"></i>Strike</span>
+                            <span class="fw-bold">R$ 37,15</span>
+                        </div>
+                        <div class="metric-row">
+                            <span><i class="ti ti-cash me-1 text-success"></i>Prêmio</span>
+                            <span class="fw-bold">R$ 0,47 <span class="text-muted">(abertura)</span></span>
+                        </div>
+                        <div class="metric-row">
+                            <span><i class="ti ti-trending-up me-1 text-warning"></i>Distância</span>
+                            <span class="fw-bold">0,16%</span>
+                        </div>
+                        <div class="metric-row">
+                            <span><i class="ti ti-calendar me-1 text-info"></i>Exercício</span>
+                            <span class="fw-bold">20/02/2026</span>
+                        </div>
+                        <div class="divider"></div>
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span><i class="ti ti-percentage me-1 text-warning"></i>% prêmio atual</span>
+                            <span class="value-large color-danger">-25,53%</span>
+                        </div>
+                        <div class="gauge-container" id="gaugePremio"></div>
+                        <div class="progress-custom mt-1">
+                            <div class="progress-bar-custom" style="width: 25%;"></div>
+                        </div>
+                        <div class="d-flex justify-content-between small text-muted mt-2">
+                            <span>📉 -472,00</span>
+                            <span>📈 meta 0%</span>
+                        </div>
+                    </div>
+
+                    <!-- CARD 2: Saldo atual e resultado final (cards de destaque) -->
+                    <div class="insight-card">
+                        <div class="card-header-custom">
+                            <i class="ti ti-wallet"></i>
+                            <span>Saldo & Resultado</span>
+                        </div>
+                        <div class="d-flex align-items-baseline gap-3">
+                            <span class="value-large color-success">R$ 31.180</span>
+                            <span class="badge bg-green-lt"><i class="ti ti-arrow-up"></i> 1,21%</span>
+                        </div>
+                        <div class="metric-row mt-3">
+                            <span>Resultado final</span>
+                            <span class="fw-bold color-success">R$ 31.556</span>
+                        </div>
+                        <div class="metric-row">
+                            <span><i class="ti ti-rotate-clockwise"></i> Lucro</span>
+                            <span class="fw-bold">R$ 376</span>
+                        </div>
+                        <div class="divider"></div>
+                        <div class="d-flex justify-content-around text-center">
+                            <div>
+                                <span class="emoji-big">💰</span>
+                                <div class="small">Prêmio total</div>
+                                <span class="fw-bold">R$ 376</span>
+                            </div>
+                            <div>
+                                <span class="emoji-big">📊</span>
+                                <div class="small">Quantidade</div>
+                                <span class="fw-bold">800</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CARD 3: Tabela mensal de 2025 (evolução) com ícones e sparkline -->
+                    <div class="insight-card">
+                        <div class="card-header-custom">
+                            <i class="ti ti-calendar-stats"></i>
+                            <span>Evolução mensal 2025</span>
+                        </div>
+                        <table class="table table-sm table-mini w-100">
+                            <thead><tr><th>Mês</th><th>Saldo</th><th>Resultado</th><th>Var.</th></tr></thead>
+                            <tbody>
+                                <tr><td>Jan</td><td>R$ 103,7k</td><td class="color-success">R$ 2.409</td><td><span class="badge-trend-up">📈 2,32%</span></td></tr>
+                                <tr><td>Fev</td><td>R$ 105,8k</td><td class="color-success">R$ 4.027</td><td><span class="badge-trend-up">📈 3,81%</span></td></tr>
+                                <tr><td>Mar</td><td>R$ 109,2k</td><td class="color-warning">R$ 0,01</td><td><span class="badge bg-secondary">0%</span></td></tr>
+                                <tr><td>Abr</td><td>R$ 109,2k</td><td class="color-success">R$ 621</td><td><span class="badge-trend-up">📈 0,57%</span></td></tr>
+                                <tr><td>Mai</td><td>R$ 109,7k</td><td class="text-muted">—</td><td><span class="badge bg-dark">-</span></td></tr>
+                            </tbody>
+                        </table>
+                        <div id="sparkMonthly" style="height: 40px; width: 100%;"></div>
+                        <div class="small text-muted mt-1">⬆️ últimos 5 meses</div>
+                    </div>
+
+                    <!-- CARD 4: Gráfico de barras dos resultados mensais (visual mais forte) -->
+                    <div class="insight-card">
+                        <div class="card-header-custom">
+                            <i class="ti ti-chart-bar"></i>
+                            <span>Resultado mensal (R$)</span>
+                        </div>
+                        <div id="barMonthly" style="height: 160px; width: 100%;"></div>
+                        <div class="d-flex justify-content-between small text-muted mt-2">
+                            <span>Jan Fev Mar Abr Mai</span>
+                        </div>
+                    </div>
+
+                    <!-- CARD 5: Projeção futura (valor futuro, renda, regra 72) -->
+                    <div class="insight-card">
+                        <div class="card-header-custom">
+                            <i class="ti ti-rocket"></i>
+                            <span>Projeção (5 anos)</span>
+                        </div>
+                        <div class="metric-row">
+                            <span>Valor presente</span>
+                            <span class="fw-bold">R$ 76.797</span>
+                        </div>
+                        <div class="metric-row">
+                            <span>Valor futuro (2031)</span>
+                            <span class="fw-bold color-info">R$ 207.969</span>
+                        </div>
+                        <div class="metric-row">
+                            <span>📈 Renda mensal estimada</span>
+                            <span class="fw-bold color-success">R$ 3.482</span>
+                        </div>
+                        <div class="divider"></div>
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="emoji-big">⏳</span>
+                            <div>
+                                <span class="text-muted">Regra dos 72</span><br>
+                                <span class="fw-bold">3,58 anos para dobrar</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CARD 6: Gauge da meta de renda (50% da renda mensal) -->
+                    <div class="insight-card">
+                        <div class="card-header-custom">
+                            <i class="ti ti-target"></i>
+                            <span>Meta de renda mensal</span>
+                        </div>
+                        <div class="d-flex align-items-baseline justify-content-between">
+                            <span>50% da renda:</span>
+                            <span class="value-large color-warning">R$ 1.741</span>
+                        </div>
+                        <div id="gaugeRenda" style="height: 100px; width: 100%;"></div>
+                        <div class="progress-custom mt-2">
+                            <div class="progress-bar-custom" style="width: 68%;"></div>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="small">0</span>
+                            <span class="small">R$ 3.482</span>
+                        </div>
+                    </div>
+
+                    <!-- CARD 7: Composição de ativos (simulado com base em PETR4 e ações) -->
+                    <div class="insight-card">
+                        <div class="card-header-custom">
+                            <i class="ti ti-pie-chart"></i>
+                            <span>Alocação atual</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="emoji-big">📊</span>
+                            <div style="flex:1;">
+                                <div><span>PETR4</span> <span class="float-end">76%</span></div>
+                                <div class="progress-custom mb-2"><div class="progress-bar-custom" style="width:76%"></div></div>
+                                <div><span>Ações (outras)</span> <span class="float-end">24%</span></div>
+                                <div class="progress-custom"><div class="progress-bar-custom bg-info" style="width:24%"></div></div>
+                            </div>
+                        </div>
+                        <div class="divider"></div>
+                        <div class="metric-row">
+                            <span><i class="ti ti-building"></i> PETR4 strike</span>
+                            <span class="fw-bold">R$ 33,39</span>
+                        </div>
+                        <div class="metric-row">
+                            <span><i class="ti ti-stock"></i> Ações</span>
+                            <span class="fw-bold">2.300</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <span class="text-muted"><i class="ti ti-info-circle"></i> 7 conceitos diferentes – escolha seu favorito</span>
+                <button class="btn btn-primary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Gauge do prêmio (card 1) - usando radial bar da Apex
+        var gaugeOptions = {
+            series: [25.53],
+            chart: { type: 'radialBar', height: 130, width: '100%', sparkline: { enabled: true } },
+            colors: ['#d63939'],
+            plotOptions: {
+                radialBar: {
+                    startAngle: -90,
+                    endAngle: 90,
+                    track: { background: '#2b3648', startAngle: -90, endAngle: 90 },
+                    dataLabels: { name: { show: false }, value: { fontSize: '14px', fontWeight: 600, offsetY: -5, color: '#f0b400' } }
+                }
+            },
+            labels: ['% atual']
+        };
+        if(document.querySelector("#gaugePremio")) new ApexCharts(document.querySelector("#gaugePremio"), gaugeOptions).render();
+
+        // Gauge da renda (card 6)
+        var gaugeRendaOpt = {
+            series: [68],
+            chart: { type: 'radialBar', height: 100, sparkline: { enabled: true } },
+            colors: ['#f59f00'],
+            plotOptions: { radialBar: { hollow: { size: '50%' }, dataLabels: { value: { fontSize: '12px', offsetY: -2 } } } },
+            labels: ['% da meta']
+        };
+        if(document.querySelector("#gaugeRenda")) new ApexCharts(document.querySelector("#gaugeRenda"), gaugeRendaOpt).render();
+
+        // Sparkline mensal (card 3)
+        var sparkOpt = {
+            series: [{ data: [2409, 4027, 0, 621, 0] }],
+            chart: { type: 'line', height: 40, sparkline: { enabled: true } },
+            stroke: { curve: 'smooth', width: 2, colors: ['#2fb344'] },
+            markers: { size: 0 }
+        };
+        if(document.querySelector("#sparkMonthly")) new ApexCharts(document.querySelector("#sparkMonthly"), sparkOpt).render();
+
+        // Gráfico de barras mensal (card 4)
+        var barOpt = {
+            series: [{ name: 'Resultado', data: [2409, 4027, 0, 621, 0] }],
+            chart: { type: 'bar', height: 160, background: 'transparent', toolbar: { show: false } },
+            plotOptions: { bar: { borderRadius: 6, columnWidth: '50%', colors: { ranges: [{ from: 0, to: 5000, color: '#2fb344' }] } } },
+            grid: { show: false },
+            xaxis: { categories: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai'], labels: { show: false } },
+            yaxis: { show: false },
+            tooltip: { theme: 'dark' }
+        };
+        if(document.querySelector("#barMonthly")) new ApexCharts(document.querySelector("#barMonthly"), barOpt).render();
+    });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/js/tabler.min.js"></script>
+</body>
+</html>

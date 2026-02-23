@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ideia 1 – Modal Saldo Médio: Hero Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <style>
+        :root {
+            --profit: #2fb344;
+            --loss: #d63939;
+            --neutral: #626976;
+            --gold: #f59f00;
+        }
+        body { background: #0f172a; }
+
+        /* ===== TRIGGER CARD (simulação do card na tela de opcoes) ===== */
+        .page { display:flex; align-items:center; justify-content:center; min-height:100vh; padding:2rem; }
+        .demo-card {
+            background: #182433;
+            border: 1px solid #2d3a4d;
+            border-radius: 12px;
+            padding: 1.5rem 2rem;
+            cursor: pointer;
+            transition: all .2s;
+            text-align: center;
+        }
+        .demo-card:hover { border-color:#206bc4; transform:translateY(-2px); box-shadow:0 8px 24px rgba(32,107,196,.25); }
+
+        /* ===== MODAL ===== */
+        .modal-backdrop-custom {
+            display:none; position:fixed; inset:0;
+            background:rgba(0,0,0,.7); z-index:9990;
+            backdrop-filter:blur(4px);
+        }
+        .modal-backdrop-custom.show { display:flex; align-items:flex-start; justify-content:center; overflow-y:auto; padding:2rem 1rem; }
+        .modal-panel {
+            background: #11192a;
+            border:1px solid #2d3a4d;
+            border-radius:20px;
+            width:100%; max-width:1280px;
+            overflow:hidden;
+            box-shadow:0 30px 80px rgba(0,0,0,.6);
+            animation: slideUp .3s ease;
+        }
+        @keyframes slideUp { from { transform:translateY(40px); opacity:0; } to { transform:translateY(0); opacity:1; } }
+
+        /* ===== HERO STRIP ===== */
+        .hero-strip {
+            background: linear-gradient(135deg, #1a2744 0%, #0f172a 60%, #0a1628 100%);
+            padding: 2rem 2rem 1.5rem;
+            position:relative; overflow:hidden;
+        }
+        .hero-strip::before {
+            content:'';position:absolute;top:0;left:0;right:0;height:3px;
+            background:linear-gradient(90deg,#206bc4,#2fb344,#206bc4);
+        }
+        .hero-strip::after {
+            content:'';position:absolute;right:-120px;top:-120px;
+            width:350px;height:350px;
+            background:radial-gradient(circle,rgba(32,107,196,.15) 0%,transparent 70%);
+        }
+        .hero-close {
+            position:absolute;top:1rem;right:1rem;z-index:10;
+            background:rgba(255,255,255,.08); border:none; color:#fff;
+            width:36px;height:36px;border-radius:50%;cursor:pointer;
+            display:flex;align-items:center;justify-content:center;
+            transition:all .2s;
+        }
+        .hero-close:hover { background:rgba(214,57,57,.3); }
+
+        .hero-tag {
+            font-size:.7rem; font-weight:600; letter-spacing:2px;
+            color:rgba(255,255,255,.5); text-transform:uppercase; margin-bottom:.5rem;
+        }
+        .hero-title { font-size:2.5rem; font-weight:700; letter-spacing:-1px; color:#fff; line-height:1; }
+        .hero-subtitle { font-size:.85rem; color:rgba(255,255,255,.55); margin-top:.3rem; }
+        .hero-badge {
+            display:inline-flex; align-items:center; gap:6px;
+            padding:6px 14px; border-radius:20px; font-size:.78rem; font-weight:600;
+            background:rgba(47,179,68,.15); border:1px solid rgba(47,179,68,.4); color:#2fb344;
+            margin-top:.75rem;
+        }
+
+        .hero-stats { display:flex; gap:2rem; margin-top:1.5rem; flex-wrap:wrap; }
+        .hstat { border-left:2px solid rgba(255,255,255,.1); padding-left:1rem; }
+        .hstat-val { font-size:1.4rem; font-weight:700; color:#fff; }
+        .hstat-lbl { font-size:.68rem; color:rgba(255,255,255,.45); text-transform:uppercase; letter-spacing:.5px; margin-top:2px; }
+
+        /* ===== PERIOD TABS ===== */
+        .period-bar {
+            background:#182433; border-bottom:1px solid #2d3a4d;
+            padding:.75rem 2rem; display:flex; align-items:center; gap:.5rem;
+        }
+        .ptab {
+            padding:6px 16px; border-radius:8px; font-size:.8rem; font-weight:500;
+            color:rgba(255,255,255,.5); background:transparent;
+            border:none; cursor:pointer; transition:all .2s;
+        }
+        .ptab:hover { color:#fff; background:rgba(255,255,255,.06); }
+        .ptab.active { background:#206bc4; color:#fff; }
+        .period-bar .ms-auto { margin-left:auto !important; font-size:.78rem; color:rgba(255,255,255,.4); }
+
+        /* ===== CONTENT ===== */
+        .modal-content-area { padding:1.5rem 2rem 2rem; }
+
+        /* ===== KPI CARDS ===== */
+        .kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:1.5rem; }
+        @media(max-width:900px){ .kpi-grid{grid-template-columns:repeat(2,1fr);} }
+        .kpi {
+            background:#182433; border:1px solid #2d3a4d; border-radius:12px;
+            padding:1.25rem; position:relative; overflow:hidden; transition:all .25s;
+        }
+        .kpi:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,.3); }
+        .kpi.green { border-color:rgba(47,179,68,.4); background:linear-gradient(135deg,rgba(47,179,68,.08) 0%,#182433 100%); }
+        .kpi.blue  { border-color:rgba(32,107,196,.4); background:linear-gradient(135deg,rgba(32,107,196,.08) 0%,#182433 100%); }
+        .kpi.gold  { border-color:rgba(245,159,0,.4); background:linear-gradient(135deg,rgba(245,159,0,.08) 0%,#182433 100%); }
+        .kpi.red   { border-color:rgba(214,57,57,.4); background:linear-gradient(135deg,rgba(214,57,57,.08) 0%,#182433 100%); }
+        .kpi-icon { font-size:1.6rem; margin-bottom:.6rem; }
+        .kpi-val { font-size:1.7rem; font-weight:700; line-height:1.1; }
+        .kpi-lbl { font-size:.7rem; color:rgba(255,255,255,.45); text-transform:uppercase; letter-spacing:.5px; margin-top:4px; }
+        .kpi-sub { font-size:.78rem; color:rgba(255,255,255,.4); margin-top:.3rem; }
+
+        /* ===== CHARTS ROW ===== */
+        .charts-row { display:grid; grid-template-columns:2fr 1fr; gap:1rem; margin-bottom:1.5rem; }
+        @media(max-width:850px){ .charts-row{grid-template-columns:1fr;} }
+        .chart-box {
+            background:#182433; border:1px solid #2d3a4d; border-radius:12px; padding:1.25rem;
+        }
+        .chart-box-title {
+            font-size:.78rem; font-weight:600; text-transform:uppercase; letter-spacing:.5px;
+            color:rgba(255,255,255,.5); margin-bottom:1rem;
+        }
+
+        /* ===== PoP GAUGE (SVG) ===== */
+        .pop-gauge-wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:1rem 0; }
+        .pop-gauge-val { font-size:2.8rem; font-weight:700; color:#2fb344; margin-top:.5rem; }
+        .pop-gauge-lbl { font-size:.72rem; color:rgba(255,255,255,.45); text-transform:uppercase; letter-spacing:1px; }
+        .pop-sub { font-size:.8rem; color:rgba(255,255,255,.35); margin-top:.3rem; }
+
+        /* ===== OPERATIONS TABLE ===== */
+        .ops-section { background:#182433; border:1px solid #2d3a4d; border-radius:12px; overflow:hidden; }
+        .ops-header { padding:1rem 1.25rem; display:flex; align-items:center; border-bottom:1px solid #2d3a4d; }
+        .ops-header-title { font-size:.8rem; font-weight:600; text-transform:uppercase; letter-spacing:.5px; color:rgba(255,255,255,.5); }
+        .ops-table { width:100%; border-collapse:collapse; }
+        .ops-table th {
+            font-size:.68rem; text-transform:uppercase; letter-spacing:.5px;
+            color:rgba(255,255,255,.35); padding:.75rem 1rem; text-align:left;
+            border-bottom:1px solid #2d3a4d;
+        }
+        .ops-table td { padding:.75rem 1rem; font-size:.85rem; border-bottom:1px solid rgba(255,255,255,.04); }
+        .ops-table tr:last-child td { border-bottom:none; }
+        .ops-table tr:hover td { background:rgba(255,255,255,.02); }
+        .badge-tipo {
+            padding:3px 10px; border-radius:6px; font-size:.72rem; font-weight:600;
+        }
+        .badge-call { background:rgba(32,107,196,.2); color:#4299e1; border:1px solid rgba(32,107,196,.3); }
+        .badge-put  { background:rgba(174,62,201,.2); color:#c084fc; border:1px solid rgba(174,62,201,.3); }
+        .badge-aberta  { background:rgba(245,159,0,.15); color:#f59f00; border:1px solid rgba(245,159,0,.3); }
+        .badge-fechada { background:rgba(47,179,68,.15);  color:#2fb344; border:1px solid rgba(47,179,68,.3); }
+        .pop-pill {
+            display:inline-flex; align-items:center; gap:4px;
+            font-size:.75rem; font-weight:600;
+            padding:2px 8px; border-radius:10px;
+        }
+        .pop-hi  { background:rgba(47,179,68,.15);  color:#2fb344; }
+        .pop-med { background:rgba(245,159,0,.15);  color:#f59f00; }
+        .pop-low { background:rgba(214,57,57,.15);  color:#d63939; }
+
+        /* ===== PROGRESS BAR ===== */
+        .prog-bar-wrap { background:rgba(255,255,255,.06); border-radius:100px; height:6px; overflow:hidden; }
+        .prog-bar-fill { height:100%; border-radius:100px; transition:width .6s ease; }
+    </style>
+</head>
+<body>
+
+<!-- DEMO: Simulação do card que dispara o modal -->
+<div class="page">
+    <div style="text-align:center;">
+        <p style="color:rgba(255,255,255,.4);font-size:.85rem;margin-bottom:1.5rem;">↓ Clique no card para abrir o modal</p>
+        <div class="demo-card" onclick="openModal()">
+            <div style="font-size:.72rem;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1px;margin-bottom:.4rem;">Saldo Médio</div>
+            <div style="font-size:2rem;font-weight:700;color:#2fb344;">+3.42%</div>
+            <div style="font-size:.78rem;color:rgba(255,255,255,.35);margin-top:.3rem;">12 operações encerradas</div>
+            <div style="font-size:.72rem;color:rgba(32,107,196,.8);margin-top:.75rem;">🖱 Ver análise completa</div>
+        </div>
+        <p style="color:rgba(255,255,255,.25);font-size:.75rem;margin-top:1rem;">Ideia 1 — Hero Dashboard</p>
+    </div>
+</div>
+
+<!-- BACKDROP / MODAL -->
+<div class="modal-backdrop-custom" id="modalBackdrop" onclick="closeOnBackdrop(event)">
+    <div class="modal-panel" id="modalPanel">
+
+        <!-- HERO STRIP -->
+        <div class="hero-strip">
+            <button class="hero-close" onclick="closeModal()">
+                <i class="ti ti-x" style="font-size:1rem;"></i>
+            </button>
+            <div class="hero-tag">Saldo Médio · Operações de Opções</div>
+            <div class="hero-title" id="heroSaldo">+R$ 4.280,00</div>
+            <div class="hero-subtitle">Retorno acumulado sobre saldo inicial de R$ 125.000</div>
+            <div class="hero-badge">
+                <i class="ti ti-trending-up"></i>
+                <span>+3.42% de retorno médio por operação</span>
+            </div>
+            <div class="hero-stats">
+                <div class="hstat"><div class="hstat-val" id="sTotalOps">15</div><div class="hstat-lbl">Total Ops</div></div>
+                <div class="hstat"><div class="hstat-val text-success" id="sVencedoras">12</div><div class="hstat-lbl">Vencedoras</div></div>
+                <div class="hstat"><div class="hstat-val text-danger" id="sPerdedoras">3</div><div class="hstat-lbl">Perdedoras</div></div>
+                <div class="hstat"><div class="hstat-val text-warning" id="sAbertas">2</div><div class="hstat-lbl">Abertas</div></div>
+                <div class="hstat"><div class="hstat-val" id="sSaldoIni">R$ 125k</div><div class="hstat-lbl">Saldo Inicial</div></div>
+                <div class="hstat"><div class="hstat-val text-success" id="sWinRate">80%</div><div class="hstat-lbl">Win Rate</div></div>
+            </div>
+        </div>
+
+        <!-- PERIOD TABS -->
+        <div class="period-bar">
+            <button class="ptab active" onclick="setPeriod('mes', this)">Mês Atual</button>
+            <button class="ptab" onclick="setPeriod('3m', this)">3 Meses</button>
+            <button class="ptab" onclick="setPeriod('6m', this)">6 Meses</button>
+            <button class="ptab" onclick="setPeriod('ano', this)">Ano</button>
+            <button class="ptab" onclick="setPeriod('all', this)">Tudo</button>
+            <span class="ms-auto">Atualizado: <strong id="lastUpdate">--</strong></span>
+        </div>
+
+        <!-- CONTENT -->
+        <div class="modal-content-area">
+
+            <!-- KPI CARDS -->
+            <div class="kpi-grid">
+                <div class="kpi green">
+                    <div class="kpi-icon">💰</div>
+                    <div class="kpi-val text-success" id="kpiPremio">R$ 4.280</div>
+                    <div class="kpi-lbl">Prêmio Total Recebido</div>
+                    <div class="kpi-sub" id="kpiPremioPerc">+3.42% sobre saldo</div>
+                </div>
+                <div class="kpi blue">
+                    <div class="kpi-icon">📊</div>
+                    <div class="kpi-val" id="kpiPoP">76.4%</div>
+                    <div class="kpi-lbl">PoP Médio Ponderado</div>
+                    <div class="kpi-sub">Probabilidade de Profit</div>
+                </div>
+                <div class="kpi gold">
+                    <div class="kpi-icon">⚡</div>
+                    <div class="kpi-val" id="kpiDiasAtivos">18 dias</div>
+                    <div class="kpi-lbl">Duração Média</div>
+                    <div class="kpi-sub" id="kpiDiasRange">de 7 a 35 dias</div>
+                </div>
+                <div class="kpi green">
+                    <div class="kpi-icon">🎯</div>
+                    <div class="kpi-val text-success" id="kpiWinRate">80%</div>
+                    <div class="kpi-lbl">Taxa de Acerto</div>
+                    <div class="kpi-sub" id="kpiWinDetail">12 de 15 ops</div>
+                </div>
+            </div>
+
+            <!-- CHARTS ROW -->
+            <div class="charts-row">
+                <!-- Capital curve -->
+                <div class="chart-box">
+                    <div class="chart-box-title">📈 Evolução do Capital + Prêmios Acumulados</div>
+                    <div id="chartCapital"></div>
+                </div>
+                <!-- PoP gauge -->
+                <div class="chart-box">
+                    <div class="chart-box-title">🎯 PoP Médio das Operações Abertas</div>
+                    <div class="pop-gauge-wrap">
+                        <svg width="200" height="120" viewBox="0 0 200 120">
+                            <defs>
+                                <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" style="stop-color:#d63939"/>
+                                    <stop offset="50%" style="stop-color:#f59f00"/>
+                                    <stop offset="100%" style="stop-color:#2fb344"/>
+                                </linearGradient>
+                            </defs>
+                            <!-- Track -->
+                            <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="14" stroke-linecap="round"/>
+                            <!-- Fill -->
+                            <path id="gaugeFill" d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="url(#gaugeGrad)" stroke-width="14" stroke-linecap="round" stroke-dasharray="0 251" style="transition:stroke-dasharray .8s ease;"/>
+                            <!-- Needle -->
+                            <line id="gaugeNeedle" x1="100" y1="100" x2="100" y2="28" stroke="#fff" stroke-width="2.5" stroke-linecap="round" transform-origin="100 100" style="transform:rotate(-90deg);transition:transform .8s ease;"/>
+                            <circle cx="100" cy="100" r="5" fill="#fff"/>
+                        </svg>
+                        <div class="pop-gauge-val" id="popGaugeVal">76.4%</div>
+                        <div class="pop-gauge-lbl">Probabilidade de Profit</div>
+                        <div class="pop-sub" id="popGaugeSub">Média ponderada por volume</div>
+                    </div>
+                    <!-- PoP breakdown -->
+                    <div style="margin-top:1rem; padding-top:1rem; border-top:1px solid #2d3a4d;">
+                        <div style="display:flex;justify-content:space-between;font-size:.75rem;color:rgba(255,255,255,.4);margin-bottom:.5rem;">
+                            <span>Win rate realizado</span><span class="text-success">80%</span>
+                        </div>
+                        <div class="prog-bar-wrap"><div class="prog-bar-fill" style="width:80%;background:#2fb344;"></div></div>
+                        <div style="display:flex;justify-content:space-between;font-size:.75rem;color:rgba(255,255,255,.4);margin-top:.75rem;margin-bottom:.5rem;">
+                            <span>PoP médio esperado</span><span style="color:#206bc4;">76.4%</span>
+                        </div>
+                        <div class="prog-bar-wrap"><div class="prog-bar-fill" style="width:76.4%;background:#206bc4;"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECOND CHART ROW: Donut + Bar por ativo -->
+            <div style="display:grid;grid-template-columns:1fr 1.5fr;gap:1rem;margin-bottom:1.5rem;">
+                <div class="chart-box">
+                    <div class="chart-box-title">🥧 Resultado por Tipo (CALL / PUT)</div>
+                    <div id="chartDonut"></div>
+                </div>
+                <div class="chart-box">
+                    <div class="chart-box-title">📊 Prêmio Recebido por Ativo Base</div>
+                    <div id="chartBarAtivo"></div>
+                </div>
+            </div>
+
+            <!-- OPERATIONS TABLE -->
+            <div class="ops-section">
+                <div class="ops-header">
+                    <span class="ops-header-title">Operações Detalhadas</span>
+                    <span id="opsCount" style="margin-left:.75rem;font-size:.75rem;color:rgba(255,255,255,.3);"></span>
+                    <button onclick="exportCSV()" style="margin-left:auto;background:rgba(32,107,196,.15);border:1px solid rgba(32,107,196,.3);color:#4299e1;padding:5px 12px;border-radius:7px;font-size:.76rem;cursor:pointer;">
+                        ⬇ Exportar CSV
+                    </button>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table class="ops-table">
+                        <thead>
+                            <tr>
+                                <th>Ativo</th>
+                                <th>Tipo</th>
+                                <th>Saldo Abertura</th>
+                                <th>Prêmio</th>
+                                <th>% Prêmio</th>
+                                <th>Strike</th>
+                                <th>PoP</th>
+                                <th>Duração</th>
+                                <th>Resultado</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyOps"></tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div><!-- /modal-content-area -->
+    </div><!-- /modal-panel -->
+</div><!-- /backdrop -->
+
+<script>
+/* ========================================================
+   DADOS MOCK — mesma estrutura da API /api/opcoes
+   Em produção: fetch('/api/opcoes').then(...)
+   ======================================================== */
+const MOCK_OPERACOES = [
+    { id:1, ativo_base:'PETR4', ativo:'PETRN369W1', tipo:'CALL', tipo_operacao:'VENDA', quantidade:-100, preco_entrada:3.65, preco_atual:0.12, strike:36.90, vencimento:'2026-01-17', premio:365.00, resultado:353.00, saldo_abertura:125000, status:'FECHADA', data_operacao:'2025-12-10', dias:38 },
+    { id:2, ativo_base:'PETR4', ativo:'PETRN380W1', tipo:'PUT',  tipo_operacao:'VENDA', quantidade:-100, preco_entrada:2.80, preco_atual:0.05, strike:38.00, vencimento:'2026-01-17', premio:280.00, resultado:275.00, saldo_abertura:125353, status:'FECHADA', data_operacao:'2025-12-12', dias:36 },
+    { id:3, ativo_base:'VALE3', ativo:'VALEB550W1', tipo:'PUT',  tipo_operacao:'VENDA', quantidade:-50,  preco_entrada:4.20, preco_atual:0.30, strike:55.00, vencimento:'2026-02-21', premio:210.00, resultado:180.00, saldo_abertura:125628, status:'FECHADA', data_operacao:'2026-01-05', dias:47 },
+    { id:4, ativo_base:'ITUB4', ativo:'ITUBL330W1', tipo:'CALL', tipo_operacao:'VENDA', quantidade:-200, preco_entrada:1.10, preco_atual:0.02, strike:33.00, vencimento:'2026-01-17', premio:220.00, resultado:218.00, saldo_abertura:125808, status:'FECHADA', data_operacao:'2026-01-07', dias:10 },
+    { id:5, ativo_base:'PETR4', ativo:'PETRF370W1', tipo:'CALL', tipo_operacao:'VENDA', quantidade:-100, preco_entrada:2.90, preco_atual:0.10, strike:37.00, vencimento:'2026-02-21', premio:290.00, resultado:280.00, saldo_abertura:126026, status:'FECHADA', data_operacao:'2026-01-10', dias:42 },
+    { id:6, ativo_base:'BBDC4', ativo:'BBDCB180W1', tipo:'PUT',  tipo_operacao:'VENDA', quantidade:-100, preco_entrada:1.80, preco_atual:3.50, strike:18.00, vencimento:'2026-02-21', premio:180.00, resultado:-170.00, saldo_abertura:126306, status:'FECHADA', data_operacao:'2026-01-12', dias:40 },
+    { id:7, ativo_base:'VALE3', ativo:'VALEF500W1', tipo:'PUT',  tipo_operacao:'VENDA', quantidade:-80,  preco_entrada:3.50, preco_atual:0.15, strike:50.00, vencimento:'2026-02-21', premio:280.00, resultado:268.00, saldo_abertura:126136, status:'FECHADA', data_operacao:'2026-01-15', dias:37 },
+    { id:8, ativo_base:'PETR4', ativo:'PETRN380W2', tipo:'CALL', tipo_operacao:'VENDA', quantidade:-100, preco_entrada:3.20, preco_atual:0.08, strike:38.00, vencimento:'2026-02-21', premio:320.00, resultado:312.00, saldo_abertura:126404, status:'FECHADA', data_operacao:'2026-01-20', dias:32 },
+    { id:9, ativo_base:'ITUB4', ativo:'ITUBN320W1', tipo:'CALL', tipo_operacao:'VENDA', quantidade:-200, preco_entrada:0.95, preco_atual:0.01, strike:32.00, vencimento:'2026-02-21', premio:190.00, resultado:189.00, saldo_abertura:126716, status:'FECHADA', data_operacao:'2026-01-22', dias:30 },
+    { id:10,ativo_base:'BBAS3', ativo:'BBASF280W1', tipo:'PUT',  tipo_operacao:'VENDA', quantidade:-100, preco_entrada:2.60, preco_atual:5.00, strike:28.00, vencimento:'2026-02-21', premio:260.00, resultado:-240.00, saldo_abertura:126905, status:'FECHADA', data_operacao:'2026-01-25', dias:27 },
+    { id:11,ativo_base:'PETR4', ativo:'PETRN390G1', tipo:'CALL', tipo_operacao:'VENDA', quantidade:-100, preco_entrada:2.50, preco_atual:0.05, strike:39.00, vencimento:'2026-03-20', premio:250.00, resultado:245.00, saldo_abertura:126665, status:'FECHADA', data_operacao:'2026-02-01', dias:47 },
+    { id:12,ativo_base:'VALE3', ativo:'VALEF520W1', tipo:'PUT',  tipo_operacao:'VENDA', quantidade:-60,  preco_entrada:4.00, preco_atual:0.20, strike:52.00, vencimento:'2026-03-20', premio:240.00, resultado:228.00, saldo_abertura:126910, status:'FECHADA', data_operacao:'2026-02-03', dias:45 },
+    { id:13,ativo_base:'ITUB4', ativo:'ITUBG340W1', tipo:'CALL', tipo_operacao:'VENDA', quantidade:-200, preco_entrada:0.85, preco_atual:0.03, strike:34.00, vencimento:'2026-03-20', premio:170.00, resultado:164.00, saldo_abertura:127138, status:'ABERTA',  data_operacao:'2026-02-05', dias:43 },
+    { id:14,ativo_base:'PETR4', ativo:'PETRG400W1', tipo:'CALL', tipo_operacao:'VENDA', quantidade:-100, preco_entrada:2.10, preco_atual:1.20, strike:40.00, vencimento:'2026-03-20', premio:210.00, resultado: 90.00, saldo_abertura:127302, status:'ABERTA',  data_operacao:'2026-02-10', dias:38 },
+    { id:15,ativo_base:'BBDC4', ativo:'BBDCG200W1', tipo:'PUT',  tipo_operacao:'VENDA', quantidade:-150, preco_entrada:1.30, preco_atual:0.10, strike:20.00, vencimento:'2026-03-20', premio:195.00, resultado:183.00, saldo_abertura:127392, status:'FECHADA', data_operacao:'2026-02-12', dias:36 },
+];
+
+/* PoP simulado por opção (em produção viria da API OpLab / Black-Scholes) */
+const POP_MAP = { 1:82, 2:78, 3:74, 4:88, 5:79, 6:58, 7:76, 8:81, 9:86, 10:55, 11:83, 12:77, 13:85, 14:72, 15:80 };
+
+/* ========================================================
+   FUNÇÕES UTILITÁRIAS
+   ======================================================== */
+const fmt = (v) => new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v);
+const fmtPct = (v) => (v >= 0 ? '+' : '') + v.toFixed(2) + '%';
+
+function calcStats(ops) {
+    const fechadas = ops.filter(o => o.status === 'FECHADA');
+    const abertas  = ops.filter(o => o.status === 'ABERTA');
+    const venc = fechadas.filter(o => (o.resultado||0) > 0);
+    const perd = fechadas.filter(o => (o.resultado||0) <= 0);
+    const totalPremio = ops.reduce((a, o) => a + (o.premio || 0), 0);
+    const totalResult = ops.reduce((a, o) => a + (o.resultado || 0), 0);
+    const saldoIni = ops.length ? ops[0].saldo_abertura : 0;
+    const winRate = fechadas.length ? (venc.length / fechadas.length * 100) : 0;
+    const popMedio = ops.reduce((a, o) => a + (POP_MAP[o.id] || 70), 0) / ops.length;
+    const duracaoMedia = ops.reduce((a, o) => a + (o.dias || 30), 0) / ops.length;
+    const duracaoMin = Math.min(...ops.map(o => o.dias || 30));
+    const duracaoMax = Math.max(...ops.map(o => o.dias || 30));
+    return { fechadas, abertas, venc, perd, totalPremio, totalResult, saldoIni, winRate, popMedio, duracaoMedia, duracaoMin, duracaoMax };
+}
+
+/* ========================================================
+   MODAL OPEN / CLOSE
+   ======================================================== */
+function openModal() {
+    document.getElementById('modalBackdrop').classList.add('show');
+    loadData('mes');
+    document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('pt-BR');
+}
+function closeModal() {
+    document.getElementById('modalBackdrop').classList.remove('show');
+}
+function closeOnBackdrop(e) {
+    if (e.target === document.getElementById('modalBackdrop')) closeModal();
+}
+
+/* ========================================================
+   PERIOD FILTER
+   ======================================================== */
+function setPeriod(p, btn) {
+    document.querySelectorAll('.ptab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const now = new Date();
+    let filtered = MOCK_OPERACOES;
+    if (p === 'mes') {
+        filtered = MOCK_OPERACOES.filter(o => {
+            const d = new Date(o.data_operacao);
+            return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+        });
+        if (!filtered.length) filtered = MOCK_OPERACOES.slice(-5);
+    } else if (p === '3m') {
+        const cutoff = new Date(now); cutoff.setMonth(cutoff.getMonth()-3);
+        filtered = MOCK_OPERACOES.filter(o => new Date(o.data_operacao) >= cutoff);
+    } else if (p === '6m') {
+        const cutoff = new Date(now); cutoff.setMonth(cutoff.getMonth()-6);
+        filtered = MOCK_OPERACOES.filter(o => new Date(o.data_operacao) >= cutoff);
+    } else if (p === 'ano') {
+        filtered = MOCK_OPERACOES.filter(o => new Date(o.data_operacao).getFullYear() === now.getFullYear());
+    }
+    renderAll(filtered);
+}
+
+/* ========================================================
+   LOAD DATA (em produção usa fetch real)
+   ======================================================== */
+function loadData(period = 'all') {
+    /* PRODUÇÃO:
+    fetch('/api/opcoes')
+        .then(r => r.json())
+        .then(ops => {
+            // ops = array de operações do banco
+            // Para PoP: fetch('/api/proxy/options/:ativo_base') → calcular Black-Scholes
+            renderAll(ops);
+        });
+    */
+    renderAll(MOCK_OPERACOES);
+}
+
+/* ========================================================
+   RENDER ALL
+   ======================================================== */
+let chartCapital = null, chartDonut = null, chartBar = null;
+
+function renderAll(ops) {
+    const s = calcStats(ops);
+
+    // HERO
+    document.getElementById('heroSaldo').textContent = fmt(s.totalResult);
+    document.getElementById('sTotalOps').textContent = ops.length;
+    document.getElementById('sVencedoras').textContent = s.venc.length;
+    document.getElementById('sPerdedoras').textContent = s.perd.length;
+    document.getElementById('sAbertas').textContent = s.abertas.length;
+    document.getElementById('sSaldoIni').textContent = 'R$ ' + (s.saldoIni/1000).toFixed0() + 'k';
+    document.getElementById('sWinRate').textContent = s.winRate.toFixed(0) + '%';
+
+    // KPIs
+    document.getElementById('kpiPremio').textContent = fmt(s.totalPremio);
+    document.getElementById('kpiPremioPerc').textContent = fmtPct(s.totalPremio / s.saldoIni * 100) + ' sobre saldo';
+    document.getElementById('kpiPoP').textContent = s.popMedio.toFixed(1) + '%';
+    document.getElementById('kpiDiasAtivos').textContent = s.duracaoMedia.toFixed(0) + ' dias';
+    document.getElementById('kpiDiasRange').textContent = `de ${s.duracaoMin} a ${s.duracaoMax} dias`;
+    document.getElementById('kpiWinRate').textContent = s.winRate.toFixed(0) + '%';
+    document.getElementById('kpiWinDetail').textContent = `${s.venc.length} de ${s.fechadas.length} ops`;
+
+    // PoP gauge
+    document.getElementById('popGaugeVal').textContent = s.popMedio.toFixed(1) + '%';
+    setGauge(s.popMedio);
+
+    // Table
+    renderTable(ops);
+
+    // Charts
+    renderCapitalChart(ops);
+    renderDonut(ops);
+    renderBarAtivo(ops);
+}
+
+/* ========================================================
+   GAUGE
+   ======================================================== */
+function setGauge(pct) {
+    const totalLen = 251; // arco semicircular
+    const fill = (pct / 100) * totalLen;
+    document.getElementById('gaugeFill').setAttribute('stroke-dasharray', `${fill} ${totalLen}`);
+    const angle = (pct / 100) * 180 - 90; // -90 a +90
+    document.getElementById('gaugeNeedle').style.transform = `rotate(${angle}deg)`;
+}
+
+/* ========================================================
+   TABLE
+   ======================================================== */
+function renderTable(ops) {
+    document.getElementById('opsCount').textContent = `(${ops.length} registros)`;
+    const tbody = document.getElementById('tbodyOps');
+    tbody.innerHTML = '';
+    ops.forEach(op => {
+        const pop = POP_MAP[op.id] || 70;
+        const popClass = pop >= 75 ? 'pop-hi' : pop >= 60 ? 'pop-med' : 'pop-low';
+        const pctPremio = op.saldo_abertura ? (op.premio / op.saldo_abertura * 100) : 0;
+        const resClass = (op.resultado || 0) >= 0 ? 'text-success' : 'text-danger';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><strong>${op.ativo_base}</strong><br><span style="color:rgba(255,255,255,.35);font-size:.75rem;">${op.ativo}</span></td>
+            <td><span class="badge-tipo badge-${op.tipo.toLowerCase()}">${op.tipo}</span></td>
+            <td>${fmt(op.saldo_abertura)}</td>
+            <td class="text-success">${fmt(op.premio)}</td>
+            <td class="text-success">${pctPremio.toFixed(2)}%</td>
+            <td>R$ ${op.strike.toFixed(2)}</td>
+            <td><span class="pop-pill ${popClass}">🎯 ${pop}%</span></td>
+            <td>${op.dias}d</td>
+            <td class="${resClass}">${fmt(op.resultado || 0)}</td>
+            <td><span class="badge-tipo badge-${op.status.toLowerCase()}">${op.status}</span></td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+/* ========================================================
+   CHARTS
+   ======================================================== */
+function renderCapitalChart(ops) {
+    const sorted = [...ops].sort((a,b) => new Date(a.data_operacao)-new Date(b.data_operacao));
+    let balance = sorted.length ? sorted[0].saldo_abertura : 125000;
+    const categories = [];
+    const balanceSeries = [balance];
+    const premioSeries = [0];
+    let premioAcum = 0;
+    sorted.forEach(op => {
+        categories.push(op.data_operacao);
+        premioAcum += op.premio || 0;
+        balance += op.resultado || 0;
+        balanceSeries.push(balance);
+        premioSeries.push(premioAcum);
+    });
+    categories.unshift('Início');
+
+    const opts = {
+        series: [
+            { name: 'Capital Acumulado', data: balanceSeries, type:'area' },
+            { name: 'Prêmios Acumulados', data: premioSeries, type:'line' },
+        ],
+        chart: { type:'line', height:220, background:'transparent', toolbar:{show:false},
+            animations:{ enabled:true, easing:'easeinout', speed:600 }
+        },
+        stroke: { width:[2.5,2], curve:'smooth', dashArray:[0,5] },
+        fill: { type:['gradient','solid'], gradient:{ shadeIntensity:1, opacityFrom:.4, opacityTo:.02, stops:[0,100] } },
+        colors: ['#2fb344','#206bc4'],
+        xaxis: { categories, labels:{ style:{colors:Array(categories.length).fill('rgba(255,255,255,.3)'), fontSize:'10px'} }, axisBorder:{show:false}, axisTicks:{show:false} },
+        yaxis: { labels:{ formatter:v=>'R$'+v.toLocaleString('pt-BR',{maximumFractionDigits:0}), style:{colors:['rgba(255,255,255,.3)']} } },
+        grid: { borderColor:'rgba(255,255,255,.05)', strokeDashArray:4 },
+        legend: { labels:{ colors:'rgba(255,255,255,.5)' } },
+        tooltip: { theme:'dark', y:{ formatter:v=>fmt(v) } },
+    };
+
+    if (chartCapital) { chartCapital.destroy(); }
+    chartCapital = new ApexCharts(document.getElementById('chartCapital'), opts);
+    chartCapital.render();
+}
+
+function renderDonut(ops) {
+    const calls = ops.filter(o=>o.tipo==='CALL').reduce((a,o)=>a+(o.resultado||0),0);
+    const puts  = ops.filter(o=>o.tipo==='PUT').reduce((a,o)=>a+(o.resultado||0),0);
+    const opts = {
+        series: [Math.max(calls,0), Math.max(puts,0)],
+        labels: ['CALL','PUT'],
+        chart: { type:'donut', height:220, background:'transparent' },
+        colors: ['#206bc4','#ae3ec9'],
+        legend: { labels:{ colors:'rgba(255,255,255,.5)' }, position:'bottom' },
+        plotOptions: { pie:{ donut:{ size:'65%', labels:{ show:true, total:{ show:true, label:'Total', color:'rgba(255,255,255,.5)', formatter:()=>fmt(calls+puts) } } } } },
+        dataLabels: { style:{ fontSize:'11px' } },
+        tooltip:{ theme:'dark', y:{ formatter:v=>fmt(v) } },
+    };
+    if (chartDonut) { chartDonut.destroy(); }
+    chartDonut = new ApexCharts(document.getElementById('chartDonut'), opts);
+    chartDonut.render();
+}
+
+function renderBarAtivo(ops) {
+    const map = {};
+    ops.forEach(o => { map[o.ativo_base] = (map[o.ativo_base]||0) + (o.premio||0); });
+    const cats = Object.keys(map);
+    const vals = Object.values(map);
+    const opts = {
+        series: [{ name:'Prêmio', data:vals }],
+        chart: { type:'bar', height:220, background:'transparent', toolbar:{show:false} },
+        plotOptions: { bar:{ horizontal:true, borderRadius:5, distributed:true } },
+        colors: ['#2fb344','#206bc4','#ae3ec9','#f59f00'],
+        xaxis: { categories:cats, labels:{ style:{colors:Array(cats.length).fill('rgba(255,255,255,.3)'), fontSize:'11px'} } },
+        yaxis: { labels:{ style:{colors:['rgba(255,255,255,.4)']} } },
+        grid: { borderColor:'rgba(255,255,255,.05)' },
+        legend: { show:false },
+        tooltip: { theme:'dark', y:{ formatter:v=>fmt(v) } },
+    };
+    if (chartBar) { chartBar.destroy(); }
+    chartBar = new ApexCharts(document.getElementById('chartBarAtivo'), opts);
+    chartBar.render();
+}
+
+/* ========================================================
+   EXPORT CSV
+   ======================================================== */
+function exportCSV() {
+    const rows = [['ID','Ativo Base','Ativo','Tipo','Saldo Abertura','Prêmio','% Prêmio','PoP','Strike','Vencimento','Dias','Resultado','Status']];
+    MOCK_OPERACOES.forEach(op => {
+        const pop = POP_MAP[op.id] || '';
+        const pct = op.saldo_abertura ? (op.premio/op.saldo_abertura*100).toFixed(2) : '';
+        rows.push([op.id,op.ativo_base,op.ativo,op.tipo,op.saldo_abertura,op.premio,pct,pop,op.strike,op.vencimento,op.dias,op.resultado,op.status]);
+    });
+    const csv = rows.map(r=>r.join(';')).join('\n');
+    const a = document.createElement('a');
+    a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent('\uFEFF'+csv);
+    a.download = 'operacoes.csv';
+    a.click();
+}
+
+/* helper */
+Number.prototype.toFixed0 = function(){ return Math.round(this).toString(); };
+</script>
+</body>
+</html>

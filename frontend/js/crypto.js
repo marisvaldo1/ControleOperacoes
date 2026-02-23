@@ -226,7 +226,7 @@ function renderChartAnual(data, year) {
 }
 
 function openNewModal() {
-    document.getElementById('modalOperacaoTitle').textContent = 'Nova Operacao';
+    document.getElementById('modalOperacaoTitle').textContent = 'Nova Operação';
     document.getElementById('formOperacao').reset();
     document.getElementById('operacaoId').value = '';
     document.getElementById('inputDataOperacao').value = getCurrentDate();

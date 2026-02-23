@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ideia 3 – Modal Saldo Médio: Timeline + Waterfall</title>
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Inter',-apple-system,sans-serif; background:#090e17; color:#d1d5db; font-size:14px; }
+
+        /* ===== TRIGGER ===== */
+        .page { display:flex; align-items:center; justify-content:center; min-height:100vh; }
+        .trig {
+            background:linear-gradient(135deg,#0f1e38,#0a1428);
+            border:1px solid #1e3a5f; border-radius:12px;
+            padding:1.5rem 2.5rem; cursor:pointer; text-align:center; transition:all .2s;
+        }
+        .trig:hover { border-color:#3b82f6; box-shadow:0 0 30px rgba(59,130,246,.2); }
+
+        /* ===== OVERLAY ===== */
+        .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.8); z-index:9000; align-items:flex-start; justify-content:center; padding:2rem 1rem; overflow-y:auto; backdrop-filter:blur(8px); }
+        .overlay.show { display:flex; }
+
+        /* ===== MODAL ===== */
+        .modal {
+            background:#0d1525; border:1px solid #1e3a5f; border-radius:20px;
+            width:100%; max-width:1200px;
+            box-shadow:0 50px 100px rgba(0,0,0,.8);
+            animation:rise .35s cubic-bezier(.22,1,.36,1);
+        }
+        @keyframes rise { from{transform:translateY(50px);opacity:0;} to{transform:translateY(0);opacity:1;} }
+
+        /* ===== HEADER ===== */
+        .mhead {
+            display:flex; align-items:center; padding:1.5rem 2rem;
+            background:linear-gradient(90deg,#0f1e38,#0d1525);
+            border-bottom:1px solid #1e3a5f; border-radius:20px 20px 0 0;
+        }
+        .mhead-left { flex:1; }
+        .mhead-eyebrow { font-size:.65rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#3b82f6; margin-bottom:.4rem; }
+        .mhead-title { font-size:1.6rem; font-weight:800; color:#f9fafb; letter-spacing:-.5px; }
+        .mhead-sub { font-size:.8rem; color:#6b7280; margin-top:.2rem; }
+
+        .mhead-stats { display:flex; gap:1.5rem; }
+        .mhs { text-align:center; }
+        .mhs-val { font-size:1.3rem; font-weight:700; }
+        .mhs-lbl { font-size:.65rem; color:#6b7280; text-transform:uppercase; letter-spacing:.5px; }
+        .divider-v { width:1px; background:#1e3a5f; }
+
+        .btn-x { background:rgba(255,255,255,.05); border:1px solid #1e3a5f; color:#6b7280; width:36px; height:36px; border-radius:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; margin-left:1.5rem; transition:all .15s; }
+        .btn-x:hover { background:#ef4444; color:#fff; border-color:#ef4444; }
+
+        /* ===== CONTENT ===== */
+        .mcontent { padding:1.5rem 2rem 2rem; }
+
+        /* ===== TOP METRICS ===== */
+        .top-metrics { display:grid; grid-template-columns:repeat(5,1fr); gap:.875rem; margin-bottom:1.5rem; }
+        .metric {
+            background:#111827; border:1px solid #1e3a5f; border-radius:10px;
+            padding:1rem 1.25rem; text-align:center; transition:all .2s;
+        }
+        .metric:hover { border-color:#3b82f6; transform:translateY(-2px); }
+        .metric-val { font-size:1.4rem; font-weight:700; }
+        .metric-lbl { font-size:.65rem; text-transform:uppercase; letter-spacing:.5px; color:#6b7280; margin-top:4px; }
+        .metric-sub { font-size:.7rem; color:#4b5563; margin-top:2px; }
+        .c-blue{color:#3b82f6;} .c-green{color:#10b981;} .c-red{color:#ef4444;} .c-yellow{color:#f59e0b;} .c-purple{color:#8b5cf6;}
+
+        /* ===== WATERFALL + TIMELINE LAYOUT ===== */
+        .main-grid { display:grid; grid-template-columns:1fr 480px; gap:1.5rem; }
+        @media(max-width:900px){.main-grid{grid-template-columns:1fr;}}
+
+        /* WATERFALL */
+        .section-title { font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#4b5563; margin-bottom:1rem; }
+        .box { background:#111827; border:1px solid #1e3a5f; border-radius:12px; padding:1.25rem; }
+
+        /* TIMELINE */
+        .timeline { position:relative; padding-left:28px; overflow-y:auto; max-height:560px; padding-right:.5rem; }
+        .timeline::before { content:''; position:absolute; left:8px; top:0; bottom:0; width:2px; background:linear-gradient(180deg,#3b82f6,#10b981); opacity:.3; border-radius:2px; }
+        .tl-item { position:relative; margin-bottom:1rem; }
+        .tl-dot {
+            position:absolute; left:-28px; top:14px;
+            width:14px; height:14px; border-radius:50%;
+            border:2px solid;
+            background:#0d1525;
+            display:flex; align-items:center; justify-content:center;
+        }
+        .tl-dot.win  { border-color:#10b981; box-shadow:0 0 8px rgba(16,185,129,.4); }
+        .tl-dot.loss { border-color:#ef4444; box-shadow:0 0 8px rgba(239,68,68,.4); }
+        .tl-dot.open { border-color:#f59e0b; box-shadow:0 0 8px rgba(245,158,11,.4); animation:pulse-y 2s infinite; }
+        @keyframes pulse-y { 0%,100%{box-shadow:0 0 8px rgba(245,158,11,.3);} 50%{box-shadow:0 0 16px rgba(245,158,11,.6);} }
+
+        .tl-card {
+            background:#0d1525; border:1px solid #1e3a5f; border-radius:10px;
+            padding:.875rem 1rem; transition:all .15s;
+        }
+        .tl-card:hover { border-color:#3b82f6; }
+        .tl-card-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:.5rem; }
+        .tl-ticker { font-weight:700; font-size:.9rem; color:#f9fafb; }
+        .tl-base { font-size:.7rem; color:#6b7280; }
+        .tl-result { font-size:1rem; font-weight:700; }
+        .tl-meta { display:flex; gap:.875rem; flex-wrap:wrap; }
+        .tl-tag { font-size:.68rem; padding:2px 8px; border-radius:5px; font-weight:600; background:rgba(255,255,255,.04); border:1px solid #1e3a5f; }
+        .tl-pop { font-size:.68rem; font-weight:700; padding:2px 8px; border-radius:5px; }
+        .pop-hi  { background:rgba(16,185,129,.12); color:#10b981; border:1px solid rgba(16,185,129,.3); }
+        .pop-med { background:rgba(245,158,11,.12); color:#f59e0b; border:1px solid rgba(245,158,11,.3); }
+        .pop-low { background:rgba(239,68,68,.12);  color:#ef4444; border:1px solid rgba(239,68,68,.3);  }
+
+        /* ===== BOTTOM ROW ===== */
+        .bottom-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1rem; margin-top:1.5rem; }
+        @media(max-width:900px){.bottom-grid{grid-template-columns:1fr 1fr;}}
+
+        /* PoP distribution bars */
+        .pop-dist-bar { margin-bottom:.6rem; }
+        .pop-dist-label { display:flex; justify-content:space-between; font-size:.72rem; color:#6b7280; margin-bottom:3px; }
+        .track { background:rgba(255,255,255,.05); border-radius:4px; height:8px; overflow:hidden; }
+        .fill { height:100%; border-radius:4px; transition:width .7s ease; }
+
+        /* Best op card */
+        .star-card { border:1px solid #1e3a5f; border-radius:8px; padding:.875rem; margin-bottom:.5rem; background:#0d1525; }
+        .star-rank { font-size:.65rem; text-transform:uppercase; letter-spacing:.5px; color:#6b7280; margin-bottom:.3rem; }
+        .star-name { font-weight:700; }
+        .star-val { font-size:1rem; font-weight:700; color:#10b981; }
+    </style>
+</head>
+<body>
+
+<div class="page">
+    <div style="text-align:center;">
+        <p style="color:#6b7280;font-size:.8rem;margin-bottom:1.25rem;">↓ Clique no card para abrir o modal</p>
+        <div class="trig" onclick="openM()">
+            <div style="font-size:.68rem;color:#3b82f6;text-transform:uppercase;letter-spacing:1px;margin-bottom:.5rem;">Saldo Médio</div>
+            <div style="font-size:1.9rem;font-weight:800;color:#10b981;">+3.42%</div>
+            <div style="font-size:.78rem;color:#6b7280;margin-top:.3rem;">15 operações · R$4.280 em prêmios</div>
+            <div style="font-size:.72rem;color:#3b82f6;margin-top:.875rem;">Ver timeline de operações →</div>
+        </div>
+        <p style="color:#374151;font-size:.72rem;margin-top:1rem;">Ideia 3 — Timeline + Waterfall</p>
+    </div>
+</div>
+
+<div class="overlay" id="overlay" onclick="closeOvl(event)">
+<div class="modal" id="modal">
+
+    <!-- HEADER -->
+    <div class="mhead">
+        <div class="mhead-left">
+            <div class="mhead-eyebrow">📈 Análise · Saldo Médio</div>
+            <div class="mhead-title" id="mTitle">+R$ 4.280</div>
+            <div class="mhead-sub" id="mSub">Retorno acumulado sobre saldo inicial</div>
+        </div>
+        <div class="mhead-stats" id="mHeadStats"></div>
+        <button class="btn-x" onclick="closeM()"><i class="ti ti-x"></i></button>
+    </div>
+
+    <div class="mcontent">
+        <!-- TOP METRICS -->
+        <div class="top-metrics">
+            <div class="metric"><div class="metric-val c-green" id="m1">R$0</div><div class="metric-lbl">Prêmio Total</div><div class="metric-sub" id="m1s">—</div></div>
+            <div class="metric"><div class="metric-val c-blue"  id="m2">0%</div><div class="metric-lbl">Win Rate</div><div class="metric-sub" id="m2s">—</div></div>
+            <div class="metric"><div class="metric-val c-purple"id="m3">0%</div><div class="metric-lbl">PoP Médio</div><div class="metric-sub">Probabilidade Profit</div></div>
+            <div class="metric"><div class="metric-val c-yellow"id="m4">0d</div><div class="metric-lbl">Duração Média</div><div class="metric-sub" id="m4s">—</div></div>
+            <div class="metric"><div class="metric-val" id="m5">0%</div><div class="metric-lbl">Retenção Prêmio</div><div class="metric-sub">resultado / prêmio</div></div>
+        </div>
+
+        <!-- MAIN GRID: Waterfall + Timeline -->
+        <div class="main-grid">
+            <div>
+                <div class="section-title">💧 Cascata de Capital — Impacto de Cada Operação</div>
+                <div class="box" style="padding:.875rem;">
+                    <div id="chartWaterfall"></div>
+                </div>
+            </div>
+            <div>
+                <div class="section-title">📋 Linha do Tempo das Operações</div>
+                <div class="box" style="padding:1rem;">
+                    <div class="timeline" id="timeline"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BOTTOM GRID -->
+        <div class="bottom-grid">
+            <!-- PoP distribution -->
+            <div class="box">
+                <div class="section-title">🎯 Distribuição de PoP</div>
+                <div id="popDistBars"></div>
+            </div>
+            <!-- Top / worst ops -->
+            <div class="box">
+                <div class="section-title">🏅 Melhores Operações</div>
+                <div id="topOps"></div>
+            </div>
+            <div class="box">
+                <div class="section-title">📊 % Prêmio / Saldo Abertura</div>
+                <div id="chartPctPremio"></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+</div>
+
+<script>
+const OPS = [
+    {id:1,  ativo_base:'PETR4',ativo:'PETRN369W1',tipo:'CALL',quantidade:-100,preco_entrada:3.65,strike:36.90,vencimento:'2026-01-17',premio:365, resultado:353, saldo_abertura:125000,status:'FECHADA',data_operacao:'2025-12-10',dias:38},
+    {id:2,  ativo_base:'PETR4',ativo:'PETRN380W1',tipo:'PUT', quantidade:-100,preco_entrada:2.80,strike:38.00,vencimento:'2026-01-17',premio:280, resultado:275, saldo_abertura:125353,status:'FECHADA',data_operacao:'2025-12-12',dias:36},
+    {id:3,  ativo_base:'VALE3',ativo:'VALEB550W1',tipo:'PUT', quantidade:-50, preco_entrada:4.20,strike:55.00,vencimento:'2026-02-21',premio:210, resultado:180, saldo_abertura:125628,status:'FECHADA',data_operacao:'2026-01-05',dias:47},
+    {id:4,  ativo_base:'ITUB4',ativo:'ITUBL330W1',tipo:'CALL',quantidade:-200,preco_entrada:1.10,strike:33.00,vencimento:'2026-01-17',premio:220, resultado:218, saldo_abertura:125808,status:'FECHADA',data_operacao:'2026-01-07',dias:10},
+    {id:5,  ativo_base:'PETR4',ativo:'PETRF370W1',tipo:'CALL',quantidade:-100,preco_entrada:2.90,strike:37.00,vencimento:'2026-02-21',premio:290, resultado:280, saldo_abertura:126026,status:'FECHADA',data_operacao:'2026-01-10',dias:42},
+    {id:6,  ativo_base:'BBDC4',ativo:'BBDCB180W1',tipo:'PUT', quantidade:-100,preco_entrada:1.80,strike:18.00,vencimento:'2026-02-21',premio:180, resultado:-170,saldo_abertura:126306,status:'FECHADA',data_operacao:'2026-01-12',dias:40},
+    {id:7,  ativo_base:'VALE3',ativo:'VALEF500W1',tipo:'PUT', quantidade:-80, preco_entrada:3.50,strike:50.00,vencimento:'2026-02-21',premio:280, resultado:268, saldo_abertura:126136,status:'FECHADA',data_operacao:'2026-01-15',dias:37},
+    {id:8,  ativo_base:'PETR4',ativo:'PETRN380W2',tipo:'CALL',quantidade:-100,preco_entrada:3.20,strike:38.00,vencimento:'2026-02-21',premio:320, resultado:312, saldo_abertura:126404,status:'FECHADA',data_operacao:'2026-01-20',dias:32},
+    {id:9,  ativo_base:'ITUB4',ativo:'ITUBN320W1',tipo:'CALL',quantidade:-200,preco_entrada:0.95,strike:32.00,vencimento:'2026-02-21',premio:190, resultado:189, saldo_abertura:126716,status:'FECHADA',data_operacao:'2026-01-22',dias:30},
+    {id:10, ativo_base:'BBAS3',ativo:'BBASF280W1',tipo:'PUT', quantidade:-100,preco_entrada:2.60,strike:28.00,vencimento:'2026-02-21',premio:260, resultado:-240,saldo_abertura:126905,status:'FECHADA',data_operacao:'2026-01-25',dias:27},
+    {id:11, ativo_base:'PETR4',ativo:'PETRN390G1',tipo:'CALL',quantidade:-100,preco_entrada:2.50,strike:39.00,vencimento:'2026-03-20',premio:250, resultado:245, saldo_abertura:126665,status:'FECHADA',data_operacao:'2026-02-01',dias:47},
+    {id:12, ativo_base:'VALE3',ativo:'VALEF520W1',tipo:'PUT', quantidade:-60, preco_entrada:4.00,strike:52.00,vencimento:'2026-03-20',premio:240, resultado:228, saldo_abertura:126910,status:'FECHADA',data_operacao:'2026-02-03',dias:45},
+    {id:13, ativo_base:'ITUB4',ativo:'ITUBG340W1',tipo:'CALL',quantidade:-200,preco_entrada:0.85,strike:34.00,vencimento:'2026-03-20',premio:170, resultado:164, saldo_abertura:127138,status:'ABERTA', data_operacao:'2026-02-05',dias:43},
+    {id:14, ativo_base:'PETR4',ativo:'PETRG400W1',tipo:'CALL',quantidade:-100,preco_entrada:2.10,strike:40.00,vencimento:'2026-03-20',premio:210, resultado:90,  saldo_abertura:127302,status:'ABERTA', data_operacao:'2026-02-10',dias:38},
+    {id:15, ativo_base:'BBDC4',ativo:'BBDCG200W1',tipo:'PUT', quantidade:-150,preco_entrada:1.30,strike:20.00,vencimento:'2026-03-20',premio:195, resultado:183, saldo_abertura:127392,status:'FECHADA',data_operacao:'2026-02-12',dias:36},
+];
+const POP_MAP={1:82,2:78,3:74,4:88,5:79,6:58,7:76,8:81,9:86,10:55,11:83,12:77,13:85,14:72,15:80};
+
+const fmt  = v => new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v);
+const fmtK = v => 'R$'+(v/1000).toFixed(1)+'k';
+
+let wChart=null, pctChart=null;
+
+function openM() {
+    document.getElementById('overlay').classList.add('show');
+    render();
+}
+function closeM() { document.getElementById('overlay').classList.remove('show'); }
+function closeOvl(e) { if(e.target===document.getElementById('overlay')) closeM(); }
+
+function render() {
+    const sorted = [...OPS].sort((a,b)=>new Date(a.data_operacao)-new Date(b.data_operacao));
+    const tPremio = OPS.reduce((a,o)=>a+(o.premio||0),0);
+    const tResult = OPS.reduce((a,o)=>a+(o.resultado||0),0);
+    const fechadas = OPS.filter(o=>o.status==='FECHADA');
+    const venc = fechadas.filter(o=>(o.resultado||0)>0);
+    const saldoIni = OPS[0].saldo_abertura;
+    const winRate = fechadas.length? venc.length/fechadas.length*100 : 0;
+    const popMedio = OPS.reduce((a,o)=>a+(POP_MAP[o.id]||70),0)/OPS.length;
+    const durMedia = OPS.reduce((a,o)=>a+(o.dias||30),0)/OPS.length;
+    const retencao = tPremio>0? tResult/tPremio*100 : 0;
+
+    // Header
+    document.getElementById('mTitle').textContent = fmt(tResult);
+    document.getElementById('mSub').textContent = `${(tResult/saldoIni*100).toFixed(2)}% sobre saldo inicial de ${fmtK(saldoIni)}`;
+
+    const statsHtml = [
+        {v:OPS.length, l:'Operações'},{v:venc.length+'/'+fechadas.length, l:'Vencidas'},{v:popMedio.toFixed(0)+'%', l:'PoP Médio'}
+    ].map(s=>`<div class="mhs"><div class="mhs-val" style="color:#f9fafb">${s.v}</div><div class="mhs-lbl">${s.l}</div></div>`).join('<div class="divider-v"></div>');
+    document.getElementById('mHeadStats').innerHTML = statsHtml;
+
+    // Top metrics
+    document.getElementById('m1').textContent = fmt(tPremio);
+    document.getElementById('m1s').textContent = (tPremio/saldoIni*100).toFixed(2)+'% s/ saldo';
+    document.getElementById('m2').textContent = winRate.toFixed(0)+'%';
+    document.getElementById('m2s').textContent = `${venc.length} de ${fechadas.length}`;
+    document.getElementById('m3').textContent = popMedio.toFixed(1)+'%';
+    document.getElementById('m4').textContent = durMedia.toFixed(0)+'d';
+    document.getElementById('m4s').textContent = `${Math.min(...OPS.map(o=>o.dias||30))}–${Math.max(...OPS.map(o=>o.dias||30))} dias`;
+    const m5el = document.getElementById('m5');
+    m5el.textContent = retencao.toFixed(0)+'%';
+    m5el.className = 'metric-val '+(retencao>=75?'c-green':retencao>=50?'c-yellow':'c-red');
+
+    // Waterfall
+    const wCats=['Início'], wVals=[saldoIni], wColors=['#3b82f6'];
+    sorted.forEach(o=>{
+        wCats.push(o.ativo.slice(0,8));
+        wVals.push(o.resultado||0);
+        wColors.push((o.resultado||0)>=0?'#10b981':'#ef4444');
+    });
+    // accumulate
+    let acc=saldoIni;
+    const wData = sorted.map((o,i)=>{
+        const prev=acc; acc+=o.resultado||0;
+        return {x:o.ativo.slice(0,8), y:[prev,acc], fillColor:(o.resultado||0)>=0?'#10b981':'#ef4444'};
+    });
+    wData.unshift({x:'Início',y:[0,saldoIni],fillColor:'#3b82f6'});
+
+    if(wChart){wChart.destroy();}
+    wChart = new ApexCharts(document.getElementById('chartWaterfall'),{
+        series:[{data:wData}],
+        chart:{type:'rangeBar',height:280,background:'transparent',toolbar:{show:false},animations:{speed:600}},
+        plotOptions:{bar:{horizontal:false,columnWidth:'70%',borderRadius:3}},
+        xaxis:{categories:wData.map(d=>d.x),labels:{style:{colors:Array(wData.length).fill('#6b7280'),fontSize:'9px'}},axisBorder:{show:false}},
+        yaxis:{labels:{formatter:v=>fmtK(v),style:{colors:['#6b7280']}}},
+        grid:{borderColor:'rgba(255,255,255,.04)',strokeDashArray:4},
+        tooltip:{theme:'dark',y:{formatter:v=>fmt(v)}},
+        legend:{show:false},
+    });
+    wChart.render();
+
+    // Timeline
+    const tl = document.getElementById('timeline');
+    tl.innerHTML = '';
+    sorted.forEach(op=>{
+        const pop=POP_MAP[op.id]||70;
+        const res=op.resultado||0;
+        const dotCls = op.status==='ABERTA'?'open': res>=0?'win':'loss';
+        const resCls = res>=0?'c-green':'c-red';
+        const popCls = pop>=75?'pop-hi':pop>=60?'pop-med':'pop-low';
+        const callPutColor = op.tipo==='CALL'?'#3b82f6':'#8b5cf6';
+        const div = document.createElement('div');
+        div.className='tl-item';
+        div.innerHTML=`
+            <div class="tl-dot ${dotCls}"></div>
+            <div class="tl-card">
+                <div class="tl-card-top">
+                    <div>
+                        <span class="tl-ticker">${op.ativo}</span>
+                        <span class="tl-base"> · ${op.ativo_base}</span>
+                    </div>
+                    <span class="tl-result ${resCls}">${fmt(res)}</span>
+                </div>
+                <div class="tl-meta">
+                    <span class="tl-tag" style="color:${callPutColor};border-color:${callPutColor}30;">${op.tipo}</span>
+                    <span class="tl-pop ${popCls}">PoP ${pop}%</span>
+                    <span class="tl-tag">Strike R$${op.strike.toFixed(2)}</span>
+                    <span class="tl-tag">Prêm. ${fmt(op.premio)}</span>
+                    <span class="tl-tag">${op.dias}d</span>
+                    <span class="tl-tag" style="color:${op.status==='ABERTA'?'#f59e0b':'#10b981'}">${op.status}</span>
+                </div>
+            </div>
+        `;
+        tl.appendChild(div);
+    });
+
+    // PoP dist bars
+    const buckets=[{l:'≥80%',n:0,c:'#10b981'},{l:'70–79%',n:0,c:'#3b82f6'},{l:'60–69%',n:0,c:'#f59e0b'},{l:'50–59%',n:0,c:'#f97316'},{l:'<50%',n:0,c:'#ef4444'}];
+    OPS.forEach(o=>{const p=POP_MAP[o.id]||70; if(p>=80)buckets[0].n++;else if(p>=70)buckets[1].n++;else if(p>=60)buckets[2].n++;else if(p>=50)buckets[3].n++;else buckets[4].n++;});
+    const pEl=document.getElementById('popDistBars');
+    pEl.innerHTML=buckets.map(b=>`<div class="pop-dist-bar"><div class="pop-dist-label"><span>${b.l}</span><span style="color:${b.c}">${b.n} ops</span></div><div class="track"><div class="fill" style="width:${b.n/OPS.length*100}%;background:${b.c};"></div></div></div>`).join('');
+
+    // Top ops
+    const best=[...OPS].sort((a,b)=>(b.resultado||0)-(a.resultado||0)).slice(0,3);
+    const topEl=document.getElementById('topOps');
+    topEl.innerHTML=best.map((o,i)=>`<div class="star-card"><div class="star-rank">${['🥇','🥈','🥉'][i]} #${i+1}</div><div class="star-name">${o.ativo} <span style="color:#6b7280;font-size:.75rem;">· ${o.ativo_base}</span></div><div class="star-val">${fmt(o.resultado||0)}</div></div>`).join('');
+
+    // % prêmio chart
+    const pcts=sorted.map(o=>+(o.premio/(o.saldo_abertura||125000)*100).toFixed(2));
+    const pctCats=sorted.map(o=>o.ativo.slice(0,6));
+    if(pctChart){pctChart.destroy();}
+    pctChart=new ApexCharts(document.getElementById('chartPctPremio'),{
+        series:[{name:'% Prêmio',data:pcts}],
+        chart:{type:'radar',height:240,background:'transparent',toolbar:{show:false}},
+        xaxis:{categories:pctCats,labels:{style:{colors:Array(pctCats.length).fill('#6b7280'),fontSize:'8px'}}},
+        fill:{opacity:.2,colors:['#8b5cf6']},
+        stroke:{colors:['#8b5cf6'],width:2},
+        markers:{colors:['#8b5cf6'],size:3},
+        yaxis:{show:false},
+        grid:{show:false},
+        tooltip:{theme:'dark',y:{formatter:v=>v+'%'}},
+    });
+    pctChart.render();
+}
+</script>
+</body>
+</html>

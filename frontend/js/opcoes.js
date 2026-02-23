@@ -1,4 +1,4 @@
-let allOperacoes = [];
+﻿let allOperacoes = [];
 let tableMesAtual, tableHistorico;
 let chartAnual = null;
 let chartAccumulated = null;
@@ -185,6 +185,23 @@ document.addEventListener('layoutReady', function() {
             if (e.key === 'Enter' || e.key === ' ') openSaldoCorretoraModal();
         });
     }
+
+    const totalOpsCard = document.getElementById('cardTotalOpsCard');
+    if (totalOpsCard) {
+        totalOpsCard.addEventListener('click', function() {
+            if (typeof window.openTotalOperacoesModal === 'function') {
+                window.openTotalOperacoesModal();
+            }
+        });
+        totalOpsCard.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                if (typeof window.openTotalOperacoesModal === 'function') {
+                    window.openTotalOperacoesModal();
+                }
+            }
+        });
+    }
+
     document.getElementById('btnFiltrarSaldo')?.addEventListener('click', updateSaldoCorretoraModal);
     document.getElementById('btnSaldoInsights')?.addEventListener('click', openSaldoInsightsModal);
     document.getElementById('saldoPeriodo')?.addEventListener('change', function() {
@@ -494,10 +511,10 @@ async function updateUI() {
     document.getElementById('mesAtualHeader').innerHTML = `
         <div class="col-12 mb-2">
             <h4>${getMonthName(currentMonth)}</h4>
-            <span class="float-end text-primary">Mes Atual</span>
+            <span class="float-end text-primary">Mês Atual</span>
         </div>
         <div class="col-md-3">
-            <div class="text-muted">Total Operacoes</div>
+            <div class="text-muted">Total Operações</div>
             <div class="text-success">${mesTotals.totalOperacoes}</div>
         </div>
         <div class="col-md-3">
@@ -509,7 +526,7 @@ async function updateUI() {
             <div class="text-success">${formatCurrency(mesTotals.resultadoTotal, 'BRL')}</div>
         </div>
         <div class="col-md-3">
-            <div class="text-muted">Media</div>
+            <div class="text-muted">Média</div>
             <div>${mesTotals.resultadoMedio.toFixed(2)}%</div>
         </div>
     `;
@@ -584,7 +601,7 @@ async function populateTable(dt, data, showActions = true, updatePrices = false,
         const loadingCell = getLoadingCell();
         const rowNodes = new Map();
         sorted.forEach(op => {
-        const diasInfo = calcularDias(op.vencimento);
+        const duracaoDias = calcularDuracaoDias(op.data_operacao, op.vencimento);
         const qtd = parseFloat(op.quantidade);
         const qtdAbs = Math.abs(qtd);
         
@@ -649,11 +666,13 @@ async function populateTable(dt, data, showActions = true, updatePrices = false,
         const premioValue = premioAbs * qtdAbs;
         
         let popCell = '-';
+        let exercicioCell = gerarBadgeExercicio(exercicio, op.status);
         let priceCell = precoAtual && !isNaN(parseFloatSafe(precoAtual)) ? `<span class="${parseFloatSafe(precoAtual) >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(parseFloatSafe(precoAtual))}</span>` : '-';
         const isAbertaComApi = op.status === 'ABERTA' && op.ativo_base;
         if (isAbertaComApi) {
             priceCell = loadingCell;
             popCell = loadingCell;
+            exercicioCell = loadingCell;
         } else {
             const precoAtualValue = parseFloatSafe(precoAtual);
             if (op.status === 'ABERTA' && precoAtualValue > 0) {
@@ -662,22 +681,23 @@ async function populateTable(dt, data, showActions = true, updatePrices = false,
                     popCell = `${popValue.toFixed(1)}%`;
                 }
             }
+            exercicioCell = gerarBadgeExercicio(calcularExercicio(op.tipo, precoAtualValue, parseFloatSafe(op.strike)), op.status);
         }
         
         const rowNode = dt.row.add([
             op.ativo_base ? `<span class="badge bg-azure text-azure-fg">${op.ativo_base}</span>` : '-',
-            priceCell,
-            `<span class="${parseFloatSafe(op.preco_entrada) >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(parseFloatSafe(op.preco_entrada))}</span>`,
             op.ativo,
             `<span class="badge ${op.tipo === 'CALL' ? 'bg-green text-green-fg' : 'bg-red text-red-fg'}">${op.tipo}</span>`,
+            priceCell,
+            `<span class="${parseFloatSafe(op.preco_entrada) >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(parseFloatSafe(op.preco_entrada))}</span>`,
             op.quantidade,
             formatCurrency(parseFloatSafe(op.strike)),
             `<span class="${premioValue >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(premioAbs)}</span>`,
             `<span class="${parseFloatSafe(op.resultado) >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(parseFloatSafe(op.resultado))}</span>`,
             popCell,
-            formatDateCell(op.vencimento),  // Vencimento com timestamp para ordenação correta
-            `${diasInfo.uteis} / ${diasInfo.corridos}`,
-            gerarBadgeExercicio(exercicio, op.status),
+            formatDateCell(op.vencimento),
+            duracaoDias !== null ? `${duracaoDias} dias` : '-',
+            exercicioCell,
             `<span class="badge ${op.status === 'ABERTA' ? 'bg-green text-green-fg' : 'bg-default text-default-fg'}">${op.status}</span>`,
             actionsHtml
         ]).node();
@@ -709,15 +729,20 @@ async function populateTable(dt, data, showActions = true, updatePrices = false,
                     popCellUpdated = `${popValue.toFixed(1)}%`;
                 }
             }
-            dt.cell(rowNode, 1).data(priceCellUpdated);
+            const exercicioUpdated = gerarBadgeExercicio(
+                calcularExercicio(op.tipo, precoAtualValue, parseFloatSafe(op.strike)),
+                op.status
+            );
+            dt.cell(rowNode, 3).data(priceCellUpdated);
             dt.cell(rowNode, 9).data(popCellUpdated);
+            dt.cell(rowNode, 12).data(exercicioUpdated);
         });
         dt.draw(false);
         return;
     }
     
     sorted.forEach(op => {
-        const diasInfo = calcularDias(op.vencimento);
+        const duracaoDias = calcularDuracaoDias(op.data_operacao, op.vencimento);
         const qtd = parseFloat(op.quantidade);
         const qtdAbs = Math.abs(qtd);
         
@@ -761,17 +786,17 @@ async function populateTable(dt, data, showActions = true, updatePrices = false,
         
         dt.row.add([
             op.ativo_base ? `<span class="badge bg-azure text-azure-fg">${op.ativo_base}</span>` : '-',
-            precoAtual && !isNaN(parseFloatSafe(precoAtual)) ? `<span class="${parseFloatSafe(precoAtual) >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(parseFloatSafe(precoAtual))}</span>` : '-',
-            `<span class="${parseFloatSafe(op.preco_entrada) >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(parseFloatSafe(op.preco_entrada))}</span>`,
             op.ativo,
             `<span class="badge ${op.tipo === 'CALL' ? 'bg-green text-green-fg' : 'bg-red text-red-fg'}">${op.tipo}</span>`,
+            precoAtual && !isNaN(parseFloatSafe(precoAtual)) ? `<span class="${parseFloatSafe(precoAtual) >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(parseFloatSafe(precoAtual))}</span>` : '-',
+            `<span class="${parseFloatSafe(op.preco_entrada) >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(parseFloatSafe(op.preco_entrada))}</span>`,
             op.quantidade,
             formatCurrency(parseFloatSafe(op.strike)),
             `<span class="${premioValue >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(premioAbs)}</span>`,
             `<span class="${parseFloatSafe(op.resultado) >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(parseFloatSafe(op.resultado))}</span>`,
             popCell,
             formatDateCell(op.vencimento),
-            `${diasInfo.uteis} / ${diasInfo.corridos}`,
+            duracaoDias !== null ? `${duracaoDias} dias` : '-',
             gerarBadgeExercicio(exercicio, op.status),
             `<span class="badge ${op.status === 'ABERTA' ? 'bg-green text-green-fg' : 'bg-default text-default-fg'}">${op.status}</span>`,
             actionsHtml
@@ -808,6 +833,18 @@ function calcularDias(vencimento) {
     }
     
     return { uteis: businessDays, corridos: diffDays };
+}
+
+function calcularDuracaoDias(dataOperacao, vencimento) {
+    if (!dataOperacao || !vencimento) return null;
+    const inicio = parseDateInput(dataOperacao);
+    const fim = parseDateInput(vencimento);
+    if (!inicio || !fim || Number.isNaN(inicio.getTime()) || Number.isNaN(fim.getTime())) return null;
+    inicio.setHours(0, 0, 0, 0);
+    fim.setHours(0, 0, 0, 0);
+    const diff = Math.round((fim - inicio) / (1000 * 60 * 60 * 24));
+    if (!Number.isFinite(diff) || diff < 0) return null;
+    return diff;
 }
 
 function normalizeSigma(value) {
@@ -2766,57 +2803,64 @@ function renderSaldoHeatmap(ops, startDate, endDate) {
     }
 }
 
-function renderSaldoHourlyHeatmap(ops) {
-    const container = document.getElementById('saldoHourlyHeatmap');
+function renderSaldoWeekdayPerformance(ops) {
+    const container = document.getElementById('saldoWeekdayList');
     if (!container) return;
 
-    const hours = [10, 11, 12, 14, 15];
-    const weekdays = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta'];
-    const results = {};
-    weekdays.forEach(day => {
-        results[day] = {};
-        hours.forEach(hour => {
-            results[day][hour] = 0;
-        });
+    const dailyMap = computeDailyResults(ops);
+    const labels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    const totals = new Array(7).fill(0);
+
+    dailyMap.forEach((value, key) => {
+        const date = new Date(`${key}T00:00:00`);
+        if (Number.isNaN(date.getTime())) return;
+        totals[date.getDay()] += value;
     });
 
-    ops.forEach(op => {
-        const date = getSaldoOpDate(op);
-        if (!date) return;
-        const dayIndex = date.getDay();
-        const hour = date.getHours();
-        const weekdayIndex = dayIndex === 0 ? -1 : dayIndex - 1;
-        if (weekdayIndex < 0 || weekdayIndex > 4 || !hours.includes(hour)) return;
-        const label = weekdays[weekdayIndex];
-        results[label][hour] += parseFloat(op.resultado) || 0;
+    const maxAbs = Math.max(...totals.map(v => Math.abs(v)), 1);
+    container.innerHTML = '';
+
+    let bestIndex = -1;
+    let bestValue = -Infinity;
+    totals.forEach((value, idx) => {
+        if (value > bestValue) {
+            bestValue = value;
+            bestIndex = idx;
+        }
     });
 
-    let maxPos = 0;
-    let maxNeg = 0;
-    weekdays.forEach(day => {
-        hours.forEach(hour => {
-            const value = results[day][hour];
-            if (value > maxPos) maxPos = value;
-            if (value < 0) maxNeg = Math.min(maxNeg, value);
-        });
+    totals.forEach((value, idx) => {
+        const item = document.createElement('div');
+        item.className = 'saldo-weekday-item';
+
+        const label = document.createElement('div');
+        label.className = 'saldo-weekday-label';
+        label.textContent = labels[idx];
+
+        const bar = document.createElement('div');
+        bar.className = 'saldo-weekday-bar';
+        const barFill = document.createElement('span');
+        const width = Math.min(100, Math.abs(value) / maxAbs * 100);
+        barFill.style.width = `${width}%`;
+        barFill.style.background = value >= 0 ? '#2fb344' : '#d63939';
+        bar.appendChild(barFill);
+
+        const val = document.createElement('div');
+        val.className = 'saldo-weekday-value';
+        val.textContent = formatCurrency(value);
+        if (value < 0) val.classList.add('text-danger');
+        if (value > 0) val.classList.add('text-success');
+
+        item.appendChild(label);
+        item.appendChild(bar);
+        item.appendChild(val);
+        container.appendChild(item);
     });
-    maxNeg = Math.abs(maxNeg);
 
-    const headerCells = ['<div></div>', ...hours.map(hour => `<div>${hour}h</div>`)];
-    const html = [`<div class="saldo-hourly-header">${headerCells.join('')}</div>`];
-
-    weekdays.forEach(day => {
-        const cells = [`<div class="saldo-hourly-label">${day}</div>`];
-        hours.forEach(hour => {
-            const value = results[day][hour];
-            const cssClass = getHeatmapClass(value, maxPos, maxNeg);
-            const title = `${day} ${hour}h - ${formatCurrency(value)}`;
-            cells.push(`<div class="saldo-hourly-cell ${cssClass}" title="${title}"></div>`);
-        });
-        html.push(`<div class="saldo-hourly-row">${cells.join('')}</div>`);
-    });
-
-    container.innerHTML = html.join('');
+    const bestDayEl = document.getElementById('saldoBestDay');
+    if (bestDayEl) {
+        bestDayEl.textContent = bestIndex >= 0 && bestValue > -Infinity ? labels[bestIndex] : '-';
+    }
 }
 
 function renderSaldoComparisonChart(currentStats, previousStats) {
@@ -3012,6 +3056,22 @@ function renderSaldoMetrics(currentStats, previousStats) {
     }
 }
 
+function setupSaldoTotalOpsLink() {
+    const card = document.getElementById('saldoMetricOpsCard');
+    if (!card) return;
+    card.classList.add('saldo-metric-click');
+    card.addEventListener('click', () => {
+        if (typeof window.openTotalOperacoesModal === 'function') {
+            window.openTotalOperacoesModal();
+        } else {
+            const modalEl = document.getElementById('modalTotalOperacoes');
+            if (modalEl && typeof bootstrap !== 'undefined') {
+                bootstrap.Modal.getOrCreateInstance(modalEl).show();
+            }
+        }
+    });
+}
+
 function renderSaldoDashboard(ops, startDate, endDate, allOps, tipoFiltro) {
     const totalOps = ops.length;
     const totalResultado = ops.reduce((acc, op) => acc + (parseFloat(op.resultado) || 0), 0);
@@ -3037,7 +3097,7 @@ function renderSaldoDashboard(ops, startDate, endDate, allOps, tipoFiltro) {
     renderSaldoMetrics(currentStats, previousStats);
     renderSaldoHeatmap(ops, startDate, endDate);
     renderSaldoComparisonChart(currentStats, previousStats);
-    renderSaldoHourlyHeatmap(ops);
+    renderSaldoWeekdayPerformance(ops);
     renderSaldoTopAssets(ops);
     renderSaldoConsistency(computeDailyResults(ops));
     renderSaldoProbabilities(ops, currentStats);
@@ -3181,6 +3241,14 @@ function renderSaldoResumo(ops) {
         </div>
     `;
 }
+
+document.addEventListener('layoutReady', () => {
+    setupSaldoTotalOpsLink();
+});
+
+window.addEventListener('load', () => {
+    setupSaldoTotalOpsLink();
+});
 
 function renderSaldoCharts(ops) {
     if (typeof Chart === 'undefined') return;
@@ -7624,3 +7692,5 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// fim opcoes.js

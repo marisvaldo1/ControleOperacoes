@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ideia 6 – Fusão 4 + 5: Gauges + Glass</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family:'Inter',sans-serif;
+            background:#070b14;
+            color:#e2e8f0;
+            font-size:14px;
+            min-height:100vh;
+        }
+
+        /* ===== ANIMATED BG ===== */
+        .bg-orbs { position:fixed; inset:0; pointer-events:none; overflow:hidden; z-index:0; }
+        .orb {
+            position:absolute; border-radius:50%;
+            filter:blur(110px); opacity:.1; animation:drift 18s infinite ease-in-out;
+        }
+        .orb1 { width:700px; height:700px; background:#206bc4; top:-250px; left:-150px; animation-delay:0s; }
+        .orb2 { width:600px; height:600px; background:#2fb344; bottom:-200px; right:-120px; animation-delay:-6s; }
+        .orb3 { width:450px; height:450px; background:#6366f1; top:45%; left:50%; animation-delay:-12s; }
+        @keyframes drift {
+            0%,100%{ transform:rotate(0deg) scale(1); }
+            33%    { transform:rotate(120deg) scale(1.08); }
+            66%    { transform:rotate(240deg) scale(.95); }
+        }
+
+        /* ===== PAGE (DEMO TRIGGER) ===== */
+        .page { display:flex; align-items:center; justify-content:center; min-height:100vh; position:relative; z-index:1; }
+        .trigger-card {
+            background:rgba(255,255,255,.04); backdrop-filter:blur(20px);
+            border:1px solid rgba(255,255,255,.1); border-radius:20px;
+            padding:1.5rem 2.5rem; cursor:pointer; text-align:center;
+            transition:all .3s ease;
+            box-shadow:0 8px 32px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.07);
+        }
+        .trigger-card:hover {
+            border-color:rgba(32,107,196,.5);
+            box-shadow:0 20px 60px rgba(32,107,196,.2), inset 0 1px 0 rgba(255,255,255,.1);
+            transform:translateY(-3px);
+        }
+
+        /* ===== OVERLAY ===== */
+        .overlay {
+            display:none; position:fixed; inset:0;
+            background:rgba(0,0,0,.65);
+            backdrop-filter:blur(18px);
+            z-index:9000;
+            align-items:flex-start; justify-content:center;
+            padding:1.5rem 1rem; overflow-y:auto;
+        }
+        .overlay.show { display:flex; }
+
+        /* ===== MODAL ===== */
+        .modal {
+            width:100%; max-width:1280px;
+            background:rgba(8,14,28,.88);
+            backdrop-filter:blur(40px);
+            border:1px solid rgba(255,255,255,.08);
+            border-radius:24px;
+            box-shadow:0 60px 120px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.06);
+            animation:glassIn .4s cubic-bezier(.22,1,.36,1);
+            overflow:hidden;
+        }
+        @keyframes glassIn {
+            from{ opacity:0; transform:translateY(28px) scale(.97); }
+            to  { opacity:1; transform:translateY(0)    scale(1); }
+        }
+
+        /* ===== GRADIENT STRIP ===== */
+        .gradient-strip {
+            height:3px;
+            background:linear-gradient(90deg,#206bc4,#2fb344,#6366f1,#206bc4);
+            background-size:200%;
+            animation:shimmer 5s linear infinite;
+        }
+        @keyframes shimmer { from{background-position:200%} to{background-position:-200%} }
+
+        /* ===== HEADER ===== */
+        .mheader { padding:1.75rem 2rem 1.25rem; }
+        .mheader-row { display:flex; align-items:flex-start; justify-content:space-between; }
+        .mheader-eyebrow {
+            font-size:.7rem; font-weight:600; letter-spacing:1.5px;
+            text-transform:uppercase; color:rgba(32,107,196,.85); margin-bottom:.4rem;
+        }
+        .mheader-amount { font-size:3rem; font-weight:900; letter-spacing:-2px; line-height:1; }
+        .amt-pos { background:linear-gradient(135deg,#2fb344,#4ade80); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+        .amt-neg { background:linear-gradient(135deg,#ef4444,#f87171); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+        .mheader-pct { font-size:1rem; font-weight:600; color:#64748b; margin-left:.75rem; }
+        .mheader-sub { font-size:.82rem; color:rgba(255,255,255,.3); margin-top:.35rem; }
+        .btn-close {
+            background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1);
+            color:rgba(255,255,255,.4); width:38px; height:38px; border-radius:10px;
+            cursor:pointer; display:flex; align-items:center; justify-content:center;
+            transition:all .2s; flex-shrink:0; margin-top:2px;
+        }
+        .btn-close:hover { background:rgba(239,68,68,.15); border-color:#ef4444; color:#ef4444; }
+
+        /* ===== PILLS ===== */
+        .pills-row { display:flex; gap:.5rem; margin-top:1rem; flex-wrap:wrap; }
+        .pill {
+            padding:4px 12px; border-radius:20px; font-size:.73rem; font-weight:600;
+            background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08);
+            display:inline-flex; align-items:center; gap:5px;
+        }
+        .pill.green  { background:rgba(47,179,68,.1);  border-color:rgba(47,179,68,.25);   color:#4ade80; }
+        .pill.blue   { background:rgba(32,107,196,.1); border-color:rgba(32,107,196,.3);   color:#60a5fa; }
+        .pill.purple { background:rgba(99,102,241,.1); border-color:rgba(99,102,241,.25);  color:#a5b4fc; }
+        .pill.amber  { background:rgba(245,158,11,.1); border-color:rgba(245,158,11,.25);  color:#fbbf24; }
+
+        /* ===== DIVIDER ===== */
+        .hdiv { height:1px; background:rgba(255,255,255,.05); margin:0 2rem; }
+
+        /* ===== CONTENT ===== */
+        .mcontent { padding:1.5rem 2rem 2rem; }
+
+        /* ===== GAUGE ROW ===== */
+        .gauge-row {
+            display:grid; grid-template-columns:repeat(4,1fr);
+            gap:1rem; margin-bottom:1.5rem;
+        }
+        @media(max-width:860px){ .gauge-row { grid-template-columns:repeat(2,1fr); } }
+
+        .gauge-cell {
+            background:rgba(255,255,255,.03); backdrop-filter:blur(10px);
+            border:1px solid rgba(255,255,255,.07); border-radius:16px;
+            padding:1.25rem; text-align:center;
+            transition:border-color .2s;
+            position:relative; overflow:hidden;
+        }
+        .gauge-cell::before {
+            content:''; position:absolute; top:0; left:0; right:0; height:2px;
+            background:linear-gradient(90deg, transparent, var(--accent-color), transparent);
+            opacity:.7;
+        }
+        .gauge-cell:hover { border-color:rgba(255,255,255,.12); }
+        .gauge-cell.gc-blue   { --accent-color: #206bc4; }
+        .gauge-cell.gc-green  { --accent-color: #2fb344; }
+        .gauge-cell.gc-amber  { --accent-color: #f59e0b; }
+        .gauge-cell.gc-purple { --accent-color: #6366f1; }
+
+        .gauge-lbl {
+            font-size:.65rem; font-weight:600; letter-spacing:.75px;
+            text-transform:uppercase; color:rgba(255,255,255,.3);
+            margin-bottom:.625rem;
+        }
+        .gauge-sub {
+            font-size:.68rem; color:rgba(255,255,255,.2);
+            margin-top:.25rem; letter-spacing:.25px;
+        }
+
+        /* ===== DATA GRID (table + status) ===== */
+        .data-grid {
+            display:grid; grid-template-columns:1.5fr 1fr;
+            gap:1rem; margin-bottom:1.5rem;
+        }
+        @media(max-width:860px){ .data-grid { grid-template-columns:1fr; } }
+
+        /* ===== GLASS BOX ===== */
+        .gbox {
+            background:rgba(255,255,255,.03); backdrop-filter:blur(10px);
+            border:1px solid rgba(255,255,255,.07); border-radius:16px;
+            overflow:hidden; transition:border-color .2s;
+        }
+        .gbox:hover { border-color:rgba(255,255,255,.11); }
+        .gbox-hdr {
+            padding:.875rem 1.25rem; border-bottom:1px solid rgba(255,255,255,.05);
+            font-size:.68rem; font-weight:600; text-transform:uppercase;
+            letter-spacing:.5px; color:rgba(255,255,255,.25);
+            display:flex; align-items:center; gap:.5rem;
+        }
+        .gbox-body { padding:1.25rem; }
+
+        /* ===== OPS TABLE ===== */
+        .ops-tbl { width:100%; border-collapse:collapse; }
+        .ops-tbl th {
+            font-size:.62rem; font-weight:600; letter-spacing:.75px;
+            text-transform:uppercase; color:rgba(255,255,255,.2);
+            padding:.5rem .875rem; border-bottom:1px solid rgba(255,255,255,.05);
+            text-align:left; white-space:nowrap;
+        }
+        .ops-tbl td {
+            font-size:.8rem; padding:.6rem .875rem;
+            border-bottom:1px solid rgba(255,255,255,.03);
+            vertical-align:middle; white-space:nowrap;
+        }
+        .ops-tbl tr:last-child td { border-bottom:none; }
+        .ops-tbl tr:hover td { background:rgba(255,255,255,.025); }
+
+        .tag-call { color:#60a5fa; font-weight:600; font-size:.73rem; }
+        .tag-put  { color:#a5b4fc; font-weight:600; font-size:.73rem; }
+        .col-pos { color:#4ade80; font-weight:600; }
+        .col-neg { color:#f87171; font-weight:600; }
+        .col-open { color:#fbbf24; font-weight:600; }
+        .col-dim  { color:rgba(255,255,255,.3); }
+
+        .st-badge {
+            display:inline-block; padding:2px 8px; border-radius:6px;
+            font-size:.62rem; font-weight:700; letter-spacing:.3px;
+        }
+        .st-done { background:rgba(47,179,68,.12); color:#4ade80; border:1px solid rgba(47,179,68,.25); }
+        .st-open { background:rgba(245,158,11,.12); color:#fbbf24; border:1px solid rgba(245,158,11,.25); }
+        .st-loss { background:rgba(239,68,68,.1);  color:#f87171; border:1px solid rgba(239,68,68,.2); }
+
+        /* ===== METRIC LIST (Status Geral) ===== */
+        .metric-list { display:flex; flex-direction:column; gap:.5rem; }
+        .mline {
+            display:flex; justify-content:space-between; align-items:center;
+            padding:.625rem 1rem;
+            background:rgba(255,255,255,.025);
+            border:1px solid rgba(255,255,255,.05);
+            border-radius:10px; transition:background .15s;
+        }
+        .mline:hover { background:rgba(255,255,255,.04); }
+        .mline-key {
+            font-size:.68rem; font-weight:500; text-transform:uppercase;
+            letter-spacing:.5px; color:rgba(255,255,255,.3);
+        }
+        .mline-val { font-size:.95rem; font-weight:700; }
+
+        /* ===== OP CARDS ===== */
+        .filter-bar { display:flex; align-items:center; gap:.875rem; margin-bottom:1rem; }
+        .filter-label { font-size:.68rem; font-weight:600; text-transform:uppercase; letter-spacing:.5px; color:rgba(255,255,255,.2); white-space:nowrap; }
+        .ftabs { display:flex; gap:.375rem; flex-wrap:wrap; }
+        .ftab {
+            padding:4px 13px; border-radius:8px; font-size:.74rem; font-weight:500;
+            border:1px solid rgba(255,255,255,.07); background:transparent;
+            color:rgba(255,255,255,.3); cursor:pointer; transition:all .15s;
+        }
+        .ftab:hover { color:rgba(255,255,255,.65); border-color:rgba(255,255,255,.14); }
+        .ftab.active { background:rgba(32,107,196,.15); border-color:rgba(32,107,196,.4); color:#60a5fa; }
+
+        .op-strip {
+            display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+            gap:.875rem; margin-bottom:1.5rem;
+        }
+        .op-card {
+            background:rgba(255,255,255,.025);
+            border:1px solid rgba(255,255,255,.07);
+            border-radius:14px; padding:1.125rem;
+            transition:all .25s; position:relative; overflow:hidden;
+        }
+        .op-card::before {
+            content:''; position:absolute; top:0; left:0; right:0; height:2px;
+        }
+        .op-card.c-win::before  { background:linear-gradient(90deg,#2fb344,#4ade80); }
+        .op-card.c-loss::before { background:linear-gradient(90deg,#ef4444,#f87171); }
+        .op-card.c-open::before {
+            background:linear-gradient(90deg,#f59e0b,#fbbf24);
+            background-size:200%; animation:shimmer 3s linear infinite;
+        }
+        .op-card:hover {
+            border-color:rgba(255,255,255,.13);
+            transform:translateY(-2px);
+            box-shadow:0 10px 30px rgba(0,0,0,.3);
+        }
+        .op-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:.75rem; }
+        .op-ticker { font-weight:700; font-size:.95rem; color:#f0f6ff; }
+        .op-base   { font-size:.68rem; color:rgba(255,255,255,.3); margin-top:1px; }
+        .op-result { font-size:1.05rem; font-weight:800; }
+        .op-tags { display:flex; gap:.4rem; flex-wrap:wrap; margin-bottom:.625rem; }
+        .op-tag {
+            font-size:.63rem; font-weight:600; padding:2px 8px;
+            border-radius:6px; background:rgba(255,255,255,.05);
+            border:1px solid rgba(255,255,255,.08);
+        }
+        .op-bot { display:flex; align-items:center; gap:.5rem; }
+        .op-pct { font-size:.78rem; color:#4ade80; font-weight:600; }
+        .op-pop-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+        .op-pop-val { font-size:.73rem; font-weight:600; }
+
+        /* ===== BOTTOM CHARTS ===== */
+        .bottom-row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+        @media(max-width:700px){ .bottom-row { grid-template-columns:1fr; } }
+    </style>
+</head>
+<body>
+
+<!-- Ambient background -->
+<div class="bg-orbs">
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="orb orb3"></div>
+</div>
+
+<!-- DEMO TRIGGER -->
+<div class="page">
+    <div style="text-align:center; z-index:1; position:relative;">
+        <p style="color:rgba(255,255,255,.2);font-size:.8rem;margin-bottom:1.25rem;">↓ Clique no card para abrir o modal</p>
+        <div class="trigger-card" onclick="openM()">
+            <div style="font-size:.65rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:rgba(32,107,196,.8);margin-bottom:.5rem;">Saldo Médio</div>
+            <div style="font-size:2.5rem;font-weight:900;letter-spacing:-1px;background:linear-gradient(135deg,#2fb344,#4ade80);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">+3.42%</div>
+            <div style="font-size:.8rem;color:rgba(255,255,255,.3);margin-top:.4rem;">R$ 4.280 em prêmios · 15 operações</div>
+            <div style="font-size:.72rem;color:rgba(32,107,196,.7);margin-top:.875rem;font-weight:600;">Abrir análise completa →</div>
+        </div>
+        <p style="color:rgba(255,255,255,.12);font-size:.7rem;margin-top:1rem;">Ideia 6 — Fusão Gauges + Glass</p>
+    </div>
+</div>
+
+<!-- OVERLAY -->
+<div class="overlay" id="overlay" onclick="closeOvl(event)">
+<div class="modal" id="modal">
+
+    <!-- top color bar -->
+    <div class="gradient-strip"></div>
+
+    <!-- HEADER -->
+    <div class="mheader">
+        <div class="mheader-row">
+            <div>
+                <div class="mheader-eyebrow">
+                    <i class="ti ti-chart-area-line" style="font-size:.85rem;vertical-align:-.1em;margin-right:4px;"></i>
+                    Saldo Médio · Análise de Operações
+                </div>
+                <div style="display:flex;align-items:baseline;gap:.5rem;flex-wrap:wrap;">
+                    <div class="mheader-amount" id="mAmount"></div>
+                    <div class="mheader-pct" id="mPct"></div>
+                </div>
+                <div class="mheader-sub" id="mSub"></div>
+            </div>
+            <button class="btn-close" onclick="closeM()">
+                <i class="ti ti-x" style="font-size:1rem;"></i>
+            </button>
+        </div>
+        <div class="pills-row" id="pillsRow"></div>
+    </div>
+
+    <div class="hdiv"></div>
+
+    <div class="mcontent">
+
+        <!-- ① 4 RADIAL GAUGES -->
+        <div class="gauge-row">
+            <div class="gauge-cell gc-blue">
+                <div class="gauge-lbl">PoP Médio</div>
+                <div id="gPoP"></div>
+                <div class="gauge-sub" id="gPoPsub"></div>
+            </div>
+            <div class="gauge-cell gc-green">
+                <div class="gauge-lbl">Win Rate</div>
+                <div id="gWin"></div>
+                <div class="gauge-sub" id="gWinsub"></div>
+            </div>
+            <div class="gauge-cell gc-amber">
+                <div class="gauge-lbl">Retenção Prêmio</div>
+                <div id="gRet"></div>
+                <div class="gauge-sub" id="gRetsub"></div>
+            </div>
+            <div class="gauge-cell gc-purple">
+                <div class="gauge-lbl">Retorno / Saldo</div>
+                <div id="gRet2"></div>
+                <div class="gauge-sub" id="gRet2sub"></div>
+            </div>
+        </div>
+
+        <!-- ② DATA GRID: log table + status -->
+        <div class="data-grid">
+
+            <!-- OPS LOG TABLE -->
+            <div class="gbox">
+                <div class="gbox-hdr">
+                    <i class="ti ti-list" style="color:rgba(32,107,196,.7);"></i>
+                    Operações · Log
+                </div>
+                <div style="overflow:auto;max-height:340px;">
+                    <table class="ops-tbl">
+                        <thead><tr>
+                            <th>Ativo</th>
+                            <th>Tipo</th>
+                            <th>Prêmio</th>
+                            <th>%</th>
+                            <th>PoP</th>
+                            <th>Dias</th>
+                            <th>Resultado</th>
+                            <th>Status</th>
+                        </tr></thead>
+                        <tbody id="opsTbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- STATUS GERAL -->
+            <div class="gbox">
+                <div class="gbox-hdr">
+                    <i class="ti ti-dashboard" style="color:rgba(47,179,68,.7);"></i>
+                    Status Geral
+                </div>
+                <div class="gbox-body">
+                    <div class="metric-list" id="metricList"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ③ OP CARDS (filterable) -->
+        <div class="filter-bar">
+            <span class="filter-label">Operações</span>
+            <div class="ftabs">
+                <button class="ftab active" onclick="filterCard('all',this)">Todas</button>
+                <button class="ftab" onclick="filterCard('ABERTA',this)">Abertas</button>
+                <button class="ftab" onclick="filterCard('FECHADA',this)">Fechadas</button>
+                <button class="ftab" onclick="filterCard('CALL',this)">CALL</button>
+                <button class="ftab" onclick="filterCard('PUT',this)">PUT</button>
+            </div>
+        </div>
+        <div class="op-strip" id="opStrip"></div>
+
+        <!-- ④ BOTTOM: donut + horizontal bar -->
+        <div class="bottom-row">
+            <div class="gbox">
+                <div class="gbox-hdr">
+                    <i class="ti ti-chart-donut" style="color:rgba(99,102,241,.7);"></i>
+                    Resultado por Tipo
+                </div>
+                <div class="gbox-body" style="padding:.75rem;">
+                    <div id="chartDonut"></div>
+                </div>
+            </div>
+            <div class="gbox">
+                <div class="gbox-hdr">
+                    <i class="ti ti-chart-bar" style="color:rgba(245,158,11,.7);"></i>
+                    Prêmio por Ativo Base
+                </div>
+                <div class="gbox-body" style="padding:.75rem;">
+                    <div id="chartBar"></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+</div>
+
+<script>
+/* ===================================================
+   MOCK DATA — substitua por: fetch('/api/opcoes')
+   =================================================== */
+const OPS = [
+    {id:1, ativo_base:'PETR4',ativo:'PETRN369W1',tipo:'CALL',premio:365, resultado:353, saldo_abertura:125000, status:'FECHADA',data_operacao:'2025-12-10',dias:38,strike:36.90},
+    {id:2, ativo_base:'PETR4',ativo:'PETRN380W1',tipo:'PUT', premio:280, resultado:275, saldo_abertura:125353, status:'FECHADA',data_operacao:'2025-12-12',dias:36,strike:38.00},
+    {id:3, ativo_base:'VALE3',ativo:'VALEB550W1',tipo:'PUT', premio:210, resultado:180, saldo_abertura:125628, status:'FECHADA',data_operacao:'2026-01-05',dias:47,strike:55.00},
+    {id:4, ativo_base:'ITUB4',ativo:'ITUBL330W1',tipo:'CALL',premio:220, resultado:218, saldo_abertura:125808, status:'FECHADA',data_operacao:'2026-01-07',dias:10,strike:33.00},
+    {id:5, ativo_base:'PETR4',ativo:'PETRF370W1',tipo:'CALL',premio:290, resultado:280, saldo_abertura:126026, status:'FECHADA',data_operacao:'2026-01-10',dias:42,strike:37.00},
+    {id:6, ativo_base:'BBDC4',ativo:'BBDCB180W1',tipo:'PUT', premio:180, resultado:-170,saldo_abertura:126306, status:'FECHADA',data_operacao:'2026-01-12',dias:40,strike:18.00},
+    {id:7, ativo_base:'VALE3',ativo:'VALEF500W1',tipo:'PUT', premio:280, resultado:268, saldo_abertura:126136, status:'FECHADA',data_operacao:'2026-01-15',dias:37,strike:50.00},
+    {id:8, ativo_base:'PETR4',ativo:'PETRN380W2',tipo:'CALL',premio:320, resultado:312, saldo_abertura:126404, status:'FECHADA',data_operacao:'2026-01-20',dias:32,strike:38.00},
+    {id:9, ativo_base:'ITUB4',ativo:'ITUBN320W1',tipo:'CALL',premio:190, resultado:189, saldo_abertura:126716, status:'FECHADA',data_operacao:'2026-01-22',dias:30,strike:32.00},
+    {id:10,ativo_base:'BBAS3',ativo:'BBASF280W1',tipo:'PUT', premio:260, resultado:-240,saldo_abertura:126905, status:'FECHADA',data_operacao:'2026-01-25',dias:27,strike:28.00},
+    {id:11,ativo_base:'PETR4',ativo:'PETRN390G1',tipo:'CALL',premio:250, resultado:245, saldo_abertura:126665, status:'FECHADA',data_operacao:'2026-02-01',dias:47,strike:39.00},
+    {id:12,ativo_base:'VALE3',ativo:'VALEF520W1',tipo:'PUT', premio:240, resultado:228, saldo_abertura:126910, status:'FECHADA',data_operacao:'2026-02-03',dias:45,strike:52.00},
+    {id:13,ativo_base:'ITUB4',ativo:'ITUBG340W1',tipo:'CALL',premio:170, resultado:164, saldo_abertura:127138, status:'ABERTA', data_operacao:'2026-02-05',dias:43,strike:34.00},
+    {id:14,ativo_base:'PETR4',ativo:'PETRG400W1',tipo:'CALL',premio:210, resultado:90,  saldo_abertura:127302, status:'ABERTA', data_operacao:'2026-02-10',dias:38,strike:40.00},
+    {id:15,ativo_base:'BBDC4',ativo:'BBDCG200W1',tipo:'PUT', premio:195, resultado:183, saldo_abertura:127392, status:'FECHADA',data_operacao:'2026-02-12',dias:36,strike:20.00},
+];
+/* PoP não está no banco — buscar de /api/proxy/options/:ativo_base */
+const POP_MAP = {1:82,2:78,3:74,4:88,5:79,6:58,7:76,8:81,9:86,10:55,11:83,12:77,13:85,14:72,15:80};
+
+/* ===== HELPERS ===== */
+const fmt  = v => new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v);
+const fmtK = v => 'R$'+(v/1000).toFixed(1)+'k';
+
+/* ===== CHART HANDLES ===== */
+let cPoP, cWin, cRet, cRet2, cDonut, cBar;
+
+/* ===== MODAL CONTROL ===== */
+function openM()  { document.getElementById('overlay').classList.add('show'); render(); }
+function closeM() { document.getElementById('overlay').classList.remove('show'); }
+function closeOvl(e){ if(e.target===document.getElementById('overlay')) closeM(); }
+
+/* ===== GAUGE FACTORY ===== */
+function makeGauge(elId, value, color, labelText) {
+    return {
+        series: [+value.toFixed(1)],
+        chart: {
+            type:'radialBar', height:160,
+            background:'transparent', toolbar:{show:false},
+        },
+        plotOptions: {
+            radialBar: {
+                startAngle:-130, endAngle:130,
+                hollow: { size:'55%', background:'transparent' },
+                track: { background:'rgba(255,255,255,.05)', strokeWidth:'100%' },
+                dataLabels: {
+                    name: {
+                        show:true, fontSize:'9px', fontFamily:'Inter',
+                        color:'rgba(255,255,255,.3)', offsetY:18,
+                    },
+                    value: {
+                        show:true, fontSize:'1.4rem', fontFamily:'Inter',
+                        fontWeight:800, color, offsetY:-8,
+                        formatter: v => v + '%',
+                    },
+                },
+            },
+        },
+        labels: [labelText],
+        colors: [color],
+        fill: {
+            type:'gradient',
+            gradient:{
+                shade:'dark', type:'circular',
+                shadeIntensity:.35,
+                gradientToColors:[color+'60'],
+                stops:[0,100],
+            },
+        },
+    };
+}
+
+/* ===== MAIN RENDER ===== */
+function render() {
+    const sorted = [...OPS].sort((a,b)=>new Date(a.data_operacao)-new Date(b.data_operacao));
+    const tPremio  = OPS.reduce((a,o)=>a+(o.premio   ||0),0);
+    const tResult  = OPS.reduce((a,o)=>a+(o.resultado||0),0);
+    const fechadas = OPS.filter(o=>o.status==='FECHADA');
+    const venc     = fechadas.filter(o=>(o.resultado||0)>0);
+    const abertas  = OPS.filter(o=>o.status==='ABERTA');
+    const saldoIni = OPS[0].saldo_abertura;
+    const saldoAtual = saldoIni + tResult;
+    const winRate  = fechadas.length ? venc.length / fechadas.length * 100 : 0;
+    const popMedio = OPS.reduce((a,o)=>a+(POP_MAP[o.id]||70),0) / OPS.length;
+    const retencao = tPremio > 0 ? tResult / tPremio * 100 : 0;
+    const retorno  = tPremio / saldoIni * 100;
+    const durMedia = OPS.reduce((a,o)=>a+(o.dias||30),0) / OPS.length;
+    const pctR     = tResult / saldoIni * 100;
+
+    /* --- Header --- */
+    const sign = tResult>=0 ? '+' : '';
+    document.getElementById('mAmount').innerHTML =
+        `<span class="${tResult>=0?'amt-pos':'amt-neg'}">${sign}${fmt(tResult)}</span>`;
+    document.getElementById('mPct').textContent = sign + pctR.toFixed(2)+'%';
+    document.getElementById('mSub').textContent = `sobre saldo inicial de ${fmt(saldoIni)}`;
+
+    /* --- Pills --- */
+    const pills = [
+        {cls:'green',  icon:'ti-trophy',    txt: venc.length+' vencedoras'},
+        {cls:'blue',   icon:'ti-target',    txt: 'PoP '+popMedio.toFixed(0)+'%'},
+        {cls:'purple', icon:'ti-clock',     txt: durMedia.toFixed(0)+'d médio'},
+        {cls:'amber',  icon:'ti-lock-open', txt: abertas.length+' aberta'+(abertas.length!==1?'s':'')},
+    ];
+    document.getElementById('pillsRow').innerHTML =
+        pills.map(p=>`<div class="pill ${p.cls}"><i class="ti ${p.icon}" style="font-size:.8rem;"></i>${p.txt}</div>`).join('');
+
+    /* --- Gauges --- */
+    [cPoP,cWin,cRet,cRet2].forEach(c=>{ if(c) c.destroy(); });
+
+    cPoP  = new ApexCharts(document.getElementById('gPoP'),  makeGauge('gPoP',  popMedio,           '#60a5fa', 'PoPs'));
+    cWin  = new ApexCharts(document.getElementById('gWin'),  makeGauge('gWin',  winRate,             '#4ade80', 'Vitórias'));
+    cRet  = new ApexCharts(document.getElementById('gRet'),  makeGauge('gRet',  Math.min(retencao,100), '#fbbf24', 'Ret.'));
+    cRet2 = new ApexCharts(document.getElementById('gRet2'), makeGauge('gRet2', Math.min(retorno/20*100,100), '#a5b4fc', 'Retorno'));
+
+    cPoP.render();  document.getElementById('gPoPsub').textContent  = `Méd. pond. ${popMedio.toFixed(1)}%`;
+    cWin.render();  document.getElementById('gWinsub').textContent  = `${venc.length} de ${fechadas.length} ops`;
+    cRet.render();  document.getElementById('gRetsub').textContent  = `${retencao.toFixed(0)}% do prêmio retido`;
+    cRet2.render(); document.getElementById('gRet2sub').textContent = `${retorno.toFixed(2)}% / saldo`;
+
+    /* --- OPS TABLE --- */
+    const tbody = document.getElementById('opsTbody');
+    tbody.innerHTML = '';
+    sorted.forEach(op => {
+        const pop = POP_MAP[op.id] || 70;
+        const res = op.resultado || 0;
+        const pct = (op.premio / (op.saldo_abertura||125000) * 100).toFixed(2);
+        const popColor = pop>=75 ? '#4ade80' : pop>=60 ? '#fbbf24' : '#f87171';
+        const stCls = op.status==='ABERTA' ? 'st-open' : res>=0 ? 'st-done' : 'st-loss';
+        const stTxt = op.status==='ABERTA' ? 'Aberta' : 'Fechada';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td style="font-weight:600;color:#e2e8f0;font-size:.8rem;">${op.ativo}</td>
+            <td><span class="${op.tipo==='CALL'?'tag-call':'tag-put'}">${op.tipo}</span></td>
+            <td class="col-pos">${fmt(op.premio)}</td>
+            <td class="col-dim">${pct}%</td>
+            <td style="font-weight:600;color:${popColor};">${pop}%</td>
+            <td class="col-dim">${op.dias}d</td>
+            <td class="${res>=0?'col-pos':'col-neg'}">${res>=0?'+':''}${fmt(res)}</td>
+            <td><span class="st-badge ${stCls}">${stTxt}</span></td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    /* --- METRICS --- */
+    const metrics = [
+        { k:'Total Ops',     v: OPS.length,             c:'#e2e8f0' },
+        { k:'Saldo Inicial', v: fmtK(saldoIni),         c:'#e2e8f0' },
+        { k:'Saldo Atual',   v: fmtK(saldoAtual),       c: saldoAtual>saldoIni?'#4ade80':'#f87171' },
+        { k:'Prêmio Total',  v: fmt(tPremio),            c:'#4ade80' },
+        { k:'Resultado Líq.',v: (tResult>=0?'+':'')+fmt(tResult), c: tResult>=0?'#4ade80':'#f87171' },
+        { k:'Dur. Média',    v: durMedia.toFixed(0)+'d', c:'#fbbf24' },
+        { k:'Abertas',       v: abertas.length,          c:'#fbbf24' },
+    ];
+    document.getElementById('metricList').innerHTML =
+        metrics.map(m=>`<div class="mline"><span class="mline-key">${m.k}</span><span class="mline-val" style="color:${m.c}">${m.v}</span></div>`).join('');
+
+    /* --- OP CARDS --- */
+    renderCards(OPS, 'all');
+
+    /* --- DONUT --- */
+    const callR = OPS.filter(o=>o.tipo==='CALL').reduce((a,o)=>a+(o.resultado||0),0);
+    const putR  = OPS.filter(o=>o.tipo==='PUT' ).reduce((a,o)=>a+(o.resultado||0),0);
+    if(cDonut) cDonut.destroy();
+    cDonut = new ApexCharts(document.getElementById('chartDonut'), {
+        series: [Math.max(callR,0), Math.max(putR,0)],
+        labels: ['CALL','PUT'],
+        chart: { type:'donut', height:230, background:'transparent' },
+        colors: ['#6366f1','#0ea5e9'],
+        fill: { type:'gradient', gradient:{ shade:'dark', type:'diagonal1' } },
+        legend: { labels:{colors:'rgba(255,255,255,.4)'}, position:'bottom', fontSize:'12px' },
+        plotOptions: {
+            pie: { donut: { size:'60%', labels:{
+                show:true,
+                total:{ show:true, label:'Total', color:'rgba(255,255,255,.3)',
+                        formatter:()=>fmt(callR+putR) }
+            }}}
+        },
+        tooltip: { theme:'dark', y:{ formatter:v=>fmt(v) } },
+    });
+    cDonut.render();
+
+    /* --- BAR --- */
+    const mp = {};
+    OPS.forEach(o => { mp[o.ativo_base] = (mp[o.ativo_base]||0) + (o.resultado||0); });
+    if(cBar) cBar.destroy();
+    cBar = new ApexCharts(document.getElementById('chartBar'), {
+        series: [{ name:'Resultado', data: Object.values(mp) }],
+        chart: { type:'bar', height:230, background:'transparent', toolbar:{show:false} },
+        plotOptions: { bar:{ horizontal:true, borderRadius:6, distributed:true } },
+        colors: Object.values(mp).map(v => v>=0 ? '#2fb344' : '#ef4444'),
+        xaxis: {
+            categories: Object.keys(mp),
+            labels: { style:{ colors: Array(Object.keys(mp).length).fill('rgba(255,255,255,.25)'), fontSize:'11px' } },
+        },
+        yaxis: { labels:{ style:{ colors:['rgba(255,255,255,.3)'] } } },
+        grid: { borderColor:'rgba(255,255,255,.04)' },
+        legend: { show:false },
+        tooltip: { theme:'dark', y:{ formatter:v=>fmt(v) } },
+        dataLabels: { enabled:true, style:{ fontSize:'10px', colors:['rgba(255,255,255,.6)'] }, formatter: v=>fmt(v) },
+    });
+    cBar.render();
+}
+
+/* ===== CARD FILTER ===== */
+function filterCard(f, btn) {
+    document.querySelectorAll('.ftab').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    renderCards(OPS, f);
+}
+
+function renderCards(ops, f) {
+    let filtered = ops;
+    if(f==='ABERTA'||f==='FECHADA') filtered = ops.filter(o=>o.status===f);
+    if(f==='CALL'  ||f==='PUT'    ) filtered = ops.filter(o=>o.tipo===f);
+
+    const strip = document.getElementById('opStrip');
+    strip.innerHTML = '';
+
+    filtered.forEach(op => {
+        const pop     = POP_MAP[op.id] || 70;
+        const res     = op.resultado || 0;
+        const pct     = (op.premio / (op.saldo_abertura||125000) * 100).toFixed(2);
+        const cls     = op.status==='ABERTA' ? 'c-open' : res>=0 ? 'c-win' : 'c-loss';
+        const resCol  = res>=0 ? '#4ade80' : '#f87171';
+        const popCol  = pop>=75 ? '#4ade80' : pop>=60 ? '#fbbf24' : '#f87171';
+        const tipoCss = op.tipo==='CALL'
+            ? 'color:#a5b4fc;border-color:rgba(165,180,252,.3);'
+            : 'color:#60a5fa;border-color:rgba(96,165,250,.3);';
+        const stCss = op.status==='ABERTA'
+            ? 'color:#fbbf24;border-color:rgba(245,158,11,.3);'
+            : 'color:#4ade80;border-color:rgba(74,222,128,.3);';
+
+        const div = document.createElement('div');
+        div.className = `op-card ${cls}`;
+        div.innerHTML = `
+            <div class="op-top">
+                <div>
+                    <div class="op-ticker">${op.ativo}</div>
+                    <div class="op-base">${op.ativo_base} · Strike R$${op.strike.toFixed(2)}</div>
+                </div>
+                <div class="op-result" style="color:${resCol}">${res>=0?'+':''}${fmt(res)}</div>
+            </div>
+            <div class="op-tags">
+                <span class="op-tag" style="${tipoCss}">${op.tipo}</span>
+                <span class="op-tag">${op.dias}d</span>
+                <span class="op-tag" style="${stCss}">${op.status}</span>
+            </div>
+            <div class="op-bot">
+                <span class="op-pct">${fmt(op.premio)} (${pct}%)</span>
+                <span style="flex:1;"></span>
+                <span class="op-pop-dot" style="background:${popCol};box-shadow:0 0 6px ${popCol}55;"></span>
+                <span class="op-pop-val" style="color:${popCol}">PoP ${pop}%</span>
+            </div>
+        `;
+        strip.appendChild(div);
+    });
+}
+</script>
+</body>
+</html>

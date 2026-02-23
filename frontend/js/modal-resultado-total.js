@@ -39,6 +39,10 @@
         return parseDate(op.created_at) || parseDate(op.data_fechamento) || parseDate(op.vencimento);
     }
 
+    function getOpVencimentoDate(op) {
+        return parseDate(op.vencimento);
+    }
+
     function getOpResultado(op) {
         const status = String(op.status || '').toUpperCase();
         const tipoOperacao = String(op.tipo_operacao || '').toUpperCase();
@@ -236,15 +240,20 @@
         return 'OPÇÃO';
     }
 
-    function formatDuration(ms) {
-        if (!Number.isFinite(ms) || ms <= 0) return '-';
-        const totalMinutes = Math.round(ms / 60000);
-        const days = Math.floor(totalMinutes / 1440);
-        const hours = Math.floor((totalMinutes % 1440) / 60);
-        const minutes = totalMinutes % 60;
-        if (days > 0) return `${days}d ${hours}h`;
-        if (hours > 0) return `${hours}h ${minutes}m`;
-        return `${minutes}m`;
+    function formatDurationDays(days) {
+        if (!Number.isFinite(days)) return '-';
+        return `${days} dias`;
+    }
+
+    function getOpDurationDays(op) {
+        const start = parseDate(op.data_operacao);
+        const end = getOpVencimentoDate(op);
+        if (!start || !end) return null;
+        start.setHours(0, 0, 0, 0);
+        end.setHours(0, 0, 0, 0);
+        const diff = Math.round((end - start) / (1000 * 60 * 60 * 24));
+        if (!Number.isFinite(diff) || diff < 0) return null;
+        return diff;
     }
 
     function formatDateTime(value) {
@@ -625,14 +634,12 @@
         let durationSum = 0;
         let durationCount = 0;
         ops.forEach(op => {
-            const start = getOpDate(op);
-            const end = getOpCloseDate(op);
-            if (start && end && end >= start) {
-                durationSum += end.getTime() - start.getTime();
-                durationCount += 1;
-            }
+            const days = getOpDurationDays(op);
+            if (days === null) return;
+            durationSum += days;
+            durationCount += 1;
         });
-        const avgDuration = durationCount > 0 ? formatDuration(durationSum / durationCount) : '-';
+        const avgDuration = durationCount > 0 ? formatDurationDays(Math.round(durationSum / durationCount)) : '-';
 
         return {
             saldoCorretora,
@@ -910,14 +917,10 @@
             const entry = getEntryPrice(op);
             const exit = getExitPrice(op);
             const type = getOpType(op);
-            const isSell = String(op.tipo_operacao || '').toUpperCase() === 'VENDA' || Number.parseInt(op.quantidade) < 0;
-            const points = entry !== null && exit !== null ? (exit - entry) * (isSell ? -1 : 1) : null;
             const result = getOpResultado(op);
             const duration = (() => {
-                const start = getOpDate(op);
-                const end = getOpCloseDate(op);
-                if (start && end) return formatDuration(end.getTime() - start.getTime());
-                return '-';
+                const days = getOpDurationDays(op);
+                return days !== null ? formatDurationDays(days) : '-';
             })();
 
             return `
@@ -927,14 +930,13 @@
                     <td>${type}</td>
                     <td>${entry !== null ? formatCurrency(entry, 'BRL') : '-'}</td>
                     <td>${exit !== null ? formatCurrency(exit, 'BRL') : '-'}</td>
-                    <td>${points !== null ? points.toFixed(2) : '-'}</td>
                     <td class="${result >= 0 ? 'text-green' : 'text-danger'}">${formatCurrency(result, 'BRL')}</td>
                     <td>${duration}</td>
                 </tr>
             `;
         }).join('');
 
-        body.innerHTML = rows || '<tr><td colspan="8" class="text-muted">Sem operações no período.</td></tr>';
+        body.innerHTML = rows || '<tr><td colspan="7" class="text-muted">Sem operações no período.</td></tr>';
     }
 
     async function fetchIAInsights(summary, metrics, ops) {

@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Controle de Investimentos - Opcoes</title>
-    <link rel="stylesheet" href="../css/style.css?v=1.1.5">
-    <link rel="stylesheet" href="../css/opcoes.css?v=1.1.5">
-    <link rel="stylesheet" href="../css/modal-detalhes.css?v=1.1.5">
-    <link rel="stylesheet" href="../css/detalhe-opcoes.css?v=1.1.5">
-    <link rel="stylesheet" href="../css/modal-resultado-total.css?v=1.1.5">
+    <title>Controle de Investimentos - Opções</title>
+    <link rel="stylesheet" href="../css/style.css?v=1.1.6">
+    <link rel="stylesheet" href="../css/opcoes.css?v=1.1.6">
+    <link rel="stylesheet" href="../css/modal-detalhes.css?v=1.1.6">
+    <link rel="stylesheet" href="../css/detalhe-opcoes.css?v=1.1.6">
+    <link rel="stylesheet" href="../css/modal-resultado-total.css?v=1.1.6">
 </head>
 
 <body data-bs-theme="dark">
@@ -18,8 +18,8 @@
                 <div class="page-header d-print-none mb-4">
                     <div class="row align-items-center">
                         <div class="col-auto">
-                            <h2 class="page-title">Controle de Investimentos - Opcoes</h2>
-                            <div class="text-muted">Opcoes de Acoes</div>
+                            <h2 class="page-title">Controle de Investimentos - Opções</h2>
+                            <div class="text-muted">Opções de Ações</div>
                         </div>
                         <div class="col-auto ms-auto d-flex align-items-center gap-3">
                             <button class="btn btn-info me-2" id="btnSimularOperacao">
@@ -28,7 +28,7 @@
                             </button>
                             <button class="btn btn-primary" id="btnNovaOperacao">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><path d="M12 5v14M5 12h14"/></svg>
-                                Nova Operacao
+                                Nova Operação
                             </button>
                         </div>
                     </div>
@@ -36,10 +36,10 @@
 
                 <div class="row row-deck row-cards mb-4">
                     <div class="col-sm-6 col-lg-3">
-                        <div class="card">
+                        <div class="card card-clickable" id="cardTotalOpsCard" role="button" tabindex="0" title="Ver histórico de operações">
                             <div class="card-body">
                                 <div class="d-flex align-items-center">
-                                    <div class="subheader">Total Operacoes</div>
+                                    <div class="subheader">Total Operações</div>
                                     <div class="ms-auto">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                                     </div>
@@ -75,10 +75,10 @@
                         </div>
                     </div>
                     <div class="col-sm-6 col-lg-3">
-                        <div class="card">
+                        <div class="card card-clickable" id="cardResultadoMedioCard" role="button" tabindex="0" title="Ver análise de saldo médio">
                             <div class="card-body">
                                 <div class="d-flex align-items-center">
-                                    <div class="subheader">Resultado Medio</div>
+                                    <div class="subheader">Resultado Médio</div>
                                     <div class="ms-auto text-success">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
                                     </div>
@@ -93,10 +93,10 @@
                     <div class="card-header">
                         <ul class="nav nav-tabs card-header-tabs" data-bs-toggle="tabs">
                             <li class="nav-item">
-                                <a href="#tab-mes-atual" class="nav-link active" data-bs-toggle="tab">Mes Atual</a>
+                                <a href="#tab-mes-atual" class="nav-link active" data-bs-toggle="tab">Mês Atual</a>
                             </li>
                             <li class="nav-item">
-                                <a href="#tab-historico" class="nav-link" data-bs-toggle="tab">Historico</a>
+                                <a href="#tab-historico" class="nav-link" data-bs-toggle="tab">Histórico</a>
                             </li>
                             <li class="nav-item">
                                 <a href="#tab-anual" class="nav-link" data-bs-toggle="tab">Anual</a>
@@ -112,27 +112,27 @@
                                 <div class="row mb-4" id="mesAtualHeader"></div>
                                 <div class="card">
                                     <div class="card-header">
-                                        <h3 class="card-title" id="mesAtualTitle">Operacoes</h3>
+                                        <h3 class="card-title" id="mesAtualTitle">Operações</h3>
                                     </div>
                                     <div class="table-responsive">
                                         <table class="table table-vcenter card-table" id="tableMesAtual">
                                             <thead>
                                                 <tr>
                                                     <th>Ativo Base</th>
-                                                    <th>Preco Atual</th>
-                                                    <th>Preco Entrada</th>
                                                     <th>Ativo</th>
                                                     <th>Tipo</th>
+                                                    <th>Preço Atual</th>
+                                                    <th>Preço Entrada</th>
                                                     <th>Quantidade</th>
                                                     <th>Strike</th>
-                                                    <th>Premio</th>
+                                                    <th>Prêmio</th>
                                                     <th>Resultado</th>
                                                     <th>PoP <span class="text-decoration-none cursor-help" data-bs-toggle="tooltip" title="Probabilidade de sucesso da operação">❓</span></th>
                                                     <th>Vencimento</th>
-                                                    <th>Dias <span class="text-decoration-none cursor-help" data-bs-toggle="tooltip" title="Dias úteis / Dias corridos" onclick="event.stopPropagation()">❓</span></th>
-                                                    <th>Exercicio</th>
+                                                    <th>Duração (dias) <span class="text-decoration-none cursor-help" data-bs-toggle="tooltip" title="Dias entre abertura e vencimento" onclick="event.stopPropagation()">❓</span></th>
+                                                    <th>Exercício</th>
                                                     <th>Status</th>
-                                                    <th>Acoes</th>
+                                                    <th>Ações</th>
                                                 </tr>
                                             </thead>
                                             <tbody></tbody>
@@ -141,29 +141,29 @@
                                 </div>
                             </div>
                             <div class="tab-pane" id="tab-historico">
-                                <h4 class="mb-3">Historico Mensal</h4>
+                                <h4 class="mb-3">Histórico Mensal</h4>
                                 <div id="historicoContainer"></div>
                                 <div class="card mt-4">
                                     <div class="card-header">
-                                        <h3 class="card-title">Todas as Operacoes</h3>
+                                        <h3 class="card-title">Todas as Operações</h3>
                                     </div>
                                     <div class="table-responsive">
                                         <table class="table table-vcenter card-table" id="tableHistorico">
                                             <thead>
                                                 <tr>
                                                     <th>Ativo Base</th>
-                                                    <th>Preco Atual</th>
-                                                    <th>Preco Entrada</th>
                                                     <th>Ativo</th>
                                                     <th>Tipo</th>
+                                                    <th>Preço Atual</th>
+                                                    <th>Preço Entrada</th>
                                                     <th>Quantidade</th>
                                                     <th>Strike</th>
-                                                    <th>Premio</th>
+                                                    <th>Prêmio</th>
                                                     <th>Resultado</th>
                                                     <th>PoP <span class="text-decoration-none cursor-help" data-bs-toggle="tooltip" title="Probabilidade de sucesso da operação">❓</span></th>
                                                     <th>Vencimento</th>
-                                                    <th>Dias <span class="text-decoration-none cursor-help" data-bs-toggle="tooltip" title="Dias úteis / Dias corridos" onclick="event.stopPropagation()">❓</span></th>
-                                                    <th>Exercicio</th>
+                                                    <th>Duração (dias) <span class="text-decoration-none cursor-help" data-bs-toggle="tooltip" title="Dias entre abertura e vencimento" onclick="event.stopPropagation()">❓</span></th>
+                                                    <th>Exercício</th>
                                                     <th>Status</th>
                                                     <th>Ações</th>
                                                 </tr>
@@ -268,7 +268,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">
-                        <span id="modalOperacaoTitle">Nova Operacao</span>
+                        <span id="modalOperacaoTitle">Nova Operação</span>
                         <span id="modalOperacaoAtivoInfo" class="badge bg-primary ms-2" style="display: none;"></span>
                         <span id="modalOperacaoMarketStatus" class="ms-2" style="cursor: help; font-size: 1.2rem;"></span>
                     </h5>
@@ -340,7 +340,7 @@
                                 <input type="date" class="form-control" id="inputVencimento">
                             </div>
                             <div class="col-md-3 mb-3">
-                                <label class="form-label">Premio (R$)</label>
+                                <label class="form-label">Prêmio (R$)</label>
                                 <input type="text" class="form-control input-currency" id="inputPremio" placeholder="R$ 0,00">
                             </div>
                             <div class="col-md-3 mb-3">
@@ -569,12 +569,15 @@
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <div class="card metric-card saldo-metric-purple">
+                        <div class="card metric-card saldo-metric-purple" id="saldoMetricOpsCard" role="button" tabindex="0" data-bs-toggle="modal" data-bs-target="#modalTotalOperacoes">
                                 <div class="metric-icon">🔢</div>
                                 <div class="metric-value-lg" id="saldoMetricOps">0</div>
                                 <div class="metric-label-lg">Total de Operações</div>
                                 <div class="mt-2">
                                     <span class="comparison-badge badge-down" id="saldoMetricOpsDelta">↘ 0 ops</span>
+                                </div>
+                                <div class="mt-2">
+                                    <a class="text-primary small" href="javascript:void(0)" onclick="window.openTotalOperacoesModal && window.openTotalOperacoesModal()">Ver detalhes</a>
                                 </div>
                             </div>
                         </div>
@@ -616,10 +619,14 @@
                         <div class="col-md-6">
                             <div class="card">
                                 <div class="card-header">
-                                    <h3 class="card-title">⏰ Performance por Horário</h3>
+                                    <h3 class="card-title">📅 Performance por Dia</h3>
                                 </div>
                                 <div class="card-body">
-                                    <div id="saldoHourlyHeatmap" class="saldo-hourly-heatmap"></div>
+                                    <div id="saldoWeekdayList" class="saldo-weekday-list"></div>
+                                    <div class="saldo-best-day">
+                                        <div class="text-muted small">Melhor Dia</div>
+                                        <div class="h3 text-success" id="saldoBestDay">-</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -648,7 +655,7 @@
                         </div>
                     </div>
 
-                    <div class="row g-3">
+                    <div class="row g-3 saldo-cards-row">
                         <div class="col-md-4">
                             <div class="card">
                                 <div class="card-header">
@@ -1897,14 +1904,18 @@
 
     <div id="modalResultadoTotalContainer"></div>
     <div id="modalDetalheOpcaoContainer"></div>
+    <div id="modalSaldoMedioContainer"></div>
+    <div id="modalTotalOperacoesContainer"></div>
 
     <script src="../js/core/libs.js?v=1.1.5"></script>
-    <script src="../js/core/global.js?v=1.1.4"></script>
-    <script src="../js/core/layout.js?v=1.1.4"></script>
-    <script src="../js/technical-analysis.js?v=1.1.4"></script>
-    <script src="../js/opcoes.js?v=1.1.4"></script>
-    <script src="../js/modal-resultado-total.js?v=1.1.4"></script>
-    <script src="../js/detalhe-opcoes.js?v=1.1.4"></script>
+    <script src="../js/core/global.js?v=1.1.5"></script>
+    <script src="../js/core/layout.js?v=1.1.5"></script>
+    <script src="../js/technical-analysis.js?v=1.1.5"></script>
+    <script src="../js/opcoes.js?v=1.1.5"></script>
+    <script src="../js/modal-resultado-total.js?v=1.1.5"></script>
+    <script src="../js/detalhe-opcoes.js?v=1.1.5"></script>
+    <script src="../js/modal-saldo-medio.js?v=1.1.0"></script>
+    <script src="../js/modal-total-operacoes.js?v=1.1.0"></script>
     <script>
         // Carregar modal de detalhes
         fetch('detalhe-opcoes.html')
@@ -1913,6 +1924,19 @@
                 document.getElementById('modalDetalheOpcaoContainer').innerHTML = html;
             })
             .catch(error => console.error('Erro ao carregar modal:', error));
+        // Carregar modal saldo médio
+        fetch('modal-saldo-medio.html')
+            .then(r => r.text())
+            .then(html => {
+                document.getElementById('modalSaldoMedioContainer').innerHTML = html;
+            })
+            .catch(err => console.error('Erro ao carregar modal saldo médio:', err));
+        fetch('modal-total-operacoes.html')
+            .then(r => r.text())
+            .then(html => {
+                document.getElementById('modalTotalOperacoesContainer').innerHTML = html;
+            })
+            .catch(err => console.error('Erro ao carregar modal total operações:', err));
     </script>
 </body>
 </html>

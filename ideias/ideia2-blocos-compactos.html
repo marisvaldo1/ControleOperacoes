@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ideia 2 – Modal Saldo Médio: Painel em Blocos Compactos</title>
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Inter',-apple-system,sans-serif; background:#0d1117; color:#e6edf3; font-size:14px; }
+
+        /* ===== TRIGGER ===== */
+        .page { display:flex; align-items:center; justify-content:center; min-height:100vh; }
+        .trigger-card {
+            background:#161b22; border:1px solid #30363d; border-radius:10px;
+            padding:1.5rem 2.5rem; cursor:pointer; text-align:center; transition:all .2s;
+        }
+        .trigger-card:hover { border-color:#58a6ff; box-shadow:0 0 20px rgba(88,166,255,.2); }
+
+        /* ===== OVERLAY ===== */
+        .overlay {
+            display:none; position:fixed; inset:0; background:rgba(0,0,0,.75);
+            z-index:9000; align-items:center; justify-content:center; padding:1.5rem;
+            backdrop-filter:blur(6px);
+        }
+        .overlay.show { display:flex; }
+
+        /* ===== PANEL ===== */
+        .panel {
+            background:#0d1117; border:1px solid #30363d; border-radius:16px;
+            width:100%; max-width:1100px; max-height:92vh; overflow-y:auto;
+            animation: pop .3s cubic-bezier(.34,1.56,.64,1);
+            box-shadow:0 40px 100px rgba(0,0,0,.8), 0 0 0 1px rgba(255,255,255,.04);
+        }
+        @keyframes pop { from{transform:scale(.92);opacity:0;} to{transform:scale(1);opacity:1;} }
+
+        /* ===== TOP BAR ===== */
+        .top-bar {
+            display:flex; align-items:center; padding:1.25rem 1.5rem;
+            border-bottom:1px solid #21262d;
+            background:linear-gradient(90deg,#161b22,#0d1117);
+            position:sticky; top:0; z-index:10;
+        }
+        .top-bar-icon {
+            width:40px;height:40px;border-radius:10px;
+            background:linear-gradient(135deg,#238636,#196c2e);
+            display:flex;align-items:center;justify-content:center;
+            font-size:1.2rem; margin-right:.875rem; flex-shrink:0;
+        }
+        .top-bar-title { font-weight:700; font-size:1.1rem; }
+        .top-bar-sub { font-size:.78rem; color:#8b949e; margin-top:1px; }
+        .btn-close-panel {
+            margin-left:auto;background:rgba(255,255,255,.06);border:1px solid #30363d;
+            color:#8b949e;width:32px;height:32px;border-radius:8px;cursor:pointer;
+            display:flex;align-items:center;justify-content:center; transition:all .15s;
+        }
+        .btn-close-panel:hover { background:#da3633; color:#fff; border-color:#da3633; }
+
+        /* ===== SUMMARY ROW ===== */
+        .summary-row {
+            display:grid; grid-template-columns:repeat(5,1fr);
+            border-bottom:1px solid #21262d;
+        }
+        .sum-block {
+            padding:1.25rem 1.5rem; border-right:1px solid #21262d;
+            position:relative;
+        }
+        .sum-block:last-child { border-right:none; }
+        .sum-block::before {
+            content:''; position:absolute; bottom:0; left:1.5rem; right:1.5rem;
+            height:2px; border-radius:2px; opacity:0;
+            transition:opacity .2s;
+        }
+        .sum-block:hover::before { opacity:1; }
+        .sum-block.green::before { background:#2ea043; }
+        .sum-block.blue::before  { background:#388bfd; }
+        .sum-block.purple::before{ background:#8b5cf6; }
+        .sum-block.orange::before{ background:#f77f1f; }
+        .sum-block.gray::before  { background:#6e7681; }
+        .sum-lbl { font-size:.68rem; font-weight:600; text-transform:uppercase; letter-spacing:.5px; color:#8b949e; margin-bottom:.4rem; }
+        .sum-val { font-size:1.5rem; font-weight:700; line-height:1; }
+        .sum-sub { font-size:.74rem; color:#8b949e; margin-top:.3rem; }
+        .c-green  { color:#3fb950; }
+        .c-blue   { color:#58a6ff; }
+        .c-red    { color:#f85149; }
+        .c-orange { color:#ff9c27; }
+
+        /* ===== CONTENT AREA ===== */
+        .content { padding:1.25rem 1.5rem; }
+
+        /* ===== TWO-COL ===== */
+        .two-col { display:grid; grid-template-columns:1.6fr 1fr; gap:1rem; margin-bottom:1rem; }
+        @media(max-width:800px){.two-col,.summary-row{grid-template-columns:1fr 1fr;}}
+
+        /* ===== BOXES ===== */
+        .box {
+            background:#161b22; border:1px solid #21262d; border-radius:12px;
+            overflow:hidden;
+        }
+        .box-header {
+            display:flex;align-items:center;gap:.6rem;
+            padding:.875rem 1.25rem; border-bottom:1px solid #21262d;
+            font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#8b949e;
+        }
+        .box-body { padding:1.25rem; }
+
+        /* ===== PoP RING ===== */
+        .pop-ring-wrap { display:flex;align-items:center;gap:1.5rem; padding:.75rem 0; }
+        .pop-ring { position:relative;width:130px;height:130px;flex-shrink:0; }
+        .pop-ring svg { transform:rotate(-90deg); }
+        .pop-ring-val {
+            position:absolute;inset:0;display:flex;flex-direction:column;
+            align-items:center;justify-content:center;
+        }
+        .pop-ring-num { font-size:1.8rem; font-weight:700; color:#3fb950; }
+        .pop-ring-lbl { font-size:.65rem; color:#8b949e; text-transform:uppercase; }
+        .pop-breakdown { flex:1; }
+        .pop-row { display:flex;align-items:center;gap:.6rem; margin-bottom:.6rem; }
+        .pop-row-lbl { font-size:.76rem; color:#8b949e; width:130px; flex-shrink:0; }
+        .pop-bar-track { flex:1; background:rgba(255,255,255,.06); border-radius:4px; height:6px; overflow:hidden; }
+        .pop-bar-f { height:100%; border-radius:4px; transition:width .7s ease; }
+        .pop-row-val { font-size:.75rem; font-weight:600; width:36px; text-align:right; }
+
+        /* ===== OP CARDS ===== */
+        .op-cards-wrap { display:flex;flex-direction:column;gap:.5rem; }
+        .op-card {
+            display:grid; grid-template-columns:auto 1fr auto auto auto auto;
+            align-items:center; gap:.75rem;
+            background:#0d1117; border:1px solid #21262d; border-radius:10px;
+            padding:.875rem 1rem; transition:all .15s;
+            cursor:default;
+        }
+        .op-card:hover { border-color:#388bfd; background:#161b22; }
+        .op-card-type {
+            font-size:.7rem; font-weight:700; padding:3px 8px; border-radius:5px;
+            text-transform:uppercase;
+        }
+        .type-call { background:rgba(56,139,253,.15); color:#58a6ff; border:1px solid rgba(56,139,253,.3); }
+        .type-put  { background:rgba(139,92,246,.15); color:#a78bfa; border:1px solid rgba(139,92,246,.3); }
+        .op-card-name { }
+        .op-card-ticker { font-weight:600; font-size:.9rem; }
+        .op-card-base { font-size:.72rem; color:#8b949e; }
+        .op-card-stat { text-align:right; }
+        .op-card-stat-val { font-size:.88rem; font-weight:600; }
+        .op-card-stat-lbl { font-size:.65rem; color:#8b949e; }
+        .chip {
+            font-size:.68rem; font-weight:600; padding:2px 8px; border-radius:10px;
+        }
+        .chip-open   { background:rgba(255,156,39,.12); color:#ff9c27; border:1px solid rgba(255,156,39,.3); }
+        .chip-closed { background:rgba(63,185,80,.12);  color:#3fb950; border:1px solid rgba(63,185,80,.3);  }
+        .chip-loss   { background:rgba(248,81,73,.12);  color:#f85149; border:1px solid rgba(248,81,73,.3);  }
+
+        /* sparkline hint (usamos ApexCharts inline) */
+        .sparkline { height:32px; width:80px; }
+
+        /* ===== INSIGHTS ===== */
+        .insight-list { display:flex; flex-direction:column; gap:.5rem; }
+        .insight-item {
+            display:flex;gap:.875rem;align-items:flex-start;
+            padding:.875rem 1rem; border-radius:8px;
+            border-left:3px solid;
+        }
+        .insight-item.ok   { background:rgba(63,185,80,.06);   border-color:#3fb950; }
+        .insight-item.warn { background:rgba(255,156,39,.06);  border-color:#ff9c27; }
+        .insight-item.bad  { background:rgba(248,81,73,.06);   border-color:#f85149; }
+        .insight-item.info { background:rgba(88,166,255,.06);  border-color:#58a6ff; }
+        .insight-emoji { font-size:1.2rem; line-height:1.4; }
+        .insight-text strong { font-size:.82rem; display:block; margin-bottom:2px; }
+        .insight-text span { font-size:.76rem; color:#8b949e; }
+
+        /* FILTERS */
+        .filter-bar { display:flex; gap:.4rem; margin-bottom:1rem; flex-wrap:wrap; }
+        .fbtn {
+            font-size:.74rem; padding:5px 14px; border-radius:6px;
+            border:1px solid #30363d; background:transparent; color:#8b949e; cursor:pointer; transition:all .15s;
+        }
+        .fbtn:hover { border-color:#58a6ff; color:#e6edf3; }
+        .fbtn.active { border-color:#238636; background:rgba(35,134,54,.15); color:#3fb950; }
+    </style>
+</head>
+<body>
+
+<div class="page">
+    <div>
+        <p style="color:#8b949e;font-size:.82rem;text-align:center;margin-bottom:1.25rem;">↓ Clique no card para abrir o modal</p>
+        <div class="trigger-card" onclick="openPanel()">
+            <div style="font-size:.7rem;color:#8b949e;text-transform:uppercase;letter-spacing:1px;margin-bottom:.5rem;">Saldo Médio</div>
+            <div style="font-size:2rem;font-weight:700;color:#3fb950;">+3.42%</div>
+            <div style="font-size:.78rem;color:#8b949e;margin-top:.3rem;">R$ 4.280 em prêmios · 15 ops</div>
+            <div style="font-size:.72rem;color:#58a6ff;margin-top:.875rem;">Ver painel de resultados →</div>
+        </div>
+        <p style="color:#6e7681;font-size:.72rem;text-align:center;margin-top:1rem;">Ideia 2 — Painel em Blocos Compactos</p>
+    </div>
+</div>
+
+<div class="overlay" id="overlay" onclick="closeOnBg(event)">
+<div class="panel" id="panel">
+
+    <!-- TOP BAR -->
+    <div class="top-bar">
+        <div class="top-bar-icon">💼</div>
+        <div>
+            <div class="top-bar-title">Painel · Saldo Médio de Operações</div>
+            <div class="top-bar-sub">Opcoes de Ações · Dados do banco + API OpLab/yfinance</div>
+        </div>
+        <button class="btn-close-panel" onclick="closePanel()">
+            <i class="ti ti-x"></i>
+        </button>
+    </div>
+
+    <!-- SUMMARY ROW -->
+    <div class="summary-row">
+        <div class="sum-block green">
+            <div class="sum-lbl">Prêmio Total</div>
+            <div class="sum-val c-green" id="s1">R$ 0</div>
+            <div class="sum-sub" id="s1b">sobre R$ 125k de saldo</div>
+        </div>
+        <div class="sum-block blue">
+            <div class="sum-lbl">Win Rate</div>
+            <div class="sum-val c-blue" id="s2">0%</div>
+            <div class="sum-sub" id="s2b">0 de 0 fechadas</div>
+        </div>
+        <div class="sum-block purple">
+            <div class="sum-lbl">PoP Médio</div>
+            <div class="sum-val" id="s3" style="color:#a78bfa">0%</div>
+            <div class="sum-sub">Probabilidade de Profit</div>
+        </div>
+        <div class="sum-block orange">
+            <div class="sum-lbl">Duração Média</div>
+            <div class="sum-val c-orange" id="s4">0d</div>
+            <div class="sum-sub" id="s4b">Range: – a – dias</div>
+        </div>
+        <div class="sum-block gray">
+            <div class="sum-lbl">Resultado Líq.</div>
+            <div class="sum-val" id="s5">R$ 0</div>
+            <div class="sum-sub" id="s5b">0 abertas</div>
+        </div>
+    </div>
+
+    <div class="content">
+
+        <!-- ROW 1: evolution chart + PoP -->
+        <div class="two-col">
+            <div class="box">
+                <div class="box-header"><i class="ti ti-chart-line" style="font-size:1rem;color:#58a6ff;"></i> Evolução do Capital</div>
+                <div class="box-body" style="padding-bottom:.5rem;">
+                    <div id="chartEvol"></div>
+                </div>
+            </div>
+            <div class="box">
+                <div class="box-header"><i class="ti ti-target" style="font-size:1rem;color:#3fb950;"></i> PoP &amp; Taxa de Acerto</div>
+                <div class="box-body">
+                    <div class="pop-ring-wrap">
+                        <div class="pop-ring">
+                            <svg width="130" height="130" viewBox="0 0 130 130">
+                                <circle cx="65" cy="65" r="52" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="10"/>
+                                <circle id="popArc" cx="65" cy="65" r="52" fill="none" stroke="#3fb950"
+                                    stroke-width="10" stroke-linecap="round"
+                                    stroke-dasharray="0 327"
+                                    style="transition:stroke-dasharray .9s ease;"/>
+                            </svg>
+                            <div class="pop-ring-val">
+                                <span class="pop-ring-num" id="popNum">0%</span>
+                                <span class="pop-ring-lbl">PoP Méd.</span>
+                            </div>
+                        </div>
+                        <div class="pop-breakdown">
+                            <div class="pop-row">
+                                <span class="pop-row-lbl">Win Rate Real</span>
+                                <div class="pop-bar-track"><div class="pop-bar-f" id="pbWin" style="width:0%;background:#3fb950;"></div></div>
+                                <span class="pop-row-val c-green" id="pvWin">0%</span>
+                            </div>
+                            <div class="pop-row">
+                                <span class="pop-row-lbl">PoP Esperado</span>
+                                <div class="pop-bar-track"><div class="pop-bar-f" id="pbPop" style="width:0%;background:#58a6ff;"></div></div>
+                                <span class="pop-row-val c-blue" id="pvPop">0%</span>
+                            </div>
+                            <div class="pop-row">
+                                <span class="pop-row-lbl">Bom PoP (≥75%)</span>
+                                <div class="pop-bar-track"><div class="pop-bar-f" id="pbGood" style="width:0%;background:#a78bfa;"></div></div>
+                                <span class="pop-row-val" id="pvGood" style="color:#a78bfa">0%</span>
+                            </div>
+                            <div id="popDistChart" style="margin-top:1rem;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ROW 2: op cards -->
+        <div class="box" style="margin-bottom:1rem;">
+            <div class="box-header">
+                <i class="ti ti-list-details" style="font-size:1rem;color:#ff9c27;"></i>
+                Operações
+                <span id="opCountBadge" style="background:rgba(255,156,39,.12);color:#ff9c27;border:1px solid rgba(255,156,39,.3);padding:1px 7px;border-radius:5px;font-size:.7rem;margin-left:.35rem;"></span>
+            </div>
+            <div class="box-body">
+                <!-- FILTER -->
+                <div class="filter-bar">
+                    <button class="fbtn active" onclick="filterOps('all',this)">Todas</button>
+                    <button class="fbtn" onclick="filterOps('ABERTA',this)">Abertas</button>
+                    <button class="fbtn" onclick="filterOps('FECHADA',this)">Fechadas</button>
+                    <button class="fbtn" onclick="filterOps('CALL',this)">CALL</button>
+                    <button class="fbtn" onclick="filterOps('PUT',this)">PUT</button>
+                </div>
+                <div class="op-cards-wrap" id="opCardsWrap"></div>
+            </div>
+        </div>
+
+        <!-- ROW 3: insights + bar chart -->
+        <div class="two-col">
+            <div class="box">
+                <div class="box-header"><i class="ti ti-bulb" style="font-size:1rem;color:#f59f00;"></i> Insights Automáticos</div>
+                <div class="box-body">
+                    <div class="insight-list" id="insightList"></div>
+                </div>
+            </div>
+            <div class="box">
+                <div class="box-header"><i class="ti ti-chart-bar" style="font-size:1rem;color:#a78bfa;"></i> Prêmio por Ativo Base</div>
+                <div class="box-body" style="padding-bottom:.5rem;">
+                    <div id="chartAtivo"></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div><!-- /panel -->
+</div><!-- /overlay -->
+
+<script>
+/* ===== MOCK DATA (mesmo schema de /api/opcoes) ===== */
+const OPS = [
+    { id:1,  ativo_base:'PETR4', ativo:'PETRN369W1', tipo:'CALL', tipo_operacao:'VENDA', quantidade:-100, preco_entrada:3.65, strike:36.90, vencimento:'2026-01-17', premio:365,  resultado:353,  saldo_abertura:125000, status:'FECHADA', data_operacao:'2025-12-10', dias:38 },
+    { id:2,  ativo_base:'PETR4', ativo:'PETRN380W1', tipo:'PUT',  tipo_operacao:'VENDA', quantidade:-100, preco_entrada:2.80, strike:38.00, vencimento:'2026-01-17', premio:280,  resultado:275,  saldo_abertura:125353, status:'FECHADA', data_operacao:'2025-12-12', dias:36 },
+    { id:3,  ativo_base:'VALE3', ativo:'VALEB550W1', tipo:'PUT',  tipo_operacao:'VENDA', quantidade:-50,  preco_entrada:4.20, strike:55.00, vencimento:'2026-02-21', premio:210,  resultado:180,  saldo_abertura:125628, status:'FECHADA', data_operacao:'2026-01-05', dias:47 },
+    { id:4,  ativo_base:'ITUB4', ativo:'ITUBL330W1', tipo:'CALL', tipo_operacao:'VENDA', quantidade:-200, preco_entrada:1.10, strike:33.00, vencimento:'2026-01-17', premio:220,  resultado:218,  saldo_abertura:125808, status:'FECHADA', data_operacao:'2026-01-07', dias:10 },
+    { id:5,  ativo_base:'PETR4', ativo:'PETRF370W1', tipo:'CALL', tipo_operacao:'VENDA', quantidade:-100, preco_entrada:2.90, strike:37.00, vencimento:'2026-02-21', premio:290,  resultado:280,  saldo_abertura:126026, status:'FECHADA', data_operacao:'2026-01-10', dias:42 },
+    { id:6,  ativo_base:'BBDC4', ativo:'BBDCB180W1', tipo:'PUT',  tipo_operacao:'VENDA', quantidade:-100, preco_entrada:1.80, strike:18.00, vencimento:'2026-02-21', premio:180,  resultado:-170, saldo_abertura:126306, status:'FECHADA', data_operacao:'2026-01-12', dias:40 },
+    { id:7,  ativo_base:'VALE3', ativo:'VALEF500W1', tipo:'PUT',  tipo_operacao:'VENDA', quantidade:-80,  preco_entrada:3.50, strike:50.00, vencimento:'2026-02-21', premio:280,  resultado:268,  saldo_abertura:126136, status:'FECHADA', data_operacao:'2026-01-15', dias:37 },
+    { id:8,  ativo_base:'PETR4', ativo:'PETRN380W2', tipo:'CALL', tipo_operacao:'VENDA', quantidade:-100, preco_entrada:3.20, strike:38.00, vencimento:'2026-02-21', premio:320,  resultado:312,  saldo_abertura:126404, status:'FECHADA', data_operacao:'2026-01-20', dias:32 },
+    { id:9,  ativo_base:'ITUB4', ativo:'ITUBN320W1', tipo:'CALL', tipo_operacao:'VENDA', quantidade:-200, preco_entrada:0.95, strike:32.00, vencimento:'2026-02-21', premio:190,  resultado:189,  saldo_abertura:126716, status:'FECHADA', data_operacao:'2026-01-22', dias:30 },
+    { id:10, ativo_base:'BBAS3', ativo:'BBASF280W1', tipo:'PUT',  tipo_operacao:'VENDA', quantidade:-100, preco_entrada:2.60, strike:28.00, vencimento:'2026-02-21', premio:260,  resultado:-240, saldo_abertura:126905, status:'FECHADA', data_operacao:'2026-01-25', dias:27 },
+    { id:11, ativo_base:'PETR4', ativo:'PETRN390G1', tipo:'CALL', tipo_operacao:'VENDA', quantidade:-100, preco_entrada:2.50, strike:39.00, vencimento:'2026-03-20', premio:250,  resultado:245,  saldo_abertura:126665, status:'FECHADA', data_operacao:'2026-02-01', dias:47 },
+    { id:12, ativo_base:'VALE3', ativo:'VALEF520W1', tipo:'PUT',  tipo_operacao:'VENDA', quantidade:-60,  preco_entrada:4.00, strike:52.00, vencimento:'2026-03-20', premio:240,  resultado:228,  saldo_abertura:126910, status:'FECHADA', data_operacao:'2026-02-03', dias:45 },
+    { id:13, ativo_base:'ITUB4', ativo:'ITUBG340W1', tipo:'CALL', tipo_operacao:'VENDA', quantidade:-200, preco_entrada:0.85, strike:34.00, vencimento:'2026-03-20', premio:170,  resultado:164,  saldo_abertura:127138, status:'ABERTA',  data_operacao:'2026-02-05', dias:43 },
+    { id:14, ativo_base:'PETR4', ativo:'PETRG400W1', tipo:'CALL', tipo_operacao:'VENDA', quantidade:-100, preco_entrada:2.10, strike:40.00, vencimento:'2026-03-20', premio:210,  resultado: 90,  saldo_abertura:127302, status:'ABERTA',  data_operacao:'2026-02-10', dias:38 },
+    { id:15, ativo_base:'BBDC4', ativo:'BBDCG200W1', tipo:'PUT',  tipo_operacao:'VENDA', quantidade:-150, preco_entrada:1.30, strike:20.00, vencimento:'2026-03-20', premio:195,  resultado:183,  saldo_abertura:127392, status:'FECHADA', data_operacao:'2026-02-12', dias:36 },
+];
+const POP_MAP = {1:82,2:78,3:74,4:88,5:79,6:58,7:76,8:81,9:86,10:55,11:83,12:77,13:85,14:72,15:80};
+
+const fmt = v => new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v);
+const fmtK = v => v >= 1000 ? 'R$ '+(v/1000).toFixed(1)+'k' : fmt(v);
+
+let currentFilter = 'all';
+let evoChart=null, ativoChart=null, popDistChart=null;
+
+function openPanel() {
+    document.getElementById('overlay').classList.add('show');
+    renderAll(OPS);
+}
+function closePanel() { document.getElementById('overlay').classList.remove('show'); }
+function closeOnBg(e) { if(e.target===document.getElementById('overlay')) closePanel(); }
+
+function renderAll(ops) {
+    const fechadas = ops.filter(o=>o.status==='FECHADA');
+    const venc = fechadas.filter(o=>(o.resultado||0)>0);
+    const abertas = ops.filter(o=>o.status==='ABERTA');
+    const totalPremio = ops.reduce((a,o)=>a+(o.premio||0),0);
+    const totalResult = ops.reduce((a,o)=>a+(o.resultado||0),0);
+    const saldoIni = ops[0]?.saldo_abertura||125000;
+    const winRate = fechadas.length? venc.length/fechadas.length*100 : 0;
+    const popMedio = ops.reduce((a,o)=>a+(POP_MAP[o.id]||70),0)/ops.length;
+    const durMedia = ops.reduce((a,o)=>a+(o.dias||30),0)/ops.length;
+    const durMin = Math.min(...ops.map(o=>o.dias||30));
+    const durMax = Math.max(...ops.map(o=>o.dias||30));
+    const goodPop = ops.filter(o=>(POP_MAP[o.id]||70)>=75).length/ops.length*100;
+
+    // Summary row
+    document.getElementById('s1').textContent = fmt(totalPremio);
+    document.getElementById('s1b').textContent = `${(totalPremio/saldoIni*100).toFixed(2)}% sobre ${fmtK(saldoIni)}`;
+    document.getElementById('s2').textContent = winRate.toFixed(0)+'%';
+    document.getElementById('s2b').textContent = `${venc.length} de ${fechadas.length} fechadas`;
+    document.getElementById('s3').textContent = popMedio.toFixed(1)+'%';
+    document.getElementById('s4').textContent = durMedia.toFixed(0)+'d';
+    document.getElementById('s4b').textContent = `Range: ${durMin} a ${durMax} dias`;
+    document.getElementById('s5').textContent = fmt(totalResult);
+    document.getElementById('s5b').textContent = `${abertas.length} abertas`;
+
+    // PoP ring
+    const circ = 327;
+    document.getElementById('popArc').setAttribute('stroke-dasharray',`${popMedio/100*circ} ${circ}`);
+    document.getElementById('popNum').textContent = popMedio.toFixed(1)+'%';
+    document.getElementById('pbWin').style.width = winRate+'%';
+    document.getElementById('pvWin').textContent = winRate.toFixed(0)+'%';
+    document.getElementById('pbPop').style.width = popMedio+'%';
+    document.getElementById('pvPop').textContent = popMedio.toFixed(1)+'%';
+    document.getElementById('pbGood').style.width = goodPop+'%';
+    document.getElementById('pvGood').textContent = goodPop.toFixed(0)+'%';
+
+    renderCards(ops, currentFilter);
+    renderEvoChart(ops);
+    renderAtivoChart(ops);
+    renderInsights(ops, winRate, popMedio);
+    renderPopDist(ops);
+}
+
+function filterOps(f, btn) {
+    currentFilter = f;
+    document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    renderCards(OPS, f);
+}
+
+function renderCards(ops, f) {
+    let filtered = ops;
+    if(f==='ABERTA'||f==='FECHADA') filtered = ops.filter(o=>o.status===f);
+    if(f==='CALL'||f==='PUT') filtered = ops.filter(o=>o.tipo===f);
+
+    document.getElementById('opCountBadge').textContent = filtered.length;
+    const wrap = document.getElementById('opCardsWrap');
+    wrap.innerHTML = '';
+    filtered.forEach(op => {
+        const pop = POP_MAP[op.id]||70;
+        const pct = op.saldo_abertura? (op.premio/op.saldo_abertura*100).toFixed(2) : 0;
+        const res = op.resultado||0;
+        const resClass = res>=0 ? 'c-green' : 'c-red';
+        const chipClass = op.status==='ABERTA'? 'chip-open' : res>=0? 'chip-closed' : 'chip-loss';
+        const popColor = pop>=75? '#3fb950' : pop>=60? '#ff9c27' : '#f85149';
+        const div = document.createElement('div');
+        div.className = 'op-card';
+        div.innerHTML = `
+            <span class="op-card-type type-${op.tipo.toLowerCase()}">${op.tipo}</span>
+            <div class="op-card-name">
+                <div class="op-card-ticker">${op.ativo}</div>
+                <div class="op-card-base">${op.ativo_base} · Strike R$${op.strike.toFixed(2)} · ${op.dias}d</div>
+            </div>
+            <div class="op-card-stat">
+                <div class="op-card-stat-val c-green">${fmt(op.premio)}</div>
+                <div class="op-card-stat-lbl">Prêmio (${pct}%)</div>
+            </div>
+            <div class="op-card-stat">
+                <div class="op-card-stat-val" style="color:${popColor}">${pop}%</div>
+                <div class="op-card-stat-lbl">PoP</div>
+            </div>
+            <div class="op-card-stat">
+                <div class="op-card-stat-val ${resClass}">${fmt(res)}</div>
+                <div class="op-card-stat-lbl">Resultado</div>
+            </div>
+            <span class="chip ${chipClass}">${op.status}</span>
+        `;
+        wrap.appendChild(div);
+    });
+}
+
+function renderEvoChart(ops) {
+    const sorted = [...ops].sort((a,b)=>new Date(a.data_operacao)-new Date(b.data_operacao));
+    let bal = sorted[0]?.saldo_abertura||125000;
+    const cats=['Início'], bals=[bal], prems=[0]; let pa=0;
+    sorted.forEach(o=>{ cats.push(o.data_operacao.slice(5)); pa+=o.premio||0; bal+=o.resultado||0; bals.push(bal); prems.push(pa); });
+    const opts={
+        series:[{name:'Capital',data:bals,type:'area'},{name:'Prêmios',data:prems,type:'line'}],
+        chart:{type:'line',height:190,background:'transparent',toolbar:{show:false},animations:{speed:500}},
+        stroke:{width:[2,1.5],curve:'smooth',dashArray:[0,4]},
+        fill:{type:['gradient','solid'],gradient:{opacityFrom:.35,opacityTo:.02}},
+        colors:['#3fb950','#58a6ff'],
+        xaxis:{categories:cats,labels:{style:{colors:Array(cats.length).fill('#8b949e'),fontSize:'9px'}},axisBorder:{show:false},axisTicks:{show:false}},
+        yaxis:{labels:{formatter:v=>fmtK(v),style:{colors:['#8b949e']}}},
+        grid:{borderColor:'rgba(255,255,255,.04)',strokeDashArray:4},
+        legend:{labels:{colors:'#8b949e'}},
+        tooltip:{theme:'dark',y:{formatter:v=>fmt(v)}},
+    };
+    if(evoChart){evoChart.destroy();}
+    evoChart = new ApexCharts(document.getElementById('chartEvol'),opts);
+    evoChart.render();
+}
+
+function renderAtivoChart(ops) {
+    const map={};
+    ops.forEach(o=>{map[o.ativo_base]=(map[o.ativo_base]||0)+(o.resultado||0);});
+    const cats=Object.keys(map), vals=Object.values(map);
+    const colors=vals.map(v=>v>=0?'#3fb950':'#f85149');
+    const opts={
+        series:[{name:'Resultado',data:vals}],
+        chart:{type:'bar',height:200,background:'transparent',toolbar:{show:false}},
+        plotOptions:{bar:{horizontal:true,borderRadius:4,distributed:true}},
+        colors,
+        xaxis:{categories:cats,labels:{style:{colors:Array(cats.length).fill('#8b949e'),fontSize:'11px'}}},
+        yaxis:{labels:{style:{colors:['#8b949e']}}},
+        grid:{borderColor:'rgba(255,255,255,.04)'},
+        legend:{show:false},
+        tooltip:{theme:'dark',y:{formatter:v=>fmt(v)}},
+    };
+    if(ativoChart){ativoChart.destroy();}
+    ativoChart = new ApexCharts(document.getElementById('chartAtivo'),opts);
+    ativoChart.render();
+}
+
+function renderPopDist(ops) {
+    const buckets=[0,0,0,0,0]; // <50, 50-60, 60-70, 70-80, ≥80
+    ops.forEach(o=>{
+        const p=POP_MAP[o.id]||70;
+        if(p<50) buckets[0]++;
+        else if(p<60) buckets[1]++;
+        else if(p<70) buckets[2]++;
+        else if(p<80) buckets[3]++;
+        else buckets[4]++;
+    });
+    const opts={
+        series:[{name:'Ops',data:buckets}],
+        chart:{type:'bar',height:100,background:'transparent',toolbar:{show:false},sparkline:{enabled:false}},
+        plotOptions:{bar:{borderRadius:3,columnWidth:'70%',distributed:true}},
+        colors:['#f85149','#ff9c27','#f59f00','#3fb950','#2ea043'],
+        xaxis:{categories:['<50','50-60','60-70','70-80','≥80'],labels:{style:{colors:Array(5).fill('#8b949e'),fontSize:'9px'}}},
+        yaxis:{show:false},
+        grid:{show:false},
+        tooltip:{theme:'dark'},
+        legend:{show:false},
+    };
+    if(popDistChart){popDistChart.destroy();}
+    popDistChart = new ApexCharts(document.getElementById('popDistChart'),opts);
+    popDistChart.render();
+}
+
+function renderInsights(ops, winRate, popMedio) {
+    const totalPremio = ops.reduce((a,o)=>a+(o.premio||0),0);
+    const totalResult = ops.reduce((a,o)=>a+(o.resultado||0),0);
+    const retencao = totalPremio>0 ? totalResult/totalPremio*100 : 0;
+    const abertas = ops.filter(o=>o.status==='ABERTA');
+    const premAberto = abertas.reduce((a,o)=>a+(o.premio||0),0);
+
+    const insights = [];
+    if(winRate>=75) insights.push({cls:'ok',icon:'🏆',title:'Taxa de acerto excelente',desc:`${winRate.toFixed(0)}% das operações foram vencedoras — acima do esperado com PoP médio de ${popMedio.toFixed(1)}%.`});
+    else if(winRate>=60) insights.push({cls:'warn',icon:'👀',title:'Win rate dentro do esperado',desc:`${winRate.toFixed(0)}% de acerto. Acompanhe se o PoP médio de ${popMedio.toFixed(1)}% se confirma nos próximos ciclos.`});
+    else insights.push({cls:'bad',icon:'⚠️',title:'Win rate abaixo do PoP esperado',desc:`Apenas ${winRate.toFixed(0)}% de acerto com PoP médio de ${popMedio.toFixed(1)}%. Revise a seleção de strikes.`});
+
+    if(retencao>=80) insights.push({cls:'ok',icon:'💰',title:'Alta retenção de prêmio',desc:`${retencao.toFixed(0)}% dos prêmios recebidos foram retidos como lucro líquido.`});
+    else insights.push({cls:'warn',icon:'💸',title:'Retenção de prêmio moderada',desc:`${retencao.toFixed(0)}% de retenção. As perdas reduziram o lucro líquido de forma significativa.`});
+
+    if(abertas.length>0) insights.push({cls:'info',icon:'🔓',title:`${abertas.length} operaç${abertas.length>1?'ões':'ão'} aberta${abertas.length>1?'s':''}`,desc:`Prêmio ainda em risco: ${fmt(premAberto)}. Monitore o ativo base em tempo real.`});
+
+    const callResult = ops.filter(o=>o.tipo==='CALL').reduce((a,o)=>a+(o.resultado||0),0);
+    const putResult = ops.filter(o=>o.tipo==='PUT').reduce((a,o)=>a+(o.resultado||0),0);
+    if(callResult > putResult) insights.push({cls:'info',icon:'📊',title:'CALLs mais rentáveis',desc:`CALL gerou ${fmt(callResult)} vs PUT ${fmt(putResult)} em resultado líquido.`});
+    else insights.push({cls:'info',icon:'📊',title:'PUTs mais rentáveis',desc:`PUT gerou ${fmt(putResult)} vs CALL ${fmt(callResult)} em resultado líquido.`});
+
+    const list = document.getElementById('insightList');
+    list.innerHTML = insights.map(i=>`
+        <div class="insight-item ${i.cls}">
+            <span class="insight-emoji">${i.icon}</span>
+            <div class="insight-text"><strong>${i.title}</strong><span>${i.desc}</span></div>
+        </div>
+    `).join('');
+}
+</script>
+</body>
+</html>

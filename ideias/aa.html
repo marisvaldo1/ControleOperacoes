@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultados 2025 - 6 Layouts Profissionais</title>
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <style>
+        :root {
+            --profit: #2fb344;
+            --loss: #d63939;
+            --neutral: #626976;
+        }
+        
+        body {
+            background: #0a0e1a;
+            padding: 2rem;
+        }
+        
+        .modal-xxl { max-width: 1600px; }
+        
+        /* ===== SHOWCASE ===== */
+        .showcase-section {
+            margin-bottom: 5rem;
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            overflow: hidden;
+            background: var(--tblr-bg-surface-dark);
+        }
+        
+        .showcase-header {
+            background: linear-gradient(135deg, #2fb344 0%, #27a13e 100%);
+            color: white;
+            padding: 2rem 2.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .showcase-number {
+            background: rgba(255, 255, 255, 0.25);
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 800;
+            font-size: 1.25rem;
+        }
+        
+        .showcase-title {
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin: 0;
+        }
+        
+        .showcase-description {
+            background: rgba(0,0,0,0.3);
+            padding: 1.25rem 2.5rem;
+            color: rgba(255,255,255,0.7);
+            font-size: 0.95rem;
+            line-height: 1.7;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .showcase-body {
+            padding: 2.5rem;
+        }
+        
+        /* ===== HERO SECTION ===== */
+        .hero-section {
+            background: linear-gradient(135deg, #1a2744 0%, #0f172a 100%);
+            border-radius: 20px;
+            padding: 2.5rem;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.05);
+            margin-bottom: 2rem;
+        }
+        
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--tblr-primary), var(--profit), var(--tblr-primary));
+        }
+        
+        .hero-main-value {
+            font-size: 4rem;
+            font-weight: 900;
+            letter-spacing: -3px;
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+        
+        .hero-label {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.6);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 0.75rem;
+        }
+        
+        .hero-stat {
+            text-align: center;
+        }
+        
+        .hero-stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+        
+        .hero-stat-label {
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.5);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-top: 0.5rem;
+        }
+        
+        .hero-divider {
+            width: 1px;
+            background: rgba(255,255,255,0.1);
+            align-self: stretch;
+            margin: 0 2rem;
+        }
+        
+        /* ===== KPI CARDS ===== */
+        .kpi-card {
+            background: var(--tblr-bg-surface);
+            border: 1px solid var(--tblr-border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            height: 100%;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--tblr-primary), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .kpi-card:hover::before {
+            opacity: 1;
+        }
+        
+        .kpi-card:hover {
+            border-color: var(--tblr-primary);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(32, 107, 196, 0.2);
+        }
+        
+        .kpi-card.highlight {
+            border-color: var(--profit);
+            background: linear-gradient(135deg, rgba(47, 179, 68, 0.1) 0%, transparent 100%);
+        }
+        
+        .kpi-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            margin-bottom: 1rem;
+        }
+        
+        .kpi-value {
+            font-size: 2rem;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 0.75rem;
+        }
+        
+        .kpi-label {
+            font-size: 0.75rem;
+            color: var(--tblr-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .kpi-change {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 8px;
+        }
+        
+        .kpi-change.up {
+            background: rgba(47, 179, 68, 0.15);
+            color: var(--profit);
+        }
+        
+        /* ===== MONTH CARDS ===== */
+        .month-card {
+            background: var(--tblr-bg-surface);
+            border: 1px solid var(--tblr-border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .month-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--profit);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .month-card:hover::before {
+            opacity: 1;
+        }
+        
+        .month-card:hover {
+            border-color: var(--profit);
+            transform: translateX(6px);
+            box-shadow: 0 8px 24px rgba(47, 179, 68, 0.15);
+        }
+        
+        .month-card.negative {
+            border-color: rgba(214, 57, 57, 0.3);
+        }
+        
+        .month-card.negative::before {
+            background: var(--loss);
+        }
+        
+        .month-card.negative:hover {
+            border-color: var(--loss);
+        }
+        
+        .month-name {
+            font-size: 0.75rem;
+            color: var(--tblr-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .month-result {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+        
+        .month-details {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--tblr-muted);
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--tblr-border-color-translucent);
+        }
+        
+        /* ===== GAUGE ===== */
+        .gauge-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 0 auto;
+        }
+        
+        .gauge-value {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+        
+        .gauge-number {
+            font-size: 2.5rem;
+            font-weight: 900;
+            line-height: 1;
+        }
+        
+        .gauge-label {
+            font-size: 0.75rem;
+            color: var(--tblr-muted);
+            text-transform: uppercase;
+            margin-top: 0.5rem;
+        }
+        
+        /* ===== TIMELINE ===== */
+        .timeline-vertical {
+            position: relative;
+            padding-left: 40px;
+        }
+        
+        .timeline-vertical::before {
+            content: '';
+            position: absolute;
+            left: 12px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(180deg, var(--profit) 0%, var(--tblr-primary) 50%, var(--tblr-border-color) 100%);
+        }
+        
+        .timeline-item {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -34px;
+            top: 8px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--profit);
+            border: 3px solid var(--tblr-bg-surface-dark);
+            box-shadow: 0 0 0 4px rgba(47, 179, 68, 0.2);
+            z-index: 2;
+        }
+        
+        .timeline-item.negative::before {
+            background: var(--loss);
+            box-shadow: 0 0 0 4px rgba(214, 57, 57, 0.2);
+        }
+        
+        .timeline-content {
+            background: var(--tblr-bg-surface);
+            border: 1px solid var(--tblr-border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+        }
+        
+        /* ===== PROGRESS BARS ===== */
+        .progress-custom {
+            height: 12px;
+            border-radius: 6px;
+            background: rgba(0,0,0,0.3);
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+        
+        .progress-custom-fill {
+            height: 100%;
+            border-radius: 6px;
+            background: linear-gradient(90deg, var(--profit), #16a34a);
+            transition: width 0.8s ease;
+            position: relative;
+        }
+        
+        .progress-custom-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        /* ===== COMPARISON TABLE ===== */
+        .comparison-table {
+            background: var(--tblr-bg-surface);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--tblr-border-color);
+        }
+        
+        .comparison-table th {
+            background: rgba(0,0,0,0.3);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 1rem;
+            font-weight: 700;
+        }
+        
+        .comparison-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--tblr-border-color-translucent);
+        }
+        
+        .comparison-table tbody tr:hover {
+            background: rgba(32, 107, 196, 0.05);
+        }
+        
+        /* ===== STAT BOXES ===== */
+        .stat-box {
+            background: linear-gradient(135deg, rgba(32, 107, 196, 0.1), transparent);
+            border: 1px solid var(--tblr-border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        
+        .stat-box:hover {
+            border-color: var(--tblr-primary);
+            transform: scale(1.05);
+        }
+        
+        .stat-emoji {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .stat-value-large {
+            font-size: 2.5rem;
+            font-weight: 900;
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label-large {
+            font-size: 0.85rem;
+            color: var(--tblr-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        /* ===== BADGES ===== */
+        .badge-custom {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .badge-custom.success {
+            background: rgba(47, 179, 68, 0.15);
+            color: var(--profit);
+            border: 1px solid rgba(47, 179, 68, 0.3);
+        }
+        
+        .badge-custom.danger {
+            background: rgba(214, 57, 57, 0.15);
+            color: var(--loss);
+            border: 1px solid rgba(214, 57, 57, 0.3);
+        }
+        
+        /* ===== HEATMAP ===== */
+        .heatmap-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 1.5rem;
+        }
+        
+        .heatmap-cell {
+            aspect-ratio: 1;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid transparent;
+        }
+        
+        .heatmap-cell:hover {
+            transform: scale(1.1);
+            z-index: 10;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+        }
+        
+        .heatmap-cell-month {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+        
+        .heatmap-cell-value {
+            font-size: 1.1rem;
+            font-weight: 900;
+        }
+        
+        .heatmap-cell.positive {
+            background: linear-gradient(135deg, rgba(47, 179, 68, 0.25), rgba(47, 179, 68, 0.1));
+            border-color: rgba(47, 179, 68, 0.4);
+            color: var(--profit);
+        }
+        
+        .heatmap-cell.negative {
+            background: linear-gradient(135deg, rgba(214, 57, 57, 0.25), rgba(214, 57, 57, 0.1));
+            border-color: rgba(214, 57, 57, 0.4);
+            color: var(--loss);
+        }
+        
+        .heatmap-cell.neutral {
+            background: linear-gradient(135deg, rgba(98, 105, 118, 0.15), rgba(98, 105, 118, 0.05));
+            border-color: rgba(98, 105, 118, 0.3);
+            color: var(--neutral);
+        }
+        
+        /* ===== PERIOD SELECTOR ===== */
+        .period-selector {
+            display: flex;
+            gap: 6px;
+            padding: 6px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+            border: 1px solid var(--tblr-border-color);
+            flex-wrap: wrap;
+        }
+        
+        .period-btn {
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--tblr-muted);
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .period-btn:hover {
+            color: var(--tblr-body-color);
+            background: rgba(255,255,255,0.05);
+        }
+        
+        .period-btn.active {
+            background: var(--tblr-primary);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(32, 107, 196, 0.4);
+        }
+        
+        /* ===== PROJECTION CARD ===== */
+        .projection-card {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            border-radius: 20px;
+            padding: 2rem;
+            color: white;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .projection-card::before {
+            content: '🚀';
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            font-size: 8rem;
+            opacity: 0.1;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-main-value {
+                font-size: 2.5rem;
+            }
+            
+            .hero-divider {
+                display: none;
+            }
+            
+            .heatmap-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-xl">
+        <h1 class="text-center mb-5" style="font-size: 3rem; font-weight: 900;">
+            💰 Resultados 2025 - 6 Layouts Visuais
+        </h1>
+
+        <!-- ============================================
+             LAYOUT 1: HERO + CARDS MENSAIS
+             ============================================ -->
+        <div class="showcase-section">
+            <div class="showcase-header">
+                <div>
+                    <div class="showcase-number">LAYOUT 1</div>
+                    <h2 class="showcase-title">Hero Gigante + Cards Mensais</h2>
+                </div>
+            </div>
+            <div class="showcase-description">
+                <strong>🎯 Foco no Resultado:</strong> Hero section com o resultado anual em destaque gigante, KPIs principais e cards para cada mês com mini-gráficos e detalhes.
+            </div>
+            
+            <div class="showcase-body">
+                <!-- HERO SECTION -->
+                <div class="hero-section">
+                    <div class="row align-items-center">
+                        <div class="col-md-5">
+                            <div class="hero-label">💰 Resultado Anual 2025</div>
+                            <div class="hero-main-value text-success">+R$ 7.057,01</div>
+                            <div class="mt-3">
+                                <span class="badge-custom success">
+                                    <i class="ti ti-trending-up"></i>
+                                    +1,67% ROI Total
+                                </span>
+                                <span class="badge-custom success ms-2">
+                                    🔥 4 Meses Positivos
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="hero-divider"></div>
+                        
+                        <div class="col-md-6">
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <div class="hero-stat">
+                                        <div class="hero-stat-value text-success">R$ 1.764</div>
+                                        <div class="hero-stat-label">Média Mensal</div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="hero-stat">
+                                        <div class="hero-stat-value text-primary">R$ 109.219</div>
+                                        <div class="hero-stat-label">Saldo Final</div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="hero-stat">
+                                        <div class="hero-stat-value text-warning">R$ 4.027</div>
+                                        <div class="hero-stat-label">Melhor Mês</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KPI CARDS -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3 col-sm-6">
+                        <div class="kpi-card highlight">
+                            <div class="kpi-icon bg-success-lt text-success">
+                                💰
+                            </div>
+                            <div class="kpi-value text-success">R$ 7.057</div>
+                            <div class="kpi-label">Lucro Total 2025</div>
+                            <div class="kpi-change up">
+                                <i class="ti ti-trending-up"></i> vs 2024
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3 col-sm-6">
+                        <div class="kpi-card">
+                            <div class="kpi-icon bg-primary-lt text-primary">
+                                📊
+                            </div>
+                            <div class="kpi-value">1,67%</div>
+                            <div class="kpi-label">ROI Total</div>
+                            <div class="text-muted small mt-2">4 meses positivos</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3 col-sm-6">
+                        <div class="kpi-card">
+                            <div class="kpi-icon bg-warning-lt text-warning">
+                                🏆
+                            </div>
+                            <div class="kpi-value text-warning">R$ 4.027</div>
+                            <div class="kpi-label">Melhor Mês</div>
+                            <div class="text-muted small mt-2">Fevereiro (+3,81%)</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3 col-sm-6">
+                        <div class="kpi-card">
+                            <div class="kpi-icon bg-info-lt text-info">
+                                📈
+                            </div>
+                            <div class="kpi-value text-info">R$ 1.764</div>
+                            <div class="kpi-label">Média Mensal</div>
+                            <div class="text-muted small mt-2">Consistência boa</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MONTHS GRID -->
+                <h4 class="mb-3">📅 Performance Mensal Detalhada</h4>
+                <div class="row g-3">
+                    <!-- Janeiro -->
+                    <div class="col-md-4 col-sm-6">
+                        <div class="month-card">
+                            <div class="month-name">Janeiro 2025</div>
+                            <div class="month-result text-success">+R$ 2.409,00</div>
+                            <div class="badge-custom success">
+                                +2,32% ROI
+                            </div>
+                            <div class="month-details">
+                                <div>
+                                    <i class="ti ti-wallet text-muted"></i>
+                                    Saldo: R$ 103.748
+                                </div>
+                                <div>
+                                    <i class="ti ti-receipt text-muted"></i>
+                                    IRPF: -R$ 361
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fevereiro -->
+                    <div class="col-md-4 col-sm-6">
+                        <div class="month-card">
+                            <div class="month-name">🏆 Fevereiro 2025</div>
+                            <div class="month-result text-warning">+R$ 4.027,00</div>
+                            <div class="badge-custom success">
+                                +3,81% ROI
+                            </div>
+                            <div class="month-details">
+                                <div>
+                                    <i class="ti ti-wallet text-muted"></i>
+                                    Saldo: R$ 105.796
+                                </div>
+                                <div>
+                                    <i class="ti ti-receipt text-muted"></i>
+                                    IRPF: -R$ 604
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Março -->
+                    <div class="col-md-4 col-sm-6">
+                        <div class="month-card neutral">
+                            <div class="month-name">Março 2025</div>
+                            <div class="month-result text-muted">+R$ 0,01</div>
+                            <div class="badge-custom" style="background: rgba(98, 105, 118, 0.15); color: var(--neutral); border: 1px solid rgba(98, 105, 118, 0.3);">
+                                0,00% ROI
+                            </div>
+                            <div class="month-details">
+                                <div>
+                                    <i class="ti ti-wallet text-muted"></i>
+                                    Saldo: R$ 109.219
+                                </div>
+                                <div>
+                                    <i class="ti ti-minus text-muted"></i>
+                                    Neutro
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Abril -->
+                    <div class="col-md-4 col-sm-6">
+                        <div class="month-card">
+                            <div class="month-name">Abril 2025</div>
+                            <div class="month-result text-success">+R$ 621,00</div>
+                            <div class="badge-custom success">
+                                +0,57% ROI
+                            </div>
+                            <div class="month-details">
+                                <div>
+                                    <i class="ti ti-wallet text-muted"></i>
+                                    Saldo: R$ 109.219
+                                </div>
+                                <div>
+                                    <i class="ti ti-arrow-up text-success"></i>
+                                    Aporte: R$ 3.200
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Maio - Dezembro (placeholders) -->
+                    <div class="col-md-4 col-sm-6">
+                        <div class="month-card" style="opacity: 0.5;">
+                            <div class="month-name">Maio 2025</div>
+                            <div class="month-result text-muted">---</div>
+                            <div class="text-muted small">Sem dados</div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 col-sm-6">
+                        <div class="month-card" style="opacity: 0.5;">
+                            <div class="month-name">Junho 2025</div>
+                            <div class="month-result text-muted">---</div>
+                            <div class="text-muted small">Sem dados</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SUMMARY FOOTER -->
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-3">
+                                <div class="text-muted small mb-1">TOTAL RETIRADAS</div>
+                                <div class="h3 mb-0 text-danger">-R$ 1.058,55</div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-muted small mb-1">TOTAL APORTES</div>
+                                <div class="h3 mb-0 text-success">+R$ 12.700,00</div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-muted small mb-1">TOTAL IRPF</div>
+                                <div class="h3 mb-0 text-warning">-R$ 998,90</div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-muted small mb-1">EVOLUÇÃO</div>
+                                <div class="h3 mb-0 text-primary">1,42%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================
+             LAYOUT 2: GRÁFICO PRINCIPAL + TIMELINE
+             ============================================ -->
+        <div class="showcase-section">
+            <div class="showcase-header">
+                <div>
+                    <div class="showcase-number">LAYOUT 2</div>
+                    <h2 class="showcase-title">Gráfico de Evolução + Timeline Mensal</h2>
+                </div>
+            </div>
+            <div class="showcase-description">
+                <strong>📈 Visualização Temporal:</strong> Gráfico de barras/área mostrando evolução mensal, timeline vertical com detalhes de cada mês e projeção futura.
+            </div>
+            
+            <div class="showcase-body">
+                <!-- HERO -->
+                <div class="hero-section">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap">
+                        <div>
+                            <div class="hero-label">📊 Performance 2025</div>
+                            <div class="hero-main-value text-success">+R$ 7.057,01</div>
+                        </div>
+                        <div class="text-end">
+                            <div class="hero-stat">
+                                <div class="hero-stat-value text-primary">R$ 109.219</div>
+                                <div class="hero-stat-label">Saldo Atual</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CHART + TIMELINE -->
+                <div class="row g-4">
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h4 class="card-title mb-0">📊 Evolução Mensal de Resultados</h4>
+                            </div>
+                            <div class="card-body">
+                                <div id="chartMonthly2" style="min-height: 350px;"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h4 class="card-title mb-0">📈 Evolução do Saldo</h4>
+                            </div>
+                            <div class="card-body">
+                                <div id="chartBalance2" style="min-height: 300px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h4 class="card-title mb-0">📅 Timeline 2025</h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="timeline-vertical">
+                                    <div class="timeline-item">
+                                        <div class="timeline-content">
+                                            <div class="fw-bold">Janeiro</div>
+                                            <div class="text-success h4 mb-2">+R$ 2.409</div>
+                                            <div class="text-muted small">ROI: +2,32%</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="timeline-item">
+                                        <div class="timeline-content">
+                                            <div class="fw-bold">Fevereiro 🏆</div>
+                                            <div class="text-warning h4 mb-2">+R$ 4.027</div>
+                                            <div class="text-muted small">ROI: +3,81%</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="timeline-item">
+                                        <div class="timeline-content">
+                                            <div class="fw-bold">Março</div>
+                                            <div class="text-muted h4 mb-2">+R$ 0,01</div>
+                                            <div class="text-muted small">ROI: 0,00%</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="timeline-item">
+                                        <div class="timeline-content">
+                                            <div class="fw-bold">Abril</div>
+                                            <div class="text-success h4 mb-2">+R$ 621</div>
+                                            <div class="text-muted small">ROI: +0,57%</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================
+             LAYOUT 3: HEATMAP + GAUGES
+             ============================================ -->
+        <div class="showcase-section">
+            <div class="showcase-header">
+                <div>
+                    <div class="showcase-number">LAYOUT 3</div>
+                    <h2 class="showcase-title">Heatmap de Meses + Gauges de Performance</h2>
+                </div>
+            </div>
+            <div class="showcase-description">
+                <strong>🎨 Visual Intenso:</strong> Mapa de calor colorido mostrando performance de cada mês, gauges circulares para metas e KPIs visuais com emojis.
+            </div>
+            
+            <div class="showcase-body">
+                <!-- HERO -->
+                <div class="hero-section">
+                    <div class="text-center">
+                        <div class="hero-label">💎 Resultado Consolidado 2025</div>
+                        <div class="hero-main-value text-success">+R$ 7.057,01</div>
+                        <div class="mt-3">
+                            <span class="badge-custom success fs-5 px-4 py-2">
+                                🎯 Meta: 67% atingida
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GAUGES -->
+                <div class="row g-4 mb-4">
+                    <div class="col-md-4">
+                        <div class="stat-box">
+                            <div class="stat-emoji">🎯</div>
+                            <div class="stat-value-large text-success">67%</div>
+                            <div class="stat-label-large">Meta Atingida</div>
+                            <div class="progress-custom mt-3">
+                                <div class="progress-custom-fill" style="width: 67%;"></div>
+                            </div>
+                            <div class="text-muted small mt-2">R$ 7.057 / R$ 10.500</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="stat-box">
+                            <div class="stat-emoji">💰</div>
+                            <div class="stat-value-large text-primary">R$ 1.764</div>
+                            <div class="stat-label-large">Média Mensal</div>
+                            <div class="mt-3">
+                                <div class="gauge-container" style="width: 120px; height: 120px;">
+                                    <div id="gaugeMedia3"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="stat-box">
+                            <div class="stat-emoji">📊</div>
+                            <div class="stat-value-large text-warning">1,67%</div>
+                            <div class="stat-label-large">ROI Total</div>
+                            <div class="progress-custom mt-3">
+                                <div class="progress-custom-fill" style="width: 55.7%; background: linear-gradient(90deg, #f59f00, #e67700);"></div>
+                            </div>
+                            <div class="text-muted small mt-2">Meta: 3%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- HEATMAP -->
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title mb-0">🎨 Mapa de Calor - Performance por Mês</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="heatmap-grid">
+                            <!-- Janeiro -->
+                            <div class="heatmap-cell positive">
+                                <div class="heatmap-cell-month">Jan</div>
+                                <div class="heatmap-cell-value">+R$ 2.409</div>
+                                <div style="font-size: 0.7rem; margin-top: 4px;">+2,32%</div>
+                            </div>
+                            
+                            <!-- Fevereiro -->
+                            <div class="heatmap-cell positive" style="background: linear-gradient(135deg, rgba(251, 191, 36, 0.3), rgba(251, 191, 36, 0.15)); border-color: rgba(251, 191, 36, 0.5); color: #f59f00;">
+                                <div class="heatmap-cell-month">Fev 🏆</div>
+                                <div class="heatmap-cell-value">+R$ 4.027</div>
+                                <div style="font-size: 0.7rem; margin-top: 4px;">+3,81%</div>
+                            </div>
+                            
+                            <!-- Março -->
+                            <div class="heatmap-cell neutral">
+                                <div class="heatmap-cell-month">Mar</div>
+                                <div class="heatmap-cell-value">+R$ 0,01</div>
+                                <div style="font-size: 0.7rem; margin-top: 4px;">0,00%</div>
+                            </div>
+                            
+                            <!-- Abril -->
+                            <div class="heatmap-cell positive">
+                                <div class="heatmap-cell-month">Abr</div>
+                                <div class="heatmap-cell-value">+R$ 621</div>
+                                <div style="font-size: 0.7rem; margin-top: 4px;">+0,57%</div>
+                            </div>
+                            
+                            <!-- Maio a Dezembro (sem dados) -->
+                            <div class="heatmap-cell neutral" style="opacity: 0.3;">
+                                <div class="heatmap-cell-month">Mai</div>
+                                <div class="heatmap-cell-value">---</div>
+                            </div>
+                            
+                            <div class="heatmap-cell neutral" style="opacity: 0.3;">
+                                <div class="heatmap-cell-month">Jun</div>
+                                <div class="heatmap-cell-value">---</div>
+                            </div>
+                            
+                            <div class="heatmap-cell neutral" style="opacity: 0.3;">
+                                <div class="heatmap-cell-month">Jul</div>
+                                <div class="heatmap-cell-value">---</div>
+                            </div>
+                            
+                            <div class="heatmap-cell neutral" style="opacity: 0.3;">
+                                <div class="heatmap-cell-month">Ago</div>
+                                <div class="heatmap-cell-value">---</div>
+                            </div>
+                            
+                            <div class="heatmap-cell neutral" style="opacity: 0.3;">
+                                <div class="heatmap-cell-month">Set</div>
+                                <div class="heatmap-cell-value">---</div>
+                            </div>
+                            
+                            <div class="heatmap-cell neutral" style="opacity: 0.3;">
+                                <div class="heatmap-cell-month">Out</div>
+                                <div class="heatmap-cell-value">---</div>
+                            </div>
+                            
+                            <div class="heatmap-cell neutral" style="opacity: 0.3;">
+                                <div class="heatmap-cell-month">Nov</div>
+                                <div class="heatmap-cell-value">---</div>
+                            </div>
+                            
+                            <div class="heatmap-cell neutral" style="opacity: 0.3;">
+                                <div class="heatmap-cell-month">Dez</div>
+                                <div class="heatmap-cell-value">---</div>
+                            </div>
+                        </div>
+                        
+                        <!-- LEGENDA -->
+                        <div class="d-flex justify-content-center gap-4 mt-4">
+                            <div class="d-flex align-items-center gap-2">
+                                <div style="width: 20px; height: 20px; border-radius: 4px; background: linear-gradient(135deg, rgba(47, 179, 68, 0.25), rgba(47, 179, 68, 0.1));"></div>
+                                <span class="text-muted small">Positivo</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <div style="width: 20px; height: 20px; border-radius: 4px; background: linear-gradient(135deg, rgba(251, 191, 36, 0.3), rgba(251, 191, 36, 0.15));"></div>
+                                <span class="text-muted small">Melhor Mês</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <div style="width: 20px; height: 20px; border-radius: 4px; background: linear-gradient(135deg, rgba(98, 105, 118, 0.15), rgba(98, 105, 118, 0.05));"></div>
+                                <span class="text-muted small">Neutro</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================
+             LAYOUT 4: PROJEÇÃO FUTURA + COMPARAÇÃO
+             ============================================ -->
+        <div class="showcase-section">
+            <div class="showcase-header">
+                <div>
+                    <div class="showcase-number">LAYOUT 4</div>
+                    <h2 class="showcase-title">Projeção Futura + Regra dos 72</h2>
+                </div>
+            </div>
+            <div class="showcase-description">
+                <strong>🚀 Visão de Futuro:</strong> Card especial de projeção com valor futuro, regra dos 72, tempo para dobrar capital e metas de longo prazo.
+            </div>
+            
+            <div class="showcase-body">
+                <!-- HERO -->
+                <div class="hero-section">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="hero-label">💰 Situação Atual</div>
+                            <div class="hero-main-value text-primary">R$ 109.219</div>
+                            <div class="text-muted mt-2">Saldo em Abril 2025</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="hero-label">🚀 Projeção 2031</div>
+                            <div class="hero-main-value text-warning">R$ 207.968</div>
+                            <div class="text-muted mt-2">+90,5% em 6 anos</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PROJECTION CARD -->
+                <div class="projection-card mb-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h3 class="mb-3">🚀 Previsão de Futuro</h3>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <div style="opacity: 0.8;">Taxa Mensal</div>
+                                    <div class="h2 mb-0">1,07%</div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div style="opacity: 0.8;">Valor Presente</div>
+                                    <div class="h2 mb-0">R$ 76.797</div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div style="opacity: 0.8;">Valor Futuro (2031)</div>
+                                    <div class="h2 mb-0">R$ 207.968</div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div style="opacity: 0.8;">Tempo em Anos</div>
+                                    <div class="h2 mb-0">3,58 anos</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div style="font-size: 6rem; opacity: 0.3;">🚀</div>
+                            <div class="h4 mt-2">Regra dos 72</div>
+                            <div style="opacity: 0.8;">Dobrar capital em</div>
+                            <div class="h2 text-warning">3,58 anos</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- COMPARISON TABLE -->
+                <div class="comparison-table">
+                    <table class="table table-vcenter mb-0">
+                        <thead>
+                            <tr>
+                                <th>Mês</th>
+                                <th class="text-end">Saldo</th>
+                                <th class="text-end">Resultado</th>
+                                <th class="text-end">ROI</th>
+                                <th class="text-end">IRPF</th>
+                                <th class="text-end">Evolução</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Janeiro</strong></td>
+                                <td class="text-end">R$ 103.748,62</td>
+                                <td class="text-end text-success">+R$ 2.409,00</td>
+                                <td class="text-end text-success">2,32%</td>
+                                <td class="text-end text-danger">-R$ 361,35</td>
+                                <td class="text-end">1,97%</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Fevereiro 🏆</strong></td>
+                                <td class="text-end">R$ 105.796,27</td>
+                                <td class="text-end text-warning fw-bold">+R$ 4.027,00</td>
+                                <td class="text-end text-warning">3,81%</td>
+                                <td class="text-end text-danger">-R$ 604,05</td>
+                                <td class="text-end">3,24%</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Março</strong></td>
+                                <td class="text-end">R$ 109.219,25</td>
+                                <td class="text-end text-muted">+R$ 0,01</td>
+                                <td class="text-end text-muted">0,00%</td>
+                                <td class="text-end">-R$ 0,00</td>
+                                <td class="text-end">0,00%</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Abril</strong></td>
+                                <td class="text-end">R$ 109.219,26</td>
+                                <td class="text-end text-success">+R$ 621,00</td>
+                                <td class="text-end text-success">0,57%</td>
+                                <td class="text-end text-danger">-R$ 93,15</td>
+                                <td class="text-end">0,48%</td>
+                            </tr>
+                            <tr class="table-active">
+                                <td><strong>TOTAL</strong></td>
+                                <td class="text-end fw-bold">R$ 109.747,12</td>
+                                <td class="text-end fw-bold text-success">+R$ 7.057,01</td>
+                                <td class="text-end fw-bold">1,67%</td>
+                                <td class="text-end fw-bold text-danger">-R$ 1.058,55</td>
+                                <td class="text-end fw-bold">1,42%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- INSIGHTS -->
+                <div class="row g-3 mt-4">
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <div style="font-size: 3rem;">💡</div>
+                                <div class="h4 mt-2">Insight</div>
+                                <div class="text-muted">Fevereiro foi 67% melhor que a média</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <div style="font-size: 3rem;">📈</div>
+                                <div class="h4 mt-2">Tendência</div>
+                                <div class="text-muted">Crescimento consistente em 4 meses</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <div style="font-size: 3rem;">🎯</div>
+                                <div class="h4 mt-2">Meta 2025</div>
+                                <div class="text-muted">Faltam R$ 3.443 para R$ 10.500</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/js/tabler.min.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const colors = {
+            primary: '#206bc4',
+            success: '#2fb344',
+            danger: '#d63939',
+            warning: '#f59f00',
+            text: '#a8aeb7',
+            grid: '#2c3035'
+        };
+
+        // Chart Monthly Results (Layout 2)
+        if (document.querySelector("#cha
