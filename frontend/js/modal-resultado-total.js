@@ -60,7 +60,7 @@
     }
 
     function formatPercent(value) {
-        return `${value.toFixed(2)}%`;
+        return value.toFixed(2) + '%';
     }
 
     function formatCurrency(value, currency = 'BRL') {
@@ -147,7 +147,7 @@
                 { id: 'rtRecordsWorst', text: 'Carregando...' },
                 { id: 'rtGoalsGrid', text: 'Carregando...' },
                 { id: 'rtComparisonList', text: 'Carregando...' },
-                { id: 'rtHistoryBody', text: '<tr><td colspan="8" class="text-muted">Carregando...</td></tr>' }
+                { id: 'rtHistoryBody', text: '<tr><td colspan="9" class="text-muted">Carregando...</td></tr>' }
             ];
             containers.forEach(item => {
                 const el = document.getElementById(item.id);
@@ -899,6 +899,8 @@
     function renderHistory(ops) {
         const body = document.getElementById('rtHistoryBody');
         if (!body) return;
+        const config = JSON.parse(localStorage.getItem('appConfig') || '{}');
+        const saldoCorretoraFallback = parseFloat(config.saldoAcoes || 0);
         const searchEl = document.getElementById('rtHistorySearch');
         const query = searchEl ? searchEl.value.trim().toLowerCase() : '';
         const filtered = query
@@ -922,6 +924,10 @@
                 const days = getOpDurationDays(op);
                 return days !== null ? formatDurationDays(days) : '-';
             })();
+            const saldoOp = parseFloat(op.saldo_abertura || 0) || saldoCorretoraFallback;
+            const pct = saldoOp > 0 ? (result / saldoOp) * 100 : null;
+            const pctText = pct !== null ? formatPercent(pct) : '-';
+            const pctCls = pct === null ? '' : (pct >= 0 ? 'text-green' : 'text-danger');
 
             return `
                 <tr>
@@ -931,12 +937,13 @@
                     <td>${entry !== null ? formatCurrency(entry, 'BRL') : '-'}</td>
                     <td>${exit !== null ? formatCurrency(exit, 'BRL') : '-'}</td>
                     <td class="${result >= 0 ? 'text-green' : 'text-danger'}">${formatCurrency(result, 'BRL')}</td>
+                    <td class="${pctCls}">${pctText}</td>
                     <td>${duration}</td>
                 </tr>
             `;
         }).join('');
 
-        body.innerHTML = rows || '<tr><td colspan="7" class="text-muted">Sem operações no período.</td></tr>';
+        body.innerHTML = rows || '<tr><td colspan="8" class="text-muted">Sem operações no período.</td></tr>';
     }
 
     async function fetchIAInsights(summary, metrics, ops) {

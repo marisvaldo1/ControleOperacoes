@@ -30,6 +30,33 @@ setInterval(() => {
 }, 5 * 60 * 1000); // 5 minutos
 
 /**
+ * Formata porcentagem no padrão 99.99% (dois decimais, ponto).
+ * Cálculo padrão: resultado / saldo_corretora * 100
+ * @param {number} valor - valor percentual já calculado (ex: 2.5 para 2.50%)
+ * @returns {string} ex: "2.50%"
+ */
+function formatROIPct(valor) {
+    if (valor === null || valor === undefined || isNaN(valor)) return '';
+    return valor.toFixed(2) + '%';
+}
+
+/**
+ * Gera HTML de célula de tabela colorida com % de lucro/resultado.
+ * Para uso como coluna separada no DataTable.
+ * @param {number} resultado - valor numérico do resultado
+ * @param {number} saldoCorretora - saldo da corretora para cálculo de %
+ * @returns {string} HTML com span colorido ou '-' se saldo zero
+ */
+function calcResultadoPctCell(resultado, saldoCorretora) {
+    const r = parseFloatSafe(resultado);
+    const s = parseFloatSafe(saldoCorretora);
+    if (!s || s <= 0) return '-';
+    const pct = (r / s) * 100;
+    const cls = pct >= 0 ? 'text-success' : 'text-danger';
+    return `<span class="${cls}">${formatROIPct(pct)}</span>`;
+}
+
+/**
  * Converte string de valor monetário (brasileiro ou americano) para número
  * Suporta: "37,65", "37.65", "1.234,56", "1234.56"
  */
@@ -270,7 +297,7 @@ function registerClosedFilter() {
         const tableId = settings.nTable ? settings.nTable.getAttribute('id') : '';
         const hideClosed = closedFilterState.get(tableId);
         if (!hideClosed) return true;
-        const statusText = getStatusText(data[13]);
+        const statusText = getStatusText(data[14]);
         return !['FECHADA', 'EXERCIDA', 'VENCIDA'].includes(statusText);
     });
     closedFilterRegistered = true;
@@ -324,19 +351,19 @@ function initDataTables() {
         pageLength: 10,
         responsive: false,
         scrollX: true,
-        order: [[10, 'desc']],
+        order: [[11, 'desc']],
         columnDefs: [
             {
-                targets: 10,
+                targets: 11,
                 orderDataType: 'dom-data-order'
             },
             {
-                targets: 14,
+                targets: 15,
                 orderable: false
             }
         ],
         createdRow: function(row, data, dataIndex) {
-            const statusHtml = data[13];
+            const statusHtml = data[14];
             if (statusHtml && (statusHtml.includes('FECHADA') || statusHtml.includes('EXERCIDA'))) {
                 $(row).addClass('op-fechada');
             }
@@ -504,7 +531,7 @@ async function updateUI() {
     document.getElementById('cardSaldoCorretora').textContent = formatCurrency(saldoCorretora, 'BRL');
     document.getElementById('cardResultadoTotal').className = `h1 mb-0 ${resClass}`;
     document.getElementById('cardResultadoTotal').textContent = formatCurrency(totals.resultadoTotal, 'BRL');
-    document.getElementById('cardResultadoMedio').textContent = totals.resultadoMedio.toFixed(2) + '%';
+    document.getElementById('cardResultadoMedio').textContent = formatROIPct(totals.resultadoMedio);
     
     // Mes Atual Header
     const mesTotals = calcTotalsOpcoes(mesAtualData);
@@ -527,7 +554,7 @@ async function updateUI() {
         </div>
         <div class="col-md-3">
             <div class="text-muted">Média</div>
-            <div>${mesTotals.resultadoMedio.toFixed(2)}%</div>
+            <div>${formatROIPct(mesTotals.resultadoMedio)}</div>
         </div>
     `;
     document.getElementById('mesAtualTitle').textContent = `Operacoes - ${getMonthName(currentMonth).replace('-', ' 20')}`;
@@ -587,6 +614,8 @@ async function populateTable(dt, data, showActions = true, updatePrices = false,
         const db = new Date(b.data_operacao || b.created_at || 0);
         return db - da;
     });
+    // Saldo da corretora para cálculo de % ao lado do resultado
+    const _saldoPctConfig = parseFloat((JSON.parse(localStorage.getItem('appConfig') || '{}').saldoAcoes) || 0);
     
     // Se updatePrices=true, buscar cotações para operações abertas
     if (updatePrices) {
@@ -694,6 +723,7 @@ async function populateTable(dt, data, showActions = true, updatePrices = false,
             formatCurrency(parseFloatSafe(op.strike)),
             `<span class="${premioValue >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(premioAbs)}</span>`,
             `<span class="${parseFloatSafe(op.resultado) >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(parseFloatSafe(op.resultado))}</span>`,
+            calcResultadoPctCell(op.resultado, _saldoPctConfig),
             popCell,
             formatDateCell(op.vencimento),
             duracaoDias !== null ? `${duracaoDias} dias` : '-',
@@ -734,8 +764,8 @@ async function populateTable(dt, data, showActions = true, updatePrices = false,
                 op.status
             );
             dt.cell(rowNode, 3).data(priceCellUpdated);
-            dt.cell(rowNode, 9).data(popCellUpdated);
-            dt.cell(rowNode, 12).data(exercicioUpdated);
+            dt.cell(rowNode, 10).data(popCellUpdated);
+            dt.cell(rowNode, 13).data(exercicioUpdated);
         });
         dt.draw(false);
         return;
@@ -794,6 +824,7 @@ async function populateTable(dt, data, showActions = true, updatePrices = false,
             formatCurrency(parseFloatSafe(op.strike)),
             `<span class="${premioValue >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(premioAbs)}</span>`,
             `<span class="${parseFloatSafe(op.resultado) >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(parseFloatSafe(op.resultado))}</span>`,
+            calcResultadoPctCell(op.resultado, _saldoPctConfig),
             popCell,
             formatDateCell(op.vencimento),
             duracaoDias !== null ? `${duracaoDias} dias` : '-',
@@ -2013,6 +2044,7 @@ function renderAnnualResumo(data, year) {
     let totalCustos = 0;
     let totalResultado = 0;
     let totalWins = 0;
+    let acumuladoPct = 0; // soma das rentabilidades mensais
 
     const rows = [];
     const cards = [];
@@ -2055,6 +2087,7 @@ function renderAnnualResumo(data, year) {
         totalCustos += custosMes;
         totalResultado += resultadoMes;
         totalWins += winsMes;
+        if (opsCount > 0) acumuladoPct += rentabilidade; // acumular % mensais
 
         const rowAttrs = opsCount > 0 ? `class="cursor-pointer" onclick="showMonthOperations(${year}, ${i})" style="cursor: pointer;"` : '';
         rows.push(`
@@ -2065,14 +2098,14 @@ function renderAnnualResumo(data, year) {
                 <td class="text-end">${formatCurrency(totalPremioMes)}</td>
                 <td class="text-end">${formatCurrency(custosMes)}</td>
                 <td class="text-end ${resultadoMes >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(resultadoMes)}</td>
-                <td class="text-end ${rentabilidade >= 0 ? 'text-success' : 'text-danger'}">${rentabilidade.toFixed(1)}%</td>
-                <td class="text-end">${taxaAcerto.toFixed(1)}%</td>
+                <td class="text-end ${rentabilidade >= 0 ? 'text-success' : 'text-danger'}">${formatROIPct(rentabilidade)}</td>
+                <td class="text-end">${formatROIPct(taxaAcerto)}</td>
                 <td>
                     <div class="d-flex align-items-center">
                         <div class="progress progress-sm flex-grow-1 me-2" data-bs-toggle="tooltip" title="Rentabilidade sobre saldo inicial: ${formatCurrency(saldoInicialMes)}">
                             <div class="progress-bar ${rentBarClass}" style="width: ${rentabilidadeBar.toFixed(0)}%"></div>
                         </div>
-                        <span class="text-muted small">${rentabilidade.toFixed(1)}%</span>
+                        <span class="text-muted small">${formatROIPct(rentabilidade)}</span>
                     </div>
                 </td>
             </tr>
@@ -2087,7 +2120,7 @@ function renderAnnualResumo(data, year) {
                     <div class="card card-sm ${cardClass}" onclick="showMonthOperations(${year}, ${i})" style="cursor: pointer;">
                         <div class="card-body text-center">
                             <div class="text-muted small">${getMonthName(monthKey).split('-')[0].substring(0, 3)}</div>
-                            <div class="h3 mb-0 ${textClass}">${rentabilidade.toFixed(1)}%</div>
+                            <div class="h3 mb-0 ${textClass}">${formatROIPct(rentabilidade)}</div>
                             <div class="text-muted small">${opsCount} ops</div>
                             <div class="${textClass} fw-bold small">${formatCurrency(resultadoMes)}</div>
                         </div>
@@ -2128,7 +2161,7 @@ function renderAnnualResumo(data, year) {
                                         <th class="text-end">Custos</th>
                                         <th class="text-end">Resultado</th>
                                         <th class="text-end">Rentabilidade</th>
-                                        <th class="text-end">Taxa Acerto</th>
+                                        <th class="text-end" title="Win rate por mês / Acumulado de % mensais no total">Taxa Acerto / % Acum.</th>
                                         <th>Progresso</th>
                                     </tr>
                                 </thead>
@@ -2141,8 +2174,8 @@ function renderAnnualResumo(data, year) {
                                         <td class="text-end">${formatCurrency(totalPremios)}</td>
                                         <td class="text-end">${formatCurrency(totalCustos)}</td>
                                         <td class="text-end ${totalResultado >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(totalResultado)}</td>
-                                        <td class="text-end ${totalRent >= 0 ? 'text-success' : 'text-danger'}">${totalRent.toFixed(1)}%</td>
-                                        <td class="text-end">${totalTaxa.toFixed(1)}%</td>
+                                        <td class="text-end ${totalRent >= 0 ? 'text-success' : 'text-danger'}">${formatROIPct(totalRent)}</td>
+                                        <td class="text-end ${acumuladoPct >= 0 ? 'text-success' : 'text-danger'}" title="Soma das rentabilidades mensais: ${formatROIPct(acumuladoPct)}">${formatROIPct(acumuladoPct)}</td>
                                         <td>${meta > 0 ? formatCurrency(meta) : '-'}</td>
                                     </tr>
                                 </tbody>
@@ -2237,7 +2270,7 @@ function showMonthOperations(year, month) {
                 <td>${exercicioBadgeHTML}</td>
                 <td>${formatCurrency(saldoInfo.saldo)}${saldoInfo.estimado ? ' <span class="badge bg-yellow text-yellow-fg ms-1">estimado</span>' : ''}</td>
                 <td class="${resultado >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(resultado)}</td>
-                <td class="${perc >= 0 ? 'text-success' : 'text-danger'}">${perc.toFixed(2)}%</td>
+                <td class="${perc >= 0 ? 'text-success' : 'text-danger'}">${formatROIPct(perc)}</td>
                 <td>
                     <button class="btn btn-sm btn-info btn-icon" onclick="openDetalheFromMonthModal('${op.id}')" title="Detalhes">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
@@ -2423,7 +2456,7 @@ function showWeekOperations(startDate, endDate) {
                 <td>${exercicioBadgeHTML}</td>
                 <td>${formatCurrency(saldoInfo.saldo)}${saldoInfo.estimado ? ' <span class="badge bg-yellow text-yellow-fg ms-1">estimado</span>' : ''}</td>
                 <td class="${resultado >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(resultado)}</td>
-                <td class="${perc >= 0 ? 'text-success' : 'text-danger'}">${perc.toFixed(2)}%</td>
+                <td class="${perc >= 0 ? 'text-success' : 'text-danger'}">${formatROIPct(perc)}</td>
                 <td>
                     <button class="btn btn-sm btn-info btn-icon" onclick="openDetalheFromMonthModal('${op.id}')" title="Detalhes">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
@@ -2595,7 +2628,7 @@ function renderAnnualTable(data) {
                     <td>${exercicioBadgeHTML}</td>
                     <td>${formatCurrency(saldoInfo.saldo)}${saldoInfo.estimado ? ' <span class="badge bg-yellow text-yellow-fg ms-1">estimado</span>' : ''}</td>
                     <td class="${resultado >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(resultado)}</td>
-                    <td class="${perc >= 0 ? 'text-success' : 'text-danger'}">${perc.toFixed(2)}%</td>
+                    <td class="${perc >= 0 ? 'text-success' : 'text-danger'}">${formatROIPct(perc)}</td>
                     <td>
                         <button class="btn btn-sm btn-info btn-icon" onclick="openDetalheOperacao('${op.id}')" title="Detalhes">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
@@ -3356,7 +3389,7 @@ function renderSaldoTabela(ops) {
             <td>${exercicioBadgeHTML}</td>
             <td>${formatCurrency(saldoInfo.saldo)}${saldoInfo.estimado ? ' <span class="badge bg-yellow text-yellow-fg ms-1">estimado</span>' : ''}</td>
             <td class="${resultado >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(resultado)}</td>
-            <td class="${perc >= 0 ? 'text-success' : 'text-danger'}">${perc.toFixed(2)}%</td>
+            <td class="${perc >= 0 ? 'text-success' : 'text-danger'}">${formatROIPct(perc)}</td>
             <td>
                 <button class="btn btn-sm btn-info btn-icon" onclick="openDetalheOperacao('${op.id}')" title="Detalhes">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
@@ -4360,6 +4393,15 @@ async function buscarOpcoesSimulacaoHibrida() {
         // Renderizar lista com filtros padrão
         renderSimOpcoesList();
 
+        // Limpar loading ANTES de restaurar seleção para que os novos valores não sejam sobrescritos no finally
+        const _loadingElementsToReset = [
+            'simOpcaoTitle', 'simOpcaoCotacao',
+            'simOpcaoNome', 'simOpcaoVencimento', 'simOpcaoStrike', 'simOpcaoPremio',
+            'simOpcaoDias', 'simOpcaoDistancia', 'simOpcaoNotional',
+            'simOpcaoSaldo', 'simOpcaoMargem', 'simLucroTotal'
+        ];
+        showMultipleElementsLoading(_loadingElementsToReset, false);
+
         // Restaurar seleção anterior
         let restored = false;
         if (prevSelectedAtivo) {
@@ -4376,7 +4418,13 @@ async function buscarOpcoesSimulacaoHibrida() {
         }
         
         // Atualizar timestamp
-        const updateTime = new Date().toLocaleTimeString('pt-BR');
+        const now = new Date();
+        const updateTime = now.toLocaleTimeString('pt-BR');
+        const timestamp = now.toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'});
+        const timestampElHib = document.getElementById('simUltimaAtualizacao');
+        if (timestampElHib) {
+            timestampElHib.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Atualizado: ${timestamp}`;
+        }
         console.log(`✅ Dados atualizados às ${updateTime}`);
 
     } catch (e) {
@@ -4394,14 +4442,21 @@ async function buscarOpcoesSimulacaoHibrida() {
     } finally {
         document.getElementById('simLoading').style.display = 'none';
         
-        // Remover loading de todos os elementos
-        const loadingElements = [
+        // Limpar apenas spinners residuais (caso o try tenha sido interrompido antes do reset)
+        // Não restaurar dataset.originalContent para não sobrescrever valores setados por selectSimOption
+        const finalLoadingElements = [
             'simOpcaoTitle', 'simOpcaoCotacao',
             'simOpcaoNome', 'simOpcaoVencimento', 'simOpcaoStrike', 'simOpcaoPremio',
             'simOpcaoDias', 'simOpcaoDistancia', 'simOpcaoNotional',
             'simOpcaoSaldo', 'simOpcaoMargem', 'simLucroTotal'
         ];
-        showMultipleElementsLoading(loadingElements, false);
+        finalLoadingElements.forEach(id => {
+            const el = document.getElementById(id);
+            if (el && el.querySelector && el.querySelector('.spinner-border')) {
+                el.innerHTML = el.dataset.originalContent || '-';
+            }
+            if (el) delete el.dataset.originalContent;
+        });
         
         // Restaurar título principal
         const mainTitle = document.querySelector('#modalSimulacao .modal-title');
@@ -4907,8 +4962,8 @@ function updateSimCharts(op, qtd) {
         percentual = investido > 0 ? (lucro / investido) * 100 : 0;
     }
     
-    document.getElementById('simEvolucaoLabel').textContent = `${percentual.toFixed(1)}%`;
-    document.getElementById('simEvolucaoText').textContent = `Crescimento +${percentual.toFixed(1)}%`;
+    document.getElementById('simEvolucaoLabel').textContent = `${percentual.toFixed(2)}%`;
+    document.getElementById('simEvolucaoText').textContent = `Crescimento +${percentual.toFixed(2)}%`;
 
     // Check theme
     const isDarkMode = document.body.getAttribute('data-bs-theme') === 'dark';

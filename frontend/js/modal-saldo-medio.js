@@ -28,7 +28,7 @@
     }
 
     function smPctFmt(v) {
-        return (v >= 0 ? '+' : '') + v.toFixed(1) + '%';
+        return (v >= 0 ? '+' : '') + v.toFixed(2) + '%';
     }
 
     function getSaldoCorretora() {
@@ -92,7 +92,7 @@
                             fontWeight: 700,
                             color: color,
                             offsetY: 8,
-                            formatter: function (v) { return v.toFixed(0) + '%'; },
+                            formatter: function (v) { return v.toFixed(2) + '%'; },
                         },
                     },
                 },
@@ -216,9 +216,9 @@
         charts.gRet  = makeGauge('smGRet',  Math.min(100, Math.max(0, retPremio)),'#f59f00');
         charts.gRet2 = makeGauge('smGRet2', Math.min(100, Math.max(0, retSaldo)), '#6366f1');
 
-        _setText('smGPoPsub',  popMedio > 0 ? popMedio.toFixed(1) + '%' : 'sem dados');
+        _setText('smGPoPsub',  popMedio > 0 ? popMedio.toFixed(2) + '%' : 'sem dados');
         _setText('smGWinsub',  ganhos.length + '/' + fechadas.length + ' ops');
-        _setText('smGRetsub',  retPremio.toFixed(1) + '%');
+        _setText('smGRetsub',  retPremio.toFixed(2) + '%');
         _setText('smGRet2sub', retSaldo.toFixed(2) + '%');
 
         /* ── Tabela ── */
@@ -232,8 +232,9 @@
                     const prem    = parseFloat(o.premio || 0);
                     const qtd     = parseFloat(o.quantidade || 1);
                     const premTot = prem * qtd;
-                    const pctBase = saldoCorretora || parseFloat(o.saldo_abertura || 0);
-                    const pct     = pctBase ? (premTot / pctBase) * 100 : 0;
+                    // % = resultado / saldo_abertura (saldo na abertura da operação)
+                    const saldoOp = parseFloat(o.saldo_abertura || 0) || saldoCorretora;
+                    const pct     = saldoOp ? (res / saldoOp) * 100 : 0;
                     const statusCls = {
                         FECHADA: 'text-success', ABERTA: 'text-primary',
                         VENCIDA: 'text-secondary', PERDIDA: 'text-danger',
@@ -243,7 +244,7 @@
                         + '<td><strong>' + _esc(ativoNome) + '</strong></td>'
                         + '<td>' + _esc(o.tipo || '—') + '</td>'
                         + '<td title="Unit: ' + smFmt(prem) + ' × ' + qtd + '">' + smFmt(premTot) + '</td>'
-                        + '<td class="' + (pct >= 0 ? 'text-success' : 'text-danger') + '">' + pct.toFixed(1) + '%</td>'
+                        + '<td class="' + (pct >= 0 ? 'text-success' : 'text-danger') + '">' + pct.toFixed(2) + '%</td>'
                         + '<td>' + (o.pop != null && parseFloat(o.pop) > 0 ? parseFloat(o.pop).toFixed(0) + '%' : '—') + '</td>'
                         + '<td>' + (o.dias != null ? o.dias : '—') + '</td>'
                         + '<td class="' + (res >= 0 ? 'text-success' : 'text-danger') + '">' + smFmt(res) + '</td>'
@@ -267,8 +268,8 @@
                 { lbl: 'Resultado total',    val: smFmt(totalResultado), cls: totalResultado >= 0 ? 'text-success' : 'text-danger' },
                 { lbl: 'Saldo médio',        val: smFmt(mediaSaldo),     cls: '' },
                 { lbl: 'PoP médio',          val: popMedio > 0 ? popMedio.toFixed(1) + '%' : '—',  cls: '' },
-                { lbl: 'Win rate',           val: winRate.toFixed(1) + '%',  cls: winRate >= 60 ? 'text-success' : winRate >= 40 ? 'text-warning' : 'text-danger' },
-                { lbl: 'Retenção prêmio',    val: retPremio.toFixed(1) + '%', cls: retPremio >= 0 ? 'text-success' : 'text-danger' },
+                { lbl: 'Win rate',           val: winRate.toFixed(2) + '%',  cls: winRate >= 60 ? 'text-success' : winRate >= 40 ? 'text-warning' : 'text-danger' },
+                { lbl: 'Retenção prêmio',    val: retPremio.toFixed(2) + '%', cls: retPremio >= 0 ? 'text-success' : 'text-danger' },
             ].map(function (m) {
                 return '<div class="sm-mline"><span class="sm-mline-lbl">' + m.lbl + '</span>'
                      + '<span class="sm-mline-val ' + m.cls + '">' + m.val + '</span></div>';

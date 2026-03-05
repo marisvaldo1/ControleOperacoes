@@ -9,7 +9,7 @@
     }
 
     function fmtPct(v) {
-        return `${(v || 0).toFixed(1)}%`;
+        return `${(v || 0).toFixed(2)}%`;
     }
 
     function getNumber(op, fields) {
@@ -133,7 +133,7 @@
         const tbody = document.getElementById('toOpsTbody');
         if (!tbody) return;
         if (!ops.length) {
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-3">Sem dados</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-3">Sem dados</td></tr>';
             return;
         }
         const sorted = [...ops].sort((a, b) => {
@@ -150,6 +150,10 @@
             const ativo = op.ativo_base || op.ativo || op.codigo || '-';
             const tipo = (op.tipo || op.tipo_opcao || '-').toUpperCase();
             const status = (op.status || op.situacao || '-').toUpperCase();
+            const saldoOp = getNumber(op, ['saldo_abertura', 'saldo', 'saldo_entrada', 'saldo_inicial']);
+            const pct = saldoOp > 0 ? (resultado / saldoOp) * 100 : null;
+            const pctText = pct !== null ? fmtPct(pct) : '-';
+            const pctCls = pct === null ? '' : (pct >= 0 ? 'text-success' : 'text-danger');
             return `<tr>
                 <td>${formatDate(d)}</td>
                 <td>${ativo}</td>
@@ -157,6 +161,7 @@
                 <td>${status}</td>
                 <td>${fmtCurrency(premio)}</td>
                 <td class="${resultado >= 0 ? 'text-success' : 'text-danger'}">${fmtCurrency(resultado)}</td>
+                <td class="${pctCls}">${pctText}</td>
                 <td class="${acumulado >= 0 ? 'text-success' : 'text-danger'}">${fmtCurrency(acumulado)}</td>
             </tr>`;
         }).join('');

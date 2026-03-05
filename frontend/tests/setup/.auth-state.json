@@ -1,0 +1,18 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "http://localhost:8881",
+      "localStorage": [
+        {
+          "name": "cc_user",
+          "value": "{\"email\":\"admin@clinica.com\",\"nome\":\"Marisvaldo\",\"perfil\":\"Admin\",\"perfil_id\":1,\"permissoes\":{\"administracao\":true,\"agenda\":true,\"atendimento\":true,\"financeiro\":true,\"pacientes\":true,\"relatorios\":true},\"user_id\":1}"
+        },
+        {
+          "name": "cc_token",
+          "value": "f69a1af1c521ad7f1603d4324fc27c7d48c8d1e1bb775a0eff7f775dfab1438e"
+        }
+      ]
+    }
+  ]
+}

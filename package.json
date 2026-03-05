@@ -1,0 +1,16 @@
+{
+  "name": "controle-operacoes-tests",
+  "version": "1.0.0",
+  "description": "Suite de testes - Controle de Operacoes",
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "eslint": "eslint frontend/js/ --max-warnings=0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0",
+    "eslint": "^9.0.0"
+  }
+}

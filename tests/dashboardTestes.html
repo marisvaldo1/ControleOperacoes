@@ -1,0 +1,314 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Controle Operacoes - Suite de Testes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="dashboardTestes.css">
+</head>
+<body>
+<div class="topbar">
+    <div class="logo">
+      <div class="topbar-left">
+        <button class="tb-toggle" onclick="toggleSidebar()" title="Mostrar/ocultar sidebar">&#x2630;</button>
+      </div>
+    <div class="logo-icon">&#x1F4C8;</div>
+    <div>
+      <div class="logo-text">Controle Operações</div>
+      <div class="logo-sub">TEST DASHBOARD</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <button class="btn-sim-err" onclick="openDemoError()" title="Simular erro para teste do modal">&#x1F9EA; Simular Erro</button>
+    <div class="badge badge-green"><div class="pulse"></div>localhost:8888</div>
+    <div class="badge badge-purple">&#x1F40D; pytest</div>
+    <div class="badge badge-orange">&#x1F3AD; Playwright</div>
+    <span class="srv-status srv-off" id="srvBadge">&#x2699; SERVIDOR</span>
+    <div class="clock" id="clock">--:--:--</div>
+  </div>
+</div>
+<div class="main">
+  <div class="sidebar" id="sidebar">
+    <div class="resize-handle" id="resizeHandle"></div>
+    <div class="sb-hdr" id="sidebarHdr">
+      <div class="sb-titlebar">
+        <div class="sidebar-title">Testes</div>
+        <div style="display:flex;align-items:center;gap:5px">
+          <button class="bxs" id="btnExpandAll" onclick="toggleExpandAll()" title="Expandir/Recolher grupos">
+            <svg id="expandIcon" width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+              <line x1="5.5" y1="1" x2="5.5" y2="10"/><line x1="1" y1="5.5" x2="10" y2="5.5"/>
+            </svg>
+          </button>
+          <button class="hamburger" id="hamburger" onclick="toggleMenu()" title="Opcoes da lista">
+            <span></span><span></span><span></span>
+          </button>
+        </div>
+      </div>
+      <div class="sb-menu" id="sbMenu">
+        <button class="sb-menu-item" onclick="menuAction('selectAll')"><span class="mico">&#x2611;</span>Marcar todos</button>
+        <button class="sb-menu-item" onclick="menuAction('deselectAll')"><span class="mico">&#x2610;</span>Desmarcar todos</button>
+        <div class="sb-menu-sep"></div>
+        <button class="sb-menu-item" onclick="menuAction('selectBE')"><span class="mico">&#x1F40D;</span>Somente Backend</button>
+        <button class="sb-menu-item" onclick="menuAction('selectFE')"><span class="mico">&#x1F3AD;</span>Somente Frontend</button>
+        <button class="sb-menu-item" onclick="menuAction('selectAI')"><span class="mico">&#x1F916;</span>Somente IA</button>
+        <div class="sb-menu-sep"></div>
+        <button class="sb-menu-item" onclick="menuAction('expandAll')"><span class="mico">&#x229E;</span>Expandir todos</button>
+        <button class="sb-menu-item" onclick="menuAction('collapseAll')"><span class="mico">&#x229F;</span>Recolher todos</button>
+        <div class="sb-menu-sep"></div>
+        <button class="sb-menu-item" onclick="menuAction('selectFailed')"><span class="mico" style="color:var(--red)">&#x2717;</span>So com falha</button>
+        <button class="sb-menu-item" onclick="menuAction('resetWidth')"><span class="mico">&#x2194;</span>Resetar largura</button>
+        <div class="sb-menu-sep"></div>
+        <button class="sb-menu-item" onclick="menuAction('resetDashboard')" style="color:var(--yellow)"><span class="mico" style="color:var(--yellow)">&#x1F5D1;</span>Zerar Resultados</button>
+      </div>
+      <div class="sb-controls">
+        <button class="bxs" id="btnSelAll" onclick="toggleSelectAll()">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+            <polyline points="1,5 3.5,7.5 9,2"/>
+          </svg>
+          <span id="btnSelAllTxt">Desmarcar</span>
+        </button>
+        <span class="sel-count" id="selCount">0/0</span>
+      </div>
+    </div>
+    <div class="sidebar-scroll" id="sidebarScroll"></div>
+    <div class="sidebar-footer">
+      <div class="run-progress-bar"><div class="run-progress-fill" id="runProgressBar"></div></div>
+      <div class="run-status" id="runStatus">- testes selecionados</div>
+      <div class="no-sel-warning" id="noSelWarn">&#9888; Nenhum teste selecionado. Selecione ao menos um teste para executar.</div>
+      <button class="run-btn" id="runBtn" onclick="runTests()">&#9654; Executar Testes</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="kpi-row">
+      <div class="kpi-card" style="--kc:var(--green)"><div class="kpi-label">Total Testes</div><div class="kpi-value" style="color:var(--green)" id="kpi-total">-</div><div class="kpi-sub" id="kpi-sub-total">carregando...</div><div class="kpi-icon">&#x1F9EA;</div></div>
+      <div class="kpi-card" style="--kc:var(--green)"><div class="kpi-label">Passou</div><div class="kpi-value" style="color:var(--green)" id="kpi-pass">-</div><div class="kpi-sub" id="kpi-sub-pass">-</div><div class="kpi-icon">&#x2705;</div></div>
+      <div class="kpi-card kpi-clickable" style="--kc:var(--red)" onclick="openFailsModal()" title="Clique para ver falhas"><div class="kpi-label">Falhou</div><div class="kpi-value" style="color:var(--red)" id="kpi-fail">-</div><div class="kpi-sub" id="kpi-sub-fail">-</div><div class="kpi-icon">&#x274C;</div></div>
+      <div class="kpi-card" style="--kc:var(--accent)"><div class="kpi-label">Duracao Total</div><div class="kpi-value" style="color:var(--accent)" id="kpi-dur">-</div><div class="kpi-sub">Ultima execucao</div><div class="kpi-icon">&#x23F1;</div></div>
+      <div class="kpi-card" style="--kc:var(--yellow)"><div class="kpi-label">Saude Geral</div><div class="kpi-value" style="color:var(--green)" id="kpi-health">-</div><div class="kpi-sub">indice de qualidade</div><div class="kpi-icon">&#x1F49A;</div></div>
+    </div>
+    <div class="mid-row">
+      <div class="panel acc-collapsed" id="panel-be">
+        <div class="panel-header acc-header" onclick="togglePanel(this)">
+          <div class="panel-title"><span style="color:var(--purple)">&#x1F40D;</span> Backend (pytest)<span class="acc-chevron">&#9660;</span></div>
+          <div class="pbadge pbadge-g" id="be-badge">- / - PASSOU</div>
+        </div>
+        <div class="panel-body" id="be-panel-body"><div style="color:var(--muted);font-size:11px;font-family:'JetBrains Mono',monospace;text-align:center;padding:20px 0">Carregando...</div></div>
+      </div>
+      <div class="panel acc-collapsed" id="panel-fe">
+        <div class="panel-header acc-header" onclick="togglePanel(this)">
+          <div class="panel-title"><span style="color:var(--orange)">&#x1F3AD;</span> Frontend (Playwright)<span class="acc-chevron">&#9660;</span></div>
+          <div class="pbadge pbadge-g" id="fe-badge">- / - PASSOU</div>
+        </div>
+        <div class="panel-body" id="fe-panel-body"><div style="color:var(--muted);font-size:11px;font-family:'JetBrains Mono',monospace;text-align:center;padding:20px 0">Carregando...</div></div>
+      </div>
+      <div class="panel acc-collapsed" id="panel-ai">
+        <div class="panel-header acc-header" onclick="togglePanel(this)">
+          <div class="panel-title"><span style="color:var(--ai-color,#00bfff)">&#x1F916;</span> Testes de IA<span class="acc-chevron">&#9660;</span></div>
+          <div class="pbadge" id="ai-badge">- / - PASSOU</div>
+        </div>
+        <div class="panel-body" id="ai-panel-body"><div style="color:var(--muted);font-size:11px;font-family:'JetBrains Mono',monospace;text-align:center;padding:20px 0">Carregando...</div></div>
+      </div>
+    </div>
+    <div class="panel" id="panel-saude">
+        <div class="panel-header acc-header" onclick="togglePanel(this)">
+          <div class="panel-title">&#x1F3E5; Saude do Sistema<span class="acc-chevron">&#9660;</span></div>
+          <div class="hc-live-pill" id="hc-main-pill">
+            <div class="hc-pill-dot" id="hc-pill-dot" style="background:var(--muted)"></div>
+            <span id="hc-pill-txt">AGUARDANDO</span>
+          </div>
+        </div>
+        <div class="panel-body hc-panel-body">
+          <div class="hc-card-body">
+            <!-- LEFT — Rings + Metricas -->
+            <div class="hc-left-col">
+              <div class="hc-rings-area">
+                <div class="hc-ring-wrap">
+                  <svg width="200" height="200" viewBox="0 0 160 160">
+                    <defs>
+                      <linearGradient id="hcGBE" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4d8cff"/><stop offset="100%" stop-color="#00d084"/></linearGradient>
+                      <linearGradient id="hcGFE" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#00b8d9"/><stop offset="100%" stop-color="#00d084"/></linearGradient>
+                      <linearGradient id="hcGHL" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#a78bfa"/><stop offset="100%" stop-color="#4d8cff"/></linearGradient>
+                    </defs>
+                    <circle cx="80" cy="80" r="72" fill="none" stroke="rgba(255,255,255,.04)" stroke-width="8"/>
+                    <circle cx="80" cy="80" r="72" id="hc-ring-be" fill="none" stroke="url(#hcGBE)" stroke-width="8" stroke-linecap="round" stroke-dasharray="452" stroke-dashoffset="452" transform="rotate(-90 80 80)" style="transition:stroke-dashoffset .5s ease"/>
+                    <circle cx="80" cy="80" r="59" fill="none" stroke="rgba(255,255,255,.04)" stroke-width="8"/>
+                    <circle cx="80" cy="80" r="59" id="hc-ring-fe" fill="none" stroke="url(#hcGFE)" stroke-width="8" stroke-linecap="round" stroke-dasharray="371" stroke-dashoffset="371" transform="rotate(-90 80 80)" style="transition:stroke-dashoffset .5s ease"/>
+                    <circle cx="80" cy="80" r="46" fill="none" stroke="rgba(255,255,255,.04)" stroke-width="8"/>
+                    <circle cx="80" cy="80" r="46" id="hc-ring-hl" fill="none" stroke="url(#hcGHL)" stroke-width="8" stroke-linecap="round" stroke-dasharray="289" stroke-dashoffset="289" transform="rotate(-90 80 80)" style="transition:stroke-dashoffset .5s ease"/>
+                    <text x="80" y="75" text-anchor="middle" font-family="JetBrains Mono" font-size="18" font-weight="700" fill="#e8edf5" id="hc-ring-pct">0%</text>
+                    <text x="80" y="87" text-anchor="middle" font-family="JetBrains Mono" font-size="7" fill="#4a5568" letter-spacing="2">SAUDE</text>
+                  </svg>
+                </div>
+                <div class="hc-ring-legend">
+                  <div class="hc-ring-leg"><div class="hc-ring-leg-dot" style="background:#00d084"></div><span class="hc-ring-leg-lbl">Backend</span><span class="hc-ring-leg-pct" id="hc-leg-be" style="color:#00d084">0%</span></div>
+                  <div class="hc-ring-leg"><div class="hc-ring-leg-dot" style="background:#00b8d9"></div><span class="hc-ring-leg-lbl">Frontend</span><span class="hc-ring-leg-pct" id="hc-leg-fe" style="color:#00b8d9">0%</span></div>
+                  <div class="hc-ring-leg"><div class="hc-ring-leg-dot" style="background:#a78bfa"></div><span class="hc-ring-leg-lbl">Saude Geral</span><span class="hc-ring-leg-pct" id="hc-leg-hl" style="color:#a78bfa">0%</span></div>
+                </div>
+              </div>
+              <div class="hc-metrics-area">
+                <div class="hc-metric-row">
+                  <div class="hc-metric-hdr"><span class="hc-metric-lbl">&#x1F3AF; Cobertura</span><span class="hc-metric-val" style="color:var(--accent)" id="hc-m-cov">0%</span></div>
+                  <div class="hc-metric-bar"><div class="hc-metric-fill" style="background:var(--accent)" id="hc-b-cov"></div></div>
+                  <div class="hc-metric-sub" id="hc-d-cov">aguardando execucao</div>
+                </div>
+                <div class="hc-metric-row">
+                  <div class="hc-metric-hdr"><span class="hc-metric-lbl">&#x2705; Confiabilidade</span><span class="hc-metric-val" style="color:var(--green)" id="hc-m-rel">&mdash;</span></div>
+                  <div class="hc-metric-bar"><div class="hc-metric-fill" style="background:var(--green)" id="hc-b-rel"></div></div>
+                  <div class="hc-metric-sub" id="hc-d-rel">aguardando</div>
+                </div>
+                <div class="hc-metric-row">
+                  <div class="hc-metric-hdr"><span class="hc-metric-lbl">&#x26A1; Velocidade</span><span class="hc-metric-val" style="color:var(--accent)" id="hc-m-spd">&mdash;</span></div>
+                  <div class="hc-metric-bar"><div class="hc-metric-fill" style="background:var(--accent)" id="hc-b-spd"></div></div>
+                  <div class="hc-metric-sub" id="hc-d-spd">ms medio por teste</div>
+                </div>
+                <div class="hc-metric-row">
+                  <div class="hc-metric-hdr"><span class="hc-metric-lbl">&#x1F6E1; Estabilidade</span><span class="hc-metric-val" style="color:var(--yellow)" id="hc-m-stab">&mdash;</span></div>
+                  <div class="hc-metric-bar"><div class="hc-metric-fill" style="background:var(--yellow)" id="hc-b-stab"></div></div>
+                  <div class="hc-metric-sub" id="hc-d-stab">sem falhas consecutivas</div>
+                </div>
+                <div class="hc-metric-row">
+                  <div class="hc-metric-hdr"><span class="hc-metric-lbl" style="font-weight:700;color:var(--text)">&#x1F3C6; Score Final</span><span class="hc-metric-val" style="color:var(--accent);font-size:15px" id="hc-m-score">&mdash;</span></div>
+                  <div class="hc-metric-bar" style="height:4px"><div class="hc-metric-fill" style="background:linear-gradient(90deg,#4d8cff,#00d084)" id="hc-b-score"></div></div>
+                  <div class="hc-metric-sub" id="hc-d-score">indice combinado</div>
+                </div>
+              </div>
+            </div>
+            <!-- RIGHT — Heatmap + Timeline -->
+            <div class="hc-right-col">
+              <div class="hc-hmap-area">
+                <div class="hc-hmap-header">
+                  <span class="hc-hmap-title">Mapa de Execucao</span>
+                  <div class="hc-hmap-meta">
+                    <span class="hc-hmap-count" id="hc-hmap-count">0 / 0</span>
+                    <div class="hc-hmap-legend">
+                      <div class="hc-hmap-leg-item"><div class="hc-hmap-leg-cell" style="background:var(--green)"></div>Passou</div>
+                      <div class="hc-hmap-leg-item"><div class="hc-hmap-leg-cell" style="background:var(--red)"></div>Falhou</div>
+                      <div class="hc-hmap-leg-item"><div class="hc-hmap-leg-cell" style="background:rgba(255,255,255,.05)"></div>Pendente</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="hc-hmap-grid" id="hc-hmap-grid"></div>
+              </div>
+              <div class="hc-timeline-area">
+                <div class="hc-tl-title">Progresso por Suite</div>
+                <div class="hc-tl-rows" id="hc-tl-rows"></div>
+              </div>
+            </div>
+            <!-- BREAKDOWN — Aprovação por Categoria -->
+            <div class="hc-bd-col">
+              <div class="hc-bd-hdr">
+                <span class="hc-bd-title">APROVAÇÃO POR CATEGORIA</span>
+              </div>
+              <div class="hc-bd-rows" id="hc-bd-rows"></div>
+            </div>
+          </div>
+        </div>
+    </div>
+    <div class="bottom-row">
+      <div class="panel acc-collapsed">
+        <div class="panel-header acc-header" onclick="togglePanel(this)">
+          <div class="panel-title">&#x1F4CB; Resultados Detalhados<span class="acc-chevron">&#9660;</span></div>
+          <div style="display:flex;gap:8px;">
+            <select class="filter-sel" id="filterType" onchange="filterTable()"><option value="">Todos</option><option value="backend">Backend</option><option value="frontend">Frontend</option><option value="ai">IA</option></select>
+            <select class="filter-sel" id="filterStatus" onchange="filterTable()"><option value="">Status</option><option value="pass">PASS</option><option value="fail">FAIL</option></select>
+          </div>
+        </div>
+        <div class="panel-body" style="padding:0">
+          <div class="table-scroll"><table class="test-table"><thead><tr><th>Arquivo / Suite</th><th>Nome do Teste</th><th>Tipo</th><th>Status</th><th>Dur.</th></tr></thead><tbody id="testTableBody"></tbody></table></div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="panel acc-collapsed">
+          <div class="panel-header acc-header" onclick="togglePanel(this)">
+            <div class="panel-title">&#x1F4CA; Distribuicao<span class="acc-chevron">&#9660;</span></div>
+          </div>
+          <div class="panel-body">
+            <div class="donut-wrap">
+              <svg width="110" height="110" viewBox="0 0 110 110">
+                <circle cx="55" cy="55" r="40" fill="none" stroke="#1e2d3d" stroke-width="18"/>
+                <circle id="donut-be" cx="55" cy="55" r="40" fill="none" stroke="var(--purple)" stroke-width="18" stroke-dasharray="192.2 59.1" stroke-dashoffset="-62.8" transform="rotate(-90 55 55)" style="transition:stroke-dasharray .8s ease"/>
+                <circle id="donut-fe" cx="55" cy="55" r="40" fill="none" stroke="var(--orange)" stroke-width="18" stroke-dasharray="59.1 192.2" stroke-dashoffset="-129.4" transform="rotate(-90 55 55)" style="transition:stroke-dasharray .8s ease"/>
+                <circle id="donut-ai" cx="55" cy="55" r="40" fill="none" stroke="var(--ai-color)" stroke-width="18" stroke-dasharray="0 251.3" stroke-dashoffset="-62.8" transform="rotate(-90 55 55)" style="transition:stroke-dasharray .8s ease"/>
+                <text id="donut-text" x="55" y="52" text-anchor="middle" font-family="JetBrains Mono" font-size="13" font-weight="700" fill="#c9d1d9">-</text>
+                <text x="55" y="64" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#4a5568">TESTES</text>
+              </svg>
+              <div class="donut-legend">
+                <div class="dl-item"><div class="dl-dot" style="background:var(--purple)"></div><div><div style="font-size:11px;color:var(--text)">Backend</div><div id="legend-be" style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace">-</div></div></div>
+                <div class="dl-item"><div class="dl-dot" style="background:var(--orange)"></div><div><div style="font-size:11px;color:var(--text)">Frontend</div><div id="legend-fe" style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace">-</div></div></div>
+                <div class="dl-item"><div class="dl-dot" style="background:var(--ai-color)"></div><div><div style="font-size:11px;color:var(--text)">IA</div><div id="legend-ai" style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace">-</div></div></div>
+                <div class="dl-item"><div class="dl-dot" style="background:var(--green)"></div><div><div style="font-size:11px;color:var(--green)" id="legend-pass">-</div><div style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace" id="legend-fail-detail">-</div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="panel acc-collapsed" style="flex:1">
+          <div class="panel-header acc-header" onclick="togglePanel(this)">
+            <div class="panel-title"><span class="pulse" style="width:6px;height:6px"></span>Terminal Log<span class="acc-chevron">&#9660;</span></div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <button onclick="copyLog();event.stopPropagation();" title="Copiar log" style="background:none;border:1px solid var(--border);color:var(--muted);cursor:pointer;font-size:10px;font-family:'JetBrains Mono',monospace;padding:2px 7px;border-radius:4px;transition:.15s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">&#x1F4CB; copiar</button>
+              <button onclick="clearLog();event.stopPropagation();" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:11px;font-family:'JetBrains Mono',monospace">limpar</button>
+            </div>
+          </div>
+          <div class="panel-body" style="padding:10px 14px"><div class="log-wrap" id="liveLog"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="failsModal" onclick="closeFailsModal(event)">
+  <div class="modal-box" style="border-color:rgba(255,61,87,.25);max-width:650px;" onclick="event.stopPropagation()">
+    <div class="modal-hdr">
+      <div class="modal-hdr-title"><span style="font-size:16px">&#x274C;</span>FALHAS DETECTADAS<span id="fails-count-badge" style="font-size:10px;background:rgba(255,61,87,.15);padding:2px 8px;border-radius:10px;border:1px solid rgba(255,61,87,.3)">0</span></div>
+      <button class="modal-close" onclick="closeFailsModal()">&#x2715; fechar</button>
+    </div>
+    <div class="modal-cnt" id="failsListContent"><p style="color:var(--muted);font-size:12px;text-align:center">Nenhuma falha encontrada.</p></div>
+  </div>
+</div>
+<div class="modal-overlay" id="errorModal" onclick="closeErrorModal(event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-hdr">
+      <div class="modal-hdr-title"><span style="font-size:16px">&#x1F4A5;</span>DETALHES DO ERRO</div>
+      <button class="modal-close" onclick="closeErrorModal()">&#x2715; fechar</button>
+    </div>
+    <div class="modal-cnt">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:10px;font-family:'JetBrains Mono',monospace;word-break:break-all" id="em-name">-</div>
+        <div class="modal-meta">
+          <span class="modal-chip modal-chip-red">&#x274C; FAIL</span>
+          <span class="modal-chip modal-chip-pur" id="em-suite">-</span>
+          <span class="modal-chip modal-chip-def" id="em-file">-</span>
+          <span class="modal-chip modal-chip-def" id="em-type">-</span>
+          <span class="modal-chip modal-chip-def" id="em-dur">-</span>
+        </div>
+      </div>
+      <div class="modal-section">
+        <div class="msec-title">&#x1F4CD; Localizacao / Linha</div>
+        <div class="modal-section-val"><span class="modal-loc" id="em-location">-</span></div>
+      </div>
+      <div class="modal-section">
+        <div class="msec-title">&#x1F4AC; Mensagem do Erro</div>
+        <pre class="code-block err-blk" id="em-message"><em style="color:var(--muted)">sem mensagem</em></pre>
+      </div>
+      <div class="modal-section">
+        <div class="msec-title">&#x1F50D; Traceback Completo</div>
+        <pre class="code-block" id="em-traceback"><em style="color:var(--muted)">sem traceback disponivel</em></pre>
+      </div>
+      <div class="modal-section" id="em-context-section" style="display:none">
+        <div class="msec-title">&#x1F9E9; Contexto do Codigo</div>
+        <pre class="code-block ctx-blk" id="em-context"></pre>
+      </div>
+      <div style="padding-top:4px">
+        <button class="ai-hint-btn" id="btnAiHint" onclick="getAiHint()">&#x1F916; Sugestao da IA</button>
+      </div>
+      <div class="modal-section" id="em-ai-section" style="display:none">
+        <div class="msec-title" style="color:var(--purple)">&#x1F916; Analise da IA</div>
+        <div class="ai-hint-box" id="em-ai-hint"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="dashboardTestes.js"></script>
+</body>
+</html>

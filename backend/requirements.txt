@@ -3,3 +3,6 @@ flask-cors
 requests
 python-dotenv
 yfinance>=0.2.32
+certifi
+pytest>=7.0
+pytest-json-report>=1.5
