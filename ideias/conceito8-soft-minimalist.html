@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Concept 8 - Soft Minimalist</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-page: #f8f9fa;
+            --bg-card: #ffffff;
+            --text-dark: #343a40;
+            --text-muted: #6c757d;
+            --text-light: #adb5bd;
+            --purple-blue: #667eea;
+            --purple-dark: #764ba2;
+            --peach: #ff9a9e;
+            --soft-green: #a8edea;
+            --soft-blue: #88d3ce;
+            --shadow-soft: 0 10px 40px -10px rgba(0, 0, 0, 0.1);
+            --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-page);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .soft-card {
+            background: var(--bg-card);
+            border-radius: 32px;
+            width: 100%;
+            max-width: 480px;
+            box-shadow: var(--shadow-soft);
+            overflow: hidden;
+            animation: softSlide 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes softSlide {
+            from { opacity: 0; transform: translateY(30px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .soft-header {
+            padding: 32px 32px 24px;
+            text-align: center;
+        }
+
+        .header-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, var(--purple-blue), var(--purple-dark));
+            color: white;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .header-title h2 {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+        }
+
+        .header-title p {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .soft-body {
+            padding: 0 32px 32px;
+        }
+
+        .big-number {
+            text-align: center;
+            margin-bottom: 32px;
+            position: relative;
+        }
+
+        .big-number .value {
+            font-size: 64px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--purple-blue), var(--purple-dark));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+        }
+
+        .big-number .label {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-top: 8px;
+        }
+
+        .big-number .status {
+            display: inline-block;
+            margin-top: 12px;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .status-winning {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            color: var(--purple-dark);
+        }
+
+        .status-losing {
+            background: linear-gradient(135deg, rgba(255, 154, 158, 0.2), rgba(254, 207, 239, 0.2));
+            color: #d63384;
+        }
+
+        .compare-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            background: #f8f9fa;
+            border-radius: 20px;
+            padding: 20px;
+        }
+
+        .compare-item {
+            text-align: center;
+            flex: 1;
+        }
+
+        .compare-item .label {
+            font-size: 11px;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .compare-item .value {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .compare-item .value.highlight {
+            color: var(--purple-blue);
+        }
+
+        .compare-item .change {
+            font-size: 12px;
+            margin-top: 4px;
+            padding: 4px 10px;
+            border-radius: 10px;
+            display: inline-block;
+        }
+
+        .change-up {
+            background: rgba(102, 126, 234, 0.1);
+            color: var(--purple-dark);
+        }
+
+        .change-down {
+            background: rgba(255, 154, 158, 0.2);
+            color: #d63384;
+        }
+
+        .sparkline-area {
+            margin-bottom: 24px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 20px;
+        }
+
+        .sparkline-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .sparkline-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .sparkline-value {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--purple-blue);
+        }
+
+        .sparkline-chart {
+            height: 60px;
+            position: relative;
+        }
+
+        .sparkline-chart svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .metric-item {
+            text-align: center;
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 16px;
+        }
+
+        .metric-item .label {
+            font-size: 11px;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .metric-item .value {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .metric-item .value.green {
+            color: var(--purple-dark);
+        }
+
+        .metric-item .value.blue {
+            color: var(--purple-blue);
+        }
+
+        .soft-footer {
+            padding: 20px 32px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .time-info {
+            font-size: 13px;
+            color: var(--text-light);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .time-info .dot {
+            width: 8px;
+            height: 8px;
+            background: var(--soft-green);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .update-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, var(--purple-blue), var(--purple-dark));
+            color: white;
+            border: none;
+            border-radius: 16px;
+            padding: 16px 32px;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .update-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(102, 126, 234, 0.5);
+        }
+
+        .update-btn:active {
+            transform: translateY(0);
+        }
+
+        .update-btn.loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .update-btn .spinner {
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+
+        .update-btn.loading .spinner { display: block; }
+        .update-btn.loading .btn-text { display: none; }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        @media (max-width: 500px) {
+            .compare-row { flex-direction: column; gap: 16px; }
+            .metrics-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="modal-overlay">
+        <div class="soft-card">
+            <div class="soft-header">
+                <div class="header-badge">
+                    <span>PUT</span>
+                    <span>PETR4</span>
+                </div>
+                <div class="header-title">
+                    <h2>Análise de Posição</h2>
+                    <p>Strike R$ 34,50 • Vencimento 15/03</p>
+                </div>
+            </div>
+
+            <div class="soft-body">
+                <div class="big-number">
+                    <div class="value" id="probValue">75%</div>
+                    <div class="label">Probabilidade de Lucro</div>
+                    <div class="status status-winning" id="statusBadge">Situação Favorável</div>
+                </div>
+
+                <div class="compare-row">
+                    <div class="compare-item">
+                        <div class="label">Premio Abertura</div>
+                        <div class="value">R$ 0,60</div>
+                    </div>
+                    <div class="compare-item">
+                        <div class="label">Premio Atual</div>
+                        <div class="value highlight" id="premioAtual">R$ 0,15</div>
+                        <div class="change change-up" id="variacaoPremio">-75%</div>
+                    </div>
+                    <div class="compare-item">
+                        <div class="label">Cotação</div>
+                        <div class="value highlight" id="cotacaoAtual">R$ 35,80</div>
+                        <div class="change change-down" id="variacaoAtivo">-0,56%</div>
+                    </div>
+                </div>
+
+                <div class="sparkline-area">
+                    <div class="sparkline-header">
+                        <span class="sparkline-title">Evolução do Prêmio</span>
+                        <span class="sparkline-value" id="lucroAberto">+R$ 450</span>
+                    </div>
+                    <div class="sparkline-chart">
+                        <svg viewBox="0 0 400 60" preserveAspectRatio="none">
+                            <defs>
+                                <linearGradient id="grad1" x1="0%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" style="stop-color:rgba(102,126,234,0.3)"/>
+                                    <stop offset="100%" style="stop-color:rgba(102,126,234,0)"/>
+                                </linearGradient>
+                            </defs>
+                            <path d="M0,50 Q50,45 100,35 T200,20 T300,15 T400,10" fill="none" stroke="var(--purple-blue)" stroke-width="3"/>
+                            <path d="M0,50 Q50,45 100,35 T200,20 T300,15 T400,10 L400,60 L0,60 Z" fill="url(#grad1)"/>
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-item">
+                        <div class="label">Dist. Strike</div>
+                        <div class="value green" id="distancia">+3,77%</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="label">Break-Even</div>
+                        <div class="value blue">33,90</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="label">Lucro Total</div>
+                        <div class="value green">R$ 750</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="soft-footer">
+                <div class="time-info">
+                    <span class="dot"></span>
+                    <span>Atualizado: <span id="timestamp">--:--:--</span></span>
+                </div>
+                <button class="update-btn" id="updateBtn" onclick="atualizar()">
+                    <span class="spinner">⟳</span>
+                    <span class="btn-text">Atualizar</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const operacao = {
+            strike: 34.50,
+            premioAbertura: 0.60,
+            premioAtual: 0.15,
+            ativoAbertura: 36.00,
+            ativoAtual: 35.80,
+            quantidade: 1000
+        };
+
+        function atualizar() {
+            const btn = document.getElementById('updateBtn');
+            btn.classList.add('loading');
+
+            setTimeout(() => {
+                const variacao = (Math.random() - 0.5) * 0.30;
+                operacao.ativoAtual = parseFloat((operacao.ativoAtual + variacao).toFixed(2));
+                operacao.premioAtual = Math.max(0.01, parseFloat((operacao.premioAbertura * 0.25 + (Math.random() - 0.5) * 0.05).toFixed(2)));
+
+                atualizarInterface();
+
+                btn.classList.remove('loading');
+                document.getElementById('timestamp').textContent = new Date().toLocaleTimeString('pt-BR');
+            }, 600);
+        }
+
+        function atualizarInterface() {
+            const distancia = ((operacao.ativoAtual - operacao.strike) / operacao.strike) * 100;
+            const probabilidade = Math.min(99, Math.max(20, 75 + (distancia - 3.77) * 5));
+            const lucro = (operacao.premioAbertura - operacao.premioAtual) * operacao.quantidade;
+            const variacaoPremio = ((operacao.premioAtual - operacao.premioAbertura) / operacao.premioAbertura) * 100;
+            const variacaoAtivo = ((operacao.ativoAtual - operacao.ativoAbertura) / operacao.ativoAbertura) * 100;
+            const isWinning = probabilidade >= 60;
+
+            // Big number
+            document.getElementById('probValue').textContent = Math.round(probabilidade) + '%';
+
+            const badge = document.getElementById('statusBadge');
+            if (isWinning) {
+                badge.textContent = 'Situação Favorável';
+                badge.className = 'status status-winning';
+            } else {
+                badge.textContent = 'Atenção Necessária';
+                badge.className = 'status status-losing';
+            }
+
+            // Valores
+            document.getElementById('premioAtual').textContent = 'R$ ' + operacao.premioAtual.toFixed(2);
+            document.getElementById('variacaoPremio').textContent = Math.round(variacaoPremio) + '%';
+            document.getElementById('cotacaoAtual').textContent = 'R$ ' + operacao.ativoAtual.toFixed(2).replace('.', ',');
+            document.getElementById('variacaoAtivo').textContent = variacaoAtivo.toFixed(2) + '%';
+            document.getElementById('lucroAberto').textContent = '+R$ ' + Math.abs(Math.round(lucro));
+            document.getElementById('distancia').textContent = '+' + distancia.toFixed(2) + '%';
+        }
+
+        document.getElementById('timestamp').textContent = new Date().toLocaleTimeString('pt-BR');
+        atualizarInterface();
+    </script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+{
+  "_info": "Dados de fixture para testes E2E de Crypto. Altere aqui para mudar os dados dos testes.",
+
+  "operacoes": [
+    {
+      "_descricao": "CALL BTC strike 95000 — posição aberta típica",
+      "ativo":            "BTC",
+      "tipo":             "CALL",
+      "status":           "ABERTA",
+      "data_operacao":    "2026-03-11",
+      "abertura":         98000,
+      "strike":           95000,
+      "tae":              85.5,
+      "prazo":            30,
+      "crypto":           0.01,
+      "premio_us":        350,
+      "distancia":        3.06,
+      "exercicio_status": "NAO",
+      "observacoes":      "Posição de teste E2E — BTC call vendida"
+    },
+    {
+      "_descricao": "PUT ETH strike 2800 — proteção",
+      "ativo":            "ETH",
+      "tipo":             "PUT",
+      "status":           "ABERTA",
+      "data_operacao":    "2026-03-11",
+      "abertura":         3200,
+      "strike":           2800,
+      "tae":              42.0,
+      "prazo":            15,
+      "crypto":           0.5,
+      "premio_us":        80,
+      "distancia":        12.5,
+      "exercicio_status": "NAO",
+      "observacoes":      "Posição de teste E2E — ETH put comprada"
+    },
+    {
+      "_descricao": "CALL BTC encerrada com exercício",
+      "ativo":            "BTC",
+      "tipo":             "CALL",
+      "status":           "FECHADA",
+      "data_operacao":    "2026-02-01",
+      "abertura":         92000,
+      "strike":           90000,
+      "tae":              120.0,
+      "prazo":            21,
+      "crypto":           0.02,
+      "premio_us":        600,
+      "resultado":        580,
+      "exercicio_status": "NAO",
+      "observacoes":      "Fechada no vencimento"
+    }
+  ],
+
+  "crud_test": {
+    "_descricao": "Operação usada APENAS para teste CRUD automatizado — será deletada ao final",
+    "ativo":            "BTC",
+    "tipo":             "compra",
+    "preco":            98000,
+    "quantidade":       1,
+    "exercicio_status": "NAO"
+  }
+}

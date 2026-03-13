@@ -102,3 +102,7 @@ Se houver uma skill ou regra aplicável, ela deve orientar a resposta.
 4. Somente após 100% de testes passando, considerar a tarefa concluída
 
 **Nunca encerrar uma tarefa com testes falhando.**
+
+copiar para a área de transferencia o conteúdo do último prompt e executar 
+./memoryIA/log_prompt.bat
+./memoryIA/ia_update.bat

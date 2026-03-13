@@ -1,0 +1,714 @@
+/* Detalhe de Opções - CSS (baseado em z.html) */
+
+/* Modal Dark Theme */
+#modalDetalheOpcao .modal-content {
+    background-color: #182433 !important;
+    color: #f5f7fb !important;
+    border: 1px solid #2d3748;
+    display: flex;
+    flex-direction: column;
+    border-radius: 8px;
+    height: 85vh;
+    min-height: 560px;
+}
+
+#modalDetalheOpcao .modal-dialog {
+    height: 85vh;
+}
+
+#modalDetalheOpcao .modal-body.modal-body-scrollable {
+    overflow-y: auto;
+}
+
+#modalDetalheOpcao .modal-header {
+    background-color: #1a2332 !important;
+    border-bottom: 1px solid #2d3748;
+    color: #f5f7fb !important;
+    flex-shrink: 0;
+    padding: 1rem 1.5rem;
+}
+
+#modalDetalheOpcao .modal-header .btn-icon {
+    color: #a0aec0 !important;
+    background: transparent !important;
+    border: none !important;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+#modalDetalheOpcao .modal-header .btn-icon:hover {
+    color: #f5f7fb !important;
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    transform: rotate(180deg);
+}
+
+#modalDetalheOpcao .modal-body {
+    background-color: #182433 !important;
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+}
+
+#modalDetalheOpcao .modal-body.border-bottom {
+    border-bottom: 1px solid #2d3748 !important;
+    flex: 0 0 auto;
+}
+
+#modalDetalheOpcao .modal-footer {
+    background-color: #1a2332 !important;
+    border-top: 1px solid #2d3748;
+    flex-shrink: 0;
+    padding: 1rem 1.5rem;
+}
+
+/* Cards Dark */
+#modalDetalheOpcao .card {
+    background-color: #1d2939 !important;
+    border-color: #2d3748 !important;
+    color: #f5f7fb !important;
+    margin-bottom: 1rem;
+}
+
+#modalDetalheOpcao .card-header {
+    background-color: #1a2533 !important;
+    border-bottom-color: #2d3748 !important;
+    color: #f5f7fb !important;
+    padding: 1rem 1.25rem;
+}
+
+#modalDetalheOpcao .card-body {
+    color: #f5f7fb !important;
+    padding: 1.25rem;
+}
+
+#modalDetalheOpcao .card-sm .card-body {
+    background-color: #1d2939 !important;
+    padding: 1rem;
+}
+
+/* Card Status Top */
+#modalDetalheOpcao .card-status-top {
+    height: 3px;
+    border-radius: 3px 3px 0 0;
+}
+
+/* Stat Cards */
+#modalDetalheOpcao .stat-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+#modalDetalheOpcao .stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+
+/* Tables Dark */
+#modalDetalheOpcao .table {
+    color: #f5f7fb !important;
+}
+
+#modalDetalheOpcao .table thead th {
+    border-color: #2d3748 !important;
+    color: #a0aec0 !important;
+    font-weight: 600;
+    font-size: 0.875rem;
+    padding: 0.75rem 1rem;
+}
+
+#modalDetalheOpcao .table tbody td {
+    border-color: #2d3748 !important;
+    padding: 0.75rem 1rem;
+}
+
+#modalDetalheOpcao .table tbody tr:hover {
+    background-color: rgba(255,255,255,0.02) !important;
+}
+
+#modalDetalheOpcao .table-sm.table-borderless td {
+    padding: 0.25rem 0;
+    border: none;
+}
+
+#modalDetalheOpcao .table-vcenter td {
+    vertical-align: middle;
+}
+
+#modalDetalheOpcao .table-success {
+    background-color: rgba(47, 179, 68, 0.1) !important;
+}
+
+/* Alerts Dark */
+#modalDetalheOpcao .alert {
+    border-left-width: 3px;
+    border-color: rgba(255,255,255,0.1) !important;
+}
+
+#modalDetalheOpcao .alert-success {
+    background-color: rgba(47, 179, 68, 0.15) !important;
+    border-left-color: #2fb344 !important;
+    color: #f5f7fb !important;
+}
+
+#modalDetalheOpcao .alert-info {
+    background-color: rgba(32, 107, 196, 0.15) !important;
+    border-left-color: #206bc4 !important;
+    color: #f5f7fb !important;
+}
+
+#modalDetalheOpcao .alert-warning {
+    background-color: rgba(247, 103, 7, 0.15) !important;
+    border-left-color: #f76707 !important;
+    color: #f5f7fb !important;
+}
+
+#modalDetalheOpcao .alert-danger {
+    background-color: rgba(214, 57, 57, 0.15) !important;
+    border-left-color: #d63939 !important;
+    color: #f5f7fb !important;
+}
+
+#modalDetalheOpcao .alert-title {
+    color: #f5f7fb !important;
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+}
+
+#modalDetalheOpcao .alert-important {
+    border-left-width: 4px;
+}
+
+/* Tabs */
+#modalDetalheOpcao .nav-tabs {
+    border-bottom-color: #2d3748 !important;
+    margin-bottom: 1.5rem;
+}
+
+#modalDetalheOpcao .nav-tabs .nav-link {
+    color: #a0aec0 !important;
+    border-color: transparent !important;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+}
+
+#modalDetalheOpcao .nav-tabs .nav-link:hover {
+    color: #f5f7fb !important;
+    border-color: transparent !important;
+    background-color: rgba(255,255,255,0.02) !important;
+}
+
+#modalDetalheOpcao .nav-tabs .nav-link.active {
+    color: #206bc4 !important;
+    background-color: transparent !important;
+    border-color: #2d3748 #2d3748 transparent !important;
+    font-weight: 600;
+}
+
+/* Badges */
+#modalDetalheOpcao .badge-pill {
+    border-radius: 10rem;
+}
+
+#modalDetalheOpcao .badge-pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* Text Colors */
+#modalDetalheOpcao .text-green {
+    color: #2fb344 !important;
+}
+
+#modalDetalheOpcao .text-red {
+    color: #d63939 !important;
+}
+
+#modalDetalheOpcao .text-yellow {
+    color: #f59f00 !important;
+}
+
+#modalDetalheOpcao .text-blue {
+    color: #206bc4 !important;
+}
+
+#modalDetalheOpcao .text-muted {
+    color: #a0aec0 !important;
+}
+
+#modalDetalheOpcao .text-purple {
+    color: #ae3ec9 !important;
+}
+
+/* Border Colors */
+#modalDetalheOpcao .border-success {
+    border-color: #2fb344 !important;
+}
+
+#modalDetalheOpcao .border-danger {
+    border-color: #d63939 !important;
+}
+
+#modalDetalheOpcao .border-warning {
+    border-color: #f76707 !important;
+}
+
+#modalDetalheOpcao .border-info {
+    border-color: #206bc4 !important;
+}
+
+#modalDetalheOpcao .border-yellow {
+    border-left: 3px solid #f59f00 !important;
+}
+
+body[data-bs-theme="light"] #modalDetalheOpcao .modal-content {
+    background-color: var(--tblr-bg-surface) !important;
+    color: var(--tblr-body-color) !important;
+    border-color: var(--tblr-border-color) !important;
+}
+
+body[data-bs-theme="light"] #modalDetalheOpcao .modal-header {
+    background-color: var(--tblr-bg-surface) !important;
+    border-bottom-color: var(--tblr-border-color) !important;
+    color: var(--tblr-body-color) !important;
+}
+
+body[data-bs-theme="light"] #modalDetalheOpcao .modal-body {
+    background-color: var(--tblr-bg-surface) !important;
+}
+
+body[data-bs-theme="light"] #modalDetalheOpcao .modal-footer {
+    background-color: var(--tblr-bg-surface) !important;
+    border-top-color: var(--tblr-border-color) !important;
+}
+
+body[data-bs-theme="light"] #modalDetalheOpcao .card {
+    background-color: var(--tblr-bg-surface) !important;
+    border-color: var(--tblr-border-color) !important;
+    color: var(--tblr-body-color) !important;
+}
+
+body[data-bs-theme="light"] #modalDetalheOpcao .card-header {
+    background-color: var(--tblr-bg-surface) !important;
+    border-bottom-color: var(--tblr-border-color) !important;
+    color: var(--tblr-body-color) !important;
+}
+
+body[data-bs-theme="light"] #modalDetalheOpcao .card-body {
+    color: var(--tblr-body-color) !important;
+}
+
+body[data-bs-theme="light"] #modalDetalheOpcao .table {
+    color: var(--tblr-body-color) !important;
+}
+
+body[data-bs-theme="light"] #modalDetalheOpcao .table thead th {
+    border-color: var(--tblr-border-color) !important;
+    color: var(--tblr-muted) !important;
+}
+
+body[data-bs-theme="light"] #modalDetalheOpcao .table tbody td {
+    border-color: var(--tblr-border-color) !important;
+}
+
+body[data-bs-theme="light"] #modalDetalheOpcao .nav-tabs {
+    border-bottom-color: var(--tblr-border-color) !important;
+}
+
+body[data-bs-theme="light"] #modalDetalheOpcao .nav-tabs .nav-link {
+    color: var(--tblr-body-color) !important;
+}
+
+body[data-bs-theme="light"] #modalDetalheOpcao .nav-tabs .nav-link.active {
+    color: var(--tblr-primary) !important;
+    border-color: var(--tblr-border-color) var(--tblr-border-color) transparent !important;
+}
+
+body[data-bs-theme="light"] #modalDetalheOpcao .text-muted {
+    color: var(--tblr-muted) !important;
+}
+
+body[data-bs-theme="light"] #modalDetalheOpcao .alert {
+    color: var(--tblr-body-color) !important;
+    border-color: var(--tblr-border-color) !important;
+}
+
+body[data-bs-theme="light"] #modalDetalheOpcao .alert-title {
+    color: var(--tblr-body-color) !important;
+}
+
+#modalDetalheOpcao .border-green {
+    border-left: 3px solid #2fb344 !important;
+}
+
+/* Avatar */
+#modalDetalheOpcao .avatar {
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+}
+
+#modalDetalheOpcao .avatar-xl {
+    width: 4rem;
+    height: 4rem;
+}
+
+#modalDetalheOpcao .bg-green {
+    background-color: #2fb344 !important;
+}
+
+#modalDetalheOpcao .bg-blue {
+    background-color: #206bc4 !important;
+}
+
+#modalDetalheOpcao .bg-yellow {
+    background-color: #f59f00 !important;
+}
+
+#modalDetalheOpcao .bg-red {
+    background-color: #d63939 !important;
+}
+
+#modalDetalheOpcao .bg-green-lt {
+    background-color: rgba(47, 179, 68, 0.15) !important;
+    color: #2fb344 !important;
+}
+
+#modalDetalheOpcao .bg-blue-lt {
+    background-color: rgba(32, 107, 196, 0.15) !important;
+    color: #206bc4 !important;
+}
+
+#modalDetalheOpcao .bg-yellow-lt {
+    background-color: rgba(245, 159, 0, 0.15) !important;
+    color: #f59f00 !important;
+}
+
+#modalDetalheOpcao .bg-red-lt {
+    background-color: rgba(214, 57, 57, 0.15) !important;
+    color: #d63939 !important;
+}
+
+/* Row Cards */
+#modalDetalheOpcao .row-cards {
+    margin-right: -0.75rem;
+    margin-left: -0.75rem;
+}
+
+#modalDetalheOpcao .row-cards > .col,
+#modalDetalheOpcao .row-cards > [class*="col-"] {
+    padding-right: 0.75rem;
+    padding-left: 0.75rem;
+}
+
+/* Scenario Cards */
+#modalDetalheOpcao .scenario-card {
+    transition: all 0.2s;
+    height: 100%;
+}
+
+#modalDetalheOpcao .scenario-card:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    transform: translateY(-2px);
+}
+
+/* Slider */
+#modalDetalheOpcao .slider-container {
+    padding: 2rem 0;
+}
+
+#modalDetalheOpcao #detPriceSlider {
+    width: 100%;
+    height: 6px;
+}
+
+#modalDetalheOpcao .strike-indicator {
+    position: relative;
+    height: 60px;
+}
+
+#modalDetalheOpcao .strike-line {
+    position: absolute;
+    top: 50%;
+    left: 48%;
+    width: 2px;
+    height: 40px;
+    background-color: #f76707;
+    transform: translateY(-50%);
+    box-shadow: 0 0 10px rgba(247, 103, 7, 0.5);
+}
+
+#modalDetalheOpcao .strike-label-top {
+    position: absolute;
+    top: 0;
+    left: 48%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    font-weight: 600;
+    color: #f76707;
+    white-space: nowrap;
+    background-color: rgba(247, 103, 7, 0.15);
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(247, 103, 7, 0.3);
+}
+
+/* Form Range Dark */
+#modalDetalheOpcao .form-range::-webkit-slider-thumb {
+    background-color: #206bc4;
+    border: 2px solid #182433;
+    width: 20px;
+    height: 20px;
+    margin-top: -7px;
+}
+
+#modalDetalheOpcao .form-range::-moz-range-thumb {
+    background-color: #206bc4;
+    border: 2px solid #182433;
+    width: 20px;
+    height: 20px;
+}
+
+#modalDetalheOpcao .form-range::-webkit-slider-runnable-track {
+    background-color: #2d3748;
+    height: 6px;
+    border-radius: 3px;
+}
+
+#modalDetalheOpcao .form-range::-moz-range-track {
+    background-color: #2d3748;
+    height: 6px;
+    border-radius: 3px;
+}
+
+/* Modal Dialog Sizes */
+#modalDetalheOpcao .modal-dialog {
+    height: 85vh;
+    max-height: 85vh;
+}
+
+/* Button Refresh */
+#modalDetalheOpcao #btnDetalheRefresh {
+    width: 38px;
+    height: 38px;
+}
+
+/* Gap between buttons */
+#modalDetalheOpcao .modal-header .gap-3,
+#modalDetalheOpcao .modal-header .gap-4 {
+    gap: 1.5rem !important;
+}
+
+#modalDetalheOpcao .modal-header .btn-icon {
+    margin-right: 0.75rem !important;
+}
+
+#modalDetalheOpcao .modal-body-scrollable {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding-top: 0;
+}
+
+/* Sticky tabs */
+#modalDetalheOpcao .nav-tabs {
+    position: sticky;
+    top: 0;
+    z-index: 6;
+    background-color: #182433;
+    padding-top: 0.25rem;
+}
+
+body[data-bs-theme="light"] #modalDetalheOpcao .nav-tabs {
+    background-color: var(--tblr-bg-surface);
+}
+
+/* Loading state */
+#modalDetalheOpcao .spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+    border-width: 0.15em;
+}
+
+/* Skeleton loading */
+#modalDetalheOpcao .skeleton {
+    animation: skeleton-loading 1s linear infinite alternate;
+    background: linear-gradient(90deg, #2d3748 25%, #3d4758 50%, #2d3748 75%);
+    background-size: 200% 100%;
+    border-radius: 4px;
+}
+
+@keyframes skeleton-loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Chart Container */
+#modalDetalheOpcao .chart-container {
+    min-height: 250px;
+    position: relative;
+}
+
+#modalDetalheOpcao .chart-container-large {
+    min-height: 400px;
+    position: relative;
+}
+
+/* Progress Bar */
+#modalDetalheOpcao .progress {
+    background-color: #2d3748 !important;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+#modalDetalheOpcao .progress-bar {
+    background-color: #2fb344 !important;
+    border-radius: 4px;
+}
+
+#modalDetalheOpcao .greek-progress {
+    height: 8px;
+    margin-top: 0.5rem;
+}
+
+/* HR Dark */
+#modalDetalheOpcao hr {
+    border-color: #2d3748 !important;
+    opacity: 1 !important;
+    margin: 1rem 0;
+}
+
+/* Card Actions */
+#modalDetalheOpcao .card-actions {
+    position: absolute;
+    top: 1rem;
+    right: 1.25rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    #modalDetalheOpcao .modal-dialog {
+        margin: 0.5rem;
+    }
+    
+    #modalDetalheOpcao .card-sm {
+        margin-bottom: 0.5rem;
+    }
+    
+    #modalDetalheOpcao .modal-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    #modalDetalheOpcao .modal-title {
+        margin-bottom: 0.5rem;
+    }
+    
+    #modalDetalheOpcao .scenario-card {
+        margin-bottom: 1rem;
+    }
+}
+
+/* Custom Scrollbar Dark */
+#modalDetalheOpcao .modal-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+#modalDetalheOpcao .modal-body::-webkit-scrollbar-track {
+    background: #1a2332;
+}
+
+#modalDetalheOpcao .modal-body::-webkit-scrollbar-thumb {
+    background: #2d3748;
+    border-radius: 4px;
+}
+
+#modalDetalheOpcao .modal-body::-webkit-scrollbar-thumb:hover {
+    background: #3d4758;
+}
+
+/* Small text fixes */
+#modalDetalheOpcao small {
+    color: #a0aec0 !important;
+    font-size: 0.8125rem;
+}
+
+/* Display utilities */
+#modalDetalheOpcao .display-6 {
+    font-size: 2rem;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+/* Button Close Dark */
+#modalDetalheOpcao .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+    opacity: 0.7;
+}
+
+#modalDetalheOpcao .btn-close:hover {
+    opacity: 1;
+}
+
+/* ============================================================
+   PAINEL POSIÇÃO ATUAL
+   ============================================================ */
+#painelPosicaoAtual {
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(20, 32, 50, 0.7);
+}
+
+#painelPosicaoAtual .posicao-table th {
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    padding: 0.35rem 0.6rem;
+}
+
+#painelPosicaoAtual .posicao-table td {
+    font-size: 0.82rem;
+    padding: 0.4rem 0.6rem;
+    white-space: nowrap;
+}
+
+#painelPosicaoAtual .posicao-table tfoot td {
+    font-size: 0.8rem;
+    border-top: 2px solid rgba(255,255,255,0.15);
+}
+
+/* Banner de status */
+#painelStatusBanner {
+    background: rgba(15, 25, 40, 0.8);
+}
+
+/* Cartão de decisão - estados */
+#posDecisaoCard.decisao-manter  { border-color: #2fb344 !important; background: rgba(47,179,68,0.1); }
+#posDecisaoCard.decisao-monitor { border-color: #f59f00 !important; background: rgba(245,159,0,0.1); }
+#posDecisaoCard.decisao-rolar   { border-color: #fd7e14 !important; background: rgba(253,126,20,0.12); }
+#posDecisaoCard.decisao-fechar  { border-color: #d63939 !important; background: rgba(214,57,57,0.12); }
+
+#posDecisaoCard.decisao-manter  #posDecisaoLabel { color: #2fb344; }
+#posDecisaoCard.decisao-monitor #posDecisaoLabel { color: #f59f00; }
+#posDecisaoCard.decisao-rolar   #posDecisaoLabel { color: #fd7e14; }
+#posDecisaoCard.decisao-fechar  #posDecisaoLabel { color: #d63939; }
+
+/* Cards de indicadores menores */
+#painelPosicaoAtual .card-sm .card-body {
+    background: rgba(255,255,255,0.04);
+    border-radius: 6px;
+}

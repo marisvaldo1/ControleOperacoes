@@ -208,6 +208,15 @@ document.addEventListener('libsLoaded', function() {
             saldoCrypto: document.getElementById('configSaldoCrypto').value
         };
         localStorage.setItem('appConfig', JSON.stringify(config));
+
+        // Sincronizar saldoCrypto com cryptoConfig (página crypto usa essa chave)
+        try {
+            const cryptoCfg = JSON.parse(localStorage.getItem('cryptoConfig') || '{}');
+            if (config.saldoCrypto) cryptoCfg.saldoCrypto = config.saldoCrypto;
+            localStorage.setItem('cryptoConfig', JSON.stringify(cryptoCfg));
+        } catch (_) {}
+        // Notifica a página crypto para atualizar UI instantaneamente
+        window.dispatchEvent(new CustomEvent('cryptoConfigUpdated', { detail: config }));
         
         try {
             // Salvar configurações gerais

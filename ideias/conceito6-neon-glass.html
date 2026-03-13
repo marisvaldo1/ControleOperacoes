@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Concept 6 - Neon Glassmorphism HUD</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+        :root {
+            --bg-deep: #0f172a;
+            --glass-surface: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --neon-mint: #00ff9d;
+            --neon-pink: #ff0055;
+            --neon-cyan: #00d4ff;
+            --text-white: #f8fafc;
+            --text-dim: #94a3b8;
+            --bg-card: rgba(30, 41, 59, 0.5);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: var(--bg-deep);
+            background-image:
+                radial-gradient(ellipse at 20% 20%, rgba(0, 255, 157, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(0, 212, 255, 0.08) 0%, transparent 50%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .hud-container {
+            background: var(--glass-surface);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow:
+                0 0 60px rgba(0, 255, 157, 0.15),
+                0 25px 50px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            animation: hudSlide 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes hudSlide {
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .hud-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .hud-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .hud-title h2 {
+            color: var(--text-white);
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .badge {
+            background: rgba(0, 212, 255, 0.2);
+            color: var(--neon-cyan);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .close-hud {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: var(--text-dim);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .close-hud:hover {
+            background: rgba(255, 0, 85, 0.2);
+            border-color: var(--neon-pink);
+            color: var(--neon-pink);
+        }
+
+        .hud-body {
+            padding: 24px;
+        }
+
+        .gauge-section {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .gauge-ring {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 16px;
+        }
+
+        .gauge-ring svg {
+            transform: rotate(-90deg);
+            width: 100%;
+            height: 100%;
+        }
+
+        .gauge-bg {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.05);
+            stroke-width: 12;
+        }
+
+        .gauge-fill {
+            fill: none;
+            stroke: var(--neon-mint);
+            stroke-width: 12;
+            stroke-linecap: round;
+            stroke-dasharray: 565;
+            stroke-dashoffset: 141;
+            transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            filter: drop-shadow(0 0 8px var(--neon-mint));
+        }
+
+        .gauge-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .gauge-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--text-white);
+            line-height: 1;
+        }
+
+        .gauge-label {
+            font-size: 12px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 8px;
+        }
+
+        .gauge-status {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .gauge-status.winning {
+            background: rgba(0, 255, 157, 0.15);
+            color: var(--neon-mint);
+            box-shadow: 0 0 20px rgba(0, 255, 157, 0.3);
+        }
+
+        .gauge-status.losing {
+            background: rgba(255, 0, 85, 0.15);
+            color: var(--neon-pink);
+            box-shadow: 0 0 20px rgba(255, 0, 85, 0.3);
+        }
+
+        .compare-pills {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .pill {
+            background: var(--bg-card);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 16px 24px;
+            text-align: center;
+            min-width: 140px;
+        }
+
+        .pill-label {
+            font-size: 11px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .pill-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-white);
+        }
+
+        .pill-arrow {
+            font-size: 14px;
+            margin: 0 8px;
+            color: var(--text-dim);
+        }
+
+        .pill-change {
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 8px;
+            margin-top: 8px;
+            display: inline-block;
+        }
+
+        .pill-change.up {
+            background: rgba(0, 255, 157, 0.15);
+            color: var(--neon-mint);
+        }
+
+        .pill-change.down {
+            background: rgba(255, 0, 85, 0.15);
+            color: var(--neon-pink);
+        }
+
+        .hud-footer {
+            padding: 20px 24px;
+            border-top: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .update-hud {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, var(--neon-cyan), #0099cc);
+            border: none;
+            border-radius: 12px;
+            padding: 14px 28px;
+            color: white;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 20px rgba(0, 212, 255, 0.4);
+        }
+
+        .update-hud:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 30px rgba(0, 212, 255, 0.5);
+        }
+
+        .update-hud:active {
+            transform: translateY(0);
+        }
+
+        .update-hud.loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .update-hud .spinner {
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+
+        .update-hud.loading .spinner { display: block; }
+        .update-hud.loading .btn-text { display: none; }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .timestamp {
+            font-size: 12px;
+            color: var(--text-dim);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .timestamp .dot {
+            width: 6px;
+            height: 6px;
+            background: var(--neon-mint);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .profit-row {
+            display: flex;
+            justify-content: space-around;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 16px;
+            margin-top: 20px;
+        }
+
+        .profit-item {
+            text-align: center;
+        }
+
+        .profit-item .label {
+            font-size: 11px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+
+        .profit-item .value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .profit-item .value.green { color: var(--neon-mint); }
+        .profit-item .value.blue { color: var(--neon-cyan); }
+
+        @media (max-width: 540px) {
+            .compare-pills { flex-direction: column; align-items: center; }
+            .pill { width: 100%; max-width: 200px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="modal-overlay">
+        <div class="hud-container">
+            <div class="hud-header">
+                <div class="hud-title">
+                    <h2>POSIÇÃO PUT</h2>
+                    <span class="badge">PETR4</span>
+                </div>
+                <button class="close-hud">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="hud-body">
+                <div class="gauge-section">
+                    <div class="gauge-ring">
+                        <svg viewBox="0 0 200 200">
+                            <circle class="gauge-bg" cx="100" cy="100" r="90"/>
+                            <circle class="gauge-fill" cx="100" cy="100" r="90" id="gaugeRing"/>
+                        </svg>
+                        <div class="gauge-center">
+                            <div class="gauge-value" id="probValue">75%</div>
+                            <div class="gauge-label">Probabilidade</div>
+                        </div>
+                    </div>
+                    <div class="gauge-status winning" id="statusBadge">VENCENDO</div>
+                </div>
+
+                <div class="compare-pills">
+                    <div class="pill">
+                        <div class="pill-label">Premio Abertura</div>
+                        <div class="pill-value">R$ 0,60</div>
+                    </div>
+                    <div style="display: flex; align-items: center;">
+                        <span class="pill-arrow">→</span>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-label">Premio Atual</div>
+                        <div class="pill-value" id="premioAtual" style="color: var(--neon-cyan);">R$ 0,15</div>
+                        <div class="pill-change up" id="variacaoPremio">▼ 75%</div>
+                    </div>
+                </div>
+
+                <div class="profit-row">
+                    <div class="profit-item">
+                        <div class="label">Cotação Atual</div>
+                        <div class="value blue" id="cotacaoAtual">R$ 35,80</div>
+                    </div>
+                    <div class="profit-item">
+                        <div class="label">Lucro Aberto</div>
+                        <div class="value green" id="lucroAberto">R$ 450</div>
+                    </div>
+                    <div class="profit-item">
+                        <div class="label">Dist. Strike</div>
+                        <div class="value green" id="distancia">+3,77%</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hud-footer">
+                <div class="timestamp">
+                    <span class="dot"></span>
+                    <span>Atualizado: <span id="timestamp">--:--:--</span></span>
+                </div>
+                <button class="update-hud" id="updateBtn" onclick="atualizar()">
+                    <svg class="spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                    </svg>
+                    <span class="btn-text">ATUALIZAR</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const operacao = {
+            strike: 34.50,
+            premioAbertura: 0.60,
+            premioAtual: 0.15,
+            ativoAbertura: 36.00,
+            ativoAtual: 35.80,
+            quantidade: 1000
+        };
+
+        function atualizar() {
+            const btn = document.getElementById('updateBtn');
+            btn.classList.add('loading');
+
+            setTimeout(() => {
+                const variacao = (Math.random() - 0.5) * 0.30;
+                operacao.ativoAtual = parseFloat((operacao.ativoAtual + variacao).toFixed(2));
+                operacao.premioAtual = Math.max(0.01, parseFloat((operacao.premioAbertura * 0.25 + (Math.random() - 0.5) * 0.05).toFixed(2)));
+
+                atualizarInterface();
+
+                btn.classList.remove('loading');
+                document.getElementById('timestamp').textContent = new Date().toLocaleTimeString('pt-BR');
+            }, 600);
+        }
+
+        function atualizarInterface() {
+            const distancia = ((operacao.ativoAtual - operacao.strike) / operacao.strike) * 100;
+            const probabilidade = Math.min(99, Math.max(20, 75 + (distancia - 3.77) * 5));
+            const lucro = (operacao.premioAbertura - operacao.premioAtual) * operacao.quantidade;
+            const variacaoPremio = ((operacao.premioAtual - operacao.premioAbertura) / operacao.premioAbertura) * 100;
+
+            // Gauge
+            const circumference = 2 * Math.PI * 90;
+            const offset = circumference * (1 - probabilidade / 100);
+            document.getElementById('gaugeRing').style.strokeDashoffset = offset;
+            document.getElementById('probValue').textContent = Math.round(probabilidade) + '%';
+
+            // Status
+            const status = document.getElementById('statusBadge');
+            if (probabilidade >= 60) {
+                status.textContent = 'VENCENDO';
+                status.className = 'gauge-status winning';
+                document.getElementById('gaugeRing').style.stroke = 'var(--neon-mint)';
+            } else {
+                status.textContent = 'ATENÇÃO';
+                status.className = 'gauge-status losing';
+                document.getElementById('gaugeRing').style.stroke = 'var(--neon-pink)';
+            }
+
+            // Valores
+            document.getElementById('premioAtual').textContent = 'R$ ' + operacao.premioAtual.toFixed(2);
+            document.getElementById('variacaoPremio').textContent = '▼ ' + Math.abs(Math.round(variacaoPremio)) + '%';
+            document.getElementById('cotacaoAtual').textContent = 'R$ ' + operacao.ativoAtual.toFixed(2).replace('.', ',');
+            document.getElementById('lucroAberto').textContent = 'R$ ' + Math.abs(Math.round(lucro));
+            document.getElementById('distancia').textContent = '+' + distancia.toFixed(2) + '%';
+        }
+
+        document.getElementById('timestamp').textContent = new Date().toLocaleTimeString('pt-BR');
+        atualizarInterface();
+    </script>
+</body>
+</html>

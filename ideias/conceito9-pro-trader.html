@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Concept 9 - Pro Trader Grid</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;600;700&family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #111111;
+            --bg-card: #1c1c1e;
+            --bg-elevated: #2c2c2e;
+            --text-primary: #ffffff;
+            --text-secondary: #a1a1a6;
+            --text-muted: #636366;
+            --profit-green: #4ade80;
+            --loss-red: #ef4444;
+            --accent-blue: #60a5fa;
+            --accent-purple: #a78bfa;
+            --border: #3d3d3d;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: var(--bg-dark);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .pro-grid {
+            background: var(--bg-card);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 560px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .grid-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-elevated);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--accent-purple);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .header-title h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-title .badge {
+            background: var(--accent-blue);
+            color: var(--bg-dark);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .header-title .subtitle {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .close-btn {
+            width: 32px;
+            height: 32px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .close-btn:hover {
+            background: var(--loss-red);
+            border-color: var(--loss-red);
+            color: white;
+        }
+
+        .grid-body {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1px;
+            background: var(--border);
+        }
+
+        .grid-cell {
+            background: var(--bg-card);
+            padding: 16px;
+        }
+
+        .cell-title {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .cell-value {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .cell-value.green { color: var(--profit-green); }
+        .cell-value.red { color: var(--loss-red); }
+        .cell-value.blue { color: var(--accent-blue); }
+        .cell-value.purple { color: var(--accent-purple); }
+
+        .cell-sub {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .data-table {
+            grid-column: span 2;
+        }
+
+        .data-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            text-align: left;
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-elevated);
+        }
+
+        .data-table td {
+            padding: 12px 16px;
+            font-size: 13px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .data-table .value {
+            font-family: 'Roboto Mono', monospace;
+            font-weight: 500;
+        }
+
+        .data-table .arrow {
+            font-size: 12px;
+            margin-left: 4px;
+        }
+
+        .arrow.up { color: var(--profit-green); }
+        .arrow.down { color: var(--loss-red); }
+
+        .thermometer {
+            grid-column: span 2;
+            padding: 20px;
+        }
+
+        .thermo-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .thermo-title {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .thermo-value {
+            font-family: 'Roboto Mono', monospace;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .thermo-value.green { color: var(--profit-green); }
+        .thermo-value.red { color: var(--loss-red); }
+
+        .thermo-track {
+            height: 24px;
+            background: var(--bg-elevated);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .thermo-fill {
+            height: 100%;
+            border-radius: 12px;
+            transition: width 0.5s ease;
+            background: linear-gradient(90deg, var(--profit-green), var(--accent-blue));
+        }
+
+        .thermo-fill.danger {
+            background: linear-gradient(90deg, var(--loss-red), #f97316);
+        }
+
+        .thermo-markers {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+
+        .grid-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-top: 1px solid var(--border);
+            background: var(--bg-elevated);
+        }
+
+        .footer-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .footer-left .dot {
+            width: 6px;
+            height: 6px;
+            background: var(--profit-green);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .update-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--accent-blue);
+            color: var(--bg-dark);
+            border: none;
+            border-radius: 8px;
+            padding: 12px 20px;
+            font-family: 'Roboto', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .update-btn:hover {
+            background: #7bb8fc;
+            transform: translateY(-1px);
+        }
+
+        .update-btn:active {
+            transform: translateY(0);
+        }
+
+        .update-btn.loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .update-btn .spinner {
+            display: none;
+            animation: spin 1s linear infinite;
+        }
+
+        .update-btn.loading .spinner { display: block; }
+        .update-btn.loading .btn-text { display: none; }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        @media (max-width: 560px) {
+            .grid-body {
+                grid-template-columns: 1fr;
+            }
+            .data-table, .thermometer {
+                grid-column: span 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="modal-overlay">
+        <div class="pro-grid">
+            <div class="grid-header">
+                <div class="header-left">
+                    <div class="header-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                        </svg>
+                    </div>
+                    <div class="header-title">
+                        <h3>PUT Position <span class="badge">PETR4</span></h3>
+                        <div class="subtitle">Strike R$ 34,50 • Vcto 15/03</div>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <button class="close-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid-body">
+                <div class="grid-cell">
+                    <div class="cell-title">📈 Lucro Aberto</div>
+                    <div class="cell-value green" id="lucroAberto">R$ 450</div>
+                    <div class="cell-sub">Premio restante</div>
+                </div>
+                <div class="grid-cell">
+                    <div class="cell-title">📊 Probabilidade</div>
+                    <div class="cell-value purple" id="probValue">75%</div>
+                    <div class="cell-sub" id="statusText">Vencendo</div>
+                </div>
+
+                <div class="grid-cell">
+                    <div class="cell-title">💹 Cotação Atual</div>
+                    <div class="cell-value blue" id="cotacaoAtual">35,80</div>
+                    <div class="cell-sub" id="variacaoAtivo">-0,56% hoje</div>
+                </div>
+                <div class="grid-cell">
+                    <div class="cell-title">🎯 Dist. Strike</div>
+                    <div class="cell-value green" id="distancia">+3,77%</div>
+                    <div class="cell-sub">Acima do strike</div>
+                </div>
+
+                <div class="grid-cell data-table">
+                    <div class="cell-title">Comparativo: Abertura vs Atual</div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Métrica</th>
+                                <th>Abertura</th>
+                                <th>Atual</th>
+                                <th>Δ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Premio</td>
+                                <td class="value">0,60</td>
+                                <td class="value" id="premioAtual">0,15</td>
+                                <td class="value"><span class="arrow down" id="varPremio">▼ 75%</span></td>
+                            </tr>
+                            <tr>
+                                <td>Ativo</td>
+                                <td class="value">36,00</td>
+                                <td class="value" id="ativoTable">35,80</td>
+                                <td class="value"><span class="arrow down" id="varAtivo">▼ 0,56%</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="grid-cell thermometer">
+                    <div class="thermo-header">
+                        <span class="thermo-title">Probabilidade de Lucro Total</span>
+                        <span class="thermo-value green" id="probHeader">75%</span>
+                    </div>
+                    <div class="thermo-track">
+                        <div class="thermo-fill" id="thermoFill" style="width: 75%"></div>
+                    </div>
+                    <div class="thermo-markers">
+                        <span>0%</span>
+                        <span>Break: 33,90</span>
+                        <span>Strike: 34,50</span>
+                        <span>100%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid-footer">
+                <div class="footer-left">
+                    <span class="dot"></span>
+                    <span>Atualizado: <span id="timestamp">--:--:--</span></span>
+                </div>
+                <button class="update-btn" id="updateBtn" onclick="atualizar()">
+                    <span class="spinner">⟳</span>
+                    <span class="btn-text">Atualizar</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const operacao = {
+            strike: 34.50,
+            premioAbertura: 0.60,
+            premioAtual: 0.15,
+            ativoAbertura: 36.00,
+            ativoAtual: 35.80,
+            quantidade: 1000
+        };
+
+        function atualizar() {
+            const btn = document.getElementById('updateBtn');
+            btn.classList.add('loading');
+
+            setTimeout(() => {
+                const variacao = (Math.random() - 0.5) * 0.30;
+                operacao.ativoAtual = parseFloat((operacao.ativoAtual + variacao).toFixed(2));
+                operacao.premioAtual = Math.max(0.01, parseFloat((operacao.premioAbertura * 0.25 + (Math.random() - 0.5) * 0.05).toFixed(2)));
+
+                atualizarInterface();
+
+                btn.classList.remove('loading');
+                document.getElementById('timestamp').textContent = new Date().toLocaleTimeString('pt-BR');
+            }, 600);
+        }
+
+        function atualizarInterface() {
+            const distancia = ((operacao.ativoAtual - operacao.strike) / operacao.strike) * 100;
+            const probabilidade = Math.min(99, Math.max(20, 75 + (distancia - 3.77) * 5));
+            const lucro = (operacao.premioAbertura - operacao.premioAtual) * operacao.quantidade;
+            const variacaoPremio = ((operacao.premioAtual - operacao.premioAbertura) / operacao.premioAbertura) * 100;
+            const variacaoAtivo = ((operacao.ativoAtual - operacao.ativoAbertura) / operacao.ativoAbertura) * 100;
+            const isWinning = probabilidade >= 60;
+
+            // Valores principais
+            document.getElementById('lucroAberto').textContent = 'R$ ' + Math.abs(Math.round(lucro));
+            document.getElementById('probValue').textContent = Math.round(probabilidade) + '%';
+            document.getElementById('cotacaoAtual').textContent = operacao.ativoAtual.toFixed(2);
+            document.getElementById('distancia').textContent = '+' + distancia.toFixed(2) + '%';
+
+            // Status
+            const statusText = document.getElementById('statusText');
+            statusText.textContent = isWinning ? 'Vencendo' : 'Atenção';
+            statusText.style.color = isWinning ? 'var(--profit-green)' : 'var(--loss-red)';
+
+            // Variações
+            document.getElementById('variacaoAtivo').textContent = (variacaoAtivo >= 0 ? '+' : '') + variacaoAtivo.toFixed(2) + '% hoje';
+            document.getElementById('variacaoAtivo').style.color = variacaoAtivo >= 0 ? 'var(--profit-green)' : 'var(--loss-red)';
+
+            // Tabela
+            document.getElementById('premioAtual').textContent = operacao.premioAtual.toFixed(2);
+            document.getElementById('ativoTable').textContent = operacao.ativoAtual.toFixed(2);
+            document.getElementById('varPremio').textContent = '▼ ' + Math.abs(Math.round(variacaoPremio)) + '%';
+            document.getElementById('varAtivo').textContent = (variacaoAtivo >= 0 ? '▲ ' : '▼ ') + Math.abs(variacaoAtivo).toFixed(2) + '%';
+            document.getElementById('varAtivo').className = 'value ' + (variacaoAtivo >= 0 ? 'arrow up' : 'arrow down');
+
+            // Thermometer
+            const thermo = document.getElementById('thermoFill');
+            thermo.style.width = probabilidade + '%';
+            thermo.className = 'thermo-fill ' + (isWinning ? '' : 'danger');
+            document.getElementById('probHeader').textContent = Math.round(probabilidade) + '%';
+            document.getElementById('probHeader').className = 'thermo-value ' + (isWinning ? 'green' : 'red');
+        }
+
+        document.getElementById('timestamp').textContent = new Date().toLocaleTimeString('pt-BR');
+        atualizarInterface();
+    </script>
+</body>
+</html>

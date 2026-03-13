@@ -31,6 +31,7 @@ AI_JSON     = os.path.join(RESULTS_DIR, 'ai_results.json')
 
 FLASK_PORT     = 8888
 DASHBOARD_PORT = 8883
+E2E_JSON    = os.path.join(RESULTS_DIR, 'e2e_results.json')
 
 app = Flask(__name__)
 
@@ -218,34 +219,49 @@ def load_ai_results():
         return []
 
 
+def load_e2e_results():
+    """Carrega resultados JSON dos testes E2E (e2e-usuario)."""
+    if not os.path.exists(E2E_JSON):
+        return []
+    try:
+        with open(E2E_JSON, encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return []
+
+
 def load_all_results():
-    tests  = load_pytest_results() + load_pw_results() + load_ai_results()
+    tests  = load_pytest_results() + load_pw_results() + load_ai_results() + load_e2e_results()
     passed = sum(1 for t in tests if t['status'] == 'pass')
     failed = sum(1 for t in tests if t['status'] == 'fail')
     total  = len(tests)
     health = round(passed / total * 100) if total > 0 else 0
-    be_dur = sum(t['dur'] for t in tests if t['type'] == 'backend')
-    fe_dur = sum(t['dur'] for t in tests if t['type'] == 'frontend')
-    ai_dur = sum(t['dur'] for t in tests if t['type'] == 'ai')
+    be_dur  = sum(t['dur'] for t in tests if t['type'] == 'backend')
+    fe_dur  = sum(t['dur'] for t in tests if t['type'] == 'frontend')
+    ai_dur  = sum(t['dur'] for t in tests if t['type'] == 'ai')
+    e2e_dur = sum(t['dur'] for t in tests if t['type'] == 'e2e')
     return {
         'tests': tests,
         'summary': {
-            'total':    total,
-            'passed':   passed,
-            'failed':   failed,
-            'health':   health,
-            'duration': round((be_dur + fe_dur + ai_dur) / 1000, 1),
-            'be_count': sum(1 for t in tests if t['type'] == 'backend'),
-            'fe_count': sum(1 for t in tests if t['type'] == 'frontend'),
-            'ai_count': sum(1 for t in tests if t['type'] == 'ai'),
+            'total':     total,
+            'passed':    passed,
+            'failed':    failed,
+            'health':    health,
+            'duration':  round((be_dur + fe_dur + ai_dur + e2e_dur) / 1000, 1),
+            'be_count':  sum(1 for t in tests if t['type'] == 'backend'),
+            'fe_count':  sum(1 for t in tests if t['type'] == 'frontend'),
+            'ai_count':  sum(1 for t in tests if t['type'] == 'ai'),
+            'e2e_count': sum(1 for t in tests if t['type'] == 'e2e'),
         }
     }
 
 
 # ─── runner SSE ────────────────────────────────────────────────────────────────
 
-def run_stream(be_nodes='', fe_grep='', skip_be=False, skip_fe=False, skip_ai=False):
-    """Generator que emite eventos SSE enquanto os testes rodam (backend + frontend + ai)."""
+def run_stream(be_nodes='', fe_grep='', skip_be=False, skip_fe=False, skip_ai=False, ai_nodes='',
+               skip_e2e=True, e2e_grep='', e2e_headed=False, e2e_screenshots='on-error',
+               e2e_cleanup_after=False):
+    """Generator que emite eventos SSE enquanto os testes rodam (backend + frontend + ai + e2e)."""
     global _flask_proc
     flask_started = False
     os.makedirs(RESULTS_DIR, exist_ok=True)
@@ -380,14 +396,26 @@ def run_stream(be_nodes='', fe_grep='', skip_be=False, skip_fe=False, skip_ai=Fa
             yield sse('log', {'type': 'warn', 'msg': '[SKIP] Testes de IA ignorados (nenhum selecionado).'})
             ai_pass = ai_fail = 0
         else:
-            yield sse('log', {'type': 'info', 'msg': '[INFO] Executando testes de IA (pytest -m live_api)...'})
-            ai_cmd = [
-                sys.executable, '-m', 'pytest',
-                'backend/tests/test_ai_providers.py',
-                '-m', 'live_api', '-v',
-                '--json-report', f'--json-report-file={AI_JSON}',
-                '--tb=short',
-            ]
+            if ai_nodes:
+                node_list = [n.strip() for n in ai_nodes.split('|') if n.strip()]
+                label = f'{len(node_list)} teste(s) de IA selecionado(s)'
+                yield sse('log', {'type': 'info', 'msg': f'[INFO] Executando {label}...'})
+                ai_cmd = [
+                    sys.executable, '-m', 'pytest',
+                    *node_list,
+                    '-v',
+                    '--json-report', f'--json-report-file={AI_JSON}',
+                    '--tb=short',
+                ]
+            else:
+                yield sse('log', {'type': 'info', 'msg': '[INFO] Executando testes de IA (pytest -m live_api)...'})
+                ai_cmd = [
+                    sys.executable, '-m', 'pytest',
+                    'backend/tests/test_ai_providers.py',
+                    '-m', 'live_api', '-v',
+                    '--json-report', f'--json-report-file={AI_JSON}',
+                    '--tb=short',
+                ]
             ai_env = {**os.environ, 'PYTHONIOENCODING': 'utf-8'}
             ai_proc = subprocess.Popen(
                 ai_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
@@ -447,16 +475,155 @@ def run_stream(be_nodes='', fe_grep='', skip_be=False, skip_fe=False, skip_ai=Fa
             yield sse('log', {'type': 'ok',
                               'msg': f'[OK] IA: {ai_pass} passou | {ai_fail} falhou'})
 
-        # 5. payload final
+        # 5. testes E2E usuário (playwright.usuario.config.js)
+        if skip_e2e:
+            yield sse('log', {'type': 'warn', 'msg': '[SKIP] Testes E2E ignorados (nenhum selecionado).'})
+            e2e_pass = e2e_fail = 0
+        else:
+            yield sse('log', {'type': 'info', 'msg': '[INFO] Executando testes E2E de simulação de usuário...'})
+            pw_flags = '--config=playwright.usuario.config.js'
+            if e2e_headed:
+                pw_flags += ' --headed'
+            # Mapeia setting de screenshots para variável de ambiente que o spec pode ler
+            screenshot_env = {**os.environ, 'PYTHONIOENCODING': 'utf-8',
+                              'PW_SCREENSHOTS': e2e_screenshots,
+                              'PW_HEADED': '1' if e2e_headed else '0',
+                              'PW_SLOW_MO': '300' if e2e_headed else '0',
+                              'E2E_SCREENSHOTS': e2e_screenshots}
+            if e2e_grep:
+                pw_flags += f' --grep "{e2e_grep}"'
+            e2e_cmd = f'npx playwright test {pw_flags} --reporter=line'
+            e2e_proc = subprocess.Popen(
+                e2e_cmd,
+                stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                text=True, encoding='utf-8', errors='replace',
+                cwd=BASE_DIR, shell=True, env=screenshot_env
+            )
+            e2e_pass = e2e_fail = 0
+            e2e_raw_output = []
+            for line in e2e_proc.stdout:
+                line = line.rstrip()
+                if not line:
+                    continue
+                e2e_raw_output.append(line)
+                t = parse_pw_line(line)
+                if t:
+                    t['type'] = 'e2e'
+                    if t['status'] == 'pass':
+                        e2e_pass += 1
+                    else:
+                        e2e_fail += 1
+                    yield sse('test', t)
+                ltype = ('ok'   if 'passed' in line.lower() else
+                         'fail' if 'failed' in line.lower() else 'info')
+                yield sse('log', {'type': ltype, 'msg': line[:250]})
+            e2e_proc.wait()
+
+            # Limpeza de dados de teste (opcional, configurável no dashboard)
+            if e2e_cleanup_after:
+                try:
+                    import urllib.request as _urlreq
+                    _req = _urlreq.Request(
+                        'http://localhost:8888/api/opcoes/test-data',
+                        data=b'', method='DELETE'
+                    )
+                    with _urlreq.urlopen(_req, timeout=5) as _resp:
+                        import json as _json
+                        _body = _json.loads(_resp.read())
+                        nd = _body.get('deleted', '?')
+                    yield sse('log', {'type': 'ok', 'msg': f'[OK] {nd} dados de teste E2E removidos do banco.'})
+                except Exception as _ce:
+                    yield sse('log', {'type': 'warn', 'msg': f'[WARN] Cleanup dados teste falhou: {_ce}'})
+
+            # Tenta parsear saída JSON do playwright reporter
+            e2e_tests_results = []
+            json_str = '\n'.join(e2e_raw_output)
+            # Playwright --reporter=json pode imprimir para stdout
+            try:
+                json_start = json_str.find('{')
+                if json_start >= 0:
+                    pw_json_data = json.loads(json_str[json_start:])
+                    for spec in pw_json_data.get('suites', []):
+                        def walk_e2e(suite, file_hint=''):
+                            fh = suite.get('file', file_hint or suite.get('title', ''))
+                            for test in suite.get('specs', []):
+                                res = test.get('tests', [{}])[0]
+                                status = res.get('status', 'skipped')
+                                dur = sum(r.get('duration', 0) for r in res.get('results', []))
+                                e2e_tests_results.append({
+                                    'file':  os.path.basename(fh).replace('.spec.js','') if fh else 'e2e-usuario',
+                                    'suite': suite.get('title', ''),
+                                    'name':  test.get('title', ''),
+                                    'type':  'e2e',
+                                    'status': 'pass' if status == 'passed' else 'fail',
+                                    'dur':   int(dur),
+                                    'errorMessage': None,
+                                    'traceback': None,
+                                    'location': None,
+                                })
+                            for child in suite.get('suites', []):
+                                walk_e2e(child, fh)
+                        walk_e2e(spec)
+            except Exception:
+                pass
+
+            if e2e_tests_results:
+                os.makedirs(RESULTS_DIR, exist_ok=True)
+                with open(E2E_JSON, 'w', encoding='utf-8') as f:
+                    json.dump(e2e_tests_results, f, ensure_ascii=False)
+            else:
+                # Fallback: tenta ler o arquivo json gerado pelo playwright.usuario.config.js
+                e2e_raw_path = os.path.join(RESULTS_DIR, 'e2e_raw.json')
+                if os.path.exists(e2e_raw_path):
+                    try:
+                        with open(e2e_raw_path, encoding='utf-8') as f:
+                            pw_data = json.load(f)
+                        fb_results = []
+                        def walk_fb(suite, fh=''):
+                            fh = suite.get('file', fh or suite.get('title', ''))
+                            for spec in suite.get('specs', []):
+                                res   = spec.get('tests', [{}])[0]
+                                dur   = sum(r.get('duration', 0) for r in res.get('results', []))
+                                stat  = res.get('status', 'skipped')
+                                fb_results.append({
+                                    'file':  os.path.basename(fh).replace('.spec.js','') if fh else 'e2e-usuario',
+                                    'suite': suite.get('title', ''),
+                                    'name':  spec.get('title', ''),
+                                    'type':  'e2e',
+                                    'status': 'pass' if stat == 'passed' else 'fail',
+                                    'dur':   int(dur),
+                                    'errorMessage': None, 'traceback': None, 'location': None,
+                                })
+                            for child in suite.get('suites', []):
+                                walk_fb(child, fh)
+                        for top in pw_data.get('suites', []):
+                            walk_fb(top)
+                        if fb_results:
+                            with open(E2E_JSON, 'w', encoding='utf-8') as f:
+                                json.dump(fb_results, f, ensure_ascii=False)
+                    except Exception:
+                        pass
+
+            if e2e_proc.returncode != 0 and e2e_pass == 0 and e2e_fail == 0:
+                yield sse('log', {'type': 'fail',
+                                  'msg': f'[ERRO] E2E: processo retornou código {e2e_proc.returncode}. Verifique o log acima.'})
+            e2e_log_type = 'ok' if (e2e_pass > 0 and e2e_fail == 0) else 'fail' if e2e_fail > 0 else 'warn'
+            e2e_log_pfx  = '[OK]' if e2e_log_type == 'ok' else '[FAIL]' if e2e_log_type == 'fail' else '[WARN]'
+            yield sse('log', {'type': e2e_log_type,
+                              'msg': f'{e2e_log_pfx} E2E: {e2e_pass} passou | {e2e_fail} falhou'})
+
+        # 6. payload final
         results = load_all_results()
         results['summary'].update({'be_pass': be_pass, 'be_fail': be_fail,
                                    'fe_pass': fe_pass, 'fe_fail': fe_fail,
-                                   'ai_pass': ai_pass, 'ai_fail': ai_fail})
+                                   'ai_pass': ai_pass, 'ai_fail': ai_fail,
+                                   'e2e_pass': e2e_pass, 'e2e_fail': e2e_fail})
         total   = results['summary']['total']
         passed  = results['summary']['passed']
         failed  = results['summary']['failed']
         color   = 'ok' if failed == 0 else 'fail'
         yield sse('complete', results)
+
         yield sse('log', {'type': color,
                           'msg': f'[RESUMO] {passed}/{total} testes passaram'
                                  + (f' | {failed} FALHOU' if failed else ' ✓ TODOS OK!')})
@@ -615,6 +782,8 @@ def scan_frontend_tests():
     if not spec_dir.exists():
         return tests
     for fpath in sorted(spec_dir.glob('*.spec.js')):
+        if fpath.name == 'e2e-usuario.spec.js':
+            continue  # tratado separadamente no grupo E2E
         try:
             src = fpath.read_text(encoding='utf-8', errors='replace')
         except Exception:
@@ -658,10 +827,48 @@ def scan_frontend_tests():
     return tests
 
 
+def scan_e2e_tests():
+    """Escaneia e2e-usuario.spec.js e retorna testes com type='e2e'."""
+    tests = []
+    fpath = Path(FRONTEND_TESTS_DIR) / 'pages' / 'e2e-usuario.spec.js'
+    if not fpath.exists():
+        return tests
+    pat_test_static = re.compile(r"^\s*test\s*\(\s*['\"](.+?)['\"]", re.MULTILINE)
+    try:
+        src = fpath.read_text(encoding='utf-8', errors='replace')
+    except Exception:
+        return tests
+    static = [m.group(1) for m in pat_test_static.finditer(src)]
+    # Para o template `[E2E-Usuario-Opcoes-FX${...}]`, adiciona entrée genérica
+    if 'E2E-Usuario-Opcoes-FX' in src:
+        import json as _json
+        fixtures_path = Path(FRONTEND_TESTS_DIR) / 'fixtures' / 'opcoes-fixtures.json'
+        try:
+            fx = _json.loads(fixtures_path.read_text(encoding='utf-8'))
+            for idx, op in enumerate(fx.get('operacoes', [])):
+                desc = op.get('_descricao', f'Fixture {idx+1}')
+                static.append(f'[E2E-Usuario-Opcoes-FX{str(idx+1).zfill(2)}] {desc}')
+        except Exception:
+            static.append('[E2E-Usuario-Opcoes-FX*] (template)')
+    for name in static:
+        tests.append({
+            'file':   'e2e-usuario',
+            'suite':  '[E2E-Usuario] Simulação de Usuário',
+            'name':   name,
+            'type':   'e2e',
+            'status': 'pending',
+            'dur':    0,
+            'errorMessage': None,
+            'traceback':    None,
+            'location':     None,
+        })
+    return tests
+
+
 @app.route('/api/tests')
 def api_tests():
-    """Retorna lista completa de testes escaneados dos arquivos reais (backend + frontend + ai)."""
-    tests = scan_backend_tests() + scan_frontend_tests() + scan_ai_tests()
+    """Retorna lista completa de testes escaneados dos arquivos reais (backend + frontend + ai + e2e)."""
+    tests = scan_backend_tests() + scan_frontend_tests() + scan_ai_tests() + scan_e2e_tests()
     resp = jsonify({'tests': tests, 'total': len(tests)})
     resp.headers['Access-Control-Allow-Origin'] = '*'
     return resp
@@ -788,11 +995,17 @@ def api_ai_hint():
 
 @app.route('/api/stream')
 def api_stream():
-    be_nodes = request.args.get('be_nodes', '')
-    fe_grep  = request.args.get('fe_grep', '')
-    skip_be  = request.args.get('skip_be', '0') == '1'
-    skip_fe  = request.args.get('skip_fe', '0') == '1'
-    skip_ai  = request.args.get('skip_ai', '0') == '1'
+    be_nodes        = request.args.get('be_nodes', '')
+    fe_grep         = request.args.get('fe_grep', '')
+    skip_be         = request.args.get('skip_be', '0') == '1'
+    skip_fe         = request.args.get('skip_fe', '0') == '1'
+    skip_ai         = request.args.get('skip_ai', '0') == '1'
+    ai_nodes        = request.args.get('ai_nodes', '')
+    skip_e2e        = request.args.get('skip_e2e', '1') == '1'  # default: skip E2E
+    e2e_grep        = request.args.get('e2e_grep', '')
+    e2e_headed        = request.args.get('e2e_headed',        '0') == '1'
+    e2e_screenshots   = request.args.get('e2e_screenshots',   'on-error')
+    e2e_cleanup_after = request.args.get('e2e_cleanup_after', '0') == '1'
 
     if not _run_lock.acquire(blocking=False):
         def busy():
@@ -803,7 +1016,11 @@ def api_stream():
     def generate():
         try:
             yield from run_stream(be_nodes=be_nodes, fe_grep=fe_grep,
-                                  skip_be=skip_be, skip_fe=skip_fe, skip_ai=skip_ai)
+                                  skip_be=skip_be, skip_fe=skip_fe, skip_ai=skip_ai,
+                                  ai_nodes=ai_nodes, skip_e2e=skip_e2e,
+                                  e2e_grep=e2e_grep, e2e_headed=e2e_headed,
+                                  e2e_screenshots=e2e_screenshots,
+                                  e2e_cleanup_after=e2e_cleanup_after)
         finally:
             _run_lock.release()
 

@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Concept 12 - Glass Widget</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            --text-white: #FFFFFF;
+            --text-muted: rgba(255, 255, 255, 0.6);
+            --green-start: #10B981;
+            --green-end: #059669;
+            --red-start: #EF4444;
+            --red-end: #DC2626;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .glass-widget {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            width: 100%;
+            max-width: 340px;
+            box-shadow: var(--glass-shadow);
+            overflow: hidden;
+        }
+
+        .widget-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px 16px;
+        }
+
+        .widget-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .widget-badge {
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--text-white);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .widget-subtitle {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .close-widget {
+            width: 28px;
+            height: 28px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 50%;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .close-widget:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--text-white);
+        }
+
+        .widget-body {
+            padding: 0 24px 20px;
+        }
+
+        .main-metric {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .main-value {
+            font-size: 56px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--green-start), var(--green-end));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.1;
+        }
+
+        .main-value.loss {
+            background: linear-gradient(135deg, var(--red-start), var(--red-end));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .main-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 8px;
+        }
+
+        .pill-row {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .pill {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-white);
+        }
+
+        .pill.success {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(5, 150, 105, 0.3));
+        }
+
+        .pill.danger {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(220, 38, 38, 0.3));
+        }
+
+        .mini-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .mini-stat {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .mini-stat-label {
+            font-size: 10px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .mini-stat-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-white);
+        }
+
+        .mini-stat-value.green { color: #34D399; }
+        .mini-stat-value.blue { color: #60A5FA; }
+
+        .progress-widget {
+            margin-bottom: 20px;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .progress-label {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .progress-value {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-white);
+        }
+
+        .progress-track {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            background: linear-gradient(90deg, var(--green-start), var(--green-end));
+            transition: width 0.4s ease;
+        }
+
+        .progress-fill.loss {
+            background: linear-gradient(90deg, var(--red-start), var(--red-end));
+        }
+
+        .widget-footer {
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .time-info {
+            font-size: 11px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .time-info::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: #34D399;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .refresh-btn {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, var(--green-start), var(--green-end));
+;
+            border-radius: 50%;
+            border: none            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+        }
+
+        .refresh-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+        }
+
+        .refresh-btn:active {
+            transform: scale(0.95);
+        }
+
+        .refresh-btn.loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .refresh-btn .spinner {
+            display: none;
+            animation: spin 1s linear infinite;
+        }
+
+        .refresh-btn.loading .spinner { display: block; }
+        .refresh-btn.loading .icon { display: none; }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="modal-overlay">
+        <div class="glass-widget">
+            <div class="widget-header">
+                <div>
+                    <div class="widget-title">
+                        <span class="widget-badge">PUT</span>
+                    </div>
+                    <div class="widget-subtitle">PETR4 • R$ 34,50</div>
+                </div>
+                <button class="close-widget">✕</button>
+            </div>
+
+            <div class="widget-body">
+                <div class="main-metric">
+                    <div class="main-value" id="probValue">75%</div>
+                    <div class="main-label">Probabilidade de Lucro</div>
+                    <div class="pill-row">
+                        <div class="pill success" id="statusPill">VENCENDO</div>
+                    </div>
+                </div>
+
+                <div class="mini-stats">
+                    <div class="mini-stat">
+                        <div class="mini-stat-label">Premio Atual</div>
+                        <div class="mini-stat-value blue" id="premioAtual">R$ 0,15</div>
+                    </div>
+                    <div class="mini-stat">
+                        <div class="mini-stat-label">Cotação</div>
+                        <div class="mini-stat-value" id="cotacaoAtual">R$ 35,80</div>
+                    </div>
+                    <div class="mini-stat">
+                        <div class="mini-stat-label">Lucro Aberto</div>
+                        <div class="mini-stat-value green" id="lucroAberto">R$ 450</div>
+                    </div>
+                    <div class="mini-stat">
+                        <div class="mini-stat-label">Dist. Strike</div>
+                        <div class="mini-stat-value green" id="distancia">+3,77%</div>
+                    </div>
+                </div>
+
+                <div class="progress-widget">
+                    <div class="progress-header">
+                        <span class="progress-label">Progresso</span>
+                        <span class="progress-value" id="progressValue">75%</span>
+                    </div>
+                    <div class="progress-track">
+                        <div class="progress-fill" id="progressFill" style="width: 75%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="widget-footer">
+                <div class="time-info">
+                    <span id="timestamp">--:--:--</span>
+                </div>
+                <button class="refresh-btn" id="refreshBtn" onclick="atualizar()">
+                    <span class="icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M23 4v6h-6"/>
+                            <path d="M1 20v-6h6"/>
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                        </svg>
+                    </span>
+                    <span class="spinner">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                        </svg>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const operacao = {
+            strike: 34.50,
+            premioAbertura: 0.60,
+            premioAtual: 0.15,
+            ativoAbertura: 36.00,
+            ativoAtual: 35.80,
+            quantidade: 1000
+        };
+
+        function atualizar() {
+            const btn = document.getElementById('refreshBtn');
+            btn.classList.add('loading');
+
+            setTimeout(() => {
+                const variacao = (Math.random() - 0.5) * 0.30;
+                operacao.ativoAtual = parseFloat((operacao.ativoAtual + variacao).toFixed(2));
+                operacao.premioAtual = Math.max(0.01, parseFloat((operacao.premioAbertura * 0.25 + (Math.random() - 0.5) * 0.05).toFixed(2)));
+
+                atualizarInterface();
+
+                btn.classList.remove('loading');
+                document.getElementById('timestamp').textContent = new Date().toLocaleTimeString('pt-BR');
+            }, 600);
+        }
+
+        function atualizarInterface() {
+            const distancia = ((operacao.ativoAtual - operacao.strike) / operacao.strike) * 100;
+            const probabilidade = Math.min(99, Math.max(20, 75 + (distancia - 3.77) * 5));
+            const lucro = (operacao.premioAbertura - operacao.premioAtual) * operacao.quantidade;
+            const isWinning = probabilidade >= 60;
+
+            // Main
+            const mainValue = document.getElementById('probValue');
+            mainValue.textContent = Math.round(probabilidade) + '%';
+            mainValue.className = 'main-value ' + (isWinning ? '' : 'loss');
+
+            // Status pill
+            const statusPill = document.getElementById('statusPill');
+            if (isWinning) {
+                statusPill.textContent = 'VENCENDO';
+                statusPill.className = 'pill success';
+            } else {
+                statusPill.textContent = 'ATENÇÃO';
+                statusPill.className = 'pill danger';
+            }
+
+            // Values
+            document.getElementById('premioAtual').textContent = 'R$ ' + operacao.premioAtual.toFixed(2);
+            document.getElementById('cotacaoAtual').textContent = 'R$ ' + operacao.ativoAtual.toFixed(2).replace('.', ',');
+            document.getElementById('lucroAberto').textContent = 'R$ ' + Math.abs(Math.round(lucro));
+            document.getElementById('distancia').textContent = '+' + distancia.toFixed(2) + '%';
+
+            // Progress
+            document.getElementById('progressValue').textContent = Math.round(probabilidade) + '%';
+            const progressFill = document.getElementById('progressFill');
+            progressFill.style.width = probabilidade + '%';
+            progressFill.className = 'progress-fill ' + (isWinning ? '' : 'loss');
+        }
+
+        document.getElementById('timestamp').textContent = new Date().toLocaleTimeString('pt-BR');
+        atualizarInterface();
+    </script>
+</body>
+</html>

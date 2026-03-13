@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Concept 15 - Minimal Card</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0D0D0D;
+            --bg-surface: #161616;
+            --bg-elevated: #1F1F1F;
+            --text-primary: #FAFAFA;
+            --text-secondary: #A1A1A1;
+            --accent-orange: #F97316;
+            --accent-cyan: #06B6D4;
+            --profit: #22C55E;
+            --loss: #EF4444;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg-dark);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .minimal-card {
+            background: var(--bg-surface);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 380px;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .minimal-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--accent-cyan);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .header-title h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .header-title .subtitle {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .close-minimal {
+            width: 32px;
+            height: 32px;
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .close-minimal:hover {
+            background: var(--loss);
+            border-color: var(--loss);
+            color: white;
+        }
+
+        .minimal-body {
+            padding: 20px;
+        }
+
+        .main-display {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .main-value {
+            font-family: 'Space Mono', monospace;
+            font-size: 48px;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .main-value.positive { color: var(--profit); }
+        .main-value.negative { color: var(--loss); }
+
+        .main-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .info-minimal {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: var(--bg-elevated);
+            border-radius: 10px;
+        }
+
+        .info-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .info-values {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .info-value {
+            font-family: 'Space Mono', monospace;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .info-value.current {
+            color: var(--accent-cyan);
+        }
+
+        .info-arrow {
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .arrow-up {
+            background: rgba(34, 197, 94, 0.2);
+            color: var(--profit);
+        }
+
+        .arrow-down {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--loss);
+        }
+
+        .minimal-footer {
+            padding: 16px 20px;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .time-display {
+            font-size: 12px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .time-display::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: var(--profit);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .refresh-minimal {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--accent-cyan);
+            color: var(--bg-dark);
+            border: none;
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .refresh-minimal:hover {
+            background: #22D3EE;
+            transform: translateY(-1px);
+        }
+
+        .refresh-minimal.loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .refresh-minimal .spinner {
+            display: none;
+            animation: spin 1s linear infinite;
+        }
+
+        .refresh-minimal.loading .spinner { display: inline; }
+        .refresh-minimal.loading .btn-text { display: none; }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="modal-overlay">
+        <div class="minimal-card">
+            <div class="minimal-header">
+                <div class="header-left">
+                    <div class="header-icon">📈</div>
+                    <div class="header-title">
+                        <h3>PUT Position</h3>
+                        <div class="subtitle">PETR4 • Strike R$ 34,50</div>
+                    </div>
+                </div>
+                <button class="close-minimal">×</button>
+            </div>
+
+            <div class="minimal-body">
+                <div class="main-display">
+                    <div class="main-value positive" id="probValue">75%</div>
+                    <div class="main-label">Probabilidade</div>
+                </div>
+
+                <div class="info-minimal">
+                    <div class="info-row">
+                        <span class="info-label">Premio</span>
+                        <div class="info-values">
+                            <span class="info-value">0,60</span>
+                            <span class="info-arrow arrow-down" id="arrowPremio">→</span>
+                            <span class="info-value current" id="premioAtual">0,15</span>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Ativo</span>
+                        <div class="info-values">
+                            <span class="info-value">36,00</span>
+                            <span class="info-arrow arrow-down" id="arrowAtivo">→</span>
+                            <span class="info-value current" id="ativoAtual">35,80</span>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Lucro</span>
+                        <div class="info-values">
+                            <span class="info-value positive" id="lucroAberto">+R$ 450</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="minimal-footer">
+                <div class="time-display">
+                    <span id="timestamp">--:--:--</span>
+                </div>
+                <button class="refresh-minimal" id="refreshBtn" onclick="atualizar()">
+                    <span class="spinner">⟳</span>
+                    <span class="btn-text">Atualizar</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const operacao = {
+            strike: 34.50,
+            premioAbertura: 0.60,
+            premioAtual: 0.15,
+            ativoAbertura: 36.00,
+            ativoAtual: 35.80,
+            quantidade: 1000
+        };
+
+        function atualizar() {
+            const btn = document.getElementById('refreshBtn');
+            btn.classList.add('loading');
+
+            setTimeout(() => {
+                const variacao = (Math.random() - 0.5) * 0.30;
+                operacao.ativoAtual = parseFloat((operacao.ativoAtual + variacao).toFixed(2));
+                operacao.premioAtual = Math.max(0.01, parseFloat((operacao.premioAbertura * 0.25 + (Math.random() - 0.5) * 0.05).toFixed(2)));
+
+                atualizarInterface();
+
+                btn.classList.remove('loading');
+                document.getElementById('timestamp').textContent = new Date().toLocaleTimeString('pt-BR');
+            }, 600);
+        }
+
+        function atualizarInterface() {
+            const distancia = ((operacao.ativoAtual - operacao.strike) / operacao.strike) * 100;
+            const probabilidade = Math.min(99, Math.max(20, 75 + (distancia - 3.77) * 5));
+            const lucro = (operacao.premioAbertura - operacao.premioAtual) * operacao.quantidade;
+            const isWinning = probabilidade >= 60;
+
+            const mainValue = document.getElementById('probValue');
+            mainValue.textContent = Math.round(probabilidade) + '%';
+            mainValue.className = 'main-value ' + (isWinning ? 'positive' : 'negative');
+
+            document.getElementById('premioAtual').textContent = operacao.premioAtual.toFixed(2);
+            document.getElementById('ativoAtual').textContent = operacao.ativoAtual.toFixed(2).replace('.', ',');
+            document.getElementById('lucroAberto').textContent = '+R$ ' + Math.abs(Math.round(lucro));
+        }
+
+        document.getElementById('timestamp').textContent = new Date().toLocaleTimeString('pt-BR');
+        atualizarInterface();
+    </script>
+</body>
+</html>

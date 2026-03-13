@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Dual Investment - Telas de Inclusão</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background-color: #0a0c10;
+            color: #e0e0e0;
+            padding: 24px;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+            color: #fff;
+            font-weight: 500;
+        }
+
+        .subtitle {
+            color: #a0a0a0;
+            margin-bottom: 32px;
+            border-left: 4px solid #f0b90b;
+            padding-left: 16px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 24px;
+            align-items: start;
+        }
+
+        .card {
+            background: #161b22;
+            border-radius: 20px;
+            border: 1px solid #2d333b;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .card:hover {
+            border-color: #f0b90b;
+            transform: translateY(-4px);
+        }
+
+        .card-header {
+            padding: 16px 20px;
+            background: #1e242c;
+            border-bottom: 1px solid #2d333b;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card-header i {
+            font-size: 1.4rem;
+            color: #f0b90b;
+            width: 32px;
+        }
+
+        .card-header h3 {
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: #fff;
+        }
+
+        .card-body {
+            padding: 20px;
+            flex: 1;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.85rem;
+            color: #8b949e;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 12px;
+            background: #0d1117;
+            border: 1px solid #2d333b;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 0.9rem;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #f0b90b;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 12px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 30px;
+            font-weight: 500;
+            cursor: pointer;
+            background: #2d333b;
+            color: #fff;
+            transition: background 0.2s;
+        }
+
+        .btn-primary {
+            background: #f0b90b;
+            color: #000;
+        }
+
+        .btn-primary:hover {
+            background: #d4a108;
+        }
+
+        .btn-secondary {
+            background: #2d333b;
+            color: #fff;
+        }
+
+        .btn-secondary:hover {
+            background: #3d444d;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: #2d333b;
+            color: #e0e0e0;
+        }
+
+        .badge.info {
+            background: #1f4f7a;
+            color: #fff;
+        }
+
+        .info-box {
+            background: #1e242c;
+            border-radius: 12px;
+            padding: 12px;
+            margin: 16px 0;
+            font-size: 0.9rem;
+            border-left: 4px solid #f0b90b;
+        }
+
+        .upload-area {
+            border: 2px dashed #2d333b;
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+            background: #0d1117;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .upload-area:hover {
+            border-color: #f0b90b;
+        }
+
+        .upload-area i {
+            font-size: 2.5rem;
+            color: #f0b90b;
+            margin-bottom: 10px;
+        }
+
+        .template-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #0d1117;
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+        }
+
+        .separator {
+            height: 1px;
+            background: #2d333b;
+            margin: 16px 0;
+        }
+
+        .coin-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .coin-icon {
+            width: 24px;
+            height: 24px;
+            background: #2d333b;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>➕ Telas de Inclusão de Operações</h1>
+    <div class="subtitle">5 variações para adicionar dual investments ao seu controle</div>
+
+    <div class="grid">
+        <!-- 1. Inclusão Manual Completa -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-pen"></i>
+                <h3>Inclusão Manual Completa</h3>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label>Par *</label>
+                    <select class="form-control">
+                        <option>BTC/USDT</option>
+                        <option>ETH/USDT</option>
+                        <option>BNB/USDT</option>
+                        <option>SOL/USDT</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Tipo</label>
+                        <select class="form-control">
+                            <option>HIGH (CALL)</option>
+                            <option>LOW (PUT)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Data de abertura</label>
+                        <input type="date" class="form-control" value="2026-03-09">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Valor (USDT)</label>
+                        <input type="number" class="form-control" placeholder="1000">
+                    </div>
+                    <div class="form-group">
+                        <label>Strike (USDT)</label>
+                        <input type="number" class="form-control" placeholder="65000">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>APY (%)</label>
+                        <input type="number" step="0.1" class="form-control" placeholder="12.5">
+                    </div>
+                    <div class="form-group">
+                        <label>Vencimento</label>
+                        <input type="date" class="form-control">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Prêmio recebido (opcional)</label>
+                    <input type="text" class="form-control" placeholder="Ex: 0.0025 BTC">
+                </div>
+                <div class="form-group">
+                    <label>Observações</label>
+                    <textarea class="form-control" rows="2" placeholder="Anotações..."></textarea>
+                </div>
+                <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px;">
+                    <button class="btn btn-secondary">Cancelar</button>
+                    <button class="btn btn-primary">Salvar Operação</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Inclusão Rápida (campos essenciais) -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-bolt"></i>
+                <h3>Inclusão Rápida</h3>
+            </div>
+            <div class="card-body">
+                <div class="info-box">
+                    <i class="fas fa-info-circle"></i> Apenas campos obrigatórios para agilizar o registro.
+                </div>
+                <div class="form-group">
+                    <label>Par *</label>
+                    <select class="form-control">
+                        <option>BTC/USDT</option>
+                        <option>ETH/USDT</option>
+                        <option>BNB/USDT</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Tipo</label>
+                        <select class="form-control">
+                            <option>HIGH</option>
+                            <option>LOW</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Valor (USDT)</label>
+                        <input type="number" class="form-control" placeholder="1000">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Strike</label>
+                        <input type="number" class="form-control" placeholder="Strike">
+                    </div>
+                    <div class="form-group">
+                        <label>Vencimento</label>
+                        <input type="date" class="form-control">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>APY (%)</label>
+                    <input type="number" class="form-control" placeholder="10.5">
+                </div>
+                <div class="separator"></div>
+                <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                    <button class="btn btn-secondary">Limpar</button>
+                    <button class="btn btn-primary">Adicionar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Inclusão via Template (copiar de operação existente) -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-copy"></i>
+                <h3>Copiar de Operação</h3>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label>Selecione um template</label>
+                    <select class="form-control">
+                        <option>ETH CALL 06/03 (TAE 17,36%)</option>
+                        <option>BTC PUT 15/03 (Strike 62k)</option>
+                        <option>BNB HIGH 20/03 (APY 15%)</option>
+                    </select>
+                </div>
+                <div class="template-item">
+                    <div>
+                        <div><strong>ETH/USDT - CALL</strong></div>
+                        <div class="small-text" style="color: #8b949e;">Strike $2.325 | APY 17,36% | Venc 06/03</div>
+                    </div>
+                    <span class="badge info">Template</span>
+                </div>
+                <div class="form-group">
+                    <label>Modifique os dados (opcional)</label>
+                    <input type="text" class="form-control" placeholder="Novo strike, valor...">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Valor (USDT)</label>
+                        <input type="number" class="form-control" value="5000">
+                    </div>
+                    <div class="form-group">
+                        <label>Vencimento</label>
+                        <input type="date" class="form-control" value="2026-04-10">
+                    </div>
+                </div>
+                <div style="margin-top: 16px; display: flex; justify-content: flex-end;">
+                    <button class="btn btn-primary">Aplicar e Salvar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. Inclusão em Lote (múltiplas operações) -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-layer-group"></i>
+                <h3>Inclusão em Lote</h3>
+            </div>
+            <div class="card-body">
+                <div class="info-box">
+                    <i class="fas fa-database"></i> Adicione várias operações de uma vez.
+                </div>
+                <div style="max-height: 200px; overflow-y: auto; background: #0d1117; border-radius: 12px; padding: 8px; margin-bottom: 16px;">
+                    <table style="width:100%; font-size:0.8rem;">
+                        <thead><tr><th>Par</th><th>Tipo</th><th>Valor</th><th>Strike</th><th>APY</th><th>Venc</th></tr></thead>
+                        <tbody>
+                            <tr><td>BTC</td><td>HIGH</td><td>2000</td><td>66k</td><td>12%</td><td>15/04</td></tr>
+                            <tr><td>ETH</td><td>LOW</td><td>1500</td><td>2.1k</td><td>9%</td><td>20/04</td></tr>
+                            <tr><td>BNB</td><td>HIGH</td><td>800</td><td>600</td><td>14%</td><td>25/04</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="form-group">
+                    <label>Adicionar nova linha</label>
+                    <div class="form-row">
+                        <select class="form-control" style="flex:2;">
+                            <option>BTC/USDT</option>
+                            <option>ETH/USDT</option>
+                            <option>BNB/USDT</option>
+                        </select>
+                        <input type="number" class="form-control" placeholder="Valor" style="flex:1;">
+                    </div>
+                </div>
+                <div style="display: flex; gap: 8px; justify-content: space-between;">
+                    <button class="btn btn-secondary"><i class="fas fa-plus"></i> Adicionar linha</button>
+                    <button class="btn btn-primary">Salvar Lote</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. Importação de Arquivo (CSV/Excel) -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-file-import"></i>
+                <h3>Importar de Arquivo</h3>
+            </div>
+            <div class="card-body">
+                <div class="upload-area">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>Arraste ou clique para enviar</p>
+                    <p class="small-text" style="color: #8b949e;">Suporta CSV, XLSX (máx 2MB)</p>
+                </div>
+                <div style="margin: 16px 0;">
+                    <p class="small-text"><i class="fas fa-download"></i> <a href="#" style="color: #f0b90b;">Baixe um modelo de planilha</a></p>
+                </div>
+                <div class="form-group">
+                    <label>Mapeamento de colunas</label>
+                    <select class="form-control">
+                        <option>Automático (detectar cabeçalho)</option>
+                        <option>Mapear manualmente</option>
+                    </select>
+                </div>
+                <div style="display: flex; justify-content: flex-end;">
+                    <button class="btn btn-primary">Importar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Extra: Explicação das ideias -->
+    <div style="margin-top: 40px; background: #161b22; border-radius: 20px; padding: 24px; max-width: 1200px; border: 1px solid #2d333b;">
+        <h3 style="color:white;">📌 Resumo das ideias para inclusão</h3>
+        <ul style="color:#a0a0a0; line-height:1.8; margin-left:20px;">
+            <li><strong>Inclusão Manual Completa:</strong> Todos os campos disponíveis para máximo controle.</li>
+            <li><strong>Inclusão Rápida:</strong> Apenas campos essenciais para agilidade no dia a dia.</li>
+            <li><strong>Copiar de Operação:</strong> Reutiliza dados de operações anteriores como template.</li>
+            <li><strong>Inclusão em Lote:</strong> Adiciona várias operações de uma só vez com uma mini tabela.</li>
+            <li><strong>Importação de Arquivo:</strong> Suporte a CSV/Excel para quem já controla em planilhas.</li>
+        </ul>
+        <p style="color:#8b949e; margin-top:16px;">Todas as telas seguem o tema escuro e podem ser adaptadas com dados reais da sua API. Escolha a que melhor se encaixa no seu fluxo ou combine várias delas.</p>
+    </div>
+
+    <style>
+        .small-text {
+            font-size: 0.75rem;
+            color: #8b949e;
+        }
+    </style>
+</body>
+</html>

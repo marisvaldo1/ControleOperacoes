@@ -11,7 +11,7 @@
     "grepInvert": null,
     "maxFailures": 0,
     "metadata": {
-      "actualWorkers": 2
+      "actualWorkers": 5
     },
     "preserveOutput": "always",
     "projects": [
@@ -20,12 +20,14 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 2
+          "actualWorkers": 5
         },
         "id": "chromium",
         "name": "chromium",
         "testDir": "D:/Sistemas/python/ControleOperacoes/frontend/tests",
-        "testIgnore": [],
+        "testIgnore": [
+          "**/e2e-usuario.spec.js"
+        ],
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
         ],
@@ -67,6 +69,218 @@
   },
   "suites": [
     {
+      "title": "pages\\crypto\\crypto-assets.spec.js",
+      "file": "pages/crypto/crypto-assets.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "[Crypto-Assets] CSS e JS devem carregar sem 404",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 20000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5245,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-03-13T19:31:15.575Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "82b250a525f72bc991fd-4c33fb0c838a18fd2bd5",
+          "file": "pages/crypto/crypto-assets.spec.js",
+          "line": 11,
+          "column": 1
+        },
+        {
+          "title": "[Crypto-Assets] JS do módulo crypto deve estar presente (js/crypto/)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 20000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2539,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-03-13T19:31:21.385Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "82b250a525f72bc991fd-443c90861895a07c21fe",
+          "file": "pages/crypto/crypto-assets.spec.js",
+          "line": 23,
+          "column": 1
+        },
+        {
+          "title": "[Crypto-Assets] GET /api/crypto deve retornar JSON válido",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 20000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 95,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-03-13T19:31:23.963Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "82b250a525f72bc991fd-1193555aeefc4ed13a23",
+          "file": "pages/crypto/crypto-assets.spec.js",
+          "line": 38,
+          "column": 1
+        },
+        {
+          "title": "[Crypto-Assets] GET /api/crypto/estrategias deve listar estratégias",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 20000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 66,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-03-13T19:31:24.088Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "82b250a525f72bc991fd-cc45cbe3512c1643fa1f",
+          "file": "pages/crypto/crypto-assets.spec.js",
+          "line": 45,
+          "column": 1
+        },
+        {
+          "title": "[Crypto-Assets] POST /api/crypto deve criar e deletar operação de teste",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 20000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 72,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-03-13T19:31:24.188Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "82b250a525f72bc991fd-4955cf10e0d9175296d9",
+          "file": "pages/crypto/crypto-assets.spec.js",
+          "line": 62,
+          "column": 1
+        },
+        {
+          "title": "[Crypto-Assets] campo tipo_estrategia deve ser persistido corretamente",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 20000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 143,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-03-13T19:31:24.296Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "82b250a525f72bc991fd-e16758ca084164e8ea52",
+          "file": "pages/crypto/crypto-assets.spec.js",
+          "line": 84,
+          "column": 1
+        }
+      ]
+    },
+    {
       "title": "pages\\crypto.spec.js",
       "file": "pages/crypto.spec.js",
       "column": 0,
@@ -85,15 +299,15 @@
               "projectName": "chromium",
               "results": [
                 {
-                  "workerIndex": 0,
-                  "parallelIndex": 0,
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
                   "status": "passed",
-                  "duration": 2783,
+                  "duration": 3972,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-03-05T18:17:47.504Z",
+                  "startTime": "2026-03-13T19:31:15.592Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -119,15 +333,15 @@
               "projectName": "chromium",
               "results": [
                 {
-                  "workerIndex": 0,
-                  "parallelIndex": 0,
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
                   "status": "passed",
-                  "duration": 2899,
+                  "duration": 3131,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-03-05T18:17:50.761Z",
+                  "startTime": "2026-03-13T19:31:20.117Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -153,15 +367,15 @@
               "projectName": "chromium",
               "results": [
                 {
-                  "workerIndex": 0,
-                  "parallelIndex": 0,
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
                   "status": "passed",
-                  "duration": 2625,
+                  "duration": 1709,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-03-05T18:17:53.690Z",
+                  "startTime": "2026-03-13T19:31:23.280Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -187,15 +401,15 @@
               "projectName": "chromium",
               "results": [
                 {
-                  "workerIndex": 0,
-                  "parallelIndex": 0,
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
                   "status": "passed",
-                  "duration": 2590,
+                  "duration": 1878,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-03-05T18:17:56.347Z",
+                  "startTime": "2026-03-13T19:31:25.019Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -209,7 +423,7 @@
           "column": 1
         },
         {
-          "title": "[Crypto] deve redirecionar para opcoes.html",
+          "title": "[Crypto] deve exibir a página de Cryptos (sem redirect)",
           "ok": true,
           "tags": [],
           "tests": [
@@ -221,15 +435,15 @@
               "projectName": "chromium",
               "results": [
                 {
-                  "workerIndex": 0,
-                  "parallelIndex": 0,
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
                   "status": "passed",
-                  "duration": 2901,
+                  "duration": 1845,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-03-05T18:17:58.961Z",
+                  "startTime": "2026-03-13T19:31:26.944Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -237,7 +451,7 @@
               "status": "expected"
             }
           ],
-          "id": "5f55ffe30675bc30dd6e-29268a3f706b2d2c9872",
+          "id": "5f55ffe30675bc30dd6e-ac0f74d998e0acdee97d",
           "file": "pages/crypto.spec.js",
           "line": 53,
           "column": 1
@@ -255,15 +469,15 @@
               "projectName": "chromium",
               "results": [
                 {
-                  "workerIndex": 0,
-                  "parallelIndex": 0,
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
                   "status": "passed",
-                  "duration": 2381,
+                  "duration": 1734,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-03-05T18:18:01.885Z",
+                  "startTime": "2026-03-13T19:31:28.816Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -273,7 +487,879 @@
           ],
           "id": "5f55ffe30675bc30dd6e-0e618acb80175a748307",
           "file": "pages/crypto.spec.js",
-          "line": 60,
+          "line": 63,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "pages\\e2e-smoke.spec.js",
+      "file": "pages/e2e-smoke.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "[E2E] Página de Opções",
+          "file": "pages/e2e-smoke.spec.js",
+          "line": 36,
+          "column": 6,
+          "specs": [
+            {
+              "title": "[E2E-Opcoes] screenshot inicial da página",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 20000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 5761,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "  📸 Screenshot salvo: D:\\Sistemas\\python\\ControleOperacoes\\tests\\results\\screenshots\\e2e-opcoes-inicial.png\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-13T19:31:15.751Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "cc8c3f501263ca73d616-0e45fd4d8365f4a873bc",
+              "file": "pages/e2e-smoke.spec.js",
+              "line": 42,
+              "column": 5
+            },
+            {
+              "title": "[E2E-Opcoes] página carrega sem erros críticos de JS",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 20000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 5305,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "  📸 Screenshot salvo: D:\\Sistemas\\python\\ControleOperacoes\\tests\\results\\screenshots\\e2e-opcoes-carregada.png\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-13T19:31:22.449Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "cc8c3f501263ca73d616-9ca59e1767dcda015fe9",
+              "file": "pages/e2e-smoke.spec.js",
+              "line": 48,
+              "column": 5
+            },
+            {
+              "title": "[E2E-Opcoes] container principal de operações está visível",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 20000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 3309,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "  📸 Screenshot salvo: D:\\Sistemas\\python\\ControleOperacoes\\tests\\results\\screenshots\\e2e-opcoes-tabela-visivel.png\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-13T19:31:27.797Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "cc8c3f501263ca73d616-c486c698233b959ae3c5",
+              "file": "pages/e2e-smoke.spec.js",
+              "line": 60,
+              "column": 5
+            },
+            {
+              "title": "[E2E-Opcoes] todos os assets CSS carregam sem 404",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 20000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 5153,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "  📸 Screenshot salvo: D:\\Sistemas\\python\\ControleOperacoes\\tests\\results\\screenshots\\e2e-opcoes-assets-ok.png\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-13T19:31:31.145Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "cc8c3f501263ca73d616-b152d5d92d47a7afc4d9",
+              "file": "pages/e2e-smoke.spec.js",
+              "line": 68,
+              "column": 5
+            },
+            {
+              "title": "[E2E-Opcoes] todos os assets JS carregam sem 404",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 20000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 4667,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-13T19:31:36.327Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "cc8c3f501263ca73d616-0dc5fe7ae9493fcff0a8",
+              "file": "pages/e2e-smoke.spec.js",
+              "line": 76,
+              "column": 5
+            }
+          ]
+        },
+        {
+          "title": "[E2E] Página de Crypto",
+          "file": "pages/e2e-smoke.spec.js",
+          "line": 86,
+          "column": 6,
+          "specs": [
+            {
+              "title": "[E2E-Crypto] screenshot inicial da página",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 20000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 3053,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "  📸 Screenshot salvo: D:\\Sistemas\\python\\ControleOperacoes\\tests\\results\\screenshots\\e2e-crypto-inicial.png\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-13T19:31:41.023Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "cc8c3f501263ca73d616-0e20786dfe6ad39f4d87",
+              "file": "pages/e2e-smoke.spec.js",
+              "line": 92,
+              "column": 5
+            },
+            {
+              "title": "[E2E-Crypto] página carrega sem erros críticos de JS",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 20000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 5014,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "  📸 Screenshot salvo: D:\\Sistemas\\python\\ControleOperacoes\\tests\\results\\screenshots\\e2e-crypto-carregada.png\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-13T19:31:44.106Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "cc8c3f501263ca73d616-d9824e023e2583bc855d",
+              "file": "pages/e2e-smoke.spec.js",
+              "line": 98,
+              "column": 5
+            },
+            {
+              "title": "[E2E-Crypto] container principal de operações está visível",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 20000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 2848,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "  📸 Screenshot salvo: D:\\Sistemas\\python\\ControleOperacoes\\tests\\results\\screenshots\\e2e-crypto-tabela-visivel.png\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-13T19:31:49.143Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "cc8c3f501263ca73d616-05f76760bcbf714d836f",
+              "file": "pages/e2e-smoke.spec.js",
+              "line": 110,
+              "column": 5
+            },
+            {
+              "title": "[E2E-Crypto] todos os assets carregam sem 404",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 20000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 4566,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "  📸 Screenshot salvo: D:\\Sistemas\\python\\ControleOperacoes\\tests\\results\\screenshots\\e2e-crypto-assets-ok.png\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-13T19:31:52.015Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "cc8c3f501263ca73d616-8b45350325ee02578273",
+              "file": "pages/e2e-smoke.spec.js",
+              "line": 118,
+              "column": 5
+            }
+          ]
+        },
+        {
+          "title": "[E2E] API Backend",
+          "file": "pages/e2e-smoke.spec.js",
+          "line": 133,
+          "column": 6,
+          "specs": [
+            {
+              "title": "[E2E-API] GET /api/opcoes retorna JSON válido",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 20000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 41,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "  ✓ /api/opcoes: 7 operação(ões)\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-13T19:31:56.605Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "cc8c3f501263ca73d616-0dab0ff2813de383ddf6",
+              "file": "pages/e2e-smoke.spec.js",
+              "line": 134,
+              "column": 5
+            },
+            {
+              "title": "[E2E-API] GET /api/crypto retorna JSON válido",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 20000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 18,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "  ✓ /api/crypto: 8 operação(ões)\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-13T19:31:56.666Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "cc8c3f501263ca73d616-d3a02267bc0f6fa29a81",
+              "file": "pages/e2e-smoke.spec.js",
+              "line": 142,
+              "column": 5
+            },
+            {
+              "title": "[E2E-API] GET /api/version retorna versão",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 20000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 19,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "  ✓ /api/version: 2.0.0\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-13T19:31:56.703Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "cc8c3f501263ca73d616-bf91a34c09a9ce0d310c",
+              "file": "pages/e2e-smoke.spec.js",
+              "line": 150,
+              "column": 5
+            },
+            {
+              "title": "[E2E-API] GET /api/config retorna lista de configurações",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 20000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 23,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-13T19:31:56.743Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "cc8c3f501263ca73d616-4e95e97e57dfb836685e",
+              "file": "pages/e2e-smoke.spec.js",
+              "line": 158,
+              "column": 5
+            },
+            {
+              "title": "[E2E-API] POST /api/opcoes CRUD completo (criar → buscar → deletar)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 20000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 63,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "  ✓ Criou operação id=94 (fixture: Operação usada APENAS para teste CRUD automatizado — será deletada ao final)\n"
+                        },
+                        {
+                          "text": "  ✓ Buscou operação id=94: ativo=PETRF325\n"
+                        },
+                        {
+                          "text": "  ✓ Deletou operação id=94\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-13T19:31:56.788Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "cc8c3f501263ca73d616-f1dace6e0f0cef9b0f2f",
+              "file": "pages/e2e-smoke.spec.js",
+              "line": 166,
+              "column": 5
+            },
+            {
+              "title": "[E2E-API] POST /api/crypto CRUD completo (criar → buscar → deletar)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 20000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 42,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "  ✓ Criou crypto id=124 (fixture: Operação usada APENAS para teste CRUD automatizado — será deletada ao final)\n"
+                        },
+                        {
+                          "text": "  ✓ Deletou crypto id=124\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-13T19:31:56.882Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "cc8c3f501263ca73d616-58b50838e86effbcb9d1",
+              "file": "pages/e2e-smoke.spec.js",
+              "line": 201,
+              "column": 5
+            }
+          ]
+        },
+        {
+          "title": "[E2E] Interações do Usuário - Opções",
+          "file": "pages/e2e-smoke.spec.js",
+          "line": 228,
+          "column": 6,
+          "specs": [
+            {
+              "title": "[E2E-UI] clicar em botões/filtros não gera erros JS",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 20000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 6928,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "  ▶ 6 botão(ões) encontrado(s) na tela\n"
+                        },
+                        {
+                          "text": "  📸 Screenshot salvo: D:\\Sistemas\\python\\ControleOperacoes\\tests\\results\\screenshots\\e2e-ui-interacoes-opcoes.png\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-13T19:31:56.941Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "cc8c3f501263ca73d616-304440d628a058d9a98e",
+              "file": "pages/e2e-smoke.spec.js",
+              "line": 229,
+              "column": 5
+            },
+            {
+              "title": "[E2E-UI] screenshot com dados carregados via API",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 20000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 3718,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "  📸 Screenshot salvo: D:\\Sistemas\\python\\ControleOperacoes\\tests\\results\\screenshots\\e2e-ui-opcoes-com-dados.png\n"
+                        },
+                        {
+                          "text": "  ℹ️ API retornou 7 operação(ões)\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-13T19:32:03.890Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "cc8c3f501263ca73d616-38981970d70a750c97f3",
+              "file": "pages/e2e-smoke.spec.js",
+              "line": 257,
+              "column": 5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "pages\\opcoes\\opcoes-assets.spec.js",
+      "file": "pages/opcoes/opcoes-assets.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "[Opcoes-Assets] CSS organizados devem carregar com status 200",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 20000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 3,
+                  "status": "passed",
+                  "duration": 6542,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-03-13T19:31:15.655Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "9220e69840ead06337b5-ca76dcfa1b40baddaa84",
+          "file": "pages/opcoes/opcoes-assets.spec.js",
+          "line": 11,
+          "column": 1
+        },
+        {
+          "title": "[Opcoes-Assets] JS do módulo opções deve carregar sem erros 404",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 20000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 3,
+                  "status": "passed",
+                  "duration": 4880,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-03-13T19:31:22.749Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "9220e69840ead06337b5-e417bbb3c4355aed9d7f",
+          "file": "pages/opcoes/opcoes-assets.spec.js",
+          "line": 25,
+          "column": 1
+        },
+        {
+          "title": "[Opcoes-Assets] CSS deve carregar de js/opcoes/, js/shared/ ou js/core/",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 20000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 3,
+                  "status": "passed",
+                  "duration": 4382,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-03-13T19:31:27.662Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "9220e69840ead06337b5-256c2b10add093de2c9a",
+          "file": "pages/opcoes/opcoes-assets.spec.js",
+          "line": 38,
+          "column": 1
+        },
+        {
+          "title": "[Opcoes-Assets] requisição GET /api/opcoes deve retornar JSON válido",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 20000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 3,
+                  "status": "passed",
+                  "duration": 437,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-03-13T19:31:32.093Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "9220e69840ead06337b5-070dfd9969db71ad752d",
+          "file": "pages/opcoes/opcoes-assets.spec.js",
+          "line": 54,
+          "column": 1
+        },
+        {
+          "title": "[Opcoes-Assets] POST /api/opcoes deve criar e deletar operação de teste",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 20000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 3,
+                  "status": "passed",
+                  "duration": 64,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-03-13T19:31:32.566Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "9220e69840ead06337b5-7c844e02e72263d38e21",
+          "file": "pages/opcoes/opcoes-assets.spec.js",
+          "line": 61,
           "column": 1
         }
       ]
@@ -297,15 +1383,15 @@
               "projectName": "chromium",
               "results": [
                 {
-                  "workerIndex": 1,
-                  "parallelIndex": 1,
+                  "workerIndex": 4,
+                  "parallelIndex": 4,
                   "status": "passed",
-                  "duration": 2670,
+                  "duration": 4173,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-03-05T18:17:47.435Z",
+                  "startTime": "2026-03-13T19:31:15.558Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -331,15 +1417,15 @@
               "projectName": "chromium",
               "results": [
                 {
-                  "workerIndex": 1,
-                  "parallelIndex": 1,
+                  "workerIndex": 4,
+                  "parallelIndex": 4,
                   "status": "passed",
-                  "duration": 3124,
+                  "duration": 3329,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-03-05T18:17:50.448Z",
+                  "startTime": "2026-03-13T19:31:20.258Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -365,15 +1451,15 @@
               "projectName": "chromium",
               "results": [
                 {
-                  "workerIndex": 1,
-                  "parallelIndex": 1,
+                  "workerIndex": 4,
+                  "parallelIndex": 4,
                   "status": "passed",
-                  "duration": 1930,
+                  "duration": 2126,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-03-05T18:17:53.598Z",
+                  "startTime": "2026-03-13T19:31:23.623Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -399,15 +1485,15 @@
               "projectName": "chromium",
               "results": [
                 {
-                  "workerIndex": 1,
-                  "parallelIndex": 1,
+                  "workerIndex": 4,
+                  "parallelIndex": 4,
                   "status": "passed",
-                  "duration": 1854,
+                  "duration": 2086,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-03-05T18:17:55.558Z",
+                  "startTime": "2026-03-13T19:31:25.784Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -433,15 +1519,15 @@
               "projectName": "chromium",
               "results": [
                 {
-                  "workerIndex": 1,
-                  "parallelIndex": 1,
+                  "workerIndex": 4,
+                  "parallelIndex": 4,
                   "status": "passed",
-                  "duration": 2389,
+                  "duration": 2573,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-03-05T18:17:57.437Z",
+                  "startTime": "2026-03-13T19:31:27.911Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -467,15 +1553,15 @@
               "projectName": "chromium",
               "results": [
                 {
-                  "workerIndex": 1,
-                  "parallelIndex": 1,
+                  "workerIndex": 4,
+                  "parallelIndex": 4,
                   "status": "passed",
-                  "duration": 2088,
+                  "duration": 2331,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-03-05T18:17:59.849Z",
+                  "startTime": "2026-03-13T19:31:30.513Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -501,15 +1587,15 @@
               "projectName": "chromium",
               "results": [
                 {
-                  "workerIndex": 1,
-                  "parallelIndex": 1,
+                  "workerIndex": 4,
+                  "parallelIndex": 4,
                   "status": "passed",
-                  "duration": 2059,
+                  "duration": 1979,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-03-05T18:18:01.958Z",
+                  "startTime": "2026-03-13T19:31:32.874Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -527,9 +1613,9 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-03-05T18:17:43.873Z",
-    "duration": 20551.115999999998,
-    "expected": 13,
+    "startTime": "2026-03-13T19:31:10.798Z",
+    "duration": 56948.286,
+    "expected": 41,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0

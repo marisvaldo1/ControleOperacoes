@@ -37,6 +37,20 @@ const MOCK_FRONTEND = [
   {file:'crypto.spec',suite:'Crypto',name:'[Crypto] nao deve ter SyntaxError no JS',status:'pass',dur:1290},
   {file:'crypto.spec',suite:'Crypto',name:'[Crypto] pagina deve carregar sem erros de runtime',status:'pass',dur:1310},
 ];
+const MOCK_OPCOES = [
+  {file:'opcoes/opcoes-assets.spec',suite:'OpcoesBE',name:'[Opcoes-Assets] CSS organizados devem carregar',status:'pass',dur:900},
+  {file:'opcoes/opcoes-assets.spec',suite:'OpcoesBE',name:'[Opcoes-Assets] JS do módulo opcoes 404-free',status:'pass',dur:880},
+  {file:'opcoes/opcoes-assets.spec',suite:'OpcoesBE',name:'[Opcoes-Assets] GET /api/opcoes retorna JSON',status:'pass',dur:430},
+  {file:'opcoes/opcoes-assets.spec',suite:'OpcoesBE',name:'[Opcoes-Assets] POST/DELETE operação de teste',status:'pass',dur:520},
+];
+const MOCK_CRYPTO = [
+  {file:'crypto/crypto-assets.spec',suite:'CryptoBE',name:'[Crypto-Assets] CSS e JS sem 404',status:'pass',dur:870},
+  {file:'crypto/crypto-assets.spec',suite:'CryptoBE',name:'[Crypto-Assets] JS crypto/ carregado',status:'pass',dur:820},
+  {file:'crypto/crypto-assets.spec',suite:'CryptoBE',name:'[Crypto-Assets] GET /api/crypto retorna JSON',status:'pass',dur:410},
+  {file:'crypto/crypto-assets.spec',suite:'CryptoBE',name:'[Crypto-Assets] GET /api/crypto/estrategias',status:'pass',dur:390},
+  {file:'crypto/crypto-assets.spec',suite:'CryptoBE',name:'[Crypto-Assets] POST/DELETE operação de teste',status:'pass',dur:480},
+  {file:'crypto/crypto-assets.spec',suite:'CryptoBE',name:'[Crypto-Assets] tipo_estrategia persistido',status:'pass',dur:500},
+];
 
 /* ── ERRO DE DEMONSTRAÇÃO (Simular Erro) ── */
 const DEMO_ERROR = {
@@ -75,15 +89,17 @@ const suiteColors = {
   // Analyze
   TestAnalyzeValidacao: '#f48fb1', TestAnalyzeComMockGemini: '#ffd740',
   TestAnalyzeForceAI: '#00e676',
-  // Frontend
+  // Frontend E2E
   Opcoes: '#00d4ff', Crypto: '#ff7043',
+  // Subgrupos opcoes/crypto (novos specs)
+  OpcoesBE: '#26c6da', CryptoBE: '#ef5350',
   // Grupos IA
   TestGemini: '#ffd740', TestDeepSeek: '#00e676', TestGrok: '#ff7043',
   TestOpenAI: '#64b5f6', TestOpenRouter: '#00bfff',
 };
 
 /* ── ESTADO DOS GRUPOS DO SIDEBAR ── */
-const groupStates = { backend: true, frontend: true, ai: true };
+const groupStates = { backend: true, frontend: true, ai: true, opcoes: true, crypto: true };
 
 function toggleGroup(type) {
   groupStates[type] = !groupStates[type];
@@ -128,6 +144,11 @@ let progressPanelTimer  = null;
 let serverOnline        = false;
 let currentErrorData    = null;  // objeto de erro atual (substitui índice)
 let lastResultsMtime    = 0;     // mtime dos arquivos de resultado (para auto-refresh)
+let tdmCurrentIdx       = null;  // índice do teste aberto no modal de detalhe
+let lastRunIndices      = new Set(); // índices dos testes da última execução (para KPIs parciais)
+
+/* Configurações persistentes dos testes E2E */
+let tdConfig = JSON.parse(localStorage.getItem('tdConfig') || '{"e2eHeaded":false,"e2eScreenshots":"on-error","e2eCleanupAfter":false}');
 
 /* ─────────────────────────────────────────
    UTILITÁRIOS
@@ -157,8 +178,10 @@ function renderMD(t) {
 
 function getMockData() {
   return [
-    ...MOCK_BACKEND.map(t => ({ ...t, type: 'backend', errorMessage: null, traceback: null, location: null })),
-    ...MOCK_FRONTEND.map(t => ({ ...t, type: 'frontend', errorMessage: null, traceback: null, location: null }))
+    ...MOCK_BACKEND.map(t => ({ ...t, type: 'backend',  errorMessage: null, traceback: null, location: null })),
+    ...MOCK_FRONTEND.map(t => ({ ...t, type: 'frontend', errorMessage: null, traceback: null, location: null })),
+    ...MOCK_OPCOES.map( t => ({ ...t, type: 'opcoes',   errorMessage: null, traceback: null, location: null })),
+    ...MOCK_CRYPTO.map( t => ({ ...t, type: 'crypto',   errorMessage: null, traceback: null, location: null })),
   ];
 }
 
@@ -231,6 +254,25 @@ function menuAction(action) {
         }
       });
       updateSelCount(); break;
+
+    case 'selectE2E':
+      allTests.forEach((_, i) => {
+        const item = document.getElementById('ti-' + i);
+        if (!item) return;
+        if (allTests[i].type === 'e2e') {
+          selectedTests.add(i);
+          item.classList.add('checked');
+          item.querySelector('.test-check').innerHTML = '&#10003;';
+        } else {
+          selectedTests.delete(i);
+          item.classList.remove('checked');
+          item.querySelector('.test-check').innerHTML = '';
+        }
+      });
+      updateSelCount(); break;
+
+    case 'testConfig':
+      openTestConfigModal(); break;
 
     case 'expandAll':
       setAllSuites(true); allExpanded = true; updateExpandIcon(); break;
@@ -335,6 +377,39 @@ document.addEventListener('click', e => {
 });
 
 /* ─────────────────────────────────────────
+   MODAL — CONFIGURAÇÕES DE TESTES E2E
+───────────────────────────────────────── */
+function openTestConfigModal() {
+  const modal = document.getElementById('testConfigModal');
+  if (!modal) return;
+  // Sincroniza UI com tdConfig atual
+  const chkHeaded   = document.getElementById('cfg-e2e-headed');
+  const chkCleanup  = document.getElementById('cfg-e2e-cleanup');
+  if (chkHeaded)  chkHeaded.checked  = tdConfig.e2eHeaded      || false;
+  if (chkCleanup) chkCleanup.checked = tdConfig.e2eCleanupAfter || false;
+  const radios = document.querySelectorAll('input[name="cfg-screenshots"]');
+  radios.forEach(r => { r.checked = (r.value === (tdConfig.e2eScreenshots || 'on-error')); });
+  modal.classList.add('open');
+}
+
+function closeTestConfigModal() {
+  const modal = document.getElementById('testConfigModal');
+  if (modal) modal.classList.remove('open');
+}
+
+function saveTestConfig() {
+  const chkHeaded  = document.getElementById('cfg-e2e-headed');
+  const chkCleanup = document.getElementById('cfg-e2e-cleanup');
+  const radio      = document.querySelector('input[name="cfg-screenshots"]:checked');
+  tdConfig.e2eHeaded       = chkHeaded  ? chkHeaded.checked  : false;
+  tdConfig.e2eCleanupAfter = chkCleanup ? chkCleanup.checked : false;
+  tdConfig.e2eScreenshots  = radio ? radio.value : 'on-error';
+  localStorage.setItem('tdConfig', JSON.stringify(tdConfig));
+  closeTestConfigModal();
+  addLog('log-ok', '[CONFIG] Configurações E2E salvas — headed: ' + tdConfig.e2eHeaded + ', cleanup: ' + tdConfig.e2eCleanupAfter + ', screenshots: ' + tdConfig.e2eScreenshots);
+}
+
+/* ─────────────────────────────────────────
    INICIALIZAÇÃO
 ───────────────────────────────────────── */
 async function init() {
@@ -369,19 +444,13 @@ async function init() {
     if (allTests.length > 0) {
       addLog('log-info', '[INFO] ' + allTests.length + ' testes carregados. Clique Executar para resultados.');
     } else {
-      allTests = getMockData();
-      addLog('log-info', '[INFO] Servidor ativo. Clique em Executar Testes para dados reais.');
+      allTests = [];
+      addLog('log-info', '[INFO] Servidor ativo. Clique em Executar Testes para rodar os testes reais.');
     }
   } else {
-    allTests = getMockData();
+    allTests = [];
     addLog('log-warn', '[AVISO] test_server.py nao detectado (execute: python tests/test_server.py).');
-    addLog('log-info', '[INFO] Exibindo dados de demonstracao.');
-    const msgs = [
-      { c: 'log-info', m: '[INFO] Suite de testes simulada - 100% passando' },
-      { c: 'log-ok',   m: '[PASS] Backend: todos OK' },
-      { c: 'log-ok',   m: '[PASS] Frontend: todos OK' }
-    ];
-    msgs.forEach((l, i) => setTimeout(() => addLog(l.c, l.m), (i + 2) * 400));
+    addLog('log-info', '[INFO] Servidor offline — sem dados de demonstracao. Execute: python tests/test_server.py');
   }
 
   populateDashboard({ tests: allTests, summary: computeSummary(allTests) });
@@ -423,7 +492,7 @@ async function reloadResults() {
     allTests = data.tests;
     if (data.mtime) lastResultsMtime = data.mtime;
     buildTestKeyMap();
-    selectedTests = new Set(allTests.map((_, i) => i));
+    // NÃO reseta selectedTests — preserva seleção do usuário
     buildSidebar();
     renderTable(allTests);
     renderProgressPanels(allTests);
@@ -457,10 +526,13 @@ async function checkServer() {
 /* ─────────────────────────────────────────
    POPULAR DASHBOARD
 ───────────────────────────────────────── */
-function populateDashboard(data) {
-  allTests = data.tests || getMockData();
+function populateDashboard(data, preserveSel = false) {
+  allTests = data.tests || [];
   buildTestKeyMap();
-  selectedTests = new Set(allTests.map((_, i) => i));
+  if (!preserveSel) {
+    // Carga inicial: seleciona todos
+    selectedTests = new Set(allTests.map((_, i) => i));
+  }
   buildSidebar();
   renderTable(allTests);
   renderProgressPanels(allTests);
@@ -495,7 +567,10 @@ function buildSidebar() {
   const groups = [
     { type: 'backend',  label: '&#x1F40D; BACKEND',  color: 'var(--purple)' },
     { type: 'frontend', label: '&#x1F3AD; FRONTEND',  color: 'var(--orange)' },
+    { type: 'opcoes',   label: '&#x1F4CA; OPÇÕES',    color: '#26c6da' },
+    { type: 'crypto',   label: '&#x20BF; CRYPTO',     color: '#ef5350' },
     { type: 'ai',       label: '&#x1F916; IA',        color: 'var(--ai-color)' },
+    { type: 'e2e',      label: '&#x1F9CD; E2E USUÁRIO', color: '#00e5a0' },
   ];
 
   groups.forEach(({ type: tp, label, color }) => {
@@ -527,21 +602,20 @@ function buildSidebar() {
           <div class="suite-dot" style="background:${c}"></div>
           <span class="suite-name-lbl" onclick="toggleSuiteSelection('${safeId}')" title="Marcar/desmarcar grupo">${s.suite}</span>
           <span class="gcnt">${s.tests.length}</span>
-          <span class="suite-arrow" onclick="toggleSuite('${safeId}')">&#9658;</span>
         </div>
         <div class="suite-tests">`;
 
       s.tests.forEach(t => {
         const dotCls = t.status === 'pass' ? 'pass' : t.status === 'fail' ? 'fail' : '';
         const chk    = selectedTests.has(t.idx) ? 'checked' : '';
-        html += `<div class="test-item ${chk}" id="ti-${t.idx}" onclick="toggleTest(${t.idx})">
-          <div class="test-check">${selectedTests.has(t.idx) ? '&#10003;' : ''}</div>
+        html += `<div class="test-item ${chk}" id="ti-${t.idx}" onclick="openTestDetail(${t.idx})">
+          <div class="test-check" onclick="toggleTest(${t.idx});event.stopPropagation()">${selectedTests.has(t.idx) ? '&#10003;' : ''}</div>
           <div class="test-name" title="${t.name}">${t.name}</div>
           <div class="tsd ${dotCls}" id="tsd-${t.idx}"></div>
         </div>`;
       });
+      html += `</div></div>`;  // fecha suite-tests e suite-group sem seta de toggle
 
-      html += `</div></div>`;
     });
 
     html += `</div>`; // fecha grp-body
@@ -688,7 +762,7 @@ async function resetDashboard() {
   clearLog();
   addLog('log-info', '[INFO] Zerado. Recarregando lista de testes...');
   await loadTestList();
-  if (allTests.length === 0) allTests = getMockData();
+  if (allTests.length === 0) addLog('log-info', '[INFO] Nenhum resultado encontrado. Execute os testes para carregar os dados.');
   buildTestKeyMap();
   selectedTests = new Set(allTests.map((_, i) => i));
   buildSidebar();
@@ -704,6 +778,8 @@ function runTests() {
     return;
   }
   if (evtSource) return;
+  // Registra quais testes serão executados (para KPIs parciais)
+  lastRunIndices = new Set(selectedTests);
   resetKPIsOnly();
   const btn = document.getElementById('runBtn');
   btn.classList.add('running');
@@ -728,12 +804,15 @@ function runTestsSSE() {
   document.getElementById('runStatus').textContent = 'Aguardando servidor...';
 
   const _p   = new URLSearchParams();
-  const _abe = allTests.filter(t => t.type === 'backend');
-  const _afe = allTests.filter(t => t.type === 'frontend');
-  const _aai = allTests.filter(t => t.type === 'ai');
-  const _sbe = allTests.filter((t, i) => t.type === 'backend' && selectedTests.has(i));
-  const _sfe = allTests.filter((t, i) => t.type === 'frontend' && selectedTests.has(i));
-  const _sai = allTests.filter((t, i) => t.type === 'ai' && selectedTests.has(i));
+  const isFE = t => ['frontend','opcoes','crypto'].includes(t.type);
+  const _abe  = allTests.filter(t => t.type === 'backend');
+  const _afe  = allTests.filter(t => isFE(t));
+  const _aai  = allTests.filter(t => t.type === 'ai');
+  const _ae2e = allTests.filter(t => t.type === 'e2e');
+  const _sbe  = allTests.filter((t, i) => t.type === 'backend' && selectedTests.has(i));
+  const _sfe  = allTests.filter((t, i) => isFE(t) && selectedTests.has(i));
+  const _sai  = allTests.filter((t, i) => t.type === 'ai' && selectedTests.has(i));
+  const _se2e = allTests.filter((t, i) => t.type === 'e2e' && selectedTests.has(i));
 
   if (_sbe.length === 0) {
     _p.set('skip_be', '1');
@@ -747,6 +826,21 @@ function runTestsSSE() {
   }
   if (_sai.length === 0) {
     _p.set('skip_ai', '1');
+  } else if (_sai.length < _aai.length) {
+    _p.set('ai_nodes', _sai.map(t => 'backend/tests/test_ai_providers.py::' + t.suite + '::' + t.name).join('|'));
+  }
+  // E2E: por padrão skip_e2e=1; só roda se houver testes E2E selecionados
+  if (_ae2e.length === 0 || _se2e.length === 0) {
+    _p.set('skip_e2e', '1');
+  } else {
+    _p.set('skip_e2e', '0');
+    if (_se2e.length < _ae2e.length) {
+      _p.set('e2e_grep', _se2e.map(t => t.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'));
+    }
+    // Passa configurações de headless/screenshots/cleanup
+    if (tdConfig.e2eHeaded)        _p.set('e2e_headed',        '1');
+    if (tdConfig.e2eScreenshots)   _p.set('e2e_screenshots',   tdConfig.e2eScreenshots);
+    if (tdConfig.e2eCleanupAfter)  _p.set('e2e_cleanup_after', '1');
   }
 
   evtSource = new EventSource('/api/stream?' + _p.toString());
@@ -797,7 +891,14 @@ function runTestsSSE() {
   evtSource.addEventListener('complete', e => {
     const data = JSON.parse(e.data);
     if (!data.error && data.tests) {
-      allTests = data.tests;
+      // Merge: atualiza apenas os testes que rodaram, mantém todos os demais
+      data.tests.forEach(t => {
+        const idx = testKeyMap.get(makeKey(t));
+        if (idx !== undefined) {
+          allTests[idx] = { ...allTests[idx], ...t };
+        }
+        // Não adiciona novos testes aqui — evitar duplicatas
+      });
       buildTestKeyMap();
     }
     finishRun(data);
@@ -858,7 +959,13 @@ function finishRun(data) {
   const btn = document.getElementById('runBtn');
   btn.classList.remove('running');
   btn.textContent = '\u25B6 Executar Testes';
-  const s = (data && !data.error && data.summary) ? data.summary : computeSummary(allTests);
+  // KPIs: usa somente os testes que foram executados nesta rodada
+  const runTests = lastRunIndices.size > 0
+    ? allTests.filter((_, i) => lastRunIndices.has(i))
+    : allTests;
+  const s = lastRunIndices.size > 0
+    ? computeSummary(runTests)
+    : ((data && !data.error && data.summary) ? data.summary : computeSummary(allTests));
   document.getElementById('runProgressBar').style.width = '100%';
   document.getElementById('runStatus').textContent = '\u2713 ' + (s.total || 0) + ' testes concluidos';
   updateKPIs(s);
@@ -1507,6 +1614,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     document.getElementById('errorModal').classList.remove('open');
     document.getElementById('failsModal').classList.remove('open');
+    document.getElementById('testDetailModal').classList.remove('open');
     // fecha também o menu hambúrguer
     const menu = document.getElementById('sbMenu');
     const ham  = document.getElementById('hamburger');
@@ -1514,6 +1622,429 @@ document.addEventListener('keydown', e => {
     if (ham)  ham.classList.remove('open');
   }
 });
+
+
+/* ══════════════════════════════════════════════════════════
+   MODAL DE DETALHE DO TESTE
+   ══════════════════════════════════════════════════════════ */
+
+/* ── BASE DE CONHECIMENTO DOS TESTES ── */
+const TEST_INFO = {
+  // ─── BACKEND: API OPCOES ────────────────────────────────
+  'test_api_opcoes::TestListarOpcoes::test_listar_retorna_lista_vazia_por_padrao': {
+    icon: '📋', desc: 'Verifica que GET /api/opcoes retorna um array vazio quando não há nenhuma operação de opções registrada no banco de dados.',
+    validates: ['Status HTTP 200', 'Corpo da resposta é um array JSON', 'Array retornado está vazio []'],
+    fails_when: ['Banco não foi limpo antes do teste (fixture mock_db com leak)', 'Endpoint /api/opcoes não registrado no Blueprint', 'Erro de conexão ao banco de dados'],
+    cmd: 'curl -X GET http://localhost:8888/api/opcoes',
+    pytest: 'pytest backend/tests/test_api_opcoes.py::TestListarOpcoes::test_listar_retorna_lista_vazia_por_padrao -v'
+  },
+  'test_api_opcoes::TestListarOpcoes::test_listar_retorna_operacoes': {
+    icon: '📋', desc: 'Verifica que GET /api/opcoes retorna a lista de operações quando existem registros no banco.',
+    validates: ['Status HTTP 200', 'Lista não está vazia', 'Cada item possui os campos esperados'],
+    fails_when: ['Fixture de dados não inseriu registros corretamente', 'Serialização dos campos com erro', 'Campo obrigatório ausente na resposta'],
+    cmd: 'curl -X GET http://localhost:8888/api/opcoes',
+    pytest: 'pytest backend/tests/test_api_opcoes.py::TestListarOpcoes::test_listar_retorna_operacoes -v'
+  },
+  'test_api_opcoes::TestBuscarOpcao::test_buscar_opcao_existente': {
+    icon: '🔍', desc: 'Verifica que GET /api/opcoes/{id} retorna a operação correta quando o ID existe no banco.',
+    validates: ['Status HTTP 200', 'Objeto retornado corresponde ao ID solicitado', 'Todos os campos estão presentes'],
+    fails_when: ['ID na fixture não coincide com o enviado na requisição', 'Serialização incorreta do objeto', 'Rota com parâmetro mal configurada'],
+    cmd: 'curl -X GET http://localhost:8888/api/opcoes/1',
+    pytest: 'pytest backend/tests/test_api_opcoes.py::TestBuscarOpcao::test_buscar_opcao_existente -v'
+  },
+  'test_api_opcoes::TestBuscarOpcao::test_buscar_opcao_inexistente_retorna_404': {
+    icon: '🔍', desc: 'Verifica que GET /api/opcoes/{id} retorna HTTP 404 quando o ID não existe no banco.',
+    validates: ['Status HTTP 404', 'Resposta com mensagem de erro adequada'],
+    fails_when: ['Endpoint retorna 200 com null ao invés de 404', 'ID inexistente foi criado por outro teste (isolamento falhou)'],
+    cmd: 'curl -v -X GET http://localhost:8888/api/opcoes/99999',
+    pytest: 'pytest backend/tests/test_api_opcoes.py::TestBuscarOpcao::test_buscar_opcao_inexistente_retorna_404 -v'
+  },
+  'test_api_opcoes::TestCriarOpcao::test_criar_opcao_retorna_sucesso': {
+    icon: '➕', desc: 'Verifica que POST /api/opcoes cria uma nova operação e retorna HTTP 201 com o recurso criado.',
+    validates: ['Status HTTP 201', 'ID gerado retornado na resposta', 'Dados enviados persistidos corretamente'],
+    fails_when: ['Payload inválido ou campos obrigatórios faltando', 'Banco não faz commit', 'Blueprint não aceita método POST'],
+    cmd: 'curl -X POST http://localhost:8888/api/opcoes -H "Content-Type: application/json" -d \'{"ativo":"PETR4","tipo":"call","strike":30}\'',
+    pytest: 'pytest backend/tests/test_api_opcoes.py::TestCriarOpcao::test_criar_opcao_retorna_sucesso -v'
+  },
+  'test_api_opcoes::TestAtualizarOpcao::test_atualizar_opcao_retorna_sucesso': {
+    icon: '✏️', desc: 'Verifica que PUT /api/opcoes/{id} atualiza uma operação existente e retorna HTTP 200.',
+    validates: ['Status HTTP 200', 'Dados atualizados refletidos na resposta', 'Commit realizado no banco'],
+    fails_when: ['ID não encontrado (404 inesperado)', 'Campo de atualização não refletido', 'Transação não confirmada'],
+    cmd: 'curl -X PUT http://localhost:8888/api/opcoes/1 -H "Content-Type: application/json" -d \'{"strike":35}\'',
+    pytest: 'pytest backend/tests/test_api_opcoes.py::TestAtualizarOpcao::test_atualizar_opcao_retorna_sucesso -v'
+  },
+  'test_api_opcoes::TestExcluirOpcao::test_excluir_opcao_retorna_sucesso': {
+    icon: '🗑️', desc: 'Verifica que DELETE /api/opcoes/{id} remove a operação existente e retorna HTTP 200 ou 204.',
+    validates: ['Status HTTP 200 ou 204', 'Registro não está mais acessível via GET'],
+    fails_when: ['Recurso já deletado (idempotência)', 'Sem cascade delete no banco', 'ID incorreto na fixture'],
+    cmd: 'curl -X DELETE http://localhost:8888/api/opcoes/1',
+    pytest: 'pytest backend/tests/test_api_opcoes.py::TestExcluirOpcao::test_excluir_opcao_retorna_sucesso -v'
+  },
+
+  // ─── BACKEND: API CRYPTO ────────────────────────────────
+  'test_api_crypto::TestListarCrypto::test_listar_retorna_lista_vazia_por_padrao': {
+    icon: '₿', desc: 'Verifica GET /api/crypto retorna array vazio no estado inicial limpo do banco.',
+    validates: ['Status HTTP 200', 'Resposta é array vazio []'],
+    fails_when: ['Leak de dados entre testes', 'Fixture mock_db não isolada'],
+    cmd: 'curl -X GET http://localhost:8888/api/crypto',
+    pytest: 'pytest backend/tests/test_api_crypto.py::TestListarCrypto::test_listar_retorna_lista_vazia_por_padrao -v'
+  },
+  'test_api_crypto::TestCriarCrypto::test_criar_operacao_retorna_sucesso': {
+    icon: '₿', desc: 'Verifica que POST /api/crypto cria uma operação de criptomoeda e retorna HTTP 201.',
+    validates: ['Status HTTP 201', 'ID gerado retornado', 'Dados persistidos'],
+    fails_when: ['Payload inválido', 'Validação de campos negando', 'Blueprint não mapeado'],
+    cmd: 'curl -X POST http://localhost:8888/api/crypto -H "Content-Type: application/json" -d \'{"ativo":"BTC","tipo":"compra","preco":50000}\'',
+    pytest: 'pytest backend/tests/test_api_crypto.py::TestCriarCrypto::test_criar_operacao_retorna_sucesso -v'
+  },
+
+  // ─── BACKEND: API CONFIG ────────────────────────────────
+  'test_api_config::TestGetConfig::test_get_config_retorna_dict_vazio_padrao': {
+    icon: '⚙️', desc: 'Verifica GET /api/config retorna dicionário vazio quando nenhuma chave foi configurada.',
+    validates: ['Status HTTP 200', 'Resposta é {} ou lista vazia'],
+    fails_when: ['Config populada por outro teste', 'Fixture com dados pré-existentes'],
+    cmd: 'curl -X GET http://localhost:8888/api/config',
+    pytest: 'pytest backend/tests/test_api_config.py::TestGetConfig::test_get_config_retorna_dict_vazio_padrao -v'
+  },
+  'test_api_config::TestSaveConfig::test_salvar_config_retorna_sucesso': {
+    icon: '⚙️', desc: 'Verifica POST /api/config salva chaves de configuração e retorna sucesso.',
+    validates: ['Status HTTP 200', 'Confirmação de sucesso na resposta', 'Commit realizado'],
+    fails_when: ['Payload mal formado', 'Banco sem permissão de escrita', 'Chave inválida ou proibida'],
+    cmd: 'curl -X POST http://localhost:8888/api/config -H "Content-Type: application/json" -d \'{"GEMINI_KEY":"abc123"}\'',
+    pytest: 'pytest backend/tests/test_api_config.py::TestSaveConfig::test_salvar_config_retorna_sucesso -v'
+  },
+
+  // ─── BACKEND: API ANALYZE ───────────────────────────────
+  'test_api_analyze::TestAnalyzeValidacao::test_sem_api_keys_retorna_400': {
+    icon: '🤖', desc: 'Verifica que POST /api/analyze retorna HTTP 400 quando nenhuma chave de API de IA está configurada.',
+    validates: ['Status HTTP 400', 'Mensagem de erro indicando chaves ausentes'],
+    fails_when: ['Variável de ambiente com chave definida no ambiente de CI', 'Mock de banco retornando chaves erroneamente'],
+    cmd: 'curl -X POST http://localhost:8888/api/analyze -H "Content-Type: application/json" -d \'{"prompt":"teste"}\'',
+    pytest: 'pytest backend/tests/test_api_analyze.py::TestAnalyzeValidacao::test_sem_api_keys_retorna_400 -v'
+  },
+  'test_api_analyze::TestAnalyzeComMockGemini::test_analyze_gemini_retorna_analise': {
+    icon: '🤖', desc: 'Verifica que POST /api/analyze com Gemini mockado retorna uma análise estruturada válida.',
+    validates: ['Status HTTP 200', 'Campos analysis/provider na resposta', 'Resposta não vazia'],
+    fails_when: ['Mock do Gemini não configurado corretamente', 'Chave Gemini ausente no mock', 'Timeout simulado'],
+    cmd: 'curl -X POST http://localhost:8888/api/analyze -H "Content-Type: application/json" -d \'{"prompt":"analisar risco","context":[]}\'',
+    pytest: 'pytest backend/tests/test_api_analyze.py::TestAnalyzeComMockGemini::test_analyze_gemini_retorna_analise -v'
+  },
+
+  // ─── FRONTEND: PLAYWRIGHT / OPCOES ──────────────────────
+  'opcoes.spec::Opcoes::[Opcoes] nao deve ter SyntaxError no JS': {
+    icon: '🎭', desc: 'Playwright: carrega a página de Opções e verifica que não há SyntaxError ou erros de parse no JavaScript.',
+    validates: ['Nenhum SyntaxError no console', 'Página carrega sem crashes', 'Scripts executados sem erro fatal'],
+    fails_when: ['Erro de sintaxe JS introduzido por edição recente', 'Import com caminho errado', 'Transpilação com erro silencioso'],
+    cmd: 'npx playwright test tests/opcoes.spec.js --reporter=list',
+    pytest: null
+  },
+  'opcoes.spec::Opcoes::[Opcoes] pagina deve carregar sem erros de runtime': {
+    icon: '🎭', desc: 'Playwright: abre a página Opções e monitora erros de runtime no console do browser (TypeError, ReferenceError etc.).',
+    validates: ['Console sem erros após carregamento', 'Todas as dependências JS resolvidas', 'Inicialização do módulo concluída'],
+    fails_when: ['Variável não definida no escopo global', 'API chamada antes de estar pronta', 'Fetch falhando com erro não tratado'],
+    cmd: 'npx playwright test tests/opcoes.spec.js --reporter=list',
+    pytest: null
+  },
+  'opcoes.spec::Opcoes::[Opcoes] tabela de operacoes deve estar visivel': {
+    icon: '🎭', desc: 'Playwright: confirma que a tabela de operações da página Opções é visível após o carregamento.',
+    validates: ['Seletor da tabela presente no DOM', 'Elemento visível (não display:none)', 'Estrutura da tabela com thead e tbody'],
+    fails_when: ['Seletor CSS alterado sem atualizar o teste', 'Tabela condicionalmente escondida por estado de erro', 'Timeout no carregamento dos dados'],
+    cmd: 'npx playwright test tests/opcoes.spec.js -g "tabela" --reporter=list',
+    pytest: null
+  },
+  'crypto.spec::Crypto::[Crypto] nao deve ter SyntaxError no JS': {
+    icon: '🎭', desc: 'Playwright: verifica ausência de SyntaxError na página de Crypto.',
+    validates: ['Nenhum SyntaxError no console', 'Scripts Crypto executados sem interrupção'],
+    fails_when: ['Erro de sintaxe no crypto.js ou módulos importados'],
+    cmd: 'npx playwright test tests/crypto.spec.js --reporter=list',
+    pytest: null
+  },
+
+  // ─── FRONTEND: AI PROVIDERS ─────────────────────────────
+  'test_ai_providers::TestGemini::test_chave_configurada': {
+    icon: '🔑', desc: 'Verifica que a chave de API do Gemini está presente e não vazia nas configurações do sistema.',
+    validates: ['Chave GEMINI_API_KEY existe', 'Valor não está em branco'],
+    fails_when: ['Chave não configurada no .env ou banco', 'Nome da variável diferente do esperado'],
+    cmd: 'D:\\laragon\\bin\\python\\python-3.13\\python.exe -c "import os; print(bool(os.getenv(\'GEMINI_API_KEY\')))"',
+    pytest: 'pytest backend/tests/test_ai_providers.py::TestGemini::test_chave_configurada -v -s'
+  },
+  'test_ai_providers::TestGemini::test_gemini_flash_responde': {
+    icon: '🤖', desc: 'Teste de integração real com a API do Gemini Flash — requer chave válida e conexão com a internet.',
+    validates: ['Resposta não vazia da API Gemini', 'Sem exceção de autenticação', 'Latência dentro do timeout'],
+    fails_when: ['Chave inválida ou expirada', 'Sem acesso à internet', 'Rate limit atingido', 'Modelo gemini-flash indisponível'],
+    cmd: 'D:\\laragon\\bin\\python\\python-3.13\\python.exe backend/test_gemini.py',
+    pytest: 'pytest backend/tests/test_ai_providers.py::TestGemini::test_gemini_flash_responde -v -s'
+  },
+};
+
+/**
+ * Converte um comando curl em equivalente PowerShell (Invoke-RestMethod).
+ * Suporta -X METHOD, -H "Header: Value", -d 'body', GET simples.
+ */
+function curlToPS(curlCmd) {
+  if (!curlCmd || curlCmd.startsWith('#') || curlCmd.startsWith('pytest') || curlCmd.startsWith('npx')) {
+    return curlCmd || '';
+  }
+  // Detectar URL
+  const urlMatch = curlCmd.match(/https?:\/\/[^\s'"]+/);
+  if (!urlMatch) return curlCmd;
+  const url = urlMatch[0];
+
+  // Detectar método
+  const methodMatch = curlCmd.match(/-X\s+(\w+)/i);
+  const method = methodMatch ? methodMatch[1] : 'GET';
+
+  // Detectar Content-Type (de -H)
+  const ctMatch = curlCmd.match(/-H\s+["']Content-Type:\s*([^"']+)["']/i);
+  const ct = ctMatch ? ctMatch[1].trim() : null;
+
+  // Detectar body (-d)
+  const bodyMatch = curlCmd.match(/-d\s+['"](.+?)['"]\s*$/s) || curlCmd.match(/-d\s+'(.+?)'\s*$/s);
+  const body = bodyMatch ? bodyMatch[1] : null;
+
+  let ps = `Invoke-RestMethod -Uri "${url}"`;
+  if (method !== 'GET') ps += ` -Method ${method}`;
+  if (ct)   ps += ` -ContentType "${ct}"`;
+  if (body) ps += ` -Body '${body}'`;
+  return ps;
+}
+
+/**
+ * Retorna informações enriquecidas sobre o teste, com fallback gerado automaticamente.
+ */
+function getTestInfo(t) {
+  const key = `${t.file}::${t.suite}::${t.name}`;
+  if (TEST_INFO[key]) {
+    const info = TEST_INFO[key];
+    // Gera cmd_ps automaticamente se não definido no TEST_INFO
+    if (!info.cmd_ps && info.cmd) info.cmd_ps = curlToPS(info.cmd);
+    return info;
+  }
+
+  // Fallback inteligente baseado no nome/suite do teste
+  const name  = t.name || '';
+  const suite = t.suite || '';
+  const isE2E = t.type === 'e2e';
+  const isPlaywright = t.type === 'playwright' || t.type === 'e2e' || (t.dur && t.dur > 500);
+  const isBE = !isPlaywright;
+
+  let icon = '🧪';
+  if (isE2E)                             icon = '🧑‍💻';
+  else if (/auth/i.test(suite + name))   icon = '🔐';
+  else if (/crypt/i.test(suite + name))  icon = '₿';
+  else if (/opcoes/i.test(suite + name)) icon = '📊';
+  else if (/ai|gemini|deepseek|grok/i.test(suite + name)) icon = '🤖';
+  else if (/config/i.test(suite + name)) icon = '⚙️';
+  else if (/playwright|spec/i.test(t.file)) icon = '🎭';
+
+  const validates = [];
+  const fails_when = [];
+  if (/404/.test(name))        { validates.push('Status HTTP 404 retornado corretamente'); fails_when.push('Recurso encontrado inesperadamente'); }
+  if (/200/.test(name))        { validates.push('Status HTTP 200 retornado'); fails_when.push('Erro interno retornando status diferente'); }
+  if (/201/.test(name))        { validates.push('Status HTTP 201 de criação'); fails_when.push('Falha na persistência do recurso'); }
+  if (/vazi/i.test(name))      { validates.push('Resultado é uma coleção vazia'); fails_when.push('Dados de testes anteriores vazando'); }
+  if (/sucesso/i.test(name))   { validates.push('Operação executada com sucesso'); fails_when.push('Validação do payload falhando'); }
+  if (/syntax/i.test(name))    { validates.push('Nenhum SyntaxError no JavaScript'); fails_when.push('Erro de sintaxe em arquivo JS recém-editado'); }
+  if (/carregar/i.test(name))  { validates.push('Página carrega sem erros de runtime'); fails_when.push('Dependência JS ou CSS não encontrada'); }
+  if (validates.length === 0)  { validates.push('Comportamento esperado do endpoint/componente'); }
+  if (fails_when.length === 0) { fails_when.push('Configuração incorreta do ambiente de teste'); fails_when.push('Mudança na interface da função testada'); }
+
+  let pytest, cmd, cmd_ps;
+  if (isE2E) {
+    const grepArg = name ? ` -g "${name}"` : '';
+    cmd    = `npx playwright test --config=playwright.usuario.config.js${grepArg}`;
+    cmd_ps = `# Com browser visível (PowerShell):\n$env:PW_HEADED='1'; $env:PW_SLOW_MO='700'\nnpx playwright test --config=playwright.usuario.config.js --headed${grepArg}`;
+    pytest = null;
+  } else if (isBE) {
+    pytest = `pytest backend/tests/${t.file}.py${suite ? '::' + suite : ''}${name ? '::' + name : ''} -v`;
+    cmd    = `# Execute via pytest:\n${pytest}`;
+    cmd_ps = pytest;
+  } else {
+    cmd    = `npx playwright test tests/${t.file}.js -g "${name}" --reporter=list`;
+    cmd_ps = curlToPS(cmd);
+    pytest = null;
+  }
+
+  return {
+    icon,
+    desc: isE2E
+      ? `Teste E2E de simulação real de usuário (Playwright). Executa "${name.replace(/_/g,' ')}" diretamente no browser.`
+      : `Teste ${isBE ? 'backend (pytest)' : 'frontend (Playwright)'} pertencente à suite ${suite}. Verifica o comportamento correto de "${name.replace(/_/g,' ')}".`,
+    validates,
+    fails_when,
+    cmd,
+    cmd_ps,
+    pytest
+  };
+}
+
+/* ── ABRIR MODAL DE DETALHE ── */
+function openTestDetail(idx) {
+  const t = allTests[idx];
+  if (!t) return;
+  tdmCurrentIdx = idx;
+
+  const info = getTestInfo(t);
+
+  // ícone + título
+  document.getElementById('tdm-icon').textContent  = info.icon || '🧪';
+  document.getElementById('tdm-title').textContent = t.name.replace(/_/g, ' ');
+
+  // meta chips
+  const statusChipCls = t.status === 'pass' ? 'tdm-chip-pass' : t.status === 'fail' ? 'tdm-chip-fail' : 'tdm-chip-pend';
+  const statusLabel   = t.status === 'pass' ? '✓ PASSOU' : t.status === 'fail' ? '✗ FALHOU' : '⏸ PENDENTE';
+  const typeLabel     = (t.type === 'playwright' || (t.dur && t.dur > 500)) ? 'Playwright' : 'pytest';
+  const durLabel      = t.dur ? `${t.dur}ms` : '—';
+  document.getElementById('tdm-meta').innerHTML = `
+    <span class="tdm-chip tdm-chip-type">${typeLabel}</span>
+    <span class="tdm-chip tdm-chip-suite">${escHtml(t.suite || t.file)}</span>
+    <span class="tdm-chip ${statusChipCls}">${statusLabel}</span>
+    <span class="tdm-chip tdm-chip-dur">⏱ ${durLabel}</span>
+  `.trim();
+
+  // descrição
+  document.getElementById('tdm-desc').textContent = info.desc;
+
+  // validações
+  const valEl = document.getElementById('tdm-validates');
+  valEl.innerHTML = (info.validates || []).map(v => `<li>${escHtml(v)}</li>`).join('');
+
+  // causas de falha
+  const failEl = document.getElementById('tdm-fails');
+  failEl.innerHTML = (info.fails_when || []).map(f => `<li>${escHtml(f)}</li>`).join('');
+
+  // comandos (curl, PowerShell, pytest)
+  document.getElementById('tdm-cmd').textContent       = info.cmd     || '# sem comando disponível';
+  document.getElementById('tdm-cmd-ps').textContent    = info.cmd_ps  || '# sem equivalente PowerShell';
+  document.getElementById('tdm-cmd-pytest').textContent = info.pytest || '# não aplicável (teste Playwright)';
+  // Reset tabs: mostra curl por padrão
+  switchCmdTab('curl', document.querySelector('.tdm-cmd-tab'));
+
+  // botão toggle: atualiza label
+  updateTDToggleBtn();
+
+  // oculta seção IA
+  document.getElementById('tdm-ai-section').style.display = 'none';
+  const aiBtn = document.getElementById('tdm-ai-btn');
+  if (aiBtn) { aiBtn.disabled = false; aiBtn.textContent = '🤖 Análise da IA'; }
+
+  // abre modal
+  document.getElementById('testDetailModal').classList.add('open');
+}
+
+function closeTDModal(e) {
+  if (e && e.target !== document.getElementById('testDetailModal')) return;
+  document.getElementById('testDetailModal').classList.remove('open');
+  tdmCurrentIdx = null;
+}
+
+function updateTDToggleBtn() {
+  const btn = document.getElementById('tdm-toggle-btn');
+  if (!btn || tdmCurrentIdx === null) return;
+  const selected = selectedTests.has(tdmCurrentIdx);
+  btn.textContent = selected ? '☑ Selecionado para execução' : '☐ Marcar para execução';
+  btn.classList.toggle('selected', selected);
+}
+
+function toggleTestFromDetail() {
+  if (tdmCurrentIdx === null) return;
+  toggleTest(tdmCurrentIdx);
+  updateTDToggleBtn();
+}
+
+function runSingleTest() {
+  if (tdmCurrentIdx === null) return;
+  const t = allTests[tdmCurrentIdx];
+  if (!t) return;
+
+  // Desmarcar TODOS e selecionar apenas este teste
+  selectedTests.clear();
+  selectedTests.add(tdmCurrentIdx);
+  allSelected = false;
+  const btnSelAll = document.getElementById('btnSelAllTxt');
+  if (btnSelAll) btnSelAll.textContent = 'Marcar';
+
+  // Fechar o modal antes de executar
+  document.getElementById('testDetailModal').classList.remove('open');
+  tdmCurrentIdx = null;
+
+  // Atualizar sidebar com nova seleção
+  buildSidebar();
+  updateSelCount();
+
+  // Executar
+  runTests();
+}
+
+function copyTDCmd(elId) {
+  const pre = document.getElementById(elId || 'tdm-cmd');
+  if (!pre) return;
+  navigator.clipboard.writeText(pre.textContent.trim())
+    .then(() => {
+      const btn = pre.parentElement ? pre.parentElement.querySelector('.tdm-copy-btn') : null;
+      if (btn) { btn.textContent = '✓'; setTimeout(() => { btn.textContent = '📋'; }, 1500); }
+    })
+    .catch(() => log('Erro ao copiar comando.', 'warn'));
+}
+
+function switchCmdTab(tab, btn) {
+  // Desativa todos os tab buttons
+  document.querySelectorAll('.tdm-cmd-tab').forEach(b => b.classList.remove('active'));
+  // Oculta todos os painéis
+  ['curl', 'ps', 'pytest'].forEach(t => {
+    const el = document.getElementById('tdm-cmd-panel-' + t);
+    if (el) el.style.display = 'none';
+  });
+  // Ativa o tab clicado
+  if (btn) btn.classList.add('active');
+  const panel = document.getElementById('tdm-cmd-panel-' + tab);
+  if (panel) panel.style.display = 'block';
+}
+
+function getAiHintForTest() {
+  if (tdmCurrentIdx === null) return;
+  const t    = allTests[tdmCurrentIdx];
+  const info = getTestInfo(t);
+  const aiBtn = document.getElementById('tdm-ai-btn');
+  const aiSec = document.getElementById('tdm-ai-section');
+  const aiBox = document.getElementById('tdm-ai-hint');
+
+  if (aiBtn) { aiBtn.disabled = true; aiBtn.textContent = '⏳ Consultando IA...'; }
+  aiSec.style.display = 'flex';
+  aiBox.innerHTML = '<div class="ai-loading"><div class="ai-spinner"></div> Consultando IA...</div>';
+
+  const context = [];
+  if (t.errorMessage) context.push({ role: 'user', content: `Erro: ${t.errorMessage}` });
+  if (t.traceback)    context.push({ role: 'user', content: `Traceback:\n${t.traceback}` });
+
+  const prompt = `Analise este teste: "${t.name}" da suite "${t.suite}".
+Descrição: ${info.desc}
+Status atual: ${t.status || 'pendente'}
+${t.errorMessage ? 'Mensagem de erro: ' + t.errorMessage : ''}
+${t.traceback    ? 'Traceback:\n' + t.traceback : ''}
+
+Explique de forma concisa:
+1. O que este teste verifica
+2. Por que ele pode estar falhando (se status for fail)
+3. Como corrigir o problema
+4. Exemplo de correção de código se aplicável`;
+
+  fetch('/api/analyze', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt, context })
+  })
+  .then(r => r.json())
+  .then(data => {
+    const text = data.analysis || data.response || data.error || 'Sem resposta da IA.';
+    aiBox.innerHTML = escHtml(text).replace(/\n/g, '<br>').replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  })
+  .catch(err => {
+    aiBox.innerHTML = `<span style="color:var(--red)">Erro ao consultar IA: ${escHtml(String(err))}</span>`;
+  })
+  .finally(() => {
+    if (aiBtn) { aiBtn.disabled = false; aiBtn.textContent = '🤖 Análise da IA'; }
+  });
+}
 
 /* ── ARRANQUE ── */
 init();

@@ -7,7 +7,10 @@
     "test": "playwright test",
     "test:headed": "playwright test --headed",
     "test:ui": "playwright test --ui",
-    "eslint": "eslint frontend/js/ --max-warnings=0"
+    "eslint": "eslint frontend/js/ --max-warnings=0",
+    "test:usuario": "playwright test --config=playwright.usuario.config.js",
+    "test:usuario:headed": "set PW_HEADED=1 && set PW_SLOW_MO=700 && npx playwright test --config=playwright.usuario.config.js --headed",
+    "test:usuario:watch": "set PW_HEADED=1 && set PW_SLOW_MO=1200 && npx playwright test --config=playwright.usuario.config.js --headed --reporter=line"
   },
   "devDependencies": {
     "@playwright/test": "^1.48.0",

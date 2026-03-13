@@ -1,0 +1,1380 @@
+/* =====================================================================
+   modal-analise.css  v1.0.0
+   Estilos do modal "Análise de Performance"
+   ===================================================================== */
+
+/* ---------- Modal container ---------- */
+.ma-modal-content {
+    background: #1a1f2e;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    overflow: hidden;
+    height: 82vh;
+    max-height: 82vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ---------- Header ---------- */
+.ma-header {
+    background: #1a1f2e;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 1rem 1.5rem;
+}
+
+.ma-title {
+    color: #c9d1d9;
+    font-size: 1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    margin: 0;
+}
+
+/* ---------- Filter bar ---------- */
+.ma-filter-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    background: #161b27;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    flex-shrink: 0;
+}
+
+.ma-filter-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.ma-filter-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #8b949e;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.ma-filter-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #c9d1d9;
+}
+
+.ma-filter-btn.active {
+    background: #2dc653;
+    border-color: #2dc653;
+    color: #fff;
+    font-weight: 600;
+}
+
+.ma-refresh-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.ma-refresh-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #8b949e;
+    border-radius: 6px;
+    padding: 5px 7px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: all 0.15s ease;
+}
+
+.ma-refresh-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #c9d1d9;
+}
+
+.ma-refresh-btn.spinning svg {
+    animation: ma-spin 0.8s linear infinite;
+}
+
+@keyframes ma-spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+/* ---------- Modal body ---------- */
+.ma-body {
+    background: #1a1f2e;
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+/* ---------- Main layout (2 colunas) ---------- */
+.ma-main {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    min-height: 0;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* ---------- COLUNA ESQUERDA ---------- */
+.ma-left {
+    background: #161b27;
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 1.5rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    overflow-y: auto;
+    min-height: 0;
+}
+
+/* Donut chart */
+.ma-donut-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 220px;
+}
+
+.ma-donut-center {
+    position: absolute;
+    text-align: center;
+    pointer-events: none;
+}
+
+.ma-donut-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2dc653;
+    line-height: 1.1;
+}
+
+.ma-donut-label {
+    font-size: 0.65rem;
+    color: #8b949e;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 2px;
+}
+
+.ma-donut-sub {
+    font-size: 0.75rem;
+    color: #6e7681;
+    margin-top: 2px;
+}
+
+/* Seção título pequeno */
+.ma-left .ma-section-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #8b949e;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+/* Tipo list (esquerda) */
+.ma-tipo-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.ma-tipo-item {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 8px;
+    padding: 0.6rem 0.8rem;
+}
+
+.ma-tipo-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.ma-tipo-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #c9d1d9;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ma-tipo-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+}
+
+.ma-tipo-value {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #c9d1d9;
+}
+
+.ma-tipo-bar-wrap {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.07);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.ma-tipo-bar {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+
+.ma-bar-call { background: #2dc653; }
+.ma-bar-put  { background: #4d9de0; }
+
+/* Métricas */
+.ma-metrics {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.ma-metric-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 8px;
+    padding: 0.55rem 0.8rem;
+}
+
+.ma-metric-label {
+    font-size: 0.85rem;
+    color: #8b949e;
+}
+
+.ma-metric-value {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #2dc653;
+}
+
+.ma-orange { color: #f76707 !important; }
+
+/* ROI box */
+.ma-roi-box {
+    border: 2px solid #2dc653;
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    text-align: center;
+    margin-top: auto;
+}
+
+.ma-roi-value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #2dc653;
+    line-height: 1;
+}
+
+.ma-roi-label {
+    font-size: 0.65rem;
+    color: #8b949e;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 4px;
+}
+
+/* ---------- COLUNA DIREITA ---------- */
+.ma-right {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    min-height: 0;
+}
+
+.ma-right-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    height: 100%;
+}
+
+/* Header direita */
+.ma-right-header {
+    text-align: left;
+}
+
+.ma-right-result {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #2dc653;
+    line-height: 1;
+}
+
+.ma-right-sub {
+    font-size: 0.8rem;
+    color: #8b949e;
+    margin-top: 4px;
+}
+
+/* Seção genérica direita */
+.ma-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.ma-right .ma-section-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #8b949e;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+/* Distribuição list (direita) */
+.ma-dist-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.ma-dist-item {
+    display: grid;
+    grid-template-columns: 70px 1fr 80px;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.ma-dist-name {
+    font-size: 0.85rem;
+    color: #c9d1d9;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ma-dist-name-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+.ma-dist-bar-wrap {
+    height: 22px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+}
+
+.ma-dist-bar {
+    height: 100%;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 8px;
+    transition: width 0.5s ease;
+    min-width: 36px;
+}
+
+.ma-dist-bar span {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+}
+
+.ma-dist-value {
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-align: right;
+    color: #2dc653;
+}
+
+/* Cores para barras de ativos */
+.ma-bar-0  { background: #2dc653; }
+.ma-bar-1  { background: #2dc653; }
+.ma-bar-2  { background: #4d9de0; }
+.ma-bar-3  { background: #2dc653; }
+.ma-bar-4  { background: #2dc653; }
+.ma-bar-5  { background: #2dc653; }
+
+/* Footer summary */
+.ma-footer-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    margin-top: auto;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    overflow: hidden;
+}
+
+.ma-summary-item {
+    padding: 0.75rem 1rem;
+    text-align: center;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ma-summary-item:last-child {
+    border-right: none;
+}
+
+.ma-summary-value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #c9d1d9;
+}
+
+.ma-summary-label {
+    font-size: 0.7rem;
+    color: #6e7681;
+    margin-top: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* ---------- Loading state ---------- */
+.ma-loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(22, 27, 39, 0.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    z-index: 10;
+}
+
+/* ---------- Seção Operações ---------- */
+.ma-ops-section {
+    flex: 1 1 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.ma-ops-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    flex-shrink: 0;
+}
+
+/* Botões de ordenação */
+.ma-ops-sort {
+    display: flex;
+    gap: 4px;
+}
+
+.ma-sort-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #8b949e;
+    border-radius: 5px;
+    padding: 2px 8px;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.ma-sort-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #c9d1d9;
+}
+
+.ma-sort-btn.active {
+    background: rgba(45, 198, 83, 0.18);
+    border-color: #2dc653;
+    color: #2dc653;
+    font-weight: 600;
+}
+
+/* Lista de operações — scrollável */
+.ma-ops-list {
+    overflow-y: auto;
+    flex: 1 1 0;
+    min-height: 0;
+    max-height: 310px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-right: 2px;
+}
+
+.ma-ops-list::-webkit-scrollbar {
+    width: 4px;
+}
+.ma-ops-list::-webkit-scrollbar-track {
+    background: rgba(255,255,255,0.03);
+    border-radius: 2px;
+}
+.ma-ops-list::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.12);
+    border-radius: 2px;
+}
+
+.ma-ops-empty {
+    color: #6e7681;
+    font-size: 0.82rem;
+    padding: 1rem 0;
+    text-align: center;
+}
+
+/* Item de operação */
+.ma-op-item {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 8px;
+    padding: 0.55rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex-shrink: 0;
+    transition: border-color 0.15s;
+}
+
+.ma-op-item:hover {
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Linha superior: identidade + valores */
+.ma-op-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.ma-op-identity {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-wrap: wrap;
+    min-width: 0;
+}
+
+.ma-op-base-badge {
+    background: #1f6feb;
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    border-radius: 4px;
+    padding: 1px 5px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.ma-op-nome {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #c9d1d9;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ma-op-values {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.ma-op-result {
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+.ma-op-pct {
+    font-size: 0.75rem;
+    font-weight: 600;
+    min-width: 46px;
+    text-align: right;
+}
+
+/* Barra de progresso */
+.ma-op-bar-wrap {
+    height: 5px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.ma-op-bar {
+    height: 100%;
+    border-radius: 3px;
+    min-width: 2px;
+    transition: width 0.4s ease;
+}
+
+.ma-opsbar-pos { background: #2dc653; }
+.ma-opsbar-neg { background: #fa5252; }
+
+/* Linha inferior: metadados */
+.ma-op-bottom {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.ma-op-meta {
+    font-size: 0.7rem;
+    color: #6e7681;
+}
+
+.ma-op-meta strong {
+    color: #8b949e;
+    font-weight: 500;
+}
+
+/* Badges genéricos */
+.ma-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    border-radius: 4px;
+    padding: 1px 6px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.ma-badge-call   { background: rgba(45,198,83,0.2);  color: #2dc653; border: 1px solid rgba(45,198,83,0.35); }
+.ma-badge-put    { background: rgba(250,82,82,0.2);  color: #fa5252; border: 1px solid rgba(250,82,82,0.35); }
+.ma-badge-outro  { background: rgba(255,255,255,0.08); color: #8b949e; border: 1px solid rgba(255,255,255,0.12); }
+.ma-badge-aberta { background: rgba(45,198,83,0.18);  color: #2dc653; border: 1px solid rgba(45,198,83,0.3); }
+.ma-badge-fechada{ background: rgba(255,255,255,0.07); color: #6e7681; border: 1px solid rgba(255,255,255,0.1); }
+.ma-badge-sim    { background: rgba(45,198,83,0.2);  color: #2dc653; border: 1px solid rgba(45,198,83,0.35); }
+.ma-badge-nao    { background: rgba(250,82,82,0.18); color: #fa5252; border: 1px solid rgba(250,82,82,0.3); }
+
+/* ---------- Ajuste painel direito para acomodar scroll ---------- */
+.ma-right {
+    overflow: hidden;
+}
+
+.ma-right-inner {
+    overflow: hidden;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 768px) {
+    .ma-main {
+        grid-template-columns: 1fr;
+    }
+
+    .ma-left {
+        border-right: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .ma-right-result {
+        font-size: 1.75rem;
+    }
+
+    .ma-ops-list {
+        max-height: 260px;
+    }
+}
+
+/* =====================================================================
+   TAB NAVIGATION
+   ===================================================================== */
+.ma-tab-nav {
+    display: flex;
+    gap: 2px;
+    padding: 0.6rem 1.25rem 0;
+    background: #161b27;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    flex-shrink: 0;
+}
+
+.ma-tab-btn {
+    padding: 6px 18px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    border: 1px solid transparent;
+    border-bottom: none;
+    border-radius: 6px 6px 0 0;
+    background: transparent;
+    color: #8b949e;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    position: relative;
+    bottom: -1px;
+}
+
+.ma-tab-btn:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: #c9d1d9;
+}
+
+.ma-tab-btn.active {
+    background: #1a1f2e;
+    border-color: rgba(255, 255, 255, 0.1);
+    border-bottom-color: #1a1f2e;
+    color: #2dc653;
+    font-weight: 600;
+}
+
+.ma-tab-badge {
+    background: #2dc653;
+    color: #fff;
+    border-radius: 10px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 1px 6px;
+    min-width: 18px;
+    text-align: center;
+    line-height: 1.4;
+}
+
+.ma-tab-pane {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+}
+
+/* =====================================================================
+   POSIÇÕES ABERTAS — Container e Resumo
+   ===================================================================== */
+.ma-pos-container {
+    padding: 1.25rem;
+    background: #1a1f2e;
+    min-height: 420px;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    overflow-y: auto;
+    max-height: calc(90vh - 180px);
+}
+
+.ma-pos-container::-webkit-scrollbar { width: 4px; }
+.ma-pos-container::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); border-radius: 2px; }
+.ma-pos-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
+
+.ma-pos-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2.5rem;
+    color: #6e7681;
+    font-size: 0.85rem;
+}
+
+/* Summary bar */
+.ma-pos-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 10px;
+}
+
+.ma-pos-sumcard {
+    flex: 1 1 120px;
+    text-align: center;
+}
+
+.ma-pos-sumval {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #c9d1d9;
+    line-height: 1.1;
+}
+
+.ma-pos-sumlbl {
+    font-size: 0.68rem;
+    color: #6e7681;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 3px;
+}
+
+/* Charts row */
+.ma-pos-charts-row {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.ma-pos-chart-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    flex-shrink: 0;
+}
+
+.ma-pos-chart-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #8b949e;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+}
+
+/* Cards grid */
+.ma-pos-cards-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+/* =====================================================================
+   POSIÇÃO CARD individual
+   ===================================================================== */
+.ma-poscard {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 0.9rem 1rem 0.75rem;
+    transition: border-color 0.15s;
+}
+
+.ma-poscard:hover {
+    border-color: rgba(255, 255, 255, 0.16);
+}
+
+/* Header */
+.ma-poscard-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.ma-poscard-identity {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.ma-pos-base-badge {
+    background: #1f6feb;
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    border-radius: 4px;
+    padding: 1px 6px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.ma-poscard-nome {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #c9d1d9;
+}
+
+.ma-poscard-tipo-badge {
+    font-size: 0.68rem;
+    font-weight: 700;
+    border-radius: 4px;
+    padding: 1px 7px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.ma-poscard-meta {
+    font-size: 0.73rem;
+    color: #6e7681;
+    white-space: nowrap;
+}
+
+.ma-poscard-badge,
+.ma-poscard-decisao-badge {
+    font-size: 0.72rem;
+    font-weight: 600;
+    border-radius: 5px;
+    padding: 2px 8px;
+    white-space: nowrap;
+    min-width: 48px;
+    text-align: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 22px;
+}
+
+/* Tabela comparativa dentro do card */
+.ma-poscard-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+}
+
+.ma-poscard-table thead tr th {
+    background: rgba(255, 255, 255, 0.06);
+    color: #8b949e;
+    text-align: right;
+    padding: 4px 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.68rem;
+    letter-spacing: 0.03em;
+}
+
+.ma-poscard-table thead tr th:first-child { text-align: left; }
+
+.ma-poscard-table tbody tr td {
+    padding: 5px 8px;
+    text-align: right;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    color: #c9d1d9;
+    white-space: nowrap;
+}
+
+.ma-poscard-table tbody tr td:first-child { text-align: left; }
+
+.row-ab-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #2dc653;
+}
+
+.row-at-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #4d9de0;
+}
+
+.row-at td { background: rgba(77, 157, 224, 0.05); }
+.row-ab td { background: rgba(45, 198, 83, 0.05); }
+
+/* Bottom: bars + indicators */
+.ma-poscard-bottom {
+    display: flex;
+    gap: 1rem;
+    margin-top: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.ma-poscard-bars {
+    flex: 1 1 260px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.ma-poscard-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.ma-poscard-bar-lbl {
+    font-size: 0.7rem;
+    color: #6e7681;
+    white-space: nowrap;
+    min-width: 110px;
+}
+
+.ma-poscard-progress {
+    flex: 1;
+    height: 8px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.07);
+}
+
+.ma-poscard-bar-val {
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+    min-width: 44px;
+    text-align: right;
+}
+
+.ma-poscard-indicators {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: flex-start;
+    flex: 1 1 240px;
+}
+
+.ma-poscard-ind {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 6px;
+    padding: 4px 10px;
+    text-align: center;
+    min-width: 72px;
+    flex: 1 1 72px;
+}
+
+.ma-poscard-ind-lbl {
+    font-size: 0.65rem;
+    color: #6e7681;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ma-poscard-ind-val {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #c9d1d9;
+    min-height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* =====================================================================
+   SPINNER para células ao vivo (aguardando API)
+   ===================================================================== */
+.ma-spin-cell {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.12);
+    border-top-color: #4d9de0;
+    border-radius: 50%;
+    animation: ma-cell-spin 0.7s linear infinite;
+    vertical-align: middle;
+}
+
+@keyframes ma-cell-spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+/* =====================================================================
+   POSIÇÕES ABERTAS — novos componentes enriquecidos
+   ===================================================================== */
+
+/* ── 4 KPIs no topo do card ─────────────────────────────────── */
+.ma-pos-kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin: 12px 0 10px;
+}
+@media (max-width: 640px) { .ma-pos-kpi-row { grid-template-columns: repeat(2,1fr); } }
+
+.ma-pos-kpi {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 8px;
+    padding: 9px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.ma-kpi-lbl {
+    font-size: 0.58rem;
+    letter-spacing: .06em;
+    color: #6e7681;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+.ma-kpi-val {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: rgb(47 179 68);
+    line-height: 1.2;
+}
+.ma-kpi-sub {
+    font-size: 0.62rem;
+    color: #6e7681;
+}
+
+/* ── Mid row: comparativo + payoff ─────────────────────────── */
+.ma-pos-mid-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+@media (max-width: 680px) { .ma-pos-mid-row { grid-template-columns: 1fr; } }
+
+.ma-pos-section-title {
+    font-size: 0.62rem;
+    letter-spacing: .06em;
+    color: #6e7681;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+
+.ma-pos-comparativo-wrap,
+.ma-pos-payoff-wrap {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.ma-comp-table {
+    width: 100%;
+    font-size: 0.72rem;
+    border-collapse: collapse;
+}
+.ma-comp-table thead tr th {
+    color: #6e7681;
+    font-size: 0.6rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    text-align: right;
+    padding: 2px 5px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.ma-comp-table thead tr th:first-child { text-align: left; }
+.ma-comp-table tbody tr td {
+    padding: 4px 5px;
+    text-align: right;
+    color: #c9d1d9;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.ma-comp-table tbody tr td:first-child { text-align: left; color: #8b949e; }
+
+.ma-payoff-stats {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+    font-size: 0.68rem;
+}
+.ma-payoff-stat { color: #8b949e; }
+
+/* ── Barra de probabilidade ─────────────────────────────────── */
+.ma-pos-prob-section {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+.ma-pos-prob-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+.ma-pos-prob-val { font-weight: 700; font-size: 1rem; }
+.ma-pos-prob-bar { height: 10px; border-radius: 6px; background: rgba(255,255,255,0.08); margin-bottom: 4px; }
+.ma-pos-prob-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.58rem;
+    color: #6e7681;
+}
+
+/* ── Bottom 3 cards ─────────────────────────────────────────── */
+.ma-pos-bottom3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 10px;
+}
+@media (max-width: 680px) { .ma-pos-bottom3 { grid-template-columns: 1fr; } }
+
+.ma-pos-bottom-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 10px;
+}
+
+/* ── kv list: chave / valor ─────────────────────────────────── */
+.ma-kv-list { display: flex; flex-direction: column; gap: 4px; }
+.ma-kv-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.70rem;
+    padding: 2px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.ma-kv-row span:first-child { color: #8b949e; }
+.ma-kv-row span:last-child  { color: #c9d1d9; font-weight: 600; }
+
+/* ── Grid 2x2 na posição atual ──────────────────────────────── */
+.ma-pos-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+}
+.ma-pos-kpi-sm {
+    background: rgba(255,255,255,0.04);
+    border-radius: 6px;
+    padding: 6px 8px;
+    text-align: center;
+}
+.ma-kpi-sm-val { font-size: 0.9rem; font-weight: 700; color: #c9d1d9; }
+.ma-kpi-sm-lbl { font-size: 0.55rem; color: #6e7681; text-transform: uppercase; letter-spacing: .05em; }
+
+/* ── Badge "base" (ativoBase) ───────────────────────────────── */
+.ma-pos-base-badge {
+    background: rgba(77,157,224,0.18);
+    color: #4d9de0;
+    border: 1px solid rgba(77,157,224,0.35);
+    border-radius: 5px;
+    padding: 1px 7px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+}
+
+/* =====================================================================
+   ABAS INTERNAS DO CARD DE POSIÇÃO
+   ===================================================================== */
+.ma-poscard-tabs {
+    display: flex;
+    gap: 3px;
+    margin: 10px 0 0;
+    padding-bottom: 0;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.ma-poscard-tab {
+    background: transparent;
+    border: 1px solid transparent;
+    border-bottom: none;
+    color: #6e7681;
+    font-size: 0.72rem;
+    font-weight: 500;
+    padding: 5px 14px;
+    border-radius: 5px 5px 0 0;
+    cursor: pointer;
+    transition: color 0.15s, background 0.15s;
+    position: relative;
+    bottom: -1px;
+}
+.ma-poscard-tab:hover { color: #c9d1d9; background: rgba(255,255,255,0.05); }
+.ma-poscard-tab.active {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(255,255,255,0.1);
+    border-bottom-color: transparent;
+    color: #4d9de0;
+    font-weight: 600;
+}
+.ma-poscard-tab-pane { padding-top: 10px; }
+
+/* =====================================================================
+   ABA EVOLUÇÃO — charts e milestones
+   ===================================================================== */
+.ma-pos-evo-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+@media (max-width: 680px) { .ma-pos-evo-grid { grid-template-columns: 1fr; } }
+
+.ma-pos-evo-chart-wrap {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 10px;
+}
+
+/* Milestones (3 caixas) */
+.ma-pos-milestones {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+@media (max-width: 680px) { .ma-pos-milestones { grid-template-columns: 1fr; } }
+
+.ma-milestone {
+    border-radius: 10px;
+    padding: 12px 14px;
+    text-align: center;
+}
+.ma-milestone-ab   { background: rgba(45,198,83,0.08);  border: 1px solid rgba(45,198,83,0.25); }
+.ma-milestone-hoje { background: rgba(250,82,82,0.08);  border: 2px solid rgba(250,82,82,0.4); }
+.ma-milestone-vcto { background: rgba(45,198,83,0.04);  border: 1px dashed rgba(45,198,83,0.35); }
+
+.ma-milestone-lbl  { font-size: 0.62rem; color: #6e7681; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 6px; }
+.ma-milestone-val  { font-size: 1.35rem; font-weight: 800; color: #c9d1d9; line-height: 1.1; margin-bottom: 4px; }
+.ma-milestone-sub  { font-size: 0.72rem; color: #8b949e; margin-bottom: 4px; }
+.ma-milestone-info { font-size: 0.72rem; }
+
+/* =====================================================================
+   ABA RISCO — gauges e cenários
+   ===================================================================== */
+.ma-pos-gauges {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 10px;
+}
+@media (max-width: 640px) { .ma-pos-gauges { grid-template-columns: 1fr; } }
+
+.ma-gauge-wrap {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+}
+.ma-gauge-footer { margin-top: 6px; display: flex; flex-direction: column; gap: 2px; align-items: center; }
+.ma-gauge-val    { font-size: 0.85rem; font-weight: 700; color: #c9d1d9; }
+.ma-gauge-sub    { font-size: 0.62rem; color: #6e7681; }
+
+/* Grid 2x2 de cenários de risco */
+.ma-pos-risk-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+@media (max-width: 680px) { .ma-pos-risk-grid { grid-template-columns: 1fr; } }
+
+.ma-risk-scenario {
+    border-radius: 8px;
+    padding: 10px 12px;
+    text-align: center;
+}
+.ma-risk-ideal  { background: rgba(45,198,83,0.08);  border: 1px solid rgba(45,198,83,0.25); }
+.ma-risk-atual  { background: rgba(45,198,83,0.04);  border: 1px solid rgba(45,198,83,0.2); }
+.ma-risk-perigo { background: rgba(250,82,82,0.08);  border: 1px solid rgba(250,82,82,0.25); }
+.ma-risk-pnl    { background: rgba(250,82,82,0.12);  border: 2px solid rgba(250,82,82,0.4); }
+
+.ma-risk-lbl  { font-size: 0.6rem; color: #6e7681; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 5px; }
+.ma-risk-val  { font-size: 1.05rem; font-weight: 700; color: #c9d1d9; margin-bottom: 3px; }
+.ma-risk-sub  { font-size: 0.7rem; color: #8b949e; }
+
+/* Seções das abas Evolução e Risco (nível principal) */
+.ma-pos-section-wrap {
+    background: rgba(22,27,34,0.6);
+    border: 1px solid rgba(48,54,61,0.8);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+.ma-pos-section-hdr {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(48,54,61,0.6);
+}
+.ma-pos-section-hdr strong {
+    font-size: 1rem;
+    color: #c9d1d9;
+    letter-spacing: .04em;
+}

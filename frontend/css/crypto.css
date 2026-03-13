@@ -1,4 +1,80 @@
-/* Estilos especificos para pagina Crypto */
+/* =========================================
+   crypto.css  v1.2.0
+   Estilos específicos para Controle de Cryptos
+   ========================================= */
+
+/* =========================================
+   Cards Clickable
+   ========================================= */
+.card-clickable {
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.card-clickable:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+[data-bs-theme="dark"] .card-clickable:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+.card-clickable:focus-visible {
+    outline: 2px solid #206bc4;
+    outline-offset: 2px;
+}
+
+/* =========================================
+   Badges CALL / PUT
+   ========================================= */
+.crypto-badge-call,
+.crypto-badge-high {
+    background-color: #2fb344;
+    color: #fff;
+    min-width: 50px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+}
+.crypto-badge-put,
+.crypto-badge-low {
+    background-color: #d63939;
+    color: #fff;
+    min-width: 50px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+}
+
+/* =========================================
+   Simulador de Retorno
+   ========================================= */
+.crypto-sim-card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    text-align: center;
+}
+.crypto-sim-label {
+    font-size: 0.72rem;
+    color: #8a9fc2;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.25rem;
+}
+.crypto-sim-value {
+    font-size: 1.15rem;
+    font-weight: 700;
+}
+.crypto-sim-cenarios {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 8px;
+}
+.crypto-sim-desc {
+    font-size: 0.75rem;
+    margin-top: 0.2rem;
+}
+
+/* =========================================
+   Estilos especificos para pagina Crypto */
 
 /* Cores especificas crypto */
 .text-btc {
@@ -63,4 +139,59 @@
 
 .badge.bg-danger {
     background-color: #d63939 !important;
+}
+
+/* =========================================
+   Dashboard Avançado Crypto — Weekday Performance
+   Estes estilos espelham o #modalSaldoOperacoes .saldo-weekday-*
+   mas sem escopo restrito, para uso no modal-dashboard-crypto
+   ========================================= */
+#modalDashboardCrypto .saldo-weekday-list {
+    display: flex;
+    flex-direction: column;
+}
+
+#modalDashboardCrypto .saldo-weekday-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+#modalDashboardCrypto .saldo-weekday-label {
+    width: 44px;
+    font-size: 12px;
+    color: #cbd5e1;
+    flex-shrink: 0;
+}
+
+#modalDashboardCrypto .saldo-weekday-bar {
+    flex: 1;
+    height: 8px;
+    background: #0f1a2b;
+    border-radius: 999px;
+    overflow: hidden;
+    min-width: 60px;
+}
+
+#modalDashboardCrypto .saldo-weekday-bar span {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    width: 0%;
+    transition: width 0.4s ease;
+}
+
+#modalDashboardCrypto .saldo-weekday-value {
+    min-width: 74px;
+    text-align: right;
+    font-size: 12px;
+    color: #94a3b8;
+    flex-shrink: 0;
+}
+
+#modalDashboardCrypto .saldo-best-day {
+    margin-top: 18px;
+    padding-top: 12px;
+    border-top: 1px solid #2d3748;
 }

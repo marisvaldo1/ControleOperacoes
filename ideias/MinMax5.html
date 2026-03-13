@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Curva P&L PUT - Conceito 5</title>
+    <style>
+        :root {
+            --bg-dark: #0D1117;
+            --bg-card: #161B22;
+            --bg-elevated: #21262D;
+            --text-primary: #E6EDF3;
+            --text-secondary: #8B949E;
+            --text-muted: #6E7681;
+            --profit: #2EA043;
+            --profit-light: #3FB950;
+            --profit-glow: rgba(46, 160, 67, 0.3);
+            --loss: #DA3633;
+            --loss-light: #F85149;
+            --loss-glow: rgba(218, 54, 51, 0.3);
+            --blue: #58A6FF;
+            --blue-light: #79C0FF;
+            --border: #30363D;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 28px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .header-badge {
+            background: var(--profit-glow);
+            color: var(--profit-light);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .header-title h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .header-title p {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .live-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg-card);
+            padding: 10px 16px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--profit-light);
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 24px;
+        }
+
+        .chart-section {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 28px;
+            border: 1px solid var(--border);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .chart-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .chart-legend {
+            display: flex;
+            gap: 20px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+        }
+
+        .legend-dot.green { background: var(--profit-light); }
+        .legend-dot.red { background: var(--loss-light); }
+        .legend-dot.blue { background: var(--blue); }
+
+        .chart-container {
+            position: relative;
+            height: 350px;
+            margin-bottom: 20px;
+        }
+
+        .chart-svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .chart-line {
+            fill: none;
+            stroke-width: 3;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .line-profit {
+            stroke: var(--profit-light);
+        }
+
+        .line-loss {
+            stroke: var(--loss-light);
+        }
+
+        .line-current {
+            stroke: var(--blue);
+            stroke-width: 3;
+        }
+
+        .chart-area {
+            opacity: 0.15;
+        }
+
+        .area-profit {
+            fill: var(--profit-light);
+        }
+
+        .area-loss {
+            fill: var(--loss-light);
+        }
+
+        .chart-axis {
+            stroke: var(--border);
+            stroke-width: 1;
+        }
+
+        .axis-label {
+            fill: var(--text-muted);
+            font-size: 11px;
+        }
+
+        .current-dot {
+            fill: var(--blue);
+            stroke: var(--bg-dark);
+            stroke-width: 3;
+        }
+
+        .current-dot-glow {
+            fill: var(--blue);
+            opacity: 0.3;
+        }
+
+        .strike-line {
+            stroke: var(--text-secondary);
+            stroke-width: 2;
+            stroke-dasharray: 8 4;
+        }
+
+        .break-even-line {
+            stroke: var(--loss-light);
+            stroke-width: 2;
+            stroke-dasharray: 6 3;
+        }
+
+        .chart-labels {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+        }
+
+        .label-marker {
+            position: absolute;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .label-marker.strike {
+            background: var(--bg-elevated);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+
+        .label-marker.current {
+            background: var(--blue);
+            color: white;
+        }
+
+        .label-marker.breakeven {
+            background: var(--loss-glow);
+            color: var(--loss-light);
+            border: 1px solid var(--loss);
+        }
+
+        .chart-footer {
+            display: flex;
+            justify-content: space-between;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .footer-stat {
+            text-align: center;
+        }
+
+        .footer-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .footer-value {
+            font-size: 18px;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .footer-value.profit { color: var(--profit-light); }
+        .footer-value.loss { color: var(--loss-light); }
+        .footer-value.blue { color: var(--blue-light); }
+
+        .info-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .info-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid var(--border);
+        }
+
+        .info-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .info-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--bg-elevated);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .data-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: var(--bg-elevated);
+            border-radius: 8px;
+        }
+
+        .data-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .data-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .data-value.profit { color: var(--profit-light); }
+        .data-value.loss { color: var(--loss-light); }
+        .data-value.blue { color: var(--blue-light); }
+
+        .pnl-display {
+            text-align: center;
+            padding: 24px;
+            background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--profit-glow) 100%);
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+
+        .pnl-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .pnl-value {
+            font-size: 42px;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .pnl-value.profit { color: var(--profit-light); }
+        .pnl-value.loss { color: var(--loss-light); }
+
+        .pnl-percent {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+
+        .progress-section {
+            margin-top: 16px;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .progress-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .progress-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+        }
+
+        .progress-bar {
+            height: 10px;
+            background: var(--bg-elevated);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 5px;
+            transition: width 0.5s ease;
+        }
+
+        .progress-fill.profit {
+            background: linear-gradient(90deg, var(--profit), var(--profit-light));
+        }
+
+        .progress-fill.loss {
+            background: linear-gradient(90deg, var(--loss), var(--loss-light));
+        }
+
+        .tooltip {
+            position: absolute;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 12px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 100;
+        }
+
+        .tooltip.visible {
+            opacity: 1;
+        }
+
+        .tooltip-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 4px;
+        }
+
+        .tooltip-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .tooltip-label {
+            color: var(--text-secondary);
+        }
+
+        .tooltip-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+        }
+
+        @media (max-width: 1100px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <div class="header-badge">PUT</div>
+                <div class="header-title">
+                    <h1>Diagrama de Payoff</h1>
+                    <p>PETR4 Strike R$ 34,50 - Vencimento 15/03/2026</p>
+                </div>
+            </div>
+            <div class="live-pill">
+                <div class="live-dot"></div>
+                <span style="font-size: 13px;">Atualizado: <span id="updateTime">--:--</span></span>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="chart-section">
+                <div class="chart-header">
+                    <div class="chart-title">Curva Profit & Loss</div>
+                    <div class="chart-legend">
+                        <div class="legend-item">
+                            <div class="legend-dot green"></div>
+                            <span>Zona de Lucro</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot red"></div>
+                            <span>Zona de Prejuízo</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot blue"></div>
+                            <span>Preço Atual</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <svg class="chart-svg" viewBox="0 0 700 320" preserveAspectRatio="xMidYMid meet">
+                        <!-- Grid lines -->
+                        <g class="grid">
+                            <line x1="60" y1="40" x2="680" y2="40" stroke="var(--border)" stroke-width="1" opacity="0.3"/>
+                            <line x1="60" y1="100" x2="680" y2="100" stroke="var(--border)" stroke-width="1" opacity="0.3"/>
+                            <line x1="60" y1="160" x2="680" y2="160" stroke="var(--border)" stroke-width="1" opacity="0.3"/>
+                            <line x1="60" y1="220" x2="680" y2="220" stroke="var(--border)" stroke-width="1" opacity="0.3"/>
+                            <line x1="60" y1="280" x2="680" y2="280" stroke="var(--border)" stroke-width="1" opacity="0.3"/>
+                        </g>
+
+                        <!-- Axis labels Y -->
+                        <g class="axis-y">
+                            <text x="50" y="44" class="axis-label" text-anchor="end">+600</text>
+                            <text x="50" y="104" class="axis-label" text-anchor="end">+400</text>
+                            <text x="50" y="164" class="axis-label" text-anchor="end">+200</text>
+                            <text x="50" y="224" class="axis-label" text-anchor="end">0</text>
+                            <text x="50" y="284" class="axis-label" text-anchor="end">-200</text>
+                        </g>
+
+                        <!-- Profit area -->
+                        <path class="chart-area area-profit" d="M60,220 L120,220 L180,220 L240,220 L300,220 L360,220 L420,160 L480,100 L540,40 L600,40 L680,40 L680,220 L60,220"/>
+
+                        <!-- Loss area -->
+                        <path class="chart-area area-loss" d="M60,220 L120,220 L180,220 L240,220 L300,220 L360,220 L420,220 L480,220 L540,220 L600,220 L680,220 L680,280 L60,280"/>
+
+                        <!-- Break-even line -->
+                        <line class="break-even-line" x1="60" y1="220" x2="680" y2="220"/>
+
+                        <!-- Strike line -->
+                        <line class="strike-line" x1="360" y1="40" x2="360" y2="280"/>
+
+                        <!-- P&L Curve -->
+                        <path class="chart-line line-profit" d="M60,160 L120,160 L180,160 L240,160 L300,160 L360,160 L420,160 L480,160 L540,160 L600,160 L680,160"/>
+                        <path class="chart-line line-loss" d="M360,160 L420,220 L480,280 L540,280 L600,280 L680,280"/>
+
+                        <!-- Current price marker -->
+                        <g id="currentMarker">
+                            <circle cx="340" cy="168" r="16" class="current-dot-glow"/>
+                            <circle cx="340" cy="168" r="8" class="current-dot"/>
+                        </g>
+
+                        <!-- Axis labels X -->
+                        <g class="axis-x">
+                            <text x="60" y="305" class="axis-label" text-anchor="middle">30</text>
+                            <text x="180" y="305" class="axis-label" text-anchor="middle">32</text>
+                            <text x="300" y="305" class="axis-label" text-anchor="middle">34</text>
+                            <text x="360" y="305" class="axis-label" text-anchor="middle">34.50</text>
+                            <text x="420" y="305" class="axis-label" text-anchor="middle">36</text>
+                            <text x="540" y="305" class="axis-label" text-anchor="middle">38</text>
+                            <text x="680" y="305" class="axis-label" text-anchor="middle">40</text>
+                        </g>
+                    </svg>
+
+                    <div class="chart-labels">
+                        <div class="label-marker strike" style="left: 340px; top: 235px;">Strike 34,50</div>
+                        <div class="label-marker breakeven" style="left: 200px; top: 40px;">Break-Even</div>
+                        <div class="label-marker current" style="left: 340px; top: 100px;" id="currentLabel">R$ 35,80</div>
+                    </div>
+                </div>
+
+                <div class="chart-footer">
+                    <div class="footer-stat">
+                        <div class="footer-label">Lucro Máximo</div>
+                        <div class="footer-value profit">+R$ 600</div>
+                    </div>
+                    <div class="footer-stat">
+                        <div class="footer-label">Prejuízo Máximo</div>
+                        <div class="footer-value loss">-R$ 2.850</div>
+                    </div>
+                    <div class="footer-stat">
+                        <div class="footer-label">Break-Even</div>
+                        <div class="footer-value">R$ 33,90</div>
+                    </div>
+                    <div class="footer-stat">
+                        <div class="footer-label">Distância Atual</div>
+                        <div class="footer-value blue" id="distanceValue">+3,77%</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-section">
+                <div class="info-card">
+                    <div class="info-title">
+                        <div class="info-icon">💰</div>
+                        Resultado Atual
+                    </div>
+                    <div class="pnl-display">
+                        <div class="pnl-label">Lucro Não Realizado</div>
+                        <div class="pnl-value profit" id="pnlValue">R$ 450</div>
+                        <div class="pnl-percent" id="pnlPercent">+1,37% do capital</div>
+                    </div>
+                    <div class="progress-section">
+                        <div class="progress-header">
+                            <span class="progress-label">Decay do Prêmio</span>
+                            <span class="progress-value" id="decayValue">75%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill profit" id="decayBar" style="width: 75%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <div class="info-title">
+                        <div class="info-icon">📊</div>
+                        Comparativo
+                    </div>
+                    <div class="data-list">
+                        <div class="data-row">
+                            <span class="data-label">Premio na Abertura</span>
+                            <span class="data-value">R$ 0,60</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Premio Atual</span>
+                            <span class="data-value blue" id="currentPrem">R$ 0,15</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Ação na Abertura</span>
+                            <span class="data-value">R$ 36,00</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Ação Atual</span>
+                            <span class="data-value blue" id="currentStock">R$ 35,80</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Ganho com Decay</span>
+                            <span class="data-value profit">R$ 450</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Ganho com Ação</span>
+                            <span class="data-value loss" id="stockGain">-R$ 200</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <div class="info-title">
+                        <div class="info-icon">🎯</div>
+                        Projeção
+                    </div>
+                    <div class="data-list">
+                        <div class="data-row">
+                            <span class="data-label">Premio Restante</span>
+                            <span class="data-value blue" id="premRemaining">R$ 150</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Premio a Perder</span>
+                            <span class="data-value">R$ 150</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Potencial Total</span>
+                            <span class="data-value profit">R$ 600</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateSimulation() {
+            const now = new Date();
+            document.getElementById('updateTime').textContent =
+                now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+            // Simula variação de preço
+            const basePrice = 35.80;
+            const variation = (Math.random() - 0.5) * 0.30;
+            const currentPrice = basePrice + variation;
+            const strike = 34.50;
+            const entryPrice = 36.00;
+
+            // Atualiza valores
+            document.getElementById('currentStock').textContent = 'R$ ' + currentPrice.toFixed(2).replace('.', ',');
+            document.getElementById('currentLabel').textContent = 'R$ ' + currentPrice.toFixed(2).replace('.', ',');
+
+            // Calcula distância
+            const distance = ((currentPrice - strike) / strike) * 100;
+            document.getElementById('distanceValue').textContent = '+' + distance.toFixed(2) + '%';
+
+            // Atualiza marker no gráfico (aproximação)
+            const markerX = 340 + (variation * 50);
+            document.getElementById('currentMarker').setAttribute('transform', `translate(${markerX - 340}, 0)`);
+
+            // Calcula prêmio atual
+            const currentPrem = 0.15 - (Math.random() * 0.04);
+            document.getElementById('currentPrem').textContent = 'R$ ' + currentPrem.toFixed(2).replace('.', ',');
+
+            // Calcula P&L
+            const pnl = (0.60 - currentPrem) * 1000;
+            document.getElementById('pnlValue').textContent = 'R$ ' + pnl.toFixed(0).replace('.', ',');
+
+            // Calcula ganho com ação
+            const stockGain = (currentPrice - entryPrice) * 1000;
+            document.getElementById('stockGain').textContent =
+                (stockGain >= 0 ? '+' : '') + 'R$ ' + stockGain.toFixed(0).replace('.', ',');
+
+            // Atualiza decay
+            const decay = ((0.60 - currentPrem) / 0.60) * 100;
+            document.getElementById('decayValue').textContent = decay.toFixed(0) + '%';
+            document.getElementById('decayBar').style.width = decay + '%';
+
+            // Atualiza prêmio restante
+            const premRemaining = currentPrem * 1000;
+            document.getElementById('premRemaining').textContent = 'R$ ' + premRemaining.toFixed(0).replace('.', ',');
+        }
+
+        setInterval(updateSimulation, 2500);
+        updateSimulation();
+    </script>
+</body>
+</html>

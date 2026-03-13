@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+-BR">
+<head<html lang="pt>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Concept 16 - Bento Grid</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0C0C0E;
+            --card: #18181B;
+            --card-2: #27272A;
+            --text: #FAFAFA;
+            --text-dim: #A1A1AA;
+            --zinc: #3F3F46;
+            --violet: #8B5CF6;
+            --emerald: #10B981;
+            --rose: #F43F5E;
+            --amber: #F59E0B;
+            --sky: #0EA5E9;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Sora', sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .bento-card {
+            background: var(--card);
+            border-radius: 24px;
+            width: 100%;
+            max-width: 540px;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.05);
+        }
+
+        .bento-header {
+            grid-column: span 4;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--zinc);
+        }
+
+        .header-info h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-info .badge {
+            background: var(--violet);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .header-info .subtitle {
+            font-size: 12px;
+            color: var(--text-dim);
+            margin-top: 4px;
+        }
+
+        .close-bento {
+            width: 32px;
+            height: 32px;
+            background: var(--card-2);
+            border: none;
+            border-radius: 8px;
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .close-bento:hover {
+            background: var(--rose);
+            color: white;
+        }
+
+        .bento-main {
+            grid-column: span 2;
+            background: linear-gradient(135deg, var(--violet), var(--sky));
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .bento-main .value {
+            font-size: 42px;
+            font-weight: 800;
+            color: white;
+            line-height: 1.1;
+        }
+
+        .bento-main .label {
+            font-size: 12px;
+            color: rgba(255,255,255,0.8);
+            margin-top: 8px;
+        }
+
+        .bento-stat {
+            background: var(--card-2);
+            border-radius: 16px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .bento-stat .label {
+            font-size: 11px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .bento-stat .value {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .bento-stat .value.green { color: var(--emerald); }
+        .bento-stat .value.violet { color: var(--violet); }
+        .bento-stat .value.amber { color: var(--amber); }
+
+        .bento-stat .sub {
+            font-size: 11px;
+            color: var(--text-dim);
+            margin-top: 4px;
+        }
+
+        .bento-comp {
+            grid-column: span 2;
+            background: var(--card-2);
+            border-radius: 16px;
+            padding: 16px;
+        }
+
+        .bento-comp .title {
+            font-size: 12px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        .comp-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--zinc);
+        }
+
+        .comp-row:last-child { border-bottom: none; }
+
+        .comp-label {
+            font-size: 13px;
+            color: var(--text-dim);
+        }
+
+        .comp-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .comp-value.current { color: var(--sky); }
+
+        .bento-footer {
+            grid-column: span 4;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 16px;
+            border-top: 1px solid var(--zinc);
+        }
+
+        .time-info {
+            font-size: 12px;
+            color: var(--text-dim);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .time-info::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: var(--emerald);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .refresh-bento {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--violet);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 20px;
+            font-family: 'Sora', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .refresh-bento:hover {
+            background: #7C3AED;
+            transform: translateY(-1px);
+        }
+
+        .refresh-bento.loading { opacity: 0.7; pointer-events: none; }
+        .refresh-bento .spinner { display: none; }
+        .refresh-bento.loading .spinner { display: inline; animation: spin 1s linear infinite; }
+        .refresh-bento.loading .btn-text { display: none; }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="modal-overlay">
+        <div class="bento-card">
+            <div class="bento-header">
+                <div class="header-info">
+                    <h3>PUT Position <span class="badge">PETR4</span></h3>
+                    <div class="subtitle">Strike R$ 34,50 • Vencimento 15/03</div>
+                </div>
+                <button class="close-bento">×</button>
+            </div>
+
+            <div class="bento-main">
+                <div class="value" id="probValue">75%</div>
+                <div class="label">Probabilidade</div>
+            </div>
+
+            <div class="bento-stat">
+                <div class="label">Lucro</div>
+                <div class="value green" id="lucroAberto">R$ 450</div>
+                <div class="sub">Aberto</div>
+            </div>
+
+            <div class="bento-stat">
+                <div class="label">Cotação</div>
+                <div class="value" id="cotacaoAtual">R$ 35,80</div>
+                <div class="sub" id="variacao">-0,56%</div>
+            </div>
+
+            <div class="bento-stat">
+                <div class="label">Premio</div>
+                <div class="value violet" id="premioAtual">R$ 0,15</div>
+                <div class="sub" id="varPremio">-75%</div>
+            </div>
+
+            <div class="bento-comp">
+                <div class="title">Comparativo</div>
+                <div class="comp-row">
+                    <span class="comp-label">Premio Abertura</span>
+                    <span class="comp-value">R$ 0,60</span>
+                </div>
+                <div class="comp-row">
+                    <span class="comp-label">Premio Atual</span>
+                    <span class="comp-value current" id="premioTable">R$ 0,15</span>
+                </div>
+                <div class="comp-row">
+                    <span class="comp-label">Ativo Abertura</span>
+                    <span class="comp-value">R$ 36,00</span>
+                </div>
+                <div class="comp-row">
+                    <span class="comp-label">Ativo Atual</span>
+                    <span class="comp-value current" id="ativoTable">R$ 35,80</span>
+                </div>
+            </div>
+
+            <div class="bento-footer">
+                <div class="time-info">
+                    <span id="timestamp">--:--:--</span>
+                </div>
+                <button class="refresh-bento" id="refreshBtn" onclick="atualizar()">
+                    <span class="spinner">⟳</span>
+                    <span class="btn-text">Atualizar</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const operacao = {
+            strike: 34.50,
+            premioAbertura: 0.60,
+            premioAtual: 0.15,
+            ativoAbertura: 36.00,
+            ativoAtual: 35.80,
+            quantidade: 1000
+        };
+
+        function atualizar() {
+            const btn = document.getElementById('refreshBtn');
+            btn.classList.add('loading');
+
+            setTimeout(() => {
+                const variacao = (Math.random() - 0.5) * 0.30;
+                operacao.ativoAtual = parseFloat((operacao.ativoAtual + variacao).toFixed(2));
+                operacao.premioAtual = Math.max(0.01, parseFloat((operacao.premioAbertura * 0.25 + (Math.random() - 0.5) * 0.05).toFixed(2)));
+
+                atualizarInterface();
+
+                btn.classList.remove('loading');
+                document.getElementById('timestamp').textContent = new Date().toLocaleTimeString('pt-BR');
+            }, 600);
+        }
+
+        function atualizarInterface() {
+            const distancia = ((operacao.ativoAtual - operacao.strike) / operacao.strike) * 100;
+            const probabilidade = Math.min(99, Math.max(20, 75 + (distancia - 3.77) * 5));
+            const lucro = (operacao.premioAbertura - operacao.premioAtual) * operacao.quantidade;
+            const variacaoPremio = ((operacao.premioAtual - operacao.premioAbertura) / operacao.premioAbertura) * 100;
+            const variacaoAtivo = ((operacao.ativoAtual - operacao.ativoAbertura) / operacao.ativoAbertura) * 100;
+
+            document.getElementById('probValue').textContent = Math.round(probabilidade) + '%';
+            document.getElementById('lucroAberto').textContent = 'R$ ' + Math.abs(Math.round(lucro));
+            document.getElementById('cotacaoAtual').textContent = 'R$ ' + operacao.ativoAtual.toFixed(2).replace('.', ',');
+            document.getElementById('variacao').textContent = variacaoAtivo.toFixed(2) + '%';
+            document.getElementById('premioAtual').textContent = 'R$ ' + operacao.premioAtual.toFixed(2);
+            document.getElementById('varPremio').textContent = Math.round(variacaoPremio) + '%';
+            document.getElementById('premioTable').textContent = 'R$ ' + operacao.premioAtual.toFixed(2);
+            document.getElementById('ativoTable').textContent = 'R$ ' + operacao.ativoAtual.toFixed(2).replace('.', ',');
+        }
+
+        document.getElementById('timestamp').textContent = new Date().toLocaleTimeString('pt-BR');
+        atualizarInterface();
+    </script>
+</body>
+</html>

@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard PUT - Conceito 2</title>
+    <style>
+        :root {
+            --bg-primary: #0D1117;
+            --bg-secondary: #161B22;
+            --bg-tertiary: #21262D;
+            --text-primary: #F0F6FC;
+            --text-secondary: #8B949E;
+            --profit: #3FB950;
+            --profit-dim: rgba(63, 185, 80, 0.15);
+            --loss: #F85149;
+            --loss-dim: rgba(248, 81, 73, 0.15);
+            --blue: #58A6FF;
+            --blue-dim: rgba(88, 166, 255, 0.15);
+            --purple: #A371F7;
+            --border: #30363D;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 24px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--profit), #238636);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 18px;
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: 600;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .market-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--profit);
+            animation: blink 2s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .hero-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .hero-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--border);
+        }
+
+        .hero-card.profit::before {
+            background: var(--profit);
+        }
+
+        .hero-card.loss::before {
+            background: var(--loss);
+        }
+
+        .hero-card.blue::before {
+            background: var(--blue);
+        }
+
+        .hero-card.purple::before {
+            background: var(--purple);
+        }
+
+        .hero-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .hero-value {
+            font-size: 36px;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            line-height: 1.1;
+        }
+
+        .hero-value.profit { color: var(--profit); }
+        .hero-value.loss { color: var(--loss); }
+
+        .hero-sub {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+
+        .hero-change {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-top: 8px;
+        }
+
+        .hero-change.positive {
+            background: var(--profit-dim);
+            color: var(--profit);
+        }
+
+        .hero-change.negative {
+            background: var(--loss-dim);
+            color: var(--loss);
+        }
+
+        .grid-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .grid-title::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: var(--blue);
+            border-radius: 2px;
+        }
+
+        .operations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .op-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .op-card:hover {
+            border-color: var(--blue);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .op-card.profit {
+            border-left: 4px solid var(--profit);
+        }
+
+        .op-card.loss {
+            border-left: 4px solid var(--loss);
+        }
+
+        .op-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .op-ticker {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .ticker-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--blue-dim);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .ticker-info h3 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .ticker-type {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .op-status {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .op-status.open {
+            background: var(--profit-dim);
+            color: var(--profit);
+        }
+
+        .op-status.closed {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+        }
+
+        .op-body {
+            padding: 20px;
+        }
+
+        .op-price {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .price-box {
+            text-align: center;
+            flex: 1;
+            padding: 12px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            margin: 0 4px;
+        }
+
+        .price-box:first-child {
+            margin-left: 0;
+        }
+
+        .price-box:last-child {
+            margin-right: 0;
+        }
+
+        .price-label {
+            font-size: 10px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .price-value {
+            font-size: 16px;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .price-value.current {
+            color: var(--blue);
+        }
+
+        .sparkline-container {
+            height: 60px;
+            margin: 16px 0;
+            position: relative;
+        }
+
+        .sparkline-container svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .op-metrics {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .metric-item {
+            text-align: center;
+            padding: 12px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+        }
+
+        .metric-label {
+            font-size: 10px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .metric-value {
+            font-size: 16px;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .metric-value.profit { color: var(--profit); }
+        .metric-value.loss { color: var(--loss); }
+
+        .op-footer {
+            padding: 16px 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .expiry-info {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .expiry-info span {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .pnl-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        .pnl-badge.profit {
+            background: var(--profit-dim);
+            color: var(--profit);
+        }
+
+        .analysis-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        .analysis-item {
+            text-align: center;
+        }
+
+        .analysis-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 12px;
+            background: var(--bg-tertiary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .analysis-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .analysis-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .analysis-result {
+            margin-top: 12px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .analysis-result.positive {
+            background: var(--profit-dim);
+            color: var(--profit);
+        }
+
+        .analysis-result.negative {
+            background: var(--loss-dim);
+            color: var(--loss);
+        }
+
+        .analysis-result.neutral {
+            background: var(--blue-dim);
+            color: var(--blue);
+        }
+
+        @media (max-width: 1200px) {
+            .hero-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .analysis-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .hero-stats {
+                grid-template-columns: 1fr;
+            }
+            .operations-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <div class="logo">P</div>
+            <div>
+                <h1>Posição Atual - PUT</h1>
+                <div style="font-size: 13px; color: var(--text-secondary);">Venda de PUT PETR4</div>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="market-status">
+                <div class="status-dot"></div>
+                <span>Mercado Aberto</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="hero-stats">
+        <div class="hero-card profit">
+            <div class="hero-label">Lucro Realizado</div>
+            <div class="hero-value profit">R$ 300</div>
+            <div class="hero-sub">Operação PETR4390ITM</div>
+            <div class="hero-change positive">✓ Expirou in-the-money</div>
+        </div>
+        <div class="hero-card blue">
+            <div class="hero-label">Lucro Potencial Aberto</div>
+            <div class="hero-value" style="color: var(--profit);">R$ 450</div>
+            <div class="hero-sub">Premio restante a receber</div>
+            <div class="hero-change positive">+ R$ 0,15/ação</div>
+        </div>
+        <div class="hero-card purple">
+            <div class="hero-label">Cotação PETR4</div>
+            <div class="hero-value" id="currentPrice">R$ 35,80</div>
+            <div class="hero-sub" id="priceChange">-0,56% hoje</div>
+            <div class="hero-change negative" id="priceDirection">▼ Queda</div>
+        </div>
+        <div class="hero-card profit">
+            <div class="hero-label">Distância Strike</div>
+            <div class="hero-value profit">+3,77%</div>
+            <div class="hero-sub">Ação acima do strike</div>
+            <div class="hero-change positive">✓ Position segura</div>
+        </div>
+    </div>
+
+    <h2 class="grid-title">Cartões de Operação</h2>
+    <div class="operations-grid">
+        <div class="op-card profit">
+            <div class="op-header">
+                <div class="op-ticker">
+                    <div class="ticker-icon">📈</div>
+                    <div class="ticker-info">
+                        <h3>PETR4</h3>
+                        <div class="ticker-type">PUT | Strike R$ 34,50</div>
+                    </div>
+                </div>
+                <span class="op-status open">Aberta</span>
+            </div>
+            <div class="op-body">
+                <div class="op-price">
+                    <div class="price-box">
+                        <div class="price-label">Premio Abertura</div>
+                        <div class="price-value">R$ 0,60</div>
+                    </div>
+                    <div class="price-box">
+                        <div class="price-label">Premio Atual</div>
+                        <div class="price-value current">R$ 0,15</div>
+                    </div>
+                    <div class="price-box">
+                        <div class="price-label">Ação Abertura</div>
+                        <div class="price-value">R$ 36,00</div>
+                    </div>
+                    <div class="price-box">
+                        <div class="price-label">Ação Atual</div>
+                        <div class="price-value current">R$ 35,80</div>
+                    </div>
+                </div>
+                <div class="sparkline-container">
+                    <svg viewBox="0 0 300 60">
+                        <path d="M0,30 L30,28 L60,25 L90,22 L120,20 L150,18 L180,15 L210,12 L240,10 L270,8 L300,5"
+                            fill="none" stroke="var(--profit)" stroke-width="2"/>
+                        <path d="M0,30 L30,28 L60,25 L90,22 L120,20 L150,18 L180,15 L210,12 L240,10 L270,8 L300,5 L300,60 L0,60 Z"
+                            fill="url(#sparkGradient)" opacity="0.3"/>
+                        <defs>
+                            <linearGradient id="sparkGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" style="stop-color:#3FB950"/>
+                                <stop offset="100%" style="stop-color:#3FB950;stop-opacity:0"/>
+                            </linearGradient>
+                        </defs>
+                        <circle cx="300" cy="5" r="4" fill="var(--profit)"/>
+                    </svg>
+                </div>
+                <div class="op-metrics">
+                    <div class="metric-item">
+                        <div class="metric-label">Decay</div>
+                        <div class="metric-value profit">-75%</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">Break-Even</div>
+                        <div class="metric-value">33,90</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">ROI</div>
+                        <div class="metric-value profit">+1,37%</div>
+                    </div>
+                </div>
+            </div>
+            <div class="op-footer">
+                <div class="expiry-info">Vencimento: <span>15/03/2026</span></div>
+                <div class="pnl-badge profit">
+                    <span>LUCRO R$ 450</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="op-card profit">
+            <div class="op-header">
+                <div class="op-ticker">
+                    <div class="ticker-icon">📈</div>
+                    <div class="ticker-info">
+                        <h3>PETR4</h3>
+                        <div class="ticker-type">PUT | Strike R$ 39,90</div>
+                    </div>
+                </div>
+                <span class="op-status closed">Fechada</span>
+            </div>
+            <div class="op-body">
+                <div class="op-price">
+                    <div class="price-box">
+                        <div class="price-label">Premio Recebido</div>
+                        <div class="price-value">R$ 0,50</div>
+                    </div>
+                    <div class="price-box">
+                        <div class="price-label">Premio Final</div>
+                        <div class="price-value">R$ 0,00</div>
+                    </div>
+                    <div class="price-box">
+                        <div class="price-label">Ação Entrada</div>
+                        <div class="price-value">R$ 40,50</div>
+                    </div>
+                    <div class="price-box">
+                        <div class="price-label">Exercício</div>
+                        <div class="price-value loss">R$ 39,90</div>
+                    </div>
+                </div>
+                <div class="sparkline-container">
+                    <svg viewBox="0 0 300 60">
+                        <path d="M0,10 L50,12 L100,15 L150,18 L200,40 L250,45 L300,50"
+                            fill="none" stroke="var(--profit)" stroke-width="2"/>
+                        <circle cx="300" cy="50" r="4" fill="var(--profit)"/>
+                    </svg>
+                </div>
+                <div class="op-metrics">
+                    <div class="metric-item">
+                        <div class="metric-label">Resultado</div>
+                        <div class="metric-value profit">+100%</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">Break-Even</div>
+                        <div class="metric-value">39,40</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">ROI</div>
+                        <div class="metric-value profit">+1,15%</div>
+                    </div>
+                </div>
+            </div>
+            <div class="op-footer">
+                <div class="expiry-info">Expirado: <span>05/03/2026</span></div>
+                <div class="pnl-badge profit">
+                    <span>LUCRO R$ 300</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="analysis-section">
+        <h2 class="grid-title">Análise em Tempo Real</h2>
+        <div class="analysis-grid">
+            <div class="analysis-item">
+                <div class="analysis-icon">🎯</div>
+                <div class="analysis-title">Probabilidade de Lucro</div>
+                <div class="analysis-desc">Considerando a distância atual do strike e o tempo até o vencimento</div>
+                <div class="analysis-result positive" id="probResult">75% - ALTA</div>
+            </div>
+            <div class="analysis-item">
+                <div class="analysis-icon">⏰</div>
+                <div class="analysis-title">Theta (Decay Diário)</div>
+                <div class="analysis-desc">Quanto você ganha por dia apenas com o tempo (sem movimento do preço)</div>
+                <div class="analysis-result positive" id="thetaResult">R$ 12,50/dia</div>
+            </div>
+            <div class="analysis-item">
+                <div class="analysis-icon">🛡️</div>
+                <div class="analysis-title">Margem de Segurança</div>
+                <div class="analysis-desc">Distância entre cotação atual e ponto de exercício</div>
+                <div class="analysis-result positive" id="marginResult">R$ 1,30 (3,77%)</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updatePrices() {
+            const basePrice = 35.80;
+            const variation = (Math.random() - 0.5) * 0.15;
+            const newPrice = basePrice + variation;
+
+            document.getElementById('currentPrice').textContent =
+                'R$ ' + newPrice.toFixed(2).replace('.', ',');
+
+            const change = ((newPrice - 36.00) / 36.00) * 100;
+            document.getElementById('priceChange').textContent =
+                (change >= 0 ? '+' : '') + change.toFixed(2) + '% hoje';
+
+            const direction = document.getElementById('priceDirection');
+            if (change >= 0) {
+                direction.textContent = '▲ Alta';
+                direction.className = 'hero-change positive';
+            } else {
+                direction.textContent = '▼ Queda';
+                direction.className = 'hero-change negative';
+            }
+
+            // Atualiza análise
+            const strike = 34.50;
+            const distance = ((newPrice - strike) / strike) * 100;
+            const prob = Math.min(99, Math.max(50, 75 + (distance - 3.77) * 5));
+            document.getElementById('probResult').textContent =
+                Math.round(prob) + '% - ' + (prob > 70 ? 'ALTA' : prob > 50 ? 'MÉDIA' : 'BAIXA');
+
+            const theta = 12.50 + (Math.random() - 0.5) * 2;
+            document.getElementById('thetaResult').textContent =
+                'R$ ' + theta.toFixed(2) + '/dia';
+        }
+
+        setInterval(updatePrices, 2000);
+        updatePrices();
+    </script>
+</body>
+</html>

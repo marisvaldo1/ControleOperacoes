@@ -202,8 +202,7 @@ body.dragging { user-select: none !important; cursor: col-resize !important; }
 .suite-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
 .suite-arrow { margin-left: auto; font-size: 10px; transition: transform .2s; color: var(--muted); }
 .suite-group.open .suite-arrow { transform: rotate(90deg); }
-.suite-tests { display: none; padding-left: 8px; }
-.suite-group.open .suite-tests { display: block; }
+.suite-tests { display: block; padding-left: 8px; }
 /* Badge count por suite */
 .gcnt {
   font-size: 9px; padding: 1px 5px; border-radius: 3px; margin-left: 2px;
@@ -512,3 +511,190 @@ select.filter-sel {
 .fail-item-name { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fail-item-meta { font-size: 10px; color: var(--muted); margin-top: 3px; display: flex; gap: 8px; flex-wrap: wrap; }
 .fail-item-loc { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--accent); }
+
+/* ══════════════════════════════════════════════════
+   MODAL DE DETALHE DO TESTE (Test Detail Modal)
+   ══════════════════════════════════════════════════ */
+.tdm-box {
+  width: min(860px, 96vw);
+  max-height: 90vh;
+  border-color: rgba(0,212,255,.22);
+  box-shadow: 0 0 60px rgba(0,212,255,.08), 0 32px 80px rgba(0,0,0,.6);
+}
+.tdm-hdr {
+  background: rgba(0,212,255,.03);
+  border-bottom-color: rgba(0,212,255,.12);
+}
+.tdm-hdr-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.tdm-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+.tdm-meta {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 8px 20px;
+  background: rgba(0,0,0,.2);
+  border-bottom: 1px solid var(--border2);
+  flex-shrink: 0;
+}
+.tdm-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  border: 1px solid;
+}
+.tdm-chip-type   { background: rgba(0,212,255,.07);  color: var(--accent);  border-color: rgba(0,212,255,.2); }
+.tdm-chip-suite  { background: rgba(179,136,255,.07); color: var(--purple);  border-color: rgba(179,136,255,.2); }
+.tdm-chip-pass   { background: rgba(0,200,83,.07);   color: var(--green);   border-color: rgba(0,200,83,.2); }
+.tdm-chip-fail   { background: rgba(255,61,87,.07);  color: var(--red);     border-color: rgba(255,61,87,.2); }
+.tdm-chip-pend   { background: rgba(74,85,104,.1);   color: var(--muted);   border-color: var(--border2); }
+.tdm-chip-dur    { background: rgba(74,85,104,.1);   color: var(--muted);   border-color: var(--border2); }
+.tdm-cnt {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+.tdm-cmd-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+.tdm-cmd-tab {
+  background: transparent;
+  border: 1px solid var(--border2);
+  color: var(--muted);
+  padding: 4px 12px;
+  border-radius: 6px 6px 0 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  cursor: pointer;
+  transition: all .15s;
+  border-bottom: none;
+}
+.tdm-cmd-tab.active { background: rgba(0,212,255,.08); color: var(--accent); border-color: rgba(0,212,255,.2); }
+.tdm-cmd-tab:hover:not(.active) { color: var(--text); background: rgba(255,255,255,.04); }
+.tdm-desc {
+  font-size: 12px;
+  color: var(--text);
+  line-height: 1.75;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+.tdm-validates, .tdm-fails {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.tdm-validates li::before { content: '✓  '; color: var(--green); font-weight: 700; }
+.tdm-fails    li::before  { content: '⚡ '; color: #f59e0b; }
+.tdm-validates li, .tdm-fails li {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  padding: 7px 12px;
+  line-height: 1.5;
+}
+.tdm-cmd-wrap {
+  position: relative;
+}
+.tdm-cmd {
+  max-height: 120px;
+  background: rgba(0,0,0,.35);
+  border-color: rgba(0,212,255,.15);
+  color: #a5f3fc;
+  padding-right: 44px;
+}
+.tdm-copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0,212,255,.1);
+  border: 1px solid rgba(0,212,255,.2);
+  color: var(--accent);
+  border-radius: 6px;
+  padding: 3px 8px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all .15s;
+}
+.tdm-copy-btn:hover { background: rgba(0,212,255,.2); }
+.tdm-footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--border2);
+  background: rgba(0,0,0,.2);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+.tdm-btn-run {
+  background: linear-gradient(135deg, #00897b, #00bfa5);
+  border: none;
+  color: #fff;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  cursor: pointer;
+  font-weight: 700;
+  transition: all .2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tdm-btn-run:hover   { opacity: .85; transform: translateY(-1px); box-shadow: 0 0 16px rgba(0,191,165,.35); }
+.tdm-btn-run:disabled { opacity: .45; cursor: wait; }
+.tdm-btn-toggle {
+  background: transparent;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  padding: 7px 16px;
+  border-radius: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all .2s;
+}
+.tdm-btn-toggle:hover { background: rgba(0,212,255,.1); }
+.tdm-btn-toggle.selected {
+  background: rgba(0,212,255,.12);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 700;
+}
+.tdm-ai-btn {
+  margin-left: auto;
+}
+.tdm-btn-close {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all .2s;
+}
+.tdm-btn-close:hover { border-color: var(--red); color: var(--red); }
+

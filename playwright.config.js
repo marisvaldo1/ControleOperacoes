@@ -3,6 +3,9 @@ import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
     testDir: "./frontend/tests",
     outputDir: ".tmp/test-results",
+    // e2e-usuario.spec.js é excluído do run normal (CI).
+    // Execute manualmente: npm run test:usuario:headed
+    testIgnore: ["**/e2e-usuario.spec.js"],
     timeout: 20_000,
     retries: 0,
     reporter: [

@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Dual Investment Crypto - Dark Theme</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background-color: #0a0c10;
+            color: #e0e0e0;
+            padding: 24px;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+            color: #fff;
+            font-weight: 500;
+        }
+
+        .subtitle {
+            color: #a0a0a0;
+            margin-bottom: 32px;
+            border-left: 4px solid #f0b90b; /* Amarelo Binance */
+            padding-left: 16px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 24px;
+            align-items: start;
+        }
+
+        .card {
+            background: #161b22;
+            border-radius: 20px;
+            border: 1px solid #2d333b;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .card:hover {
+            border-color: #f0b90b;
+            transform: translateY(-4px);
+        }
+
+        .card-header {
+            padding: 16px 20px;
+            background: #1e242c;
+            border-bottom: 1px solid #2d333b;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card-header i {
+            font-size: 1.4rem;
+            color: #f0b90b;
+            width: 32px;
+        }
+
+        .card-header h3 {
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: #fff;
+        }
+
+        .card-body {
+            padding: 20px;
+            flex: 1;
+        }
+
+        .card-body.scroll {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 0.95rem;
+        }
+        .metric .label {
+            color: #8b949e;
+        }
+        .metric .value {
+            font-weight: 600;
+            color: #fff;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: #2d333b;
+            color: #e0e0e0;
+        }
+        .badge.success {
+            background: #1f6f4c;
+            color: #fff;
+        }
+        .badge.warning {
+            background: #9b6b1f;
+            color: #fff;
+        }
+        .badge.danger {
+            background: #b13e3e;
+            color: #fff;
+        }
+        .badge.info {
+            background: #1f4f7a;
+            color: #fff;
+        }
+        .badge.secondary {
+            background: #444c56;
+            color: #fff;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+        }
+        th {
+            text-align: left;
+            color: #8b949e;
+            font-weight: 500;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #2d333b;
+        }
+        td {
+            padding: 10px 0;
+            border-bottom: 1px solid #2d333b;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .coin-icon {
+            width: 24px;
+            height: 24px;
+            background: #2d333b;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: bold;
+            margin-right: 8px;
+            color: #fff;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.85rem;
+            color: #8b949e;
+        }
+        .form-control {
+            width: 100%;
+            padding: 10px 12px;
+            background: #0d1117;
+            border: 1px solid #2d333b;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 0.9rem;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: #f0b90b;
+        }
+        .form-row {
+            display: flex;
+            gap: 12px;
+        }
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 30px;
+            font-weight: 500;
+            cursor: pointer;
+            background: #2d333b;
+            color: #fff;
+            transition: background 0.2s;
+        }
+        .btn-primary {
+            background: #f0b90b;
+            color: #000;
+        }
+        .btn-primary:hover {
+            background: #d4a108;
+        }
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+        }
+
+        .simulator-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .option-list {
+            background: #0d1117;
+            border-radius: 12px;
+            padding: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .option-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 10px;
+            border-bottom: 1px solid #2d333b;
+            font-size: 0.85rem;
+        }
+        .option-item:last-child {
+            border-bottom: none;
+        }
+        .option-item.selected {
+            background: #2d4a2d;
+            border-radius: 8px;
+        }
+        .positive {
+            color: #4caf92;
+        }
+        .negative {
+            color: #f28b82;
+        }
+        .info-box {
+            background: #1e242c;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 12px;
+        }
+        .progress-bar {
+            height: 8px;
+            background: #2d333b;
+            border-radius: 20px;
+            margin: 8px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #f0b90b;
+            border-radius: 20px;
+        }
+
+        canvas {
+            max-height: 150px;
+            width: 100% !important;
+            margin: 10px 0;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        .detail-item {
+            background: #0d1117;
+            border-radius: 12px;
+            padding: 16px;
+        }
+        .price-tag {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #fff;
+        }
+        .small-text {
+            font-size: 0.75rem;
+            color: #8b949e;
+        }
+        .separator {
+            height: 1px;
+            background: #2d333b;
+            margin: 16px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>📊 Controle de Dual Investment em Crypto</h1>
+    <div class="subtitle">BTC · ETH · BNB — Adaptado das suas referências para o mercado cripto</div>
+
+    <div class="grid">
+        <!-- Tela 1: Dashboard Resumido Crypto -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fab fa-bitcoin"></i>
+                <h3>Dashboard Resumido</h3>
+            </div>
+            <div class="card-body">
+                <div class="metric">
+                    <span class="label">Saldo Total (USDT)</span>
+                    <span class="value">$ 48.234,21</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Em Dual Investment</span>
+                    <span class="value">$ 32.150,00</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Lucro Realizado (mês)</span>
+                    <span class="value positive">+$ 876,42</span>
+                </div>
+                <div class="metric">
+                    <span class="label">APY médio ponderado</span>
+                    <span class="value">14,3%</span>
+                </div>
+                <div style="margin: 15px 0;">
+                    <span class="badge info">BTC: 52%</span>
+                    <span class="badge info" style="margin-left:5px;">ETH: 31%</span>
+                    <span class="badge info" style="margin-left:5px;">BNB: 17%</span>
+                </div>
+                <canvas id="chart-dash" width="300" height="120"></canvas>
+                <div class="metric" style="margin-top:15px;">
+                    <span class="label">Próximos vencimentos</span>
+                    <span class="value">BTC 28/03 · ETH 30/03</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tela 2: Tabela de Operações (Dual Investment) -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-table"></i>
+                <h3>Operações Ativas</h3>
+            </div>
+            <div class="card-body scroll">
+                <div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;">
+                    <span class="badge secondary">Total: 9</span>
+                    <span class="badge secondary">Mês Atual</span>
+                    <span class="badge secondary">Histórico</span>
+                    <span class="badge secondary">Anual</span>
+                </div>
+                <table>
+                    <thead>
+                        <tr><th>Ativo</th><th>Produto</th><th>Strike</th><th>Valor</th><th>APY</th><th>Resultado</th><th>Venc.</th><th>Status</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="coin-icon">₿</span> BTC</td><td>HIGH</td><td>$65.000</td><td>$5.200</td><td>12,5%</td><td class="positive">+$65</td><td>28/03</td><td><span class="badge success">ABERTA</span></td></tr>
+                        <tr><td><span class="coin-icon">Ξ</span> ETH</td><td>LOW</td><td>$3.200</td><td>$3.800</td><td>8,2%</td><td class="positive">+$31</td><td>30/03</td><td><span class="badge success">ABERTA</span></td></tr>
+                        <tr><td><span class="coin-icon">BNB</span> BNB</td><td>HIGH</td><td>$580</td><td>$2.100</td><td>15,0%</td><td class="positive">+$31,5</td><td>02/04</td><td><span class="badge success">ABERTA</span></td></tr>
+                        <tr><td><span class="coin-icon">₿</span> BTC</td><td>LOW</td><td>$62.000</td><td>$4.130</td><td>10,8%</td><td class="negative">-$12</td><td>05/04</td><td><span class="badge warning">ABERTA</span></td></tr>
+                        <tr><td><span class="coin-icon">Ξ</span> ETH</td><td>HIGH</td><td>$3.500</td><td>$2.500</td><td>9,5%</td><td class="positive">+$23</td><td>07/04</td><td><span class="badge success">ABERTA</span></td></tr>
+                    </tbody>
+                </table>
+                <div style="margin-top:16px; text-align:right;">
+                    <span class="badge">1-5 de 9</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tela 3: Nova Operação (Dual Investment) -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-plus-circle"></i>
+                <h3>Nova Operação</h3>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label>Par *</label>
+                    <select class="form-control">
+                        <option>BTC/USDT</option>
+                        <option>ETH/USDT</option>
+                        <option>BNB/USDT</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Tipo</label>
+                        <select class="form-control">
+                            <option>HIGH (compra em alta)</option>
+                            <option>LOW (compra em baixa)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Valor (USDT)</label>
+                        <input type="number" class="form-control" value="1000">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Strike (USDT)</label>
+                        <input type="number" step="0.01" class="form-control" value="65000">
+                    </div>
+                    <div class="form-group">
+                        <label>APY (%)</label>
+                        <input type="number" step="0.1" class="form-control" value="12.5">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Data de Vencimento</label>
+                    <input type="date" class="form-control" value="2026-04-10">
+                </div>
+                <div class="form-group">
+                    <label>Prêmio Estimado (USDT)</label>
+                    <input type="text" class="form-control" value="24.65" readonly>
+                </div>
+                <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:16px;">
+                    <button class="btn">Cancelar</button>
+                    <button class="btn btn-primary">Salvar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tela 4: Simulador de Cenários Dual Investment -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-chart-line"></i>
+                <h3>Simulador de Retorno</h3>
+            </div>
+            <div class="card-body">
+                <div class="simulator-panel">
+                    <div class="form-group">
+                        <label>Par</label>
+                        <select class="form-control">
+                            <option>BTC/USDT</option>
+                            <option>ETH/USDT</option>
+                            <option>BNB/USDT</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Tipo</label>
+                            <select class="form-control"><option>HIGH</option><option>LOW</option></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Valor (USDT)</label>
+                            <input type="number" class="form-control" value="5000">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Strike (USDT)</label>
+                            <input type="number" class="form-control" value="64000">
+                        </div>
+                        <div class="form-group">
+                            <label>APY (%)</label>
+                            <input type="number" class="form-control" value="14.2">
+                        </div>
+                    </div>
+                    <div class="info-box">
+                        <div class="metric"><span class="label">Preço atual BTC</span><span class="value">$63.200</span></div>
+                        <div class="metric"><span class="label">Retorno se vencer</span><span class="value positive">+$97,50</span></div>
+                        <div class="metric"><span class="label">Retorno se não vencer</span><span class="value negative">-$5.000 (em BTC)</span></div>
+                        <div class="progress-bar"><div class="progress-fill" style="width:68%"></div></div>
+                        <div class="small-text">Probabilidade de sucesso: 68% (estimada)</div>
+                    </div>
+                    <button class="btn btn-primary">Calcular Cenários</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tela 5: Detalhe da Operação (Exemplo BTC) -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-info-circle"></i>
+                <h3>BTC · HIGH · Venc 28/03</h3>
+            </div>
+            <div class="card-body">
+                <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:12px;">
+                    <span class="badge success">Ativa</span>
+                    <span class="badge">5 dias restantes</span>
+                    <span class="badge info">Strike $65.000</span>
+                </div>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <div class="small-text">Valor Investido</div>
+                        <div class="price-tag">$5.200</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="small-text">Prêmio Recebido</div>
+                        <div class="price-tag positive">+$65,00</div>
+                    </div>
+                </div>
+                <div class="separator"></div>
+                <div class="metric"><span class="label">Preço BTC Atual</span><span class="value">$63.200 <span class="negative">(-2,8%)</span></span></div>
+                <div class="metric"><span class="label">APY Contratado</span><span class="value">12,5%</span></div>
+                <div class="metric"><span class="label">Valor de Liquidação</span><span class="value">$5.265 (se HIGH vencedor)</span></div>
+                <div class="separator"></div>
+                <div class="detail-grid">
+                    <div>
+                        <div class="small-text">Cenário Ideal</div>
+                        <div class="positive">+$65,00</div>
+                        <div class="small-text">(BTC > $65k)</div>
+                    </div>
+                    <div>
+                        <div class="small-text">Cenário Alternativo</div>
+                        <div>Recebe BTC</div>
+                        <div class="small-text">equivalente a ~0,082 BTC</div>
+                    </div>
+                </div>
+                <div class="info-box" style="margin-top:12px;">
+                    <div class="metric"><span class="label">Mark-to-Market</span><span>+$32,40 (50% do prêmio)</span></div>
+                    <div class="metric"><span class="label">ROI Atual</span><span class="positive">+0,62%</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tela 6: Calendário de Vencimentos e Exposição -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-calendar-alt"></i>
+                <h3>Vencimentos & Risco</h3>
+            </div>
+            <div class="card-body">
+                <div style="display:flex; flex-direction:column; gap:12px;">
+                    <div style="display:flex; align-items:center; gap:12px; background:#0d1117; border-radius:12px; padding:12px;">
+                        <div style="min-width:60px; font-weight:600;">28/03</div>
+                        <div style="flex:1;">BTC HIGH - $5.200</div>
+                        <span class="badge warning">2 dias</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:12px; background:#0d1117; border-radius:12px; padding:12px;">
+                        <div style="min-width:60px;">30/03</div>
+                        <div style="flex:1;">ETH LOW - $3.800</div>
+                        <span class="badge secondary">4 dias</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:12px; background:#0d1117; border-radius:12px; padding:12px;">
+                        <div style="min-width:60px;">02/04</div>
+                        <div style="flex:1;">BNB HIGH - $2.100</div>
+                        <span class="badge secondary">7 dias</span>
+                    </div>
+                </div>
+                <div class="separator"></div>
+                <div class="metric"><span class="label">Exposição por Ativo</span></div>
+                <div><span class="badge info">BTC: $9.330 (52%)</span> <span class="badge info">ETH: $6.300 (31%)</span> <span class="badge info">BNB: $3.400 (17%)</span></div>
+                <div class="progress-bar" style="margin-top:12px;"><div class="progress-fill" style="width:52%"></div></div>
+                <div class="small-text" style="margin-top:8px;">⚠️ Exposição concentrada em BTC. Considere diversificar para outras moedas.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Gráfico do dashboard
+        window.onload = function() {
+            const ctx = document.getElementById('chart-dash').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['BTC', 'ETH', 'BNB'],
+                    datasets: [{
+                        data: [52, 31, 17],
+                        backgroundColor: ['#f7931a', '#627eea', '#f3ba2f'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    cutout: '70%',
+                    responsive: true,
+                    plugins: { legend: { display: false } }
+                }
+            });
+        };
+    </script>
+
+    <div style="margin-top: 40px; background: #161b22; border-radius: 20px; padding: 24px; max-width: 1200px; border: 1px solid #2d333b;">
+        <h3 style="color:white;">📌 Resumo das Telas para Dual Investment em Crypto</h3>
+        <ul style="color:#a0a0a0; line-height:1.8; margin-left:20px;">
+            <li><strong>1. Dashboard Resumido:</strong> visão geral com saldo, exposição por ativo (BTC, ETH, BNB) e próximos vencimentos.</li>
+            <li><strong>2. Tabela de Operações:</strong> lista de posições ativas com colunas adaptadas (Ativo, Produto, Strike, Valor, APY, Resultado, Vencimento, Status).</li>
+            <li><strong>3. Nova Operação:</strong> formulário para incluir um novo dual investment, com par, tipo (HIGH/LOW), valor, strike, APY e data.</li>
+            <li><strong>4. Simulador de Retorno:</strong> calculadora interativa para estimar ganhos com base no preço atual e strike.</li>
+            <li><strong>5. Detalhe da Operação:</strong> visão aprofundada de uma posição específica (exemplo BTC), com MTM e cenários.</li>
+            <li><strong>6. Calendário e Risco:</strong> próximos vencimentos e análise de concentração por ativo.</li>
+        </ul>
+        <p style="color:#8b949e; margin-top:16px;">Todas as telas seguem o tema escuro e a terminologia do mercado cripto. Adapte os dados e integre com APIs da Binance conforme necessário.</p>
+    </div>
+</body>
+</html>

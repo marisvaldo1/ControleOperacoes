@@ -1,0 +1,4 @@
+#/usr/bin/env bash
+# AI Memory auto-update apos merge/pull
+python "memoryIA/scripts/ai_memory_update.py" >>".ai-memory/hook.log" 2>&1
+python "memoryIA/scripts/ai_snapshot.py"      >>".ai-memory/hook.log" 2>&1

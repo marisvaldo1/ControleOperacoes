@@ -1,0 +1,239 @@
+<div class="modal modal-blur fade" id="modalAnalise" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content ma-modal-content">
+            <div class="modal-header ma-header">
+                <h5 class="modal-title ma-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon me-2" width="20" height="20" viewBox="0 0 24 24"
+                        stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                    </svg>
+                    Análise de Performance
+                </h5>
+                <div class="d-flex align-items-center gap-2 ms-auto me-3">
+                    <span class="text-muted small" id="maRefreshStatus">Atualizado agora</span>
+                    <button type="button" class="ma-refresh-btn" id="maRefreshBtn" title="Atualizar dados">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round">
+                            <path d="M23 4v6h-6"/>
+                            <path d="M1 20v-6h6"/>
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                        </svg>
+                    </button>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body p-0 ma-body">
+
+                <!-- Barra de filtros de período -->
+                <div class="ma-filter-bar">
+                    <div class="ma-filter-group" id="maFilterButtons">
+                        <button type="button" class="ma-filter-btn" data-period="today">Hoje</button>
+                        <button type="button" class="ma-filter-btn" data-period="7d">7 dias</button>
+                        <button type="button" class="ma-filter-btn" data-period="15d">15 dias</button>
+                        <button type="button" class="ma-filter-btn active" data-period="month">Mês atual</button>
+                        <button type="button" class="ma-filter-btn" data-period="30d">30 dias</button>
+                        <button type="button" class="ma-filter-btn" data-period="90d">90 dias</button>
+                        <button type="button" class="ma-filter-btn" data-period="12m">12 meses</button>
+                        <button type="button" class="ma-filter-btn" data-period="year">Ano atual</button>
+                        <button type="button" class="ma-filter-btn" data-period="lastyear">Ano passado</button>
+                    </div>
+                    <!-- refresh movido para o cabeçalho do modal -->
+                </div>
+
+                <!-- Tab Navigation -->
+                <div class="ma-tab-nav" id="maTabNav">
+                    <button type="button" class="ma-tab-btn active" data-tab="desempenho">&#128202; Desempenho</button>
+                    <button type="button" class="ma-tab-btn" data-tab="posicoes">&#128200; Posições Abertas <span class="ma-tab-badge" id="maPosBadge"></span></button>
+                    <button type="button" class="ma-tab-btn" data-tab="evolucao">&#128198; Evolução</button>
+                    <button type="button" class="ma-tab-btn" data-tab="risco">&#9888;&#65039; Risco</button>
+                </div>
+
+                <!-- Tab: Desempenho (conteúdo atual) -->
+                <div class="ma-tab-pane" id="maTabPane-desempenho">
+                <!-- Conteúdo principal: 2 colunas -->
+                <div class="ma-main">
+                    <!-- COLUNA ESQUERDA -->
+                    <div class="ma-left">
+
+                        <!-- Donut chart -->
+                        <div class="ma-donut-wrap">
+                            <div id="maDonutChart"></div>
+                            <div class="ma-donut-center">
+                                <div class="ma-donut-value" id="maDonutValue">R$ 0</div>
+                                <div class="ma-donut-label">LUCRO TOTAL</div>
+                                <div class="ma-donut-sub" id="maDonutSub">0 operações</div>
+                            </div>
+                        </div>
+
+                        <!-- Detalhamento por tipo -->
+                        <div class="ma-section-title">Detalhamento por Tipo</div>
+                        <div class="ma-tipo-list" id="maTipoList">
+                            <!-- preenchido pelo JS -->
+                        </div>
+
+                        <!-- Métricas rápidas -->
+                        <div class="ma-metrics">
+                            <div class="ma-metric-row">
+                                <span class="ma-metric-label">Win Rate</span>
+                                <span class="ma-metric-value" id="maWinRate">0%</span>
+                            </div>
+                            <div class="ma-metric-row">
+                                <span class="ma-metric-label">Ticket Médio</span>
+                                <span class="ma-metric-value ma-orange" id="maTicketMedio">R$ 0,00</span>
+                            </div>
+                        </div>
+
+                        <!-- ROI box -->
+                        <div class="ma-roi-box">
+                            <div class="ma-roi-value" id="maRoiValue">+0,00%</div>
+                            <div class="ma-roi-label">ROI TOTAL DO PERÍODO</div>
+                        </div>
+
+                    </div>
+
+                    <!-- COLUNA DIREITA -->
+                    <div class="ma-right">
+                        <div class="ma-right-inner">
+
+                            <!-- Header resultado -->
+                            <div class="ma-right-header">
+                                <div class="ma-right-result" id="maRightResult">R$ 0,00</div>
+                                <div class="ma-right-sub" id="maRightSub">Lucro Total | 0 Operações | 0% Win Rate</div>
+                            </div>
+
+                            <!-- Distribuição por Tipo -->
+                            <div class="ma-section">
+                                <div class="ma-section-title">Distribuição por Tipo</div>
+                                <div class="ma-dist-list" id="maDistTipo">
+                                    <!-- preenchido pelo JS -->
+                                </div>
+                            </div>
+
+                            <!-- Operações -->
+                            <div class="ma-section ma-ops-section">
+                                <div class="ma-ops-header">
+                                    <div class="ma-section-title">Operações</div>
+                                    <div class="ma-ops-sort" id="maOpsSort">
+                                        <button class="ma-sort-btn active" data-sort="date">Data</button>
+                                        <button class="ma-sort-btn" data-sort="result">Resultado</button>
+                                        <button class="ma-sort-btn" data-sort="pct">%</button>
+                                    </div>
+                                </div>
+                                <div class="ma-ops-list" id="maOpsList">
+                                    <!-- preenchido pelo JS -->
+                                </div>
+                            </div>
+
+                            <!-- Resumo rodapé -->
+                            <div class="ma-footer-summary">
+                                <div class="ma-summary-item">
+                                    <div class="ma-summary-value text-success" id="maMelhorTrade">R$ 0</div>
+                                    <div class="ma-summary-label">Melhor Trade</div>
+                                </div>
+                                <div class="ma-summary-item">
+                                    <div class="ma-summary-value" id="maTicketMedioFooter">R$ 0</div>
+                                    <div class="ma-summary-label">Ticket Médio</div>
+                                </div>
+                                <div class="ma-summary-item">
+                                    <div class="ma-summary-value text-success" id="maRoiFooter">+0,00%</div>
+                                    <div class="ma-summary-label">ROI Total</div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div><!-- /ma-main -->
+
+                </div><!-- /maTabPane-desempenho -->
+
+                <!-- Tab: Posições Abertas -->
+                <div class="ma-tab-pane d-none" id="maTabPane-posicoes">
+                    <div class="ma-pos-container" id="maPosContainer">
+
+                        <!-- Loading state -->
+                        <div id="maPosLoading" class="ma-pos-empty">
+                            <div class="spinner-border text-primary" style="width:2rem;height:2rem" role="status"></div>
+                            <div class="mt-2 text-muted small">Carregando posições abertas...</div>
+                        </div>
+
+                        <!-- Resumo (preenchido pelo JS) -->
+                        <div id="maPosSummary" class="ma-pos-summary" style="display:none">
+                            <div class="ma-pos-sumcard">
+                                <div class="ma-pos-sumval" id="maPosCount">—</div>
+                                <div class="ma-pos-sumlbl">Posições Abertas</div>
+                            </div>
+                            <div class="ma-pos-sumcard">
+                                <div class="ma-pos-sumval" id="maPosTotalMTM">—</div>
+                                <div class="ma-pos-sumlbl">P&amp;L MTM Total</div>
+                            </div>
+                            <div class="ma-pos-sumcard">
+                                <div class="ma-pos-sumval" id="maPosPctMedio">—</div>
+                                <div class="ma-pos-sumlbl">ROI Médio</div>
+                            </div>
+                            <div class="ma-pos-sumcard">
+                                <div class="ma-pos-sumval" id="maPosRiscoCount">—</div>
+                                <div class="ma-pos-sumlbl">Em Risco (ITM)</div>
+                            </div>
+                            <div class="ma-pos-sumcard">
+                                <div class="ma-pos-sumval" id="maPosDecayMedio">—</div>
+                                <div class="ma-pos-sumlbl">Decay Médio</div>
+                            </div>
+                            <div class="ma-pos-sumcard">
+                                <div class="ma-pos-sumval" id="maPosUltimaAtt">nunca</div>
+                                <div class="ma-pos-sumlbl">Atualizado</div>
+                            </div>
+                        </div>
+
+                        <!-- Charts row removido: abas Evolução e Risco promovidas ao nível principal -->
+
+                        <!-- Cards por posição (preenchido pelo JS) -->
+                        <div id="maPosCards" class="ma-pos-cards-grid" style="display:none"></div>
+
+                        <!-- Empty state -->
+                        <div id="maPosEmpty" class="ma-pos-empty" style="display:none">
+                            <div style="font-size:2.5rem">&#128173;</div>
+                            <div class="mt-2 text-muted">Nenhuma posição aberta encontrada</div>
+                        </div>
+
+                    </div>
+                </div><!-- /maTabPane-posicoes -->
+
+                <!-- Tab: Evolução -->
+                <div class="ma-tab-pane d-none" id="maTabPane-evolucao">
+                    <div class="ma-pos-container" id="maPosEvoContainer">
+                        <div id="maPosEvoLoading" class="ma-pos-empty">
+                            <div class="spinner-border text-primary" style="width:2rem;height:2rem" role="status"></div>
+                            <div class="mt-2 text-muted small">Carregando evolução...</div>
+                        </div>
+                        <div id="maPosEvoSections" style="display:none"></div>
+                        <div id="maPosEvoEmpty" class="ma-pos-empty" style="display:none">
+                            <div style="font-size:2.5rem">&#128200;</div>
+                            <div class="mt-2 text-muted">Nenhuma posição aberta</div>
+                        </div>
+                    </div>
+                </div><!-- /maTabPane-evolucao -->
+
+                <!-- Tab: Risco -->
+                <div class="ma-tab-pane d-none" id="maTabPane-risco">
+                    <div class="ma-pos-container" id="maPosRiscoContainer">
+                        <div id="maPosRiscoLoading" class="ma-pos-empty">
+                            <div class="spinner-border text-primary" style="width:2rem;height:2rem" role="status"></div>
+                            <div class="mt-2 text-muted small">Carregando análise de risco...</div>
+                        </div>
+                        <div id="maPosRiscoSections" style="display:none"></div>
+                        <div id="maPosRiscoEmpty" class="ma-pos-empty" style="display:none">
+                            <div style="font-size:2.5rem">&#9888;&#65039;</div>
+                            <div class="mt-2 text-muted">Nenhuma posição aberta</div>
+                        </div>
+                    </div>
+                </div><!-- /maTabPane-risco -->
+
+            </div>
+        </div>
+    </div>
+</div>

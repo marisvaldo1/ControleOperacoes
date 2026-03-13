@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modal Análise - Layout Original Melhorado</title>
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <style>
+        :root {
+            --bg-primary: #1e2a3a;
+            --bg-secondary: #2a3544;
+            --bg-modal: #1a2332;
+            --border-color: #2d3748;
+            --text-primary: #e1e8ed;
+            --text-secondary: #94a3b8;
+            --success: #2fb344;
+            --primary: #3b82f6;
+            --warning: #f59f00;
+        }
+        
+        body {
+            background: #0f1416;
+            color: var(--text-primary);
+            padding: 20px;
+        }
+        
+        .container-fluid {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        /* Modal */
+        .modal-analysis {
+            background: var(--bg-modal);
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+        
+        /* Modal Header */
+        .modal-header-custom {
+            background: var(--bg-primary);
+            padding: 2rem 2.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-title-custom {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 0;
+        }
+        
+        .period-filters {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        
+        .period-btn {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .period-btn:hover {
+            border-color: var(--success);
+            color: var(--success);
+        }
+        
+        .period-btn.active {
+            background: var(--success);
+            border-color: var(--success);
+            color: white;
+        }
+        
+        /* Modal Body */
+        .modal-body-custom {
+            padding: 2.5rem;
+        }
+        
+        /* Two Column Layout */
+        .two-column-layout {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 2rem;
+        }
+        
+        /* LEFT COLUMN - Detalhamento */
+        .detalhamento-section {
+            background: var(--bg-primary);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            padding: 2rem 1.75rem;
+        }
+        
+        .section-header {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+        }
+        
+        /* Donut Container */
+        .donut-container {
+            position: relative;
+            width: 280px;
+            height: 280px;
+            margin: 0 auto 2rem;
+        }
+        
+        .donut-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+        
+        .donut-value {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: var(--success);
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+        
+        .donut-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .donut-sublabel {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+        
+        /* Breakdown Item (CALL/PUT) */
+        .breakdown-item {
+            padding: 1rem;
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            margin-bottom: 1rem;
+        }
+        
+        .breakdown-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+        
+        .breakdown-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .breakdown-values {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+        
+        .breakdown-value {
+            font-size: 1.125rem;
+            font-weight: 700;
+        }
+        
+        .breakdown-percentage {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+        
+        /* Progress Bar Rounded */
+        .progress-bar-rounded {
+            height: 28px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 14px;
+            overflow: hidden;
+        }
+        
+        .progress-fill-rounded {
+            height: 100%;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 0 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: white;
+            transition: width 0.5s ease;
+        }
+        
+        /* Info Box (Win Rate e Ticket Médio) */
+        .info-box {
+            padding: 1.25rem;
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            border: 2px solid;
+            margin-bottom: 1rem;
+        }
+        
+        .info-box.success {
+            border-color: var(--success);
+        }
+        
+        .info-box.warning {
+            border-color: var(--warning);
+        }
+        
+        .info-box-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .info-box-value {
+            font-size: 1.75rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+        
+        /* ROI Box */
+        .roi-box {
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 2px solid var(--success);
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+        
+        .roi-box-value {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: var(--success);
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+        
+        .roi-box-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        /* RIGHT COLUMN - Análise */
+        .analise-section {
+            background: var(--bg-primary);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+        
+        .analise-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(0,0,0,0.2);
+        }
+        
+        .analise-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin: 0;
+            color: var(--text-primary);
+        }
+        
+        .analise-body {
+            padding: 1.75rem;
+        }
+        
+        /* Main Value */
+        .main-value-section {
+            margin-bottom: 2rem;
+        }
+        
+        .main-value-large {
+            font-size: 3.5rem;
+            font-weight: 900;
+            color: var(--success);
+            line-height: 1;
+            margin-bottom: 0.75rem;
+        }
+        
+        .main-subtitle {
+            font-size: 1rem;
+            color: var(--text-secondary);
+        }
+        
+        /* Section Title */
+        .section-title {
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        /* Asset Item */
+        .asset-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+        }
+        
+        .asset-name {
+            font-size: 0.95rem;
+            font-weight: 600;
+            min-width: 100px;
+        }
+        
+        .asset-progress {
+            flex: 1;
+            margin: 0 1.5rem;
+        }
+        
+        .asset-value {
+            font-size: 1rem;
+            font-weight: 700;
+            min-width: 90px;
+            text-align: right;
+        }
+        
+        /* Footer Stats */
+        .footer-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .footer-stat-box {
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            padding: 1.25rem;
+            text-align: center;
+            border: 2px solid var(--border-color);
+            transition: all 0.2s;
+        }
+        
+        .footer-stat-box:hover {
+            border-color: var(--success);
+        }
+        
+        .footer-stat-value {
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            line-height: 1;
+        }
+        
+        .footer-stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Color Dot */
+        .color-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .two-column-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div style="text-align: center; margin-bottom: 40px;">
+            <h1 style="font-size: 2.5rem; font-weight: 900; color: var(--success); margin-bottom: 1rem;">
+                📊 Modal Análise - Layout Original Melhorado
+            </h1>
+            <p style="color: var(--text-secondary); font-size: 1.125rem;">
+                Mantendo o layout que você pediu, mas com uniformização visual
+            </p>
+        </div>
+
+        <div class="modal-analysis">
+            <!-- Modal Header -->
+            <div class="modal-header-custom">
+                <h2 class="modal-title-custom">
+                    <i class="ti ti-chart-bar"></i>
+                    Análise Detalhada de Performance
+                </h2>
+                <div class="period-filters">
+                    <button class="period-btn">Hoje</button>
+                    <button class="period-btn">7 dias</button>
+                    <button class="period-btn">15 dias</button>
+                    <button class="period-btn active">Mês atual</button>
+                    <button class="period-btn">30 dias</button>
+                    <button class="period-btn">90 dias</button>
+                    <button class="period-btn">12 meses</button>
+                    <button class="period-btn">Ano atual</button>
+                    <button class="period-btn">Ano passado</button>
+                </div>
+            </div>
+            
+            <!-- Modal Body -->
+            <div class="modal-body-custom">
+                <div class="two-column-layout">
+                    <!-- ===== LEFT COLUMN: DETALHAMENTO ===== -->
+                    <div>
+                        <!-- Detalhamento Section (SEM HEADER DE CARD) -->
+                        <div class="detalhamento-section">
+                            <h3 class="section-header">Detalhamento por Tipo</h3>
+                            
+                            <!-- Donut Chart -->
+                            <div class="donut-container">
+                                <div id="donutChart"></div>
+                                <div class="donut-center">
+                                    <div class="donut-value">R$ 1.338</div>
+                                    <div class="donut-label">Lucro Total</div>
+                                    <div class="donut-sublabel">5 operações</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Operações CALL -->
+                            <div class="breakdown-item">
+                                <div class="breakdown-header">
+                                    <div class="breakdown-label">
+                                        <div class="color-dot" style="background: var(--success);"></div>
+                                        Operações CALL
+                                    </div>
+                                    <div class="breakdown-values">
+                                        <div class="breakdown-value" style="color: var(--success);">R$ 1.058</div>
+                                        <div class="breakdown-percentage">80%</div>
+                                    </div>
+                                </div>
+                                <div class="progress-bar-rounded">
+                                    <div class="progress-fill-rounded" style="width: 80%; background: var(--success);">
+                                        80%
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Operações PUT -->
+                            <div class="breakdown-item">
+                                <div class="breakdown-header">
+                                    <div class="breakdown-label">
+                                        <div class="color-dot" style="background: var(--primary);"></div>
+                                        Operações PUT
+                                    </div>
+                                    <div class="breakdown-values">
+                                        <div class="breakdown-value" style="color: var(--primary);">R$ 280</div>
+                                        <div class="breakdown-percentage">20%</div>
+                                    </div>
+                                </div>
+                                <div class="progress-bar-rounded">
+                                    <div class="progress-fill-rounded" style="width: 20%; background: var(--primary);">
+                                        20%
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Win Rate -->
+                            <div class="info-box success">
+                                <div class="info-box-label">Win Rate</div>
+                                <div class="info-box-value" style="color: var(--success);">100%</div>
+                            </div>
+                            
+                            <!-- Ticket Médio -->
+                            <div class="info-box warning" style="margin-bottom: 0;">
+                                <div class="info-box-label">Ticket Médio</div>
+                                <div class="info-box-value" style="color: var(--warning);">R$ 267,60</div>
+                            </div>
+                        </div>
+                        
+                        <!-- ROI Total (FORA DO CARD) -->
+                        <div class="roi-box">
+                            <div class="roi-box-value">+4,55%</div>
+                            <div class="roi-box-label">ROI Total do Período</div>
+                        </div>
+                    </div>
+                    
+                    <!-- ===== RIGHT COLUMN: ANÁLISE ===== -->
+                    <div>
+                        <!-- Análise Section (COM HEADER) -->
+                        <div class="analise-section">
+                            <div class="analise-header">
+                                <h3 class="analise-title">Análise Detalhada de Performance</h3>
+                            </div>
+                            
+                            <div class="analise-body">
+                                <!-- Main Value -->
+                                <div class="main-value-section">
+                                    <div class="main-value-large">R$ 1.338,00</div>
+                                    <div class="main-subtitle">Lucro Total | 5 Operações | 100% Win Rate</div>
+                                </div>
+                                
+                                <!-- Distribuição por Tipo -->
+                                <div class="section-title">Distribuição por Tipo</div>
+                                
+                                <div class="asset-item">
+                                    <div class="asset-name">CALL</div>
+                                    <div class="asset-progress">
+                                        <div class="progress-bar-rounded">
+                                            <div class="progress-fill-rounded" style="width: 80%; background: var(--success);">
+                                                80%
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="asset-value" style="color: var(--success);">R$ 1.058</div>
+                                </div>
+                                
+                                <div class="asset-item">
+                                    <div class="asset-name">PUT</div>
+                                    <div class="asset-progress">
+                                        <div class="progress-bar-rounded">
+                                            <div class="progress-fill-rounded" style="width: 20%; background: var(--primary);">
+                                                20%
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="asset-value" style="color: var(--primary);">R$ 280</div>
+                                </div>
+                                
+                                <!-- Ativos Operados -->
+                                <div class="section-title" style="margin-top: 2rem;">Ativos Operados</div>
+                                
+                                <div class="asset-item">
+                                    <div class="asset-name">PETRB380</div>
+                                    <div class="asset-progress">
+                                        <div class="progress-bar-rounded">
+                                            <div class="progress-fill-rounded" style="width: 28%; background: var(--success);">
+                                                28%
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="asset-value" style="color: var(--success);">R$ 376</div>
+                                </div>
+                                
+                                <div class="asset-item">
+                                    <div class="asset-name">ITUB4</div>
+                                    <div class="asset-progress">
+                                        <div class="progress-bar-rounded">
+                                            <div class="progress-fill-rounded" style="width: 24%; background: var(--success);">
+                                                24%
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="asset-value" style="color: var(--success);">R$ 320</div>
+                                </div>
+                                
+                                <div class="asset-item">
+                                    <div class="asset-name">VALE3</div>
+                                    <div class="asset-progress">
+                                        <div class="progress-bar-rounded">
+                                            <div class="progress-fill-rounded" style="width: 21%; background: var(--primary);">
+                                                21%
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="asset-value" style="color: var(--primary);">R$ 280</div>
+                                </div>
+                                
+                                <div class="asset-item">
+                                    <div class="asset-name">BBAS3</div>
+                                    <div class="asset-progress">
+                                        <div class="progress-bar-rounded">
+                                            <div class="progress-fill-rounded" style="width: 16%; background: var(--success);">
+                                                16%
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="asset-value" style="color: var(--success);">R$ 210</div>
+                                </div>
+                                
+                                <div class="asset-item">
+                                    <div class="asset-name">PETR4</div>
+                                    <div class="asset-progress">
+                                        <div class="progress-bar-rounded">
+                                            <div class="progress-fill-rounded" style="width: 11%; background: var(--success);">
+                                                11%
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="asset-value" style="color: var(--success);">R$ 152</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Footer Stats -->
+                        <div class="footer-stats">
+                            <div class="footer-stat-box">
+                                <div class="footer-stat-value" style="color: var(--success);">+R$ 376</div>
+                                <div class="footer-stat-label">Melhor Trade</div>
+                            </div>
+                            <div class="footer-stat-box">
+                                <div class="footer-stat-value">R$ 268</div>
+                                <div class="footer-stat-label">Ticket Médio</div>
+                            </div>
+                            <div class="footer-stat-box" style="border-color: var(--success);">
+                                <div class="footer-stat-value" style="color: var(--success);">+4,55%</div>
+                                <div class="footer-stat-label">ROI Total</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Explicação das Melhorias -->
+        <div style="margin-top: 3rem; padding: 2rem; background: rgba(47, 179, 68, 0.1); border-radius: 16px; border-left: 4px solid var(--success);">
+            <h3 style="color: var(--success); margin-bottom: 1.5rem; font-size: 1.5rem;">✅ Melhorias Aplicadas (mantendo o layout original)</h3>
+            
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 2rem; line-height: 1.8;">
+                <div>
+                    <h4 style="color: var(--success); margin-bottom: 1rem;">Coluna Esquerda:</h4>
+                    <ul style="margin: 0; padding-left: 1.5rem;">
+                        <li><strong>SEM header de card</strong> - apenas título "Detalhamento por Tipo"</li>
+                        <li><strong>Donut + CALL + PUT + Win Rate + Ticket Médio</strong> - tudo junto sem quebras</li>
+                        <li><strong>Info boxes uniformizados</strong> - mesma altura, padding e font-size (1.75rem)</li>
+                        <li><strong>ROI separado</strong> - fora do card, embaixo</li>
+                        <li><strong>Bordas 2px</strong> - todas as boxes com mesma espessura</li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 style="color: var(--success); margin-bottom: 1rem;">Coluna Direita:</h4>
+                    <ul style="margin: 0; padding-left: 1.5rem;">
+                        <li><strong>Card COM header</strong> - "Análise Detalhada de Performance"</li>
+                        <li><strong>Estrutura mantida</strong> - igual estava, funcionando bem</li>
+                        <li><strong>Footer stats em grid</strong> - 3 colunas com mesma altura</li>
+                        <li><strong>Font-sizes padronizados</strong> - valores 1.75rem, labels 0.75rem</li>
+                        <li><strong>Bordas uniformes</strong> - todas com 2px solid</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div style="margin-top: 2rem; padding: 1.5rem; background: rgba(0,0,0,0.2); border-radius: 12px;">
+                <h4 style="margin-bottom: 1rem;">📐 Padronizações Aplicadas:</h4>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; font-size: 0.9rem;">
+                    <div>
+                        <strong>Tipografia:</strong><br>
+                        Main value: 3.5rem<br>
+                        Info boxes: 1.75rem<br>
+                        Footer stats: 1.75rem<br>
+                        ROI: 2.5rem<br>
+                        Labels: 0.75rem
+                    </div>
+                    <div>
+                        <strong>Bordas:</strong><br>
+                        Cards: 1px solid<br>
+                        Info boxes: 2px solid<br>
+                        Footer stats: 2px solid<br>
+                        ROI box: 2px solid
+                    </div>
+                    <div>
+                        <strong>Espaçamentos:</strong><br>
+                        Card padding: 1.75rem-2rem<br>
+                        Info box padding: 1.25rem<br>
+                        Gap colunas: 2rem<br>
+                        Margin entre boxes: 1rem
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/js/tabler.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const colors = {
+            success: '#2fb344',
+            primary: '#3b82f6'
+        };
+
+        // Donut Chart
+        if (document.querySelector("#donutChart")) {
+            new ApexCharts(document.querySelector("#donutChart"), {
+                series: [80, 20],
+                chart: {
+                    type: 'donut',
+                    height: 280
+                },
+                labels: ['CALL', 'PUT'],
+                colors: [colors.success, colors.primary],
+                legend: {
+                    show: false
+                },
+                dataLabels: {
+                    enabled: false
+                },
+                plotOptions: {
+                    pie: {
+                        donut: {
+                            size: '75%',
+                            labels: {
+                                show: false
+                            }
+                        }
+                    }
+                },
+                stroke: {
+                    width: 0
+                }
+            }).render();
+        }
+
+        // Period buttons
+        document.querySelectorAll('.period-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.closest('.period-filters').querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+    });
+    </script>
+</body>
+</html>

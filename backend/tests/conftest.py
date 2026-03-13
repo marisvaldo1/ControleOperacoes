@@ -39,11 +39,21 @@ def _build_mock_connection():
     return conn
 
 
-# Importar o app Flask (init_db roda na DB real uma única vez — sem impacto nos testes)
-import server as _server_module
+# ─────────────────────────────────────────
+# MOCK DO BANCO DE DADOS
+# ─────────────────────────────────────────
+# O app agora usa Flask Blueprints.
+# Cada blueprint importa get_db de db.py via `import db; db.get_db()`.
+# Mockamos db.get_db ANTES de qualquer import de blueprint para que
+# todas as rotas usem o mesmo mock centralizado.
+# ─────────────────────────────────────────
+import db as _db_module  # noqa: E402
 
-# Substituir get_db no módulo server pelo mock
-_server_module.get_db = MagicMock(side_effect=_build_mock_connection)
+# Importar o app Flask (init_db já rodou na execução anterior — sem impacto nos testes)
+import server as _server_module  # noqa: E402
+
+# Substituir get_db no módulo db pelo mock (afeta TODOS os blueprints)
+_db_module.get_db = MagicMock(side_effect=_build_mock_connection)
 
 
 @pytest.fixture(scope='session')
@@ -64,13 +74,13 @@ def mock_db():
         mock_db.cursor.return_value.lastrowid = 5
     """
     db = _build_mock_connection()
-    # Todas as chamadas a get_db() no escopo deste teste retornam o MESMO mock
-    _server_module.get_db.side_effect = None
-    _server_module.get_db.return_value = db
+    # Todas as chamadas a db.get_db() no escopo deste teste retornam o MESMO mock
+    _db_module.get_db.side_effect = None
+    _db_module.get_db.return_value = db
     yield db
     # Restaurar comportamento padrão após o teste
-    _server_module.get_db.return_value = None
-    _server_module.get_db.side_effect = _build_mock_connection
+    _db_module.get_db.return_value = None
+    _db_module.get_db.side_effect = _build_mock_connection
 
 
 @pytest.fixture(scope='function')

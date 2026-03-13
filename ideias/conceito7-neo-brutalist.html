@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Concept 7 - Neo-Brutalist</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-light: #f0f0f0;
+            --black: #000000;
+            --white: #ffffff;
+            --acid-green: #a3e635;
+            --salmon: #fb7185;
+            --yellow: #facc15;
+            --blue: #60a5fa;
+            --border-width: 3px;
+            --shadow-hard: 6px 6px 0px #000000;
+            --shadow-pressed: 3px 3px 0px #000000;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg-light);
+            background-image:
+                linear-gradient(45deg, #e0e0e0 25%, transparent 25%),
+                linear-gradient(-45deg, #e0e0e0 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, #e0e0e0 75%),
+                linear-gradient(-45deg, transparent 75%, #e0e0e0 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .brutalist-card {
+            background: var(--white);
+            border: var(--border-width) solid var(--black);
+            border-radius: 0;
+            width: 100%;
+            max-width: 520px;
+            box-shadow: var(--shadow-hard);
+        }
+
+        .brutalist-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            border-bottom: var(--border-width) solid var(--black);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 20px 24px;
+        }
+
+        .header-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--black);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .header-title h2 {
+            font-size: 24px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: -0.5px;
+        }
+
+        .header-title .subtitle {
+            font-size: 14px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .close-btn {
+            width: 60px;
+            background: var(--salmon);
+            border: none;
+            border-left: var(--border-width) solid var(--black);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.1s;
+        }
+
+        .close-btn:hover {
+            background: var(--black);
+            color: var(--white);
+        }
+
+        .close-btn:active {
+            box-shadow: inset 3px 3px 0px rgba(0,0,0,0.3);
+            transform: translate(3px, 3px);
+        }
+
+        .status-banner {
+            background: var(--acid-green);
+            padding: 16px 24px;
+            border-bottom: var(--border-width) solid var(--black);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .status-banner.losing {
+            background: var(--salmon);
+        }
+
+        .status-text {
+            font-size: 20px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .status-badge {
+            background: var(--black);
+            color: var(--white);
+            padding: 6px 16px;
+            font-weight: 700;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .brutalist-body {
+            padding: 24px;
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .comp-box {
+            border: var(--border-width) solid var(--black);
+            padding: 16px;
+            background: var(--white);
+        }
+
+        .comp-box h4 {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #666;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .comp-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 2px solid #eee;
+        }
+
+        .comp-row:last-child {
+            border-bottom: none;
+        }
+
+        .comp-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+        }
+
+        .comp-value {
+            font-size: 18px;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+        }
+
+        .comp-value.highlight {
+            background: var(--black);
+            color: var(--white);
+            padding: 4px 8px;
+        }
+
+        .comp-value.blue {
+            color: var(--blue);
+        }
+
+        .progress-block {
+            margin-bottom: 24px;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 14px;
+        }
+
+        .progress-track {
+            height: 24px;
+            background: var(--white);
+            border: var(--border-width) solid var(--black);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--acid-green);
+            transition: width 0.4s ease;
+            border-right: var(--border-width) solid var(--black);
+        }
+
+        .progress-fill.losing {
+            background: var(--salmon);
+        }
+
+        .progress-segments {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+        }
+
+        .segment {
+            flex: 1;
+            border-right: 2px solid var(--black);
+        }
+
+        .segment:last-child {
+            border-right: none;
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .stat-box {
+            background: var(--black);
+            padding: 16px;
+            text-align: center;
+        }
+
+        .stat-box .label {
+            font-size: 10px;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .stat-box .value {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--white);
+        }
+
+        .stat-box .value.green { color: var(--acid-green); }
+        .stat-box .value.blue { color: var(--blue); }
+
+        .analysis-box {
+            background: #fff9c4;
+            border: var(--border-width) solid var(--black);
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+
+        .analysis-box.losing {
+            background: #ffebee;
+        }
+
+        .analysis-title {
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .analysis-text {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .brutalist-footer {
+            display: flex;
+            gap: 12px;
+            padding: 20px 24px;
+            border-top: var(--border-width) solid var(--black);
+            background: #f5f5f5;
+        }
+
+        .update-btn {
+            flex: 1;
+            background: var(--blue);
+            border: var(--border-width) solid var(--black);
+            padding: 16px 24px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.1s;
+            box-shadow: var(--shadow-hard);
+        }
+
+        .update-btn:hover {
+            transform: translate(2px, 2px);
+            box-shadow: var(--shadow-pressed);
+        }
+
+        .update-btn:active {
+            transform: translate(6px, 6px);
+            box-shadow: none;
+        }
+
+        .update-btn .spinner {
+            display: none;
+            animation: spin 1s linear infinite;
+        }
+
+        .update-btn.loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .update-btn.loading .btn-text { display: none; }
+        .update-btn.loading .spinner { display: inline; }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .timestamp {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--white);
+            border: var(--border-width) solid var(--black);
+            padding: 16px;
+            font-weight: 600;
+            font-size: 14px;
+            min-width: 140px;
+        }
+
+        @media (max-width: 540px) {
+            .comparison-grid, .stats-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="modal-overlay">
+        <div class="brutalist-card">
+            <div class="brutalist-header">
+                <div class="header-left">
+                    <div class="header-icon">📊</div>
+                    <div class="header-title">
+                        <h2>PUT Analysis</h2>
+                        <div class="subtitle">PETR4 • Strike R$ 34,50</div>
+                    </div>
+                </div>
+                <button class="close-btn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="status-banner" id="statusBanner">
+                <span class="status-text" id="statusText">✓ VENCENDO</span>
+                <span class="status-badge">PETR424W2</span>
+            </div>
+
+            <div class="brutalist-body">
+                <div class="comparison-grid">
+                    <div class="comp-box">
+                        <h4>Premio</h4>
+                        <div class="comp-row">
+                            <span class="comp-label">Abertura</span>
+                            <span class="comp-value">R$ 0,60</span>
+                        </div>
+                        <div class="comp-row">
+                            <span class="comp-label">Atual</span>
+                            <span class="comp-value highlight" id="premioAtual">R$ 0,15</span>
+                        </div>
+                        <div class="comp-row">
+                            <span class="comp-label">Var</span>
+                            <span class="comp-value" style="color: var(--acid-green);" id="variacaoPremio">-75%</span>
+                        </div>
+                    </div>
+                    <div class="comp-box">
+                        <h4>Ativo</h4>
+                        <div class="comp-row">
+                            <span class="comp-label">Abertura</span>
+                            <span class="comp-value">R$ 36,00</span>
+                        </div>
+                        <div class="comp-row">
+                            <span class="comp-label">Atual</span>
+                            <span class="comp-value blue" id="cotacaoAtual">R$ 35,80</span>
+                        </div>
+                        <div class="comp-row">
+                            <span class="comp-label">Var</span>
+                            <span class="comp-value" style="color: var(--salmon);" id="variacaoAtivo">-0,56%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="progress-block">
+                    <div class="progress-label">
+                        <span>Probabilidade de Lucro</span>
+                        <span id="probValue">75%</span>
+                    </div>
+                    <div class="progress-track">
+                        <div class="progress-fill" id="progressBar" style="width: 75%"></div>
+                        <div class="progress-segments">
+                            <div class="segment"></div><div class="segment"></div>
+                            <div class="segment"></div><div class="segment"></div>
+                            <div class="segment"></div><div class="segment"></div>
+                            <div class="segment"></div><div class="segment"></div>
+                            <div class="segment"></div><div class="segment"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stats-row">
+                    <div class="stat-box">
+                        <div class="label">Lucro Aberto</div>
+                        <div class="value green" id="lucroAberto">R$ 450</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="label">Dist. Strike</div>
+                        <div class="value green" id="distancia">+3,77%</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="label">Break-Even</div>
+                        <div class="value blue">33,90</div>
+                    </div>
+                </div>
+
+                <div class="analysis-box" id="analysisBox">
+                    <div class="analysis-title">
+                        <span>📋</span> Análise
+                    </div>
+                    <div class="analysis-text" id="analysisText">
+                        <strong>SITUAÇÃO FAVORÁVEL!</strong> Cotação acima do strike. Operação tende a expirar PÓ. Lucro potencial: R$ 600.
+                    </div>
+                </div>
+            </div>
+
+            <div class="brutalist-footer">
+                <button class="update-btn" id="updateBtn" onclick="atualizar()">
+                    <span class="btn-text">[R] ATUALIZAR</span>
+                    <span class="spinner">⟳</span>
+                </button>
+                <div class="timestamp">
+                    <span id="timestamp">--:--:--</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const operacao = {
+            strike: 34.50,
+            premioAbertura: 0.60,
+            premioAtual: 0.15,
+            ativoAbertura: 36.00,
+            ativoAtual: 35.80,
+            quantidade: 1000
+        };
+
+        function atualizar() {
+            const btn = document.getElementById('updateBtn');
+            btn.classList.add('loading');
+
+            setTimeout(() => {
+                const variacao = (Math.random() - 0.5) * 0.30;
+                operacao.ativoAtual = parseFloat((operacao.ativoAtual + variacao).toFixed(2));
+                operacao.premioAtual = Math.max(0.01, parseFloat((operacao.premioAbertura * 0.25 + (Math.random() - 0.5) * 0.05).toFixed(2)));
+
+                atualizarInterface();
+
+                btn.classList.remove('loading');
+                document.getElementById('timestamp').textContent = new Date().toLocaleTimeString('pt-BR');
+            }, 600);
+        }
+
+        function atualizarInterface() {
+            const distancia = ((operacao.ativoAtual - operacao.strike) / operacao.strike) * 100;
+            const probabilidade = Math.min(99, Math.max(20, 75 + (distancia - 3.77) * 5));
+            const lucro = (operacao.premioAbertura - operacao.premioAtual) * operacao.quantidade;
+            const variacaoPremio = ((operacao.premioAtual - operacao.premioAbertura) / operacao.premioAbertura) * 100;
+            const variacaoAtivo = ((operacao.ativoAtual - operacao.ativoAbertura) / operacao.ativoAbertura) * 100;
+
+            // Status
+            const banner = document.getElementById('statusBanner');
+            const statusText = document.getElementById('statusText');
+            const isWinning = probabilidade >= 60;
+
+            if (isWinning) {
+                banner.className = 'status-banner';
+                statusText.textContent = '✓ VENCENDO';
+            } else {
+                banner.className = 'status-banner losing';
+                statusText.textContent = '✕ ATENÇÃO';
+            }
+
+            // Progress
+            const progress = document.getElementById('progressBar');
+            progress.style.width = probabilidade + '%';
+            progress.className = 'progress-fill ' + (isWinning ? '' : 'losing');
+            document.getElementById('probValue').textContent = Math.round(probabilidade) + '%';
+
+            // Valores
+            document.getElementById('premioAtual').textContent = 'R$ ' + operacao.premioAtual.toFixed(2);
+            document.getElementById('variacaoPremio').textContent = Math.round(variacaoPremio) + '%';
+            document.getElementById('cotacaoAtual').textContent = 'R$ ' + operacao.ativoAtual.toFixed(2).replace('.', ',');
+            document.getElementById('variacaoAtivo').textContent = variacaoAtivo.toFixed(2) + '%';
+            document.getElementById('lucroAberto').textContent = 'R$ ' + Math.abs(Math.round(lucro));
+            document.getElementById('distancia').textContent = '+' + distancia.toFixed(2) + '%';
+
+            // Analysis
+            const analysisBox = document.getElementById('analysisBox');
+            const analysisText = document.getElementById('analysisText');
+            if (isWinning) {
+                analysisBox.className = 'analysis-box';
+                analysisText.innerHTML = '<strong>SITUAÇÃO FAVORÁVEL!</strong> Cotação acima do strike. Operação tende a expirar PÓ. Lucro potencial: R$ 600.';
+            } else {
+                analysisBox.className = 'analysis-box losing';
+                analysisText.innerHTML = '<strong>ATENÇÃO!</strong> Volatilidade aumentada. Monitorar de perto. Prejuízo unrealizado: R$ ' + Math.abs(Math.round(lucro));
+            }
+        }
+
+        document.getElementById('timestamp').textContent = new Date().toLocaleTimeString('pt-BR');
+        atualizarInterface();
+    </script>
+</body>
+</html>

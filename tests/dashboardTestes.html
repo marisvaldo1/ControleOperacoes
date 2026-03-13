@@ -53,12 +53,15 @@
         <button class="sb-menu-item" onclick="menuAction('selectBE')"><span class="mico">&#x1F40D;</span>Somente Backend</button>
         <button class="sb-menu-item" onclick="menuAction('selectFE')"><span class="mico">&#x1F3AD;</span>Somente Frontend</button>
         <button class="sb-menu-item" onclick="menuAction('selectAI')"><span class="mico">&#x1F916;</span>Somente IA</button>
+        <button class="sb-menu-item" onclick="menuAction('selectE2E')"><span class="mico">&#x1F9CD;</span>Somente E2E</button>
         <div class="sb-menu-sep"></div>
         <button class="sb-menu-item" onclick="menuAction('expandAll')"><span class="mico">&#x229E;</span>Expandir todos</button>
         <button class="sb-menu-item" onclick="menuAction('collapseAll')"><span class="mico">&#x229F;</span>Recolher todos</button>
         <div class="sb-menu-sep"></div>
         <button class="sb-menu-item" onclick="menuAction('selectFailed')"><span class="mico" style="color:var(--red)">&#x2717;</span>So com falha</button>
         <button class="sb-menu-item" onclick="menuAction('resetWidth')"><span class="mico">&#x2194;</span>Resetar largura</button>
+        <div class="sb-menu-sep"></div>
+        <button class="sb-menu-item" onclick="menuAction('testConfig')"><span class="mico">&#x2699;</span>Configurações E2E</button>
         <div class="sb-menu-sep"></div>
         <button class="sb-menu-item" onclick="menuAction('resetDashboard')" style="color:var(--yellow)"><span class="mico" style="color:var(--yellow)">&#x1F5D1;</span>Zerar Resultados</button>
       </div>
@@ -309,6 +312,118 @@
     </div>
   </div>
 </div>
+<!-- ===== MODAL: DETALHE DO TESTE ===== -->
+<div class="modal-overlay" id="testDetailModal" onclick="closeTDModal(event)">
+  <div class="modal-box tdm-box" onclick="event.stopPropagation()">
+    <div class="modal-hdr tdm-hdr">
+      <div class="tdm-hdr-left">
+        <span class="tdm-icon" id="tdm-icon">🧪</span>
+        <div class="modal-hdr-title" id="tdm-title">DETALHES DO TESTE</div>
+      </div>
+      <button class="modal-close" onclick="closeTDModal()">✕ fechar</button>
+    </div>
+    <div class="tdm-meta" id="tdm-meta"></div>
+    <div class="modal-cnt tdm-cnt" id="tdm-content">
+      <div class="modal-section">
+        <div class="msec-title">📋 Descrição</div>
+        <div class="tdm-desc" id="tdm-desc"></div>
+      </div>
+      <div class="modal-section">
+        <div class="msec-title">🎯 O que é validado</div>
+        <ul class="tdm-validates" id="tdm-validates"></ul>
+      </div>
+      <div class="modal-section">
+        <div class="msec-title">⚠️ O que pode gerar falha</div>
+        <ul class="tdm-fails" id="tdm-fails"></ul>
+      </div>
+      <div class="modal-section">
+        <div class="msec-title">💻 Executar manualmente no terminal</div>
+        <div class="tdm-cmd-tabs">
+          <button class="tdm-cmd-tab active" onclick="switchCmdTab('curl',this)">🐧 Linux/curl</button>
+          <button class="tdm-cmd-tab" onclick="switchCmdTab('ps',this)">🪟 PowerShell</button>
+          <button class="tdm-cmd-tab" onclick="switchCmdTab('pytest',this)">🐍 pytest</button>
+        </div>
+        <div class="tdm-cmd-wrap" id="tdm-cmd-panel-curl">
+          <pre class="code-block tdm-cmd" id="tdm-cmd"></pre>
+          <button class="tdm-copy-btn" onclick="copyTDCmd('tdm-cmd')" title="Copiar comando">📋</button>
+        </div>
+        <div class="tdm-cmd-wrap" id="tdm-cmd-panel-ps" style="display:none">
+          <pre class="code-block tdm-cmd tdm-cmd-ps" id="tdm-cmd-ps" style="color:#b8f5e9"></pre>
+          <button class="tdm-copy-btn" onclick="copyTDCmd('tdm-cmd-ps')" title="Copiar comando PowerShell">📋</button>
+        </div>
+        <div class="tdm-cmd-wrap" id="tdm-cmd-panel-pytest" style="display:none">
+          <pre class="code-block tdm-cmd" id="tdm-cmd-pytest" style="color:#ffd740"></pre>
+          <button class="tdm-copy-btn" onclick="copyTDCmd('tdm-cmd-pytest')" title="Copiar comando pytest">📋</button>
+        </div>
+      </div>
+      <div class="modal-section" id="tdm-ai-section" style="display:none">
+        <div class="msec-title" style="color:var(--purple)">🤖 Análise da IA</div>
+        <div class="ai-hint-box" id="tdm-ai-hint"></div>
+      </div>
+    </div>
+    <div class="tdm-footer">
+      <button class="tdm-btn-run" id="tdm-run-btn" onclick="runSingleTest()">▶ Executar Este Teste</button>
+      <button class="tdm-btn-toggle" id="tdm-toggle-btn" onclick="toggleTestFromDetail()">☑ Marcar/Desmarcar</button>
+      <button class="ai-hint-btn tdm-ai-btn" id="tdm-ai-btn" onclick="getAiHintForTest()">🤖 Análise da IA</button>
+      <button class="tdm-btn-close" onclick="closeTDModal()">Fechar</button>
+    </div>
+  </div>
+</div>
 <script src="dashboardTestes.js"></script>
+
+<!-- ===== MODAL: CONFIGURAÇÕES DE TESTES E2E ===== -->
+<div class="modal-overlay" id="testConfigModal" onclick="closeTestConfigModal()">
+  <div class="modal-box" style="max-width:440px" onclick="event.stopPropagation()">
+    <div class="modal-hdr">
+      <div class="modal-hdr-title"><span style="font-size:16px">&#x2699;</span> CONFIGURAÇÕES E2E</div>
+      <button class="modal-close" onclick="closeTestConfigModal()">&#x2715; fechar</button>
+    </div>
+    <div class="modal-cnt" style="padding:18px 20px;display:flex;flex-direction:column;gap:18px">
+
+      <!-- Browser visível -->
+      <div style="display:flex;align-items:center;gap:10px">
+        <input type="checkbox" id="cfg-e2e-headed" style="width:16px;height:16px;cursor:pointer;accent-color:var(--accent)">
+        <label for="cfg-e2e-headed" style="cursor:pointer;font-size:12px;color:var(--text)">&#x1F5A5; Abrir browser visível <code style="font-size:10px;color:var(--muted)">--headed</code></label>
+      </div>
+
+      <!-- Excluir dados após testes -->
+      <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:rgba(250,82,82,0.07);border:1px solid rgba(250,82,82,0.25);border-radius:6px">
+        <input type="checkbox" id="cfg-e2e-cleanup" style="width:16px;height:16px;cursor:pointer;accent-color:#fa5252;margin-top:2px">
+        <label for="cfg-e2e-cleanup" style="cursor:pointer;font-size:12px;color:var(--text);line-height:1.5">
+          &#x1F9F9; <strong>Excluir dados de teste após execução</strong><br>
+          <span style="font-size:10px;color:var(--muted)">Remove do banco todos os registros criados pelos testes E2E (is_test_data=1). Depende do Flask estar ativo.</span>
+        </label>
+      </div>
+
+      <!-- Screenshots -->
+      <fieldset style="border:1px solid var(--border2);border-radius:6px;padding:12px 14px;margin:0">
+        <legend style="font-size:10px;color:var(--muted);padding:0 6px;letter-spacing:1px">&#x1F4F8; CAPTURA DE TELA (E2E)</legend>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--text)">
+            <input type="radio" name="cfg-screenshots" value="never" style="accent-color:var(--accent)">
+            <span>Nunca</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--text)">
+            <input type="radio" name="cfg-screenshots" value="on-error" checked style="accent-color:var(--accent)">
+            <span>Somente em erro <span style="font-size:10px;color:var(--muted)">(recomendado)</span></span>
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--text)">
+            <input type="radio" name="cfg-screenshots" value="always" style="accent-color:var(--accent)">
+            <span>Sempre</span>
+          </label>
+        </div>
+      </fieldset>
+
+      <p style="font-size:10px;color:var(--muted);margin:0;line-height:1.5">
+        &#x26A0; Em caso de erro, o screenshot é sempre capturado independente da configuração.
+      </p>
+
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button onclick="closeTestConfigModal()" style="background:none;border:1px solid var(--border2);color:var(--muted);padding:6px 14px;border-radius:5px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:11px">Cancelar</button>
+        <button onclick="saveTestConfig()" style="background:var(--accent);border:none;color:#000;padding:6px 16px;border-radius:5px;cursor:pointer;font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px">&#x2714; Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
 </body>
 </html>

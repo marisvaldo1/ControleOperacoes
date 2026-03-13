@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análise de Posição PUT</title>
+    <style>
+        /* ============================================
+           ESTILOS BASE - Mantendo compatibilidade
+           ============================================ */
+        :root {
+            --bg-primary: #131722;
+            --bg-secondary: #1E222D;
+            --bg-tertiary: #2A2E39;
+            --bg-hover: #363A45;
+            --text-primary: #ECEFF1;
+            --text-secondary: #B0BEC5;
+            --text-muted: #78909C;
+            --profit: #00C853;
+            --profit-dim: rgba(0, 200, 83, 0.15);
+            --profit-glow: rgba(0, 200, 83, 0.3);
+            --loss: #FF5252;
+            --loss-dim: rgba(255, 82, 82, 0.15);
+            --loss-glow: rgba(255, 82, 82, 0.3);
+            --blue: #2962FF;
+            --blue-light: #448AFF;
+            --blue-dim: rgba(41, 98, 255, 0.15);
+            --orange: #FFB74D;
+            --orange-dim: rgba(255, 183, 77, 0.15);
+            --border: #363A45;
+            --border-light: #2A2E39;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* ============================================
+           ESTRUTURA DO MODAL
+           ============================================ */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            padding: 20px;
+        }
+
+        .modal-container {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 900px;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ============================================
+           HEADER DO MODAL
+           ============================================ */
+        .modal-header-custom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-tertiary);
+            border-radius: 12px 12px 0 0;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .header-title-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-icon {
+            width: 44px;
+            height: 44px;
+            background: var(--blue-dim);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .header-icon svg {
+            width: 24px;
+            height: 24px;
+            stroke: var(--blue-light);
+        }
+
+        .header-text h2 {
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-text .subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .badge-put {
+            background: var(--blue-dim);
+            color: var(--blue-light);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .close-btn {
+            width: 36px;
+            height: 36px;
+            background: var(--bg-hover);
+            border: none;
+            border-radius: 8px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .close-btn:hover {
+            background: var(--loss-dim);
+            color: var(--loss);
+        }
+
+        /* ============================================
+           CORPO DO MODAL
+           ============================================ */
+        .modal-body-custom {
+            padding: 24px;
+        }
+
+        /* Barra de atualização */
+        .update-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding: 12px 16px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .update-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .update-info .dot {
+            width: 8px;
+            height: 8px;
+            background: var(--profit);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .update-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: var(--blue);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .update-btn:hover {
+            background: var(--blue-light);
+            transform: translateY(-1px);
+        }
+
+        .update-btn:active {
+            transform: translateY(0);
+        }
+
+        .update-btn.loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .update-btn .spinner {
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+
+        .update-btn.loading .spinner {
+            display: block;
+        }
+
+        .update-btn.loading .btn-text {
+            display: none;
+        }
+
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+
+        /* ============================================
+           GRID DE INFORMAÇÕES
+           ============================================ */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .info-card {
+            background: var(--bg-tertiary);
+            border-radius: 10px;
+            padding: 16px;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .info-card.highlight {
+            background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--profit-dim) 100%);
+            border-color: var(--profit);
+        }
+
+        .info-card.danger {
+            background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--loss-dim) 100%);
+            border-color: var(--loss);
+        }
+
+        .info-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .info-value {
+            font-size: 22px;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+        }
+
+        .info-value.profit { color: var(--profit); }
+        .info-value.loss { color: var(--loss); }
+        .info-value.neutral { color: var(--text-primary); }
+        .info-value.blue { color: var(--blue-light); }
+
+        .info-sub {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        /* ============================================
+           SEÇÃO COMPARATIVA
+           ============================================ */
+        .comparison-section {
+            background: var(--bg-tertiary);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border);
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 16px;
+            background: var(--blue);
+            border-radius: 2px;
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .comparison-box {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .comparison-box h4 {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        .comp-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .comp-row:last-child {
+            border-bottom: none;
+        }
+
+        .comp-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .comp-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .comp-value.current {
+            color: var(--blue-light);
+            position: relative;
+        }
+
+        .comp-value.current::after {
+            content: '';
+            position: absolute;
+            right: -16px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-left: 6px solid var(--blue-light);
+            border-top: 4px solid transparent;
+            border-bottom: 4px solid transparent;
+        }
+
+        .comp-change {
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 8px;
+        }
+
+        .comp-change.up {
+            background: var(--profit-dim);
+            color: var(--profit);
+        }
+
+        .comp-change.down {
+            background: var(--loss-dim);
+            color: var(--loss);
+        }
+
+        /* ============================================
+           BARRA DE PROGRESSO
+           ============================================ */
+        .progress-section {
+            margin-bottom: 24px;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .progress-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .progress-status {
+            font-size: 13px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+
+        .progress-status.winning {
+            background: var(--profit-dim);
+            color: var(--profit);
+        }
+
+        .progress-status.losing {
+            background: var(--loss-dim);
+            color: var(--loss);
+        }
+
+        .progress-track {
+            height: 10px;
+            background: var(--bg-tertiary);
+            border-radius: 5px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 5px;
+            transition: width 0.5s ease, background 0.3s ease;
+        }
+
+        .progress-fill.winning {
+            background: linear-gradient(90deg, var(--profit), #69F0AE);
+        }
+
+        .progress-fill.losing {
+            background: linear-gradient(90deg, var(--loss), #FF8A80);
+        }
+
+        .progress-markers {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* ============================================
+           ANÁLISE AUTOMÁTICA
+           ============================================ */
+        .analysis-box {
+            background: var(--bg-tertiary);
+            border-radius: 10px;
+            padding: 20px;
+            border-left: 4px solid var(--border);
+            margin-bottom: 24px;
+            transition: border-color 0.3s;
+        }
+
+        .analysis-box.winning {
+            border-color: var(--profit);
+        }
+
+        .analysis-box.losing {
+            border-color: var(--loss);
+        }
+
+        .analysis-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .analysis-content {
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--text-secondary);
+        }
+
+        .analysis-content strong {
+            color: var(--text-primary);
+        }
+
+        .analysis-content .highlight-profit {
+            color: var(--profit);
+            font-weight: 600;
+        }
+
+        .analysis-content .highlight-loss {
+            color: var(--loss);
+            font-weight: 600;
+        }
+
+        /* ============================================
+           RODAPÉ
+           ============================================ */
+        .modal-footer-custom {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-tertiary);
+            border-radius: 0 0 12px 12px;
+        }
+
+        .footer-note {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .footer-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-secondary {
+            padding: 10px 20px;
+            background: var(--bg-hover);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-secondary);
+        }
+
+        .btn-primary {
+            padding: 10px 24px;
+            background: var(--blue);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            background: var(--blue-light);
+        }
+
+        /* ============================================
+           RESPONSIVO
+           ============================================ */
+        @media (max-width: 768px) {
+            .info-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-header-custom {
+                flex-direction: column;
+                gap: 16px;
+                align-items: flex-start;
+            }
+
+            .header-title-group {
+                width: 100%;
+            }
+
+            .close-btn {
+                position: absolute;
+                top: 16px;
+                right: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ============================================
+         MODAL DE ANÁLISE DE POSIÇÃO PUT
+         ============================================ -->
+    <div class="modal-overlay" id="modalPosicao">
+        <div class="modal-container">
+
+            <!-- Header -->
+            <div class="modal-header-custom">
+                <div class="header-title-group">
+                    <div class="header-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                        </svg>
+                    </div>
+                    <div class="header-text">
+                        <h2>
+                            Posição Atual - PUT
+                            <span class="badge-put">PETR4</span>
+                        </h2>
+                        <div class="subtitle">PETR424W2 • Strike R$ 34,50 • Vencimento 15/03/2026</div>
+                    </div>
+                </div>
+                <button class="close-btn" onclick="fecharModal()" title="Fechar">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Corpo -->
+            <div class="modal-body-custom">
+
+                <!-- Barra de Atualização -->
+                <div class="update-bar">
+                    <div class="update-info">
+                        <div class="dot"></div>
+                        <span>Atualizado: <strong id="lastUpdate">--:--:--</strong></span>
+                    </div>
+                    <button class="update-btn" id="updateBtn" onclick="atualizarCotacoes()">
+                        <svg class="spinner" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                        </svg>
+                        <span class="btn-text">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;">
+                                <path d="M23 4v6h-6"/>
+                                <path d="M1 20v-6h6"/>
+                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                            </svg>
+                            Atualizar Cotações
+                        </span>
+                    </button>
+                </div>
+
+                <!-- Grid de Informações Principais -->
+                <div class="info-grid">
+                    <div class="info-card highlight">
+                        <div class="info-label">Lucro Realizado</div>
+                        <div class="info-value profit" id="lucroRealizado">R$ 300</div>
+                        <div class="info-sub">Fechada em 05/03</div>
+                    </div>
+                    <div class="info-card highlight">
+                        <div class="info-label">Lucro Aberto</div>
+                        <div class="info-value profit" id="lucroAberto">R$ 450</div>
+                        <div class="info-sub">Premio restante</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-label">Cotação PETR4</div>
+                        <div class="info-value neutral" id="cotacaoAtual">R$ 35,80</div>
+                        <div class="info-sub" id="variacaoCotacao">-0,56% hoje</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-label">Distância Strike</div>
+                        <div class="info-value profit" id="distanciaStrike">+3,77%</div>
+                        <div class="info-sub">Acima do strike</div>
+                    </div>
+                </div>
+
+                <!-- Seção Comparativa -->
+                <div class="comparison-section">
+                    <div class="section-title">Comparativo: Abertura vs Cotação Atual</div>
+
+                    <div class="comparison-grid">
+                        <!-- Premio -->
+                        <div class="comparison-box">
+                            <h4>Premio da Opção</h4>
+                            <div class="comp-row">
+                                <span class="comp-label">Na Abertura</span>
+                                <span class="comp-value">R$ 0,60</span>
+                            </div>
+                            <div class="comp-row">
+                                <span class="comp-label">Cotação Atual</span>
+                                <span class="comp-value current" id="premioAtual">R$ 0,15</span>
+                            </div>
+                            <div class="comp-row">
+                                <span class="comp-label">Variação</span>
+                                <span class="comp-value">
+                                    <span class="comp-change up" id="variacaoPremio">▼ -75%</span>
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Ativo Objeto -->
+                        <div class="comparison-box">
+                            <h4>Ativo Objeto (PETR4)</h4>
+                            <div class="comp-row">
+                                <span class="comp-label">Na Abertura</span>
+                                <span class="comp-value">R$ 36,00</span>
+                            </div>
+                            <div class="comp-row">
+                                <span class="comp-label">Cotação Atual</span>
+                                <span class="comp-value current" id="ativoAtual">R$ 35,80</span>
+                            </div>
+                            <div class="comp-row">
+                                <span class="comp-label">Variação</span>
+                                <span class="comp-value">
+                                    <span class="comp-change down" id="variacaoAtivo">▼ -0,56%</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Barra de Progresso -->
+                <div class="progress-section">
+                    <div class="progress-header">
+                        <span class="progress-label">Probabilidade de Lucro Total</span>
+                        <span class="progress-status winning" id="statusProbabilidade">75% - VENCENDO</span>
+                    </div>
+                    <div class="progress-track">
+                        <div class="progress-fill winning" id="barraProbabilidade" style="width: 75%"></div>
+                    </div>
+                    <div class="progress-markers">
+                        <span>0%</span>
+                        <span>Break-Even: R$ 33,90</span>
+                        <span>Strike: R$ 34,50</span>
+                        <span>100%</span>
+                    </div>
+                </div>
+
+                <!-- Análise Automática -->
+                <div class="analysis-box winning" id="analiseBox">
+                    <div class="analysis-title">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="12" y1="16" x2="12" y2="12"/>
+                            <line x1="12" y1="8" x2="12.01" y2="8"/>
+                        </svg>
+                        Análise Automática
+                    </div>
+                    <div class="analysis-content" id="analiseContent">
+                        <strong>Situação favoravel!</strong> A cotação atual (R$ 35,80) está <strong class="highlight-profit">3,77% acima</strong> do strike (R$ 34,50).
+                        Para a sua operação de <strong>venda de PUT</strong>, isso significa que a opção tende a expirar <strong class="highlight-profit">PÓ</strong> (sem valor),
+                        e você ficara com o premio total de R$ 600,00. O decay ja trabalhou a seu favor, reduzindo o premio de R$ 0,60 para R$ 0,15.
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Rodapé -->
+            <div class="modal-footer-custom">
+                <div class="footer-note">
+                    💡 Operação: Venda de PUT • Quantidade: 1.000 ações • Break-Even: R$ 33,90
+                </div>
+                <div class="footer-actions">
+                    <button class="btn-secondary">Detalhes</button>
+                    <button class="btn-primary">Fechar Posição</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ============================================
+         JAVASCRIPT - LÓGICA DE ATUALIZAÇÃO
+         ============================================ -->
+    <script>
+        // ============================================
+        // DADOS DA OPERAÇÃO (Venda de PUT)
+        // ============================================
+        const operacao = {
+            ticker: 'PETR4',
+            strike: 34.50,
+            premioAbertura: 0.60,
+            premioAtual: 0.15,
+            ativoAbertura: 36.00,
+            ativoAtual: 35.80,
+            quantidade: 1000,
+            breakEven: 33.90,
+            vencimento: new Date('2026-03-15'),
+            lucroRealizado: 300, // operação anterior fechada
+            status: 'open' // aberta
+        };
+
+        // ============================================
+        // FUNÇÃO PRINCIPAL: Atualizar Cotações
+        // ============================================
+        function atualizarCotacoes() {
+            const btn = document.getElementById('updateBtn');
+
+            // UI: Estado de carregamento
+            btn.classList.add('loading');
+
+            // Simular delay de API (500ms)
+            setTimeout(() => {
+                // 1. Simular nova cotação (variação aleatória)
+                const variacaoAtivo = (Math.random() - 0.5) * 0.40; // -0.20 a +0.20
+                const novaCotacao = operacao.ativoAtual + variacaoAtivo;
+
+                // 2. Calcular novo premio (correlacionado com ativo)
+                // Se ativo cai, PUT valoriza (prejuízo para vendedor)
+                const variacaoPremio = (operacao.strike - novaCotacao) * 0.05 + (Math.random() - 0.5) * 0.02;
+                let novoPremio = Math.max(0.01, operacao.premioAbertura * 0.25 + variacaoPremio * 10);
+
+                // 3. Atualizar dados da operação
+                operacao.ativoAtual = parseFloat(novaCotacao.toFixed(2));
+                operacao.premioAtual = parseFloat(novoPremio.toFixed(2));
+
+                // 4. Atualizar interface
+                atualizarInterface();
+
+                // 5. Resetar UI
+                btn.classList.remove('loading');
+
+                // 6. Atualizar timestamp
+                const agora = new Date();
+                document.getElementById('lastUpdate').textContent =
+                    agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+            }, 600);
+        }
+
+        // ============================================
+        // ATUALIZAR INTERFACE
+        // ============================================
+        function atualizarInterface() {
+            // --- Grid Principal ---
+
+            // Cotação atual
+            document.getElementById('cotacaoAtual').textContent =
+                'R$ ' + operacao.ativoAtual.toFixed(2).replace('.', ',');
+
+            // Variação do dia
+            const variacaoDia = ((operacao.ativoAtual - 36.00) / 36.00) * 100;
+            const variacaoEl = document.getElementById('variacaoCotacao');
+            variacaoEl.textContent = (variacaoDia >= 0 ? '+' : '') + variacaoDia.toFixed(2) + '% hoje';
+            variacaoEl.style.color = variacaoDia >= 0 ? 'var(--profit)' : 'var(--loss)';
+
+            // Distância do strike
+            const distancia = ((operacao.ativoAtual - operacao.strike) / operacao.strike) * 100;
+            document.getElementById('distanciaStrike').textContent =
+                '+' + distancia.toFixed(2) + '%';
+
+            // Lucro aberto (premio atual vs premio abertura)
+            const lucroAberto = (operacao.premioAbertura - operacao.premioAtual) * operacao.quantidade;
+            document.getElementById('lucroAberto').textContent =
+                'R$ ' + Math.abs(lucroAberto).toFixed(0).replace('.', ',');
+
+            // --- Seção Comparativa ---
+
+            // Premio
+            document.getElementById('premioAtual').textContent =
+                'R$ ' + operacao.premioAtual.toFixed(2).replace('.', ',');
+
+            const variacaoPremio = ((operacao.premioAtual - operacao.premioAbertura) / operacao.premioAbertura) * 100;
+            const varPremioEl = document.getElementById('variacaoPremio');
+            varPremioEl.textContent = (variacaoPremio <= 0 ? '▼ ' : '▲ ') + Math.abs(variacaoPremio).toFixed(0) + '%';
+            varPremioEl.className = 'comp-change ' + (variacaoPremio <= 0 ? 'up' : 'down');
+
+            // Ativo
+            document.getElementById('ativoAtual').textContent =
+                'R$ ' + operacao.ativoAtual.toFixed(2).replace('.', ',');
+
+            const variacaoAtivo = ((operacao.ativoAtual - operacao.ativoAbertura) / operacao.ativoAbertura) * 100;
+            const varAtivoEl = document.getElementById('variacaoAtivo');
+            varAtivoEl.textContent = (variacaoAtivo <= 0 ? '▼ ' : '▲ ') + Math.abs(variacaoAtivo).toFixed(2) + '%';
+            varAtivoEl.className = 'comp-change ' + (variacaoAtivo <= 0 ? 'down' : 'up');
+
+            // --- Barra de Probabilidade ---
+            const probabilidade = Math.min(99, Math.max(20, 75 + (distancia - 3.77) * 5));
+            const barra = document.getElementById('barraProbabilidade');
+            const status = document.getElementById('statusProbabilidade');
+
+            barra.style.width = probabilidade + '%';
+
+            if (probabilidade >= 60) {
+                barra.className = 'progress-fill winning';
+                status.className = 'progress-status winning';
+                status.textContent = Math.round(probabilidade) + '% - VENCENDO';
+            } else {
+                barra.className = 'progress-fill losing';
+                status.className = 'progress-status losing';
+                status.textContent = Math.round(probabilidade) + '% - ATENÇÃO';
+            }
+
+            // --- Análise Automática ---
+            atualizarAnalise(distancia, lucroAberto, variacaoPremio);
+        }
+
+        // ============================================
+        // ANÁLISE AUTOMÁTICA
+        // ============================================
+        function atualizarAnalise(distancia, lucro, variacaoPremio) {
+            const box = document.getElementById('analiseBox');
+            const content = document.getElementById('analiseContent');
+
+            // Para VENDA de PUT:
+            // - Lucro quando premio cai (ativo sobe ou fica estável)
+            // - Prejuízo quando premio sobe (ativo cai)
+
+            const estaVencendo = lucro >= 0;
+
+            if (estaVencendo) {
+                box.className = 'analysis-box winning';
+                content.innerHTML = `
+                    <strong>Situação favorável!</strong> A cotação atual (R$ ${operacao.ativoAtual.toFixed(2)}) está
+                    <strong class="highlight-profit">${distancia.toFixed(2)}% acima</strong> do strike (R$ ${operacao.strike.toFixed(2)}).
+                    Para a sua operação de <strong>venda de PUT</strong>, isso significa que a opção tende a expirar
+                    <strong class="highlight-profit">PÓ</strong> (sem valor), e você ficará com o prêmio total de R$ 600,00.
+                    O decay já trabalhou a seu favor, reduzindo o prêmio de R$ 0,60 para R$ ${operacao.premioAtual.toFixed(2)}.
+                `;
+            } else {
+                box.className = 'analysis-box losing';
+                content.innerHTML = `
+                    <strong>Atenção necessária!</strong> A cotação atual (R$ ${operacao.ativoAtual.toFixed(2)}) está
+                    <strong class="highlight-loss">${distancia.toFixed(2)}% acima</strong> do strike (R$ ${operacao.strike.toFixed(2)}),
+                    mas a volatilidade aumentou. O prêmio valorizou de R$ 0,60 para R$ ${operacao.premioAtual.toFixed(2)},
+                    gerando um <strong class="highlight-loss">prejuízo unrealizado de R$ ${Math.abs(lucro).toFixed(0)}</strong>.
+                    A posição ainda está acima do break-even (R$ ${operacao.breakEven}), mas monitore de perto.
+                `;
+            }
+        }
+
+        // ============================================
+        // FECHAR MODAL
+        // ============================================
+        function fecharModal() {
+            const modal = document.getElementById('modalPosicao');
+            modal.style.opacity = '0';
+            modal.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                modal.style.display = 'none';
+                // Aqui você pode adicionar lógica para mostrar a tela original
+                alert('Modal fechado! Volte para a tela principal.');
+            }, 300);
+        }
+
+        // ============================================
+        // INICIALIZAÇÃO
+        // ============================================
+        window.onload = function() {
+            // Atualiza timestamp inicial
+            const agora = new Date();
+            document.getElementById('lastUpdate').textContent =
+                agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+            // Atualiza interface com dados iniciais
+            atualizarInterface();
+        };
+
+        // Fechar ao clicar fora do modal
+        document.getElementById('modalPosicao').addEventListener('click', function(e) {
+            if (e.target === this) {
+                fecharModal();
+            }
+        });
+    </script>
+</body>
+</html>

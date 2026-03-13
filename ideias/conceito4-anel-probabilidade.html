@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anel de Probabilidade PUT - Conceito 4</title>
+    <style>
+        :root {
+            --bg-primary: #0A0E17;
+            --bg-secondary: #111827;
+            --bg-tertiary: #1F2937;
+            --text-white: #F9FAFB;
+            --text-gray: #9CA3AF;
+            --text-muted: #6B7280;
+            --success: #10B981;
+            --success-bg: rgba(16, 185, 129, 0.15);
+            --danger: #EF4444;
+            --danger-bg: rgba(239, 68, 68, 0.15);
+            --warning: #F59E0B;
+            --warning-bg: rgba(245, 158, 11, 0.15);
+            --info: #3B82F6;
+            --info-bg: rgba(59, 130, 246, 0.15);
+            --purple: #8B5CF6;
+            --border: #374151;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-white);
+            min-height: 100vh;
+            padding: 32px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        .header-info h1 {
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .header-info p {
+            color: var(--text-gray);
+            font-size: 14px;
+        }
+
+        .status-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg-secondary);
+            padding: 10px 18px;
+            border-radius: 25px;
+            border: 1px solid var(--border);
+        }
+
+        .status-pill .dot {
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.3); }
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .ring-card {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 32px;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .ring-container {
+            position: relative;
+            width: 220px;
+            height: 220px;
+            margin: 0 auto 24px;
+        }
+
+        .ring-svg {
+            transform: rotate(-90deg);
+        }
+
+        .ring-bg {
+            fill: none;
+            stroke: var(--bg-tertiary);
+            stroke-width: 16;
+        }
+
+        .ring-progress {
+            fill: none;
+            stroke-width: 16;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1s ease;
+        }
+
+        .ring-progress.success { stroke: var(--success); }
+        .ring-progress.warning { stroke: var(--warning); }
+        .ring-progress.danger { stroke: var(--danger); }
+
+        .ring-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .ring-value {
+            font-size: 48px;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            line-height: 1;
+        }
+
+        .ring-value.success { color: var(--success); }
+        .ring-value.warning { color: var(--warning); }
+        .ring-value.danger { color: var(--danger); }
+
+        .ring-label {
+            font-size: 13px;
+            color: var(--text-gray);
+            margin-top: 8px;
+        }
+
+        .ring-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .ring-subtitle {
+            font-size: 13px;
+            color: var(--text-gray);
+            line-height: 1.5;
+        }
+
+        .metrics-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .metric-box {
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .metric-box .label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .metric-box .value {
+            font-size: 20px;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .metric-box .value.success { color: var(--success); }
+        .metric-box .value.danger { color: var(--danger); }
+        .metric-box .value.info { color: var(--info); }
+
+        .scenario-card {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 24px;
+            border: 1px solid var(--border);
+        }
+
+        .scenario-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .scenario-title .icon {
+            width: 32px;
+            height: 32px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .scenario-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .scenario-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            border-left: 4px solid var(--border);
+        }
+
+        .scenario-item.best {
+            border-left-color: var(--success);
+        }
+
+        .scenario-item.neutral {
+            border-left-color: var(--warning);
+        }
+
+        .scenario-item.worst {
+            border-left-color: var(--danger);
+        }
+
+        .scenario-info {
+            flex: 1;
+        }
+
+        .scenario-name {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .scenario-desc {
+            font-size: 12px;
+            color: var(--text-gray);
+        }
+
+        .scenario-result {
+            text-align: right;
+        }
+
+        .scenario-value {
+            font-size: 18px;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .scenario-value.success { color: var(--success); }
+        .scenario-value.danger { color: var(--danger); }
+
+        .scenario-percent {
+            font-size: 11px;
+            color: var(--text-gray);
+            margin-top: 2px;
+        }
+
+        .position-card {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 24px;
+            border: 1px solid var(--border);
+            grid-column: span 2;
+        }
+
+        .position-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .position-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .position-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+
+        .position-item {
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .position-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 12px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .position-icon.green { background: var(--success-bg); }
+        .position-icon.red { background: var(--danger-bg); }
+        .position-icon.blue { background: var(--info-bg); }
+        .position-icon.purple { background: rgba(139, 92, 246, 0.15); }
+
+        .position-label {
+            font-size: 12px;
+            color: var(--text-gray);
+            margin-bottom: 8px;
+        }
+
+        .position-value {
+            font-size: 22px;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .position-value.green { color: var(--success); }
+        .position-value.red { color: var(--danger); }
+
+        .position-sub {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .timeline-card {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 24px;
+            border: 1px solid var(--border);
+        }
+
+        .timeline-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .timeline-track {
+            position: relative;
+            height: 60px;
+            background: var(--bg-tertiary);
+            border-radius: 30px;
+            overflow: hidden;
+        }
+
+        .timeline-progress {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            background: linear-gradient(90deg, var(--success), var(--info));
+            border-radius: 30px;
+            transition: width 0.5s ease;
+        }
+
+        .timeline-markers {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .timeline-marker {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 1;
+        }
+
+        .marker-dot {
+            width: 12px;
+            height: 12px;
+            background: var(--bg-primary);
+            border-radius: 50%;
+            border: 3px solid var(--text-gray);
+            margin-bottom: 6px;
+        }
+
+        .marker-dot.active {
+            border-color: var(--success);
+            background: var(--success);
+        }
+
+        .marker-label {
+            font-size: 10px;
+            color: var(--text-gray);
+            text-transform: uppercase;
+        }
+
+        .timeline-days {
+            text-align: center;
+            margin-top: 16px;
+        }
+
+        .days-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--info);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .days-label {
+            font-size: 12px;
+            color: var(--text-gray);
+        }
+
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            .position-card {
+                grid-column: span 1;
+            }
+            .position-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .position-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-info">
+                <h1>Probabilidade de Sucesso</h1>
+                <p>PUT PETR4 R$ 34,50 - Vencimento 15/03/2026</p>
+            </div>
+            <div class="status-pill">
+                <div class="dot"></div>
+                <span style="font-size: 13px;">Tempo Real</span>
+            </div>
+        </div>
+
+        <div class="main-grid">
+            <div class="ring-card">
+                <div class="ring-container">
+                    <svg class="ring-svg" width="220" height="220" viewBox="0 0 220 220">
+                        <circle class="ring-bg" cx="110" cy="110" r="90"></circle>
+                        <circle class="ring-progress success" cx="110" cy="110" r="90"
+                            stroke-dasharray="565" stroke-dashoffset="141" id="mainRing"></circle>
+                    </svg>
+                    <div class="ring-center">
+                        <div class="ring-value success" id="probValue">75%</div>
+                        <div class="ring-label">Probabilidade</div>
+                    </div>
+                </div>
+                <div class="ring-title">Você está vencer!</div>
+                <div class="ring-subtitle">
+                    A cotação atual está <strong id="distanceText">3,77% acima</strong> do strike.
+                    <br>Alta probabilidade de expirar in-the-money a seu favor.
+                </div>
+                <div class="metrics-row">
+                    <div class="metric-box">
+                        <div class="label">Strike</div>
+                        <div class="value">34,50</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="label">Cotação</div>
+                        <div class="value info" id="currentPrice">35,80</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="label">Break-Even</div>
+                        <div class="value success">33,90</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="scenario-card">
+                <div class="scenario-title">
+                    <div class="icon">🎲</div>
+                    Cenários Possíveis
+                </div>
+                <div class="scenario-list">
+                    <div class="scenario-item best">
+                        <div class="scenario-info">
+                            <div class="scenario-name">✓ Melhor Cenário</div>
+                            <div class="scenario-desc">Expira acima do strike (OTM)</div>
+                        </div>
+                        <div class="scenario-result">
+                            <div class="scenario-value success">+R$ 600</div>
+                            <div class="scenario-percent">100% do prêmio</div>
+                        </div>
+                    </div>
+                    <div class="scenario-item neutral">
+                        <div class="scenario-info">
+                            <div class="scenario-name">~ Cenário Intermediário</div>
+                            <div class="scenario-desc">Exercício parcial</div>
+                        </div>
+                        <div class="scenario-result">
+                            <div class="scenario-value" style="color: var(--warning);">+R$ 300</div>
+                            <div class="scenario-percent">50% do prêmio</div>
+                        </div>
+                    </div>
+                    <div class="scenario-item worst">
+                        <div class="scenario-info">
+                            <div class="scenario-name">✗ Pior Cenário</div>
+                            <div class="scenario-desc">Ação cai muito abaixo</div>
+                        </div>
+                        <div class="scenario-result">
+                            <div class="scenario-value danger">-R$ 1.500</div>
+                            <div class="scenario-percent">Ação entregue</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeline-card">
+                <div class="timeline-title">⏳ Linha do Tempo</div>
+                <div class="timeline-track">
+                    <div class="timeline-progress" id="timeProgress" style="width: 25%"></div>
+                    <div class="timeline-markers">
+                        <div class="timeline-marker">
+                            <div class="marker-dot active"></div>
+                            <div class="marker-label">Abertura</div>
+                        </div>
+                        <div class="timeline-marker">
+                            <div class="marker-dot active"></div>
+                            <div class="marker-label">Hoje</div>
+                        </div>
+                        <div class="timeline-marker">
+                            <div class="marker-dot"></div>
+                            <div class="marker-label">Vcto</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="timeline-days">
+                    <div class="days-value" id="daysLeft">5</div>
+                    <div class="days-label">Dias para vencimento</div>
+                </div>
+            </div>
+
+            <div class="position-card">
+                <div class="position-header">
+                    <div class="position-title">📊 Posição Atual</div>
+                </div>
+                <div class="position-grid">
+                    <div class="position-item">
+                        <div class="position-icon green">💰</div>
+                        <div class="position-label">Lucro Realizado</div>
+                        <div class="position-value green">R$ 300</div>
+                        <div class="position-sub">Fechada</div>
+                    </div>
+                    <div class="position-item">
+                        <div class="position-icon blue">📈</div>
+                        <div class="position-label">Lucro Aberto</div>
+                        <div class="position-value green" id="openProfit">R$ 450</div>
+                        <div class="position-sub">Parcial</div>
+                    </div>
+                    <div class="position-item">
+                        <div class="position-icon purple">🎯</div>
+                        <div class="position-label">Premio Atual</div>
+                        <div class="position-value" id="currentPrem">R$ 0,15</div>
+                        <div class="position-sub">Por ação</div>
+                    </div>
+                    <div class="position-item">
+                        <div class="position-icon green">🛡️</div>
+                        <div class="position-label">Margem</div>
+                        <div class="position-value green" id="marginValue">+3,77%</div>
+                        <div class="position-sub">Distância strike</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateSimulation() {
+            const basePrice = 35.80;
+            const variation = (Math.random() - 0.5) * 0.25;
+            const currentPrice = basePrice + variation;
+            const strike = 34.50;
+
+            // Atualiza preço
+            document.getElementById('currentPrice').textContent = currentPrice.toFixed(2);
+
+            // Calcula distância
+            const distance = ((currentPrice - strike) / strike) * 100;
+            document.getElementById('distanceText').textContent =
+                distance.toFixed(2) + '% acima';
+
+            // Atualiza probabilidade
+            const prob = Math.min(99, Math.max(30, 75 + (distance - 3.77) * 5));
+            document.getElementById('probValue').textContent = Math.round(prob) + '%';
+
+            // Atualiza anel
+            const circumference = 2 * Math.PI * 90;
+            const offset = circumference * (1 - prob / 100);
+            document.getElementById('mainRing').style.strokeDashoffset = offset;
+
+            // Atualiza cor do anel
+            const ring = document.getElementById('mainRing');
+            const value = document.getElementById('probValue');
+            if (prob >= 70) {
+                ring.className = 'ring-progress success';
+                value.className = 'ring-value success';
+            } else if (prob >= 50) {
+                ring.className = 'ring-progress warning';
+                value.className = 'ring-value warning';
+            } else {
+                ring.className = 'ring-progress danger';
+                value.className = 'ring-value danger';
+            }
+
+            // Atualiza lucro
+            const currentPrem = 0.15 - (Math.random() * 0.04);
+            document.getElementById('currentPrem').textContent = 'R$ ' + currentPrem.toFixed(2);
+
+            const profit = (0.60 - currentPrem) * 1000;
+            document.getElementById('openProfit').textContent = 'R$ ' + profit.toFixed(0);
+
+            // Atualiza margem
+            document.getElementById('marginValue').textContent = '+' + distance.toFixed(2) + '%';
+        }
+
+        setInterval(updateSimulation, 3000);
+        updateSimulation();
+    </script>
+</body>
+</html>

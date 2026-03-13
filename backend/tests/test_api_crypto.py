@@ -131,3 +131,23 @@ class TestExcluirCrypto:
     def test_excluir_operacao_confirma_commit(self, client, mock_db):
         client.delete('/api/crypto/1')
         mock_db.commit.assert_called()
+
+
+class TestFecharCrypto:
+    def test_fechar_operacao_existente_retorna_sucesso(self, client, mock_db):
+        mock_db.execute.return_value.fetchone.return_value = {'id': 1, 'status': 'ABERTA'}
+        resp = client.patch('/api/crypto/1/fechar')
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data.get('success') is True
+
+    def test_fechar_operacao_inexistente_retorna_404(self, client, mock_db):
+        mock_db.execute.return_value.fetchone.return_value = None
+        resp = client.patch('/api/crypto/9999/fechar')
+        assert resp.status_code == 404
+        assert 'error' in resp.get_json()
+
+    def test_fechar_operacao_confirma_commit(self, client, mock_db):
+        mock_db.execute.return_value.fetchone.return_value = {'id': 1, 'status': 'ABERTA'}
+        client.patch('/api/crypto/1/fechar')
+        mock_db.commit.assert_called()

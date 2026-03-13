@@ -50,11 +50,14 @@ test("[Crypto] título da página deve estar definido", async ({ page }) => {
     expect(title.length).toBeGreaterThan(0);
 });
 
-test("[Crypto] deve redirecionar para opcoes.html", async ({ page }) => {
-    // crypto.html tem meta refresh para opcoes.html
-    await page.goto(BASE);
-    await page.waitForURL("**/opcoes.html", { timeout: 5000 });
-    expect(page.url()).toContain("opcoes.html");
+test("[Crypto] deve exibir a página de Cryptos (sem redirect)", async ({ page }) => {
+    // crypto.html agora exibe a tela completa, sem meta refresh
+    await page.goto(BASE, { waitUntil: "domcontentloaded" });
+    // Confirma que permanece na URL correta (sem redirect)
+    expect(page.url()).toContain("crypto.html");
+    // Confirma que a estrutura principal está presente
+    const heading = await page.locator("h2.page-title").textContent();
+    expect(heading).toBeTruthy();
 });
 
 test("[Crypto] deve responder a requisição da página com status 200", async ({ page }) => {

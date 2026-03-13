@@ -1,0 +1,151 @@
+/* =========================================
+   crypto.css  v1.2.0
+   Estilos específicos para Controle de Cryptos
+   ========================================= */
+
+/* =========================================
+   Cards Clickable
+   ========================================= */
+.card-clickable {
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.card-clickable:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+[data-bs-theme="dark"] .card-clickable:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+.card-clickable:focus-visible {
+    outline: 2px solid #206bc4;
+    outline-offset: 2px;
+}
+
+/* =========================================
+   Badges HIGH / LOW
+   ========================================= */
+.crypto-badge-high {
+    background-color: #2fb344;
+    color: #fff;
+    min-width: 50px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+}
+.crypto-badge-low {
+    background-color: #d63939;
+    color: #fff;
+    min-width: 50px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+}
+
+/* =========================================
+   Simulador de Retorno
+   ========================================= */
+.crypto-sim-card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    text-align: center;
+}
+.crypto-sim-label {
+    font-size: 0.72rem;
+    color: #8a9fc2;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.25rem;
+}
+.crypto-sim-value {
+    font-size: 1.15rem;
+    font-weight: 700;
+}
+.crypto-sim-cenarios {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 8px;
+}
+.crypto-sim-desc {
+    font-size: 0.75rem;
+    margin-top: 0.2rem;
+}
+
+/* =========================================
+   Estilos especificos para pagina Crypto */
+
+/* Cores especificas crypto */
+.text-btc {
+    color: #f7931a;
+}
+
+.bg-btc {
+    background-color: #f7931a;
+}
+
+/* Card crypto icon */
+#cardTotalCrypto {
+    font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+    font-size: 1.5rem;
+}
+
+/* Icones dos cards */
+.card-body svg {
+    opacity: 0.6;
+}
+
+[data-bs-theme="dark"] .card-body svg {
+    opacity: 0.4;
+}
+
+/* Tabela crypto */
+#tableMesAtual .badge,
+#tableHistorico .badge {
+    min-width: 60px;
+    font-weight: 600;
+}
+
+/* Grafico anual */
+#chartAnual {
+    max-height: 400px;
+}
+
+/* Historico cards */
+#historicoContainer .card {
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+#historicoContainer .card:hover {
+    transform: translateX(4px);
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.15);
+}
+
+[data-bs-theme="dark"] #historicoContainer .card:hover {
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.5);
+}
+
+/* Badges coloridos */
+.badge.bg-warning {
+    background-color: #f59f00 !important;
+    color: #000;
+}
+
+.badge.bg-success {
+    background-color: #2fb344 !important;
+    color: #fff !important;
+}
+
+.badge.bg-danger {
+    background-color: #d63939 !important;
+    color: #fff !important;
+}
+
+.badge.bg-secondary {
+    color: #fff !important;
+}
+
+.badge.bg-azure {
+    background-color: #4299e1 !important;
+    color: #fff !important;
+}

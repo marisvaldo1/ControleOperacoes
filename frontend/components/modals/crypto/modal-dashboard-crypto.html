@@ -1,0 +1,233 @@
+<!-- Dashboard Avançado de Performance · Crypto -->
+<div class="modal modal-blur fade" id="modalDashboardCrypto" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content saldo-dashboard">
+            <div class="modal-header">
+                <h5 class="modal-title">🔥 Dashboard Avançado de Performance · Crypto</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+
+                <!-- Filtros -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3">
+                        <label class="form-label">Data Início</label>
+                        <input type="date" class="form-control" id="dcInicio">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Data Fim</label>
+                        <input type="date" class="form-control" id="dcFim">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Período</label>
+                        <select class="form-select" id="dcPeriodo">
+                            <option value="custom">Personalizado</option>
+                            <option value="7">Últimos 7 dias</option>
+                            <option value="30">Últimos 30 dias</option>
+                            <option value="60">Últimos 60 dias</option>
+                            <option value="90">Últimos 90 dias</option>
+                            <option value="month">Mês atual</option>
+                            <option value="12">Últimos 12 meses</option>
+                            <option value="year" selected>Ano atual</option>
+                            <option value="lastYear">Ano passado</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Tipo</label>
+                        <select class="form-select" id="dcTipo">
+                            <option value="ALL">Todos</option>
+                            <option value="CALL">CALL</option>
+                            <option value="PUT">PUT</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3 align-self-end">
+                        <button class="btn btn-primary w-100" id="dcBtnFiltrar">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                            Filtrar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- KPI cards -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3">
+                        <div class="card metric-card saldo-metric-success">
+                            <div class="metric-icon">💰</div>
+                            <div class="metric-value-lg" id="dcMetricSaldo">$0.00</div>
+                            <div class="metric-label-lg">Saldo em Crypto</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card metric-card saldo-metric-primary">
+                            <div class="metric-icon">📈</div>
+                            <div class="metric-value-lg text-white" id="dcMetricResultado">$0.00</div>
+                            <div class="metric-label-lg">Prêmio no Período</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card metric-card saldo-metric-warning">
+                            <div class="metric-icon">🎯</div>
+                            <div class="metric-value-lg text-dark" id="dcMetricWinRate">0%</div>
+                            <div class="metric-label-lg text-dark">Taxa de Acerto</div>
+                            <div class="mt-2">
+                                <span class="comparison-badge" id="dcMetricWinLoss">0W / 0L</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card metric-card saldo-metric-purple">
+                            <div class="metric-icon">🔢</div>
+                            <div class="metric-value-lg" id="dcMetricOps">0</div>
+                            <div class="metric-label-lg">Total de Operações</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Heatmap -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3 class="card-title">🗓️ Heatmap de Performance Diária</h3>
+                        <p class="text-muted mb-0 small">Resultado diário por prêmio acumulado · Verde = Lucro | Vermelho = Prejuízo</p>
+                    </div>
+                    <div class="card-body">
+                        <div id="dcHeatmap"></div>
+                        <div class="mt-3 d-flex gap-3 align-items-center saldo-legend">
+                            <span>Legenda:</span>
+                            <span><span class="heatmap-day heatmap-profit-high saldo-legend-box"></span> Lucro Alto</span>
+                            <span><span class="heatmap-day heatmap-profit-med saldo-legend-box"></span> Lucro Médio</span>
+                            <span><span class="heatmap-day heatmap-profit-low saldo-legend-box"></span> Lucro Baixo</span>
+                            <span><span class="heatmap-day heatmap-neutral saldo-legend-box"></span> Sem Operação</span>
+                            <span><span class="heatmap-day heatmap-loss-low saldo-legend-box"></span> Perda Baixa</span>
+                            <span><span class="heatmap-day heatmap-loss-med saldo-legend-box"></span> Perda Média</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Comparação CALL vs PUT + Weekday -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">📊 CALL vs PUT</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container" style="position:relative;height:250px">
+                                    <canvas id="dcChartComparacao"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">📅 Performance por Dia da Semana</h3>
+                            </div>
+                            <div class="card-body">
+                                <div id="dcWeekdayList" class="saldo-weekday-list"></div>
+                                <div class="saldo-best-day mt-2">
+                                    <div class="text-muted small">Melhor Dia</div>
+                                    <div class="h4 text-success" id="dcBestDay">-</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top Ativos -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3 class="card-title">🏆 Top Ativos por Prêmio</h3>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-vcenter card-table">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Ativo</th>
+                                        <th>Operações</th>
+                                        <th>Win Rate</th>
+                                        <th>Prêmio Total</th>
+                                        <th>Ticket Médio</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dcTopAtivosBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Consistência e Probabilidades -->
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">💪 Consistência</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span>Dias Lucrativos</span>
+                                        <strong class="text-success" id="dcConsPositiveValue">0%</strong>
+                                    </div>
+                                    <div class="progress" style="height:8px">
+                                        <div class="progress-bar bg-success" id="dcConsPositiveBar" style="width:0%"></div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span>Dias Negativos</span>
+                                        <strong class="text-danger" id="dcConsNegativeValue">0%</strong>
+                                    </div>
+                                    <div class="progress" style="height:8px">
+                                        <div class="progress-bar bg-danger" id="dcConsNegativeBar" style="width:0%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span>Estabilidade</span>
+                                        <strong class="text-info" id="dcConsStabilityValue">0%</strong>
+                                    </div>
+                                    <div class="progress" style="height:8px">
+                                        <div class="progress-bar bg-info" id="dcConsStabilityBar" style="width:0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">🎲 Probabilidades</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="row text-center">
+                                    <div class="col-6 mb-3">
+                                        <div class="text-muted small">Acerto CALL</div>
+                                        <div class="h2 text-success mb-0" id="dcProbCall">0%</div>
+                                    </div>
+                                    <div class="col-6 mb-3">
+                                        <div class="text-muted small">Acerto PUT</div>
+                                        <div class="h2 text-warning mb-0" id="dcProbPut">0%</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="text-muted small">Expectativa Média</div>
+                                        <div class="h2 text-info mb-0" id="dcExpectativa">$0.00</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="text-muted small">ROI s/ Saldo</div>
+                                        <div class="h2 mb-0" id="dcRoi">0%</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- /modal-body -->
+        </div>
+    </div>
+</div>
+<!-- /modal-dashboard-crypto -->

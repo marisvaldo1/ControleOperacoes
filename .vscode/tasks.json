@@ -14,6 +14,34 @@
                 "reveal": "always",
                 "panel": "new"
             }
+        },
+        {
+            "label": "AI Memory: Update",
+            "type": "shell",
+            "command": "memoryIA\\ai_update.bat",
+            "problemMatcher": [],
+            "group": "build",
+            "presentation": { "reveal": "always", "panel": "shared" }
+        },
+        {
+            "label": "AI Memory: Snapshot",
+            "type": "shell",
+            "command": "python memoryIA\\scripts\\ai_snapshot.py",
+            "problemMatcher": [],
+            "presentation": { "reveal": "always", "panel": "shared" }
+        },
+        {
+            "label": "AI Memory: Update + Snapshot",
+            "dependsOrder": "sequence",
+            "dependsOn": ["AI Memory: Update", "AI Memory: Snapshot"],
+            "problemMatcher": []
+        },
+        {
+            "label": "AI Memory: Log Prompt",
+            "type": "shell",
+            "command": "memoryIA\\log_prompt.bat",
+            "problemMatcher": [],
+            "presentation": { "reveal": "always", "panel": "shared" }
         }
     ]
 }

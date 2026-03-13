@@ -84,7 +84,7 @@ class TestAnalyzeComMockGemini:
         gemini_mock = _make_response_mock(200, gemini_resp)
 
         with patch.dict(os.environ, {'GEMINI_API_KEY': 'fake-key-test', 'OPENAI_API_KEY': '', 'OPENROUTER_API_KEY': '', 'DEEPSEEK_API_KEY': '', 'GROK_API_KEY': ''}):
-            with patch('server.requests.post', return_value=gemini_mock):
+            with patch('routes.ai.requests.post', return_value=gemini_mock):
                 resp = client.post('/api/analyze', json={
                     **PAYLOAD_VALIDO,
                     'force_ai': 'GEMINI',
@@ -102,7 +102,7 @@ class TestAnalyzeComMockGemini:
             'candidates': [{'content': {'parts': [{'text': 'Recomendação de venda.'}]}}]
         }
         with patch.dict(os.environ, {'GEMINI_API_KEY': 'fake-key', 'OPENAI_API_KEY': '', 'OPENROUTER_API_KEY': '', 'DEEPSEEK_API_KEY': '', 'GROK_API_KEY': ''}):
-            with patch('server.requests.post', return_value=_make_response_mock(200, gemini_resp)):
+            with patch('routes.ai.requests.post', return_value=_make_response_mock(200, gemini_resp)):
                 resp = client.post('/api/analyze', json={**PAYLOAD_VALIDO, 'force_ai': 'GEMINI'})
         assert resp.status_code == 200
         data = resp.get_json()
@@ -116,7 +116,7 @@ class TestAnalyzeComMockGemini:
             'choices': [{'message': {'content': 'Análise técnica: suporte em 34.80.'}}]
         }
         with patch.dict(os.environ, {'DEEPSEEK_API_KEY': 'fake-ds-key', 'OPENAI_API_KEY': '', 'OPENROUTER_API_KEY': '', 'GEMINI_API_KEY': '', 'GROK_API_KEY': ''}):
-            with patch('server.requests.post', return_value=_make_response_mock(200, ds_resp)):
+            with patch('routes.ai.requests.post', return_value=_make_response_mock(200, ds_resp)):
                 resp = client.post('/api/analyze', json={**PAYLOAD_VALIDO, 'force_ai': 'DEEPSEEK'})
         assert resp.status_code == 200
         assert 'analysis' in resp.get_json()
@@ -129,7 +129,7 @@ class TestAnalyzeForceAI:
             'candidates': [{'content': {'parts': [{'text': 'ok gemini'}]}}]
         }
         with patch.dict(os.environ, {'GEMINI_API_KEY': 'fake', 'OPENAI_API_KEY': '', 'OPENROUTER_API_KEY': '', 'DEEPSEEK_API_KEY': '', 'GROK_API_KEY': ''}):
-            with patch('server.requests.post', return_value=_make_response_mock(200, gemini_resp)):
+            with patch('routes.ai.requests.post', return_value=_make_response_mock(200, gemini_resp)):
                 resp = client.post('/api/analyze', json={**PAYLOAD_VALIDO, 'force_ai': 'GEMINI'})
         data = resp.get_json()
         assert data.get('agent') == 'GEMINI'
@@ -138,7 +138,7 @@ class TestAnalyzeForceAI:
         """Se o provedor retorna erro HTTP, o endpoint deve retornar 400."""
         mock_db.execute.return_value.fetchone.return_value = None
         with patch.dict(os.environ, {'GEMINI_API_KEY': 'fake', 'OPENAI_API_KEY': '', 'OPENROUTER_API_KEY': '', 'DEEPSEEK_API_KEY': '', 'GROK_API_KEY': ''}):
-            with patch('server.requests.post', return_value=_make_response_mock(500, {'error': 'Internal Server Error'})):
+            with patch('routes.ai.requests.post', return_value=_make_response_mock(500, {'error': 'Internal Server Error'})):
                 resp = client.post('/api/analyze', json={**PAYLOAD_VALIDO, 'force_ai': 'GEMINI'})
         assert resp.status_code == 400
         assert 'error' in resp.get_json()

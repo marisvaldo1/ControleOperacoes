@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Concept 13 - Classic Finance</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-cream: #F5F5F0;
+            --bg-white: #FFFFFF;
+            --text-dark: #1A1A1A;
+            --text-muted: #666666;
+            --gold: #B8860B;
+            --gold-light: #DAA520;
+            --green: #228B22;
+            --red: #B22222;
+            --border: #E0E0E0;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Lato', sans-serif;
+            background: var(--bg-cream);
+            background-image: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 10px,
+                rgba(0,0,0,0.02) 10px,
+                rgba(0,0,0,0.02) 20px
+            );
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .classic-card {
+            background: var(--bg-white);
+            border-radius: 4px;
+            width: 100%;
+            max-width: 480px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            border: 1px solid var(--border);
+        }
+
+        .classic-header {
+            padding: 24px;
+            border-bottom: 2px solid var(--gold);
+            background: linear-gradient(135deg, var(--gold-light), var(--gold));
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--bg-white);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        }
+
+        .header-title .subtitle {
+            font-size: 13px;
+            color: rgba(255,255,255,0.9);
+            margin-top: 4px;
+        }
+
+        .close-classic {
+            width: 32px;
+            height: 32px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.2s;
+        }
+
+        .close-classic:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .classic-body {
+            padding: 24px;
+        }
+
+        .result-display {
+            text-align: center;
+            padding: 24px;
+            background: var(--bg-cream);
+            border-radius: 4px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border);
+        }
+
+        .result-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+
+        .result-value {
+            font-family: 'Playfair Display', serif;
+            font-size: 48px;
+            font-weight: 700;
+        }
+
+        .result-value.positive { color: var(--green); }
+        .result-value.negative { color: var(--red); }
+
+        .result-sub {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-top: 8px;
+        }
+
+        .comparison-classic {
+            margin-bottom: 24px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .section-icon {
+            width: 24px;
+            height: 24px;
+            background: var(--gold);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-dark);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .comp-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .comp-row:last-child {
+            border-bottom: none;
+        }
+
+        .comp-label {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .comp-values {
+            text-align: right;
+        }
+
+        .comp-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .comp-value.current {
+            color: var(--gold);
+            font-weight: 700;
+        }
+
+        .comp-delta {
+            font-size: 11px;
+            margin-top: 2px;
+        }
+
+        .comp-delta.positive { color: var(--green); }
+        .comp-delta.negative { color: var(--red); }
+
+        .analysis-classic {
+            padding: 16px;
+            background: var(--bg-cream);
+            border-radius: 4px;
+            border-left: 4px solid var(--gold);
+            margin-bottom: 24px;
+        }
+
+        .analysis-text {
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--text-dark);
+        }
+
+        .analysis-text strong {
+            color: var(--text-dark);
+        }
+
+        .classic-footer {
+            padding: 16px 24px;
+            background: var(--bg-cream);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .time-stamp {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .update-classic {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--gold);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 12px 24px;
+            font-family: 'Lato', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .update-classic:hover {
+            background: var(--gold-light);
+        }
+
+        .update-classic.loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .update-classic .spinner {
+            display: none;
+            animation: spin 1s linear infinite;
+        }
+
+        .update-classic.loading .spinner { display: inline; }
+        .update-classic.loading .btn-text { display: none; }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="modal-overlay">
+        <div class="classic-card">
+            <div class="classic-header">
+                <div class="header-content">
+                    <div class="header-title">
+                        <h2>Análise de Posição</h2>
+                        <div class="subtitle">PUT PETR4 • Strike R$ 34,50</div>
+                    </div>
+                    <button class="close-classic">×</button>
+                </div>
+            </div>
+
+            <div class="classic-body">
+                <div class="result-display">
+                    <div class="result-label">Situação Atual</div>
+                    <div class="result-value positive" id="probValue">75%</div>
+                    <div class="result-sub" id="statusText">Probabilidade de Lucro</div>
+                </div>
+
+                <div class="comparison-classic">
+                    <div class="section-header">
+                        <div class="section-icon">$</div>
+                        <div class="section-title">Premio da Opção</div>
+                    </div>
+                    <div class="comp-row">
+                        <span class="comp-label">Na Abertura</span>
+                        <div class="comp-values">
+                            <div class="comp-value">R$ 0,60</div>
+                        </div>
+                    </div>
+                    <div class="comp-row">
+                        <span class="comp-label">Cotação Atual</span>
+                        <div class="comp-values">
+                            <div class="comp-value current" id="premioAtual">R$ 0,15</div>
+                            <div class="comp-delta positive" id="varPremio">-75%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="comparison-classic">
+                    <div class="section-header">
+                        <div class="section-icon">P</div>
+                        <div class="section-title">Ativo Objeto</div>
+                    </div>
+                    <div class="comp-row">
+                        <span class="comp-label">Na Abertura</span>
+                        <div class="comp-values">
+                            <div class="comp-value">R$ 36,00</div>
+                        </div>
+                    </div>
+                    <div class="comp-row">
+                        <span class="comp-label">Cotação Atual</span>
+                        <div class="comp-values">
+                            <div class="comp-value current" id="cotacaoAtual">R$ 35,80</div>
+                            <div class="comp-delta negative" id="varAtivo">-0,56%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="analysis-classic">
+                    <div class="analysis-text" id="analysisText">
+                        <strong>Análise:</strong> A cotação atual (R$ 35,80) está acima do strike (R$ 34,50),
+                        o que é favorável para sua operação de <strong>venda de PUT</strong>.
+                        O prêmio valorizou significativamente, gerando um lucro unrealizado de <strong>R$ 450</strong>.
+                    </div>
+                </div>
+            </div>
+
+            <div class="classic-footer">
+                <div class="time-stamp">
+                    Atualizado em: <span id="timestamp">--:--:--</span>
+                </div>
+                <button class="update-classic" id="updateBtn" onclick="atualizar()">
+                    <span class="spinner">⟳</span>
+                    <span class="btn-text">Atualizar</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const operacao = {
+            strike: 34.50,
+            premioAbertura: 0.60,
+            premioAtual: 0.15,
+            ativoAbertura: 36.00,
+            ativoAtual: 35.80,
+            quantidade: 1000
+        };
+
+        function atualizar() {
+            const btn = document.getElementById('updateBtn');
+            btn.classList.add('loading');
+
+            setTimeout(() => {
+                const variacao = (Math.random() - 0.5) * 0.30;
+                operacao.ativoAtual = parseFloat((operacao.ativoAtual + variacao).toFixed(2));
+                operacao.premioAtual = Math.max(0.01, parseFloat((operacao.premioAbertura * 0.25 + (Math.random() - 0.5) * 0.05).toFixed(2)));
+
+                atualizarInterface();
+
+                btn.classList.remove('loading');
+                document.getElementById('timestamp').textContent = new Date().toLocaleTimeString('pt-BR');
+            }, 600);
+        }
+
+        function atualizarInterface() {
+            const distancia = ((operacao.ativoAtual - operacao.strike) / operacao.strike) * 100;
+            const probabilidade = Math.min(99, Math.max(20, 75 + (distancia - 3.77) * 5));
+            const lucro = (operacao.premioAbertura - operacao.premioAtual) * operacao.quantidade;
+            const variacaoPremio = ((operacao.premioAtual - operacao.premioAbertura) / operacao.premioAbertura) * 100;
+            const variacaoAtivo = ((operacao.ativoAtual - operacao.ativoAbertura) / operacao.ativoAbertura) * 100;
+            const isWinning = probabilidade >= 60;
+
+            // Result
+            const probValue = document.getElementById('probValue');
+            probValue.textContent = Math.round(probabilidade) + '%';
+            probValue.className = 'result-value ' + (isWinning ? 'positive' : 'negative');
+
+            document.getElementById('statusText').textContent = isWinning ? 'Probabilidade de Lucro' : 'Atenção Necessária';
+
+            // Values
+            document.getElementById('premioAtual').textContent = 'R$ ' + operacao.premioAtual.toFixed(2);
+            document.getElementById('varPremio').textContent = Math.round(variacaoPremio) + '%';
+            document.getElementById('cotacaoAtual').textContent = 'R$ ' + operacao.ativoAtual.toFixed(2).replace('.', ',');
+            document.getElementById('varAtivo').textContent = variacaoAtivo.toFixed(2) + '%';
+
+            // Analysis
+            const analysisText = document.getElementById('analysisText');
+            if (isWinning) {
+                analysisText.innerHTML = '<strong>Análise:</strong> A cotação atual (R$ ' + operacao.ativoAtual.toFixed(2) + ') está acima do strike (R$ 34,50), o que é favorável para sua operação de <strong>venda de PUT</strong>. O prêmio valorizou significativamente, gerando um lucro unrealizado de <strong>R$ ' + Math.abs(Math.round(lucro)) + '</strong>.';
+            } else {
+                analysisText.innerHTML = '<strong>Atenção:</strong> A volatilidade aumentou. A cotação atual (R$ ' + operacao.ativoAtual.toFixed(2) + ') está próxima do strike. O lucro unrealizado目前 é de <strong>R$ ' + Math.abs(Math.round(lucro)) + '</strong>. Monitore de perto.';
+            }
+        }
+
+        document.getElementById('timestamp').textContent = new Date().toLocaleTimeString('pt-BR');
+        atualizarInterface();
+    </script>
+</body>
+</html>

@@ -103,6 +103,25 @@ function formatDateCell(dateStr) {
     return `<span data-order="${Number.isFinite(ts) ? ts : ''}">${formatDate(dateStr)}</span>`;
 }
 
+/**
+ * Calcula a duração em dias entre a data de abertura e o vencimento.
+ * Usa setHours(0,0,0,0) para evitar erro de fuso horário.
+ * @param {string} dataOperacao - Data de abertura (YYYY-MM-DD ou DD/MM/YYYY)
+ * @param {string} vencimento   - Data de vencimento
+ * @returns {number|null}       - Dias ou null se dados inválidos
+ */
+function calcularDuracaoDias(dataOperacao, vencimento) {
+    if (!dataOperacao || !vencimento) return null;
+    const inicio = parseDateInput(dataOperacao);
+    const fim    = parseDateInput(vencimento);
+    if (!inicio || !fim || isNaN(inicio.getTime()) || isNaN(fim.getTime())) return null;
+    inicio.setHours(0, 0, 0, 0);
+    fim.setHours(0, 0, 0, 0);
+    const diff = Math.round((fim - inicio) / (1000 * 60 * 60 * 24));
+    return diff < 0 ? null : diff;
+}
+window.calcularDuracaoDias = calcularDuracaoDias;
+
 // Obter mes/ano atual
 function getCurrentMonth() {
     const now = new Date();

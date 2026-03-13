@@ -889,7 +889,7 @@ function updateDetalheUI(op, spotPrice, optionPrice) {
     
     // Atualizar matriz de risco
     updateRiskMatrix(op, spotPrice, premioTotal, capitalRisco);
-    
+
     // Remover loading dos cards
     hideCardLoading();
 }
@@ -913,6 +913,186 @@ function hideCardLoading() {
     hideLoading('detCustoRecompra');
     hideLoading('detResultLiquido');
     hideLoading('detROIAtual');
+}
+
+/**
+ * Atualiza o painel "Posição Atual" no topo da aba Performance
+ */
+function updatePosicaoAtualPanel(op, spotPrice, optionPrice, mtm, premioTotal, custoRecompra,
+    distanciaAtual, distanciaAbertura, diasRestantes, probLucro, breakeven) {
+
+    const setT = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+    const setH = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+
+    const strike         = Number.parseFloat(op.strike);
+    const premioAb       = Math.abs(Number.parseFloat(op.premio || op.preco_entrada || 0));
+    const precoAb        = Number.parseFloat(op.preco_ativo_base || op.strike || strike);
+    const qtdAbs         = Math.abs(Number.parseInt(op.quantidade));
+    const isVenda        = op.tipo_operacao === 'VENDA' || (op.tipo_operacao === undefined && Number.parseInt(op.quantidade) < 0);
+    const tipo           = String(op.tipo || 'CALL').toUpperCase();
+    const ativoBase      = op.ativo_base || op.ativo.substring(0, 5);
+    const statusOp       = String(op.status || 'ABERTA').toUpperCase();
+
+    // ---- Banner de status ----
+    const tipoBadgeEl = document.getElementById('posTipoBadge');
+    if (tipoBadgeEl) {
+        tipoBadgeEl.textContent = tipo;
+        tipoBadgeEl.className = `badge fs-4 ${tipo === 'PUT' ? 'bg-yellow text-yellow-fg' : 'bg-cyan text-cyan-fg'}`;
+    }
+    setT('posStatusLabel', `Posição Atual — ${tipo} ${ativoBase}`);
+
+    // ITM / OTM badge
+    const isITM = tipo === 'PUT' ? spotPrice < strike : spotPrice > strike;
+    const itmEl = document.getElementById('posITMOTMBadge');
+    if (itmEl) {
+        itmEl.textContent = isITM ? '⚠️ ITM' : '✅ OTM';
+        itmEl.className   = `badge ${isITM ? 'bg-danger' : 'bg-success'}`;
+    }
+
+    // Risco de exercício
+    const distPct = distanciaAtual;
+    const riscoEl = document.getElementById('posExercicioRisco');
+    if (riscoEl) {
+        if (isITM) {
+            riscoEl.textContent = '🔴 NO DINHEIRO';
+            riscoEl.className   = 'badge bg-danger';
+        } else if (distPct < 2) {
+            riscoEl.textContent = '🟠 PRÓXIMO AO STRIKE';
+            riscoEl.className   = 'badge bg-warning text-dark';
+        } else if (distPct < 5) {
+            riscoEl.textContent = '🟡 MONITORAR';
+            riscoEl.className   = 'badge bg-yellow text-dark';
+        } else {
+            riscoEl.textContent = '🟢 SEGURO';
+            riscoEl.className   = 'badge bg-success';
+        }
+    }
+
+    // Timestamp
+    const now = new Date();
+    setT('posUltimaAtt', now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
+
+    // ---- Linha da Abertura ----
+    setT('posAtivoAbertura',    formatCurrencyBR(precoAb));
+    setT('posPremioAberturaUnit', formatCurrencyBR(premioAb));
+    setT('posTotalPremioAb',    formatCurrencyBR(premioTotal));
+    setT('posDistAbertura',     distanciaAbertura.toFixed(2) + '%');
+    setT('posPctPremioAb',      '100%');
+
+    // Dias abertos (da data da operação até hoje)
+    let diasAbertos = 0;
+    if (op.data_operacao) {
+        const dataAb = parseDateInput(op.data_operacao);
+        if (dataAb) {
+            diasAbertos = Math.max(0, Math.round((new Date() - dataAb) / 86400000));
+        }
+    }
+    setT('posDiasAberto', diasAbertos > 0 ? diasAbertos + 'd' : '—');
+
+    // ---- Linha Atual ----
+    setT('posAtivoAtual',       formatCurrencyBR(spotPrice));
+    setT('posPremioAtualUnit',  formatCurrencyBR(optionPrice));
+    setT('posCustoRecompraPos', formatCurrencyBR(isVenda ? custoRecompra : optionPrice * qtdAbs));
+    setT('posDistAtual',        distanciaAtual.toFixed(2) + '%');
+
+    // % prêmio restante
+    const pctRestante = premioAb > 0 ? Math.max(0, Math.min(100, (optionPrice / premioAb) * 100)) : 0;
+    const pctCapturado = 100 - pctRestante;
+    const corPct = pctRestante < 30 ? 'text-success' : pctRestante < 60 ? 'text-yellow' : 'text-danger';
+    setH('posPctPremioAtual', `<span class="${corPct} fw-bold">${pctRestante.toFixed(1)}% restante</span>`);
+    setT('posDiasRestantesPos', diasRestantes + 'd');
+
+    // ---- Linha de Resultado ----
+    const varCotacao = spotPrice - precoAb;
+    const varPremioUnit = optionPrice - premioAb;
+    const roiAtual = premioTotal > 0 ? (mtm / premioTotal * 100) : 0;
+
+    const colorMTM = mtm >= 0 ? 'text-success' : 'text-danger';
+    setH('posMTMTotal',     `<span class="${colorMTM}">${mtm >= 0 ? '+' : ''}${formatCurrencyBR(mtm)}</span>`);
+    setH('posMTMPct',       `<span class="${colorMTM}">${roiAtual >= 0 ? '+' : ''}${roiAtual.toFixed(1)}%</span>`);
+    setH('posVarCotacao',   `<span class="${varCotacao >= 0 ? 'text-success' : 'text-danger'}">${varCotacao >= 0 ? '+' : ''}${formatCurrencyBR(varCotacao)}</span>`);
+    const varPremioColor = isVenda ? (varPremioUnit < 0 ? 'text-success' : 'text-danger') : (varPremioUnit > 0 ? 'text-success' : 'text-danger');
+    setH('posVarPremioUnit', `<span class="${varPremioColor}">${varPremioUnit >= 0 ? '+' : ''}${formatCurrencyBR(varPremioUnit)}</span>`);
+    const varDist = distanciaAtual - distanciaAbertura;
+    const varDistColor = isVenda ? (varDist < 0 ? 'text-danger' : 'text-success') : (varDist > 0 ? 'text-success' : 'text-danger');
+    setH('posVarDist',      `<span class="${varDistColor}">${varDist >= 0 ? '+' : ''}${varDist.toFixed(2)} pp</span>`);
+
+    // ---- Decay do Prêmio ----
+    setT('posDecayAb',    formatCurrencyBR(premioAb));
+    setT('posDecayAtual', formatCurrencyBR(optionPrice));
+    setT('posDecayPct',   pctCapturado.toFixed(1) + '% capturado');
+    const decayBar = document.getElementById('posDecayBar');
+    if (decayBar) decayBar.style.width = Math.min(pctCapturado, 100) + '%';
+
+    // ---- Linha do Tempo ----
+    let percTempo = 0;
+    let diasTotais = 0;
+    if (op.data_operacao) {
+        const dataAb = parseDateInput(op.data_operacao);
+        const dataVcto = parseDateInput(op.vencimento);
+        if (dataAb && dataVcto) {
+            diasTotais = Math.max(1, Math.round((dataVcto - dataAb) / 86400000));
+            percTempo  = Math.min(100, Math.round((diasAbertos / diasTotais) * 100));
+        }
+    }
+    const tempoBar = document.getElementById('posTempoBar');
+    if (tempoBar) tempoBar.style.width = percTempo + '%';
+    setT('posPercTempo',        percTempo + '%');
+    setT('posDataAberturaLabel', op.data_operacao ? formatDate(op.data_operacao) : '—');
+    setT('posVencimentoLabel',   op.vencimento    ? formatDate(op.vencimento)    : '—');
+    setT('posDiasCorridosLabel', diasAbertos + ' corridos');
+    setT('posDiasRestLabel',     diasRestantes + ' restantes');
+
+    // ---- Indicadores rápidos ----
+    setT('posBreakevenLabel', formatCurrencyBR(breakeven));
+    setT('posPoPAtual',       probLucro.toFixed(1) + '%');
+
+    // Theta simplificado: prêmio atual / dias restantes por dia
+    const theta = diasRestantes > 0 ? (optionPrice * qtdAbs / diasRestantes) : 0;
+    setT('posThetaDia', `+${formatCurrencyBR(theta)}/dia`);
+    const corROI = roiAtual >= 0 ? 'text-success' : 'text-danger';
+    setH('posROIAtual2', `<span class="${corROI}">${roiAtual >= 0 ? '+' : ''}${roiAtual.toFixed(1)}%</span>`);
+
+    // ---- Painel de Decisão ----
+    const card = document.getElementById('posDecisaoCard');
+    const icon  = document.getElementById('posDecisaoIcon');
+    const label = document.getElementById('posDecisaoLabel');
+    const desc  = document.getElementById('posDecisaoDesc');
+    const bdg   = document.getElementById('posDecisaoBadge');
+
+    card?.classList.remove('decisao-manter', 'decisao-monitor', 'decisao-rolar', 'decisao-fechar');
+
+    if (statusOp === 'FECHADA') {
+        if (card)  card.classList.add('decisao-manter');
+        if (icon)  icon.textContent  = '✅';
+        if (label) label.textContent = 'ENCERRADA';
+        if (desc)  desc.textContent  = 'Operação já fechada';
+        if (bdg)   { bdg.textContent = 'FECHADA'; bdg.className = 'badge bg-secondary mt-2'; }
+    } else if (isITM) {
+        if (card)  card.classList.add('decisao-fechar');
+        if (icon)  icon.textContent  = '🔴';
+        if (label) label.textContent = 'ATENÇÃO!';
+        if (desc)  desc.textContent  = 'No dinheiro — avaliar rolagem ou encerramento';
+        if (bdg)   { bdg.textContent = `ITM ${distanciaAtual.toFixed(1)}% dentro`; bdg.className = 'badge bg-danger mt-2'; }
+    } else if (distanciaAtual < 2) {
+        if (card)  card.classList.add('decisao-rolar');
+        if (icon)  icon.textContent  = '🟠';
+        if (label) label.textContent = 'CONSIDERAR ROLAR';
+        if (desc)  desc.textContent  = 'Muito próximo ao strike';
+        if (bdg)   { bdg.textContent = `Dist. ${distanciaAtual.toFixed(2)}% do strike`; bdg.className = 'badge bg-warning text-dark mt-2'; }
+    } else if (distanciaAtual < 5) {
+        if (card)  card.classList.add('decisao-monitor');
+        if (icon)  icon.textContent  = '🟡';
+        if (label) label.textContent = 'MONITORAR';
+        if (desc)  desc.textContent  = 'Posição sob atenção';
+        if (bdg)   { bdg.textContent = `Dist. ${distanciaAtual.toFixed(2)}% — PoP ${probLucro.toFixed(0)}%`; bdg.className = 'badge bg-yellow text-dark mt-2'; }
+    } else {
+        if (card)  card.classList.add('decisao-manter');
+        if (icon)  icon.textContent  = '🟢';
+        if (label) label.textContent = 'MANTER';
+        if (desc)  desc.textContent  = `Posição segura — ${pctCapturado.toFixed(0)}% do prêmio capturado`;
+        if (bdg)   { bdg.textContent = `Dist. ${distanciaAtual.toFixed(2)}% — PoP ${probLucro.toFixed(0)}%`; bdg.className = 'badge bg-success mt-2'; }
+    }
 }
 
 /**

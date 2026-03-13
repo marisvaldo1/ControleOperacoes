@@ -1,0 +1,1517 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ideias de Gráficos - Posições Abertas (Venda PUT)</title>
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <style>
+        :root {
+            --bg-dark: #1a2332;
+            --bg-card: #283544;
+            --bg-secondary: #354556;
+            --border-color: #3d4f63;
+            --text-primary: #e1e8ed;
+            --text-secondary: #94a3b8;
+            --danger: #ef4444;
+            --success: #22c55e;
+            --warning: #f59f00;
+            --primary: #3b82f6;
+        }
+        
+        body {
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            padding: 20px;
+        }
+        
+        .container-fluid {
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+        
+        .page-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+        
+        .page-title {
+            font-size: 3rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary), var(--success));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+        
+        /* Version Container */
+        .version-showcase {
+            margin-bottom: 80px;
+            background: var(--bg-card);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+        
+        .version-header {
+            background: linear-gradient(135deg, var(--primary), #2563eb);
+            color: white;
+            padding: 2rem;
+        }
+        
+        .version-number {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 800;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+        
+        .version-title {
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin: 0;
+        }
+        
+        .version-body {
+            padding: 2.5rem;
+        }
+        
+        /* Chart Section */
+        .chart-section {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+        }
+        
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .chart-title {
+            font-size: 0.875rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .chart-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+        
+        /* Info Box */
+        .info-box {
+            background: var(--bg-card);
+            border-radius: 8px;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+        }
+        
+        .info-label {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+        
+        .info-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+        }
+        
+        .info-change {
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+        
+        /* Grid Layouts */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+        }
+        
+        /* Explanation Box */
+        .explanation-box {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid var(--primary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .explanation-title {
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .explanation-content {
+            line-height: 1.8;
+            color: var(--text-secondary);
+        }
+        
+        /* Tabs */
+        .tabs-container {
+            display: flex;
+            gap: 4px;
+            background: var(--bg-card);
+            padding: 4px;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+        
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        /* Metric Cards */
+        .metric-card {
+            background: var(--bg-card);
+            border-radius: 8px;
+            padding: 1.25rem;
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+        
+        .metric-label {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 0.75rem;
+        }
+        
+        .metric-value {
+            font-size: 1.75rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+        
+        .metric-change {
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+        }
+
+        /* Tab content */
+        .tab-content {
+            display: block;
+        }
+        .tab-content.hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="page-header">
+            <h1 class="page-title">📊 Ideias de Gráficos - Posições Abertas</h1>
+            <p class="text-muted fs-4">Venda PUT PETRO424W2 - Visualizações em Tempo Real</p>
+        </div>
+
+        <!-- ============================================
+             IDEIA 1: GRÁFICO DE EVOLUÇÃO TEMPORAL (3 PONTOS)
+             ============================================ -->
+        <div class="version-showcase">
+            <div class="version-header">
+                <div class="version-number">IDEIA 1 ⭐</div>
+                <div class="version-title">Gráfico de Evolução: Abertura → Hoje → Vencimento</div>
+            </div>
+            
+            <div class="version-body">
+                <div class="grid-2">
+                    <!-- Left: Timeline Chart -->
+                    <div class="chart-section">
+                        <div class="chart-header">
+                            <div>
+                                <div class="chart-title">
+                                    <i class="ti ti-chart-line"></i>
+                                    Evolução do Prêmio
+                                </div>
+                                <div class="chart-subtitle">Venda PUT • Strike R$ 42,40</div>
+                            </div>
+                        </div>
+                        <div id="evolutionChart1" style="height: 280px;"></div>
+                        
+                        <div style="margin-top: 1rem; display: flex; justify-content: space-around; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                            <div style="text-align: center;">
+                                <div style="font-size: 0.7rem; color: var(--text-secondary);">Abertura</div>
+                                <div style="font-size: 1rem; font-weight: 700; color: var(--success);">R$ 0,60</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 0.7rem; color: var(--text-secondary);">Hoje</div>
+                                <div style="font-size: 1rem; font-weight: 700; color: var(--danger);">R$ 0,92</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 0.7rem; color: var(--text-secondary);">Projeção Venc.</div>
+                                <div style="font-size: 1rem; font-weight: 700; color: var(--success);">R$ 0,00</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right: Strike vs Ativo -->
+                    <div class="chart-section">
+                        <div class="chart-header">
+                            <div>
+                                <div class="chart-title">
+                                    <i class="ti ti-target"></i>
+                                    Ativo Base vs Strike
+                                </div>
+                                <div class="chart-subtitle">Distância atual: +0,59% (OTM)</div>
+                            </div>
+                        </div>
+                        <div id="strikeChart1" style="height: 280px;"></div>
+                        
+                        <div style="margin-top: 1rem; display: flex; justify-content: space-around; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                            <div style="text-align: center;">
+                                <div style="font-size: 0.7rem; color: var(--text-secondary);">Strike</div>
+                                <div style="font-size: 1rem; font-weight: 700;">R$ 42,40</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 0.7rem; color: var(--text-secondary);">Ativo Atual</div>
+                                <div style="font-size: 1rem; font-weight: 700; color: var(--success);">R$ 42,65</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 0.7rem; color: var(--text-secondary);">Dias p/ Venc.</div>
+                                <div style="font-size: 1rem; font-weight: 700; color: var(--warning);">3</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- P&L Overview -->
+                <div class="grid-3" style="margin-top: 1.5rem;">
+                    <div class="metric-card" style="border-color: var(--success);">
+                        <div class="metric-label">Prêmio Recebido</div>
+                        <div class="metric-value" style="color: var(--success);">R$ 360,00</div>
+                        <div class="metric-change" style="color: var(--text-secondary);">R$ 0,60 x 600 contratos</div>
+                    </div>
+                    
+                    <div class="metric-card" style="border-color: var(--danger);">
+                        <div class="metric-label">Custo Atual Recompra</div>
+                        <div class="metric-value" style="color: var(--danger);">R$ 552,00</div>
+                        <div class="metric-change" style="color: var(--danger);">
+                            <i class="ti ti-arrow-up"></i>
+                            R$ 0,92 x 600 contratos (+53%)
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card" style="border-color: var(--danger); background: rgba(239, 68, 68, 0.1);">
+                        <div class="metric-label">P&L Não Realizado</div>
+                        <div class="metric-value" style="color: var(--danger);">-R$ 192,00</div>
+                        <div class="metric-change" style="color: var(--danger);">
+                            Se recomprar agora
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Explanation -->
+                <div class="explanation-box">
+                    <div class="explanation-title">
+                        <i class="ti ti-info-circle"></i>
+                        O que significa -R$ 192,00 de lucro aberto?
+                    </div>
+                    <div class="explanation-content">
+                        <strong>Você VENDEU uma PUT por R$ 360,00 (R$ 0,60 x 600)</strong><br>
+                        → Para fechar a posição agora, precisaria RECOMPRAR por R$ 552,00 (R$ 0,92 x 600)<br>
+                        → <strong style="color: var(--danger);">Prejuízo atual: R$ 360,00 - R$ 552,00 = -R$ 192,00</strong><br><br>
+                        
+                        <strong style="color: var(--success);">Cenário Ideal:</strong> O prêmio cair para R$ 0,00 no vencimento (ativo acima do strike)<br>
+                        → Você fica com os R$ 360,00 que recebeu na venda (lucro máximo)<br><br>
+                        
+                        <strong style="color: var(--danger);">Situação Atual:</strong> O prêmio AUMENTOU de R$ 0,60 → R$ 0,92 (+53%)<br>
+                        → Isso é ruim para quem vendeu! Você teria prejuízo se fechar agora.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================
+             IDEIA 2: COMPARATIVO ABERTURA VS ATUAL (BARRAS)
+             ============================================ -->
+        <div class="version-showcase">
+            <div class="version-header">
+                <div class="version-number">IDEIA 2</div>
+                <div class="version-title">Comparativo com Barras Horizontais</div>
+            </div>
+            
+            <div class="version-body">
+                <div class="chart-section">
+                    <div class="chart-header">
+                        <div>
+                            <div class="chart-title">
+                                <i class="ti ti-arrow-right"></i>
+                                Abertura vs Atual
+                            </div>
+                            <div class="chart-subtitle">Venda PUT • Quanto menor o prêmio, melhor!</div>
+                        </div>
+                    </div>
+                    <div id="comparisonChart2" style="height: 200px;"></div>
+                </div>
+                
+                <div class="grid-2">
+                    <div class="chart-section">
+                        <div class="chart-header">
+                            <div class="chart-title">
+                                <i class="ti ti-coin"></i>
+                                Valor em Reais
+                            </div>
+                        </div>
+                        <div id="valueChart2" style="height: 250px;"></div>
+                    </div>
+                    
+                    <div class="chart-section">
+                        <div class="chart-header">
+                            <div class="chart-title">
+                                <i class="ti ti-activity"></i>
+                                Payoff Venda PUT
+                            </div>
+                        </div>
+                        <div id="payoffChart2" style="height: 250px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================
+             IDEIA 3: MEDIDORES (GAUGES) + RISCO
+             ============================================ -->
+        <div class="version-showcase">
+            <div class="version-header">
+                <div class="version-number">IDEIA 3</div>
+                <div class="version-title">Medidores Visuais + Indicadores de Risco</div>
+            </div>
+            
+            <div class="version-body">
+                <div class="grid-3">
+                    <!-- Gauge: Variação Prêmio -->
+                    <div class="chart-section">
+                        <div class="chart-header">
+                            <div class="chart-title">
+                                <i class="ti ti-gauge"></i>
+                                Variação do Prêmio
+                            </div>
+                        </div>
+                        <div id="gaugeVariacao" style="height: 200px;"></div>
+                        <div style="text-align: center; margin-top: 1rem;">
+                            <div style="font-size: 2rem; font-weight: 900; color: var(--danger);">+53%</div>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary);">Prêmio aumentou (ruim!)</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Gauge: Distância Strike -->
+                    <div class="chart-section">
+                        <div class="chart-header">
+                            <div class="chart-title">
+                                <i class="ti ti-target"></i>
+                                Distância do Strike
+                            </div>
+                        </div>
+                        <div id="gaugeDistancia" style="height: 200px;"></div>
+                        <div style="text-align: center; margin-top: 1rem;">
+                            <div style="font-size: 2rem; font-weight: 900; color: var(--success);">+0,59%</div>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary);">OTM • Ativo acima strike</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Gauge: Tempo até Vencimento -->
+                    <div class="chart-section">
+                        <div class="chart-header">
+                            <div class="chart-title">
+                                <i class="ti ti-clock"></i>
+                                Tempo Restante
+                            </div>
+                        </div>
+                        <div id="gaugeTempo" style="height: 200px;"></div>
+                        <div style="text-align: center; margin-top: 1rem;">
+                            <div style="font-size: 2rem; font-weight: 900; color: var(--warning);">3 dias</div>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary);">Até 13/03/2026</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Risk Meter -->
+                <div class="chart-section" style="margin-top: 1.5rem;">
+                    <div class="chart-header">
+                        <div>
+                            <div class="chart-title">
+                                <i class="ti ti-alert-triangle"></i>
+                                Análise de Risco
+                            </div>
+                            <div class="chart-subtitle">Venda PUT • Risco se ativo cair abaixo de R$ 42,40</div>
+                        </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-top: 1.5rem;">
+                        <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid var(--success); border-radius: 8px; padding: 1rem; text-align: center;">
+                            <div style="font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.5rem;">CENÁRIO IDEAL</div>
+                            <div style="font-size: 1.25rem; font-weight: 800; color: var(--success);">Ativo > R$ 42,40</div>
+                            <div style="font-size: 0.75rem; margin-top: 0.5rem;">Lucro máximo: R$ 360</div>
+                        </div>
+                        
+                        <div style="background: rgba(34, 197, 94, 0.05); border: 1px solid var(--success); border-radius: 8px; padding: 1rem; text-align: center;">
+                            <div style="font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.5rem;">ATUAL</div>
+                            <div style="font-size: 1.25rem; font-weight: 800; color: var(--success);">R$ 42,65</div>
+                            <div style="font-size: 0.75rem; margin-top: 0.5rem; color: var(--success);">✓ Acima do strike</div>
+                        </div>
+                        
+                        <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--danger); border-radius: 8px; padding: 1rem; text-align: center;">
+                            <div style="font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.5rem;">RISCO SE</div>
+                            <div style="font-size: 1.25rem; font-weight: 800; color: var(--danger);">Ativo < R$ 42,40</div>
+                            <div style="font-size: 0.75rem; margin-top: 0.5rem;">Prejuízo ilimitado</div>
+                        </div>
+                        
+                        <div style="background: rgba(239, 68, 68, 0.15); border: 2px solid var(--danger); border-radius: 8px; padding: 1rem; text-align: center;">
+                            <div style="font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.5rem;">P&L ATUAL</div>
+                            <div style="font-size: 1.25rem; font-weight: 800; color: var(--danger);">-R$ 192,00</div>
+                            <div style="font-size: 0.75rem; margin-top: 0.5rem; color: var(--danger);">Se recomprar agora</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================
+             IDEIA 4: TIMELINE COM MARCOS
+             ============================================ -->
+        <div class="version-showcase">
+            <div class="version-header">
+                <div class="version-number">IDEIA 4 ⭐</div>
+                <div class="version-title">Timeline com Marcos Importantes</div>
+            </div>
+            
+            <div class="version-body">
+                <div class="chart-section">
+                    <div class="chart-header">
+                        <div>
+                            <div class="chart-title">
+                                <i class="ti ti-timeline"></i>
+                                Jornada da Operação
+                            </div>
+                            <div class="chart-subtitle">10/03 (Abertura) → 13/03 (Hoje) → 13/03 (Vencimento)</div>
+                        </div>
+                    </div>
+                    
+                    <div id="timelineChart4" style="height: 300px;"></div>
+                    
+                    <!-- Timeline Info -->
+                    <div style="margin-top: 2rem; display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem;">
+                        <div style="text-align: center; padding: 1.5rem; background: rgba(34, 197, 94, 0.1); border-radius: 12px;">
+                            <div style="font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.75rem;">📍 ABERTURA (10/03)</div>
+                            <div style="font-size: 1.5rem; font-weight: 800; color: var(--success); margin-bottom: 0.5rem;">R$ 0,60</div>
+                            <div style="font-size: 0.875rem; margin-bottom: 0.25rem;">Vendeu PUT</div>
+                            <div style="font-size: 0.75rem; color: var(--success);">✓ Recebeu R$ 360,00</div>
+                        </div>
+                        
+                        <div style="text-align: center; padding: 1.5rem; background: rgba(239, 68, 68, 0.1); border: 2px solid var(--danger); border-radius: 12px;">
+                            <div style="font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.75rem;">🔴 HOJE (13/03 15:20)</div>
+                            <div style="font-size: 1.5rem; font-weight: 800; color: var(--danger); margin-bottom: 0.5rem;">R$ 0,92</div>
+                            <div style="font-size: 0.875rem; margin-bottom: 0.25rem;">Prêmio atual</div>
+                            <div style="font-size: 0.75rem; color: var(--danger);">⚠️ Pagaria R$ 552 para fechar</div>
+                        </div>
+                        
+                        <div style="text-align: center; padding: 1.5rem; background: rgba(34, 197, 94, 0.05); border-radius: 12px; border: 1px dashed var(--success);">
+                            <div style="font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.75rem;">🎯 VENCIMENTO (13/03)</div>
+                            <div style="font-size: 1.5rem; font-weight: 800; color: var(--success); margin-bottom: 0.5rem;">R$ 0,00</div>
+                            <div style="font-size: 0.875rem; margin-bottom: 0.25rem;">Projeção ideal</div>
+                            <div style="font-size: 0.75rem; color: var(--success);">✓ Lucro total R$ 360</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- P&L Evolution -->
+                <div class="chart-section" style="margin-top: 1.5rem;">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <i class="ti ti-trending-up"></i>
+                            Evolução do P&L
+                        </div>
+                    </div>
+                    <div id="plEvolution4" style="height: 200px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================
+             IDEIA 5: DASHBOARD COMPLETO COM ABAS
+             ============================================ -->
+        <div class="version-showcase">
+            <div class="version-header">
+                <div class="version-number">IDEIA 5 ⭐⭐</div>
+                <div class="version-title">Dashboard Completo com Abas (Visão Geral | Payoff | Risco)</div>
+            </div>
+            
+            <div class="version-body">
+                <!-- Tabs -->
+                <div class="tabs-container" id="tabContainer">
+                    <button class="tab-btn active" data-tab="geral">
+                        <i class="ti ti-chart-line"></i>
+                        Visão Geral
+                    </button>
+                    <button class="tab-btn" data-tab="payoff">
+                        <i class="ti ti-chart-area"></i>
+                        Payoff
+                    </button>
+                    <button class="tab-btn" data-tab="risco">
+                        <i class="ti ti-alert-triangle"></i>
+                        Análise de Risco
+                    </button>
+                </div>
+                
+                <!-- ABA 1: Visão Geral -->
+                <div id="tab-geral" class="tab-content">
+                    <div class="grid-2">
+                        <div class="chart-section">
+                            <div class="chart-header">
+                                <div class="chart-title">
+                                    <i class="ti ti-chart-line"></i>
+                                    Evolução do Prêmio
+                                </div>
+                            </div>
+                            <div id="evolutionTab1" style="height: 250px;"></div>
+                        </div>
+                        
+                        <div class="chart-section">
+                            <div class="chart-header">
+                                <div class="chart-title">
+                                    <i class="ti ti-coins"></i>
+                                    Breakdown Financeiro
+                                </div>
+                            </div>
+                            <div id="financialTab1" style="height: 250px;"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Stats -->
+                    <div class="grid-3" style="margin-top: 1.5rem;">
+                        <div class="metric-card">
+                            <div class="metric-label">
+                                <i class="ti ti-moneybag"></i>
+                                Prêmio Recebido
+                            </div>
+                            <div class="metric-value" style="color: var(--success);">R$ 360,00</div>
+                            <div class="metric-change" style="color: var(--text-secondary);">
+                                Na venda da PUT
+                            </div>
+                        </div>
+                        
+                        <div class="metric-card" style="border-color: var(--danger);">
+                            <div class="metric-label">
+                                <i class="ti ti-alert-circle"></i>
+                                Custo Recompra
+                            </div>
+                            <div class="metric-value" style="color: var(--danger);">R$ 552,00</div>
+                            <div class="metric-change" style="color: var(--danger);">
+                                <i class="ti ti-arrow-up"></i>
+                                +53% do inicial
+                            </div>
+                        </div>
+                        
+                        <div class="metric-card" style="background: rgba(239, 68, 68, 0.1); border-color: var(--danger);">
+                            <div class="metric-label">
+                                <i class="ti ti-trending-down"></i>
+                                P&L Não Realizado
+                            </div>
+                            <div class="metric-value" style="color: var(--danger);">-R$ 192,00</div>
+                            <div class="metric-change" style="color: var(--danger);">
+                                Prejuízo atual
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ABA 2: Payoff (inicialmente oculta) -->
+                <div id="tab-payoff" class="tab-content hidden">
+                    <div class="chart-section">
+                        <div class="chart-header">
+                            <div class="chart-title">
+                                <i class="ti ti-chart-area"></i>
+                                Payoff da Venda PUT
+                            </div>
+                        </div>
+                        <div id="payoffTab2" style="height: 350px;"></div>
+                    </div>
+                    <div class="explanation-box" style="margin-top: 1rem;">
+                        <div class="explanation-title">
+                            <i class="ti ti-info-circle"></i>
+                            Entendendo o Payoff
+                        </div>
+                        <div class="explanation-content">
+                            <strong>Linha azul:</strong> lucro/prejuízo no vencimento para cada preço do ativo.<br>
+                            <strong>Ponto vermelho:</strong> preço atual do ativo (R$ 42,65).<br>
+                            Se o ativo fechar acima de R$ 42,40, você lucra R$ 360. Abaixo disso, começa a ter prejuízo.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ABA 3: Análise de Risco (inicialmente oculta) -->
+                <div id="tab-risco" class="tab-content hidden">
+                    <div class="grid-2">
+                        <div class="chart-section">
+                            <div class="chart-header">
+                                <div class="chart-title">
+                                    <i class="ti ti-alert-triangle"></i>
+                                    Medidor de Risco (Delta)
+                                </div>
+                            </div>
+                            <div id="riscoGauge" style="height: 200px;"></div>
+                        </div>
+                        <div class="chart-section">
+                            <div class="chart-header">
+                                <div class="chart-title">
+                                    <i class="ti ti-wave-sine"></i>
+                                    Sensibilidade (Gama)
+                                </div>
+                            </div>
+                            <div id="riscoGama" style="height: 200px;"></div>
+                        </div>
+                    </div>
+                    <div class="grid-2" style="margin-top: 1rem;">
+                        <div class="metric-card" style="border-color: var(--warning);">
+                            <div class="metric-label">Delta da Posição</div>
+                            <div class="metric-value" style="color: var(--warning);">-0,42</div>
+                            <div class="metric-change">Para cada R$1 de alta, opção sobe R$0,42</div>
+                        </div>
+                        <div class="metric-card" style="border-color: var(--primary);">
+                            <div class="metric-label">Theta (decaimento)</div>
+                            <div class="metric-value" style="color: var(--primary);">R$ 0,15/dia</div>
+                            <div class="metric-change">Perda de valor por dia (bom para vendedor)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/js/tabler.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const colors = {
+            danger: '#ef4444',
+            success: '#22c55e',
+            warning: '#f59f00',
+            primary: '#3b82f6',
+            secondary: '#94a3b8'
+        };
+
+        // ===== IDEIA 1 =====
+        
+        // Evolution Chart (3 pontos: abertura, hoje, vencimento)
+        if (document.querySelector("#evolutionChart1")) {
+            new ApexCharts(document.querySelector("#evolutionChart1"), {
+                series: [{
+                    name: 'Prêmio da PUT',
+                    data: [
+                        { x: 'Abertura\n10/03', y: 0.60 },
+                        { x: 'Hoje\n13/03', y: 0.92 },
+                        { x: 'Vencimento\n13/03 (projeção)', y: 0.00 }
+                    ]
+                }],
+                chart: {
+                    type: 'line',
+                    height: 280,
+                    toolbar: { show: false }
+                },
+                stroke: {
+                    curve: 'smooth',
+                    width: 3,
+                    colors: [colors.danger]
+                },
+                markers: {
+                    size: 8,
+                    colors: [colors.success, colors.danger, colors.success],
+                    strokeColors: '#fff',
+                    strokeWidth: 2
+                },
+                annotations: {
+                    yaxis: [{
+                        y: 0.60,
+                        borderColor: colors.success,
+                        strokeDashArray: 5,
+                        label: {
+                            text: 'Prêmio Venda: R$ 0,60',
+                            style: { background: colors.success }
+                        }
+                    }]
+                },
+                xaxis: {
+                    labels: { 
+                        style: { colors: colors.secondary, fontSize: '11px' }
+                    }
+                },
+                yaxis: {
+                    labels: {
+                        style: { colors: colors.secondary },
+                        formatter: (val) => 'R$ ' + val.toFixed(2)
+                    },
+                    min: 0,
+                    max: 1.0
+                },
+                grid: {
+                    borderColor: '#3d4f63',
+                    strokeDashArray: 3
+                },
+                tooltip: {
+                    theme: 'dark',
+                    y: { formatter: (val) => 'R$ ' + val.toFixed(2) }
+                }
+            }).render();
+        }
+
+        // Strike vs Ativo Chart
+        if (document.querySelector("#strikeChart1")) {
+            new ApexCharts(document.querySelector("#strikeChart1"), {
+                series: [{
+                    name: 'Valor',
+                    data: [
+                        { x: 'Strike\nPUT', y: 42.40 },
+                        { x: 'Ativo Base\nAtual', y: 42.65 }
+                    ]
+                }],
+                chart: {
+                    type: 'bar',
+                    height: 280,
+                    toolbar: { show: false }
+                },
+                plotOptions: {
+                    bar: {
+                        horizontal: false,
+                        columnWidth: '60%',
+                        dataLabels: { position: 'top' }
+                    }
+                },
+                colors: [colors.primary],
+                dataLabels: {
+                    enabled: true,
+                    formatter: (val) => 'R$ ' + val.toFixed(2),
+                    style: {
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        colors: ['#fff']
+                    },
+                    offsetY: -20
+                },
+                xaxis: {
+                    labels: { 
+                        style: { colors: colors.secondary, fontSize: '11px' }
+                    }
+                },
+                yaxis: {
+                    labels: {
+                        style: { colors: colors.secondary },
+                        formatter: (val) => 'R$ ' + val.toFixed(2)
+                    },
+                    min: 41,
+                    max: 44
+                },
+                grid: {
+                    borderColor: '#3d4f63',
+                    strokeDashArray: 3
+                },
+                tooltip: {
+                    theme: 'dark',
+                    y: { formatter: (val) => 'R$ ' + val.toFixed(2) }
+                }
+            }).render();
+        }
+
+        // ===== IDEIA 2 =====
+        
+        // Comparison Chart (horizontal bars)
+        if (document.querySelector("#comparisonChart2")) {
+            new ApexCharts(document.querySelector("#comparisonChart2"), {
+                series: [{
+                    name: 'Prêmio',
+                    data: [0.60, 0.92]
+                }],
+                chart: {
+                    type: 'bar',
+                    height: 200,
+                    toolbar: { show: false }
+                },
+                plotOptions: {
+                    bar: {
+                        horizontal: true,
+                        barHeight: '70%',
+                        dataLabels: { position: 'center' }
+                    }
+                },
+                colors: [colors.success, colors.danger],
+                dataLabels: {
+                    enabled: true,
+                    formatter: (val) => 'R$ ' + val.toFixed(2),
+                    style: {
+                        fontSize: '14px',
+                        fontWeight: 700,
+                        colors: ['#fff']
+                    }
+                },
+                xaxis: {
+                    categories: ['Abertura (Vendeu)', 'Atual (Recompra)'],
+                    labels: {
+                        style: { colors: colors.secondary },
+                        formatter: (val) => 'R$ ' + val.toFixed(2)
+                    }
+                },
+                yaxis: {
+                    labels: { style: { colors: colors.secondary, fontSize: '12px' } }
+                },
+                grid: {
+                    borderColor: '#3d4f63',
+                    strokeDashArray: 3
+                },
+                tooltip: {
+                    theme: 'dark',
+                    y: { formatter: (val) => 'R$ ' + val.toFixed(2) }
+                }
+            }).render();
+        }
+
+        // Value Chart (total em reais)
+        if (document.querySelector("#valueChart2")) {
+            new ApexCharts(document.querySelector("#valueChart2"), {
+                series: [{
+                    name: 'Valor Total',
+                    data: [
+                        { x: 'Recebeu\n(Venda)', y: 360 },
+                        { x: 'Precisa Pagar\n(Recompra)', y: 552 },
+                        { x: 'P&L', y: -192 }
+                    ]
+                }],
+                chart: {
+                    type: 'bar',
+                    height: 250,
+                    toolbar: { show: false }
+                },
+                plotOptions: {
+                    bar: {
+                        columnWidth: '60%',
+                        dataLabels: { position: 'top' }
+                    }
+                },
+                colors: [colors.success, colors.danger, colors.danger],
+                dataLabels: {
+                    enabled: true,
+                    formatter: (val) => 'R$ ' + val.toFixed(0),
+                    style: {
+                        fontSize: '13px',
+                        fontWeight: 700,
+                        colors: ['#fff']
+                    },
+                    offsetY: -20
+                },
+                xaxis: {
+                    labels: { style: { colors: colors.secondary, fontSize: '11px' } }
+                },
+                yaxis: {
+                    labels: {
+                        style: { colors: colors.secondary },
+                        formatter: (val) => 'R$ ' + val.toFixed(0)
+                    }
+                },
+                grid: {
+                    borderColor: '#3d4f63',
+                    strokeDashArray: 3
+                },
+                tooltip: {
+                    theme: 'dark',
+                    y: { formatter: (val) => 'R$ ' + val.toFixed(2) }
+                }
+            }).render();
+        }
+
+        // Payoff Chart
+        if (document.querySelector("#payoffChart2")) {
+            // Payoff de venda de PUT: lucro até strike, prejuízo abaixo
+            const strikePrice = 42.40;
+            const premioRecebido = 0.60;
+            
+            // Gera pontos do payoff
+            const pontos = [];
+            for (let price = 38; price <= 46; price += 0.5) {
+                let payoff;
+                if (price >= strikePrice) {
+                    // Acima do strike: lucro = prêmio recebido
+                    payoff = premioRecebido;
+                } else {
+                    // Abaixo do strike: prejuízo = strike - preço + prêmio
+                    payoff = price - strikePrice + premioRecebido;
+                }
+                pontos.push({ x: price, y: payoff });
+            }
+            
+            new ApexCharts(document.querySelector("#payoffChart2"), {
+                series: [{
+                    name: 'Payoff',
+                    data: pontos
+                }],
+                chart: {
+                    type: 'line',
+                    height: 250,
+                    toolbar: { show: false }
+                },
+                stroke: {
+                    curve: 'straight',
+                    width: 3,
+                    colors: [colors.success]
+                },
+                annotations: {
+                    xaxis: [{
+                        x: strikePrice,
+                        borderColor: colors.warning,
+                        strokeDashArray: 5,
+                        label: {
+                            text: 'Strike R$ 42,40',
+                            style: { background: colors.warning }
+                        }
+                    }, {
+                        x: 42.65,
+                        borderColor: colors.success,
+                        strokeDashArray: 5,
+                        label: {
+                            text: 'Ativo Atual',
+                            style: { background: colors.success }
+                        }
+                    }],
+                    yaxis: [{
+                        y: 0,
+                        borderColor: colors.secondary,
+                        strokeDashArray: 3
+                    }]
+                },
+                xaxis: {
+                    labels: {
+                        style: { colors: colors.secondary },
+                        formatter: (val) => 'R$ ' + val.toFixed(0)
+                    }
+                },
+                yaxis: {
+                    labels: {
+                        style: { colors: colors.secondary },
+                        formatter: (val) => 'R$ ' + val.toFixed(2)
+                    }
+                },
+                grid: {
+                    borderColor: '#3d4f63',
+                    strokeDashArray: 3
+                },
+                tooltip: {
+                    theme: 'dark',
+                    x: { formatter: (val) => 'Preço Ativo: R$ ' + val.toFixed(2) },
+                    y: { formatter: (val) => 'Lucro/Prejuízo: R$ ' + val.toFixed(2) }
+                }
+            }).render();
+        }
+
+        // ===== IDEIA 3: Gauges =====
+        
+        // Gauge Variação (53%)
+        if (document.querySelector("#gaugeVariacao")) {
+            new ApexCharts(document.querySelector("#gaugeVariacao"), {
+                series: [53],
+                chart: {
+                    type: 'radialBar',
+                    height: 200,
+                    toolbar: { show: false }
+                },
+                plotOptions: {
+                    radialBar: {
+                        startAngle: -135,
+                        endAngle: 135,
+                        track: {
+                            background: '#333',
+                            startAngle: -135,
+                            endAngle: 135,
+                        },
+                        dataLabels: {
+                            name: { show: false },
+                            value: {
+                                fontSize: '20px',
+                                fontWeight: 700,
+                                color: colors.danger,
+                                formatter: (val) => val + '%'
+                            }
+                        }
+                    }
+                },
+                fill: {
+                    colors: [colors.danger]
+                },
+                stroke: {
+                    lineCap: 'round'
+                },
+                labels: ['Variação']
+            }).render();
+        }
+
+        // Gauge Distância (0.59%)
+        if (document.querySelector("#gaugeDistancia")) {
+            new ApexCharts(document.querySelector("#gaugeDistancia"), {
+                series: [0.59],
+                chart: {
+                    type: 'radialBar',
+                    height: 200,
+                    toolbar: { show: false }
+                },
+                plotOptions: {
+                    radialBar: {
+                        startAngle: -135,
+                        endAngle: 135,
+                        track: {
+                            background: '#333',
+                            startAngle: -135,
+                            endAngle: 135,
+                        },
+                        dataLabels: {
+                            name: { show: false },
+                            value: {
+                                fontSize: '20px',
+                                fontWeight: 700,
+                                color: colors.success,
+                                formatter: (val) => '+' + val + '%'
+                            }
+                        }
+                    }
+                },
+                fill: {
+                    colors: [colors.success]
+                },
+                stroke: {
+                    lineCap: 'round'
+                },
+                labels: ['Distância']
+            }).render();
+        }
+
+        // Gauge Tempo (3 dias) - considerando 30 dias como máximo
+        if (document.querySelector("#gaugeTempo")) {
+            new ApexCharts(document.querySelector("#gaugeTempo"), {
+                series: [3],
+                chart: {
+                    type: 'radialBar',
+                    height: 200,
+                    toolbar: { show: false }
+                },
+                plotOptions: {
+                    radialBar: {
+                        startAngle: -135,
+                        endAngle: 135,
+                        track: {
+                            background: '#333',
+                            startAngle: -135,
+                            endAngle: 135,
+                        },
+                        dataLabels: {
+                            name: { show: false },
+                            value: {
+                                fontSize: '20px',
+                                fontWeight: 700,
+                                color: colors.warning,
+                                formatter: (val) => val + ' dias'
+                            }
+                        }
+                    }
+                },
+                fill: {
+                    colors: [colors.warning]
+                },
+                stroke: {
+                    lineCap: 'round'
+                },
+                labels: ['Tempo']
+            }).render();
+        }
+
+        // ===== IDEIA 4: Timeline =====
+        
+        // Timeline Chart
+        if (document.querySelector("#timelineChart4")) {
+            new ApexCharts(document.querySelector("#timelineChart4"), {
+                series: [{
+                    name: 'Prêmio',
+                    data: [
+                        { x: '10/03', y: 0.60 },
+                        { x: '11/03', y: 0.70 },
+                        { x: '12/03', y: 0.85 },
+                        { x: '13/03 (hoje)', y: 0.92 },
+                        { x: '13/03 (vencimento)', y: 0.00 }
+                    ]
+                }],
+                chart: {
+                    type: 'line',
+                    height: 300,
+                    toolbar: { show: false }
+                },
+                stroke: {
+                    curve: 'smooth',
+                    width: 3,
+                    colors: [colors.primary]
+                },
+                markers: {
+                    size: 6,
+                    colors: [colors.success, colors.warning, colors.warning, colors.danger, colors.success],
+                    strokeColors: '#fff',
+                    strokeWidth: 2
+                },
+                xaxis: {
+                    type: 'category',
+                    labels: { style: { colors: colors.secondary } }
+                },
+                yaxis: {
+                    labels: {
+                        style: { colors: colors.secondary },
+                        formatter: (val) => 'R$ ' + val.toFixed(2)
+                    },
+                    min: 0,
+                    max: 1.0
+                },
+                grid: {
+                    borderColor: '#3d4f63',
+                    strokeDashArray: 3
+                },
+                tooltip: {
+                    theme: 'dark',
+                    y: { formatter: (val) => 'R$ ' + val.toFixed(2) }
+                }
+            }).render();
+        }
+
+        // P&L Evolution
+        if (document.querySelector("#plEvolution4")) {
+            new ApexCharts(document.querySelector("#plEvolution4"), {
+                series: [{
+                    name: 'P&L (R$)',
+                    data: [
+                        { x: '10/03', y: 0 },
+                        { x: '11/03', y: -60 },
+                        { x: '12/03', y: -150 },
+                        { x: '13/03 (hoje)', y: -192 },
+                        { x: '13/03 (vencimento)', y: 360 }
+                    ]
+                }],
+                chart: {
+                    type: 'line',
+                    height: 200,
+                    toolbar: { show: false }
+                },
+                stroke: {
+                    curve: 'smooth',
+                    width: 3,
+                    colors: [colors.warning]
+                },
+                markers: {
+                    size: 6,
+                    colors: [colors.success, colors.warning, colors.warning, colors.danger, colors.success],
+                    strokeColors: '#fff',
+                    strokeWidth: 2
+                },
+                xaxis: {
+                    type: 'category',
+                    labels: { style: { colors: colors.secondary } }
+                },
+                yaxis: {
+                    labels: {
+                        style: { colors: colors.secondary },
+                        formatter: (val) => 'R$ ' + val.toFixed(0)
+                    }
+                },
+                grid: {
+                    borderColor: '#3d4f63',
+                    strokeDashArray: 3
+                },
+                tooltip: {
+                    theme: 'dark',
+                    y: { formatter: (val) => 'R$ ' + val.toFixed(2) }
+                }
+            }).render();
+        }
+
+        // ===== IDEIA 5: Dashboard com abas =====
+        
+        // Evolution Tab1
+        if (document.querySelector("#evolutionTab1")) {
+            new ApexCharts(document.querySelector("#evolutionTab1"), {
+                series: [{
+                    name: 'Prêmio',
+                    data: [
+                        { x: 'Abertura', y: 0.60 },
+                        { x: 'Hoje', y: 0.92 },
+                        { x: 'Vencimento', y: 0.00 }
+                    ]
+                }],
+                chart: {
+                    type: 'line',
+                    height: 250,
+                    toolbar: { show: false }
+                },
+                stroke: {
+                    curve: 'smooth',
+                    width: 3,
+                    colors: [colors.primary]
+                },
+                markers: {
+                    size: 6,
+                    colors: [colors.success, colors.danger, colors.success]
+                },
+                xaxis: {
+                    labels: { style: { colors: colors.secondary } }
+                },
+                yaxis: {
+                    labels: {
+                        style: { colors: colors.secondary },
+                        formatter: (val) => 'R$ ' + val.toFixed(2)
+                    }
+                },
+                grid: {
+                    borderColor: '#3d4f63',
+                    strokeDashArray: 3
+                },
+                tooltip: {
+                    theme: 'dark',
+                    y: { formatter: (val) => 'R$ ' + val.toFixed(2) }
+                }
+            }).render();
+        }
+
+        // Financial Tab1 (Breakdown)
+        if (document.querySelector("#financialTab1")) {
+            new ApexCharts(document.querySelector("#financialTab1"), {
+                series: [{
+                    name: 'Valor',
+                    data: [360, 552, -192]
+                }],
+                chart: {
+                    type: 'bar',
+                    height: 250,
+                    toolbar: { show: false }
+                },
+                plotOptions: {
+                    bar: {
+                        columnWidth: '50%',
+                        dataLabels: { position: 'top' }
+                    }
+                },
+                colors: [colors.success, colors.danger, colors.danger],
+                dataLabels: {
+                    enabled: true,
+                    formatter: (val) => 'R$ ' + val,
+                    style: { colors: ['#fff'] },
+                    offsetY: -20
+                },
+                xaxis: {
+                    categories: ['Recebido', 'Recompra', 'P&L'],
+                    labels: { style: { colors: colors.secondary } }
+                },
+                yaxis: {
+                    labels: {
+                        style: { colors: colors.secondary },
+                        formatter: (val) => 'R$ ' + val
+                    }
+                },
+                grid: {
+                    borderColor: '#3d4f63',
+                    strokeDashArray: 3
+                },
+                tooltip: {
+                    theme: 'dark',
+                    y: { formatter: (val) => 'R$ ' + val }
+                }
+            }).render();
+        }
+
+        // Payoff Tab2
+        if (document.querySelector("#payoffTab2")) {
+            const strikePrice = 42.40;
+            const premioRecebido = 0.60;
+            const pontos = [];
+            for (let price = 38; price <= 46; price += 0.5) {
+                let payoff;
+                if (price >= strikePrice) {
+                    payoff = premioRecebido;
+                } else {
+                    payoff = price - strikePrice + premioRecebido;
+                }
+                pontos.push({ x: price, y: payoff });
+            }
+            new ApexCharts(document.querySelector("#payoffTab2"), {
+                series: [{
+                    name: 'Payoff (R$ por ação)',
+                    data: pontos
+                }],
+                chart: {
+                    type: 'line',
+                    height: 350,
+                    toolbar: { show: false }
+                },
+                stroke: {
+                    curve: 'straight',
+                    width: 3,
+                    colors: [colors.primary]
+                },
+                annotations: {
+                    xaxis: [{
+                        x: strikePrice,
+                        borderColor: colors.warning,
+                        strokeDashArray: 5,
+                        label: {
+                            text: 'Strike',
+                            style: { background: colors.warning }
+                        }
+                    }, {
+                        x: 42.65,
+                        borderColor: colors.success,
+                        strokeDashArray: 5,
+                        label: {
+                            text: 'Ativo Atual',
+                            style: { background: colors.success }
+                        }
+                    }],
+                    yaxis: [{
+                        y: 0,
+                        borderColor: colors.secondary,
+                        strokeDashArray: 3
+                    }]
+                },
+                xaxis: {
+                    labels: { style: { colors: colors.secondary }, formatter: (val) => 'R$ ' + val.toFixed(0) }
+                },
+                yaxis: {
+                    labels: { style: { colors: colors.secondary }, formatter: (val) => 'R$ ' + val.toFixed(2) }
+                },
+                grid: { borderColor: '#3d4f63', strokeDashArray: 3 },
+                tooltip: {
+                    theme: 'dark',
+                    x: { formatter: (val) => 'Preço Ativo: R$ ' + val.toFixed(2) },
+                    y: { formatter: (val) => 'Lucro/Prejuízo: R$ ' + val.toFixed(2) }
+                }
+            }).render();
+        }
+
+        // Risco Gauge (Delta aproximado)
+        if (document.querySelector("#riscoGauge")) {
+            new ApexCharts(document.querySelector("#riscoGauge"), {
+                series: [42],
+                chart: {
+                    type: 'radialBar',
+                    height: 200,
+                    toolbar: { show: false }
+                },
+                plotOptions: {
+                    radialBar: {
+                        startAngle: -135,
+                        endAngle: 135,
+                        track: { background: '#333' },
+                        dataLabels: {
+                            name: { show: false },
+                            value: {
+                                fontSize: '20px',
+                                fontWeight: 700,
+                                color: colors.warning,
+                                formatter: (val) => '-' + val + '%'
+                            }
+                        }
+                    }
+                },
+                fill: { colors: [colors.warning] },
+                stroke: { lineCap: 'round' },
+                labels: ['Delta']
+            }).render();
+        }
+
+        // Risco Gama (pequeno)
+        if (document.querySelector("#riscoGama")) {
+            new ApexCharts(document.querySelector("#riscoGama"), {
+                series: [0.08],
+                chart: {
+                    type: 'radialBar',
+                    height: 200,
+                    toolbar: { show: false }
+                },
+                plotOptions: {
+                    radialBar: {
+                        startAngle: -135,
+                        endAngle: 135,
+                        track: { background: '#333' },
+                        dataLabels: {
+                            name: { show: false },
+                            value: {
+                                fontSize: '20px',
+                                fontWeight: 700,
+                                color: colors.primary,
+                                formatter: (val) => val
+                            }
+                        }
+                    }
+                },
+                fill: { colors: [colors.primary] },
+                stroke: { lineCap: 'round' },
+                labels: ['Gama']
+            }).render();
+        }
+
+        // ===== Tab switching for Ideia 5 =====
+        const tabContainer = document.getElementById('tabContainer');
+        if (tabContainer) {
+            const tabs = tabContainer.querySelectorAll('.tab-btn');
+            const contents = {
+                geral: document.getElementById('tab-geral'),
+                payoff: document.getElementById('tab-payoff'),
+                risco: document.getElementById('tab-risco')
+            };
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Remove active class from all tabs
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+
+                    // Hide all contents
+                    Object.values(contents).forEach(c => c.classList.add('hidden'));
+
+                    // Show selected content
+                    const target = tab.getAttribute('data-tab');
+                    if (contents[target]) {
+                        contents[target].classList.remove('hidden');
+                    }
+                });
+            });
+        }
+    });
+    </script>
+</body>
+</html>

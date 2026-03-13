@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Concept 14 - Dashboard Card</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0F0F23;
+            --bg-card: #1A1A2E;
+            --bg-elevated: #252542;
+            --purple: #7C3AED;
+            --purple-light: #A78BFA;
+            --green: #10B981;
+            --green-light: #34D399;
+            --red: #EF4444;
+            --red-light: #F87171;
+            --blue: #3B82F6;
+            --text-white: #F8FAFC;
+            --text-muted: #94A3B8;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--bg-dark);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .dashboard-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 500px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .dash-header {
+            background: linear-gradient(135deg, var(--purple) 0%, var(--blue) 100%);
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dash-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .header-info h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .badge-dash {
+            background: rgba(255,255,255,0.2);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .header-info .subtitle {
+            font-size: 13px;
+            color: rgba(255,255,255,0.8);
+            margin-top: 4px;
+        }
+
+        .close-dash {
+            width: 32px;
+            height: 32px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.2s;
+        }
+
+        .close-dash:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .hero-metric {
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-value {
+            font-size: 56px;
+            font-weight: 800;
+            color: white;
+            line-height: 1;
+        }
+
+        .hero-label {
+            font-size: 13px;
+            color: rgba(255,255,255,0.8);
+            margin-top: 8px;
+        }
+
+        .dash-body {
+            padding: 24px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-item {
+            background: var(--bg-elevated);
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .stat-value.green { color: var(--green); }
+        .stat-value.blue { color: var(--blue); }
+        .stat-value.white { color: var(--text-white); }
+
+        .stat-change {
+            font-size: 11px;
+            margin-top: 4px;
+        }
+
+        .stat-change.up { color: var(--green); }
+        .stat-change.down { color: var(--red); }
+
+        .comparison-dash {
+            background: var(--bg-elevated);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+
+        .comp-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .comp-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-white);
+        }
+
+        .comp-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .comp-badge.win {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--green);
+        }
+
+        .comp-badge.lose {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--red);
+        }
+
+        .comp-items {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .comp-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .comp-row:last-child {
+            border-bottom: none;
+        }
+
+        .comp-label {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .comp-values {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .comp-val {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-white);
+        }
+
+        .comp-val.current {
+            color: var(--purple-light);
+        }
+
+        .comp-arrow {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .comp-arrow.up {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--green);
+        }
+
+        .comp-arrow.down {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--red);
+        }
+
+        .progress-dash {
+            margin-bottom: 24px;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .progress-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-white);
+        }
+
+        .progress-value {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--purple-light);
+        }
+
+        .progress-track {
+            height: 10px;
+            background: var(--bg-elevated);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 5px;
+            background: linear-gradient(90deg, var(--purple), var(--blue));
+            transition: width 0.4s ease;
+        }
+
+        .dash-footer {
+            padding: 16px 24px;
+            background: var(--bg-elevated);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .time-info {
+            font-size: 12px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .time-info::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: var(--green);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .refresh-dash {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, var(--purple), var(--blue));
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 20px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .refresh-dash:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(124, 58, 237, 0.4);
+        }
+
+        .refresh-dash.loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .refresh-dash .spinner {
+            display: none;
+            animation: spin 1s linear infinite;
+        }
+
+        .refresh-dash.loading .spinner { display: inline; }
+        .refresh-dash.loading .btn-text { display: none; }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        @media (max-width: 500px) {
+            .stats-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="modal-overlay">
+        <div class="dashboard-card">
+            <div class="dash-header">
+                <div class="header-top">
+                    <div class="header-info">
+                        <h3>Posição PUT <span class="badge-dash">PETR4</span></h3>
+                        <div class="subtitle">Strike R$ 34,50 • Vencimento 15/03</div>
+                    </div>
+                    <button class="close-dash">✕</button>
+                </div>
+                <div class="hero-metric">
+                    <div class="hero-value" id="probValue">75%</div>
+                    <div class="hero-label">Probabilidade de Lucro</div>
+                </div>
+            </div>
+
+            <div class="dash-body">
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-label">Lucro Aberto</div>
+                        <div class="stat-value green" id="lucroAberto">R$ 450</div>
+                        <div class="stat-change up" id="lucroChange">+R$ 450 ganho</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Cotação Atual</div>
+                        <div class="stat-value white" id="cotacaoAtual">R$ 35,80</div>
+                        <div class="stat-change down" id="cotacaoChange">-0,56%</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Premio Atual</div>
+                        <div class="stat-value blue" id="premioAtual">R$ 0,15</div>
+                        <div class="stat-change up" id="premioChange">-75%</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Dist. Strike</div>
+                        <div class="stat-value green" id="distancia">+3,77%</div>
+                        <div class="stat-change up">Acima</div>
+                    </div>
+                </div>
+
+                <div class="comparison-dash">
+                    <div class="comp-header">
+                        <span class="comp-title">Comparativo</span>
+                        <span class="comp-badge win" id="compBadge">VENCENDO</span>
+                    </div>
+                    <div class="comp-items">
+                        <div class="comp-row">
+                            <span class="comp-label">Premio Abertura</span>
+                            <div class="comp-values">
+                                <span class="comp-val">R$ 0,60</span>
+                            </div>
+                        </div>
+                        <div class="comp-row">
+                            <span class="comp-label">Premio Atual</span>
+                            <div class="comp-values">
+                                <span class="comp-val current" id="premioTable">R$ 0,15</span>
+                                <span class="comp-arrow down">▼ 75%</span>
+                            </div>
+                        </div>
+                        <div class="comp-row">
+                            <span class="comp-label">Ativo Abertura</span>
+                            <div class="comp-values">
+                                <span class="comp-val">R$ 36,00</span>
+                            </div>
+                        </div>
+                        <div class="comp-row">
+                            <span class="comp-label">Ativo Atual</span>
+                            <div class="comp-values">
+                                <span class="comp-val current" id="ativoTable">R$ 35,80</span>
+                                <span class="comp-arrow down" id="ativoArrow">▼ 0,56%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="progress-dash">
+                    <div class="progress-header">
+                        <span class="progress-title">Progresso</span>
+                        <span class="progress-value" id="progressValue">75%</span>
+                    </div>
+                    <div class="progress-track">
+                        <div class="progress-fill" id="progressFill" style="width: 75%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dash-footer">
+                <div class="time-info">
+                    <span id="timestamp">--:--:--</span>
+                </div>
+                <button class="refresh-dash" id="refreshBtn" onclick="atualizar()">
+                    <span class="spinner">⟳</span>
+                    <span class="btn-text">Atualizar</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const operacao = {
+            strike: 34.50,
+            premioAbertura: 0.60,
+            premioAtual: 0.15,
+            ativoAbertura: 36.00,
+            ativoAtual: 35.80,
+            quantidade: 1000
+        };
+
+        function atualizar() {
+            const btn = document.getElementById('refreshBtn');
+            btn.classList.add('loading');
+
+            setTimeout(() => {
+                const variacao = (Math.random() - 0.5) * 0.30;
+                operacao.ativoAtual = parseFloat((operacao.ativoAtual + variacao).toFixed(2));
+                operacao.premioAtual = Math.max(0.01, parseFloat((operacao.premioAbertura * 0.25 + (Math.random() - 0.5) * 0.05).toFixed(2)));
+
+                atualizarInterface();
+
+                btn.classList.remove('loading');
+                document.getElementById('timestamp').textContent = new Date().toLocaleTimeString('pt-BR');
+            }, 600);
+        }
+
+        function atualizarInterface() {
+            const distancia = ((operacao.ativoAtual - operacao.strike) / operacao.strike) * 100;
+            const probabilidade = Math.min(99, Math.max(20, 75 + (distancia - 3.77) * 5));
+            const lucro = (operacao.premioAbertura - operacao.premioAtual) * operacao.quantidade;
+            const variacaoPremio = ((operacao.premioAtual - operacao.premioAbertura) / operacao.premioAbertura) * 100;
+            const variacaoAtivo = ((operacao.ativoAtual - operacao.ativoAbertura) / operacao.ativoAbertura) * 100;
+            const isWinning = probabilidade >= 60;
+
+            // Hero
+            document.getElementById('probValue').textContent = Math.round(probabilidade) + '%';
+
+            // Stats
+            document.getElementById('lucroAberto').textContent = 'R$ ' + Math.abs(Math.round(lucro));
+            document.getElementById('cotacaoAtual').textContent = 'R$ ' + operacao.ativoAtual.toFixed(2).replace('.', ',');
+            document.getElementById('cotacaoChange').textContent = (variacaoAtivo >= 0 ? '+' : '') + variacaoAtivo.toFixed(2) + '%';
+            document.getElementById('premioAtual').textContent = 'R$ ' + operacao.premioAtual.toFixed(2);
+            document.getElementById('premioChange').textContent = Math.round(variacaoPremio) + '%';
+            document.getElementById('distancia').textContent = '+' + distancia.toFixed(2) + '%';
+
+            // Table
+            document.getElementById('premioTable').textContent = 'R$ ' + operacao.premioAtual.toFixed(2);
+            document.getElementById('ativoTable').textContent = 'R$ ' + operacao.ativoAtual.toFixed(2).replace('.', ',');
+            document.getElementById('ativoArrow').textContent = '▼ ' + Math.abs(variacaoAtivo).toFixed(2) + '%';
+
+            // Badge
+            const badge = document.getElementById('compBadge');
+            if (isWinning) {
+                badge.textContent = 'VENCENDO';
+                badge.className = 'comp-badge win';
+            } else {
+                badge.textContent = 'ATENÇÃO';
+                badge.className = 'comp-badge lose';
+            }
+
+            // Progress
+            document.getElementById('progressValue').textContent = Math.round(probabilidade) + '%';
+            document.getElementById('progressFill').style.width = probabilidade + '%';
+        }
+
+        document.getElementById('timestamp').textContent = new Date().toLocaleTimeString('pt-BR');
+        atualizarInterface();
+    </script>
+</body>
+</html>

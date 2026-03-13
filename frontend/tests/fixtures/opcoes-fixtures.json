@@ -1,0 +1,75 @@
+{
+  "_info": "Dados de fixture para testes E2E de Opções. Altere aqui para mudar os dados dos testes.",
+
+  "operacoes": [
+    {
+      "_descricao": "Venda de CALL PETR4 — operação padrão aberta",
+      "ativo_base":     "PETR4",
+      "ativo":          "PETRF325",
+      "tipo":           "CALL",
+      "tipo_operacao":  "VENDA",
+      "data_operacao":  "2026-03-11",
+      "quantidade":     100,
+      "preco_entrada":  "38.50",
+      "strike":         "40.00",
+      "premio":         "0.85",
+      "resultado":      "",
+      "preco_atual":    "",
+      "vencimento":     "2026-03-20",
+      "status":         "ABERTA",
+      "saldo_abertura": 5000,
+      "observacoes":    "[TESTE E2E]",
+      "_is_test":       true
+    },
+    {
+      "_descricao": "Compra de PUT VALE3 — proteção de carteira",
+      "ativo_base":     "VALE3",
+      "ativo":          "VALEP280",
+      "tipo":           "PUT",
+      "tipo_operacao":  "COMPRA",
+      "data_operacao":  "2026-03-11",
+      "quantidade":     50,
+      "preco_entrada":  "65.20",
+      "strike":         "62.00",
+      "premio":         "1.20",
+      "resultado":      "",
+      "preco_atual":    "",
+      "vencimento":     "2026-04-17",
+      "status":         "ABERTA",
+      "saldo_abertura": 0,
+      "observacoes":    "[TESTE E2E]",
+      "_is_test":       true
+    },
+    {
+      "_descricao": "Venda de CALL BBDC4 — operação fechada com resultado",
+      "ativo_base":     "BBDC4",
+      "ativo":          "BBDCG200",
+      "tipo":           "CALL",
+      "tipo_operacao":  "VENDA",
+      "data_operacao":  "2026-02-01",
+      "quantidade":     200,
+      "preco_entrada":  "22.30",
+      "strike":         "24.00",
+      "premio":         "0.60",
+      "resultado":      "120.00",
+      "preco_atual":    "0.00",
+      "vencimento":     "2026-02-21",
+      "status":         "FECHADA",
+      "saldo_abertura": 4500,
+      "observacoes":    "[TESTE E2E]",
+      "_is_test":       true
+    }
+  ],
+
+  "crud_test": {
+    "_descricao": "Operação usada APENAS para teste CRUD automatizado — será deletada ao final",
+    "ativo_base":    "PETR4",
+    "ativo":         "PETRF325",
+    "tipo":          "call",
+    "tipo_operacao": "VENDA",
+    "strike":        28.5,
+    "premio":        0.5,
+    "quantidade":    100,
+    "status":        "ABERTA"
+  }
+}

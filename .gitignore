@@ -4,3 +4,7 @@ backend/.env
 **/.env
 /node_modules
 /.vscode
+
+# AI Memory - snapshots datados (nao versionar)
+.ai-memory/snapshots/20*.md
+.ai-memory/hook.log

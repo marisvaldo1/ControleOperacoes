@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Concept 10 - CyberHUD Gamer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #050505;
+            --neon-green: #39FF14;
+            --neon-pink: #FF0055;
+            --cyber-cyan: #00F3FF;
+            --cyber-yellow: #FFE600;
+            --text-white: #E0E0E0;
+            --text-dim: #666666;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background: var(--bg-dark);
+            background-image:
+                linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px);
+            background-size: 30px 30px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .cyber-card {
+            background: var(--bg-dark);
+            border: 2px solid var(--cyber-cyan);
+            width: 100%;
+            max-width: 480px;
+            position: relative;
+            clip-path: polygon(
+                0 10px, 10px 0, calc(100% - 10px) 0, 100% 10px,
+                100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px)
+            );
+            box-shadow:
+                0 0 30px rgba(0, 243, 255, 0.3),
+                inset 0 0 30px rgba(0, 243, 255, 0.05);
+        }
+
+        .cyber-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 2px solid var(--cyber-cyan);
+            background: linear-gradient(90deg, rgba(0, 243, 255, 0.1), transparent);
+        }
+
+        .header-info h3 {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--cyber-cyan);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-info .subtitle {
+            font-size: 10px;
+            color: var(--text-dim);
+            margin-top: 4px;
+        }
+
+        .close-cyber {
+            width: 36px;
+            height: 36px;
+            background: transparent;
+            border: 2px solid var(--neon-pink);
+            color: var(--neon-pink);
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            transition: all 0.2s;
+            clip-path: polygon(10% 0, 100% 0, 100% 90%, 90% 100%, 0 100%, 0 10%);
+        }
+
+        .close-cyber:hover {
+            background: var(--neon-pink);
+            color: var(--bg-dark);
+            box-shadow: 0 0 20px var(--neon-pink);
+        }
+
+        .status-bar {
+            padding: 12px 20px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        .status-bar.winning {
+            background: var(--neon-green);
+            color: var(--bg-dark);
+            animation: blink-win 1s infinite;
+            text-shadow: 0 0 10px var(--bg-dark);
+        }
+
+        .status-bar.losing {
+            background: var(--neon-pink);
+            color: var(--bg-dark);
+            animation: blink-lose 0.5s infinite;
+        }
+
+        @keyframes blink-win {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        @keyframes blink-lose {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .cyber-body {
+            padding: 24px;
+        }
+
+        .hud-display {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .hud-value {
+            font-size: 56px;
+            font-weight: 900;
+            line-height: 1;
+            text-shadow: 0 0 30px currentColor;
+        }
+
+        .hud-value.winning { color: var(--neon-green); }
+        .hud-value.losing { color: var(--neon-pink); }
+
+        .hud-label {
+            font-size: 11px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-top: 8px;
+        }
+
+        .comparison-cyber {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .cyber-box {
+            background: rgba(0, 243, 255, 0.05);
+            border: 1px solid var(--cyber-cyan);
+            padding: 16px;
+            text-align: center;
+        }
+
+        .cyber-box-title {
+            font-size: 10px;
+            color: var(--cyber-cyan);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+
+        .cyber-box-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-white);
+        }
+
+        .cyber-box-value.current {
+            color: var(--cyber-yellow);
+            text-shadow: 0 0 10px var(--cyber-yellow);
+        }
+
+        .cyber-box-delta {
+            font-size: 12px;
+            margin-top: 6px;
+            padding: 4px 8px;
+            display: inline-block;
+        }
+
+        .delta-green {
+            background: rgba(57, 255, 20, 0.2);
+            color: var(--neon-green);
+        }
+
+        .delta-red {
+            background: rgba(255, 0, 85, 0.2);
+            color: var(--neon-pink);
+        }
+
+        .hp-bar-section {
+            margin-bottom: 24px;
+        }
+
+        .hp-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 10px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .hp-track {
+            height: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--cyber-cyan);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hp-fill {
+            height: 100%;
+            transition: width 0.4s ease;
+        }
+
+        .hp-fill.winning {
+            background: var(--neon-green);
+            box-shadow: 0 0 20px var(--neon-green);
+        }
+
+        .hp-fill.losing {
+            background: var(--neon-pink);
+            box-shadow: 0 0 20px var(--neon-pink);
+        }
+
+        .hp-segments {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+        }
+
+        .hp-segment {
+            flex: 1;
+            border-right: 1px solid rgba(0, 243, 255, 0.3);
+        }
+
+        .hp-segment:last-child { border-right: none; }
+
+        .cyber-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-top: 2px solid var(--cyber-cyan);
+            background: linear-gradient(90deg, transparent, rgba(0, 243, 255, 0.1));
+        }
+
+        .timestamp-cyber {
+            font-size: 11px;
+            color: var(--cyber-cyan);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .timestamp-cyber::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: var(--neon-green);
+            border-radius: 50%;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 5px var(--neon-green); }
+            50% { opacity: 0.5; box-shadow: 0 0 15px var(--neon-green); }
+        }
+
+        .reload-cyber {
+            background: transparent;
+            border: 2px solid var(--cyber-cyan);
+            color: var(--cyber-cyan);
+            padding: 12px 24px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.3s;
+            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+        }
+
+        .reload-cyber:hover {
+            background: var(--cyber-cyan);
+            color: var(--bg-dark);
+            box-shadow: 0 0 30px var(--cyber-cyan);
+        }
+
+        .reload-cyber.loading {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .reload-cyber .spinner {
+            display: none;
+            animation: spin 1s linear infinite;
+        }
+
+        .reload-cyber.loading .spinner { display: inline; }
+        .reload-cyber.loading .btn-text { display: none; }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        @media (max-width: 500px) {
+            .comparison-cyber { grid-template-columns: 1fr; }
+            .hud-value { font-size: 42px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="modal-overlay">
+        <div class="cyber-card">
+            <div class="cyber-header">
+                <div class="header-info">
+                    <h3>⚡ PUT POSITION</h3>
+                    <div class="subtitle">PETR4 • Strike R$ 34,50 • Vcto 15/03</div>
+                </div>
+                <button class="close-cyber">✕</button>
+            </div>
+
+            <div class="status-bar winning" id="statusBar">
+                ◉ TARGET LOCKED
+            </div>
+
+            <div class="cyber-body">
+                <div class="hud-display">
+                    <div class="hud-value winning" id="probValue">75%</div>
+                    <div class="hud-label">Success Probability</div>
+                </div>
+
+                <div class="comparison-cyber">
+                    <div class="cyber-box">
+                        <div class="cyber-box-title">Premio Opening</div>
+                        <div class="cyber-box-value">R$ 0,60</div>
+                    </div>
+                    <div class="cyber-box">
+                        <div class="cyber-box-title">Premio Current</div>
+                        <div class="cyber-box-value current" id="premioAtual">R$ 0,15</div>
+                        <div class="cyber-box-delta delta-green" id="varPremio">▼ 75%</div>
+                    </div>
+                    <div class="cyber-box">
+                        <div class="cyber-box-title">Ativo Opening</div>
+                        <div class="cyber-box-value">R$ 36,00</div>
+                    </div>
+                    <div class="cyber-box">
+                        <div class="cyber-box-title">Ativo Current</div>
+                        <div class="cyber-box-value current" id="cotacaoAtual">R$ 35,80</div>
+                        <div class="cyber-box-delta delta-red" id="varAtivo">▼ 0,56%</div>
+                    </div>
+                </div>
+
+                <div class="hp-bar-section">
+                    <div class="hp-label">
+                        <span>HP: DISTÂNCIA STRIKE</span>
+                        <span id="distancia">+3,77%</span>
+                    </div>
+                    <div class="hp-track">
+                        <div class="hp-fill winning" id="hpFill" style="width: 75%"></div>
+                        <div class="hp-segments">
+                            <div class="hp-segment"></div>
+                            <div class="hp-segment"></div>
+                            <div class="hp-segment"></div>
+                            <div class="hp-segment"></div>
+                            <div class="hp-segment"></div>
+                            <div class="hp-segment"></div>
+                            <div class="hp-segment"></div>
+                            <div class="hp-segment"></div>
+                            <div class="hp-segment"></div>
+                            <div class="hp-segment"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cyber-footer">
+                <div class="timestamp-cyber">
+                    <span id="timestamp">--:--:--</span>
+                </div>
+                <button class="reload-cyber" id="reloadBtn" onclick="atualizar()">
+                    <span class="btn-text">⟳ RELOAD</span>
+                    <span class="spinner">⟳</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const operacao = {
+            strike: 34.50,
+            premioAbertura: 0.60,
+            premioAtual: 0.15,
+            ativoAbertura: 36.00,
+            ativoAtual: 35.80,
+            quantidade: 1000
+        };
+
+        function atualizar() {
+            const btn = document.getElementById('reloadBtn');
+            btn.classList.add('loading');
+
+            setTimeout(() => {
+                const variacao = (Math.random() - 0.5) * 0.30;
+                operacao.ativoAtual = parseFloat((operacao.ativoAtual + variacao).toFixed(2));
+                operacao.premioAtual = Math.max(0.01, parseFloat((operacao.premioAbertura * 0.25 + (Math.random() - 0.5) * 0.05).toFixed(2)));
+
+                atualizarInterface();
+
+                btn.classList.remove('loading');
+                document.getElementById('timestamp').textContent = new Date().toLocaleTimeString('pt-BR');
+            }, 600);
+        }
+
+        function atualizarInterface() {
+            const distancia = ((operacao.ativoAtual - operacao.strike) / operacao.strike) * 100;
+            const probabilidade = Math.min(99, Math.max(20, 75 + (distancia - 3.77) * 5));
+            const variacaoPremio = ((operacao.premioAtual - operacao.premioAbertura) / operacao.premioAbertura) * 100;
+            const variacaoAtivo = ((operacao.ativoAtual - operacao.ativoAbertura) / operacao.ativoAbertura) * 100;
+            const isWinning = probabilidade >= 60;
+
+            // Status
+            const statusBar = document.getElementById('statusBar');
+            if (isWinning) {
+                statusBar.textContent = '◉ TARGET LOCKED';
+                statusBar.className = 'status-bar winning';
+            } else {
+                statusBar.textContent = '⚠ WARNING';
+                statusBar.className = 'status-bar losing';
+            }
+
+            // HUD
+            const hudValue = document.getElementById('probValue');
+            hudValue.textContent = Math.round(probabilidade) + '%';
+            hudValue.className = 'hud-value ' + (isWinning ? 'winning' : 'losing');
+
+            // HP Bar
+            const hpFill = document.getElementById('hpFill');
+            hpFill.style.width = probabilidade + '%';
+            hpFill.className = 'hp-fill ' + (isWinning ? 'winning' : 'losing');
+
+            // Valores
+            document.getElementById('premioAtual').textContent = 'R$ ' + operacao.premioAtual.toFixed(2);
+            document.getElementById('varPremio').textContent = '▼ ' + Math.abs(Math.round(variacaoPremio)) + '%';
+            document.getElementById('cotacaoAtual').textContent = 'R$ ' + operacao.ativoAtual.toFixed(2).replace('.', ',');
+            document.getElementById('varAtivo').textContent = '▼ ' + Math.abs(variacaoAtivo).toFixed(2) + '%';
+            document.getElementById('distancia').textContent = '+' + distancia.toFixed(2) + '%';
+        }
+
+        document.getElementById('timestamp').textContent = new Date().toLocaleTimeString('pt-BR');
+        atualizarInterface();
+    </script>
+</body>
+</html>
