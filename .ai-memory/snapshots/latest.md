@@ -1,6 +1,6 @@
 # AI PROJECT SNAPSHOT
 > Cole todo este arquivo na IA para retomar o projeto sem perder contexto.
-> Gerado em: 2026-03-12 09:03:35 | Branch: master
+> Gerado em: 2026-03-13 16:51:48 | Branch: master
 
 ---
 
@@ -12,261 +12,162 @@
 ---
 
 ## GIT — últimos 5 commits
+c9934aa 2026-03-13 Tela de cryptos
 c8f34d5 2026-03-05 Tela de testes
 6482359 2026-02-23 Janela de totais finais
 308a0b6 2026-02-23 Janela de totais finais
 0d01e39 2026-02-18 Janela de totais finais
-8dd62bc 2026-02-13 Janela de totais finais
 
 ## Arquivos alterados no último commit
-.github/agents/ARCHITECTURE.md
-.github/agents/backend-specialist.agent.md
-.github/agents/code-archaeologist.agent.md
-.github/agents/database-architect.agent.md
-.github/agents/debugger.agent.md
-.github/agents/devops-engineer.agent.md
-.github/agents/documentation-writer.agent.md
-.github/agents/explorer-agent.agent.md
-.github/agents/frontend-specialist.agent.md
-.github/agents/game-developer.agent.md
-.github/agents/mobile-developer.agent.md
-.github/agents/orchestrator.agent.md
-.github/agents/penetration-tester.agent.md
-.github/agents/performance-optimizer.agent.md
-.github/agents/product-manager.agent.md
-.github/agents/project-planner.agent.md
-.github/agents/qa-automation-engineer.agent.md
-.github/agents/rules/GEMINI.md
-.github/agents/scripts/auto_preview.py
-.github/agents/scripts/checklist.py
-.github/agents/scripts/session_manager.py
-.github/agents/scripts/verify_all.py
-.github/agents/security-auditor.agent.md
-.github/agents/seo-specialist.agent.md
-.github/agents/shared/ui-ux-pro-max/data/charts.csv
-.github/agents/shared/ui-ux-pro-max/data/colors.csv
-.github/agents/shared/ui-ux-pro-max/data/icons.csv
-.github/agents/shared/ui-ux-pro-max/data/landing.csv
-.github/agents/shared/ui-ux-pro-max/data/products.csv
-.github/agents/shared/ui-ux-pro-max/data/prompts.csv
-.github/agents/shared/ui-ux-pro-max/data/react-performance.csv
-.github/agents/shared/ui-ux-pro-max/data/stacks/flutter.csv
-.github/agents/shared/ui-ux-pro-max/data/stacks/html-tailwind.csv
-.github/agents/shared/ui-ux-pro-max/data/stacks/jetpack-compose.csv
-.github/agents/shared/ui-ux-pro-max/data/stacks/nextjs.csv
-.github/agents/shared/ui-ux-pro-max/data/stacks/nuxt-ui.csv
-.github/agents/shared/ui-ux-pro-max/data/stacks/nuxtjs.csv
-.github/agents/shared/ui-ux-pro-max/data/stacks/react-native.csv
-.github/agents/shared/ui-ux-pro-max/data/stacks/react.csv
-.github/agents/shared/ui-ux-pro-max/data/stacks/shadcn.csv
-.github/agents/shared/ui-ux-pro-max/data/stacks/svelte.csv
-.github/agents/shared/ui-ux-pro-max/data/stacks/swiftui.csv
-.github/agents/shared/ui-ux-pro-max/data/stacks/vue.csv
-.github/agents/shared/ui-ux-pro-max/data/styles.csv
-.github/agents/shared/ui-ux-pro-max/data/typography.csv
-.github/agents/shared/ui-ux-pro-max/data/ui-reasoning.csv
-.github/agents/shared/ui-ux-pro-max/data/ux-guidelines.csv
-.github/agents/shared/ui-ux-pro-max/data/web-interface.csv
-.github/agents/shared/ui-ux-pro-max/scripts/__pycache__/core.cpython-313.pyc
-.github/agents/shared/ui-ux-pro-max/scripts/__pycache__/design_system.cpython-313.pyc
-.github/agents/shared/ui-ux-pro-max/scripts/core.py
-.github/agents/shared/ui-ux-pro-max/scripts/design_system.py
-.github/agents/shared/ui-ux-pro-max/scripts/search.py
-.github/agents/skills/api-patterns/SKILL.md
-.github/agents/skills/api-patterns/api-style.md
-.github/agents/skills/api-patterns/auth.md
-.github/agents/skills/api-patterns/documentation.md
-.github/agents/skills/api-patterns/graphql.md
-.github/agents/skills/api-patterns/rate-limiting.md
-.github/agents/skills/api-patterns/response.md
-.github/agents/skills/api-patterns/rest.md
-.github/agents/skills/api-patterns/scripts/api_validator.py
-.github/agents/skills/api-patterns/security-testing.md
-.github/agents/skills/api-patterns/trpc.md
-.github/agents/skills/api-patterns/versioning.md
-.github/agents/skills/app-builder/SKILL.md
-.github/agents/skills/app-builder/agent-coordination.md
-.github/agents/skills/app-builder/feature-building.md
-.github/agents/skills/app-builder/project-detection.md
-.github/agents/skills/app-builder/scaffolding.md
-.github/agents/skills/app-builder/tech-stack.md
-.github/agents/skills/app-builder/templates/SKILL.md
-.github/agents/skills/app-builder/templates/astro-static/TEMPLATE.md
-.github/agents/skills/app-builder/templates/chrome-extension/TEMPLATE.md
-.github/agents/skills/app-builder/templates/cli-tool/TEMPLATE.md
-.github/agents/skills/app-builder/templates/electron-desktop/TEMPLATE.md
-.github/agents/skills/app-builder/templates/express-api/TEMPLATE.md
-.github/agents/skills/app-builder/templates/flutter-app/TEMPLATE.md
-.github/agents/skills/app-builder/templates/monorepo-turborepo/TEMPLATE.md
-.github/agents/skills/app-builder/templates/nextjs-fullstack/TEMPLATE.md
-.github/agents/skills/app-builder/templates/nextjs-saas/TEMPLATE.md
-.github/agents/skills/app-builder/templates/nextjs-static/TEMPLATE.md
-.github/agents/skills/app-builder/templates/nuxt-app/TEMPLATE.md
-.github/agents/skills/app-builder/templates/python-fastapi/TEMPLATE.md
-.github/agents/skills/app-builder/templates/react-native-app/TEMPLATE.md
-.github/agents/skills/architecture/SKILL.md
-.github/agents/skills/architecture/context-discovery.md
-.github/agents/skills/architecture/examples.md
-.github/agents/skills/architecture/pattern-selection.md
-.github/agents/skills/architecture/patterns-reference.md
-.github/agents/skills/architecture/trade-off-analysis.md
-.github/agents/skills/bash-linux/SKILL.md
-.github/agents/skills/behavioral-modes/SKILL.md
-.github/agents/skills/brainstorming/SKILL.md
-.github/agents/skills/brainstorming/dynamic-questioning.md
-.github/agents/skills/clean-code/SKILL.md
-.github/agents/skills/code-review-checklist/SKILL.md
-.github/agents/skills/database-design/SKILL.md
-.github/agents/skills/database-design/database-selection.md
-.github/agents/skills/database-design/indexing.md
-.github/agents/skills/database-design/migrations.md
-.github/agents/skills/database-design/optimization.md
-.github/agents/skills/database-design/orm-selection.md
-.github/agents/skills/database-design/schema-design.md
-.github/agents/skills/database-design/scripts/schema_validator.py
-.github/agents/skills/deployment-procedures/SKILL.md
-.github/agents/skills/doc.md
-.github/agents/skills/documentation-templates/SKILL.md
-.github/agents/skills/frontend-design/SKILL.md
-.github/agents/skills/frontend-design/animation-guide.md
-.github/agents/skills/frontend-design/color-system.md
-.github/agents/skills/frontend-design/decision-trees.md
-.github/agents/skills/frontend-design/motion-graphics.md
-.github/agents/skills/frontend-design/scripts/accessibility_checker.py
-.github/agents/skills/frontend-design/scripts/ux_audit.py
-.github/agents/skills/frontend-design/typography-system.md
-.github/agents/skills/frontend-design/ux-psychology.md
-.github/agents/skills/frontend-design/visual-effects.md
-.github/agents/skills/game-development/2d-games/SKILL.md
-.github/agents/skills/game-development/3d-games/SKILL.md
-.github/agents/skills/game-development/SKILL.md
-.github/agents/skills/game-development/game-art/SKILL.md
-.github/agents/skills/game-development/game-audio/SKILL.md
-.github/agents/skills/game-development/game-design/SKILL.md
-.github/agents/skills/game-development/mobile-games/SKILL.md
-.github/agents/skills/game-development/multiplayer/SKILL.md
-.github/agents/skills/game-development/pc-games/SKILL.md
-.github/agents/skills/game-development/vr-ar/SKILL.md
-.github/agents/skills/game-development/web-games/SKILL.md
-.github/agents/skills/geo-fundamentals/SKILL.md
-.github/agents/skills/geo-fundamentals/scripts/geo_checker.py
-.github/agents/skills/i18n-localization/SKILL.md
-.github/agents/skills/i18n-localization/scripts/i18n_checker.py
-.github/agents/skills/intelligent-routing/SKILL.md
-.github/agents/skills/lint-and-validate/SKILL.md
-.github/agents/skills/lint-and-validate/scripts/lint_runner.py
-.github/agents/skills/lint-and-validate/scripts/type_coverage.py
-.github/agents/skills/mcp-builder/SKILL.md
-.github/agents/skills/mobile-design/SKILL.md
-.github/agents/skills/mobile-design/decision-trees.md
-.github/agents/skills/mobile-design/mobile-backend.md
-.github/agents/skills/mobile-design/mobile-color-system.md
-.github/agents/skills/mobile-design/mobile-debugging.md
-.github/agents/skills/mobile-design/mobile-design-thinking.md
-.github/agents/skills/mobile-design/mobile-navigation.md
-.github/agents/skills/mobile-design/mobile-performance.md
-.github/agents/skills/mobile-design/mobile-testing.md
-.github/agents/skills/mobile-design/mobile-typography.md
-.github/agents/skills/mobile-design/platform-android.md
-.github/agents/skills/mobile-design/platform-ios.md
-.github/agents/skills/mobile-design/scripts/mobile_audit.py
-.github/agents/skills/mobile-design/touch-psychology.md
-.github/agents/skills/nextjs-best-practices/SKILL.md
-.github/agents/skills/nodejs-best-practices/SKILL.md
-.github/agents/skills/parallel-agents/SKILL.md
-.github/agents/skills/performance-profiling/SKILL.md
-.github/agents/skills/performance-profiling/scripts/lighthouse_audit.py
-.github/agents/skills/plan-writing/SKILL.md
-.github/agents/skills/powershell-windows/SKILL.md
-.github/agents/skills/python-patterns/SKILL.md
-.github/agents/skills/react-patterns/SKILL.md
-.github/agents/skills/red-team-tactics/SKILL.md
-.github/agents/skills/seo-fundamentals/SKILL.md
-.github/agents/skills/seo-fundamentals/scripts/seo_checker.py
-.github/agents/skills/server-management/SKILL.md
-.github/agents/skills/systematic-debugging/SKILL.md
-.github/agents/skills/tailwind-patterns/SKILL.md
-.github/agents/skills/tdd-workflow/SKILL.md
-.github/agents/skills/testing-patterns/SKILL.md
-.github/agents/skills/testing-patterns/scripts/test_runner.py
-.github/agents/skills/vulnerability-scanner/SKILL.md
-.github/agents/skills/vulnerability-scanner/checklists.md
-.github/agents/skills/vulnerability-scanner/scripts/security_scan.py
-.github/agents/skills/webapp-testing/SKILL.md
-.github/agents/skills/webapp-testing/scripts/playwright_runner.py
-.github/agents/test-engineer.agent.md
-.github/agents/workflows/brainstorm.md
-.github/agents/workflows/create.md
-.github/agents/workflows/debug.md
-.github/agents/workflows/deploy.md
-.github/agents/workflows/enhance.md
-.github/agents/workflows/orchestrate.md
-.github/agents/workflows/plan.md
-.github/agents/workflows/preview.md
-.github/agents/workflows/status.md
-.github/agents/workflows/test.md
-.github/agents/workflows/ui-ux-pro-max.md
+.ai-memory/00-ENTRYPOINT.md
+.ai-memory/01-CONTEXT.md
+.ai-memory/02-ARCHITECTURE.md
+.ai-memory/03-TECH-STACK.md
+.ai-memory/04-RULES.md
+.ai-memory/05-STATE.md
+.ai-memory/06-TASKS.md
+.ai-memory/08-CHANGELOG.md
+.ai-memory/09-PROMPTS.md
+.ai-memory/prompts_log.txt
+.ai-memory/snapshots/latest.md
+.githooks/post-checkout
+.githooks/post-commit
+.githooks/post-merge
 .github/copilot-instructions.md
 .gitignore
-CONTEXTO.md
+.vscode/settings.json
+.vscode/tasks.json
+ARQUITETURA.md
+GUIA_TESTES.md
+_setup_arch.py
+arquivos/GUIA_CRIAR_TESTES_E2E.md
+backend/__pycache__/db.cpython-313.pyc
 backend/__pycache__/server.cpython-313.pyc
+backend/data/controle_operacoes - Copia.db
 backend/data/controle_operacoes.db
-backend/requirements.txt
-backend/test_all_models.py
-backend/test_gemini.py
+backend/db.py
+backend/models/__init__.py
+backend/routes/__init__.py
+backend/routes/__pycache__/__init__.cpython-313.pyc
+backend/routes/__pycache__/ai.cpython-313.pyc
+backend/routes/__pycache__/config.cpython-313.pyc
+backend/routes/__pycache__/crypto.cpython-313.pyc
+backend/routes/__pycache__/market.cpython-313.pyc
+backend/routes/__pycache__/opcoes.cpython-313.pyc
+backend/routes/ai.py
+backend/routes/config.py
+backend/routes/crypto.py
+backend/routes/market.py
+backend/routes/opcoes.py
+backend/server.py
+backend/server.py.bak
+backend/tests/__pycache__/conftest.cpython-313-pytest-8.3.4.pyc
+backend/tests/__pycache__/conftest.cpython-313-pytest-8.3.4.pyc.52116
 backend/tests/__pycache__/conftest.cpython-313-pytest-9.0.2.pyc
-backend/tests/__pycache__/test_ai_providers.cpython-313-pytest-9.0.2.pyc
-backend/tests/__pycache__/test_api_agenda.cpython-313-pytest-9.0.2.pyc
 backend/tests/__pycache__/test_api_analyze.cpython-313-pytest-9.0.2.pyc
-backend/tests/__pycache__/test_api_atendimento.cpython-313-pytest-9.0.2.pyc
-backend/tests/__pycache__/test_api_auth.cpython-313-pytest-9.0.2.pyc
-backend/tests/__pycache__/test_api_config.cpython-313-pytest-9.0.2.pyc
 backend/tests/__pycache__/test_api_crypto.cpython-313-pytest-9.0.2.pyc
-backend/tests/__pycache__/test_api_financeiro.cpython-313-pytest-9.0.2.pyc
 backend/tests/__pycache__/test_api_opcoes.cpython-313-pytest-9.0.2.pyc
-backend/tests/__pycache__/test_api_pacientes.cpython-313-pytest-9.0.2.pyc
-backend/tests/__pycache__/test_api_relatorios.cpython-313-pytest-9.0.2.pyc
 backend/tests/conftest.py
-backend/tests/test_ai_providers.py
+backend/tests/crypto/__init__.py
+backend/tests/opcoes/__init__.py
 backend/tests/test_api_analyze.py
-backend/tests/test_api_config.py
 backend/tests/test_api_crypto.py
-backend/tests/test_api_opcoes.py
-eslint.config.js
-frontend/components/modals/opcoes/modal-resultado-total.html
-frontend/html/modal-total-operacoes.html
+frontend/components/modals/crypto/modal-dashboard-crypto.html
+frontend/components/modals/opcoes/modal-analise.html
+frontend/css/crypto.css
+frontend/css/crypto/crypto.css
+frontend/css/modal-analise.css
+frontend/css/opcoes/detalhe-opcoes.css
+frontend/css/opcoes/modal-detalhes.css
+frontend/css/opcoes/modal-resultado-total.css
+frontend/css/opcoes/opcoes.css
+frontend/css/shared/modal-analise.css
+frontend/css/shared/style.css
+frontend/css/shared/y2-styles.css
+frontend/css/style.css
+frontend/html/crypto.html
+frontend/html/detalhe-opcoes.html
 frontend/html/opcoes.html
-frontend/js/modal-resultado-total.js
-frontend/js/modal-saldo-medio.js
-frontend/js/modal-total-operacoes.js
+frontend/js/core/global.js
+frontend/js/core/layout.js
+frontend/js/crypto.js
+frontend/js/crypto/crypto.js
+frontend/js/crypto/modal-dashboard-crypto.js
+frontend/js/detalhe-opcoes.js
+frontend/js/modal-analise.js
 frontend/js/opcoes.js
+frontend/js/opcoes/detalhe-opcoes.js
+frontend/js/opcoes/modal-resultado-total.js
+frontend/js/opcoes/modal-saldo-medio.js
+frontend/js/opcoes/modal-total-operacoes.js
+frontend/js/opcoes/opcoes.js
+frontend/js/opcoes/opcoes_patch.js
+frontend/js/shared/modal-analise.js
+frontend/js/shared/technical-analysis.js
+frontend/tests/fixtures/crypto-fixtures.json
+frontend/tests/fixtures/opcoes-fixtures.json
 frontend/tests/pages/crypto.spec.js
-frontend/tests/pages/opcoes.spec.js
-frontend/tests/setup/.auth-state.json
-frontend/tests/setup/global-setup.js
-package-lock.json
+frontend/tests/pages/crypto/crypto-assets.spec.js
+frontend/tests/pages/e2e-smoke.spec.js
+frontend/tests/pages/e2e-usuario.spec.js
+frontend/tests/pages/opcoes/opcoes-assets.spec.js
+ideias/14.html
+ideias/15.html
+ideias/16.html
+ideias/MinMax2.html
+ideias/MinMax3.html
+ideias/MinMax4.html
+ideias/MinMax5.html
+ideias/Zai1.html
+ideias/conceito1-painel-detalhado.html
+ideias/conceito10-cyberhud-gamer.html
+ideias/conceito11-quant-terminal.html
+ideias/conceito12-glass-widget.html
+ideias/conceito13-classic-finance.html
+ideias/conceito14-dashboard-card.html
+ideias/conceito15-minimal-card.html
+ideias/conceito16-bento-grid.html
+ideias/conceito2-dashboard-grid.html
+ideias/conceito3-tabela-comparativa.html
+ideias/conceito4-anel-probabilidade.html
+ideias/conceito5-curva-payoff.html
+ideias/conceito6-neon-glass.html
+ideias/conceito7-neo-brutalist.html
+ideias/conceito8-soft-minimalist.html
+ideias/conceito9-pro-trader.html
+ideias/modal-posicao-put.html
+ideias/package.zip
+ideias/posicoesAtuais.html
+memoryIA/ai_update.bat
+memoryIA/log_prompt.bat
+memoryIA/scripts/ai_memory_update.py
+memoryIA/scripts/ai_snapshot.py
+memoryIA/scripts/prompt_logger.py
+memoryIA/setup_ai_memory.bat
+memoryIA/templates/ADR-template.md
 package.json
 playwright.config.js
-pytest.ini
-run_all_tests.bat
-start_dashboard.bat
-tests/__pycache__/conftest.cpython-313-pytest-9.0.2.pyc
-tests/__pycache__/test_api_admin.cpython-313-pytest-9.0.2.pyc
-tests/__pycache__/test_api_agenda.cpython-313-pytest-9.0.2.pyc
-tests/__pycache__/test_api_atendimento.cpython-313-pytest-9.0.2.pyc
-tests/__pycache__/test_api_auth.cpython-313-pytest-9.0.2.pyc
-tests/__pycache__/test_api_financeiro.cpython-313-pytest-9.0.2.pyc
-tests/__pycache__/test_api_pacientes.cpython-313-pytest-9.0.2.pyc
-tests/__pycache__/test_api_relatorios.cpython-313-pytest-9.0.2.pyc
-tests/__pycache__/test_server.cpython-313-pytest-9.0.2.pyc
-tests/__pycache__/test_server.cpython-313.pyc
+playwright.usuario.config.js
 tests/dashboardTestes.css
 tests/dashboardTestes.html
 tests/dashboardTestes.js
-tests/results/.gitkeep
 tests/results/ai_results.json
 tests/results/playwright_results.json
 tests/results/pytest_results.json
+tests/results/screenshots/e2e-crypto-assets-ok.png
+tests/results/screenshots/e2e-crypto-carregada.png
+tests/results/screenshots/e2e-crypto-inicial.png
+tests/results/screenshots/e2e-crypto-tabela-visivel.png
+tests/results/screenshots/e2e-opcoes-assets-ok.png
+tests/results/screenshots/e2e-opcoes-carregada.png
+tests/results/screenshots/e2e-opcoes-inicial.png
+tests/results/screenshots/e2e-opcoes-tabela-visivel.png
+tests/results/screenshots/e2e-ui-interacoes-opcoes.png
+tests/results/screenshots/e2e-ui-opcoes-com-dados.png
+tests/results/screenshots/usuario-opcoes-delete04-apos-excluir-id64.png
+tests/results/screenshots/usuario-opcoes-delete04-lista-antes-id64.png
+tests/results/screenshots/usuario-opcoes-delete04-swal-confirm-id64.png
+tests/results/screenshots/usuario-opcoes-pagina-inicial.png
 tests/test_server.py
 
 ---
@@ -414,10 +315,11 @@ ControleOperacoes/
 ## ESTADO ATUAL (auto)
 # STATE (auto)
 
-Última atualização: 2026-03-12 09:03:34
+Última atualização: 2026-03-13 16:51:47
 Branch: master
 
 ## Commits recentes (últimos 10)
+  c9934aa | 2026-03-13 | â€œMarisvaldoâ€ | Tela de cryptos
   c8f34d5 | 2026-03-05 | â€œMarisvaldoâ€ | Tela de testes
   6482359 | 2026-02-23 | â€œMarisvaldoâ€ | Janela de totais finais
   308a0b6 | 2026-02-23 | â€œMarisvaldoâ€ | Janela de totais finais
@@ -427,31 +329,24 @@ Branch: master
   10a5284 | 2026-02-11 | â€œMarisvaldoâ€ | Ajustes no registro de controle
   0fa948d | 2026-02-11 | â€œMarisvaldoâ€ | Janela de insigths
   f624116 | 2026-02-11 | â€œMarisvaldoâ€ | Janela de insigths
-  6795244 | 2026-02-10 | â€œMarisvaldoâ€ | Janela de insigths
 
 ## Working tree
-  M .gitignore
-   M .vscode/settings.json
-   M .vscode/tasks.json
-   M backend/__pycache__/server.cpython-313.pyc
-   M backend/data/controle_operacoes.db
-   M backend/server.py
-   M backend/tests/__pycache__/conftest.cpython-313-pytest-9.0.2.pyc
-   M backend/tests/__pycache__/test_api_analyze.cpython-313-pytest-9.0.2.pyc
-   M backend/tests/__pycache__/test_api_crypto.cpython-313-pytest-9.0.2.pyc
-   M backend/tests/conftest.py
-   M backend/tests/test_api_analyze.py
-   M frontend/css/crypto.css
-   M frontend/html/crypto.html
-   M frontend/html/detalhe-opcoes.html
-   M frontend/html/opcoes.html
-   M frontend/js/crypto.js
-   M frontend/js/detalhe-opcoes.js
-   M frontend/tests/pages/crypto.spec.js
-   M package.json
-   M play
+  M .ai-memory/05-STATE.md
+   M .ai-memory/08-CHANGELOG.md
+   M .ai-memory/snapshots/latest.md
+   D _setup_arch.py
 
-... [truncado — 519 chars omitidos]
+## Arquivos mais tocados (últimos 20 commits)
+- (sem dados)
+
+## Contexto de testes detectado
+- Python: pytest detectado
+- Node: package.json detectado (verificar scripts de test)
+- Playwright detectado
+
+## Pontos de atenção
+- Revise o working tree acima antes de merge/push.
+- Atualize `.ai-memory/06-TASKS.md` ao concluir etapas.
 
 ---
 
@@ -496,6 +391,10 @@ Branch: master
 ---
 
 ## ÚLTIMOS PROMPTS ENVIADOS
+[2026-03-12 09:04:29]  fonte: clipboard
+Todas os ajustes abaixo dizem respeito Ã  tela de crypto
+Preciso de ajustes no calculo de dias de duraÃ§Ã£o da operaÃ§Ã£o. Verificar o cÃ¡lculo para ser Ãºnico e utilizado em todas as telas. Veja a imagem abaixo e anlise segundo a data atual e a data de vencimento e verifique o o cÃ¡lculo de dias esta errado.  Hoje sÃ£o 12/03 o vencimento 13/03 portanto deveria aparecer 2 dias e nÃ£o 4 como estÃ¡ ...
+
 [2026-03-12 08:35:57]  fonte: clipboard
 [Thu Mar 12 08:29:21 2026] 127.0.0.1:58597 [200]: GET /resultados/results.json?_=1773314961912
 [Thu Mar 12 08:29:21 2026] 127.0.0.1:58597 Closing

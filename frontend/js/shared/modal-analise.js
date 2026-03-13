@@ -1,5 +1,5 @@
 /**
- * modal-analise.js  v1.4.0
+ * modal-analise.js  v1.5.0
  * Modal de Análise de Performance – padrão IIFE do projeto
  * Acionado pelo botão #btnAnalise na barra superior
  */
@@ -609,6 +609,29 @@
 
         const modalEl = document.getElementById(state.modalId);
         if (!modalEl) return;
+
+        /* Resetar para aba Desempenho e forçar loadData ao reabrir */
+        state.activeTab = 'desempenho';
+        const tabNav = document.getElementById('maTabNav');
+        if (tabNav) {
+            tabNav.querySelectorAll('.ma-tab-btn').forEach(b => {
+                b.classList.toggle('active', b.dataset.tab === 'desempenho');
+            });
+            const body = tabNav.closest('.ma-body');
+            if (body) {
+                body.querySelectorAll('.ma-tab-pane').forEach(p => {
+                    p.classList.toggle('d-none', p.id !== 'maTabPane-desempenho');
+                });
+            }
+        }
+
+        /* Sincronizar botão de período com state.period */
+        const filterBox = document.getElementById('maFilterButtons');
+        if (filterBox) {
+            filterBox.querySelectorAll('button[data-period]').forEach(b => {
+                b.classList.toggle('active', b.dataset.period === state.period);
+            });
+        }
 
         setupTabs();
         setupFilterButtons();

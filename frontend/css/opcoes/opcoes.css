@@ -2394,3 +2394,71 @@
 #modalSaldoMedio .accordion-body {
     padding: 1rem;
 }
+
+/* =========================================
+   Heatmap de Performance — estilos globais
+   (usados em #modalDashboardCrypto e em
+    qualquer outro contexto sem scope)
+   ========================================= */
+.heatmap-month {
+    margin-bottom: 10px;
+}
+.heatmap-month-title {
+    color: #94a3b8;
+    font-size: 12px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+.heatmap-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(28px, 1fr));
+    gap: 4px;
+    margin-bottom: 6px;
+    text-align: center;
+    font-size: 11px;
+    color: #94a3b8;
+}
+.heatmap-weekday {
+    padding: 2px 0;
+}
+.heatmap-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(28px, 1fr));
+    gap: 4px;
+}
+.heatmap-day {
+    width: 100%;
+    aspect-ratio: 1;
+    min-height: 28px;
+    border-radius: 5px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72rem;
+    color: #cbd5e1;
+    font-weight: 500;
+    cursor: default;
+    transition: transform 0.1s;
+}
+.heatmap-day:hover {
+    transform: scale(1.12);
+    z-index: 1;
+    position: relative;
+}
+.heatmap-profit-high { background: #2fb344; color: #fff; }
+.heatmap-profit-med  { background: rgba(47, 179, 68, 0.65); }
+.heatmap-profit-low  { background: rgba(47, 179, 68, 0.30); }
+.heatmap-neutral     { background: rgba(148, 163, 184, 0.12); }
+.heatmap-loss-low    { background: rgba(214, 57, 57, 0.35); }
+.heatmap-loss-med    { background: rgba(214, 57, 57, 0.70); }
+.heatmap-loss-high   { background: #d63939; color: #fff; }
+
+/* Caixinha de legenda do heatmap */
+.saldo-legend-box {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    vertical-align: middle;
+    margin-right: 3px;
+}

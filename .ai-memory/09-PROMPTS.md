@@ -1,8 +1,42 @@
 # 09 — PROMPTS LOG
 
-> Atualizado automaticamente. Total registrado: 4 entrada(s).
+> Atualizado automaticamente. Total registrado: 5 entrada(s).
 > Para registrar um novo prompt: `memoryIA\log_prompt.bat`
 
+
+---
+
+**`2026-03-13 16:52:09`**
+
+```
+Na tela de anÃ¡lise temporal de performance de crypto veio totamente vazia em todas as abas
+Recebendo esses erros
+Uncaught (in promise) TypeError: Cannot read properties of null (reading 'includes')
+    at AutofillOverlayContentService.<anonymous> (bootstrap-autofill-overlay.js:9562:81)
+    at Generator.next (<anonymous>)
+    at bootstrap-autofill-overlay.js:8522:71
+    at new Promise (<anonymous>)
+    at autofill_overlay_content_service_awaiter (bootstrap-autofill-overlay.js:8518:12)
+    at AutofillOverlayContentService.setQualifiedLoginFillType (bootstrap-autofill-overlay.js:9555:16)
+    at AutofillOverlayContentService.isIgnoredField (bootstrap-autofill-overlay.js:9530:23)
+    at AutofillOverlayContentService.<anonymous> (bootstrap-autofill-overlay.js:8981:22)
+    at Generator.next (<anonymous>)
+    at bootstrap-autofill-overlay.js:8522:71
+
+Tela de dashboard avanÃ§ado de performance - crypto toda errada. Veja a imagem o resultado
+Tela de anÃ¡lise temporal de performance - crypto nÃ£o carregou nada. Imagem 2
+
+Tela de evoluÃ§Ã£o do resultado acumulado fora do accordion e inclusive deve vir fechado
+
+Erro na tela de simulador. Veja a imagem 3
+
+Criar em opcoes na janela de opcoes no datatable, inserir o botÃ£o de finalizar a operaÃ§Ã£o
+A parte de anÃ¡lise temporal em opcÃµes, continua trazendo a tela vazia. 
+
+Tela de total de operaÃ§Ãµes da crypto estÃ¡ diferente da tela do opcoes. 
+
+Dashboard avanÃ§ado no heatmap ainda com erro. Imagem 4
+```
 
 ---
 

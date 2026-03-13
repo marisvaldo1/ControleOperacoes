@@ -156,3 +156,33 @@ class TestRefreshOpcoes:
         mock_db.cursor.return_value.execute.return_value.fetchall.return_value = []
         resp = client.post('/api/opcoes/refresh')
         assert resp.get_json().get('updated') == 0
+
+
+class TestFecharOpcao:
+    def test_fechar_operacao_retorna_sucesso(self, client, mock_db):
+        """Finalizar uma operação deve retornar success=True."""
+        resp = client.post('/api/opcoes/1/fechar', json={'status': 'FECHADA'})
+        assert resp.status_code == 200
+        assert resp.get_json().get('success') is True
+
+    def test_fechar_com_resultado_retorna_sucesso(self, client, mock_db):
+        """Finalizar com resultado explícito deve aceitar e retornar sucesso."""
+        resp = client.post('/api/opcoes/1/fechar', json={
+            'status': 'EXERCIDA',
+            'resultado': 150.0,
+            'preco_atual': 4.75
+        })
+        assert resp.status_code == 200
+        assert resp.get_json().get('success') is True
+
+    def test_fechar_sem_payload_usa_status_fechada(self, client, mock_db):
+        """Sem payload, status padrão FECHADA deve ser usado."""
+        resp = client.post('/api/opcoes/1/fechar', json={})
+        assert resp.status_code == 200
+        assert resp.get_json().get('success') is True
+
+    def test_fechar_status_vencida(self, client, mock_db):
+        """Deve aceitar qualquer status de encerramento (VENCIDA)."""
+        resp = client.post('/api/opcoes/1/fechar', json={'status': 'VENCIDA'})
+        assert resp.status_code == 200
+        assert resp.get_json().get('success') is True

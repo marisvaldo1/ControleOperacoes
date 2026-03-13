@@ -165,6 +165,36 @@ def update_opcoes(id):
     return jsonify({'success': True})
 
 
+# ─── Fechar / Finalizar ────────────────────────────────────────────────────────
+@opcoes_bp.route('/<int:id>/fechar', methods=['POST'])
+def fechar_opcao(id):
+    """Finaliza uma operação: atualiza status e opcionalmente resultado."""
+    data = request.json or {}
+    novo_status  = data.get('status',    'FECHADA')
+    resultado    = data.get('resultado', None)
+    preco_atual  = data.get('preco_atual', None)
+
+    conn = db.get_db()
+    if resultado is not None and preco_atual is not None:
+        conn.execute(
+            'UPDATE operacoes_opcoes SET status=?, resultado=?, preco_atual=? WHERE id=?',
+            (novo_status, resultado, preco_atual, id)
+        )
+    elif resultado is not None:
+        conn.execute(
+            'UPDATE operacoes_opcoes SET status=?, resultado=? WHERE id=?',
+            (novo_status, resultado, id)
+        )
+    else:
+        conn.execute(
+            'UPDATE operacoes_opcoes SET status=? WHERE id=?',
+            (novo_status, id)
+        )
+    conn.commit()
+    conn.close()
+    return jsonify({'success': True})
+
+
 # ─── Excluir ──────────────────────────────────────────────────────────────────
 @opcoes_bp.route('/<int:id>', methods=['DELETE'])
 def delete_opcoes(id):

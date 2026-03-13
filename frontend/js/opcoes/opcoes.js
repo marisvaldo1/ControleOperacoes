@@ -683,7 +683,11 @@ async function populateTable(dt, data, showActions = true, updatePrices = false,
                     <button class="btn btn-sm btn-primary btn-icon" onclick="editOperacao('${op.id}')" title="Editar">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                     </button>
-                    ${!isFechada ? `<button class="btn btn-sm btn-danger btn-icon" onclick="deleteOperacao('${op.id}')" title="Excluir">
+                    ${!isFechada ? `
+                    <button class="btn btn-sm btn-warning btn-icon" onclick="finalizarOpcao('${op.id}')" title="Finalizar operação">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    </button>
+                    <button class="btn btn-sm btn-danger btn-icon" onclick="deleteOperacao('${op.id}')" title="Excluir">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
                     </button>` : ''}
                  </div>`;
@@ -805,7 +809,11 @@ async function populateTable(dt, data, showActions = true, updatePrices = false,
                     <button class="btn btn-sm btn-primary btn-icon" onclick="editOperacao('${op.id}')" title="Editar">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                     </button>
-                    ${!isFechada ? `<button class="btn btn-sm btn-danger btn-icon" onclick="deleteOperacao('${op.id}')" title="Excluir">
+                    ${!isFechada ? `
+                    <button class="btn btn-sm btn-warning btn-icon" onclick="finalizarOpcao('${op.id}')" title="Finalizar operação">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    </button>
+                    <button class="btn btn-sm btn-danger btn-icon" onclick="deleteOperacao('${op.id}')" title="Excluir">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
                     </button>` : ''}
                  </div>`;
@@ -1095,6 +1103,64 @@ async function deleteOperacao(id) {
         loadOperacoes();
     } catch (e) {
         iziToast.error({title: 'Erro', message: 'Erro ao excluir'});
+    }
+}
+
+async function finalizarOpcao(id) {
+    const op = allOperacoes.find(o => String(o.id) === String(id));
+    const ativoLabel = op ? `${op.ativo || ''} ${op.tipo || ''}` : `#${id}`;
+
+    const { value: formValues, isConfirmed } = await Swal.fire({
+        title: `Finalizar operação`,
+        html: `
+            <p class="mb-3 text-muted">Operação: <strong>${ativoLabel}</strong></p>
+            <div class="mb-3 text-start">
+                <label class="form-label small">Status de encerramento</label>
+                <select id="swalStatus" class="form-select form-select-sm">
+                    <option value="FECHADA">FECHADA</option>
+                    <option value="EXERCIDA">EXERCIDA</option>
+                    <option value="VENCIDA">VENCIDA</option>
+                </select>
+            </div>
+            <div class="mb-3 text-start">
+                <label class="form-label small">Resultado final (R$) <span class="text-muted">(opcional)</span></label>
+                <input id="swalResultado" type="number" step="0.01" class="form-control form-control-sm"
+                       placeholder="Ex: 150.00 ou -50.00"
+                       value="${op && op.resultado != null ? op.resultado : ''}">
+            </div>
+            <div class="mb-1 text-start">
+                <label class="form-label small">Preço atual (R$) <span class="text-muted">(opcional)</span></label>
+                <input id="swalPrecoAtual" type="number" step="0.01" class="form-control form-control-sm"
+                       placeholder="Ex: 22.50"
+                       value="${op && op.preco_atual != null ? op.preco_atual : ''}">
+            </div>`,
+        showCancelButton: true,
+        confirmButtonColor: '#f59f00',
+        cancelButtonColor: '#626976',
+        confirmButtonText: 'Finalizar',
+        cancelButtonText: 'Cancelar',
+        background: '#1f2937',
+        color: '#f8f9fa',
+        preConfirm: () => ({
+            status:     document.getElementById('swalStatus').value,
+            resultado:  document.getElementById('swalResultado').value  !== '' ? parseFloat(document.getElementById('swalResultado').value)  : null,
+            preco_atual: document.getElementById('swalPrecoAtual').value !== '' ? parseFloat(document.getElementById('swalPrecoAtual').value) : null,
+        })
+    });
+
+    if (!isConfirmed) return;
+
+    try {
+        const res = await fetch(`${API_BASE}/api/opcoes/${id}/fechar`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify(formValues)
+        });
+        if (!res.ok) throw new Error('API error');
+        iziToast.success({ title: 'Sucesso', message: `Operação finalizada como ${formValues.status}` });
+        loadOperacoes();
+    } catch (e) {
+        iziToast.error({ title: 'Erro', message: 'Erro ao finalizar operação' });
     }
 }
 
