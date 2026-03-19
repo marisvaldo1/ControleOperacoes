@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medidor de Utilização</title>
+    <style>
+        body {
+            background-color: #141414;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        .gauge {
+            width: 300px;
+            height: 150px;
+            position: relative;
+            overflow: hidden;
+        }
+        .gauge-body {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        .gauge-background {
+            width: 100%;
+            height: 100%;
+            border-top-left-radius: 150px;
+            border-top-right-radius: 150px;
+            background: #232323;
+            position: absolute;
+            top: 0;
+            left: 0;
+            overflow: hidden;
+        }
+        .gauge-fill {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            border-top-left-radius: 150px;
+            border-top-right-radius: 150px;
+            background: #00e0a1; /* Cor sólida */
+            transform-origin: bottom center;
+        }
+        .gauge-cover {
+            width: 260px;
+            height: 130px;
+            background: #141414;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            border-radius: 130px 130px 0 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 3;
+        }
+        .gauge-value {
+            font-size: 36px;
+            font-weight: bold;
+            color: white;
+            margin-top: 10px;
+        }
+        .gauge-label {
+            font-size: 12px;
+            color: #00a6ed;
+            margin-top: 5px;
+        }
+        .gauge-pointer {
+            position: absolute;
+            width: 4px;
+            height: 90px;
+            bottom: 0;
+            left: 50%;
+            transform-origin: bottom center;
+            z-index: 4;
+        }
+        .gauge-pointer::after {
+            content: '';
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            bottom: -6px;
+            left: -4px;
+        }
+        .gauge-marks {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: 5;
+        }
+        .gauge-mark {
+            position: absolute;
+            width: 2px;
+            height: 10px;
+            background: white;
+            bottom: 10px; /* Ajuste para posicionar as marcações abaixo do arco */
+            left: 50%;
+            transform-origin: bottom center;
+        }
+        .gauge-mark.highlight {
+            height: 14px;
+        }
+        .controls {
+            margin-top: 20px;
+        }
+        .button {
+            background-color: #00a6ed;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 0 10px;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 5px;
+        }
+        .button:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+        }
+        .pointer-red {
+            background: red;
+        }
+        .pointer-yellow {
+            background: yellow;
+        }
+        .pointer-green {
+            background: green;
+        }
+        .pointer-aqua {
+            background: #00e0a1;
+        }
+        .pointer-red::after {
+            background: red;
+        }
+        .pointer-yellow::after {
+            background: yellow;
+        }
+        .pointer-green::after {
+            background: green;
+        }
+        .pointer-aqua::after {
+            background: #00e0a1;
+        }
+    </style>
+</head>
+<body>
+    <div class="gauge">
+        <div class="gauge-body">
+            <div class="gauge-background"></div>
+            <div class="gauge-fill"></div>
+            <div class="gauge-cover">
+                <div class="gauge-value">0%</div>
+                <div class="gauge-label">Lucro</div>
+            </div>
+            <div class="gauge-pointer"></div>
+            <div class="gauge-marks"></div>
+        </div>
+    </div>
+    <div class="controls">
+        <button id="toggleButton" class="button">Iniciar</button>
+    </div>
+    <script>
+        let currentValue = 0;
+        let increasing = true;
+        let intervalId;
+        let running = false;
+
+        function setGaugeValue(gauge, value) {
+            if (value < 0 || value > 100) return;
+            const gaugeFill = gauge.querySelector(".gauge-fill");
+            const gaugeValue = gauge.querySelector(".gauge-value");
+            const gaugePointer = gauge.querySelector(".gauge-pointer");
+            const rotation = (value / 100 * 180) - 90;
+
+            let colorClass;
+            if (value < 25) {
+                gaugeFill.style.backgroundColor = "red";
+                colorClass = "pointer-red";
+            } else if (value >= 25 && value < 50) {
+                gaugeFill.style.backgroundColor = "yellow";
+                colorClass = "pointer-yellow";
+            } else if (value >= 50 && value < 75) {
+                gaugeFill.style.backgroundColor = "#00e0a1";
+                colorClass = "pointer-aqua";
+            } else {
+                gaugeFill.style.backgroundColor = "green";
+                colorClass = "pointer-green";
+            }
+            
+            gaugePointer.className = `gauge-pointer ${colorClass}`;
+            gaugeFill.style.transform = `rotate(${rotation + 90}deg)`;
+			gaugePointer.style.transform = `rotate(${rotation}deg)`;
+            gaugeValue.textContent = value + "%";
+
+            const gaugeMarks = gauge.querySelector(".gauge-marks");
+            gaugeMarks.innerHTML = ''; // Limpa as marcações anteriores
+            for (let i = 0; i <= 36; i++) {
+                const mark = document.createElement('div');
+                mark.className = 'gauge-mark';
+                if (i % 2 === 0) {
+                    mark.classList.add('highlight');
+                }
+                mark.style.transform = `rotate(${i * 5 + 90}deg) translateY(115px)`; // Ajuste para posicionar as marcações abaixo do arco
+                gaugeMarks.appendChild(mark);
+            }
+        }
+
+        const gaugeElement = document.querySelector(".gauge");
+        setGaugeValue(gaugeElement, currentValue);
+
+        document.getElementById("toggleButton").addEventListener("click", () => {
+            if (running) {
+                clearInterval(intervalId);
+                document.getElementById("toggleButton").textContent = "Iniciar";
+            } else {
+                intervalId = setInterval(() => {
+                    if (increasing) {
+                        currentValue++;
+                        if (currentValue >= 100) {
+                            increasing = false;
+                        }
+                    } else {
+                        currentValue--;
+                        if (currentValue <= 0) {
+                            increasing = true;
+                        }
+                    }
+                    setGaugeValue(gaugeElement, currentValue);
+                }, 50); // 1 segundo
+                document.getElementById("toggleButton").textContent = "Parar";
+            }
+            running = !running;
+        });
+    </script>
+</body>
+</html>

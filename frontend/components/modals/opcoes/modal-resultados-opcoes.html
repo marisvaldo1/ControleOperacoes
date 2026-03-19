@@ -1,0 +1,385 @@
+﻿<!-- Modal Resultados Opcoes v4 — layout idêntico ao Crypto (5 abas + sidebar) -->
+<div class="modal modal-blur fade" id="modalResultadosOpcoes" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content res-modal-content">
+
+            <!--  Header  -->
+            <div class="modal-header mp-header">
+                <h5 class="modal-title mp-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                    </svg>
+                    Resultados · Opções
+                </h5>
+                <div class="d-flex align-items-center gap-2 ms-auto me-3">
+                    <span class="mp-update-status" id="roLastUpdate">Atualizado agora</span>
+                    <button type="button" class="mp-refresh-btn" id="roRefreshBtn" title="Atualizar dados">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                        </svg>
+                    </button>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+
+            <!--  Modal Body  -->
+            <div class="modal-body p-0">
+
+                <!-- ── Filtros ───────────────────────────────────────────── -->
+                <div class="rmc-filter-bar">
+                    <div class="rmc-pills-group" id="roPeriodPills">
+                        <button class="rmc-pill active" data-period="all">Todos</button>
+                        <button class="rmc-pill" data-period="today">Hoje</button>
+                        <button class="rmc-pill" data-period="7d">7d</button>
+                        <button class="rmc-pill" data-period="15d">15d</button>
+                        <button class="rmc-pill" data-period="mes">Mês</button>
+                        <button class="rmc-pill" data-period="30d">30d</button>
+                        <button class="rmc-pill" data-period="90d">90d</button>
+                        <button class="rmc-pill" data-period="12m">12m</button>
+                        <button class="rmc-pill" data-period="ano">Ano</button>
+                    </div>
+                    <div class="rmc-pills-group" id="roTypePills">
+                        <button class="rmc-pill rmc-pill-ab" data-type="aberta">Abertas</button>
+                        <button class="rmc-pill rmc-pill-fe" data-type="fechada">Fechadas</button>
+                        <button class="rmc-pill rmc-pill-call" data-tipo="CALL">CALL</button>
+                        <button class="rmc-pill rmc-pill-put" data-tipo="PUT">PUT</button>
+                    </div>
+                </div>
+
+                <!-- ── Op Tabs ───────────────────────────────────────────── -->
+                <div class="rmc-op-selector">
+                    <div class="rmc-op-tabs-row" id="roOpTabsRow"><!-- renderOpTabs() --></div>
+                    <div class="rmc-op-summary-pills">
+                        <span class="rmc-s-pill rmc-sp-blue"  title="Total de operações no filtro atual"><span class="rmc-sp-lbl">Total</span><span id="roSumTotal">0</span></span>
+                        <span class="rmc-s-pill rmc-sp-green" title="Operações com status ABERTA"><span class="rmc-sp-lbl">Abertas</span><span id="roSumAbertas">0</span></span>
+                        <span class="rmc-s-pill rmc-sp-gray"  title="Operações com status FECHADA"><span class="rmc-sp-lbl">Fechadas</span><span id="roSumFechadas">0</span></span>
+                        <span class="rmc-s-pill rmc-sp-gold"  title="Soma total dos prêmios × quantidade"><span class="rmc-sp-lbl">Prêmio</span><span id="roSumPremio">R$0</span></span>
+                    </div>
+                </div>
+
+                <!-- ── Section Tabs ──────────────────────────────────────── -->
+                <div class="rmc-section-tabs" id="roSectionTabs">
+                    <button class="rmc-section-tab active" data-sec="desempenho"><span class="rmc-stab-icon">📊</span> Desempenho</button>
+                    <button class="rmc-section-tab" data-sec="comparativos"><span class="rmc-stab-icon">📐</span> Comparativos</button>
+                    <button class="rmc-section-tab" data-sec="posicoes"><span class="rmc-stab-icon">📋</span> Posições Abertas</button>
+                    <button class="rmc-section-tab" data-sec="risco"><span class="rmc-stab-icon">⚠</span> Risco <span class="rmc-stab-warn" id="roRiscoWarn" style="display:none">●</span></button>
+                </div>
+
+                <!-- ── Dashboard Body: Sidebar + Conteúdo ───────────────── -->
+                <div class="rmc-dashboard-body" id="roDashBody">
+
+                    <!-- SIDEBAR -->
+                    <aside class="rmc-sidebar" id="roSidebar">
+                        <div class="rmc-sb-card active">
+                            <div class="rmc-sb-label">Cotação</div>
+                            <div class="rmc-sb-value rmc-c-cyan" id="roSbCotacao">—</div>
+                            <div class="rmc-sb-sub rmc-c-green" id="roSbCotacaoVar">—</div>
+                            <div class="rmc-sb-bar"><div class="rmc-sb-bar-fill" id="roSbCotacaoBar" style="background:#00d4e8;width:0%"></div></div>
+                        </div>
+                        <div class="rmc-sb-card">
+                            <div class="rmc-sb-label">Resultado</div>
+                            <div class="rmc-sb-value rmc-c-green" id="roSbResultado">—</div>
+                            <div class="rmc-sb-sub" id="roSbResultadoBrl">—</div>
+                        </div>
+                        <div class="rmc-sb-card">
+                            <div class="rmc-sb-label">TAE ao Ano</div>
+                            <div class="rmc-sb-value rmc-c-green" id="roSbTae">—</div>
+                            <div class="rmc-sb-bar"><div class="rmc-sb-bar-fill" id="roSbTaeBar" style="background:#00e87a;width:0%"></div></div>
+                        </div>
+                        <div class="rmc-sb-card">
+                            <div class="rmc-sb-label">Strike</div>
+                            <div class="rmc-sb-value" id="roSbStrike">—</div>
+                            <div class="rmc-sb-sub" id="roSbStrikeBadge"><span class="rmc-badge-call">CALL</span></div>
+                        </div>
+                        <div class="rmc-sb-card">
+                            <div class="rmc-sb-label">Distância OTM</div>
+                            <div class="rmc-sb-value rmc-c-gold" id="roSbDist">—</div>
+                            <div class="rmc-sb-bar"><div class="rmc-sb-bar-fill" id="roSbDistBar" style="background:#f5a623;width:0%"></div></div>
+                        </div>
+                        <div class="rmc-sb-card">
+                            <div class="rmc-sb-label">Prêmio</div>
+                            <div class="rmc-sb-value rmc-c-gold" id="roSbPremio">—</div>
+                            <div class="rmc-sb-sub" id="roSbPremioSub">—</div>
+                            <div class="rmc-sb-bar"><div class="rmc-sb-bar-fill" id="roSbPremioBar" style="background:#f5a623;width:100%"></div></div>
+                        </div>
+                        <div class="rmc-sb-card">
+                            <div class="rmc-sb-label">PoP</div>
+                            <div class="rmc-sb-value rmc-c-green" id="roSbPoP">—</div>
+                            <div class="rmc-sb-sub">Prob. de Lucro</div>
+                            <div class="rmc-sb-bar"><div class="rmc-sb-bar-fill" id="roSbPoPBar" style="background:#00e87a;width:0%"></div></div>
+                        </div>
+                        <div class="rmc-sb-card">
+                            <div class="rmc-sb-label">Saldo Base</div>
+                            <div class="rmc-sb-value rmc-c-cyan" id="roSbSaldo">—</div>
+                            <div class="rmc-sb-sub" id="roSbSaldoSub">—</div>
+                        </div>
+                    </aside>
+
+                    <!-- CONTEÚDO PRINCIPAL -->
+                    <div class="rmc-content" id="roContent">
+
+                        <!-- ===== DESEMPENHO ===== -->
+                        <div class="rmc-tab-panel active" id="roSecDesempenho">
+                            <!-- Row 1: Resumo da Operação + Performance -->
+                            <div class="rmc-row-2" style="margin-bottom:0.5rem;">
+                                <div class="rmc-card">
+                                    <div class="rmc-card-label"><span class="rmc-card-label-dot" style="background:#4d9eff"></span>Resumo da Operação</div>
+                                    <div class="rmc-resumo-grid">
+                                        <div><span class="rmc-ik">Ativo</span><span class="rmc-iv" id="roResAtivo">—</span></div>
+                                        <div><span class="rmc-ik">Tipo</span><span class="rmc-iv" id="roResTipoBadge">—</span></div>
+                                        <div><span class="rmc-ik">Strike</span><span class="rmc-iv rmc-c-gold" id="roResStrike">—</span></div>
+                                        <div><span class="rmc-ik">Abertura</span><span class="rmc-iv rmc-c-cyan" id="roResAbertura">—</span></div>
+                                        <div><span class="rmc-ik">Cotação</span><span class="rmc-iv rmc-c-green" id="roResCotacao">—</span></div>
+                                        <div><span class="rmc-ik">Prêmio</span><span class="rmc-iv rmc-c-gold" id="roResPremio">—</span></div>
+                                        <div><span class="rmc-ik">Quantidade</span><span class="rmc-iv" id="roResQtd">—</span></div>
+                                        <div><span class="rmc-ik">Saldo Base</span><span class="rmc-iv" id="roResInvestido">—</span></div>
+                                        <div><span class="rmc-ik">Exercício</span><span class="rmc-iv" id="roResExDate">—</span></div>
+                                        <div><span class="rmc-ik">Dias Rest.</span><span class="rmc-iv" id="roResDiasRest">—</span></div>
+                                    </div>
+                                </div>
+                                <div class="rmc-card">
+                                    <div class="rmc-card-label"><span class="rmc-card-label-dot" style="background:#00e87a"></span>Performance</div>
+                                    <div style="display:flex;gap:0.5rem;align-items:center;margin-bottom:0.3rem;">
+                                        <div style="flex:1;position:relative;height:60px;">
+                                            <svg width="100%" height="60" viewBox="0 0 200 60" preserveAspectRatio="none" id="roPerfSvg">
+                                                <defs><linearGradient id="roPerfGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#00e87a" stop-opacity=".3"/><stop offset="100%" stop-color="#00e87a" stop-opacity="0"/></linearGradient></defs>
+                                                <path id="roPerfPath" d="M0,50 L200,50" fill="none" stroke="#00e87a" stroke-width="2"/>
+                                                <path id="roPerfFill" d="M0,50 L200,50 L200,60 L0,60Z" fill="url(#roPerfGrad)"/>
+                                            </svg>
+                                        </div>
+                                        <div style="text-align:center;">
+                                            <div class="rmc-gauge-wrap rmc-gauge-sm" style="width:60px;height:60px;">
+                                                <svg viewBox="0 0 100 100">
+                                                    <circle class="rmc-g-track-sm" cx="50" cy="50" r="38"/>
+                                                    <circle class="rmc-g-arc-sm" cx="50" cy="50" r="38" stroke="#00e87a" id="roPerfPoPArc" style="stroke-dasharray:238.76;stroke-dashoffset:238.76"/>
+                                                </svg>
+                                                <div class="rmc-gauge-inner"><div class="rmc-g-val-sm" id="roPerfPoP">—</div><div class="rmc-g-sub">PoP</div></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="rmc-info-row"><span class="rmc-ik">Resultado</span><span class="rmc-iv" id="roPerfResultado">—</span></div>
+                                    <div class="rmc-info-row"><span class="rmc-ik">Lucro R$</span><span class="rmc-iv" id="roPerfLucroBrl">—</span></div>
+                                </div>
+                            </div>
+
+                            <!-- Row 2: Gregos + Probabilidades + Risco/Retorno -->
+                            <div class="rmc-row-3" style="margin-bottom:0.5rem;">
+                                <div class="rmc-card">
+                                    <div class="rmc-card-label"><span class="rmc-card-label-dot" style="background:#a855f7"></span>Gregos</div>
+                                    <div class="rmc-greeks-grid">
+                                        <div><span class="rmc-ik">Delta</span><span class="rmc-iv rmc-c-blue" id="roGreeksDelta">—</span></div>
+                                        <div><span class="rmc-ik">Gamma</span><span class="rmc-iv" id="roGreeksGamma">—</span></div>
+                                        <div><span class="rmc-ik">Theta</span><span class="rmc-iv rmc-c-red" id="roGreeksTheta">—</span></div>
+                                        <div><span class="rmc-ik">Vega</span><span class="rmc-iv" id="roGreeksVega">—</span></div>
+                                        <div><span class="rmc-ik">IV</span><span class="rmc-iv rmc-c-purple" id="roGreeksIV">—</span></div>
+                                    </div>
+                                </div>
+                                <div class="rmc-card">
+                                    <div class="rmc-card-label"><span class="rmc-card-label-dot" style="background:#00e87a"></span>Probabilidades</div>
+                                    <div class="rmc-prob-grid">
+                                        <div><span class="rmc-ik">PoP</span><span class="rmc-iv" id="roProbPoP">—</span></div>
+                                        <div><span class="rmc-ik">Prob. ITM</span><span class="rmc-iv rmc-c-red" id="roProbITM">—</span></div>
+                                        <div><span class="rmc-ik">Prob. OTM</span><span class="rmc-iv rmc-c-green" id="roProbOTM">—</span></div>
+                                        <div><span class="rmc-ik">Distância OTM</span><span class="rmc-iv rmc-c-gold" id="roProbDist">—</span></div>
+                                    </div>
+                                </div>
+                                <div class="rmc-card">
+                                    <div class="rmc-card-label"><span class="rmc-card-label-dot" style="background:#f5a623"></span>Risco/Retorno</div>
+                                    <div class="rmc-rr-grid">
+                                        <div><span class="rmc-ik">Ganho Máx.</span><span class="rmc-iv rmc-c-gold" id="roRRGanhoMax">—</span></div>
+                                        <div><span class="rmc-ik">Perda Máx.</span><span class="rmc-iv rmc-c-red" id="roRRPerdaMax">—</span></div>
+                                        <div><span class="rmc-ik">R/R</span><span class="rmc-iv" id="roRRRatio">—</span></div>
+                                        <div><span class="rmc-ik">Break-even</span><span class="rmc-iv" id="roRRBreakeven">—</span></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Row 3: Decaimento Theta + Cotação vs Strike -->
+                            <div class="rmc-row-2">
+                                <div class="rmc-card">
+                                    <div class="rmc-card-label"><span class="rmc-card-label-dot" style="background:#ff4d6a"></span>Decaimento Theta</div>
+                                    <div style="position:relative;height:60px;">
+                                        <svg width="100%" height="60" viewBox="0 0 300 60" preserveAspectRatio="none">
+                                            <defs><linearGradient id="roThetaDecayGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ff4d6a" stop-opacity=".3"/><stop offset="100%" stop-color="#ff4d6a" stop-opacity="0"/></linearGradient></defs>
+                                            <path id="roThetaDecayPath" d="M0,10 L300,55" fill="none" stroke="#ff4d6a" stroke-width="2"/>
+                                            <path id="roThetaDecayFill" d="M0,10 L300,55 L300,60 L0,60Z" fill="url(#roThetaDecayGrad)"/>
+                                        </svg>
+                                    </div>
+                                    <div class="rmc-info-row"><span class="rmc-ik">Theta/dia</span><span class="rmc-iv rmc-c-red" id="roThetaDaily">—</span></div>
+                                    <div class="rmc-info-row"><span class="rmc-ik">Decaimento total</span><span class="rmc-iv rmc-c-red" id="roThetaTotal">—</span></div>
+                                </div>
+                                <div class="rmc-card">
+                                    <div class="rmc-card-label"><span class="rmc-card-label-dot" style="background:#00d4e8"></span>Cotação vs Strike</div>
+                                    <div class="rmc-gauge-row">
+                                        <div class="rmc-gauge-wrap rmc-gauge-sm">
+                                            <svg viewBox="0 0 100 100">
+                                                <circle class="rmc-g-track-sm" cx="50" cy="50" r="38"/>
+                                                <circle class="rmc-g-arc-sm" cx="50" cy="50" r="38" stroke="#00d4e8" id="roVsArc" style="stroke-dasharray:238.76;stroke-dashoffset:238.76"/>
+                                            </svg>
+                                            <div class="rmc-gauge-inner"><div class="rmc-g-val-sm" id="roVsPct">—</div><div class="rmc-g-sub">do strike</div></div>
+                                        </div>
+                                        <div class="rmc-gauge-stats">
+                                            <div class="rmc-info-row"><span class="rmc-ik">Cotação</span><span class="rmc-iv rmc-c-green" id="roVsCot">—</span></div>
+                                            <div class="rmc-info-row"><span class="rmc-ik">Strike</span><span class="rmc-iv rmc-c-gold" id="roVsStrike">—</span></div>
+                                            <div class="rmc-info-row"><span class="rmc-ik">Diferença</span><span class="rmc-iv" id="roVsDiff">—</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div><!-- /roSecDesempenho -->
+
+                        <!-- ===== COMPARATIVOS ===== -->
+                        <div class="rmc-tab-panel" id="roSecComparativos">
+                            <div class="rmc-card rmc-compare-bar-card">
+                                <div class="rmc-card-label"><span class="rmc-card-label-dot" style="background:#4d9eff"></span>Comparativo de Preços — Cotação vs. Strike vs. Abertura</div>
+                                <div class="rmc-cbar-wrap" id="roCbarWrap">
+                                    <div id="roCbarRangeFill" class="rmc-cbar-fill" style="background:linear-gradient(90deg,rgba(0,212,232,0.15),rgba(245,166,35,0.15));width:100%;left:0;"></div>
+                                    <div class="rmc-cbar-marker" id="roCbarAbertura" style="background:#00d4e8;left:4%">
+                                        <div class="rmc-cbar-marker-label" style="color:#00d4e8">ABERTURA</div>
+                                        <div class="rmc-cbar-marker-price" style="color:#00d4e8"><span id="roCbAbert">—</span></div>
+                                    </div>
+                                    <div class="rmc-cbar-marker" id="roCbarStrike" style="background:#f5a623;left:96%">
+                                        <div class="rmc-cbar-marker-label" style="color:#f5a623">STRIKE</div>
+                                        <div class="rmc-cbar-marker-price" style="color:#f5a623"><span id="roCbStrike">—</span></div>
+                                    </div>
+                                    <div class="rmc-cbar-dot" id="roCbarCotacao" style="background:#00e87a;left:93%">
+                                        <div class="rmc-cbar-dot-label" style="color:#00e87a">COTAÇÃO</div>
+                                    </div>
+                                </div>
+                                <div class="rmc-cbar-legend">
+                                    <div class="rmc-cbar-legend-item"><div class="rmc-cbar-legend-dot" style="background:#00d4e8"></div>Abertura <strong style="color:#00d4e8;font-family:'JetBrains Mono',monospace;margin-left:0.3rem;" id="roLegAb">—</strong></div>
+                                    <div class="rmc-cbar-legend-item"><div class="rmc-cbar-legend-dot" style="background:#00e87a"></div>Cotação <strong style="color:#00e87a;font-family:'JetBrains Mono',monospace;margin-left:0.3rem;" id="roLegCot">—</strong></div>
+                                    <div class="rmc-cbar-legend-item"><div class="rmc-cbar-legend-dot" style="background:#f5a623"></div>Strike <strong style="color:#f5a623;font-family:'JetBrains Mono',monospace;margin-left:0.3rem;" id="roLegStrike">—</strong></div>
+                                </div>
+                            </div>
+                            <div class="rmc-row-2">
+                                <div class="rmc-card">
+                                    <div class="rmc-card-label"><span class="rmc-card-label-dot" style="background:#00d4e8"></span>Cotação vs. Abertura</div>
+                                    <div class="rmc-delta-compare">
+                                        <div class="rmc-delta-block"><div class="rmc-delta-lbl">Abertura</div><div class="rmc-delta-val rmc-c-cyan" id="roDAbVal">—</div><div class="rmc-delta-pct">base 100%</div></div>
+                                        <div class="rmc-delta-block"><div class="rmc-delta-lbl">Cotação Atual</div><div class="rmc-delta-val rmc-c-green" id="roDCotVal">—</div><div class="rmc-delta-pct rmc-c-green" id="roDCotPct">—</div></div>
+                                        <div class="rmc-delta-block" style="background:rgba(0,232,122,0.05);border-color:rgba(0,232,122,0.2)"><div class="rmc-delta-lbl" style="color:#00e87a">Variação R$</div><div class="rmc-delta-val rmc-c-green" id="roDDeltaVal">—</div><div class="rmc-delta-pct rmc-c-green">desde abertura</div></div>
+                                    </div>
+                                    <div class="rmc-pbar" style="margin:0.4rem 0;"><div class="rmc-pbar-fill" id="roPbVsAb" style="background:linear-gradient(90deg,#00d4e8,#00e87a);width:0%"></div></div>
+                                </div>
+                                <div class="rmc-card">
+                                    <div class="rmc-card-label"><span class="rmc-card-label-dot" style="background:#f5a623"></span>Cotação vs. Strike</div>
+                                    <div class="rmc-delta-compare">
+                                        <div class="rmc-delta-block"><div class="rmc-delta-lbl">Cotação Atual</div><div class="rmc-delta-val rmc-c-green" id="roD2Cot">—</div><div class="rmc-delta-pct rmc-c-green">atual</div></div>
+                                        <div class="rmc-delta-block"><div class="rmc-delta-lbl">Strike</div><div class="rmc-delta-val rmc-c-gold" id="roD2Strike">—</div><div class="rmc-delta-pct"><span class="rmc-badge-call" id="roD2Badge">CALL</span></div></div>
+                                        <div class="rmc-delta-block" style="background:rgba(245,166,35,0.05);border-color:rgba(245,166,35,0.2)"><div class="rmc-delta-lbl" style="color:#f5a623">Distância</div><div class="rmc-delta-val rmc-c-gold" id="roD2Dist">—</div><div class="rmc-delta-pct rmc-c-gold" id="roD2DistPct">—</div></div>
+                                    </div>
+                                    <div class="rmc-pbar" style="margin:0.4rem 0;"><div class="rmc-pbar-fill" id="roPbVsStrike" style="background:linear-gradient(90deg,#00e87a,#f5a623);width:0%"></div></div>
+                                </div>
+                            </div>
+                            <div class="rmc-row-3">
+                                <div class="rmc-card">
+                                    <div class="rmc-card-label"><span class="rmc-card-label-dot" style="background:#00e87a"></span>% Cotação / Strike</div>
+                                    <div class="rmc-gauge-row">
+                                        <div class="rmc-gauge-wrap"><svg viewBox="0 0 100 100"><circle class="rmc-g-track" cx="50" cy="50" r="38"/><circle class="rmc-g-arc" cx="50" cy="50" r="38" stroke="#00e87a" id="roArcCotStrike" style="stroke-dasharray:238.76;stroke-dashoffset:238.76;transform-origin:center;transform:rotate(-90deg)"/></svg><div class="rmc-gauge-inner"><div class="rmc-g-val rmc-c-green" id="roGcPctStrike">—</div><div class="rmc-g-sub">do strike</div></div></div>
+                                        <div class="rmc-gauge-stats">
+                                            <div class="rmc-info-row"><span class="rmc-ik">Cotação</span><span class="rmc-iv rmc-c-green" id="roGcCot1">—</span></div>
+                                            <div class="rmc-info-row"><span class="rmc-ik">Strike</span><span class="rmc-iv rmc-c-gold" id="roGcStrike1">—</span></div>
+                                            <div class="rmc-info-row"><span class="rmc-ik">Falta</span><span class="rmc-iv rmc-c-gold" id="roGcFalta">—</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="rmc-card">
+                                    <div class="rmc-card-label"><span class="rmc-card-label-dot" style="background:#00d4e8"></span>Crescimento vs. Abertura</div>
+                                    <div class="rmc-gauge-row">
+                                        <div class="rmc-gauge-wrap"><svg viewBox="0 0 100 100"><circle class="rmc-g-track" cx="50" cy="50" r="38"/><circle class="rmc-g-arc" cx="50" cy="50" r="38" stroke="#00d4e8" id="roArcCotAb" style="stroke-dasharray:238.76;stroke-dashoffset:238.76;transform-origin:center;transform:rotate(-90deg)"/></svg><div class="rmc-gauge-inner"><div class="rmc-g-val rmc-c-cyan" id="roGcPctAb">—</div><div class="rmc-g-sub">abertura</div></div></div>
+                                        <div class="rmc-gauge-stats">
+                                            <div class="rmc-info-row"><span class="rmc-ik">Abertura</span><span class="rmc-iv rmc-c-cyan" id="roGcAb2">—</span></div>
+                                            <div class="rmc-info-row"><span class="rmc-ik">Atual</span><span class="rmc-iv rmc-c-green" id="roGcCot2">—</span></div>
+                                            <div class="rmc-info-row"><span class="rmc-ik">Mult.</span><span class="rmc-iv rmc-c-green" id="roGcMult">—</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="rmc-card">
+                                    <div class="rmc-card-label"><span class="rmc-card-label-dot" style="background:#f5a623"></span>Distância ao Strike</div>
+                                    <div class="rmc-gauge-row">
+                                        <div class="rmc-gauge-wrap"><svg viewBox="0 0 100 100"><circle class="rmc-g-track" cx="50" cy="50" r="38"/><circle class="rmc-g-arc" cx="50" cy="50" r="38" stroke="#f5a623" id="roArcDist2" style="stroke-dasharray:238.76;stroke-dashoffset:238.76;transform-origin:center;transform:rotate(-90deg)"/></svg><div class="rmc-gauge-inner"><div class="rmc-g-val rmc-c-gold" id="roGcDistPct">—</div><div class="rmc-g-sub">OTM</div></div></div>
+                                        <div class="rmc-gauge-stats">
+                                            <div class="rmc-info-row"><span class="rmc-ik">Falta R$</span><span class="rmc-iv rmc-c-gold" id="roGcDistBrl">—</span></div>
+                                            <div class="rmc-info-row"><span class="rmc-ik">Status</span><span class="rmc-iv rmc-c-green" id="roGcDistStatus">OTM</span></div>
+                                            <div class="rmc-info-row"><span class="rmc-ik">Tipo</span><span class="rmc-iv" id="roGcDistTipo">—</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div><!-- /roSecComparativos -->
+
+                        <!-- ===== POSIÇÕES ABERTAS ===== -->
+                        <div class="rmc-tab-panel" id="roSecPosicoes">
+                            <div class="rmc-card">
+                                <div class="rmc-card-label"><span class="rmc-card-label-dot" style="background:#00e87a"></span>Posições Abertas</div>
+                                <div id="roPosTabela">
+                                    <div class="rmc-pos-header">
+                                        <span>Ativo</span><span>Tipo</span><span>Abertura</span><span>Strike</span><span>TAE</span><span>Resultado</span>
+                                    </div>
+                                    <div id="roPosRows"><!-- renderPosicoes() --></div>
+                                </div>
+                            </div>
+                            <div class="rmc-row-2" id="roPoPCards"><!-- renderPoP() --></div>
+                        </div><!-- /roSecPosicoes -->
+
+                        <!-- ===== RISCO ===== -->
+                        <div class="rmc-tab-panel" id="roSecRisco">
+                            <div class="rmc-row-2">
+                                <div class="rmc-card">
+                                    <div class="rmc-card-label"><span class="rmc-card-label-dot" style="background:#f5a623;box-shadow:0 0 6px #f5a623"></span>Análise de Risco</div>
+                                    <div style="display:flex;gap:0.75rem;align-items:flex-start;">
+                                        <div class="rmc-gauge-wrap" style="margin-bottom:0.3rem;"><svg viewBox="0 0 100 100"><circle class="rmc-g-track" cx="50" cy="50" r="38"/><circle class="rmc-g-arc" cx="50" cy="50" r="38" stroke="#ff4d6a" id="roArcRisco" style="stroke-dasharray:238.76;stroke-dashoffset:197;transform-origin:center;transform:rotate(-90deg)"/></svg><div class="rmc-gauge-inner"><div class="rmc-g-val rmc-c-red" id="roRiscoGPct">—</div><div class="rmc-g-sub">Risco ITM</div></div></div>
+                                        <div style="flex:1;">
+                                            <div class="rmc-info-row"><span class="rmc-ik">Prob. Exercício</span><span class="rmc-iv rmc-c-red" id="roRiscoProbEx">—</span></div>
+                                            <div class="rmc-info-row"><span class="rmc-ik">Prob. Lucro (PoP)</span><span class="rmc-iv rmc-c-green" id="roRiscoProbLucro">—</span></div>
+                                            <div class="rmc-info-row"><span class="rmc-ik">Perda Máx.</span><span class="rmc-iv rmc-c-red" id="roRiscoPerdaMax">—</span></div>
+                                            <div class="rmc-info-row"><span class="rmc-ik">Ganho Máx.</span><span class="rmc-iv rmc-c-gold" id="roRiscoGanhoMax">—</span></div>
+                                            <div class="rmc-info-row"><span class="rmc-ik">Risco/Retorno</span><span class="rmc-iv rmc-c-gold" id="roRiscoRR">—</span></div>
+                                            <div class="rmc-info-row"><span class="rmc-ik">Distância Segura</span><span class="rmc-iv rmc-c-green" id="roRiscoDist">—</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="rmc-card">
+                                    <div class="rmc-card-label"><span class="rmc-card-label-dot" style="background:#ff4d6a"></span>Cenários</div>
+                                    <div style="display:flex;flex-direction:column;gap:0.3rem;">
+                                        <div class="rmc-cenario rmc-cenario-otm"><div class="rmc-cenario-title rmc-c-green">✓ CENÁRIO ATUAL (OTM)</div><div class="rmc-cenario-desc" id="roCenarioOTM">Cotação abaixo do strike → prêmio retido</div></div>
+                                        <div class="rmc-cenario rmc-cenario-itm"><div class="rmc-cenario-title rmc-c-red">✗ CENÁRIO ITM</div><div class="rmc-cenario-desc" id="roCenarioITM">Cotação acima do strike → exercício</div></div>
+                                        <div class="rmc-cenario rmc-cenario-eq"><div class="rmc-cenario-title rmc-c-gold">⚡ PONTO DE EQUILÍBRIO</div><div class="rmc-cenario-desc" id="roCenarioEq">Break-even: strike + prêmio</div></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="rmc-row-3">
+                                <div class="rmc-card">
+                                    <div class="rmc-card-label"><span class="rmc-card-label-dot" style="background:#a855f7"></span>Volatilidade Implícita</div>
+                                    <div class="rmc-gauge-wrap" style="margin:0.2rem auto;"><svg viewBox="0 0 100 100"><circle class="rmc-g-track" cx="50" cy="50" r="38"/><circle class="rmc-g-arc" cx="50" cy="50" r="38" stroke="#a855f7" id="roArcIV" style="stroke-dasharray:238.76;stroke-dashoffset:100;transform-origin:center;transform:rotate(-90deg)"/></svg><div class="rmc-gauge-inner"><div class="rmc-g-val rmc-c-purple" id="roRiscoIV">—</div><div class="rmc-g-sub">IV</div></div></div>
+                                    <div class="rmc-info-row"><span class="rmc-ik">IV Rank</span><span class="rmc-iv rmc-c-purple" id="roRiscoIVRank">—</span></div>
+                                </div>
+                                <div class="rmc-card">
+                                    <div class="rmc-card-label"><span class="rmc-card-label-dot" style="background:#4d9eff"></span>Delta</div>
+                                    <div class="rmc-gauge-wrap" style="margin:0.2rem auto;"><svg viewBox="0 0 100 100"><circle class="rmc-g-track" cx="50" cy="50" r="38"/><circle class="rmc-g-arc" cx="50" cy="50" r="38" stroke="#4d9eff" id="roArcDelta" style="stroke-dasharray:238.76;stroke-dashoffset:158;transform-origin:center;transform:rotate(-90deg)"/></svg><div class="rmc-gauge-inner"><div class="rmc-g-val rmc-c-blue" id="roRiscoDelta">—</div><div class="rmc-g-sub">delta</div></div></div>
+                                    <div class="rmc-info-row"><span class="rmc-ik">Sensibilidade</span><span class="rmc-iv rmc-c-blue" id="roRiscoDeltaSens">—</span></div>
+                                </div>
+                                <div class="rmc-card">
+                                    <div class="rmc-card-label"><span class="rmc-card-label-dot" style="background:#ff4d6a"></span>Theta (decay/dia)</div>
+                                    <div class="rmc-gauge-wrap" style="margin:0.2rem auto;"><svg viewBox="0 0 100 100"><circle class="rmc-g-track" cx="50" cy="50" r="38"/><circle class="rmc-g-arc" cx="50" cy="50" r="38" stroke="#ff4d6a" id="roArcTheta" style="stroke-dasharray:238.76;stroke-dashoffset:238;transform-origin:center;transform:rotate(-90deg)"/></svg><div class="rmc-gauge-inner"><div class="rmc-g-val rmc-c-red" id="roRiscoTheta">—</div><div class="rmc-g-sub">por dia</div></div></div>
+                                    <div class="rmc-info-row"><span class="rmc-ik">Total decay</span><span class="rmc-iv rmc-c-red" id="roRiscoThetaTotal">—</span></div>
+                                </div>
+                            </div>
+                        </div><!-- /roSecRisco -->
+
+                    </div><!-- /roContent -->
+                </div><!-- /roDashBody -->
+
+                <!-- Estado vazio -->
+                <div class="rg-full-empty d-none" id="roEmptyState">Nenhuma operação encontrada com os filtros selecionados.</div>
+
+                <!-- Botões de navegação ocultos (compatibilidade JS) -->
+                <button id="roPrevOp" class="d-none" aria-hidden="true"></button>
+                <button id="roNextOp" class="d-none" aria-hidden="true"></button>
+
+            </div><!-- /modal-body -->
+        </div>
+    </div>
+</div>

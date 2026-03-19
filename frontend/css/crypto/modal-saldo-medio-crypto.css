@@ -1,0 +1,33 @@
+/**
+ * modal-saldo-medio-crypto.css  v1.0.0
+ * Estilos dedicados para o Modal de Saldo Médio Crypto
+ * Tema: amber/gold — estende as classes .sm-* do modal-saldo-medio
+ */
+
+/* === Gradient strip amber === */
+#modalSaldoMedio .sm-grad-strip {
+    background: linear-gradient(90deg, #f59f00 0%, #e67700 50%, #f59f00 100%);
+}
+
+/* === Header amber === */
+#modalSaldoMedio .sm-eyebrow {
+    color: var(--tblr-warning, #f59f00) !important;
+}
+
+/* === Valor principal amber === */
+#modalSaldoMedio .sm-main-value {
+    color: var(--tblr-warning, #f59f00);
+}
+
+/* === Botão refresh com cor amber === */
+#modalSaldoMedio #smBtnRefresh,
+#modalSaldoMedio [id$="BtnRefresh"] {
+    color: var(--tblr-warning, #f59f00);
+    border-color: var(--tblr-warning, #f59f00);
+}
+
+#modalSaldoMedio #smBtnRefresh:hover,
+#modalSaldoMedio [id$="BtnRefresh"]:hover {
+    background-color: var(--tblr-warning, #f59f00);
+    color: #000;
+}

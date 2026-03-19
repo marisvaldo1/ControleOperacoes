@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gauge Radial Multi-Anéis</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .radial-container {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 24px;
+            padding: 50px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            text-align: center;
+        }
+
+        .radial-title {
+            color: #fff;
+            font-size: 22px;
+            margin-bottom: 40px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .radial-gauge {
+            position: relative;
+            width: 350px;
+            height: 350px;
+            margin: 0 auto;
+        }
+
+        .radial-svg {
+            transform: rotate(-90deg);
+            width: 100%;
+            height: 100%;
+        }
+
+        .radial-ring {
+            fill: none;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1.5s ease;
+        }
+
+        .ring-1 {
+            stroke-width: 25;
+            stroke: rgba(255, 255, 255, 0.05);
+        }
+
+        .ring-1-fill {
+            stroke-width: 25;
+            stroke: #00ff88;
+        }
+
+        .ring-2 {
+            stroke-width: 25;
+            stroke: rgba(255, 255, 255, 0.05);
+        }
+
+        .ring-2-fill {
+            stroke-width: 25;
+            stroke: #00d4ff;
+        }
+
+        .ring-3 {
+            stroke-width: 25;
+            stroke: rgba(255, 255, 255, 0.05);
+        }
+
+        .ring-3-fill {
+            stroke-width: 25;
+            stroke: #a855f7;
+        }
+
+        .radial-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .center-main {
+            font-size: 48px;
+            font-weight: 800;
+            color: #fff;
+            text-shadow: 0 0 30px rgba(0, 255, 136, 0.5);
+        }
+
+        .center-sub {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 5px;
+        }
+
+        .radial-legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .legend-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+        }
+
+        .legend-text {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 13px;
+        }
+
+        .dot-green { background: #00ff88; }
+        .dot-blue { background: #00d4ff; }
+        .dot-purple { background: #a855f7; }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .stat-box {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 12px;
+        }
+
+        .stat-box-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 5px;
+        }
+
+        .stat-box-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="radial-container">
+        <h2 class="radial-title">🎯 PERFORMANCE MULTIDIMENSIONAL</h2>
+        
+        <div class="radial-gauge">
+            <svg class="radial-svg" viewBox="0 0 350 350">
+                <!-- Anel 1 -->
+                <circle class="radial-ring ring-1" cx="175" cy="175" r="150"/>
+                <circle class="radial-ring ring-1-fill" id="ring1Fill" cx="175" cy="175" r="150" 
+                    stroke-dasharray="942" stroke-dashoffset="942"/>
+                
+                <!-- Anel 2 -->
+                <circle class="radial-ring ring-2" cx="175" cy="175" r="115"/>
+                <circle class="radial-ring ring-2-fill" id="ring2Fill" cx="175" cy="175" r="115" 
+                    stroke-dasharray="722" stroke-dashoffset="722"/>
+                
+                <!-- Anel 3 -->
+                <circle class="radial-ring ring-3" cx="175" cy="175" r="80"/>
+                <circle class="radial-ring ring-3-fill" id="ring3Fill" cx="175" cy="175" r="80" 
+                    stroke-dasharray="502" stroke-dashoffset="502"/>
+            </svg>
+            
+            <div class="radial-center">
+                <div class="center-main" id="centerValue">85%</div>
+                <div class="center-sub">Score Geral</div>
+            </div>
+        </div>
+
+        <div class="radial-legend">
+            <div class="legend-item">
+                <div class="legend-dot dot-green"></div>
+                <div class="legend-text">Lucro</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot dot-blue"></div>
+                <div class="legend-text">Acertos</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot dot-purple"></div>
+                <div class="legend-text">Consistência</div>
+            </div>
+        </div>
+
+        <div class="stats-row">
+            <div class="stat-box">
+                <div class="stat-box-value" style="color: #00ff88;">+R$ 12.450</div>
+                <div class="stat-box-label">Lucro Total</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-box-value" style="color: #00d4ff;">68%</div>
+                <div class="stat-box-label">Win Rate</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-box-value" style="color: #a855f7;">2.8</div>
+                <div class="stat-box-label">Risk/Reward</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class MultiRingGauge {
+            constructor() {
+                this.rings = [
+                    { id: 'ring1Fill', circumference: 942, value: 75 },
+                    { id: 'ring2Fill', circumference: 722, value: 68 },
+                    { id: 'ring3Fill', circumference: 502, value: 82 }
+                ];
+                this.init();
+            }
+
+            init() {
+                this.rings.forEach((ring, index) => {
+                    const element = document.getElementById(ring.id);
+                    element.style.strokeDasharray = ring.circumference;
+                    element.style.strokeDashoffset = ring.circumference;
+                    
+                    setTimeout(() => {
+                        const offset = ring.circumference - (ring.value / 100 * ring.circumference);
+                        element.style.strokeDashoffset = offset;
+                    }, index * 300 + 500);
+                });
+
+                // Atualiza valor central (média)
+                const avg = this.rings.reduce((sum, ring) => sum + ring.value, 0) / this.rings.length;
+                document.getElementById('centerValue').textContent = `${Math.round(avg)}%`;
+            }
+
+            updateRing(ringId, newValue) {
+                const ring = this.rings.find(r => r.id === ringId);
+                if (ring) {
+                    ring.value = newValue;
+                    const element = document.getElementById(ringId);
+                    const offset = ring.circumference - (newValue / 100 * ring.circumference);
+                    element.style.strokeDashoffset = offset;
+                    
+                    // Recalcula média
+                    const avg = this.rings.reduce((sum, r) => sum + r.value, 0) / this.rings.length;
+                    document.getElementById('centerValue').textContent = `${Math.round(avg)}%`;
+                }
+            }
+        }
+
+        new MultiRingGauge();
+    </script>
+</body>
+</html>

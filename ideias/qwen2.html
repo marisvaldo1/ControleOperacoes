@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gauge de Decisão</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a3e 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .decision-container {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 24px;
+            padding: 50px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .decision-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .decision-title {
+            color: #fff;
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+
+        .decision-subtitle {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 14px;
+        }
+
+        .gauge-box {
+            position: relative;
+            width: 280px;
+            height: 280px;
+            margin: 0 auto 40px;
+        }
+
+        .gauge-ring {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(
+                from 180deg,
+                #ff4757 0deg,
+                #ff4757 60deg,
+                #ffaa00 60deg,
+                #ffaa00 120deg,
+                #00ff88 120deg,
+                #00ff88 180deg,
+                transparent 180deg
+            );
+            mask: radial-gradient(transparent 55%, black 56%);
+            -webkit-mask: radial-gradient(transparent 55%, black 56%);
+        }
+
+        .gauge-needle {
+            position: absolute;
+            width: 4px;
+            height: 120px;
+            background: linear-gradient(to top, #fff, rgba(255, 255, 255, 0));
+            bottom: 50%;
+            left: 50%;
+            transform-origin: bottom center;
+            transform: translateX(-50%) rotate(0deg);
+            transition: transform 1s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 2px;
+            filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
+        }
+
+        .gauge-center-dot {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #fff;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+        }
+
+        .signal-display {
+            text-align: center;
+            padding: 25px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            margin-bottom: 20px;
+        }
+
+        .signal-text {
+            font-size: 28px;
+            font-weight: 800;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 10px;
+        }
+
+        .signal-subtext {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .metric-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px 15px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .metric-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 5px;
+        }
+
+        .metric-label {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .buy-signal { color: #00ff88; text-shadow: 0 0 20px rgba(0, 255, 136, 0.5); }
+        .sell-signal { color: #ff4757; text-shadow: 0 0 20px rgba(255, 71, 87, 0.5); }
+        .hold-signal { color: #ffaa00; text-shadow: 0 0 20px rgba(255, 170, 0, 0.5); }
+
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+    <div class="decision-container">
+        <div class="decision-header">
+            <h2 class="decision-title">🎯 SINAL DE OPERAÇÃO</h2>
+            <p class="decision-subtitle">Análise em Tempo Real</p>
+        </div>
+
+        <div class="gauge-box">
+            <div class="gauge-ring"></div>
+            <div class="gauge-needle" id="needle"></div>
+            <div class="gauge-center-dot"></div>
+        </div>
+
+        <div class="signal-display">
+            <div class="signal-text buy-signal pulse-animation" id="signalText">COMPRA</div>
+            <div class="signal-subtext" id="signalSubtext">Força do Sinal: 85%</div>
+        </div>
+
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-value buy-signal" id="rsiValue">65</div>
+                <div class="metric-label">RSI</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="macdValue">+0.45</div>
+                <div class="metric-label">MACD</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value buy-signal" id="volumeValue">+12%</div>
+                <div class="metric-label">Volume</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class DecisionGauge {
+            constructor() {
+                this.needle = document.getElementById('needle');
+                this.signalText = document.getElementById('signalText');
+                this.signalSubtext = document.getElementById('signalSubtext');
+                this.init();
+            }
+
+            init() {
+                // Simula dados reais - substitua pela sua API
+                this.updateSignal(85, 'BUY');
+            }
+
+            updateSignal(strength, signal) {
+                // Mapeia força (0-100) para rotação (-90 a 90 graus)
+                const rotation = (strength / 100 * 180) - 90;
+                this.needle.style.transform = `translateX(-50%) rotate(${rotation}deg)`;
+
+                // Atualiza texto e cores
+                if (signal === 'BUY') {
+                    this.signalText.textContent = 'COMPRA';
+                    this.signalText.className = 'signal-text buy-signal pulse-animation';
+                    this.signalSubtext.textContent = `Força do Sinal: ${strength}%`;
+                } else if (signal === 'SELL') {
+                    this.signalText.textContent = 'VENDA';
+                    this.signalText.className = 'signal-text sell-signal pulse-animation';
+                    this.signalSubtext.textContent = `Força do Sinal: ${strength}%`;
+                } else {
+                    this.signalText.textContent = 'AGUARDE';
+                    this.signalText.className = 'signal-text hold-signal';
+                    this.signalSubtext.textContent = `Aguardando Confirmação: ${strength}%`;
+                }
+
+                // Atualiza métricas (simulado)
+                document.getElementById('rsiValue').textContent = Math.floor(Math.random() * 40 + 30);
+                document.getElementById('macdValue').textContent = (Math.random() * 2 - 1).toFixed(2);
+                document.getElementById('volumeValue').textContent = `+${Math.floor(Math.random() * 20)}%`;
+            }
+
+            // Método para atualizar automaticamente
+            autoUpdate(interval = 3000) {
+                setInterval(() => {
+                    const signals = ['BUY', 'SELL', 'HOLD'];
+                    const randomSignal = signals[Math.floor(Math.random() * signals.length)];
+                    const randomStrength = Math.floor(Math.random() * 40 + 60);
+                    this.updateSignal(randomStrength, randomSignal);
+                }, interval);
+            }
+        }
+
+        const gauge = new DecisionGauge();
+        gauge.autoUpdate(5000);
+    </script>
+</body>
+</html>

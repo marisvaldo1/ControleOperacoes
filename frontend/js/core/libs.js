@@ -24,16 +24,25 @@ function loadCSS(href) {
         const link = document.createElement('link');
         link.rel = 'stylesheet';
         link.href = href;
-        link.onload = resolve;
+        // onerror: resolve mesmo em falha de rede (CSS é cosmético, não bloqueia)
+        // setTimeout: fallback para bug de browser onde link.onload não dispara para recursos em cache
+        const done = () => resolve();
+        link.onload = done;
+        link.onerror = done;
         document.head.appendChild(link);
+        setTimeout(done, 4000); // máximo 4s de espera por CSS
     });
 }
 
 function loadJS(src) {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
         const script = document.createElement('script');
         script.src = src;
         script.onload = resolve;
+        script.onerror = () => {
+            console.error('[Libs] Falha ao carregar:', src);
+            resolve(); // resolve mesmo assim para não travar o resto
+        };
         document.body.appendChild(script);
     });
 }

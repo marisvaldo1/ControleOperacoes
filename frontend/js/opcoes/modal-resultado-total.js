@@ -79,7 +79,7 @@
     }
 
     function getOpResultadoFinal(op) {
-        return cfg.getResultValue ? cfg.getResultValue(op) : getOpResultadoFinal(op);
+        return cfg.getResultValue ? cfg.getResultValue(op) : getOpResultado(op);
     }
 
     function formatPercent(value) {

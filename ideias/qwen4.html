@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataTable com Gauges</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a3e 100%);
+            min-height: 100vh;
+            padding: 40px;
+        }
+
+        .table-container {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            overflow-x: auto;
+        }
+
+        .table-title {
+            color: #fff;
+            font-size: 20px;
+            margin-bottom: 25px;
+            font-weight: 700;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            padding: 15px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        td {
+            padding: 15px;
+            color: #fff;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .status-gauge {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .mini-gauge {
+            width: 60px;
+            height: 60px;
+            position: relative;
+        }
+
+        .mini-gauge svg {
+            transform: rotate(-90deg);
+            width: 100%;
+            height: 100%;
+        }
+
+        .mini-gauge circle {
+            fill: none;
+            stroke-width: 6;
+            stroke-linecap: round;
+        }
+
+        .mini-gauge .bg {
+            stroke: rgba(255, 255, 255, 0.1);
+        }
+
+        .mini-gauge .fill {
+            transition: stroke-dashoffset 1s ease;
+        }
+
+        .gauge-info {
+            flex: 1;
+        }
+
+        .gauge-percent {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .gauge-status {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 3px;
+        }
+
+        .profit-positive { color: #00ff88; }
+        .profit-negative { color: #ff4757; }
+        .profit-neutral { color: #ffaa00; }
+
+        .badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-win {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+        }
+
+        .badge-loss {
+            background: rgba(255, 71, 87, 0.2);
+            color: #ff4757;
+        }
+
+        .badge-open {
+            background: rgba(255, 170, 0, 0.2);
+            color: #ffaa00;
+        }
+
+        .action-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-close {
+            background: rgba(255, 71, 87, 0.2);
+            color: #ff4757;
+            border: 1px solid #ff4757;
+        }
+
+        .btn-close:hover {
+            background: #ff4757;
+            color: #fff;
+        }
+
+        .btn-hold {
+            background: rgba(255, 170, 0, 0.2);
+            color: #ffaa00;
+            border: 1px solid #ffaa00;
+        }
+    </style>
+</head>
+<body>
+    <div class="table-container">
+        <h2 class="table-title">📋 OPERAÇÕES ABERTAS E FECHADAS</h2>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Ativo</th>
+                    <th>Tipo</th>
+                    <th>Entrada</th>
+                    <th>Atual</th>
+                    <th>Lucro/Prejuízo</th>
+                    <th>Performance</th>
+                    <th>Status</th>
+                    <th>Ação</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- Preenchido via JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        class DataTableGauge {
+            constructor() {
+                this.operations = [
+                    { id: '#001', asset: 'BTC/USDT', type: 'COMPRA', entry: 42350, current: 42890, status: 'open' },
+                    { id: '#002', asset: 'ETH/USDT', type: 'VENDA', entry: 2250, current: 2180, status: 'open' },
+                    { id: '#003', asset: 'SOL/USDT', type: 'COMPRA', entry: 98.50, current: 102.30, status: 'closed' },
+                    { id: '#004', asset: 'BNB/USDT', type: 'COMPRA', entry: 315, current: 308, status: 'closed' },
+                    { id: '#005', asset: 'XRP/USDT', type: 'VENDA', entry: 0.62, current: 0.58, status: 'open' }
+                ];
+                this.render();
+            }
+
+            calculateProfit(op) {
+                if (op.type === 'COMPRA') {
+                    return ((op.current - op.entry) / op.entry) * 100;
+                } else {
+                    return ((op.entry - op.current) / op.entry) * 100;
+                }
+            }
+
+            createMiniGauge(percent) {
+                const circumference = 2 * Math.PI * 25;
+                const offset = circumference - (Math.min(Math.abs(percent), 100) / 100 * circumference);
+                const color = percent >= 0 ? '#00ff88' : '#ff4757';
+                
+                return `
+                    <div class="mini-gauge">
+                        <svg viewBox="0 0 60 60">
+                            <circle class="bg" cx="30" cy="30" r="25"/>
+                            <circle class="fill" cx="30" cy="30" r="25" 
+                                stroke="${color}" 
+                                stroke-dasharray="${circumference}" 
+                                stroke-dashoffset="${offset}"/>
+                        </svg>
+                    </div>
+                `;
+            }
+
+            render() {
+                const tbody = document.getElementById('tableBody');
+                tbody.innerHTML = this.operations.map(op => {
+                    const profit = this.calculateProfit(op);
+                    const profitClass = profit >= 0 ? 'profit-positive' : 'profit-negative';
+                    const badgeClass = op.status === 'open' ? 'badge-open' : (profit >= 0 ? 'badge-win' : 'badge-loss');
+                    const badgeText = op.status === 'open' ? 'ABERTA' : (profit >= 0 ? 'LUCRO' : 'PREJUÍZO');
+                    
+                    return `
+                        <tr>
+                            <td>${op.id}</td>
+                            <td><strong>${op.asset}</strong></td>
+                            <td><span class="${op.type === 'COMPRA' ? 'profit-positive' : 'profit-negative'}">${op.type}</span></td>
+                            <td>$${op.entry.toFixed(2)}</td>
+                            <td>$${op.current.toFixed(2)}</td>
+                            <td class="${profitClass}">${profit >= 0 ? '+' : ''}${profit.toFixed(2)}%</td>
+                            <td>
+                                <div class="status-gauge">
+                                    ${this.createMiniGauge(profit)}
+                                    <div class="gauge-info">
+                                        <div class="gauge-percent ${profitClass}">${Math.abs(profit).toFixed(1)}%</div>
+                                        <div class="gauge-status">${profit >= 0 ? 'Positivo' : 'Negativo'}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><span class="badge ${badgeClass}">${badgeText}</span></td>
+                            <td>
+                                ${op.status === 'open' 
+                                    ? '<button class="action-btn btn-close">Encerrar</button>' 
+                                    : '<button class="action-btn btn-hold" disabled>Finalizada</button>'}
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+        }
+
+        new DataTableGauge();
+    </script>
+</body>
+</html>

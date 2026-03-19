@@ -36,27 +36,37 @@ if exist "%~dp0.venv\Scripts\python.exe" (
 :: ============================================
 :: 1. Verificar / Iniciar servidor Flask
 :: ============================================
+set FLASK_PID=
+
 echo [INFO] Verificando servidor em localhost:8888...
 powershell -Command "try{$t=New-Object Net.Sockets.TcpClient;$t.Connect('127.0.0.1',8888);$t.Close();exit 0}catch{exit 1}" >nul 2>&1
 if not errorlevel 1 (
-    echo [OK] Servidor ja esta rodando.
-    goto :SERVER_READY
+    echo [INFO] Servidor ja esta rodando. Encerrando para iniciar instancia limpa...
+    powershell -Command "Get-NetTCPConnection -LocalPort 8888 -State Listen -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }" >nul 2>&1
+    powershell -Command "Start-Sleep -Seconds 2" >nul 2>&1
 )
 
-echo [INFO] Servidor nao encontrado. Iniciando Flask...
+echo [INFO] Iniciando Flask em janela visivel...
 if "%PYTHON%"=="" (
     echo [ERRO] Python nao encontrado.
     pause
     exit /b 1
 )
 set PYTHONIOENCODING=UTF-8
-start "Flask - Testes" /min cmd /c "cd /d "%~dp0backend" && "%PYTHON%" server.py"
-set SERVER_STARTED=1
+:: Inicia Flask em janela separada visivel, captura PID para kill preciso ao final
+for /f "delims=" %%P in ('powershell -Command "(Start-Process -FilePath '%PYTHON%' -ArgumentList 'server.py' -WorkingDirectory '%~dp0backend' -WindowStyle Normal -PassThru).Id"') do set FLASK_PID=%%P
+
+if "%FLASK_PID%"=="" (
+    echo [ERRO] Nao foi possivel iniciar o Flask.
+    pause
+    exit /b 1
+)
+echo [INFO] Flask iniciado (PID: %FLASK_PID%). Aguardando resposta...
 
 :: Aguardar servidor (max 20s)
 set /a WAIT=0
 :WAIT_SERVER
-timeout /t 1 >nul
+powershell -Command "Start-Sleep -Seconds 1" >nul 2>&1
 set /a WAIT+=1
 powershell -Command "try{$t=New-Object Net.Sockets.TcpClient;$t.Connect('127.0.0.1',8888);$t.Close();exit 0}catch{exit 1}" >nul 2>&1
 if not errorlevel 1 (
@@ -67,7 +77,7 @@ if !WAIT! lss 20 (
     echo [INFO] Aguardando... (!WAIT!/20s)
     goto :WAIT_SERVER
 )
-echo [ERRO] Servidor nao respondeu em 20 segundos.
+echo [ERRO] Servidor nao respondeu em 20 segundos. Veja .tmp\flask_err.log
 pause
 exit /b 1
 
@@ -144,14 +154,17 @@ if %PYTEST_EXIT% equ 0 if %PLAYWRIGHT_EXIT% equ 0 (
     )
 )
 
-:: Encerrar servidor se foi iniciado por este bat
-if %SERVER_STARTED% equ 1 (
-    echo.
-    echo [INFO] Encerrando servidor Flask iniciado pelos testes...
-    powershell -Command "$p=8888;$c=Get-NetTCPConnection -LocalPort $p -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1; if($c -and $c.OwningProcess){Stop-Process -Id $c.OwningProcess -Force -ErrorAction SilentlyContinue;Write-Host '[OK] Servidor encerrado.'}" 2>nul
+:: Encerrar servidor Flask - kill preciso por PID + fallback por porta
+echo.
+echo [INFO] Encerrando servidor Flask...
+if defined FLASK_PID (
+    powershell -Command "Stop-Process -Id %FLASK_PID% -Force -ErrorAction SilentlyContinue" >nul 2>&1
+    echo [OK] Processo Flask (PID: %FLASK_PID%) encerrado.
 )
+:: Fallback: garante que a porta 8888 foi liberada de qualquer modo
+powershell -Command "$conns = Get-NetTCPConnection -LocalPort 8888 -State Listen -ErrorAction SilentlyContinue; if ($conns) { $conns | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }; Write-Host '[OK] Porta 8888 liberada.' } else { Write-Host '[OK] Servidor encerrado e porta 8888 liberada.' }" 2>nul
 
-:: Codigo de saida: falha se qualquer suite falhou
+:: Código de saída: falha se qualquer suite falhou
 set /a TOTAL_EXIT=%PYTEST_EXIT%+%PLAYWRIGHT_EXIT%
 if %TOTAL_EXIT% neq 0 (
     echo.

@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Resultados · Crypto · Dashboard V3</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Syne:wght@400;600;700;800&family=Orbitron:wght@400;500;700;900&display=swap" rel="stylesheet"/>
+<style>
+/* ======================================================  RESET & VARS  */
+:root{
+  --bg:       #07101e;
+  --bg-card:  #0b1525;
+  --bg-card2: #0d1a2e;
+  --bg-side:  #080f1c;
+  --bdr:      #182235;
+  --bdr-hi:   #243450;
+  --tx1:      #ddeeff;
+  --tx2:      #4e6a8a;
+  --tx3:      #283850;
+  --gold:     #f5a300;
+  --gold-d:   #3a2500;
+  --cyan:     #00d4e8;
+  --cyan-d:   #003440;
+  --grn:      #00e87a;
+  --grn-d:    #003a1e;
+  --red:      #ff3d5c;
+  --red-d:    #3d0010;
+  --blu:      #3d8eff;
+  --blu-d:    #071830;
+  --pur:      #a855f7;
+  --pur-d:    #1e0635;
+  --r:        6px; --rm:10px; --rl:14px;
+  --mono:'JetBrains Mono',monospace;
+  --disp:'Orbitron',sans-serif;
+  --ui:'Syne',sans-serif;
+  --ease:all .2s cubic-bezier(.4,0,.2,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:13px}
+body{background:#04080e;color:var(--tx1);font-family:var(--ui);min-height:100vh;padding:1.5rem;display:flex;flex-direction:column;align-items:center;gap:2rem;}
+
+/* ======================================================  SHOWCASE SWITCHER  */
+.switcher{
+  display:flex;gap:.35rem;flex-wrap:wrap;
+  background:#070d1a;border:1px solid var(--bdr);border-radius:30px;padding:.4rem .6rem;
+  position:sticky;top:.75rem;z-index:200;
+  box-shadow:0 4px 20px rgba(0,0,0,.6);
+}
+.sw-btn{
+  padding:.25rem .8rem;border-radius:20px;border:1px solid var(--bdr);
+  background:transparent;color:var(--tx2);
+  font-family:var(--mono);font-size:.62rem;font-weight:600;cursor:pointer;
+  transition:var(--ease);
+}
+.sw-btn:hover{color:var(--tx1);border-color:var(--bdr-hi);}
+.sw-btn.on{background:#0f2040;border-color:var(--blu);color:#7ab8ff;}
+
+/* ======================================================  MODAL SHELL  */
+.modal{
+  width:100%;max-width:1160px;
+  background:var(--bg);border:1px solid var(--bdr);border-radius:var(--rl);
+  overflow:hidden;
+  box-shadow:0 24px 80px rgba(0,0,0,.8),0 0 0 1px rgba(61,142,255,.05);
+  display:none;
+}
+.modal.on{display:block;}
+
+/* ======================================================  HEADER  */
+.hdr{
+  background:linear-gradient(135deg,#050d1c,#091520);
+  border-bottom:1px solid var(--bdr);
+  padding:.5rem .85rem;
+  display:flex;align-items:center;gap:.6rem;
+}
+.hdr-ico{color:var(--gold);font-size:1rem;margin-right:.1rem;}
+.hdr-title{font-family:var(--ui);font-size:.88rem;font-weight:700;flex:1;}
+.hdr-dot{width:7px;height:7px;border-radius:50%;background:var(--grn);box-shadow:0 0 8px var(--grn);}
+.hdr-time{font-family:var(--mono);font-size:.58rem;color:var(--tx2);}
+.btn-ref,.btn-cls{
+  width:26px;height:26px;border-radius:var(--r);border:1px solid var(--bdr-hi);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  font-size:.75rem;transition:var(--ease);
+}
+.btn-ref{background:var(--bg-card2);color:var(--blu);}
+.btn-ref:hover{border-color:var(--blu);background:var(--blu-d);}
+.btn-ref.spin svg{animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.btn-cls{background:transparent;color:var(--tx2);}
+.btn-cls:hover{border-color:var(--red);color:var(--red);background:var(--red-d);}
+
+/* ======================================================  FILTER BAR (periods + types all in one row)  */
+.fbar{
+  padding:.38rem .85rem;border-bottom:1px solid var(--bdr);
+  display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;
+  background:#06101d;
+}
+.pill{
+  padding:.17rem .48rem;border-radius:20px;
+  font-family:var(--mono);font-size:.61rem;font-weight:600;
+  cursor:pointer;border:1px solid var(--bdr);background:transparent;color:var(--tx2);
+  transition:var(--ease);white-space:nowrap;
+}
+.pill:hover{color:var(--tx1);border-color:var(--bdr-hi);}
+.pill.ap{background:#0e1e38;border-color:var(--blu);color:#7ab8ff;}
+.pill.aa{background:var(--grn-d);border-color:var(--grn);color:#6fffc0;}
+.pill.af{background:var(--red-d);border-color:var(--red);color:#ff9aaa;}
+.pill.ac{background:var(--blu-d);border-color:var(--blu);color:#7ab8ff;}
+.pill.apu{background:var(--pur-d);border-color:var(--pur);color:#d8b4fe;}
+.fbar-sep{width:1px;height:18px;background:var(--bdr);flex-shrink:0;}
+
+/* ======================================================  OP TABS ROW  */
+.op-row{
+  padding:.38rem .85rem;border-bottom:1px solid var(--bdr);
+  background:#060e1a;
+  display:flex;align-items:center;gap:.28rem;
+  overflow-x:auto;scrollbar-width:none;
+}
+.op-row::-webkit-scrollbar{display:none;}
+.op-tab{
+  flex-shrink:0;padding:.26rem .58rem;border-radius:var(--r);
+  border:1px solid var(--bdr);background:var(--bg-card);
+  cursor:pointer;transition:var(--ease);text-align:center;min-width:52px;
+}
+.op-tab:hover{border-color:var(--bdr-hi);}
+.op-tab.on{background:#0c1e38;border-color:var(--blu);}
+.op-tab-type{font-family:var(--mono);font-size:.58rem;font-weight:700;}
+.op-tab-asset{font-family:var(--mono);font-size:.62rem;font-weight:700;color:var(--tx1);}
+.op-tab-date{font-family:var(--mono);font-size:.52rem;color:var(--tx2);}
+.op-tab.on .op-tab-type{color:#7ab8ff;}
+.op-summary{margin-left:auto;flex-shrink:0;display:flex;gap:.22rem;align-items:center;}
+.sp{padding:.13rem .38rem;border-radius:10px;font-family:var(--mono);font-size:.6rem;font-weight:700;}
+.sp-b{background:#091830;color:var(--blu);}
+.sp-g{background:var(--grn-d);color:var(--grn);}
+.sp-r{background:#181828;color:var(--tx2);}
+.sp-o{background:var(--gold-d);color:var(--gold);}
+
+/* ======================================================  SECTION TABS  */
+.stabs{
+  display:flex;gap:0;border-bottom:1px solid var(--bdr);
+  background:#060e1a;padding:0 .85rem;overflow-x:auto;scrollbar-width:none;
+}
+.stabs::-webkit-scrollbar{display:none;}
+.stab{
+  padding:.48rem .82rem;font-family:var(--mono);
+  font-size:.63rem;font-weight:600;color:var(--tx2);
+  cursor:pointer;border-bottom:2px solid transparent;
+  white-space:nowrap;display:flex;align-items:center;gap:.32rem;
+  margin-bottom:-1px;transition:var(--ease);
+}
+.stab:hover{color:var(--tx1);}
+.stab.on{color:#7ab8ff;border-bottom-color:var(--blu);}
+.stab .warn{color:var(--red);font-size:.55rem;}
+
+/* ======================================================  LAYOUT  */
+.dash{display:flex;min-height:450px;}
+
+/* SIDEBAR */
+.side{
+  flex:0 0 162px;background:var(--bg-side);
+  border-right:1px solid var(--bdr);
+  padding:.5rem;display:flex;flex-direction:column;gap:.32rem;overflow-y:auto;
+}
+.sc{
+  background:var(--bg-card);border:1px solid var(--bdr);
+  border-radius:var(--rm);padding:.45rem .5rem;
+  cursor:pointer;transition:var(--ease);
+  position:relative;overflow:hidden;
+}
+.sc::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:3px 0 0 3px;background:transparent;transition:var(--ease);}
+.sc:hover{border-color:var(--bdr-hi);}
+.sc:hover::before,.sc.on::before{background:var(--blu);}
+.sc.on{background:#0b1c34;border-color:#1e3a6e;}
+.sc-lbl{font-family:var(--mono);font-size:.52rem;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.2rem;}
+.sc-val{font-family:var(--mono);font-size:.86rem;font-weight:700;line-height:1;margin-bottom:.12rem;}
+.sc-sub{font-family:var(--mono);font-size:.58rem;color:var(--tx2);}
+.sc-bar{height:2px;background:var(--bdr);border-radius:1px;margin-top:.28rem;overflow:hidden;}
+.sc-bf{height:100%;border-radius:1px;transition:width .7s ease;}
+
+/* CONTENT */
+.main{flex:1;padding:.6rem;display:flex;flex-direction:column;gap:.5rem;overflow:hidden;}
+
+/* ======================================================  PANELS  */
+.panel{display:none;flex-direction:column;gap:.5rem;}
+.panel.on{display:flex;}
+
+/* ======================================================  CARDS  */
+.card{
+  background:var(--bg-card);border:1px solid var(--bdr);
+  border-radius:var(--rm);padding:.58rem .65rem;
+  transition:var(--ease);position:relative;overflow:hidden;
+}
+.card:hover{border-color:var(--bdr-hi);}
+.card-lbl{
+  font-family:var(--mono);font-size:.55rem;font-weight:700;
+  color:var(--tx2);text-transform:uppercase;letter-spacing:.1em;
+  margin-bottom:.42rem;display:flex;align-items:center;gap:.32rem;
+}
+.card-lbl-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+.card-big{font-family:var(--mono);font-size:1.15rem;font-weight:700;line-height:1;margin-bottom:.12rem;}
+.card-xl{font-family:var(--disp);font-size:1.55rem;font-weight:700;line-height:1;margin-bottom:.15rem;}
+
+/* grids */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;}
+.g21{display:grid;grid-template-columns:2fr 1fr;gap:.5rem;}
+.g12{display:grid;grid-template-columns:1fr 2fr;gap:.5rem;}
+
+/* info rows */
+.ir{display:flex;justify-content:space-between;align-items:center;padding:.17rem 0;border-bottom:1px solid rgba(24,34,53,.7);font-size:.63rem;}
+.ir:last-child{border-bottom:none;}
+.ik{color:var(--tx2);}
+.iv{font-family:var(--mono);font-weight:600;}
+
+/* pbar */
+.pb{height:4px;background:var(--bdr);border-radius:2px;margin:.3rem 0;overflow:hidden;}
+.pbf{height:100%;border-radius:2px;transition:width .7s ease;}
+
+/* ======================================================  GAUGE SVG  */
+.g-wrap{position:relative;flex-shrink:0;}
+.g-wrap svg{display:block;}
+.g-inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.gv{font-family:var(--mono);font-weight:700;line-height:1;}
+.gs{font-size:.5rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.05em;margin-top:.1rem;}
+.g-row{display:flex;align-items:center;gap:.65rem;}
+.g-stats{flex:1;}
+
+/* ======================================================  BADGES  */
+.badge{padding:.08rem .35rem;border-radius:4px;font-family:var(--mono);font-size:.58rem;font-weight:700;letter-spacing:.04em;display:inline-block;}
+.bc{background:rgba(61,142,255,.25);color:#7ab8ff;}
+.bp{background:rgba(168,85,247,.25);color:#d8b4fe;}
+.bg{background:rgba(0,232,122,.15);color:#00e87a;}
+.br{background:rgba(255,61,92,.15);color:#ff3d5c;}
+.bo{background:rgba(245,163,0,.2);color:#f5a300;}
+
+/* ======================================================  STATUS BADGE (exercise)  */
+.ex-badge{display:inline-flex;align-items:center;gap:.3rem;padding:.2rem .55rem;border-radius:20px;font-family:var(--mono);font-size:.63rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;}
+.ex-otm{background:rgba(0,232,122,.08);border:1px solid rgba(0,232,122,.28);color:var(--grn);}
+.ex-itm{background:rgba(255,61,92,.08);border:1px solid rgba(255,61,92,.28);color:var(--red);}
+.ex-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.exd-g{background:var(--grn);box-shadow:0 0 6px var(--grn);}
+.exd-r{background:var(--red);box-shadow:0 0 6px var(--red);}
+
+/* ======================================================  TIMEBOX  */
+.tbox{display:flex;gap:.28rem;}
+.tc{flex:1;background:var(--bg-card2);border:1px solid var(--bdr);border-radius:var(--r);padding:.28rem .18rem;text-align:center;}
+.tn{font-family:var(--mono);font-size:.8rem;font-weight:700;}
+.tl{font-size:.5rem;color:var(--tx2);margin-top:.08rem;text-transform:uppercase;letter-spacing:.06em;}
+
+/* ======================================================  COMPARATIVO BAR  */
+.cbar-outer{
+  position:relative;height:24px;background:var(--bdr);border-radius:12px;
+  margin:1.8rem 0 2rem;overflow:visible;
+}
+.cbar-fill{position:absolute;left:0;top:0;bottom:0;border-radius:12px 0 0 12px;transition:width .8s ease;}
+.cbar-mk{position:absolute;top:-5px;bottom:-5px;width:2px;border-radius:1px;transform:translateX(-50%);transition:left .8s ease;}
+.cbar-mk-lbl{position:absolute;top:-20px;transform:translateX(-50%);font-family:var(--mono);font-size:.53rem;font-weight:700;white-space:nowrap;}
+.cbar-mk-val{position:absolute;top:28px;transform:translateX(-50%);font-family:var(--mono);font-size:.58rem;font-weight:700;white-space:nowrap;}
+.cbar-dot{position:absolute;top:50%;width:13px;height:13px;border-radius:50%;transform:translate(-50%,-50%);border:2px solid var(--bg);z-index:2;transition:left .8s ease;}
+.cbar-dot-lbl{position:absolute;top:-20px;transform:translateX(-50%);font-family:var(--mono);font-size:.52rem;font-weight:700;white-space:nowrap;}
+
+/* ======================================================  DELTA BLOCK  */
+.dblk{flex:1;background:var(--bg-card2);border:1px solid var(--bdr);border-radius:var(--r);padding:.32rem .38rem;text-align:center;}
+.dblk-lbl{font-family:var(--mono);font-size:.52rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.07em;}
+.dblk-val{font-family:var(--mono);font-size:.8rem;font-weight:700;margin:.08rem 0;}
+.dblk-sub{font-family:var(--mono);font-size:.58rem;color:var(--tx2);}
+.dblks{display:flex;gap:.32rem;margin:.35rem 0;}
+
+/* ======================================================  PoP GAUGE (semicircle)  */
+.pop-wrap{position:relative;width:110px;height:62px;margin:0 auto;overflow:visible;}
+.pop-wrap svg{overflow:visible;}
+.pop-needle{transform-origin:55px 55px;transition:transform .9s cubic-bezier(.4,0,.2,1);}
+.pop-big{font-family:var(--disp);font-size:1.45rem;font-weight:700;text-align:center;margin:.18rem 0 .1rem;line-height:1;}
+.pop-st{text-align:center;font-family:var(--mono);font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;padding:.18rem .5rem;border-radius:20px;display:inline-block;}
+.pop-hi{background:rgba(0,232,122,.1);border:1px solid rgba(0,232,122,.3);color:var(--grn);}
+.pop-md{background:rgba(245,163,0,.1);border:1px solid rgba(245,163,0,.3);color:var(--gold);}
+.pop-lo{background:rgba(255,61,92,.1);border:1px solid rgba(255,61,92,.3);color:var(--red);}
+.pop-grid{display:grid;grid-template-columns:1fr 1fr;gap:.28rem;margin-top:.38rem;}
+.pop-item{background:var(--bg-card2);border:1px solid var(--bdr);border-radius:var(--r);padding:.28rem .35rem;text-align:center;}
+.pop-il{font-family:var(--mono);font-size:.5rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.06em;}
+.pop-iv{font-family:var(--mono);font-size:.76rem;font-weight:700;margin-top:.08rem;}
+
+/* ======================================================  SPARK LINE  */
+.spark{width:100%;overflow:hidden;}
+
+/* ======================================================  HEAT ROW (risk color blocks)  */
+.heat-row{display:flex;gap:.32rem;margin:.3rem 0;}
+.heat-cell{flex:1;border-radius:var(--r);padding:.32rem .4rem;text-align:center;}
+.heat-lbl{font-family:var(--mono);font-size:.52rem;text-transform:uppercase;letter-spacing:.07em;margin-bottom:.18rem;opacity:.7;}
+.heat-val{font-family:var(--mono);font-size:.8rem;font-weight:700;}
+
+/* ======================================================  SCENARIO CARD  */
+.scen{border-radius:var(--r);padding:.38rem .48rem;margin:.22rem 0;}
+.scen-title{font-family:var(--mono);font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:.18rem;}
+.scen-text{font-family:var(--mono);font-size:.62rem;color:var(--tx1);}
+.scen-otm{background:rgba(0,232,122,.06);border:1px solid rgba(0,232,122,.2);}
+.scen-itm{background:rgba(255,61,92,.06);border:1px solid rgba(255,61,92,.2);}
+.scen-be {background:rgba(245,163,0,.06);border:1px solid rgba(245,163,0,.2);}
+
+/* ======================================================  TABLE  */
+.tbl-head{display:grid;gap:.35rem;padding:.28rem .42rem;background:var(--bg-card2);border-radius:var(--r);font-family:var(--mono);font-size:.56rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.28rem;}
+.tbl-row{display:grid;gap:.35rem;padding:.38rem .42rem;background:var(--bg-card);border:1px solid var(--bdr);border-radius:var(--r);align-items:center;margin-bottom:.22rem;transition:var(--ease);}
+.tbl-row:hover{border-color:var(--bdr-hi);}
+.tbl-row.sel{background:#0b1c34;border-color:#1e3a6e;}
+.tbl-cols-6{grid-template-columns:1fr 1fr 1fr 1fr 1fr 1fr;}
+.tbl-af{font-family:var(--mono);font-size:.68rem;font-weight:700;}
+.tbl-sm{font-family:var(--mono);font-size:.65rem;}
+
+/* ======================================================  MINI CHART  */
+.mini-chart{position:relative;height:64px;margin:.28rem 0;}
+.mini-chart svg{width:100%;height:100%;}
+
+/* ======================================================  LOADING SHIMMER  */
+.loading .loadable{
+  background:linear-gradient(90deg,var(--bdr) 25%,var(--bdr-hi) 50%,var(--bdr) 75%);
+  background-size:200% 100%;animation:shim 1.3s infinite;
+  border-radius:3px;color:transparent!important;
+  min-width:40px;display:inline-block;
+}
+@keyframes shim{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.loading .g-arc,.loading .pbf,.loading .sc-bf,.loading .cbar-fill,.loading .cbar-dot,.loading .cbar-mk{opacity:.12;}
+.loading .pop-needle{opacity:.08;}
+
+/* ======================================================  COLORS  */
+.cg{color:var(--grn)} .co{color:var(--gold)} .cc{color:var(--cyan)} .cr{color:var(--red)} .cb{color:var(--blu)} .cw{color:var(--tx1)} .cx{color:var(--tx2)} .cp{color:var(--pur)}
+</style>
+</head>
+<body>
+
+<!-- SWITCHER -->
+<div class="switcher" id="sw">
+  <span style="font-family:var(--mono);font-size:.62rem;color:var(--tx2);margin-right:.25rem;">Variação:</span>
+  <button class="sw-btn on" data-v="1">① Desempenho Rico</button>
+  <button class="sw-btn" data-v="2">② Metric Cards</button>
+  <button class="sw-btn" data-v="3">③ Chart Focus</button>
+  <button class="sw-btn" data-v="4">④ Compact Pro</button>
+  <button class="sw-btn" data-v="5">⑤ Analytics</button>
+</div>
+
+<!-- ================================================================
+     VARIAÇÃO 1 — DESEMPENHO RICO
+     (Resultado + Cotação + TAE | Distância + Prazo + Prêmio + Strike+Ex)
+     ================================================================ -->
+<div class="modal on" id="v1">
+  <!-- header -->
+  <div class="hdr">
+    <span class="hdr-ico">$</span>
+    <span class="hdr-title">Resultados · Crypto <span class="hdr-dot" style="display:inline-block;margin-left:.3rem;"></span></span>
+    <span class="hdr-time" id="v1-time">Atualizado: 11:16</span>
+    <button class="btn-ref" id="v1-ref" onclick="refresh('v1')" title="Atualizar">
+      <svg id="v1-ico" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M3 12a9 9 0 0 1 15.74-6.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.74 6.74L3 16"/><path d="M3 21v-5h5"/></svg>
+    </button>
+    <button class="btn-cls">✕</button>
+  </div>
+  <!-- filter -->
+  <div class="fbar">
+    <div id="v1-per" class="fbar-periods" style="display:flex;gap:.22rem;flex-wrap:wrap;">
+      <button class="pill ap">Todos</button><button class="pill">Hoje</button><button class="pill">7d</button>
+      <button class="pill">15d</button><button class="pill">Mês</button><button class="pill">30d</button>
+      <button class="pill">90d</button><button class="pill">12m</button><button class="pill">Ano</button>
+    </div>
+    <div class="fbar-sep"></div>
+    <div style="display:flex;gap:.22rem;">
+      <button class="pill">Abertas</button>
+      <button class="pill af">Fechadas</button>
+      <button class="pill ac">CALL</button>
+      <button class="pill">PUT</button>
+    </div>
+  </div>
+  <!-- op tabs -->
+  <div class="op-row" id="v1-ops">
+    <div class="op-tab on" data-op="0" onclick="selOp('v1',0,this)">
+      <div class="op-tab-type cb">CALL</div>
+      <div class="op-tab-asset">BTC</div>
+      <div class="op-tab-date">18/03</div>
+    </div>
+    <div class="op-tab" data-op="1" onclick="selOp('v1',1,this)">
+      <div class="op-tab-type cb">CALL</div>
+      <div class="op-tab-asset">ETH</div>
+      <div class="op-tab-date">18/03</div>
+    </div>
+    <div class="op-tab" data-op="2" onclick="selOp('v1',2,this)">
+      <div class="op-tab-type cb">CALL</div>
+      <div class="op-tab-asset">BTC</div>
+      <div class="op-tab-date">17/03</div>
+    </div>
+    <div class="op-tab" data-op="3" onclick="selOp('v1',3,this)">
+      <div class="op-tab-type cp">PUT</div>
+      <div class="op-tab-asset">ETH</div>
+      <div class="op-tab-date">17/03</div>
+    </div>
+    <div class="op-tab" data-op="4" onclick="selOp('v1',4,this)">
+      <div class="op-tab-type cb">CALL</div>
+      <div class="op-tab-asset">BTC</div>
+      <div class="op-tab-date">16/03</div>
+    </div>
+    <div class="op-tab" data-op="5" onclick="selOp('v1',5,this)">
+      <div class="op-tab-type cp">PUT</div>
+      <div class="op-tab-asset">BTC</div>
+      <div class="op-tab-date">16/03</div>
+    </div>
+    <div class="op-tab" data-op="6" onclick="selOp('v1',6,this)">
+      <div class="op-tab-type cb">CALL</div>
+      <div class="op-tab-asset">BTC</div>
+      <div class="op-tab-date">16/03</div>
+    </div>
+    <div class="op-tab" data-op="7" onclick="selOp('v1',7,this)">
+      <div class="op-tab-type cb">CALL</div>
+      <div class="op-tab-asset">ETH</div>
+      <div class="op-tab-date">16/03</div>
+    </div>
+    <div class="op-summary">
+      <span class="sp sp-b">16</span>
+      <span class="sp sp-g">0A</span>
+      <span class="sp sp-r">16F</span>
+      <span class="sp sp-o">$97.38</span>
+    </div>
+  </div>
+  <!-- section tabs -->
+  <div class="stabs">
+    <button class="stab on" data-s="des" onclick="selTab('v1','des',this)"><span>📊</span> Desempenho</button>
+    <button class="stab" data-s="cmp" onclick="selTab('v1','cmp',this)"><span>📐</span> Comparativos</button>
+    <button class="stab" data-s="pos" onclick="selTab('v1','pos',this)"><span>📋</span> Posições Abertas</button>
+    <button class="stab" data-s="evo" onclick="selTab('v1','evo',this)"><span>📈</span> Evolução</button>
+    <button class="stab" data-s="ris" onclick="selTab('v1','ris',this)"><span>⚠</span> Risco <span class="warn">●</span></button>
+  </div>
+  <!-- body -->
+  <div class="dash" id="v1-dash">
+    <!-- sidebar -->
+    <div class="side">
+      <div class="sc on"><div class="sc-lbl">Cotação</div><div class="sc-val cc"><span class="loadable" id="v1-sb-cot">$72.4K</span></div><div class="sc-sub cg"><span class="loadable" id="v1-sb-var">+2487%</span></div><div class="sc-bar"><div class="sc-bf" id="v1-sbbar-cot" style="background:var(--cyan);width:72%;"></div></div></div>
+      <div class="sc"><div class="sc-lbl">Resultado</div><div class="sc-val cg"><span class="loadable" id="v1-sb-res">+0.37%</span></div><div class="sc-sub"><span class="loadable" id="v1-sb-rusd">$10.35</span></div></div>
+      <div class="sc"><div class="sc-lbl">TAE ao Ano</div><div class="sc-val cg"><span class="loadable" id="v1-sb-tae">134.51%</span></div><div class="sc-bar"><div class="sc-bf" id="v1-sbbar-tae" style="background:var(--grn);width:74%;"></div></div></div>
+      <div class="sc"><div class="sc-lbl">Strike</div><div class="sc-val cw"><span class="loadable" id="v1-sb-str">$75.0K</span></div><div class="sc-sub"><span class="badge bc" id="v1-sb-tipo">CALL</span></div></div>
+      <div class="sc"><div class="sc-lbl">Distância OTM</div><div class="sc-val co"><span class="loadable" id="v1-sb-dist">3.63%</span></div><div class="sc-bar"><div class="sc-bf" id="v1-sbbar-dist" style="background:var(--gold);width:7%;"></div></div></div>
+      <div class="sc"><div class="sc-lbl">Prêmio</div><div class="sc-val co"><span class="loadable" id="v1-sb-pre">$10.55</span></div><div class="sc-sub"><span class="loadable" id="v1-sb-preq">1 unid.</span></div><div class="sc-bar"><div class="sc-bf" id="v1-sbbar-pre" style="background:var(--gold);width:100%;"></div></div></div>
+      <div class="sc"><div class="sc-lbl">PoP</div><div class="sc-val co"><span class="loadable" id="v1-sb-pop">57.3%</span></div><div class="sc-sub">Prob. de Lucro</div><div class="sc-bar"><div class="sc-bf" id="v1-sbbar-pop" style="background:var(--gold);width:57%;"></div></div></div>
+      <div class="sc"><div class="sc-lbl">Investido</div><div class="sc-val cc"><span class="loadable" id="v1-sb-inv">$2,797.33</span></div><div class="sc-sub"><span class="loadable" id="v1-sb-invq">1.0000 BTC</span></div></div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main">
+
+      <!-- DESEMPENHO PANEL -->
+      <div class="panel on" id="v1-des">
+        <!-- Row 1: Resultado + Cotação + TAE -->
+        <div class="g3">
+          <!-- Resultado -->
+          <div class="card" style="background:linear-gradient(135deg,#030e07,#051a0d);border-color:rgba(0,232,122,.18);">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--grn);box-shadow:0 0 5px var(--grn);"></span>Resultado Atual</div>
+            <div class="card-xl cg" style="text-align:center;"><span class="loadable" id="v1-res-pct">+0.37%</span></div>
+            <div style="text-align:center;margin:.28rem 0;"><span class="ex-badge ex-otm"><span class="ex-dot exd-g"></span><span class="loadable" id="v1-res-ex">OTM — SEGURO</span></span></div>
+            <!-- mini spark -->
+            <div class="mini-chart">
+              <svg viewBox="0 0 200 60" preserveAspectRatio="none">
+                <defs><linearGradient id="spg1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#00e87a" stop-opacity=".35"/><stop offset="100%" stop-color="#00e87a" stop-opacity="0"/></linearGradient></defs>
+                <path d="M0,55 C20,52 40,48 60,40 C80,32 100,25 120,18 C140,11 160,8 180,5 L200,3" fill="none" stroke="var(--grn)" stroke-width="2"/>
+                <path d="M0,55 C20,52 40,48 60,40 C80,32 100,25 120,18 C140,11 160,8 180,5 L200,3 L200,60 L0,60Z" fill="url(#spg1)"/>
+              </svg>
+            </div>
+            <div class="g2" style="gap:.28rem;margin-top:.2rem;">
+              <div style="text-align:center;"><div class="loadable cg" id="v1-res-usd" style="font-family:var(--mono);font-size:.85rem;font-weight:700;">$10.35</div><div style="font-family:var(--mono);font-size:.5rem;color:var(--tx2);text-transform:uppercase;">LUCRO $</div></div>
+              <div style="text-align:center;"><div class="loadable cg" id="v1-res-sal" style="font-family:var(--mono);font-size:.85rem;font-weight:700;">0.38%</div><div style="font-family:var(--mono);font-size:.5rem;color:var(--tx2);text-transform:uppercase;">% SALDO</div></div>
+            </div>
+          </div>
+          <!-- Cotação -->
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--cyan);"></span>Cotação Atual</div>
+            <div class="g-row">
+              <div class="g-wrap" style="width:88px;height:88px;">
+                <svg width="88" height="88" viewBox="0 0 100 100">
+                  <circle class="g-track" cx="50" cy="50" r="38" fill="none" stroke="var(--bdr)" stroke-width="8"/>
+                  <circle class="g-arc" cx="50" cy="50" r="38" fill="none" stroke="var(--cyan)" stroke-width="8" stroke-linecap="round" id="v1-arc-cot" style="stroke-dasharray:238.76;stroke-dashoffset:65;transform-origin:center;transform:rotate(-90deg);"/>
+                </svg>
+                <div class="g-inner"><div class="gv cc" style="font-size:.78rem;"><span class="loadable" id="v1-g-cot">$72.4K</span></div><div class="gs">BTC</div></div>
+              </div>
+              <div class="g-stats">
+                <div class="ir"><span class="ik">Cotação</span><span class="iv cc"><span class="loadable" id="v1-ir-cot">$72,373.74</span></span></div>
+                <div class="ir"><span class="ik">Abertura</span><span class="iv co"><span class="loadable" id="v1-ir-ab">$2,797.33</span></span></div>
+                <div class="ir"><span class="ik">Variação</span><span class="iv cg"><span class="loadable" id="v1-ir-var">+2487.24%</span></span></div>
+              </div>
+            </div>
+          </div>
+          <!-- TAE -->
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--grn);"></span>TAE ao Ano</div>
+            <div class="g-row">
+              <div class="g-wrap" style="width:88px;height:88px;">
+                <svg width="88" height="88" viewBox="0 0 100 100">
+                  <circle class="g-track" cx="50" cy="50" r="38" fill="none" stroke="var(--bdr)" stroke-width="8"/>
+                  <circle class="g-arc" cx="50" cy="50" r="38" fill="none" stroke="var(--grn)" stroke-width="8" stroke-linecap="round" id="v1-arc-tae" style="stroke-dasharray:238.76;stroke-dashoffset:62;transform-origin:center;transform:rotate(-90deg);"/>
+                </svg>
+                <div class="g-inner"><div class="gv cg" style="font-size:.76rem;"><span class="loadable" id="v1-g-tae">135%</span></div><div class="gs">a.a.</div></div>
+              </div>
+              <div class="g-stats">
+                <div class="ir"><span class="ik">TAE</span><span class="iv cg"><span class="loadable" id="v1-ir-tae">134.51%</span></span></div>
+                <div class="ir"><span class="ik">Data</span><span class="iv"><span class="loadable" id="v1-ir-data">19/03/2026</span></span></div>
+                <div class="ir"><span class="ik">Prazo</span><span class="iv"><span class="loadable" id="v1-ir-prazo">1 dias</span></span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Row 2: Distância + Prazo + Prêmio + Strike&Exercício -->
+        <div class="g4">
+          <!-- Distância -->
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--gold);"></span>Distância OTM</div>
+            <div class="g-wrap" style="width:72px;height:72px;margin:.1rem auto .28rem;">
+              <svg width="72" height="72" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="38" fill="none" stroke="var(--bdr)" stroke-width="8"/>
+                <circle cx="50" cy="50" r="38" fill="none" stroke="var(--gold)" stroke-width="8" stroke-linecap="round" id="v1-arc-dist" style="stroke-dasharray:238.76;stroke-dashoffset:214;transform-origin:center;transform:rotate(-90deg);"/>
+              </svg>
+              <div class="g-inner"><div class="gv co" style="font-size:.72rem;"><span class="loadable" id="v1-g-dist">3.63%</span></div><div class="gs">OTM</div></div>
+            </div>
+            <div class="ir"><span class="ik">Strike</span><span class="iv"><span class="loadable" id="v1-dst-str">$75,000.00</span></span></div>
+            <!-- heat bar -->
+            <div style="margin-top:.35rem;">
+              <div style="font-family:var(--mono);font-size:.5rem;color:var(--tx2);margin-bottom:.18rem;">ZONA DE SEGURANÇA</div>
+              <div style="height:6px;border-radius:3px;background:linear-gradient(90deg,var(--grn),var(--gold),var(--red));position:relative;overflow:visible;">
+                <div id="v1-safezone-ptr" style="position:absolute;top:-3px;bottom:-3px;width:2px;background:white;border-radius:1px;left:93%;"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:.48rem;color:var(--tx2);margin-top:.18rem;"><span>Seguro</span><span>Risco</span></div>
+            </div>
+          </div>
+          <!-- Prazo -->
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--red);"></span>Prazo</div>
+            <div class="g-wrap" style="width:72px;height:72px;margin:.1rem auto .28rem;">
+              <svg width="72" height="72" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="38" fill="none" stroke="var(--bdr)" stroke-width="8"/>
+                <circle cx="50" cy="50" r="38" fill="none" stroke="var(--red)" stroke-width="8" stroke-linecap="round" id="v1-arc-prazo" style="stroke-dasharray:238.76;stroke-dashoffset:238;transform-origin:center;transform:rotate(-90deg);"/>
+              </svg>
+              <div class="g-inner"><div class="gv cr" style="font-size:.72rem;"><span class="loadable" id="v1-g-prazo">0</span></div><div class="gs">dias</div></div>
+            </div>
+            <div class="ir"><span class="ik">Total</span><span class="iv"><span class="loadable" id="v1-pr-tot">1d</span></span></div>
+            <div class="ir"><span class="ik">Decorrido</span><span class="iv co"><span class="loadable" id="v1-pr-dec">1d</span></span></div>
+            <div class="pb" style="margin-top:.3rem;"><div class="pbf" id="v1-pb-prazo" style="background:var(--red);width:100%;"></div></div>
+          </div>
+          <!-- Prêmio -->
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--gold);"></span>Prêmio</div>
+            <div class="card-big co" style="text-align:center;font-size:1.3rem;"><span class="loadable" id="v1-g-pre">$10.55</span></div>
+            <div class="pb"><div class="pbf" id="v1-pb-pre" style="background:var(--gold);width:100%;"></div></div>
+            <div class="ir"><span class="ik">Quantidade</span><span class="iv"><span class="loadable" id="v1-pre-qtd">1</span></span></div>
+            <div class="ir"><span class="ik">Total</span><span class="iv co"><span class="loadable" id="v1-pre-tot">$10.55</span></span></div>
+            <!-- NOVO: retorno vs risco -->
+            <div style="margin-top:.35rem;display:flex;gap:.22rem;">
+              <div style="flex:1;text-align:center;background:var(--bg-card2);border:1px solid var(--bdr);border-radius:var(--r);padding:.22rem;">
+                <div class="loadable co" id="v1-rr" style="font-family:var(--mono);font-size:.7rem;font-weight:700;">269:1</div>
+                <div style="font-family:var(--mono);font-size:.48rem;color:var(--tx2);">R/R</div>
+              </div>
+              <div style="flex:1;text-align:center;background:var(--bg-card2);border:1px solid var(--bdr);border-radius:var(--r);padding:.22rem;">
+                <div class="loadable cg" id="v1-roi" style="font-family:var(--mono);font-size:.7rem;font-weight:700;">0.37%</div>
+                <div style="font-family:var(--mono);font-size:.48rem;color:var(--tx2);">ROI</div>
+              </div>
+            </div>
+          </div>
+          <!-- Strike & Exercício -->
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--blu);"></span>Strike &amp; Exercício</div>
+            <div class="card-big cw"><span class="loadable" id="v1-str-val">$75,000.00</span></div>
+            <div style="margin-bottom:.32rem;"><span class="badge bc" id="v1-str-tipo">CALL</span></div>
+            <div class="ir"><span class="ik">Exercício</span><span class="iv"><span class="loadable" id="v1-ex-data">19/03/2026</span></span></div>
+            <div class="tbox" style="margin-top:.32rem;">
+              <div class="tc"><div class="tn cw"><span class="loadable" id="v1-tb-h">19/03</span></div><div class="tl">HOJE</div></div>
+              <div class="tc"><div class="tn cg"><span class="loadable" id="v1-tb-r">0</span></div><div class="tl">REST.</div></div>
+              <div class="tc"><div class="tn co"><span class="loadable" id="v1-tb-d">1</span></div><div class="tl">DEC.</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- COMPARATIVOS PANEL -->
+      <div class="panel" id="v1-cmp">
+        <!-- Price bar -->
+        <div class="card">
+          <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--blu);"></span>Comparativo de Preços — Cotação vs. Strike vs. Abertura</div>
+          <div class="cbar-outer" id="v1-cbar">
+            <div class="cbar-fill" id="v1-cbf" style="background:linear-gradient(90deg,rgba(0,212,232,.2),rgba(0,232,122,.35));width:93%;"></div>
+            <div class="cbar-mk" id="v1-mk-ab" style="background:var(--cyan);left:4%;">
+              <div class="cbar-mk-lbl" style="color:var(--cyan);">ABERTURA</div>
+              <div class="cbar-mk-val" style="color:var(--cyan);"><span class="loadable" id="v1-cb-ab">$2,797.33</span></div>
+            </div>
+            <div class="cbar-mk" id="v1-mk-st" style="background:var(--gold);left:97%;">
+              <div class="cbar-mk-lbl" style="color:var(--gold);right:0;transform:none;left:auto;transform:translateX(-50%);">STRIKE</div>
+              <div class="cbar-mk-val" style="color:var(--gold);"><span class="loadable" id="v1-cb-st">$75,000.00</span></div>
+            </div>
+            <div class="cbar-dot" id="v1-mk-cot" style="background:var(--grn);left:93%;">
+              <div class="cbar-dot-lbl" style="color:var(--grn);">COTAÇÃO</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:.75rem;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:.28rem;font-family:var(--mono);font-size:.6rem;color:var(--tx2);">
+              <span style="width:8px;height:8px;border-radius:50%;background:var(--cyan);display:inline-block;"></span>Abertura <strong class="cc loadable" id="v1-leg-ab" style="margin-left:.25rem;">$2,797.33</strong>
+            </div>
+            <div style="display:flex;align-items:center;gap:.28rem;font-family:var(--mono);font-size:.6rem;color:var(--tx2);">
+              <span style="width:8px;height:8px;border-radius:50%;background:var(--grn);display:inline-block;"></span>Cotação <strong class="cg loadable" id="v1-leg-cot" style="margin-left:.25rem;">$72,373.74</strong>
+            </div>
+            <div style="display:flex;align-items:center;gap:.28rem;font-family:var(--mono);font-size:.6rem;color:var(--tx2);">
+              <span style="width:8px;height:8px;border-radius:50%;background:var(--gold);display:inline-block;"></span>Strike <strong class="co loadable" id="v1-leg-st" style="margin-left:.25rem;">$75,000.00</strong>
+            </div>
+          </div>
+        </div>
+        <!-- Delta cards -->
+        <div class="g2">
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--cyan);"></span>Cotação vs. Abertura</div>
+            <div class="dblks">
+              <div class="dblk"><div class="dblk-lbl">ABERTURA</div><div class="dblk-val cc"><span class="loadable" id="v1-d1a">$2,797.33</span></div><div class="dblk-sub">base 100%</div></div>
+              <div class="dblk"><div class="dblk-lbl">COTAÇÃO ATUAL</div><div class="dblk-val cg"><span class="loadable" id="v1-d1c">$72,373.74</span></div><div class="dblk-sub cg"><span class="loadable" id="v1-d1v">+2487.24%</span></div></div>
+              <div class="dblk" style="background:rgba(0,232,122,.05);border-color:rgba(0,232,122,.2);"><div class="dblk-lbl" style="color:var(--grn);">VARIAÇÃO $</div><div class="dblk-val cg"><span class="loadable" id="v1-d1d">+$69,576.41</span></div><div class="dblk-sub">desde abertura</div></div>
+            </div>
+            <div class="pb"><div class="pbf" id="v1-pb-d1" style="background:linear-gradient(90deg,var(--cyan),var(--grn));width:97%;"></div></div>
+            <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:.52rem;color:var(--tx2);margin-top:.18rem;">
+              <span class="loadable" id="v1-pb-d1-l">$2,797.33</span><span class="loadable cg" id="v1-pb-d1-r">$72,373.74</span>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--gold);"></span>Cotação vs. Strike</div>
+            <div class="dblks">
+              <div class="dblk"><div class="dblk-lbl">COTAÇÃO ATUAL</div><div class="dblk-val cg"><span class="loadable" id="v1-d2c">$72,373.74</span></div><div class="dblk-sub">atual</div></div>
+              <div class="dblk"><div class="dblk-lbl">STRIKE</div><div class="dblk-val co"><span class="loadable" id="v1-d2s">$75,000.00</span></div><div class="dblk-sub"><span class="badge bc">CALL</span></div></div>
+              <div class="dblk" style="background:rgba(245,163,0,.05);border-color:rgba(245,163,0,.2);"><div class="dblk-lbl" style="color:var(--gold);">DISTÂNCIA</div><div class="dblk-val co"><span class="loadable" id="v1-d2d">$2,626.26</span></div><div class="dblk-sub co"><span class="loadable" id="v1-d2p">3.50%</span></div></div>
+            </div>
+            <div style="position:relative;margin:.3rem 0;">
+              <div class="pb" style="height:7px;border-radius:4px;"><div class="pbf" id="v1-pb-d2" style="background:linear-gradient(90deg,var(--grn),var(--gold));width:96%;height:100%;border-radius:4px;"></div></div>
+              <div style="position:absolute;right:4%;top:-2px;bottom:-2px;width:2px;background:var(--gold);border-radius:1px;"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:.52rem;color:var(--tx2);">
+              <span>$0</span><span class="cg">Cotação: <span class="loadable" id="v1-pb-d2-c">$72,373.74</span></span><span class="co">Strike: <span class="loadable" id="v1-pb-d2-s">$75,000.00</span></span>
+            </div>
+          </div>
+        </div>
+        <!-- 3 gauges comparativos -->
+        <div class="g3">
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--grn);"></span>% Cotação / Strike</div>
+            <div class="g-row">
+              <div class="g-wrap" style="width:80px;height:80px;">
+                <svg width="80" height="80" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="38" fill="none" stroke="var(--bdr)" stroke-width="8"/>
+                  <circle cx="50" cy="50" r="38" fill="none" stroke="var(--grn)" stroke-width="8" stroke-linecap="round" id="v1-arc-pcs" style="stroke-dasharray:238.76;stroke-dashoffset:8;transform-origin:center;transform:rotate(-90deg);"/>
+                </svg>
+                <div class="g-inner"><div class="gv cg" style="font-size:.72rem;"><span class="loadable" id="v1-gc1">96.5%</span></div><div class="gs">do strike</div></div>
+              </div>
+              <div class="g-stats">
+                <div class="ir"><span class="ik">Cotação</span><span class="iv cg"><span class="loadable" id="v1-gc1c">$72,373.74</span></span></div>
+                <div class="ir"><span class="ik">Strike</span><span class="iv co"><span class="loadable" id="v1-gc1s">$75,000.00</span></span></div>
+                <div class="ir"><span class="ik">Falta</span><span class="iv co"><span class="loadable" id="v1-gc1f">$2,626.26</span></span></div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--cyan);"></span>Crescimento vs. Abertura</div>
+            <div class="g-row">
+              <div class="g-wrap" style="width:80px;height:80px;">
+                <svg width="80" height="80" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="38" fill="none" stroke="var(--bdr)" stroke-width="8"/>
+                  <circle cx="50" cy="50" r="38" fill="none" stroke="var(--cyan)" stroke-width="8" stroke-linecap="round" id="v1-arc-cresc" style="stroke-dasharray:238.76;stroke-dashoffset:5;transform-origin:center;transform:rotate(-90deg);"/>
+                </svg>
+                <div class="g-inner"><div class="gv cc" style="font-size:.68rem;"><span class="loadable" id="v1-gc2">25.87x</span></div><div class="gs">abertura</div></div>
+              </div>
+              <div class="g-stats">
+                <div class="ir"><span class="ik">Abertura</span><span class="iv cc"><span class="loadable" id="v1-gc2a">$2,797.33</span></span></div>
+                <div class="ir"><span class="ik">Atual</span><span class="iv cg"><span class="loadable" id="v1-gc2c">$72,373.74</span></span></div>
+                <div class="ir"><span class="ik">Mult.</span><span class="iv cg"><span class="loadable" id="v1-gc2m">25.872x</span></span></div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--gold);"></span>Distância ao Strike</div>
+            <div class="g-row">
+              <div class="g-wrap" style="width:80px;height:80px;">
+                <svg width="80" height="80" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="38" fill="none" stroke="var(--bdr)" stroke-width="8"/>
+                  <circle cx="50" cy="50" r="38" fill="none" stroke="var(--gold)" stroke-width="8" stroke-linecap="round" id="v1-arc-dstr" style="stroke-dasharray:238.76;stroke-dashoffset:214;transform-origin:center;transform:rotate(-90deg);"/>
+                </svg>
+                <div class="g-inner"><div class="gv co" style="font-size:.72rem;"><span class="loadable" id="v1-gc3">3.50%</span></div><div class="gs">OTM</div></div>
+              </div>
+              <div class="g-stats">
+                <div class="ir"><span class="ik">Falta $</span><span class="iv co"><span class="loadable" id="v1-gc3f">$2,626.26</span></span></div>
+                <div class="ir"><span class="ik">Status</span><span class="iv cg">OTM Seguro</span></div>
+                <div class="ir"><span class="ik">Tipo</span><span class="iv"><span class="badge bc">CALL</span></span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- POSIÇÕES ABERTAS PANEL -->
+      <div class="panel" id="v1-pos">
+        <div class="card">
+          <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--grn);"></span>Posições Abertas</div>
+          <div class="tbl-head tbl-cols-6"><span>ATIVO</span><span>TIPO</span><span>ABERTURA</span><span>STRIKE</span><span>TAE</span><span>RESULTADO</span></div>
+          <div class="tbl-row tbl-cols-6 sel"><span class="tbl-af">ETH</span><span><span class="badge bc">CALL</span></span><span class="tbl-sm">$862.95</span><span class="tbl-sm co">$2,225.00</span><span class="tbl-sm cg">143.42%</span><span class="tbl-sm cg">+0.06%</span></div>
+          <div class="tbl-row tbl-cols-6"><span class="tbl-af">ETH</span><span><span class="badge bc">CALL</span></span><span class="tbl-sm">$2,345.16</span><span class="tbl-sm co">$2,250.00</span><span class="tbl-sm cg">106.76%</span><span class="tbl-sm cg">+0.13%</span></div>
+          <div class="tbl-row tbl-cols-6"><span class="tbl-af">BTC</span><span><span class="badge bc">CALL</span></span><span class="tbl-sm">$70,499.00</span><span class="tbl-sm co">$71,500.00</span><span class="tbl-sm cg">115.26%</span><span class="tbl-sm cg">+0.16%</span></div>
+        </div>
+        <!-- PoP side by side -->
+        <div class="g2">
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--grn);"></span>PoP — ETH $2,225</div>
+            <div style="display:flex;align-items:center;gap:.75rem;">
+              <div style="flex-shrink:0;text-align:center;">
+                <div class="pop-wrap">
+                  <svg width="110" height="62" viewBox="0 0 110 65" style="overflow:visible;">
+                    <path d="M10,55 A45,45 0 0,1 100,55" fill="none" stroke="var(--bdr)" stroke-width="10" stroke-linecap="round"/>
+                    <path d="M10,55 A45,45 0 0,1 100,55" fill="none" stroke="url(#pg1)" stroke-width="10" stroke-linecap="round" opacity=".25"/>
+                    <defs><linearGradient id="pg1" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="var(--red)"/><stop offset="40%" stop-color="var(--gold)"/><stop offset="100%" stop-color="var(--grn)"/></linearGradient></defs>
+                    <path d="M10,55 A45,45 0 0,1 100,55" fill="none" stroke="var(--gold)" stroke-width="10" stroke-linecap="round" style="stroke-dasharray:141.37;stroke-dashoffset:58;"/>
+                    <g class="pop-needle" style="transform:rotate(43deg);"><line x1="55" y1="55" x2="55" y2="17" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity=".9"/><circle cx="55" cy="55" r="3.5" fill="white" opacity=".8"/></g>
+                  </svg>
+                </div>
+                <div class="pop-big co">59.3%</div>
+                <div style="text-align:center;"><span class="pop-st pop-md">PROB. MÉDIA</span></div>
+              </div>
+              <div style="flex:1;">
+                <div class="ir"><span class="ik">Distância OTM</span><span class="iv co">4.63%</span></div>
+                <div class="ir"><span class="ik">Cotação</span><span class="iv cc">$2,126.62</span></div>
+                <div class="ir"><span class="ik">Strike</span><span class="iv co">$2,225.00</span></div>
+                <div class="ir"><span class="ik">Tipo</span><span class="iv"><span class="badge bc">CALL</span></span></div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--grn);"></span>PoP — ETH $2,250</div>
+            <div style="display:flex;align-items:center;gap:.75rem;">
+              <div style="flex-shrink:0;text-align:center;">
+                <div class="pop-wrap">
+                  <svg width="110" height="62" viewBox="0 0 110 65" style="overflow:visible;">
+                    <path d="M10,55 A45,45 0 0,1 100,55" fill="none" stroke="var(--bdr)" stroke-width="10" stroke-linecap="round"/>
+                    <path d="M10,55 A45,45 0 0,1 100,55" fill="none" stroke="url(#pg2)" stroke-width="10" stroke-linecap="round" opacity=".25"/>
+                    <defs><linearGradient id="pg2" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="var(--red)"/><stop offset="40%" stop-color="var(--gold)"/><stop offset="100%" stop-color="var(--grn)"/></linearGradient></defs>
+                    <path d="M10,55 A45,45 0 0,1 100,55" fill="none" stroke="var(--gold)" stroke-width="10" stroke-linecap="round" style="stroke-dasharray:141.37;stroke-dashoffset:50;"/>
+                    <g class="pop-needle" style="transform:rotate(50deg);"><line x1="55" y1="55" x2="55" y2="17" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity=".9"/><circle cx="55" cy="55" r="3.5" fill="white" opacity=".8"/></g>
+                  </svg>
+                </div>
+                <div class="pop-big co">61.6%</div>
+                <div style="text-align:center;"><span class="pop-st pop-md">PROB. MÉDIA</span></div>
+              </div>
+              <div style="flex:1;">
+                <div class="ir"><span class="ik">Distância OTM</span><span class="iv co">5.80%</span></div>
+                <div class="ir"><span class="ik">Cotação</span><span class="iv cc">$2,126.62</span></div>
+                <div class="ir"><span class="ik">Strike</span><span class="iv co">$2,250.00</span></div>
+                <div class="ir"><span class="ik">Tipo</span><span class="iv"><span class="badge bc">CALL</span></span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- EVOLUÇÃO PANEL -->
+      <div class="panel" id="v1-evo">
+        <div class="card">
+          <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--blu);"></span>Evolução do Resultado — Linha do Tempo</div>
+          <div class="mini-chart" style="height:100px;">
+            <svg viewBox="0 0 600 100" preserveAspectRatio="none" style="width:100%;height:100%;">
+              <defs>
+                <linearGradient id="evog" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#00e87a" stop-opacity=".4"/><stop offset="100%" stop-color="#00e87a" stop-opacity="0"/></linearGradient>
+              </defs>
+              <line x1="0" y1="80" x2="600" y2="80" stroke="var(--bdr)" stroke-width="1" stroke-dasharray="4,4"/>
+              <path d="M0,78 C40,75 80,70 120,60 C160,50 200,42 240,33 C280,24 320,18 360,14 C400,10 440,8 480,6 C520,5 560,4 600,3" fill="none" stroke="var(--grn)" stroke-width="2.5"/>
+              <path d="M0,78 C40,75 80,70 120,60 C160,50 200,42 240,33 C280,24 320,18 360,14 C400,10 440,8 480,6 C520,5 560,4 600,3 L600,100 L0,100Z" fill="url(#evog)"/>
+              <circle cx="600" cy="3" r="4" fill="var(--grn)"/>
+            </svg>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:.55rem;color:var(--tx2);margin-top:.25rem;">
+            <span>17/03</span><span>17/03 12h</span><span>18/03 00h</span><span>18/03</span><span>19/03</span>
+          </div>
+        </div>
+        <div class="g3">
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--cyan);"></span>Cotação BTC ao Longo do Tempo</div>
+            <div class="mini-chart" style="height:72px;">
+              <svg viewBox="0 0 300 72" preserveAspectRatio="none" style="width:100%;height:100%;">
+                <defs><linearGradient id="cotg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--cyan)" stop-opacity=".3"/><stop offset="100%" stop-color="var(--cyan)" stop-opacity="0"/></linearGradient></defs>
+                <path d="M0,65 C30,60 60,55 90,45 C120,35 150,27 180,20 C210,13 240,9 270,6 L300,4" fill="none" stroke="var(--cyan)" stroke-width="2"/>
+                <path d="M0,65 C30,60 60,55 90,45 C120,35 150,27 180,20 C210,13 240,9 270,6 L300,4 L300,72 L0,72Z" fill="url(#cotg)"/>
+              </svg>
+            </div>
+            <div class="ir"><span class="ik">Mín</span><span class="iv cc">$2,600.00</span></div>
+            <div class="ir"><span class="ik">Máx</span><span class="iv cc">$72,373.74</span></div>
+          </div>
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--gold);"></span>Decaimento do Prêmio (Theta)</div>
+            <div class="mini-chart" style="height:72px;">
+              <svg viewBox="0 0 300 72" preserveAspectRatio="none" style="width:100%;height:100%;">
+                <defs><linearGradient id="thg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--gold)" stop-opacity=".3"/><stop offset="100%" stop-color="var(--gold)" stop-opacity="0"/></linearGradient></defs>
+                <path d="M0,8 C30,14 60,24 90,35 C120,46 150,53 180,58 C210,62 240,65 270,66 L300,67" fill="none" stroke="var(--gold)" stroke-width="2"/>
+                <path d="M0,8 C30,14 60,24 90,35 C120,46 150,53 180,58 C210,62 240,65 270,66 L300,67 L300,72 L0,72Z" fill="url(#thg)"/>
+              </svg>
+            </div>
+            <div class="ir"><span class="ik">Início</span><span class="iv co">$10.55</span></div>
+            <div class="ir"><span class="ik">Atual</span><span class="iv co">$0.00</span></div>
+          </div>
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--grn);"></span>PoP Histórico</div>
+            <div class="mini-chart" style="height:72px;">
+              <svg viewBox="0 0 300 72" preserveAspectRatio="none" style="width:100%;height:100%;">
+                <defs><linearGradient id="popg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--grn)" stop-opacity=".3"/><stop offset="100%" stop-color="var(--grn)" stop-opacity="0"/></linearGradient></defs>
+                <path d="M0,45 C30,42 60,38 90,32 C120,26 150,22 180,18 C210,15 240,12 270,10 L300,8" fill="none" stroke="var(--grn)" stroke-width="2"/>
+                <path d="M0,45 C30,42 60,38 90,32 C120,26 150,22 180,18 C210,15 240,12 270,10 L300,8 L300,72 L0,72Z" fill="url(#popg)"/>
+              </svg>
+            </div>
+            <div class="ir"><span class="ik">Início</span><span class="iv cg">52.0%</span></div>
+            <div class="ir"><span class="ik">Atual</span><span class="iv cg">57.3%</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RISCO PANEL -->
+      <div class="panel" id="v1-ris">
+        <div class="g2">
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--red);box-shadow:0 0 5px var(--red);"></span>Análise de Risco</div>
+            <div class="g-row">
+              <div class="g-wrap" style="width:85px;height:85px;flex-shrink:0;">
+                <svg width="85" height="85" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="38" fill="none" stroke="var(--bdr)" stroke-width="8"/>
+                  <circle cx="50" cy="50" r="38" fill="none" stroke="var(--red)" stroke-width="8" stroke-linecap="round" id="v1-arc-ris" style="stroke-dasharray:238.76;stroke-dashoffset:194;transform-origin:center;transform:rotate(-90deg);"/>
+                </svg>
+                <div class="g-inner"><div class="gv cr" style="font-size:.75rem;">41%</div><div class="gs">Risco ITM</div></div>
+              </div>
+              <div class="g-stats">
+                <div class="ir"><span class="ik">Prob. Exercício</span><span class="iv cr">40.7%</span></div>
+                <div class="ir"><span class="ik">Prob. Lucro (PoP)</span><span class="iv cg">59.3%</span></div>
+                <div class="ir"><span class="ik">Perda Máx.</span><span class="iv cr">$859.56</span></div>
+                <div class="ir"><span class="ik">Ganho Máx.</span><span class="iv co">$3.39</span></div>
+                <div class="ir"><span class="ik">Risco/Retorno</span><span class="iv co">1:253.5</span></div>
+                <div class="ir"><span class="ik">Distância Segura</span><span class="iv cg">4.63%</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--gold);"></span>Cenários</div>
+            <div class="scen scen-otm"><div class="scen-title cg">✓ Cenário Atual (OTM)</div><div class="scen-text">Cotação <span class="loadable cg" id="v1-sc-cot">$2,126.62</span> &lt; Strike <span class="loadable co" id="v1-sc-str">$2,225.00</span> → prêmio <span class="cg">$3.39</span> retido</div></div>
+            <div class="scen scen-itm"><div class="scen-title cr">✗ Cenário ITM</div><div class="scen-text">Cotação acima de $2,225.00 → exercício, perda potencial <span class="cr">$859.56</span></div></div>
+            <div class="scen scen-be"><div class="scen-title co">⚡ Ponto de Equilíbrio</div><div class="scen-text">Break-even: <span class="co">$2,228.39</span> (strike $2,225.00 + prêmio $3.39)</div></div>
+          </div>
+        </div>
+        <!-- Heat row + Greeks -->
+        <div class="card">
+          <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--pur);"></span>Mapa de Risco — Indicadores Greeks</div>
+          <div class="heat-row">
+            <div class="heat-cell" style="background:rgba(168,85,247,.08);border:1px solid rgba(168,85,247,.2);">
+              <div class="heat-lbl" style="color:var(--pur);">VOLATILIDADE (IV)</div>
+              <div class="heat-val cp">60%</div>
+            </div>
+            <div class="heat-cell" style="background:rgba(61,142,255,.08);border:1px solid rgba(61,142,255,.2);">
+              <div class="heat-lbl" style="color:var(--blu);">DELTA</div>
+              <div class="heat-val cb">0.35</div>
+            </div>
+            <div class="heat-cell" style="background:rgba(255,61,92,.08);border:1px solid rgba(255,61,92,.2);">
+              <div class="heat-lbl" style="color:var(--red);">THETA / DIA</div>
+              <div class="heat-val cr">-$0.50</div>
+            </div>
+            <div class="heat-cell" style="background:rgba(0,212,232,.08);border:1px solid rgba(0,212,232,.2);">
+              <div class="heat-lbl" style="color:var(--cyan);">GAMMA</div>
+              <div class="heat-val cc">0.0042</div>
+            </div>
+            <div class="heat-cell" style="background:rgba(0,232,122,.08);border:1px solid rgba(0,232,122,.2);">
+              <div class="heat-lbl" style="color:var(--grn);">VEGA</div>
+              <div class="heat-val cg">$1.23</div>
+            </div>
+          </div>
+        </div>
+        <div class="g3">
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--pur);"></span>Volatilidade Implícita</div>
+            <div class="g-wrap" style="width:80px;height:80px;margin:.1rem auto .28rem;">
+              <svg width="80" height="80" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="38" fill="none" stroke="var(--bdr)" stroke-width="8"/>
+                <circle cx="50" cy="50" r="38" fill="none" stroke="var(--pur)" stroke-width="8" stroke-linecap="round" style="stroke-dasharray:238.76;stroke-dashoffset:96;transform-origin:center;transform:rotate(-90deg);"/>
+              </svg>
+              <div class="g-inner"><div class="gv cp" style="font-size:.72rem;">60%</div><div class="gs">IV</div></div>
+            </div>
+            <div class="ir"><span class="ik">IV Rank</span><span class="iv cp">Médio</span></div>
+          </div>
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--blu);"></span>Delta</div>
+            <div class="g-wrap" style="width:80px;height:80px;margin:.1rem auto .28rem;">
+              <svg width="80" height="80" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="38" fill="none" stroke="var(--bdr)" stroke-width="8"/>
+                <circle cx="50" cy="50" r="38" fill="none" stroke="var(--blu)" stroke-width="8" stroke-linecap="round" style="stroke-dasharray:238.76;stroke-dashoffset:155;transform-origin:center;transform:rotate(-90deg);"/>
+              </svg>
+              <div class="g-inner"><div class="gv cb" style="font-size:.72rem;">35</div><div class="gs">delta</div></div>
+            </div>
+            <div class="ir"><span class="ik">Sensibilidade</span><span class="iv cb">Média</span></div>
+          </div>
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--red);"></span>Theta (decay/dia)</div>
+            <div class="g-wrap" style="width:80px;height:80px;margin:.1rem auto .28rem;">
+              <svg width="80" height="80" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="38" fill="none" stroke="var(--bdr)" stroke-width="8"/>
+                <circle cx="50" cy="50" r="38" fill="none" stroke="var(--red)" stroke-width="8" stroke-linecap="round" style="stroke-dasharray:238.76;stroke-dashoffset:238;transform-origin:center;transform:rotate(-90deg);"/>
+              </svg>
+              <div class="g-inner"><div class="gv cr" style="font-size:.68rem;">-$0.50</div><div class="gs">por dia</div></div>
+            </div>
+            <div class="ir"><span class="ik">Total decay</span><span class="iv cr">$15.00</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /main -->
+  </div><!-- /dash -->
+</div><!-- /v1 -->
+
+<!-- ================================================================
+     VARIAÇÕES 2-5 — estrutura idêntica, diferença só nas grades/cards
+     ================================================================ -->
+
+<!-- V2 — METRIC CARDS (4 colunas, cards menores, mais métricas) -->
+<div class="modal" id="v2">
+  <div class="hdr"><span class="hdr-ico">$</span><span class="hdr-title">Resultados · Crypto <span class="hdr-dot" style="display:inline-block;margin-left:.3rem;"></span></span><span class="hdr-time">Atualizado: 11:16</span><button class="btn-ref" onclick="refresh('v2')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M3 12a9 9 0 0 1 15.74-6.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.74 6.74L3 16"/><path d="M3 21v-5h5"/></svg></button><button class="btn-cls">✕</button></div>
+  <div class="fbar"><div style="display:flex;gap:.22rem;flex-wrap:wrap;"><button class="pill ap">Todos</button><button class="pill">Hoje</button><button class="pill">7d</button><button class="pill">15d</button><button class="pill">Mês</button><button class="pill">30d</button><button class="pill">90d</button><button class="pill">12m</button><button class="pill">Ano</button></div><div class="fbar-sep"></div><div style="display:flex;gap:.22rem;"><button class="pill">Abertas</button><button class="pill af">Fechadas</button><button class="pill ac">CALL</button><button class="pill">PUT</button></div></div>
+  <div class="op-row"><div class="op-tab on"><div class="op-tab-type cb">CALL</div><div class="op-tab-asset">BTC</div><div class="op-tab-date">18/03</div></div><div class="op-tab"><div class="op-tab-type cb">CALL</div><div class="op-tab-asset">ETH</div><div class="op-tab-date">18/03</div></div><div class="op-tab"><div class="op-tab-type cb">CALL</div><div class="op-tab-asset">BTC</div><div class="op-tab-date">17/03</div></div><div class="op-tab"><div class="op-tab-type cp">PUT</div><div class="op-tab-asset">ETH</div><div class="op-tab-date">17/03</div></div><div class="op-tab"><div class="op-tab-type cb">CALL</div><div class="op-tab-asset">BTC</div><div class="op-tab-date">16/03</div></div><div class="op-summary"><span class="sp sp-b">16</span><span class="sp sp-g">0A</span><span class="sp sp-r">16F</span><span class="sp sp-o">$97.38</span></div></div>
+  <div class="stabs"><button class="stab on" onclick="selTab('v2','des2',this)" data-s="des2">📊 Desempenho</button><button class="stab" onclick="selTab('v2','cmp2',this)" data-s="cmp2">📐 Comparativos</button><button class="stab" onclick="selTab('v2','pos2',this)" data-s="pos2">📋 Posições Abertas</button><button class="stab" onclick="selTab('v2','evo2',this)" data-s="evo2">📈 Evolução</button><button class="stab" onclick="selTab('v2','ris2',this)" data-s="ris2">⚠ Risco <span class="warn">●</span></button></div>
+  <div class="dash">
+    <div class="side">
+      <div class="sc on"><div class="sc-lbl">Cotação</div><div class="sc-val cc">$72.4K</div><div class="sc-sub cg">+2487%</div><div class="sc-bar"><div class="sc-bf" style="background:var(--cyan);width:72%;"></div></div></div>
+      <div class="sc"><div class="sc-lbl">Resultado</div><div class="sc-val cg">+0.37%</div><div class="sc-sub">$10.35</div></div>
+      <div class="sc"><div class="sc-lbl">TAE ao Ano</div><div class="sc-val cg">134.51%</div><div class="sc-bar"><div class="sc-bf" style="background:var(--grn);width:74%;"></div></div></div>
+      <div class="sc"><div class="sc-lbl">Strike</div><div class="sc-val cw">$75.0K</div><div class="sc-sub"><span class="badge bc">CALL</span></div></div>
+      <div class="sc"><div class="sc-lbl">Distância OTM</div><div class="sc-val co">3.63%</div><div class="sc-bar"><div class="sc-bf" style="background:var(--gold);width:7%;"></div></div></div>
+      <div class="sc"><div class="sc-lbl">Prêmio</div><div class="sc-val co">$10.55</div><div class="sc-sub">1 unid.</div><div class="sc-bar"><div class="sc-bf" style="background:var(--gold);width:100%;"></div></div></div>
+      <div class="sc"><div class="sc-lbl">PoP</div><div class="sc-val co">57.3%</div><div class="sc-sub">Prob. de Lucro</div><div class="sc-bar"><div class="sc-bf" style="background:var(--gold);width:57%;"></div></div></div>
+      <div class="sc"><div class="sc-lbl">Investido</div><div class="sc-val cc">$2,797.33</div><div class="sc-sub">1.0000 BTC</div></div>
+    </div>
+    <div class="main">
+      <div class="panel on" id="v2-des2">
+        <!-- 4 metric cards top -->
+        <div class="g4">
+          <div class="card" style="background:linear-gradient(135deg,#030e07,#051a0d);border-color:rgba(0,232,122,.18);">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--grn);box-shadow:0 0 5px var(--grn);"></span>Resultado</div>
+            <div class="card-xl cg" style="font-size:1.35rem;text-align:center;">+0.37%</div>
+            <div style="text-align:center;margin:.25rem 0;"><span class="ex-badge ex-otm"><span class="ex-dot exd-g"></span>OTM — SEGURO</span></div>
+            <div class="ir"><span class="ik">Lucro $</span><span class="iv cg">$10.35</span></div>
+            <div class="ir"><span class="ik">% Saldo</span><span class="iv cg">0.38%</span></div>
+          </div>
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--cyan);"></span>Cotação Atual</div>
+            <div class="g-wrap" style="width:78px;height:78px;margin:0 auto .28rem;">
+              <svg width="78" height="78" viewBox="0 0 100 100"><circle cx="50" cy="50" r="38" fill="none" stroke="var(--bdr)" stroke-width="8"/><circle cx="50" cy="50" r="38" fill="none" stroke="var(--cyan)" stroke-width="8" stroke-linecap="round" style="stroke-dasharray:238.76;stroke-dashoffset:65;transform-origin:center;transform:rotate(-90deg);"/></svg>
+              <div class="g-inner"><div class="gv cc" style="font-size:.75rem;">$72.4K</div><div class="gs">BTC</div></div>
+            </div>
+            <div class="ir"><span class="ik">Cotação</span><span class="iv cc">$72,373.74</span></div>
+            <div class="ir"><span class="ik">Variação</span><span class="iv cg">+2487.24%</span></div>
+          </div>
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--grn);"></span>TAE ao Ano</div>
+            <div class="g-wrap" style="width:78px;height:78px;margin:0 auto .28rem;">
+              <svg width="78" height="78" viewBox="0 0 100 100"><circle cx="50" cy="50" r="38" fill="none" stroke="var(--bdr)" stroke-width="8"/><circle cx="50" cy="50" r="38" fill="none" stroke="var(--grn)" stroke-width="8" stroke-linecap="round" style="stroke-dasharray:238.76;stroke-dashoffset:62;transform-origin:center;transform:rotate(-90deg);"/></svg>
+              <div class="g-inner"><div class="gv cg" style="font-size:.75rem;">135%</div><div class="gs">a.a.</div></div>
+            </div>
+            <div class="ir"><span class="ik">TAE</span><span class="iv cg">134.51%</span></div>
+            <div class="ir"><span class="ik">Data</span><span class="iv">19/03/2026</span></div>
+          </div>
+          <!-- PoP card — NEW in V2 -->
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--gold);"></span>PoP</div>
+            <div style="text-align:center;">
+              <div class="pop-wrap" style="margin-bottom:0;">
+                <svg width="110" height="62" viewBox="0 0 110 65" style="overflow:visible;">
+                  <path d="M10,55 A45,45 0 0,1 100,55" fill="none" stroke="var(--bdr)" stroke-width="10" stroke-linecap="round"/>
+                  <path d="M10,55 A45,45 0 0,1 100,55" fill="none" stroke="url(#pg3)" stroke-width="10" stroke-linecap="round" opacity=".25"/>
+                  <defs><linearGradient id="pg3" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="var(--red)"/><stop offset="40%" stop-color="var(--gold)"/><stop offset="100%" stop-color="var(--grn)"/></linearGradient></defs>
+                  <path d="M10,55 A45,45 0 0,1 100,55" fill="none" stroke="var(--gold)" stroke-width="10" stroke-linecap="round" style="stroke-dasharray:141.37;stroke-dashoffset:58;"/>
+                  <g class="pop-needle" style="transform:rotate(43deg);"><line x1="55" y1="55" x2="55" y2="17" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity=".9"/><circle cx="55" cy="55" r="3.5" fill="white" opacity=".8"/></g>
+                </svg>
+              </div>
+            </div>
+            <div class="pop-big co">57.3%</div>
+            <div style="text-align:center;"><span class="pop-st pop-md">PROB. MÉDIA</span></div>
+            <div class="ir" style="margin-top:.2rem;"><span class="ik">OTM</span><span class="iv cg">57.3%</span></div>
+            <div class="ir"><span class="ik">ITM</span><span class="iv cr">42.7%</span></div>
+          </div>
+        </div>
+        <!-- row 2: 4 gauges pequenos -->
+        <div class="g4">
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--gold);"></span>Distância OTM</div>
+            <div class="g-wrap" style="width:68px;height:68px;margin:.08rem auto .22rem;">
+              <svg width="68" height="68" viewBox="0 0 100 100"><circle cx="50" cy="50" r="38" fill="none" stroke="var(--bdr)" stroke-width="8"/><circle cx="50" cy="50" r="38" fill="none" stroke="var(--gold)" stroke-width="8" stroke-linecap="round" style="stroke-dasharray:238.76;stroke-dashoffset:214;transform-origin:center;transform:rotate(-90deg);"/></svg>
+              <div class="g-inner"><div class="gv co" style="font-size:.68rem;">3.63%</div><div class="gs">OTM</div></div>
+            </div>
+            <div class="ir"><span class="ik">Strike</span><span class="iv">$75,000.00</span></div>
+          </div>
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--red);"></span>Prazo</div>
+            <div class="g-wrap" style="width:68px;height:68px;margin:.08rem auto .22rem;">
+              <svg width="68" height="68" viewBox="0 0 100 100"><circle cx="50" cy="50" r="38" fill="none" stroke="var(--bdr)" stroke-width="8"/><circle cx="50" cy="50" r="38" fill="none" stroke="var(--red)" stroke-width="8" stroke-linecap="round" style="stroke-dasharray:238.76;stroke-dashoffset:238;transform-origin:center;transform:rotate(-90deg);"/></svg>
+              <div class="g-inner"><div class="gv cr" style="font-size:.68rem;">0</div><div class="gs">dias</div></div>
+            </div>
+            <div class="ir"><span class="ik">Total</span><span class="iv">1d</span></div>
+          </div>
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--gold);"></span>Prêmio</div>
+            <div class="card-big co" style="text-align:center;font-size:1.2rem;margin:.25rem 0;">$10.55</div>
+            <div class="pb"><div class="pbf" style="background:var(--gold);width:100%;"></div></div>
+            <div class="ir"><span class="ik">Total</span><span class="iv co">$10.55</span></div>
+          </div>
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--blu);"></span>Strike &amp; Exercício</div>
+            <div class="card-big cw" style="font-size:1.1rem;">$75,000.00</div>
+            <div style="margin-bottom:.28rem;"><span class="badge bc">CALL</span></div>
+            <div class="tbox">
+              <div class="tc"><div class="tn cw" style="font-size:.72rem;">19/03</div><div class="tl">HOJE</div></div>
+              <div class="tc"><div class="tn cg" style="font-size:.72rem;">0</div><div class="tl">REST.</div></div>
+              <div class="tc"><div class="tn co" style="font-size:.72rem;">1</div><div class="tl">DEC.</div></div>
+            </div>
+          </div>
+        </div>
+        <!-- row 3: Investimento + Abertura + Heat badges -->
+        <div class="g3">
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--cyan);"></span>Valor Investido</div>
+            <div class="card-big cc">$2,797.33</div>
+            <div class="pb"><div class="pbf" style="background:var(--cyan);width:100%;"></div></div>
+            <div class="ir"><span class="ik">Crypto</span><span class="iv">1.0000 BTC</span></div>
+            <div class="ir"><span class="ik">Corretora $</span><span class="iv cc">$2,797.33</span></div>
+          </div>
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--gold);"></span>Abertura da Operação</div>
+            <div class="card-big co">$2,797.33</div>
+            <div class="ir"><span class="ik">Data</span><span class="iv">17/03/2026</span></div>
+            <div class="ir"><span class="ik">Qtd / Tipo</span><span class="iv">1x CALL</span></div>
+            <div class="ir"><span class="ik">Status</span><span class="iv cg">FECHADA</span></div>
+          </div>
+          <!-- NOVO: resumo de performance -->
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--pur);"></span>Performance Resumo</div>
+            <div class="heat-row" style="flex-wrap:wrap;">
+              <div class="heat-cell" style="background:rgba(0,232,122,.07);border:1px solid rgba(0,232,122,.2);">
+                <div class="heat-lbl cg">RETORNO</div><div class="heat-val cg">0.37%</div>
+              </div>
+              <div class="heat-cell" style="background:rgba(245,163,0,.07);border:1px solid rgba(245,163,0,.2);">
+                <div class="heat-lbl co">ROI</div><div class="heat-val co">$10.35</div>
+              </div>
+              <div class="heat-cell" style="background:rgba(61,142,255,.07);border:1px solid rgba(61,142,255,.2);">
+                <div class="heat-lbl cb">TAE</div><div class="heat-val cb">134%</div>
+              </div>
+              <div class="heat-cell" style="background:rgba(0,232,122,.07);border:1px solid rgba(0,232,122,.2);">
+                <div class="heat-lbl cg">PoP</div><div class="heat-val cg">57.3%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="panel" id="v2-cmp2" style="display:none;flex-direction:column;gap:.5rem;">
+        <div style="text-align:center;padding:2rem;color:var(--tx2);font-family:var(--mono);font-size:.75rem;">← Selecione a aba Comparativos para ver os gráficos aqui</div>
+      </div>
+      <div class="panel" id="v2-pos2"><div class="card"><div class="card-lbl">Posições Abertas</div><div class="tbl-head tbl-cols-6"><span>ATIVO</span><span>TIPO</span><span>ABERTURA</span><span>STRIKE</span><span>TAE</span><span>RESULTADO</span></div><div class="tbl-row tbl-cols-6 sel"><span class="tbl-af">ETH</span><span><span class="badge bc">CALL</span></span><span class="tbl-sm">$862.95</span><span class="tbl-sm co">$2,225.00</span><span class="tbl-sm cg">143.42%</span><span class="tbl-sm cg">+0.06%</span></div><div class="tbl-row tbl-cols-6"><span class="tbl-af">ETH</span><span><span class="badge bc">CALL</span></span><span class="tbl-sm">$2,345.16</span><span class="tbl-sm co">$2,250.00</span><span class="tbl-sm cg">106.76%</span><span class="tbl-sm cg">+0.13%</span></div><div class="tbl-row tbl-cols-6"><span class="tbl-af">BTC</span><span><span class="badge bc">CALL</span></span><span class="tbl-sm">$70,499.00</span><span class="tbl-sm co">$71,500.00</span><span class="tbl-sm cg">115.26%</span><span class="tbl-sm cg">+0.16%</span></div></div></div>
+      <div class="panel" id="v2-evo2"><div class="card"><div class="card-lbl">Evolução</div><div class="mini-chart" style="height:100px;"><svg viewBox="0 0 600 100" preserveAspectRatio="none" style="width:100%;height:100%;"><defs><linearGradient id="evog2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#00e87a" stop-opacity=".4"/><stop offset="100%" stop-color="#00e87a" stop-opacity="0"/></linearGradient></defs><path d="M0,78 C40,75 80,70 120,60 C160,50 200,42 240,33 C280,24 320,18 360,14 C400,10 440,8 480,6 C520,5 560,4 600,3" fill="none" stroke="var(--grn)" stroke-width="2.5"/><path d="M0,78 C40,75 80,70 120,60 C160,50 200,42 240,33 C280,24 320,18 360,14 C400,10 440,8 480,6 C520,5 560,4 600,3 L600,100 L0,100Z" fill="url(#evog2)"/></svg></div></div></div>
+      <div class="panel" id="v2-ris2"><div class="g2"><div class="card"><div class="card-lbl"><span class="card-lbl-dot" style="background:var(--red);"></span>Análise de Risco</div><div class="ir"><span class="ik">Prob. Exercício</span><span class="iv cr">40.7%</span></div><div class="ir"><span class="ik">Prob. Lucro (PoP)</span><span class="iv cg">59.3%</span></div><div class="ir"><span class="ik">Perda Máx.</span><span class="iv cr">$859.56</span></div><div class="ir"><span class="ik">Ganho Máx.</span><span class="iv co">$3.39</span></div><div class="ir"><span class="ik">Risco/Retorno</span><span class="iv co">1:253.5</span></div></div><div class="card"><div class="card-lbl"><span class="card-lbl-dot" style="background:var(--gold);"></span>Cenários</div><div class="scen scen-otm"><div class="scen-title cg">✓ Cenário Atual (OTM)</div><div class="scen-text">Cotação $2,126.62 &lt; Strike $2,225.00 → prêmio $3.39 retido</div></div><div class="scen scen-itm"><div class="scen-title cr">✗ Cenário ITM</div><div class="scen-text">Exercício → perda potencial $859.56</div></div><div class="scen scen-be"><div class="scen-title co">⚡ Break-even: $2,228.39</div></div></div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- V3, V4, V5 placeholders com header completo -->
+<div class="modal" id="v3">
+  <div class="hdr"><span class="hdr-ico">$</span><span class="hdr-title">Resultados · Crypto — Variação 3: Chart Focus <span class="hdr-dot" style="display:inline-block;margin-left:.3rem;"></span></span><span class="hdr-time">Atualizado: 11:16</span><button class="btn-ref" onclick="refresh('v3')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M3 12a9 9 0 0 1 15.74-6.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.74 6.74L3 16"/><path d="M3 21v-5h5"/></svg></button><button class="btn-cls">✕</button></div>
+  <div class="fbar"><div style="display:flex;gap:.22rem;flex-wrap:wrap;"><button class="pill ap">Todos</button><button class="pill">Hoje</button><button class="pill">7d</button><button class="pill">15d</button><button class="pill">Mês</button><button class="pill">30d</button><button class="pill">90d</button><button class="pill">12m</button><button class="pill">Ano</button></div><div class="fbar-sep"></div><div style="display:flex;gap:.22rem;"><button class="pill">Abertas</button><button class="pill af">Fechadas</button><button class="pill ac">CALL</button><button class="pill">PUT</button></div></div>
+  <div class="op-row"><div class="op-tab on"><div class="op-tab-type cb">CALL</div><div class="op-tab-asset">BTC</div><div class="op-tab-date">18/03</div></div><div class="op-tab"><div class="op-tab-type cb">CALL</div><div class="op-tab-asset">ETH</div><div class="op-tab-date">18/03</div></div><div class="op-tab"><div class="op-tab-type cb">CALL</div><div class="op-tab-asset">BTC</div><div class="op-tab-date">17/03</div></div><div class="op-summary"><span class="sp sp-b">16</span><span class="sp sp-g">0A</span><span class="sp sp-r">16F</span><span class="sp sp-o">$97.38</span></div></div>
+  <div class="stabs"><button class="stab on">📊 Desempenho</button><button class="stab">📐 Comparativos</button><button class="stab">📋 Posições Abertas</button><button class="stab">📈 Evolução</button><button class="stab">⚠ Risco <span class="warn">●</span></button></div>
+  <div class="dash">
+    <div class="side"><div class="sc on"><div class="sc-lbl">Cotação</div><div class="sc-val cc">$72.4K</div><div class="sc-sub cg">+2487%</div><div class="sc-bar"><div class="sc-bf" style="background:var(--cyan);width:72%;"></div></div></div><div class="sc"><div class="sc-lbl">Resultado</div><div class="sc-val cg">+0.37%</div><div class="sc-sub">$10.35</div></div><div class="sc"><div class="sc-lbl">TAE ao Ano</div><div class="sc-val cg">134.51%</div><div class="sc-bar"><div class="sc-bf" style="background:var(--grn);width:74%;"></div></div></div><div class="sc"><div class="sc-lbl">Strike</div><div class="sc-val cw">$75.0K</div><div class="sc-sub"><span class="badge bc">CALL</span></div></div><div class="sc"><div class="sc-lbl">Dist. OTM</div><div class="sc-val co">3.63%</div><div class="sc-bar"><div class="sc-bf" style="background:var(--gold);width:7%;"></div></div></div><div class="sc"><div class="sc-lbl">Prêmio</div><div class="sc-val co">$10.55</div><div class="sc-sub">1 unid.</div></div><div class="sc"><div class="sc-lbl">PoP</div><div class="sc-val co">57.3%</div><div class="sc-sub">Prob. Lucro</div><div class="sc-bar"><div class="sc-bf" style="background:var(--gold);width:57%;"></div></div></div><div class="sc"><div class="sc-lbl">Investido</div><div class="sc-val cc">$2,797.33</div><div class="sc-sub">1.0000 BTC</div></div></div>
+    <div class="main">
+      <div class="panel on">
+        <!-- BIG resultado + cotação + PoP em 3 col iguais -->
+        <div class="g3">
+          <div class="card" style="background:linear-gradient(135deg,#030e07,#051a0d);border-color:rgba(0,232,122,.18);">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--grn);box-shadow:0 0 5px var(--grn);"></span>Resultado Atual</div>
+            <div style="font-family:var(--disp);font-size:2.2rem;font-weight:700;color:var(--grn);text-align:center;line-height:1;margin:.3rem 0;">+0.37%</div>
+            <div style="text-align:center;margin-bottom:.35rem;"><span class="ex-badge ex-otm"><span class="ex-dot exd-g"></span>OTM — SEGURO</span></div>
+            <div class="ir"><span class="ik">Lucro $</span><span class="iv cg">$10.35</span></div>
+            <div class="ir"><span class="ik">% Saldo</span><span class="iv cg">0.38%</span></div>
+            <div class="ir"><span class="ik">Exercício</span><span class="iv">19/03/2026</span></div>
+          </div>
+          <!-- Cotação gauge grande -->
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--cyan);"></span>Cotação Atual BTC</div>
+            <div style="text-align:center;">
+              <div class="g-wrap" style="width:110px;height:110px;margin:0 auto .28rem;">
+                <svg width="110" height="110" viewBox="0 0 100 100"><circle cx="50" cy="50" r="38" fill="none" stroke="var(--bdr)" stroke-width="7"/><circle cx="50" cy="50" r="38" fill="none" stroke="var(--cyan)" stroke-width="7" stroke-linecap="round" style="stroke-dasharray:238.76;stroke-dashoffset:65;transform-origin:center;transform:rotate(-90deg);"/></svg>
+                <div class="g-inner"><div class="gv cc" style="font-size:.9rem;">$72.4K</div><div class="gs">BTC</div></div>
+              </div>
+            </div>
+            <div class="ir"><span class="ik">Cotação</span><span class="iv cc">$72,373.74</span></div>
+            <div class="ir"><span class="ik">Abertura Op.</span><span class="iv co">$2,797.33</span></div>
+            <div class="ir"><span class="ik">Variação</span><span class="iv cg">+2487.24%</span></div>
+          </div>
+          <!-- PoP semicircle grande -->
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--gold);box-shadow:0 0 5px var(--gold);"></span>PoP — Probabilidade de Lucro</div>
+            <div style="text-align:center;">
+              <div class="pop-wrap" style="width:130px;height:72px;margin:0 auto;">
+                <svg width="130" height="72" viewBox="0 0 130 75" style="overflow:visible;">
+                  <path d="M12,65 A53,53 0 0,1 118,65" fill="none" stroke="var(--bdr)" stroke-width="11" stroke-linecap="round"/>
+                  <path d="M12,65 A53,53 0 0,1 118,65" fill="none" stroke="url(#pg4)" stroke-width="11" stroke-linecap="round" opacity=".25"/>
+                  <defs><linearGradient id="pg4" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="var(--red)"/><stop offset="40%" stop-color="var(--gold)"/><stop offset="100%" stop-color="var(--grn)"/></linearGradient></defs>
+                  <path d="M12,65 A53,53 0 0,1 118,65" fill="none" stroke="var(--gold)" stroke-width="11" stroke-linecap="round" style="stroke-dasharray:166.5;stroke-dashoffset:68;"/>
+                  <g class="pop-needle" style="transform-origin:65px 65px;transform:rotate(43deg);"><line x1="65" y1="65" x2="65" y2="20" stroke="white" stroke-width="1.8" stroke-linecap="round" opacity=".9"/><circle cx="65" cy="65" r="4" fill="white" opacity=".8"/></g>
+                </svg>
+              </div>
+            </div>
+            <div style="font-family:var(--disp);font-size:1.6rem;font-weight:700;color:var(--gold);text-align:center;margin:.15rem 0;line-height:1;">57.3%</div>
+            <div style="text-align:center;margin-bottom:.28rem;"><span class="pop-st pop-md">PROBABILIDADE MÉDIA</span></div>
+            <div class="ir"><span class="ik">Prob. OTM (lucro)</span><span class="iv co">57.3%</span></div>
+            <div class="ir"><span class="ik">Prob. ITM (exercício)</span><span class="iv cr">42.7%</span></div>
+          </div>
+        </div>
+        <!-- row 2: TAE + Dist + Prazo + Prêmio + Strike -->
+        <div class="g4">
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--grn);"></span>TAE</div>
+            <div class="g-wrap" style="width:68px;height:68px;margin:.08rem auto .22rem;"><svg width="68" height="68" viewBox="0 0 100 100"><circle cx="50" cy="50" r="38" fill="none" stroke="var(--bdr)" stroke-width="8"/><circle cx="50" cy="50" r="38" fill="none" stroke="var(--grn)" stroke-width="8" stroke-linecap="round" style="stroke-dasharray:238.76;stroke-dashoffset:62;transform-origin:center;transform:rotate(-90deg);"/></svg><div class="g-inner"><div class="gv cg" style="font-size:.68rem;">135%</div><div class="gs">a.a.</div></div></div>
+            <div class="ir"><span class="ik">TAE</span><span class="iv cg">134.51%</span></div>
+          </div>
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--gold);"></span>Distância OTM</div>
+            <div class="g-wrap" style="width:68px;height:68px;margin:.08rem auto .22rem;"><svg width="68" height="68" viewBox="0 0 100 100"><circle cx="50" cy="50" r="38" fill="none" stroke="var(--bdr)" stroke-width="8"/><circle cx="50" cy="50" r="38" fill="none" stroke="var(--gold)" stroke-width="8" stroke-linecap="round" style="stroke-dasharray:238.76;stroke-dashoffset:214;transform-origin:center;transform:rotate(-90deg);"/></svg><div class="g-inner"><div class="gv co" style="font-size:.68rem;">3.63%</div><div class="gs">OTM</div></div></div>
+            <div class="ir"><span class="ik">Strike</span><span class="iv">$75,000.00</span></div>
+          </div>
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--red);"></span>Prazo</div>
+            <div class="g-wrap" style="width:68px;height:68px;margin:.08rem auto .22rem;"><svg width="68" height="68" viewBox="0 0 100 100"><circle cx="50" cy="50" r="38" fill="none" stroke="var(--bdr)" stroke-width="8"/><circle cx="50" cy="50" r="38" fill="none" stroke="var(--red)" stroke-width="8" stroke-linecap="round" style="stroke-dasharray:238.76;stroke-dashoffset:238;transform-origin:center;transform:rotate(-90deg);"/></svg><div class="g-inner"><div class="gv cr" style="font-size:.68rem;">0</div><div class="gs">dias</div></div></div>
+            <div class="ir"><span class="ik">Total</span><span class="iv">1d</span></div>
+            <div class="ir"><span class="ik">Dec.</span><span class="iv co">1d</span></div>
+          </div>
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--blu);"></span>Strike &amp; Exer.</div>
+            <div class="card-big cw" style="font-size:1rem;">$75,000.00</div>
+            <div style="margin-bottom:.25rem;"><span class="badge bc">CALL</span></div>
+            <div class="tbox"><div class="tc"><div class="tn cw" style="font-size:.7rem;">19/03</div><div class="tl">HOJE</div></div><div class="tc"><div class="tn cg" style="font-size:.7rem;">0</div><div class="tl">REST.</div></div><div class="tc"><div class="tn co" style="font-size:.7rem;">1</div><div class="tl">DEC.</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- V4 compact, V5 analytics — shortened for space -->
+<div class="modal" id="v4">
+  <div class="hdr"><span class="hdr-ico">$</span><span class="hdr-title">Resultados · Crypto — Variação 4: Compact Pro <span class="hdr-dot" style="display:inline-block;margin-left:.3rem;"></span></span><span class="hdr-time">Atualizado: 11:16</span><button class="btn-ref" onclick="refresh('v4')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M3 12a9 9 0 0 1 15.74-6.74L21 8"/><path d="M21 3v5h-5"/></svg></button><button class="btn-cls">✕</button></div>
+  <div class="fbar"><div style="display:flex;gap:.22rem;flex-wrap:wrap;"><button class="pill ap">Todos</button><button class="pill">Hoje</button><button class="pill">7d</button><button class="pill">15d</button><button class="pill">Mês</button><button class="pill">30d</button><button class="pill">90d</button><button class="pill">12m</button><button class="pill">Ano</button></div><div class="fbar-sep"></div><div style="display:flex;gap:.22rem;"><button class="pill">Abertas</button><button class="pill af">Fechadas</button><button class="pill ac">CALL</button><button class="pill">PUT</button></div></div>
+  <div class="op-row"><div class="op-tab on"><div class="op-tab-type cb">CALL</div><div class="op-tab-asset">BTC</div><div class="op-tab-date">18/03</div></div><div class="op-tab"><div class="op-tab-type cb">CALL</div><div class="op-tab-asset">ETH</div><div class="op-tab-date">18/03</div></div><div class="op-tab"><div class="op-tab-type cp">PUT</div><div class="op-tab-asset">ETH</div><div class="op-tab-date">17/03</div></div><div class="op-summary"><span class="sp sp-b">16</span><span class="sp sp-g">0A</span><span class="sp sp-r">16F</span><span class="sp sp-o">$97.38</span></div></div>
+  <div class="stabs"><button class="stab on">📊 Desempenho</button><button class="stab">📐 Comparativos</button><button class="stab">📋 Posições Abertas</button><button class="stab">📈 Evolução</button><button class="stab">⚠ Risco <span class="warn">●</span></button></div>
+  <div class="dash">
+    <div class="side"><div class="sc on"><div class="sc-lbl">Cotação</div><div class="sc-val cc">$72.4K</div><div class="sc-sub cg">+2487%</div><div class="sc-bar"><div class="sc-bf" style="background:var(--cyan);width:72%;"></div></div></div><div class="sc"><div class="sc-lbl">Resultado</div><div class="sc-val cg">+0.37%</div><div class="sc-sub">$10.35</div></div><div class="sc"><div class="sc-lbl">TAE ao Ano</div><div class="sc-val cg">134.51%</div><div class="sc-bar"><div class="sc-bf" style="background:var(--grn);width:74%;"></div></div></div><div class="sc"><div class="sc-lbl">Strike</div><div class="sc-val cw">$75.0K</div><div class="sc-sub"><span class="badge bc">CALL</span></div></div><div class="sc"><div class="sc-lbl">Dist. OTM</div><div class="sc-val co">3.63%</div><div class="sc-bar"><div class="sc-bf" style="background:var(--gold);width:7%;"></div></div></div><div class="sc"><div class="sc-lbl">Prêmio</div><div class="sc-val co">$10.55</div><div class="sc-sub">1 unid.</div></div><div class="sc"><div class="sc-lbl">PoP</div><div class="sc-val co">57.3%</div><div class="sc-sub">Prob. Lucro</div><div class="sc-bar"><div class="sc-bf" style="background:var(--gold);width:57%;"></div></div></div><div class="sc"><div class="sc-lbl">Investido</div><div class="sc-val cc">$2,797.33</div><div class="sc-sub">1.0000 BTC</div></div></div>
+    <div class="main">
+      <div class="panel on">
+        <!-- compact: 5 colunas métricas rápidas no topo -->
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.42rem;">
+          <div class="card" style="text-align:center;background:linear-gradient(135deg,#030e07,#051a0d);border-color:rgba(0,232,122,.2);"><div class="sc-lbl" style="margin-bottom:.18rem;">Resultado</div><div style="font-family:var(--disp);font-size:1.3rem;font-weight:700;color:var(--grn);">+0.37%</div><div style="margin-top:.18rem;"><span class="ex-badge ex-otm" style="font-size:.55rem;padding:.12rem .38rem;"><span class="ex-dot exd-g"></span>OTM</span></div></div>
+          <div class="card" style="text-align:center;"><div class="sc-lbl" style="margin-bottom:.18rem;">Cotação BTC</div><div style="font-family:var(--mono);font-size:1.1rem;font-weight:700;color:var(--cyan);">$72,373.74</div><div style="font-family:var(--mono);font-size:.58rem;color:var(--grn);">+2487.24%</div></div>
+          <div class="card" style="text-align:center;"><div class="sc-lbl" style="margin-bottom:.18rem;">TAE ao Ano</div><div style="font-family:var(--mono);font-size:1.1rem;font-weight:700;color:var(--grn);">134.51%</div><div class="pb" style="margin:.28rem auto 0;max-width:70px;"><div class="pbf" style="background:var(--grn);width:74%;"></div></div></div>
+          <div class="card" style="text-align:center;"><div class="sc-lbl" style="margin-bottom:.18rem;">PoP</div><div style="font-family:var(--mono);font-size:1.1rem;font-weight:700;color:var(--gold);">57.3%</div><div class="pb" style="margin:.28rem auto 0;max-width:70px;"><div class="pbf" style="background:var(--gold);width:57%;"></div></div></div>
+          <div class="card" style="text-align:center;"><div class="sc-lbl" style="margin-bottom:.18rem;">Prêmio</div><div style="font-family:var(--mono);font-size:1.1rem;font-weight:700;color:var(--gold);">$10.55</div><div style="font-family:var(--mono);font-size:.58rem;color:var(--tx2);">1 unid.</div></div>
+        </div>
+        <!-- gauges compactos -->
+        <div class="g4">
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--cyan);"></span>Cotação</div>
+            <div class="g-row">
+              <div class="g-wrap" style="width:65px;height:65px;"><svg width="65" height="65" viewBox="0 0 100 100"><circle cx="50" cy="50" r="38" fill="none" stroke="var(--bdr)" stroke-width="8"/><circle cx="50" cy="50" r="38" fill="none" stroke="var(--cyan)" stroke-width="8" stroke-linecap="round" style="stroke-dasharray:238.76;stroke-dashoffset:65;transform-origin:center;transform:rotate(-90deg);"/></svg><div class="g-inner"><div class="gv cc" style="font-size:.65rem;">$72.4K</div><div class="gs">BTC</div></div></div>
+              <div class="g-stats"><div class="ir"><span class="ik">Cotação</span><span class="iv cc">$72,373.74</span></div><div class="ir"><span class="ik">Abertura</span><span class="iv co">$2,797.33</span></div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--gold);"></span>Distância</div>
+            <div class="g-row">
+              <div class="g-wrap" style="width:65px;height:65px;"><svg width="65" height="65" viewBox="0 0 100 100"><circle cx="50" cy="50" r="38" fill="none" stroke="var(--bdr)" stroke-width="8"/><circle cx="50" cy="50" r="38" fill="none" stroke="var(--gold)" stroke-width="8" stroke-linecap="round" style="stroke-dasharray:238.76;stroke-dashoffset:214;transform-origin:center;transform:rotate(-90deg);"/></svg><div class="g-inner"><div class="gv co" style="font-size:.65rem;">3.63%</div><div class="gs">OTM</div></div></div>
+              <div class="g-stats"><div class="ir"><span class="ik">Strike</span><span class="iv">$75,000.00</span></div><div class="ir"><span class="ik">Falta $</span><span class="iv co">$2,626.26</span></div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--red);"></span>Prazo</div>
+            <div class="g-row">
+              <div class="g-wrap" style="width:65px;height:65px;"><svg width="65" height="65" viewBox="0 0 100 100"><circle cx="50" cy="50" r="38" fill="none" stroke="var(--bdr)" stroke-width="8"/><circle cx="50" cy="50" r="38" fill="none" stroke="var(--red)" stroke-width="8" stroke-linecap="round" style="stroke-dasharray:238.76;stroke-dashoffset:238;transform-origin:center;transform:rotate(-90deg);"/></svg><div class="g-inner"><div class="gv cr" style="font-size:.65rem;">0</div><div class="gs">dias</div></div></div>
+              <div class="g-stats"><div class="ir"><span class="ik">Total</span><span class="iv">1d</span></div><div class="ir"><span class="ik">Decorrido</span><span class="iv co">1d</span></div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--blu);"></span>Strike</div>
+            <div class="card-big cw" style="font-size:.95rem;margin:.18rem 0;">$75,000.00</div>
+            <div style="margin-bottom:.25rem;"><span class="badge bc">CALL</span></div>
+            <div class="tbox"><div class="tc"><div class="tn cg" style="font-size:.65rem;">0</div><div class="tl">REST.</div></div><div class="tc"><div class="tn co" style="font-size:.65rem;">1</div><div class="tl">DEC.</div></div></div>
+          </div>
+        </div>
+        <!-- heat badges resumo -->
+        <div class="card">
+          <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--pur);"></span>Resumo Rápido da Operação</div>
+          <div class="heat-row">
+            <div class="heat-cell" style="background:rgba(0,232,122,.07);border:1px solid rgba(0,232,122,.2);"><div class="heat-lbl cg">RESULTADO</div><div class="heat-val cg">+0.37%</div></div>
+            <div class="heat-cell" style="background:rgba(0,212,232,.07);border:1px solid rgba(0,212,232,.2);"><div class="heat-lbl cc">COTAÇÃO</div><div class="heat-val cc">$72,373</div></div>
+            <div class="heat-cell" style="background:rgba(245,163,0,.07);border:1px solid rgba(245,163,0,.2);"><div class="heat-lbl co">STRIKE</div><div class="heat-val co">$75,000</div></div>
+            <div class="heat-cell" style="background:rgba(245,163,0,.07);border:1px solid rgba(245,163,0,.2);"><div class="heat-lbl co">PRÊMIO</div><div class="heat-val co">$10.55</div></div>
+            <div class="heat-cell" style="background:rgba(0,232,122,.07);border:1px solid rgba(0,232,122,.2);"><div class="heat-lbl cg">PoP</div><div class="heat-val cg">57.3%</div></div>
+            <div class="heat-cell" style="background:rgba(0,232,122,.07);border:1px solid rgba(0,232,122,.2);"><div class="heat-lbl cg">TAE</div><div class="heat-val cg">134.5%</div></div>
+            <div class="heat-cell" style="background:rgba(61,142,255,.07);border:1px solid rgba(61,142,255,.2);"><div class="heat-lbl cb">DIST. OTM</div><div class="heat-val cb">3.63%</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- V5 ANALYTICS -->
+<div class="modal" id="v5">
+  <div class="hdr"><span class="hdr-ico">$</span><span class="hdr-title">Resultados · Crypto — Variação 5: Analytics Full <span class="hdr-dot" style="display:inline-block;margin-left:.3rem;"></span></span><span class="hdr-time">Atualizado: 11:16</span><button class="btn-ref" onclick="refresh('v5')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M3 12a9 9 0 0 1 15.74-6.74L21 8"/><path d="M21 3v5h-5"/></svg></button><button class="btn-cls">✕</button></div>
+  <div class="fbar"><div style="display:flex;gap:.22rem;flex-wrap:wrap;"><button class="pill ap">Todos</button><button class="pill">Hoje</button><button class="pill">7d</button><button class="pill">15d</button><button class="pill">Mês</button><button class="pill">30d</button><button class="pill">90d</button><button class="pill">12m</button><button class="pill">Ano</button></div><div class="fbar-sep"></div><div style="display:flex;gap:.22rem;"><button class="pill">Abertas</button><button class="pill af">Fechadas</button><button class="pill ac">CALL</button><button class="pill">PUT</button></div></div>
+  <div class="op-row"><div class="op-tab on"><div class="op-tab-type cb">CALL</div><div class="op-tab-asset">BTC</div><div class="op-tab-date">18/03</div></div><div class="op-tab"><div class="op-tab-type cb">CALL</div><div class="op-tab-asset">ETH</div><div class="op-tab-date">18/03</div></div><div class="op-tab"><div class="op-tab-type cp">PUT</div><div class="op-tab-asset">ETH</div><div class="op-tab-date">17/03</div></div><div class="op-summary"><span class="sp sp-b">16</span><span class="sp sp-g">0A</span><span class="sp sp-r">16F</span><span class="sp sp-o">$97.38</span></div></div>
+  <div class="stabs"><button class="stab on">📊 Desempenho</button><button class="stab">📐 Comparativos</button><button class="stab">📋 Posições Abertas</button><button class="stab">📈 Evolução</button><button class="stab">⚠ Risco <span class="warn">●</span></button></div>
+  <div class="dash">
+    <div class="side"><div class="sc on"><div class="sc-lbl">Cotação</div><div class="sc-val cc">$72.4K</div><div class="sc-sub cg">+2487%</div><div class="sc-bar"><div class="sc-bf" style="background:var(--cyan);width:72%;"></div></div></div><div class="sc"><div class="sc-lbl">Resultado</div><div class="sc-val cg">+0.37%</div><div class="sc-sub">$10.35</div></div><div class="sc"><div class="sc-lbl">TAE ao Ano</div><div class="sc-val cg">134.51%</div><div class="sc-bar"><div class="sc-bf" style="background:var(--grn);width:74%;"></div></div></div><div class="sc"><div class="sc-lbl">Strike</div><div class="sc-val cw">$75.0K</div><div class="sc-sub"><span class="badge bc">CALL</span></div></div><div class="sc"><div class="sc-lbl">Dist. OTM</div><div class="sc-val co">3.63%</div><div class="sc-bar"><div class="sc-bf" style="background:var(--gold);width:7%;"></div></div></div><div class="sc"><div class="sc-lbl">Prêmio</div><div class="sc-val co">$10.55</div><div class="sc-sub">1 unid.</div></div><div class="sc"><div class="sc-lbl">PoP</div><div class="sc-val co">57.3%</div><div class="sc-sub">Prob. Lucro</div><div class="sc-bar"><div class="sc-bf" style="background:var(--gold);width:57%;"></div></div></div><div class="sc"><div class="sc-lbl">Investido</div><div class="sc-val cc">$2,797.33</div><div class="sc-sub">1.0000 BTC</div></div></div>
+    <div class="main">
+      <div class="panel on">
+        <!-- 2+1 layout: resultado wide + cotação -->
+        <div class="g21">
+          <div class="card" style="background:linear-gradient(135deg,#030e07,#051a0d);border-color:rgba(0,232,122,.18);">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--grn);box-shadow:0 0 5px var(--grn);"></span>Resultado Atual — Performance Detalhada</div>
+            <div style="display:flex;align-items:center;gap:1rem;">
+              <div style="text-align:center;flex-shrink:0;">
+                <div style="font-family:var(--disp);font-size:2rem;font-weight:700;color:var(--grn);line-height:1;">+0.37%</div>
+                <div style="margin:.22rem 0;"><span class="ex-badge ex-otm"><span class="ex-dot exd-g"></span>OTM — SEGURO</span></div>
+              </div>
+              <div style="width:1px;height:50px;background:var(--bdr);flex-shrink:0;"></div>
+              <div style="flex:1;">
+                <div class="ir"><span class="ik">Lucro $</span><span class="iv cg">$10.35</span></div>
+                <div class="ir"><span class="ik">% Saldo</span><span class="iv cg">0.38%</span></div>
+                <div class="ir"><span class="ik">Data Exercício</span><span class="iv">19/03/2026</span></div>
+                <div class="ir"><span class="ik">Status</span><span class="iv cg">FECHADA — OTM</span></div>
+              </div>
+              <div style="width:1px;height:50px;background:var(--bdr);flex-shrink:0;"></div>
+              <div style="flex:1;">
+                <div class="ir"><span class="ik">Prêmio</span><span class="iv co">$10.55</span></div>
+                <div class="ir"><span class="ik">TAE</span><span class="iv cg">134.51%</span></div>
+                <div class="ir"><span class="ik">PoP</span><span class="iv co">57.3%</span></div>
+                <div class="ir"><span class="ik">R/R</span><span class="iv co">1:269</span></div>
+              </div>
+            </div>
+            <!-- spark -->
+            <div class="mini-chart" style="margin-top:.38rem;height:45px;">
+              <svg viewBox="0 0 400 45" preserveAspectRatio="none" style="width:100%;height:100%;"><defs><linearGradient id="spg5" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#00e87a" stop-opacity=".35"/><stop offset="100%" stop-color="#00e87a" stop-opacity="0"/></linearGradient></defs><path d="M0,40 C40,38 80,34 120,28 C160,22 200,17 240,13 C280,9 320,6 360,4 L400,2" fill="none" stroke="var(--grn)" stroke-width="2"/><path d="M0,40 C40,38 80,34 120,28 C160,22 200,17 240,13 C280,9 320,6 360,4 L400,2 L400,45 L0,45Z" fill="url(#spg5)"/></svg>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--gold);"></span>PoP</div>
+            <div class="pop-wrap" style="margin:0 auto;">
+              <svg width="110" height="62" viewBox="0 0 110 65" style="overflow:visible;">
+                <path d="M10,55 A45,45 0 0,1 100,55" fill="none" stroke="var(--bdr)" stroke-width="10" stroke-linecap="round"/>
+                <path d="M10,55 A45,45 0 0,1 100,55" fill="none" stroke="url(#pg5)" stroke-width="10" stroke-linecap="round" opacity=".25"/>
+                <defs><linearGradient id="pg5" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="var(--red)"/><stop offset="40%" stop-color="var(--gold)"/><stop offset="100%" stop-color="var(--grn)"/></linearGradient></defs>
+                <path d="M10,55 A45,45 0 0,1 100,55" fill="none" stroke="var(--gold)" stroke-width="10" stroke-linecap="round" style="stroke-dasharray:141.37;stroke-dashoffset:58;"/>
+                <g class="pop-needle" style="transform:rotate(43deg);"><line x1="55" y1="55" x2="55" y2="17" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity=".9"/><circle cx="55" cy="55" r="3.5" fill="white" opacity=".8"/></g>
+              </svg>
+            </div>
+            <div class="pop-big co">57.3%</div>
+            <div style="text-align:center;margin-bottom:.25rem;"><span class="pop-st pop-md">PROB. MÉDIA</span></div>
+            <div class="pop-grid">
+              <div class="pop-item"><div class="pop-il">OTM (lucro)</div><div class="pop-iv cg">57.3%</div></div>
+              <div class="pop-item"><div class="pop-il">ITM (exer.)</div><div class="pop-iv cr">42.7%</div></div>
+              <div class="pop-item"><div class="pop-il">Dist. OTM</div><div class="pop-iv co">3.63%</div></div>
+              <div class="pop-item"><div class="pop-il">Dias Venc.</div><div class="pop-iv cr">0</div></div>
+            </div>
+          </div>
+        </div>
+        <!-- 3 gauges -->
+        <div class="g3">
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--cyan);"></span>Cotação Atual</div>
+            <div class="g-row"><div class="g-wrap" style="width:82px;height:82px;"><svg width="82" height="82" viewBox="0 0 100 100"><circle cx="50" cy="50" r="38" fill="none" stroke="var(--bdr)" stroke-width="8"/><circle cx="50" cy="50" r="38" fill="none" stroke="var(--cyan)" stroke-width="8" stroke-linecap="round" style="stroke-dasharray:238.76;stroke-dashoffset:65;transform-origin:center;transform:rotate(-90deg);"/></svg><div class="g-inner"><div class="gv cc" style="font-size:.75rem;">$72.4K</div><div class="gs">BTC</div></div></div><div class="g-stats"><div class="ir"><span class="ik">Cotação</span><span class="iv cc">$72,373.74</span></div><div class="ir"><span class="ik">Abertura</span><span class="iv co">$2,797.33</span></div><div class="ir"><span class="ik">Variação</span><span class="iv cg">+2487.24%</span></div></div></div>
+          </div>
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--grn);"></span>TAE ao Ano</div>
+            <div class="g-row"><div class="g-wrap" style="width:82px;height:82px;"><svg width="82" height="82" viewBox="0 0 100 100"><circle cx="50" cy="50" r="38" fill="none" stroke="var(--bdr)" stroke-width="8"/><circle cx="50" cy="50" r="38" fill="none" stroke="var(--grn)" stroke-width="8" stroke-linecap="round" style="stroke-dasharray:238.76;stroke-dashoffset:62;transform-origin:center;transform:rotate(-90deg);"/></svg><div class="g-inner"><div class="gv cg" style="font-size:.75rem;">135%</div><div class="gs">a.a.</div></div></div><div class="g-stats"><div class="ir"><span class="ik">TAE</span><span class="iv cg">134.51%</span></div><div class="ir"><span class="ik">Data</span><span class="iv">19/03/2026</span></div><div class="ir"><span class="ik">Prazo</span><span class="iv">1 dias</span></div></div></div>
+          </div>
+          <div class="card">
+            <div class="card-lbl"><span class="card-lbl-dot" style="background:var(--gold);"></span>Dist. OTM &amp; Prazo</div>
+            <div class="g2" style="gap:.32rem;">
+              <div style="text-align:center;">
+                <div class="g-wrap" style="width:60px;height:60px;margin:0 auto .18rem;"><svg width="60" height="60" viewBox="0 0 100 100"><circle cx="50" cy="50" r="38" fill="none" stroke="var(--bdr)" stroke-width="8"/><circle cx="50" cy="50" r="38" fill="none" stroke="var(--gold)" stroke-width="8" stroke-linecap="round" style="stroke-dasharray:238.76;stroke-dashoffset:214;transform-origin:center;transform:rotate(-90deg);"/></svg><div class="g-inner"><div class="gv co" style="font-size:.62rem;">3.63%</div><div class="gs">OTM</div></div></div>
+                <div style="font-family:var(--mono);font-size:.52rem;color:var(--tx2);">Dist. Strike</div>
+              </div>
+              <div style="text-align:center;">
+                <div class="g-wrap" style="width:60px;height:60px;margin:0 auto .18rem;"><svg width="60" height="60" viewBox="0 0 100 100"><circle cx="50" cy="50" r="38" fill="none" stroke="var(--bdr)" stroke-width="8"/><circle cx="50" cy="50" r="38" fill="none" stroke="var(--red)" stroke-width="8" stroke-linecap="round" style="stroke-dasharray:238.76;stroke-dashoffset:238;transform-origin:center;transform:rotate(-90deg);"/></svg><div class="g-inner"><div class="gv cr" style="font-size:.62rem;">0</div><div class="gs">dias</div></div></div>
+                <div style="font-family:var(--mono);font-size:.52rem;color:var(--tx2);">Restantes</div>
+              </div>
+            </div>
+            <div class="ir" style="margin-top:.2rem;"><span class="ik">Strike</span><span class="iv co">$75,000.00</span></div>
+            <div class="ir"><span class="ik">Exercício</span><span class="iv">19/03/2026</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ========= SWITCHER ========= */
+document.querySelectorAll('.sw-btn').forEach(btn=>{
+  btn.addEventListener('click',function(){
+    document.querySelectorAll('.sw-btn').forEach(b=>b.classList.remove('on'));
+    document.querySelectorAll('.modal').forEach(m=>m.classList.remove('on'));
+    this.classList.add('on');
+    document.getElementById('v'+this.dataset.v).classList.add('on');
+    window.scrollTo({top:document.querySelector('.switcher').offsetTop-12,behavior:'smooth'});
+  });
+});
+
+/* ========= PERIOD PILLS ========= */
+document.querySelectorAll('.fbar').forEach(bar=>{
+  bar.querySelectorAll('.pill').forEach(p=>{
+    p.addEventListener('click',function(){
+      // determine group: period pills are the first group
+      const allPills=[...bar.querySelectorAll('.pill')];
+      const idx=allPills.indexOf(this);
+      if(idx<=8){allPills.slice(0,9).forEach(b=>b.classList.remove('ap'));this.classList.add('ap');}
+    });
+  });
+});
+
+/* ========= OP TABS ========= */
+function selOp(vid,idx,el){
+  document.querySelectorAll(`#${vid}-ops .op-tab`).forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+}
+
+/* ========= SECTION TABS ========= */
+function selTab(vid,sid,el){
+  const dash=document.getElementById(vid+'-dash')||el.closest('.modal').querySelector('.dash');
+  // remove all active stabs
+  el.closest('.stabs').querySelectorAll('.stab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  // hide all panels in this modal's main
+  const main=dash.querySelector('.main');
+  if(!main)return;
+  main.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  const target=document.getElementById(vid+'-'+sid);
+  if(target){target.classList.add('on');}
+}
+
+/* ========= REFRESH ========= */
+function refresh(vid){
+  const modal=document.getElementById(vid);
+  const btn=modal.querySelector('.btn-ref');
+  const dash=modal.querySelector('.dash');
+  if(!dash||btn.dataset.loading)return;
+  btn.dataset.loading='1';
+  btn.querySelector('svg').style.animation='spin .8s linear infinite';
+  dash.classList.add('loading');
+  setTimeout(()=>{
+    // simulate value update
+    const els=dash.querySelectorAll('.loadable');
+    els.forEach(el=>{
+      if(el.textContent.includes('%')&&el.textContent.includes('.')&&!el.textContent.startsWith('$')){
+        // slight pct shift
+        const v=parseFloat(el.textContent.replace('+','').replace('%',''));
+        const nv=(v+(Math.random()-.5)*.1).toFixed(2);
+        el.textContent=(nv>=0?'+':'')+nv+'%';
+      }
+    });
+    dash.classList.remove('loading');
+    btn.querySelector('svg').style.animation='';
+    delete btn.dataset.loading;
+    // update time
+    const now=new Date();
+    modal.querySelector('.hdr-time').textContent='Atualizado: '+now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  },1800);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gauge de Alertas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a3e 100%);
+            min-height: 100vh;
+            padding: 40px;
+        }
+
+        .alert-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .alert-title {
+            color: #fff;
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 40px;
+            font-weight: 700;
+        }
+
+        .alerts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .alert-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .alert-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+
+        .alert-critical::before {
+            background: #ff4757;
+            animation: pulse-red 2s infinite;
+        }
+
+        .alert-warning::before {
+            background: #ffaa00;
+        }
+
+        .alert-info::before {
+            background: #00d4ff;
+        }
+
+        .alert-success::before {
+            background: #00ff88;
+        }
+
+        @keyframes pulse-red {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .alert-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .alert-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .alert-title-text {
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .mini-gauge {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 15px;
+            position: relative;
+        }
+
+        .mini-gauge svg {
+            transform: rotate(-90deg);
+            width: 100%;
+            height: 100%;
+        }
+
+        .mini-gauge circle {
+            fill: none;
+            stroke-width: 8;
+            stroke-linecap: round;
+        }
+
+        .mini-gauge .bg {
+            stroke: rgba(255, 255, 255, 0.1);
+        }
+
+        .mini-gauge .fill {
+            transition: stroke-dashoffset 1s ease;
+        }
+
+        .alert-value {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 18px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .alert-message {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 13px;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .alert-time {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.4);
+            text-align: right;
+        }
+
+        .bg-critical { background: rgba(255, 71, 87, 0.15); }
+        .bg-warning { background: rgba(255, 170, 0, 0.15); }
+        .bg-info { background: rgba(0, 212, 255, 0.15); }
+        .bg-success { background: rgba(0, 255, 136, 0.15); }
+
+        .text-critical { color: #ff4757; }
+        .text-warning { color: #ffaa00; }
+        .text-info { color: #00d4ff; }
+        .text-success { color: #00ff88; }
+    </style>
+</head>
+<body>
+    <div class="alert-container">
+        <h2 class="alert-title">🔔 ALERTAS DE OPERAÇÃO</h2>
+        
+        <div class="alerts-grid">
+            <!-- Alerta Crítico -->
+            <div class="alert-card alert-critical">
+                <div class="alert-header">
+                    <div class="alert-icon bg-critical">⚠️</div>
+                    <div class="alert-title-text">Stop Loss</div>
+                </div>
+                <div class="mini-gauge">
+                    <svg viewBox="0 0 80 80">
+                        <circle class="bg" cx="40" cy="40" r="32"/>
+                        <circle class="fill" cx="40" cy="40" r="32" 
+                            stroke="#ff4757" stroke-dasharray="201" stroke-dashoffset="50"/>
+                    </svg>
+                    <div class="alert-value text-critical">75%</div>
+                </div>
+                <div class="alert-message">Posição atingiu 75% do stop loss definido. Considere encerrar.</div>
+                <div class="alert-time">Há 2 minutos</div>
+            </div>
+
+            <!-- Alerta Warning -->
+            <div class="alert-card alert-warning">
+                <div class="alert-header">
+                    <div class="alert-icon bg-warning">📊</div>
+                    <div class="alert-title-text">Volatilidade</div>
+                </div>
+                <div class="mini-gauge">
+                    <svg viewBox="0 0 80 80">
+                        <circle class="bg" cx="40" cy="40" r="32"/>
+                        <circle class="fill" cx="40" cy="40" r="32" 
+                            stroke="#ffaa00" stroke-dasharray="201" stroke-dashoffset="100"/>
+                    </svg>
+                    <div class="alert-value text-warning">50%</div>
+                </div>
+                <div class="alert-message">Volatilidade acima da média. Ajuste tamanho da posição.</div>
+                <div class="alert-time">Há 5 minutos</div>
+            </div>
+
+            <!-- Alerta Info -->
+            <div class="alert-card alert-info">
+                <div class="alert-header">
+                    <div class="alert-icon bg-info">📈</div>
+                    <div class="alert-title-text">Oportunidade</div>
+                </div>
+                <div class="mini-gauge">
+                    <svg viewBox="0 0 80 80">
+                        <circle class="bg" cx="40" cy="40" r="32"/>
+                        <circle class="fill" cx="40" cy="40" r="32" 
+                            stroke="#00d4ff" stroke-dasharray="201" stroke-dashoffset="140"/>
+                    </svg>
+                    <div class="alert-value text-info">30%</div>
+                </div>
+                <div class="alert-message">Padrão de compra identificado em BTC/USDT.</div>
+                <div class="alert-time">Há 10 minutos</div>
+            </div>
+
+            <!-- Alerta Success -->
+            <div class="alert-card alert-success">
+                <div class="alert-header">
+                    <div class="alert-icon bg-success">✅</div>
+                    <div class="alert-title-text">Meta Atingida</div>
+                </div>
+                <div class="mini-gauge">
+                    <svg viewBox="0 0 80 80">
+                        <circle class="bg" cx="40" cy="40" r="32"/>
+                        <circle class="fill" cx="40" cy="40" r="32" 
+                            stroke="#00ff88" stroke-dasharray="201" stroke-dashoffset="20"/>
+                    </svg>
+                    <div class="alert-value text-success">90%</div>
+                </div>
+                <div class="alert-message">Take profit de 90% atingido. Parabéns!</div>
+                <div class="alert-time">Há 15 minutos</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class AlertGauge {
+            constructor() {
+                this.init();
+            }
+
+            init() {
+                // Animação inicial dos gauges
+                document.querySelectorAll('.mini-gauge .fill').forEach((circle, index) => {
+                    const circumference = 2 * Math.PI * 32;
+                    circle.style.strokeDasharray = circumference;
+                    
+                    setTimeout(() => {
+                        const offset = parseFloat(circle.getAttribute('stroke-dashoffset'));
+                        circle.style.strokeDashoffset = circumference - offset;
+                    }, index * 200);
+                });
+            }
+
+            addAlert(type, title, message, percentage) {
+                // Método para adicionar novos alertas dinamicamente
+                console.log(`Novo alerta: ${title} - ${percentage}%`);
+            }
+        }
+
+        new AlertGauge();
+    </script>
+</body>
+</html>

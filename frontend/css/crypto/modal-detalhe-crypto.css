@@ -1,0 +1,52 @@
+/**
+ * modal-detalhe-crypto.css  v1.0.0
+ * Estilos dedicados para o Modal de Detalhes da Operação Crypto
+ * Tema: amber/gold para crypto
+ */
+
+/* Badge de tipo HIGH/LOW */
+.crypto-badge-high {
+    background-color: var(--bs-success-bg-subtle, #d1e7dd);
+    color: var(--bs-success-text-emphasis, #0a3622);
+    border: 1px solid var(--bs-success-border-subtle, #a3cfbb);
+}
+
+.crypto-badge-low {
+    background-color: var(--bs-danger-bg-subtle, #f8d7da);
+    color: var(--bs-danger-text-emphasis, #842029);
+    border: 1px solid var(--bs-danger-border-subtle, #f1aeb5);
+}
+
+/* Header com ícone amber */
+#modalDetalhesCrypto .modal-header {
+    border-bottom: 2px solid var(--tblr-warning, #f59f00);
+}
+
+#modalDetalhesCrypto .modal-title {
+    color: var(--tblr-warning, #f59f00);
+    font-weight: 600;
+}
+
+/* Botão editar com destaque amber */
+#modalDetalhesEditBtn {
+    background-color: var(--tblr-warning, #f59f00);
+    border-color: var(--tblr-warning, #f59f00);
+    color: #000;
+}
+
+#modalDetalhesEditBtn:hover {
+    background-color: #e08e00;
+    border-color: #e08e00;
+    color: #000;
+}
+
+/* Corpo do modal com grid de informações */
+#modalDetalhesBody .text-muted.small {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+#modalDetalhesBody .fw-bold {
+    font-size: 0.95rem;
+}

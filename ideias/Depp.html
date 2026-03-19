@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Opções · Gauges para cada métrica</title>
+    <!-- Bootstrap + Tabler dark -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- gauge.js -->
+    <script src="https://bernii.github.io/gauge.js/dist/gauge.min.js"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            background-color: #141414;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 20px;
+            color: #e9ecef;
+        }
+        .card {
+            background-color: #1f2124;
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 12px 24px -8px rgba(0,0,0,0.8);
+            margin-bottom: 24px;
+        }
+        .card-header {
+            background-color: rgba(0,0,0,0.2);
+            border-bottom: 1px solid #2c2f33;
+            font-weight: 600;
+            font-size: 1rem;
+            color: #b0b3b8;
+            padding: 16px 20px;
+        }
+        .card-body {
+            padding: 20px;
+        }
+        .metric-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+        .metric-item {
+            text-align: center;
+            min-width: 140px;
+        }
+        .metric-label {
+            font-size: 0.8rem;
+            color: #8b949e;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+        .metric-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: white;
+        }
+        .metric-small {
+            font-size: 0.9rem;
+            color: #adb5bd;
+        }
+
+        /* Gauge customizado (baseado no Gauge3.html) */
+        .gauge-custom {
+            position: relative;
+            margin: 10px auto;
+        }
+        .gauge-custom .gauge-body {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        .gauge-custom .gauge-background {
+            width: 100%;
+            height: 100%;
+            border-top-left-radius: 50%;
+            border-top-right-radius: 50%;
+            background: #2a2e33;
+            position: absolute;
+            top: 0;
+            left: 0;
+            overflow: hidden;
+        }
+        .gauge-custom .gauge-fill {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            border-top-left-radius: 50%;
+            border-top-right-radius: 50%;
+            background: #00e0a1;
+            transform-origin: bottom center;
+        }
+        .gauge-custom .gauge-cover {
+            background: #1f2124;
+            position: absolute;
+            border-radius: 50% 50% 0 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 3;
+        }
+        .gauge-custom .gauge-value {
+            font-weight: bold;
+            color: white;
+            line-height: 1;
+        }
+        .gauge-custom .gauge-label {
+            color: #8b949e;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.6rem;
+        }
+        .gauge-custom .gauge-pointer {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform-origin: bottom center;
+            z-index: 4;
+            background: white;
+            border-radius: 2px;
+        }
+        .gauge-custom .gauge-pointer::after {
+            content: '';
+            position: absolute;
+            border-radius: 50%;
+            bottom: -4px;
+            left: -4px;
+            background: currentColor;
+        }
+
+        /* Tamanhos específicos para cada gauge no card de operação */
+        .gauge-md {
+            width: 140px;
+            height: 70px;
+        }
+        .gauge-md .gauge-cover {
+            width: 120px;
+            height: 60px;
+            top: 10px;
+            left: 10px;
+        }
+        .gauge-md .gauge-value { font-size: 18px; }
+        .gauge-md .gauge-label { font-size: 8px; }
+        .gauge-md .gauge-pointer {
+            width: 2.5px;
+            height: 42px;
+        }
+        .gauge-md .gauge-pointer::after {
+            width: 8px;
+            height: 8px;
+            bottom: -4px;
+            left: -2.75px;
+        }
+
+        .gauge-sm {
+            width: 100px;
+            height: 50px;
+        }
+        .gauge-sm .gauge-cover {
+            width: 86px;
+            height: 43px;
+            top: 7px;
+            left: 7px;
+        }
+        .gauge-sm .gauge-value { font-size: 14px; }
+        .gauge-sm .gauge-label { font-size: 6px; }
+        .gauge-sm .gauge-pointer {
+            width: 2px;
+            height: 30px;
+        }
+        .gauge-sm .gauge-pointer::after {
+            width: 6px;
+            height: 6px;
+            bottom: -3px;
+            left: -2px;
+        }
+
+        .gauge-xs {
+            width: 70px;
+            height: 35px;
+        }
+        .gauge-xs .gauge-cover {
+            width: 60px;
+            height: 30px;
+            top: 5px;
+            left: 5px;
+        }
+        .gauge-xs .gauge-value { font-size: 12px; }
+        .gauge-xs .gauge-label { font-size: 5px; }
+        .gauge-xs .gauge-pointer {
+            width: 1.5px;
+            height: 20px;
+        }
+        .gauge-xs .gauge-pointer::after {
+            width: 4px;
+            height: 4px;
+            bottom: -2px;
+            left: -1.25px;
+        }
+
+        /* Para gauge.js */
+        .canvas-gauge-md { width: 140px; height: 70px; }
+        .canvas-gauge-sm { width: 100px; height: 50px; }
+        .canvas-gauge-xs { width: 70px; height: 35px; }
+
+        .btn-tabler {
+            background-color: #2f343a;
+            color: white;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            border: 1px solid #40454c;
+            margin-top: 12px;
+        }
+        .btn-tabler:hover {
+            background-color: #3a4048;
+        }
+        .table {
+            color: #e9ecef;
+            font-size: 0.85rem;
+        }
+        .table td {
+            vertical-align: middle;
+            border-top: 1px solid #2c2f33;
+        }
+        .badge {
+            padding: 4px 8px;
+            border-radius: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <h1 class="text-white mb-4">📈 Painel de Acompanhamento de Opções</h1>
+        <p class="text-secondary mb-4">Cada operação é exibida com seus indicadores em gauges (CSS custom e gauge.js).</p>
+
+        <!-- Card de exemplo: Operação PETRA24W2 -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-chart-line me-2"></i>PETRA24W2 · Call</span>
+                <span class="badge bg-info text-dark">Operação aberta</span>
+            </div>
+            <div class="card-body">
+                <!-- Primeira linha: informações textuais -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="metric-label">Cotação atual</div>
+                        <div class="metric-value">R$ 45,58</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-label">Strike</div>
+                        <div class="metric-value">R$ 44,00</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-label">Prêmio recebido</div>
+                        <div class="metric-value">R$ 2,50</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-label">Prêmio atual</div>
+                        <div class="metric-value">R$ 2,80</div>
+                        <div class="metric-small text-warning">+12%</div>
+                    </div>
+                </div>
+
+                <!-- Segunda linha: gauges para cada métrica -->
+                <div class="metric-group">
+                    <!-- Cotação atual em relação ao strike (distância %) -->
+                    <div class="metric-item">
+                        <div class="metric-label">Distância do strike</div>
+                        <div class="gauge-custom gauge-md" id="distancia-strike">
+                            <div class="gauge-body">
+                                <div class="gauge-background"></div>
+                                <div class="gauge-fill"></div>
+                                <div class="gauge-cover">
+                                    <div class="gauge-value">0%</div>
+                                    <div class="gauge-label">acima</div>
+                                </div>
+                                <div class="gauge-pointer"></div>
+                            </div>
+                        </div>
+                        <div class="metric-small">+3,6%</div>
+                    </div>
+
+                    <!-- % atual do prêmio (ganho/perda) -->
+                    <div class="metric-item">
+                        <div class="metric-label">Var. do prêmio</div>
+                        <div class="gauge-custom gauge-md" id="var-premio">
+                            <div class="gauge-body">
+                                <div class="gauge-background"></div>
+                                <div class="gauge-fill"></div>
+                                <div class="gauge-cover">
+                                    <div class="gauge-value">0%</div>
+                                    <div class="gauge-label">lucro</div>
+                                </div>
+                                <div class="gauge-pointer"></div>
+                            </div>
+                        </div>
+                        <div class="metric-small text-danger">-12%</div>
+                    </div>
+
+                    <!-- Dias corridos para finalizar (tempo restante) -->
+                    <div class="metric-item">
+                        <div class="metric-label">Tempo restante</div>
+                        <canvas id="tempo-restante" class="canvas-gauge-md"></canvas>
+                        <div class="metric-small">23/30 dias</div>
+                    </div>
+
+                    <!-- Exercício? (indicador binário) -->
+                    <div class="metric-item">
+                        <div class="metric-label">Exercício</div>
+                        <div class="gauge-custom gauge-md" id="exercicio">
+                            <div class="gauge-body">
+                                <div class="gauge-background"></div>
+                                <div class="gauge-fill"></div>
+                                <div class="gauge-cover">
+                                    <div class="gauge-value">Não</div>
+                                    <div class="gauge-label">recomendado</div>
+                                </div>
+                                <div class="gauge-pointer"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botão para atualizar dados (simulação) -->
+                <div class="text-center">
+                    <button class="btn-tabler" onclick="randomizarOperacao()"><i class="fas fa-sync-alt me-2"></i>Simular variação</button>
+                </div>
+            </div>
+        </div>
+       
+
+    <script>
+        // Utilitários
+        function randomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+        function randomFloat(min, max, decimals=2) {
+            return (Math.random() * (max - min) + min).toFixed(decimals);
+        }
+
+        // ---------- Funções para gauge customizado (CSS) ----------
+        function setCustomGaugeValue(containerId, value, colorScheme = 'padrao', labelSuffix = '%') {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            const fill = container.querySelector('.gauge-fill');
+            const pointer = container.querySelector('.gauge-pointer');
+            const valueDiv = container.querySelector('.gauge-value');
+            if (!fill || !pointer || !valueDiv) return;
+
+            value = Math.min(100, Math.max(0, value));
+            const pointerRot = (value / 100) * 180 - 90;
+            const fillRot = pointerRot + 90;
+            fill.style.transform = `rotate(${fillRot}deg)`;
+            pointer.style.transform = `rotate(${pointerRot}deg)`;
+
+            // Cor baseada no valor ou esquema especial
+            if (colorScheme === 'distancia') {
+                // Quanto maior a distância acima do strike, mais verde; abaixo, vermelho
+                if (value >= 50) { // acima do strike (valor > 0% na prática)
+                    const green = Math.min(255, Math.floor(255 * ((value - 50) / 50)));
+                    fill.style.backgroundColor = `rgb(100, ${green}, 100)`;
+                    pointer.style.backgroundColor = `rgb(100, ${green}, 100)`;
+                } else {
+                    const red = Math.min(255, Math.floor(255 * ((50 - value) / 50)));
+                    fill.style.backgroundColor = `rgb(${red}, 100, 100)`;
+                    pointer.style.backgroundColor = `rgb(${red}, 100, 100)`;
+                }
+            } else if (colorScheme === 'var-premio') {
+                // valor 0 = -100% (prejuízo total), 50 = 0%, 100 = +100% lucro
+                if (value < 50) {
+                    const red = 255;
+                    const green = Math.floor(255 * (value / 50));
+                    fill.style.backgroundColor = `rgb(${red}, ${green}, 100)`;
+                    pointer.style.backgroundColor = `rgb(${red}, ${green}, 100)`;
+                } else {
+                    const green = 255;
+                    const red = Math.floor(255 * ((100 - value) / 50));
+                    fill.style.backgroundColor = `rgb(${red}, ${green}, 100)`;
+                    pointer.style.backgroundColor = `rgb(${red}, ${green}, 100)`;
+                }
+            } else {
+                // Padrão: vermelho < 25, amarelo 25-50, verde claro 50-75, verde escuro 75-100
+                if (value < 25) { fill.style.backgroundColor = '#f03e3e'; pointer.style.backgroundColor = '#f03e3e'; }
+                else if (value < 50) { fill.style.backgroundColor = '#fcc419'; pointer.style.backgroundColor = '#fcc419'; }
+                else if (value < 75) { fill.style.backgroundColor = '#00e0a1'; pointer.style.backgroundColor = '#00e0a1'; }
+                else { fill.style.backgroundColor = '#51cf66'; pointer.style.backgroundColor = '#51cf66'; }
+            }
+
+            if (containerId === 'exercicio') {
+                valueDiv.textContent = value > 50 ? 'Sim' : 'Não';
+            } else {
+                valueDiv.textContent = value + (labelSuffix ? labelSuffix : '');
+            }
+        }
+
+        // ---------- Funções para gauge.js ----------
+        const gaugesJs = {};
+
+        function createGaugeJs(canvasId, opts, initialValue) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return null;
+            const gauge = new Gauge(canvas).setOptions(opts);
+            gauge.maxValue = 100;
+            gauge.setMinValue(0);
+            gauge.animationSpeed = 20;
+            gauge.set(initialValue);
+            gaugesJs[canvasId] = gauge;
+            return gauge;
+        }
+
+        // Configuração base para gauge.js (semicírculo)
+        const baseOpts = {
+            angle: 0.0,
+            lineWidth: 0.3,
+            radiusScale: 1,
+            pointer: { length: 0.6, strokeWidth: 0.035, color: '#ffffff' },
+            limitMax: false,
+            limitMin: false,
+            strokeColor: '#3a4048',
+            generateGradient: true,
+            highDpiSupport: true,
+            staticLabels: { font: "8px 'Inter'", labels: [0,25,50,75,100], color: "#adb5bd", fractionDigits: 0 }
+        };
+
+        // Gauge de tempo restante (azul)
+        createGaugeJs('tempo-restante', Object.assign({}, baseOpts, {
+            staticZones: [ { strokeStyle: "#339af0", min: 0, max: 100 } ]
+        }), 77); // 23/30 = 77% restante (ou invertido? Vamos usar % restante)
+
+        // Inicializa gauges custom
+        setCustomGaugeValue('distancia-strike', 52, 'distancia'); // 52% na escala representa 3.6% acima (mapeamento depois)
+        setCustomGaugeValue('var-premio', 44, 'var-premio'); // 44% na escala representa -12% (44 = 50 - 6)
+        setCustomGaugeValue('exercicio', 30, 'padrao'); // 30% = Não recomendado
+
+        // Mapeamento de valores reais para escala 0-100
+        function mapToScale(value, min, max) {
+            return ((value - min) / (max - min)) * 100;
+        }
+
+        // Função para atualizar todos os gauges com novos valores simulados
+        window.randomizarOperacao = function() {
+            // Novos valores
+            const cotacao = 45 + randomFloat(-5, 5, 2);
+            const strike = 44;
+            const premioAbertura = 2.5;
+            const premioAtual = premioAbertura * (1 + randomFloat(-0.3, 0.3, 2));
+            const diasPassados = randomInt(5, 28);
+            const diasTotais = 30;
+            const tempoRestante = diasTotais - diasPassados;
+            
+            // Distância do strike em %
+            const distanciaPerc = ((cotacao - strike) / strike) * 100;
+            // Mapear distância de -10% a +10% para 0-100 (50% = 0)
+            const distanciaScale = Math.min(100, Math.max(0, 50 + distanciaPerc * 5)); // cada 1% = 5 pontos
+
+            // Variação do prêmio: (premioAtual - premioAbertura)/premioAbertura * 100
+            const varPremioPerc = ((premioAtual - premioAbertura) / premioAbertura) * 100;
+            // Mapear de -50% a +50% para 0-100 (50% = 0)
+            const varPremioScale = Math.min(100, Math.max(0, 50 + varPremioPerc));
+
+            // Tempo restante em % do total
+            const tempoScale = (tempoRestante / diasTotais) * 100;
+
+            // Decisão de exercício: se distância > 0 e tempo < 10%, chance de exercer
+            const exercicioScale = (distanciaPerc > 2 && tempoRestante < 5) ? 80 : 20;
+
+            // Atualizar gauges
+            setCustomGaugeValue('distancia-strike', distanciaScale, 'distancia');
+            setCustomGaugeValue('var-premio', varPremioScale, 'var-premio');
+            const tempoGauge = gaugesJs['tempo-restante'];
+            if (tempoGauge) tempoGauge.set(tempoScale);
+            setCustomGaugeValue('exercicio', exercicioScale, 'padrao');
+
+            // Atualizar textos
+            document.querySelectorAll('.metric-value')[0].innerText = `R$ ${parseFloat(cotacao).toFixed(2)}`; // cotação
+            document.querySelectorAll('.metric-value')[3].innerText = `R$ ${parseFloat(premioAtual).toFixed(2)}`; // prêmio atual
+            document.querySelectorAll('.metric-small')[0].innerText = (distanciaPerc > 0 ? '+' : '') + distanciaPerc.toFixed(2) + '%';
+            document.querySelectorAll('.metric-small')[1].innerText = (varPremioPerc > 0 ? '+' : '') + varPremioPerc.toFixed(2) + '%';
+            document.querySelectorAll('.metric-small')[2].innerText = tempoRestante + '/' + diasTotais + ' dias';
+        };
+
+        // ---------- Tabela com mini gauges ----------
+        function renderTabela() {
+            const tbody = document.getElementById('tabela-opcoes');
+            const ativos = ['PETRA24W2', 'VALE3A25', 'ITUB4B26', 'BBDC4C27', 'PETR4D28'];
+            const tipos = ['Call', 'Put', 'Call', 'Put', 'Call'];
+            tbody.innerHTML = '';
+
+            for (let i = 0; i < 5; i++) {
+                const ativo = ativos[i];
+                const tipo = tipos[i];
+                const strike = randomFloat(40, 60, 2);
+                const cotacao = randomFloat(35, 65, 2);
+                const premioAbertura = randomFloat(1, 5, 2);
+                const premioAtual = premioAbertura * (1 + randomFloat(-0.4, 0.4, 2));
+                const distanciaPerc = ((cotacao - strike) / strike) * 100;
+                const distanciaScale = Math.min(100, Math.max(0, 50 + distanciaPerc * 5));
+                const varPremioPerc = ((premioAtual - premioAbertura) / premioAbertura) * 100;
+                const varPremioScale = Math.min(100, Math.max(0, 50 + varPremioPerc));
+                const tempoRestante = randomInt(0, 100); // %
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${ativo}</strong></td>
+                    <td>${tipo}</td>
+                    <td>R$ ${strike}</td>
+                    <td>R$ ${parseFloat(premioAtual).toFixed(2)}</td>
+                    <td><div class="gauge-custom gauge-xs" id="dist-tab-${i}" style="margin:0"></div><small>${distanciaPerc.toFixed(1)}%</small></td>
+                    <td><div class="gauge-custom gauge-xs" id="var-tab-${i}" style="margin:0"></div><small>${varPremioPerc.toFixed(1)}%</small></td>
+                    <td><canvas id="tempo-tab-${i}" width="70" height="35" style="width:70px; height:35px;"></canvas></td>
+                    <td><span class="badge ${distanciaPerc > 2 && tempoRestante < 30 ? 'bg-success' : 'bg-secondary'}">${distanciaPerc > 2 && tempoRestante < 30 ? 'Sim' : 'Não'}</span></td>
+                `;
+                tbody.appendChild(row);
+
+                // Inicializa mini gauges
+                setTimeout(() => {
+                    setCustomGaugeValue(`dist-tab-${i}`, distanciaScale, 'distancia', '%');
+                    setCustomGaugeValue(`var-tab-${i}`, varPremioScale, 'var-premio', '%');
+                    
+                    const canvas = document.getElementById(`tempo-tab-${i}`);
+                    if (canvas) {
+                        const ctx = canvas.getContext('2d');
+                        // Como o canvas é pequeno, vamos desenhar um retângulo proporcional (simplificado)
+                        // Mas para manter a consistência, usaremos gauge.js também? Vamos fazer simples:
+                        ctx.clearRect(0, 0, 70, 35);
+                        ctx.fillStyle = '#2f343a';
+                        ctx.fillRect(0, 0, 70, 35);
+                        ctx.fillStyle = '#339af0';
+                        ctx.fillRect(0, 0, 70 * (tempoRestante/100), 35);
+                        ctx.strokeStyle = '#fff';
+                        ctx.strokeRect(0, 0, 70, 35);
+                        ctx.font = '8px Inter';
+                        ctx.fillStyle = '#fff';
+                        ctx.fillText(tempoRestante + '%', 25, 20);
+                    }
+                }, 10);
+            }
+        }
+
+        document.getElementById('refresh-table').addEventListener('click', renderTabela);
+        renderTabela();
+    </script>
+</body>
+</html>

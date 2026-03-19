@@ -3,17 +3,49 @@
 let allOperacoes = [];
 let tableMesAtual, tableHistorico;
 let chartAnual = null;
-let currentFilterCrypto = "all";
+let currentFilterCrypto = "ABERTA";
 let _lastSimData = null;
+let _investidoMode = 'usd';
 const CRYPTO_CFG_KEY = "cryptoConfig";
 
-document.addEventListener("layoutReady", function () {
+function setInvestidoMode(mode) {
+    _investidoMode = mode;
+    const btnUsd    = document.getElementById('btnInvestidoUsd');
+    const btnCrypto = document.getElementById('btnInvestidoCrypto');
+    const unit      = document.getElementById('investidoUnit');
+    const input     = document.getElementById('inputAbertura');
+    if (btnUsd)    btnUsd.classList.toggle('active', mode === 'usd');
+    if (btnUsd)    btnUsd.classList.toggle('btn-primary', mode === 'usd');
+    if (btnUsd)    btnUsd.classList.toggle('btn-outline-secondary', mode !== 'usd');
+    if (btnCrypto) btnCrypto.classList.toggle('active', mode === 'crypto');
+    if (btnCrypto) btnCrypto.classList.toggle('btn-primary', mode === 'crypto');
+    if (btnCrypto) btnCrypto.classList.toggle('btn-outline-secondary', mode !== 'crypto');
+    if (unit)  unit.textContent  = mode === 'usd' ? 'USD' : 'BTC';
+    if (input) input.placeholder = mode === 'usd' ? 'Ex: 5000' : 'Ex: 0.1';
+    if (input) input.step        = mode === 'usd' ? '0.01' : '0.00000001';
+}
+
+function _initCrypto() {
     initDataTables();
     loadConfig();
     loadOperacoes();
     setupEventListeners();
     setupCardClicks();
     setupFilterButtons();
+}
+
+// Garante inicialização mesmo se layoutReady já disparou antes de este script ser parseado
+if (window.__appLayoutReady) {
+    _initCrypto();
+} else {
+    document.addEventListener("layoutReady", _initCrypto);
+}
+
+// Recarrega dados ao voltar via BFCache (botão Voltar/Avançar do browser)
+window.addEventListener("pageshow", function (e) {
+    if (e.persisted) {
+        loadOperacoes();
+    }
 });
 
 function setupEventListeners() {
@@ -114,6 +146,21 @@ function setupEventListeners() {
     document.getElementById("inputExercicio")?.addEventListener("input", calcPrazoFromDatas);
     document.getElementById("inputExercicio")?.addEventListener("change", calcPrazoFromDatas);
 
+    // ── Conversão automática Crypto → USD ao sair do campo inputAbertura ────
+    document.getElementById("inputAbertura")?.addEventListener("blur", function () {
+        if (_investidoMode !== 'crypto') return;
+        const qtdCrypto = parseFloat(this.value);
+        if (!qtdCrypto || qtdCrypto <= 0) return;
+        const cotacao = parseFloat(document.getElementById("inputCotacaoAtual")?.value) || 0;
+        if (cotacao <= 0) {
+            iziToast.warning({ title: "Aviso", message: "Informe a Cotação Atual para converter Crypto → USD." });
+            return;
+        }
+        this.value = (qtdCrypto * cotacao).toFixed(2);
+        setInvestidoMode('usd');
+        calcFormFields();
+    });
+
     // ── Reatividade: atualiza UI sempre que o saldo for alterado em qualquer aba ──
     window.addEventListener("storage", e => {
         if (e.key === CRYPTO_CFG_KEY || e.key === "appConfig") updateUI();
@@ -126,10 +173,8 @@ function setupCardClicks() {
     // são tratados pelos modais configurados externamente em crypto.html.
     const handlers = {
         "cardTotalOpsCryptoCard": () => {
-            if (window.ModalResultadoTotal && window.ModalResultadoTotal.openModal) {
-                window.ModalResultadoTotal.openModal();
-            } else {
-                openCryptoDashboardModal("total");
+            if (window.ModalTotalOperacoesCrypto && window.ModalTotalOperacoesCrypto.openModal) {
+                window.ModalTotalOperacoesCrypto.openModal();
             }
         },
     };
@@ -321,17 +366,25 @@ function initDataTables() {
     });
 }
 
-async function loadOperacoes() {
+async function loadOperacoes(attempt) {
+    attempt = attempt || 0;
     try {
-        const res = await fetch(API_BASE + "/api/crypto");
+        const res = await fetch(API_BASE + "/api/crypto", { cache: "no-store" });
+        if (!res.ok) throw new Error("HTTP " + res.status);
         allOperacoes = await res.json();
         window.cryptoOperacoes = allOperacoes;
         updateUI();
         refreshCryptoCotacoes();
         updateCryptoMarketStatus();
     } catch (e) {
-        console.error("[crypto] Erro ao carregar:", e);
-        iziToast.error({ title: "Erro", message: "Erro ao carregar operacoes crypto." });
+        console.error("[crypto] Erro ao carregar (tentativa " + (attempt + 1) + "):", e);
+        if (attempt < 3) {
+            const delay = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s
+            console.log("[crypto] Retentando em " + (delay / 1000) + "s...");
+            setTimeout(function() { loadOperacoes(attempt + 1); }, delay);
+        } else {
+            iziToast.error({ title: "Erro", message: "Servidor indisponível. Verifique se o Flask está rodando." });
+        }
     }
 }
 
@@ -384,6 +437,10 @@ function updateUI() {
     populateTable(tableHistorico, allOperacoes);
     renderHistoricoMensal();
     renderChartAnual(anoData, currentYear);
+    // Reaplica filtro de status ativo após recarregar a tabela
+    if (tableMesAtual) {
+        tableMesAtual.column(14).search(currentFilterCrypto === "all" ? "" : currentFilterCrypto).draw();
+    }
 }
 
 function fmtUsd(v) {
@@ -411,6 +468,7 @@ function getSaldoCrypto() {
 }
 
 function populateTable(dt, data) {
+    if (!dt) return; // DataTable não inicializado ainda
     dt.clear();
     [...data].sort((a, b) => {
         const aOpen = (a.status || 'ABERTA') === 'ABERTA' ? 0 : 1;
@@ -422,7 +480,16 @@ function populateTable(dt, data) {
             ? ((parseFloat(op.premio_us) / parseFloat(op.abertura)) * 100).toFixed(2) + "%"
             : "-";
         const tipoBadge   = op.tipo === "CALL" ? "<span class=\"badge crypto-badge-call\">CALL</span>" : "<span class=\"badge crypto-badge-put\">PUT</span>";
-        const exBadge     = op.exercicio_status === "SIM" ? "<span class=\"badge bg-warning text-dark\">SIM</span>" : "<span class=\"badge bg-secondary text-white\">NÃO</span>";
+        // Calcula exercício: usa campo do banco; se ausente, deriva de tipo/cotacao/strike
+        let exStatus = op.exercicio_status;
+        if (!exStatus && op.tipo && op.cotacao_atual && op.strike) {
+            const _cot = parseFloat(op.cotacao_atual);
+            const _str = parseFloat(op.strike);
+            if (_cot > 0 && _str > 0) {
+                exStatus = op.tipo === "CALL" ? (_cot >= _str ? "SIM" : "NAO") : (_cot <= _str ? "SIM" : "NAO");
+            }
+        }
+        const exBadge = exStatus === "SIM" ? "<span class=\"badge bg-warning text-dark\">SIM</span>" : "<span class=\"badge bg-secondary text-white\">NÃO</span>";
         const status      = op.status || "ABERTA";
         const statusBadge = status === "ABERTA"
             ? "<span class=\"badge bg-success text-white\">ABERTA</span>"
@@ -448,7 +515,7 @@ function populateTable(dt, data) {
             "<div class=\"btn-list flex-nowrap\">" +
             "<button class=\"btn btn-sm btn-info btn-icon\" onclick=\"showDetalhes(" + op.id + ")\" title=\"Detalhes\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M12 16v-4\"/><path d=\"M12 8h.01\"/></svg></button>" +
             (status === "ABERTA" ? "<button class=\"btn btn-sm btn-warning btn-icon\" onclick=\"fecharOperacao(" + op.id + ")\" title=\"Fechar Operação\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M18 6 6 18\"/><path d=\"m6 6 12 12\"/></svg></button>" : "") +
-            "<button class=\"btn btn-sm btn-primary btn-icon\" onclick=\"editOperacao(" + op.id + ")\" title=\"Editar\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7\"/><path d=\"M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z\"/></svg></button>" +
+            (status === "ABERTA" ? "<button class=\"btn btn-sm btn-primary btn-icon\" onclick=\"editOperacao(" + op.id + ")\" title=\"Editar\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7\"/><path d=\"M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z\"/></svg></button>" : "") +
             "<button class=\"btn btn-sm btn-danger btn-icon\" onclick=\"deleteOperacao(" + op.id + ")\" title=\"Excluir\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"3 6 5 6 21 6\"/><path d=\"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2\"/><line x1=\"10\" y1=\"11\" x2=\"10\" y2=\"17\"/><line x1=\"14\" y1=\"11\" x2=\"14\" y2=\"17\"/></svg></button>" +
             "</div>"
         ]);
@@ -745,6 +812,10 @@ function openNewModal() {
 function editOperacao(id) {
     const op = allOperacoes.find(o => o.id === id);
     if (!op) return;
+    if ((op.status || 'ABERTA').toUpperCase() === 'FECHADA') {
+        iziToast.warning({ title: 'Aviso', message: 'Operações fechadas não podem ser editadas.' });
+        return;
+    }
     document.getElementById("modalOperacaoTitle").textContent = "Editar Operacao";
     document.getElementById("operacaoId").value              = op.id;
     document.getElementById("inputAtivo").value              = op.ativo || "BTC";
@@ -949,7 +1020,58 @@ function usarProdutoDI(ativo, tipo, strike, tae, prazo, vencimento) {
     document.getElementById("simValor").focus();
 }
 
+// ── Simulador: Toggle USD ↔ Crypto ────────────────────────────────────────────
+let _simModo = 'usd'; // 'usd' | 'crypto'
+
+function setSimModo(modo) {
+    _simModo = modo;
+    const usdBtn    = document.getElementById('simModoUsd');
+    const cryptoBtn = document.getElementById('simModoCrypto');
+    const suffix    = document.getElementById('simValorSuffix');
+    const convRow   = document.getElementById('simConverterRow');
+    const input     = document.getElementById('simValor');
+    if (!usdBtn || !cryptoBtn) return;
+    if (modo === 'usd') {
+        usdBtn.classList.add('active');
+        cryptoBtn.classList.remove('active');
+        if (suffix)  suffix.textContent = 'USD';
+        if (convRow) convRow.classList.add('d-none');
+        if (input)   input.placeholder  = 'Valor em US$';
+    } else {
+        cryptoBtn.classList.add('active');
+        usdBtn.classList.remove('active');
+        if (suffix)  suffix.textContent = 'Crypto';
+        if (convRow) convRow.classList.remove('d-none');
+        if (input)   input.placeholder  = 'Quantidade de crypto';
+        // Atualiza referência de cotação
+        const cotacao = parseFloat(document.getElementById('simCotacao')?.value || 0);
+        const cotRef  = document.getElementById('simCotacaoRef');
+        if (cotRef) cotRef.textContent = cotacao > 0 ? `Cotação: US$ ${cotacao.toLocaleString('pt-BR', {minimumFractionDigits:2})}` : 'Cotação: US$ —';
+    }
+}
+
+function converterSimValor() {
+    const cotacao = parseFloat(document.getElementById('simCotacao')?.value || 0);
+    const simValorEl = document.getElementById('simValor');
+    const simUsdEquiv = document.getElementById('simUsdEquiv');
+    if (!cotacao) { iziToast.warning({ title: 'Aviso', message: 'Informe a cotação atual antes de converter.' }); return; }
+    const qty = parseFloat(simValorEl?.value || 0);
+    if (!qty) { iziToast.warning({ title: 'Aviso', message: 'Informe a quantidade de crypto.' }); return; }
+    const usdEquiv = qty * cotacao;
+    if (simUsdEquiv) simUsdEquiv.textContent = `≈ US$ ${usdEquiv.toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
+    // Substituir valor pelo equivalente em USD e trocar modo
+    if (simValorEl) simValorEl.value = usdEquiv.toFixed(2);
+    setSimModo('usd');
+    iziToast.success({ title: 'Convertido', message: `${qty} crypto × ${cotacao.toFixed(2)} = US$ ${usdEquiv.toFixed(2)}` });
+}
+
 function calcularSimulador() {
+    // Garantir que o valor está em USD antes de calcular
+    if (_simModo === 'crypto') {
+        const cotacao = parseFloat(document.getElementById('simCotacao')?.value || 0);
+        if (!cotacao) { iziToast.warning({ title: 'Aviso', message: 'Informe a cotação para converter antes de calcular.' }); return; }
+        converterSimValor();
+    }
     const valor   = parseFloat(document.getElementById("simValor").value)  || 0;
     const tae     = parseFloat(document.getElementById("simTae").value)    || 0;
     const prazo   = parseInt(document.getElementById("simPrazo").value)    || 7;
@@ -1051,14 +1173,32 @@ function saveConfig() {
     updateUI();
 }
 
-async function refreshQuotes() {
-    const btn = document.getElementById("btnRefresh");
-    if (btn) { btn.disabled = true; btn.classList.add("spin-anim"); }
-    // Feedback visual imediato nos cards
+function showRefreshLoading() {
+    // Spinner nos cards
     ["cardTotalOps", "cardSaldoCrypto", "cardTotalPremios", "cardResultadoMedio"].forEach(id => {
         const el = document.getElementById(id);
         if (el) { el._prevText = el.textContent; el.innerHTML = '<span class="spinner-border spinner-border-sm opacity-50"></span>'; }
     });
+    // Overlay sobre a tabela
+    const tabContent = document.querySelector(".tab-content");
+    if (tabContent && !document.getElementById("cryptoTableLoadingOverlay")) {
+        const overlay = document.createElement("div");
+        overlay.id = "cryptoTableLoadingOverlay";
+        overlay.style.cssText = "position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.55);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:200;border-radius:6px;";
+        overlay.innerHTML = '<div class="text-center"><div class="spinner-border text-primary mb-3" style="width:3rem;height:3rem;"></div><div class="text-light fs-5 fw-semibold">Atualizando cotações...</div></div>';
+        tabContent.style.position = "relative";
+        tabContent.appendChild(overlay);
+    }
+}
+
+function hideRefreshLoading() {
+    document.getElementById("cryptoTableLoadingOverlay")?.remove();
+}
+
+async function refreshQuotes() {
+    const btn = document.getElementById("btnRefresh");
+    if (btn) { btn.disabled = true; btn.classList.add("spin-anim"); }
+    showRefreshLoading();
     iziToast.info({ title: "Atualizando", message: "Verificando posições e buscando cotações..." });
     try {
         // 1. Chama backend refresh (auto-fecha operações com data passada)
@@ -1076,6 +1216,7 @@ async function refreshQuotes() {
         console.error("[refreshQuotes]", e);
         iziToast.error({ title: "Erro", message: "Falha ao atualizar cotações." });
     } finally {
+        hideRefreshLoading();
         if (btn) { btn.disabled = false; btn.classList.remove("spin-anim"); }
     }
 }
@@ -1124,81 +1265,5 @@ async function updateCryptoMarketStatus() {
 }
 
 // Mostra modal de detalhes de uma operação
-function showDetalhes(id) {
-    const op = allOperacoes.find(o => o.id === id);
-    if (!op) return;
-    const duracao = calcularDuracaoDias(getCurrentDate(), op.exercicio);
-    const dist    = op._liveDist !== undefined ? op._liveDist : op.distancia;
-    const cotacao = op._livePrice || op.cotacao_atual;
-    const tipoBadge   = op.tipo === "CALL"
-        ? "<span class='badge crypto-badge-high fs-6'>HIGH (CALL)</span>"
-        : "<span class='badge crypto-badge-low  fs-6'>LOW (PUT)</span>";
-    const statusClass = (op.status || "ABERTA") === "ABERTA" ? "text-success" : (op.status === "FECHADA" ? "text-secondary" : "text-danger");
-    const html = `
-    <div class="row g-3">
-        <div class="col-6">
-            <div class="text-muted small">Ativo / Par</div>
-            <div class="fw-bold fs-5">${op.ativo || "-"}/USDT ${tipoBadge}</div>
-        </div>
-        <div class="col-6 text-end">
-            <div class="text-muted small">Status</div>
-            <div class="fw-bold fs-5 ${statusClass}">${op.status || "ABERTA"}</div>
-        </div>
-        <div class="col-4">
-            <div class="text-muted small">Valor Investido</div>
-            <div class="fw-bold">${op.abertura ? fmtUsd(op.abertura) : "-"}</div>
-        </div>
-        <div class="col-4">
-            <div class="text-muted small">Strike</div>
-            <div class="fw-bold">${op.strike ? fmtUsd(op.strike) : "-"}</div>
-        </div>
-        <div class="col-4">
-            <div class="text-muted small">TAE</div>
-            <div class="fw-bold text-info">${op.tae ? parseFloat(op.tae).toFixed(2) + "% a.a." : "-"}</div>
-        </div>
-        <div class="col-4">
-            <div class="text-muted small">Cotação Atual${op._livePrice ? " <span class='badge bg-success-lt'>ao vivo</span>" : ""}</div>
-            <div class="fw-bold">${cotacao ? fmtUsd(cotacao) : "-"}</div>
-        </div>
-        <div class="col-4">
-            <div class="text-muted small">Distância Strike</div>
-            <div class="fw-bold ${dist !== null && dist !== undefined ? (parseFloat(dist) > 0 ? "text-success" : "text-danger") : ""}">${dist !== null && dist !== undefined ? (parseFloat(dist) > 0 ? "+" : "") + parseFloat(dist).toFixed(2) + "% " : "-"}</div>
-        </div>
-        <div class="col-4">
-            <div class="text-muted small">Prazo</div>
-            <div class="fw-bold">${duracao !== null ? duracao + " dias" : (op.prazo ? op.prazo + " dias" : "-")}</div>
-        </div>
-        <div class="col-4">
-            <div class="text-muted small">Prêmio Estimado</div>
-            <div class="fw-bold text-success">${op.premio_us ? fmtUsd(op.premio_us) : "-"}</div>
-        </div>
-        <div class="col-4">
-            <div class="text-muted small">Resultado</div>
-            <div class="fw-bold ${(op.resultado || 0) >= 0 ? "text-success" : "text-danger"}">${op.resultado != null ? parseFloat(op.resultado).toFixed(2) + "%" : "-"}</div>
-        </div>
-        <div class="col-4">
-            <div class="text-muted small">Qtd Crypto</div>
-            <div class="fw-bold">${op.crypto ? parseFloat(op.crypto).toFixed(6) : "-"} ${op.ativo || ""}</div>
-        </div>
-        <div class="col-4">
-            <div class="text-muted small">Abertura</div>
-            <div class="fw-bold">${op.data_operacao ? formatDate(op.data_operacao) : "-"}</div>
-        </div>
-        <div class="col-4">
-            <div class="text-muted small">Vencimento</div>
-            <div class="fw-bold">${op.exercicio ? formatDate(op.exercicio) : "-"}</div>
-        </div>
-        <div class="col-4">
-            <div class="text-muted small">Exercício</div>
-            <div class="fw-bold">${op.exercicio_status === "SIM" ? "<span class='badge bg-warning text-dark'>SIM</span>" : "<span class='badge bg-secondary'>NÃO</span>"}</div>
-        </div>
-        ${op.observacoes ? `<div class="col-12"><div class="text-muted small">Observações</div><div class="text-secondary">${op.observacoes}</div></div>` : ""}
-    </div>`;
-    document.getElementById("modalDetalhesBody").innerHTML = html;
-    document.getElementById("modalDetalhesTitle").textContent = "Detalhes — " + (op.ativo || "") + " #" + op.id;
-    document.getElementById("modalDetalhesEditBtn").onclick = () => {
-        bootstrap.Modal.getInstance(document.getElementById("modalDetalhesCrypto")).hide();
-        setTimeout(() => editOperacao(id), 350);
-    };
-    new bootstrap.Modal(document.getElementById("modalDetalhesCrypto")).show();
-}
+// showDetalhes() movida para modal-detalhe-crypto.js (v1.0.0)
+// O módulo expõe window.showDetalhes como retrocompatibilidade

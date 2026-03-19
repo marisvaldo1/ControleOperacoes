@@ -272,4 +272,7 @@ document.addEventListener('libsLoaded', function() {
     
     console.log('[Layout] Disparando evento layoutReady');
     document.dispatchEvent(new Event('layoutReady'));
+    // Sinaliza que layoutReady disparou E todos os handlers síncronos já rodaram
+    // (dispatchEvent é síncrono — todos os handlers terminam antes desta linha)
+    window.__appLayoutReady = true;
 });

@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gauge Semicircular</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .semicircle-container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 24px 24px 0 0;
+            padding: 50px 40px 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: none;
+            text-align: center;
+        }
+
+        .gauge-title {
+            color: #fff;
+            font-size: 20px;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+
+        .semicircle-gauge {
+            position: relative;
+            width: 320px;
+            height: 160px;
+            margin: 0 auto;
+            overflow: hidden;
+        }
+
+        .gauge-arc {
+            position: absolute;
+            width: 320px;
+            height: 320px;
+            border-radius: 50%;
+            background: conic-gradient(
+                from 270deg,
+                #ff4757 0deg,
+                #ff4757 45deg,
+                #ffaa00 45deg,
+                #ffaa00 90deg,
+                #00ff88 90deg,
+                #00ff88 180deg,
+                transparent 180deg
+            );
+            mask: radial-gradient(transparent 58%, black 59%);
+            -webkit-mask: radial-gradient(transparent 58%, black 59%);
+        }
+
+        .gauge-inner {
+            position: absolute;
+            width: 260px;
+            height: 260px;
+            background: #1a1a2e;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .gauge-needle {
+            position: absolute;
+            width: 4px;
+            height: 140px;
+            background: linear-gradient(to top, #fff, transparent);
+            bottom: 0;
+            left: 50%;
+            transform-origin: bottom center;
+            transform: translateX(-50%) rotate(0deg);
+            transition: transform 1s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 2px;
+            z-index: 10;
+        }
+
+        .gauge-pivot {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background: #fff;
+            border-radius: 50%;
+            bottom: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 11;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+        }
+
+        .value-display {
+            margin-top: 30px;
+        }
+
+        .value-number {
+            font-size: 56px;
+            font-weight: 800;
+            color: #fff;
+            text-shadow: 0 0 30px rgba(0, 255, 136, 0.5);
+        }
+
+        .value-unit {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 5px;
+        }
+
+        .scale-markers {
+            display: flex;
+            justify-content: space-between;
+            width: 320px;
+            margin: 20px auto 0;
+            padding: 0 10px;
+        }
+
+        .marker {
+            text-align: center;
+        }
+
+        .marker-line {
+            width: 2px;
+            height: 15px;
+            background: rgba(255, 255, 255, 0.3);
+            margin: 0 auto 8px;
+        }
+
+        .marker-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            justify-content: center;
+        }
+
+        .action-btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-buy {
+            background: linear-gradient(135deg, #00ff88, #00cc6a);
+            color: #000;
+        }
+
+        .btn-sell {
+            background: linear-gradient(135deg, #ff4757, #ff3344);
+            color: #fff;
+        }
+
+        .btn-buy:hover, .btn-sell:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="semicircle-container">
+        <h2 class="gauge-title">📊 PERFORMANCE DA OPERAÇÃO</h2>
+        
+        <div class="semicircle-gauge">
+            <div class="gauge-arc"></div>
+            <div class="gauge-inner"></div>
+            <div class="gauge-needle" id="needle"></div>
+            <div class="gauge-pivot"></div>
+        </div>
+
+        <div class="value-display">
+            <div class="value-number color-green" id="valueNumber">+75%</div>
+            <div class="value-unit">Retorno Atual</div>
+        </div>
+
+        <div class="scale-markers">
+            <div class="marker">
+                <div class="marker-line"></div>
+                <div class="marker-label">-100%</div>
+            </div>
+            <div class="marker">
+                <div class="marker-line"></div>
+                <div class="marker-label">-50%</div>
+            </div>
+            <div class="marker">
+                <div class="marker-line"></div>
+                <div class="marker-label">0%</div>
+            </div>
+            <div class="marker">
+                <div class="marker-line"></div>
+                <div class="marker-label">+50%</div>
+            </div>
+            <div class="marker">
+                <div class="marker-line"></div>
+                <div class="marker-label">+100%</div>
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <button class="action-btn btn-buy">Comprar</button>
+            <button class="action-btn btn-sell">Vender</button>
+        </div>
+    </div>
+
+    <script>
+        class SemiCircleGauge {
+            constructor() {
+                this.needle = document.getElementById('needle');
+                this.valueNumber = document.getElementById('valueNumber');
+                this.init();
+            }
+
+            init() {
+                this.updateValue(75);
+            }
+
+            updateValue(percent) {
+                // Mapeia -100 a +100 para -90 a +90 graus
+                const rotation = (percent / 100) * 90;
+                this.needle.style.transform = `translateX(-50%) rotate(${rotation}deg)`;
+                
+                this.valueNumber.textContent = `${percent >= 0 ? '+' : ''}${percent}%`;
+                this.valueNumber.style.color = percent >= 0 ? '#00ff88' : '#ff4757';
+                this.valueNumber.style.textShadow = percent >= 0 
+                    ? '0 0 30px rgba(0, 255, 136, 0.5)' 
+                    : '0 0 30px rgba(255, 71, 87, 0.5)';
+            }
+
+            simulateUpdates() {
+                setInterval(() => {
+                    const randomValue = Math.floor(Math.random() * 100) - 30;
+                    this.updateValue(randomValue);
+                }, 3000);
+            }
+        }
+
+        const gauge = new SemiCircleGauge();
+        gauge.simulateUpdates();
+    </script>
+</body>
+</html>

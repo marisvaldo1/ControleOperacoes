@@ -1,7 +1,8 @@
 // frontend/tests/pages/e2e-smoke.spec.js
-// Testes E2E de fumaça: simulam o usuário acessando o sistema,
-// tiram prints das telas e validam interações principais.
-// Screenshots são salvas em tests/results/screenshots/ (sempre).
+// Testes E2E de fumaça: simulam o usuário acessando o sistema.
+// Screenshots são opcionais: defina PLAYWRIGHT_SCREENSHOTS=1 ou E2E_SCREENSHOTS=always para habilitá-las.
+//   Exemplo direto: $env:PLAYWRIGHT_SCREENSHOTS="1"; npx playwright test
+//   Via dashboard de testes: Configurações → Captura de Tela → Sempre (passa E2E_SCREENSHOTS=always)
 
 import { test, expect } from "@playwright/test";
 import { createRequire } from "module";
@@ -15,17 +16,15 @@ const require   = createRequire(import.meta.url);
 const opcoesFx  = require("../fixtures/opcoes-fixtures.json");
 const cryptoFx  = require("../fixtures/crypto-fixtures.json");
 
-const BASE     = "http://localhost:8888";
-const SHOT_DIR = path.resolve(__dirname, "../../../tests/results/screenshots");
+const BASE        = "http://localhost:8888";
+const SHOT_DIR    = path.resolve(__dirname, "../../../tests/results/screenshots");
+const SCREENSHOTS = process.env.PLAYWRIGHT_SCREENSHOTS === "1"
+                 || process.env.E2E_SCREENSHOTS === "always";
 
-// Garante que o diretório de screenshots existe
-function ensureShotDir() {
-    if (!fs.existsSync(SHOT_DIR)) fs.mkdirSync(SHOT_DIR, { recursive: true });
-}
-
+// Captura screenshot apenas se PLAYWRIGHT_SCREENSHOTS=1
 async function shot(page, name) {
-    ensureShotDir();
-    // Usa path absoluto (SHOT_DIR já é absoluto via path.resolve)
+    if (!SCREENSHOTS) return;
+    if (!fs.existsSync(SHOT_DIR)) fs.mkdirSync(SHOT_DIR, { recursive: true });
     const file = path.join(SHOT_DIR, `${name}.png`);
     await page.screenshot({ path: file, fullPage: true });
     console.log(`  📸 Screenshot salvo: ${file}`);

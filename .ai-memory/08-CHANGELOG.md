@@ -1,21 +1,5 @@
 # 08 — CHANGELOG: Histórico de Mudanças
 
-> Formato: `## [Data] — Descrição breve`
-> Atualizado automaticamente por `memoryIA/scripts/ai_memory_update.py`
-
----
-
-## [2025-07-09] — Refatoração arquitetural major (v2.0.0)
-
-### Backend
-- **NOVO** `backend/db.py` — utilitários de banco centralizados (`get_db`, `init_db`, `_safe_add_columns`)
-- **NOVO** `backend/routes/` — 5 Flask Blueprints criados:
-  - `crypto.py` — CRUD crypto + suporte a `tipo_estrategia`
-  - `opcoes.py` — CRUD opcoes + `normalize_resultado_opcao` + refresh
-  - `config.py` — configurações + available-ais + config-ia
-  - `ai.py` — análise IA multi-provider (OpenRouter→Grok→DeepSeek→OpenAI→Gemini)
-  - `market.py` — proxy OpLab + yfinance + Binance + cache
-- **MODIFICADO** `backend/server.py` — refatorado de monolito (974 linhas) para thin entry point (60 linhas)
 - **MODIFICADO** `backend/tests/conftest.py` — mock atualizado de `server.get_db` para `db.get_db`
 - **MODIFICADO** `backend/tests/test_api_analyze.py` — patches atualizados de `server.requests` para `routes.ai.requests`
 - **NOVO** coluna `tipo_estrategia` em `operacoes_crypto` (DEFAULT: DUAL_INVESTMENT)
@@ -162,3 +146,55 @@
 - 10a5284 | 2026-02-11 | â€œMarisvaldoâ€ | Ajustes no registro de controle
 - 0fa948d | 2026-02-11 | â€œMarisvaldoâ€ | Janela de insigths
 - f624116 | 2026-02-11 | â€œMarisvaldoâ€ | Janela de insigths
+
+## 2026-03-16 14:18:17 — branch: master
+
+- fd1a31d | 2026-03-13 | â€œMarisvaldoâ€ | Tela de cryptos
+- c9934aa | 2026-03-13 | â€œMarisvaldoâ€ | Tela de cryptos
+- c8f34d5 | 2026-03-05 | â€œMarisvaldoâ€ | Tela de testes
+- 6482359 | 2026-02-23 | â€œMarisvaldoâ€ | Janela de totais finais
+- 308a0b6 | 2026-02-23 | â€œMarisvaldoâ€ | Janela de totais finais
+- 0d01e39 | 2026-02-18 | â€œMarisvaldoâ€ | Janela de totais finais
+- 8dd62bc | 2026-02-13 | â€œMarisvaldoâ€ | Janela de totais finais
+- 2c2b88a | 2026-02-12 | â€œMarisvaldoâ€ | Janela de insigths
+- 10a5284 | 2026-02-11 | â€œMarisvaldoâ€ | Ajustes no registro de controle
+- 0fa948d | 2026-02-11 | â€œMarisvaldoâ€ | Janela de insigths
+
+## 2026-03-16 14:19:21 — branch: master
+
+- fd1a31d | 2026-03-13 | â€œMarisvaldoâ€ | Tela de cryptos
+- c9934aa | 2026-03-13 | â€œMarisvaldoâ€ | Tela de cryptos
+- c8f34d5 | 2026-03-05 | â€œMarisvaldoâ€ | Tela de testes
+- 6482359 | 2026-02-23 | â€œMarisvaldoâ€ | Janela de totais finais
+- 308a0b6 | 2026-02-23 | â€œMarisvaldoâ€ | Janela de totais finais
+- 0d01e39 | 2026-02-18 | â€œMarisvaldoâ€ | Janela de totais finais
+- 8dd62bc | 2026-02-13 | â€œMarisvaldoâ€ | Janela de totais finais
+- 2c2b88a | 2026-02-12 | â€œMarisvaldoâ€ | Janela de insigths
+- 10a5284 | 2026-02-11 | â€œMarisvaldoâ€ | Ajustes no registro de controle
+- 0fa948d | 2026-02-11 | â€œMarisvaldoâ€ | Janela de insigths
+
+## 2026-03-17 16:20:44 — branch: master
+
+- fd1a31d | 2026-03-13 | â€œMarisvaldoâ€ | Tela de cryptos
+- c9934aa | 2026-03-13 | â€œMarisvaldoâ€ | Tela de cryptos
+- c8f34d5 | 2026-03-05 | â€œMarisvaldoâ€ | Tela de testes
+- 6482359 | 2026-02-23 | â€œMarisvaldoâ€ | Janela de totais finais
+- 308a0b6 | 2026-02-23 | â€œMarisvaldoâ€ | Janela de totais finais
+- 0d01e39 | 2026-02-18 | â€œMarisvaldoâ€ | Janela de totais finais
+- 8dd62bc | 2026-02-13 | â€œMarisvaldoâ€ | Janela de totais finais
+- 2c2b88a | 2026-02-12 | â€œMarisvaldoâ€ | Janela de insigths
+- 10a5284 | 2026-02-11 | â€œMarisvaldoâ€ | Ajustes no registro de controle
+- 0fa948d | 2026-02-11 | â€œMarisvaldoâ€ | Janela de insigths
+
+## 2026-03-18 15:38:06 — branch: master
+
+- fd1a31d | 2026-03-13 | â€œMarisvaldoâ€ | Tela de cryptos
+- c9934aa | 2026-03-13 | â€œMarisvaldoâ€ | Tela de cryptos
+- c8f34d5 | 2026-03-05 | â€œMarisvaldoâ€ | Tela de testes
+- 6482359 | 2026-02-23 | â€œMarisvaldoâ€ | Janela de totais finais
+- 308a0b6 | 2026-02-23 | â€œMarisvaldoâ€ | Janela de totais finais
+- 0d01e39 | 2026-02-18 | â€œMarisvaldoâ€ | Janela de totais finais
+- 8dd62bc | 2026-02-13 | â€œMarisvaldoâ€ | Janela de totais finais
+- 2c2b88a | 2026-02-12 | â€œMarisvaldoâ€ | Janela de insigths
+- 10a5284 | 2026-02-11 | â€œMarisvaldoâ€ | Ajustes no registro de controle
+- 0fa948d | 2026-02-11 | â€œMarisvaldoâ€ | Janela de insigths

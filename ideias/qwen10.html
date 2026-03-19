@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Opções Dashboard - Versão 1</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            border: 1px solid #334155;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            color: #10b981;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .card {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #334155;
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #334155;
+        }
+
+        .card-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .card-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #f1f5f9;
+        }
+
+        .gauge-wrapper {
+            position: relative;
+            width: 220px;
+            height: 220px;
+            margin: 0 auto 20px;
+        }
+
+        .gauge-svg {
+            transform: rotate(-90deg);
+            width: 100%;
+            height: 100%;
+        }
+
+        .gauge-bg {
+            fill: none;
+            stroke: #334155;
+            stroke-width: 20;
+        }
+
+        .gauge-fill {
+            fill: none;
+            stroke-width: 20;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1.5s ease;
+        }
+
+        .gauge-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .gauge-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: #10b981;
+        }
+
+        .gauge-label {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-top: 5px;
+        }
+
+        .info-value {
+            text-align: center;
+            padding: 30px 0;
+        }
+
+        .info-big {
+            font-size: 42px;
+            font-weight: 800;
+            color: #10b981;
+            text-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .info-medium {
+            font-size: 28px;
+            font-weight: 700;
+            color: #f1f5f9;
+            margin: 10px 0;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .badge-success {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border: 1px solid #10b981;
+        }
+
+        .badge-danger {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid #ef4444;
+        }
+
+        .linear-gauge {
+            margin: 20px 0;
+        }
+
+        .linear-track {
+            height: 10px;
+            background: #334155;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .linear-fill {
+            height: 100%;
+            border-radius: 5px;
+            transition: width 1.5s ease;
+        }
+
+        .linear-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 11px;
+            color: #94a3b8;
+        }
+
+        .stats-row {
+            display: flex;
+            justify-content: space-around;
+            padding-top: 15px;
+            border-top: 1px solid #334155;
+            margin-top: 15px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #f1f5f9;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-top: 3px;
+        }
+
+        .time-box {
+            background: #0f172a;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .time-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0;
+        }
+
+        .time-label {
+            color: #94a3b8;
+            font-size: 13px;
+        }
+
+        .time-value {
+            font-weight: 600;
+            color: #f1f5f9;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: #334155;
+            border-radius: 4px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #3b82f6);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .exercise-info {
+            background: #0f172a;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .exercise-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #334155;
+        }
+
+        .exercise-row:last-child {
+            border-bottom: none;
+        }
+
+        .text-success { color: #10b981; }
+        .text-danger { color: #ef4444; }
+        .text-warning { color: #f59e0b; }
+        .text-info { color: #3b82f6; }
+
+        .bg-green { background: rgba(16, 185, 129, 0.2); }
+        .bg-red { background: rgba(239, 68, 68, 0.2); }
+        .bg-blue { background: rgba(59, 130, 246, 0.2); }
+        .bg-purple { background: rgba(168, 85, 247, 0.2); }
+        .bg-orange { background: rgba(245, 158, 11, 0.2); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Controle de Opções - PETR4</h1>
+            <p>Monitoramento em Tempo Real da Operação</p>
+        </div>
+
+        <div class="grid">
+            <!-- 1. Cotação Atual -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon bg-blue">📈</div>
+                    <div class="card-title">Cotação Atual</div>
+                </div>
+                <div class="gauge-wrapper">
+                    <svg class="gauge-svg" viewBox="0 0 200 200">
+                        <circle class="gauge-bg" cx="100" cy="100" r="80"/>
+                        <circle class="gauge-fill" id="gaugeQuote" cx="100" cy="100" r="80" 
+                            stroke="#3b82f6" stroke-dasharray="502" stroke-dashoffset="502"/>
+                    </svg>
+                    <div class="gauge-center">
+                        <div class="gauge-value" id="quoteValue">R$ 46,14</div>
+                        <div class="gauge-label">Preço Mercado</div>
+                    </div>
+                </div>
+                <div class="stats-row">
+                    <div class="stat-item">
+                        <div class="stat-value text-success">+1.2%</div>
+                        <div class="stat-label">Variação</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">46,80</div>
+                        <div class="stat-label">Máxima</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Prêmio Recebido -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon bg-green">💰</div>
+                    <div class="card-title">Prêmio Recebido</div>
+                </div>
+                <div class="info-value">
+                    <div class="info-big">R$ 0,58</div>
+                    <div style="color: #94a3b8; margin-top: 8px;">Por opção</div>
+                </div>
+                <div class="linear-gauge">
+                    <div class="linear-track">
+                        <div class="linear-fill" style="width: 100%; background: #10b981;"></div>
+                    </div>
+                    <div class="linear-labels">
+                        <span>Entrada</span>
+                        <span>100% Creditado</span>
+                    </div>
+                </div>
+                <div class="stats-row">
+                    <div class="stat-item">
+                        <div class="stat-value text-success">R$ 348,00</div>
+                        <div class="stat-label">Total (600 opc)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Strike -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon bg-orange">🎯</div>
+                    <div class="card-title">Strike (Preço Exercício)</div>
+                </div>
+                <div class="info-value">
+                    <div class="info-medium">R$ 44,65</div>
+                    <span class="badge badge-success">PUT - ITM</span>
+                </div>
+                <div class="exercise-info">
+                    <div class="exercise-row">
+                        <span class="time-label">Tipo</span>
+                        <span class="time-value">PUT</span>
+                    </div>
+                    <div class="exercise-row">
+                        <span class="time-label">Breakeven</span>
+                        <span class="time-value text-success">R$ 44,07</span>
+                    </div>
+                    <div class="exercise-row">
+                        <span class="time-label">Multiplicador</span>
+                        <span class="time-value">100</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. Prêmio Atual -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon bg-purple">📊</div>
+                    <div class="card-title">Prêmio Atual</div>
+                </div>
+                <div class="gauge-wrapper">
+                    <svg class="gauge-svg" viewBox="0 0 200 200">
+                        <circle class="gauge-bg" cx="100" cy="100" r="80"/>
+                        <circle class="gauge-fill" id="gaugePremium" cx="100" cy="100" r="80" 
+                            stroke="#a855f7" stroke-dasharray="502" stroke-dashoffset="502"/>
+                    </svg>
+                    <div class="gauge-center">
+                        <div class="gauge-value" id="premiumValue" style="color: #a855f7;">R$ 0,52</div>
+                        <div class="gauge-label">Valor Atual</div>
+                    </div>
+                </div>
+                <div class="linear-gauge">
+                    <div class="linear-track">
+                        <div class="linear-fill" id="premiumBar" style="width: 52%; background: #a855f7;"></div>
+                    </div>
+                    <div class="linear-labels">
+                        <span>R$ 0,00</span>
+                        <span>R$ 1,00</span>
+                    </div>
+                </div>
+                <div class="stats-row">
+                    <div class="stat-item">
+                        <div class="stat-value text-success">R$ 312,00</div>
+                        <div class="stat-label">Valor Posição</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. Distância Strike → Cotação -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon bg-green">📏</div>
+                    <div class="card-title">Distância Strike → Cotação</div>
+                </div>
+                <div class="gauge-wrapper">
+                    <svg class="gauge-svg" viewBox="0 0 200 200">
+                        <circle class="gauge-bg" cx="100" cy="100" r="80"/>
+                        <circle class="gauge-fill" id="gaugeDistance" cx="100" cy="100" r="80" 
+                            stroke="#10b981" stroke-dasharray="502" stroke-dashoffset="502"/>
+                    </svg>
+                    <div class="gauge-center">
+                        <div class="gauge-value text-success" id="distanceValue">+3.34%</div>
+                        <div class="gauge-label">Acima do Strike</div>
+                    </div>
+                </div>
+                <div class="linear-gauge">
+                    <div class="linear-track">
+                        <div class="linear-fill" id="distanceBar" style="width: 67%; background: linear-gradient(90deg, #ef4444, #f59e0b, #10b981);"></div>
+                    </div>
+                    <div class="linear-labels">
+                        <span>-5%</span>
+                        <span>0%</span>
+                        <span>+5%</span>
+                    </div>
+                </div>
+                <div style="text-align: center; margin-top: 10px;">
+                    <span class="badge badge-success">ITM: +R$ 1,49</span>
+                </div>
+            </div>
+
+            <!-- 6. % Variação do Prêmio -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon bg-green">📉</div>
+                    <div class="card-title">Variação do Prêmio</div>
+                </div>
+                <div class="gauge-wrapper">
+                    <svg class="gauge-svg" viewBox="0 0 200 200">
+                        <circle class="gauge-bg" cx="100" cy="100" r="80"/>
+                        <circle class="gauge-fill" id="gaugePremiumVar" cx="100" cy="100" r="80" 
+                            stroke="#10b981" stroke-dasharray="502" stroke-dashoffset="502"/>
+                    </svg>
+                    <div class="gauge-center">
+                        <div class="gauge-value text-success" id="premiumVarValue">+10.3%</div>
+                        <div class="gauge-label">Lucro no Prêmio</div>
+                    </div>
+                </div>
+                <div style="background: rgba(16,185,129,0.1); border-radius: 8px; padding: 12px; margin: 15px 0;">
+                    <div style="font-size: 11px; color: #94a3b8; margin-bottom: 5px;">Fórmula:</div>
+                    <div style="font-family: monospace; font-size: 12px; color: #e2e8f0;">
+                        (0,58 - 0,52) / 0,58 = <strong class="text-success">+10.3%</strong>
+                    </div>
+                </div>
+                <div class="stats-row">
+                    <div class="stat-item">
+                        <div class="stat-value text-success">R$ 36,00</div>
+                        <div class="stat-label">Lucro Parcial</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 7. Data de Exercício -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon bg-blue">📅</div>
+                    <div class="card-title">Data de Exercício</div>
+                </div>
+                <div class="info-value">
+                    <div class="info-medium" style="color: #3b82f6;">20/03/2026</div>
+                    <div style="color: #94a3b8; margin-top: 8px;">Vencimento</div>
+                </div>
+                <div class="time-box">
+                    <div class="time-row">
+                        <span class="time-label">Data Hoje</span>
+                        <span class="time-value">17/03/2026</span>
+                    </div>
+                    <div class="time-row">
+                        <span class="time-label">Dias Restantes</span>
+                        <span class="time-value text-warning">3 dias</span>
+                    </div>
+                    <div class="time-row">
+                        <span class="time-label">Dias Decorridos</span>
+                        <span class="time-value">12 dias</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 8. Dias Corridos (Gauge) -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon bg-orange">⏱️</div>
+                    <div class="card-title">Tempo Decorrido</div>
+                </div>
+                <div class="gauge-wrapper">
+                    <svg class="gauge-svg" viewBox="0 0 200 200">
+                        <circle class="gauge-bg" cx="100" cy="100" r="80"/>
+                        <circle class="gauge-fill" id="gaugeTime" cx="100" cy="100" r="80" 
+                            stroke="#f59e0b" stroke-dasharray="502" stroke-dashoffset="502"/>
+                    </svg>
+                    <div class="gauge-center">
+                        <div class="gauge-value text-warning" id="timePercent">80%</div>
+                        <div class="gauge-label">Tempo Decorrido</div>
+                    </div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="timeFill" style="width: 80%;"></div>
+                </div>
+                <div style="text-align: center; color: #94a3b8; font-size: 12px; margin-top: 10px;">
+                    Theta Decay: <span class="text-warning">-R$ 2,50/dia</span>
+                </div>
+            </div>
+
+            <!-- 9. Exercício -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon" style="background: linear-gradient(135deg, #10b981, #3b82f6);">✅</div>
+                    <div class="card-title">Situação de Exercício</div>
+                </div>
+                <div style="text-align: center; padding: 25px 0;">
+                    <div style="font-size: 48px; margin-bottom: 15px;">🟢</div>
+                    <div style="font-size: 20px; font-weight: 700; color: #10b981;">
+                        IN-THE-MONEY
+                    </div>
+                    <div style="color: #94a3b8; margin-top: 10px; font-size: 14px;">
+                        PUT: Cotação > Strike
+                    </div>
+                </div>
+                <div class="exercise-info">
+                    <div class="exercise-row">
+                        <span class="time-label">Prob. Exercício</span>
+                        <span class="time-value text-success">85%</span>
+                    </div>
+                    <div class="exercise-row">
+                        <span class="time-label">Delta</span>
+                        <span class="time-value">-0.68</span>
+                    </div>
+                    <div class="exercise-row">
+                        <span class="time-label">Valor Intrínseco</span>
+                        <span class="time-value text-success">R$ 1,49</span>
+                    </div>
+                    <div class="exercise-row">
+                        <span class="time-label">Valor Extrínseco</span>
+                        <span class="time-value text-info">R$ 0,97</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button style="flex:1; padding: 12px; background: #10b981; color: #0f172a; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                        Encerrar
+                    </button>
+                    <button style="flex:1; padding: 12px; background: transparent; color: #e2e8f0; border: 1px solid #334155; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                        Ajustar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class OptionsDashboard {
+            constructor() {
+                this.circumference = 502;
+                this.init();
+                this.startUpdates();
+            }
+
+            init() {
+                this.updateGauge('gaugeQuote', 75, '#3b82f6');
+                this.updateGauge('gaugePremium', 52, '#a855f7');
+                this.updateGauge('gaugeDistance', 67, '#10b981');
+                this.updateGauge('gaugePremiumVar', 10, '#10b981');
+                this.updateGauge('gaugeTime', 80, '#f59e0b');
+            }
+
+            updateGauge(id, percent, color) {
+                const el = document.getElementById(id);
+                const offset = this.circumference - (percent / 100 * this.circumference);
+                el.style.strokeDasharray = this.circumference;
+                el.style.strokeDashoffset = this.circumference;
+                el.style.stroke = color;
+                setTimeout(() => {
+                    el.style.strokeDashoffset = offset;
+                }, 300);
+            }
+
+            startUpdates() {
+                setInterval(() => {
+                    const quote = 46.14 + (Math.random() - 0.5) * 0.2;
+                    document.getElementById('quoteValue').textContent = `R$ ${quote.toFixed(2)}`;
+                    
+                    const distance = ((quote - 44.65) / 44.65) * 100;
+                    document.getElementById('distanceValue').textContent = `${distance > 0 ? '+' : ''}${distance.toFixed(2)}%`;
+                }, 3000);
+            }
+        }
+
+        new OptionsDashboard();
+    </script>
+</body>
+</html>

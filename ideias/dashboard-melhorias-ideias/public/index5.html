@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Trading - Comparativo de Estratégias</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0e27;
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+        }
+
+        h1 {
+            font-size: 36px;
+            font-weight: 700;
+            background: linear-gradient(90deg, #00f2fe, #4facfe, #00f2fe);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shimmer 3s linear infinite;
+            margin-bottom: 10px;
+        }
+
+        @keyframes shimmer {
+            to { background-position: 200% center; }
+        }
+
+        .subtitle {
+            color: #888;
+            font-size: 16px;
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .strategy-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            padding: 30px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .strategy-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 242, 254, 0.3);
+        }
+
+        .strategy-card.best {
+            border-color: #00ff88;
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.3);
+        }
+
+        .strategy-card.best::before {
+            content: '⭐ MELHOR OPÇÃO';
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(90deg, #00ff88, #00f2fe);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #000;
+        }
+
+        .strategy-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .strategy-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .strategy-name {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .strategy-type {
+            font-size: 14px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .strategy-metrics {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+        }
+
+        .metric-label {
+            font-size: 13px;
+            color: #888;
+        }
+
+        .metric-value {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .positive { color: #00ff88; }
+        .negative { color: #ff4757; }
+        .neutral { color: #4facfe; }
+        .warning { color: #ffc107; }
+
+        .radar-chart {
+            width: 200px;
+            height: 200px;
+            margin: 20px auto;
+            position: relative;
+        }
+
+        .radar-svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .strategy-score {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .score-value {
+            font-size: 48px;
+            font-weight: bold;
+            background: linear-gradient(90deg, #00f2fe, #4facfe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .score-label {
+            font-size: 14px;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .action-button {
+            width: 100%;
+            padding: 15px;
+            border-radius: 12px;
+            border: none;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(90deg, #00ff88, #00f2fe);
+            color: #000;
+        }
+
+        .btn-secondary {
+            background: rgba(79, 172, 254, 0.2);
+            color: #4facfe;
+            border: 2px solid #4facfe;
+        }
+
+        .btn-warning {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+            border: 2px solid #ffc107;
+        }
+
+        .action-button:hover {
+            transform: scale(1.05);
+        }
+
+        .comparison-table {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 30px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            padding: 15px;
+            font-size: 13px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .best-row {
+            background: rgba(0, 255, 136, 0.05);
+        }
+
+        .decision-matrix {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .matrix-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .matrix-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .pros-cons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .pro-item, .con-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            border-radius: 10px;
+        }
+
+        .pro-item {
+            background: rgba(0, 255, 136, 0.1);
+            border-left: 3px solid #00ff88;
+        }
+
+        .con-item {
+            background: rgba(255, 71, 87, 0.1);
+            border-left: 3px solid #ff4757;
+        }
+
+        .item-icon {
+            font-size: 20px;
+        }
+
+        .item-text {
+            font-size: 14px;
+        }
+
+        .recommendation-banner {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 242, 254, 0.2));
+            border: 2px solid #00ff88;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .banner-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .banner-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #00ff88;
+            margin-bottom: 15px;
+        }
+
+        .banner-desc {
+            font-size: 16px;
+            color: #ccc;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⚖️ Comparativo de Estratégias</h1>
+            <p class="subtitle">Análise completa para tomada de decisão</p>
+        </header>
+
+        <!-- Recomendação Principal -->
+        <div class="recommendation-banner">
+            <div class="banner-icon">🏆</div>
+            <div class="banner-title">RECOMENDAÇÃO: MANTER POSIÇÃO ATUAL</div>
+            <div class="banner-desc">
+                Com base na análise de múltiplos fatores (PoP 78%, Theta favorável, 40% de lucro já realizado),
+                a melhor estratégia é <strong>MANTER a posição atual em PETR4</strong> e considerar fechamento
+                quando atingir 50-60% do lucro máximo.
+            </div>
+        </div>
+
+        <!-- Cards de Estratégias -->
+        <div class="comparison-grid">
+            <!-- Estratégia 1: Manter -->
+            <div class="strategy-card best">
+                <div class="strategy-header">
+                    <div class="strategy-icon">💎</div>
+                    <div class="strategy-name">MANTER</div>
+                    <div class="strategy-type">Estratégia Atual</div>
+                </div>
+
+                <div class="strategy-metrics">
+                    <div class="metric-row">
+                        <span class="metric-label">Lucro Atual</span>
+                        <span class="metric-value positive">R$ 114 (40%)</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Lucro Projetado</span>
+                        <span class="metric-value positive">R$ 185 (65%)</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">PoP</span>
+                        <span class="metric-value positive">78%</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Risco</span>
+                        <span class="metric-value positive">BAIXO</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Theta Diário</span>
+                        <span class="metric-value positive">+R$ 8/dia</span>
+                    </div>
+                </div>
+
+                <div class="strategy-score">
+                    <div class="score-value">8.5</div>
+                    <div class="score-label">Score Geral</div>
+                </div>
+
+                <button class="action-button btn-primary">✓ ESTRATÉGIA RECOMENDADA</button>
+            </div>
+
+            <!-- Estratégia 2: Fechar Agora -->
+            <div class="strategy-card">
+                <div class="strategy-header">
+                    <div class="strategy-icon">💰</div>
+                    <div class="strategy-name">FECHAR AGORA</div>
+                    <div class="strategy-type">Realizar Lucro</div>
+                </div>
+
+                <div class="strategy-metrics">
+                    <div class="metric-row">
+                        <span class="metric-label">Lucro Garantido</span>
+                        <span class="metric-value positive">R$ 114 (40%)</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Lucro Perdido</span>
+                        <span class="metric-value warning">R$ 71 (25%)</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Risco</span>
+                        <span class="metric-value positive">ZERO</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Capital Liberado</span>
+                        <span class="metric-value neutral">R$ 2.828</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Oportunidade</span>
+                        <span class="metric-value warning">Perdida</span>
+                    </div>
+                </div>
+
+                <div class="strategy-score">
+                    <div class="score-value">7.2</div>
+                    <div class="score-label">Score Geral</div>
+                </div>
+
+                <button class="action-button btn-secondary">Considerar se conservador</button>
+            </div>
+
+            <!-- Estratégia 3: Rolagem -->
+            <div class="strategy-card">
+                <div class="strategy-header">
+                    <div class="strategy-icon">🔄</div>
+                    <div class="strategy-name">ROLAGEM</div>
+                    <div class="strategy-type">Fechar + Abrir Nova</div>
+                </div>
+
+                <div class="strategy-metrics">
+                    <div class="metric-row">
+                        <span class="metric-label">Lucro Realizado</span>
+                        <span class="metric-value positive">R$ 114 (40%)</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Novo Prêmio</span>
+                        <span class="metric-value neutral">R$ 2,50</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Novo PoP</span>
+                        <span class="metric-value warning">72%</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Custos</span>
+                        <span class="metric-value negative">R$ 15</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Complexidade</span>
+                        <span class="metric-value warning">ALTA</span>
+                    </div>
+                </div>
+
+                <div class="strategy-score">
+                    <div class="score-value">6.8</div>
+                    <div class="score-label">Score Geral</div>
+                </div>
+
+                <button class="action-button btn-warning">Apenas se necessário</button>
+            </div>
+        </div>
+
+        <!-- Tabela Comparativa Detalhada -->
+        <div class="comparison-table">
+            <h2 style="font-size: 24px; margin-bottom: 25px;">📊 Comparativo Detalhado</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Critério</th>
+                        <th>Manter</th>
+                        <th>Fechar Agora</th>
+                        <th>Rolagem</th>
+                        <th>Melhor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="best-row">
+                        <td><strong>Lucro Imediato</strong></td>
+                        <td class="positive">R$ 114</td>
+                        <td class="positive">R$ 114</td>
+                        <td class="positive">R$ 114</td>
+                        <td>Empate</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Lucro Potencial</strong></td>
+                        <td class="positive">R$ 185</td>
+                        <td class="warning">R$ 114</td>
+                        <td class="neutral">R$ 250</td>
+                        <td class="neutral">Rolagem</td>
+                    </tr>
+                    <tr class="best-row">
+                        <td><strong>Probabilidade Sucesso</strong></td>
+                        <td class="positive">78%</td>
+                        <td class="positive">100%</td>
+                        <td class="warning">72%</td>
+                        <td class="positive">Fechar</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Risco</strong></td>
+                        <td class="positive">Baixo</td>
+                        <td class="positive">Zero</td>
+                        <td class="warning">Médio</td>
+                        <td class="positive">Fechar</td>
+                    </tr>
+                    <tr class="best-row">
+                        <td><strong>Esforço</strong></td>
+                        <td class="positive">Nenhum</td>
+                        <td class="neutral">Baixo</td>
+                        <td class="negative">Alto</td>
+                        <td class="positive">Manter</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Custos Operacionais</strong></td>
+                        <td class="positive">R$ 0</td>
+                        <td class="neutral">R$ 5</td>
+                        <td class="negative">R$ 15</td>
+                        <td class="positive">Manter</td>
+                    </tr>
+                    <tr class="best-row">
+                        <td><strong>Theta Favorável</strong></td>
+                        <td class="positive">Sim (+R$8/d)</td>
+                        <td class="neutral">N/A</td>
+                        <td class="warning">Reinicia</td>
+                        <td class="positive">Manter</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Matriz de Decisão -->
+        <div class="decision-matrix">
+            <div class="matrix-card">
+                <div class="matrix-title">
+                    <span>✅</span>
+                    <span>Prós de MANTER</span>
+                </div>
+                <div class="pros-cons">
+                    <div class="pro-item">
+                        <span class="item-icon">💰</span>
+                        <span class="item-text">Potencial de mais R$ 71 de lucro (25% adicional)</span>
+                    </div>
+                    <div class="pro-item">
+                        <span class="item-icon">⏰</span>
+                        <span class="item-text">Theta trabalha a favor: +R$ 8 por dia</span>
+                    </div>
+                    <div class="pro-item">
+                        <span class="item-icon">📊</span>
+                        <span class="item-text">Alta probabilidade de sucesso (78%)</span>
+                    </div>
+                    <div class="pro-item">
+                        <span class="item-icon">🎯</span>
+                        <span class="item-text">Distância segura do strike (2,03% OTM)</span>
+                    </div>
+                    <div class="pro-item">
+                        <span class="item-icon">💸</span>
+                        <span class="item-text">Zero custos adicionais</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="matrix-card">
+                <div class="matrix-title">
+                    <span>⚠️</span>
+                    <span>Contras de MANTER</span>
+                </div>
+                <div class="pros-cons">
+                    <div class="con-item">
+                        <span class="item-icon">📉</span>
+                        <span class="item-text">Risco de reversão do mercado</span>
+                    </div>
+                    <div class="con-item">
+                        <span class="item-icon">⏳</span>
+                        <span class="item-text">Capital fica preso por mais 15 dias</span>
+                    </div>
+                    <div class="con-item">
+                        <span class="item-icon">🎲</span>
+                        <span class="item-text">22% de chance de exercício</span>
+                    </div>
+                    <div class="con-item">
+                        <span class="item-icon">😰</span>
+                        <span class="item-text">Stress de acompanhar a operação</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Animação de entrada
+        window.onload = () => {
+            const cards = document.querySelectorAll('.strategy-card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(30px)';
+                setTimeout(() => {
+                    card.style.transition = 'all 0.5s';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 200);
+            });
+        };
+    </script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 # AI PROJECT SNAPSHOT
 > Cole todo este arquivo na IA para retomar o projeto sem perder contexto.
-> Gerado em: 2026-03-13 16:51:48 | Branch: master
+> Gerado em: 2026-03-18 15:38:08 | Branch: master
 
 ---
 
@@ -12,163 +12,29 @@
 ---
 
 ## GIT — últimos 5 commits
+fd1a31d 2026-03-13 Tela de cryptos
 c9934aa 2026-03-13 Tela de cryptos
 c8f34d5 2026-03-05 Tela de testes
 6482359 2026-02-23 Janela de totais finais
 308a0b6 2026-02-23 Janela de totais finais
-0d01e39 2026-02-18 Janela de totais finais
 
 ## Arquivos alterados no último commit
-.ai-memory/00-ENTRYPOINT.md
-.ai-memory/01-CONTEXT.md
-.ai-memory/02-ARCHITECTURE.md
-.ai-memory/03-TECH-STACK.md
-.ai-memory/04-RULES.md
 .ai-memory/05-STATE.md
-.ai-memory/06-TASKS.md
 .ai-memory/08-CHANGELOG.md
 .ai-memory/09-PROMPTS.md
 .ai-memory/prompts_log.txt
 .ai-memory/snapshots/latest.md
-.githooks/post-checkout
-.githooks/post-commit
-.githooks/post-merge
-.github/copilot-instructions.md
-.gitignore
-.vscode/settings.json
-.vscode/tasks.json
-ARQUITETURA.md
-GUIA_TESTES.md
 _setup_arch.py
-arquivos/GUIA_CRIAR_TESTES_E2E.md
-backend/__pycache__/db.cpython-313.pyc
-backend/__pycache__/server.cpython-313.pyc
-backend/data/controle_operacoes - Copia.db
 backend/data/controle_operacoes.db
-backend/db.py
-backend/models/__init__.py
-backend/routes/__init__.py
-backend/routes/__pycache__/__init__.cpython-313.pyc
-backend/routes/__pycache__/ai.cpython-313.pyc
-backend/routes/__pycache__/config.cpython-313.pyc
-backend/routes/__pycache__/crypto.cpython-313.pyc
-backend/routes/__pycache__/market.cpython-313.pyc
 backend/routes/__pycache__/opcoes.cpython-313.pyc
-backend/routes/ai.py
-backend/routes/config.py
-backend/routes/crypto.py
-backend/routes/market.py
 backend/routes/opcoes.py
-backend/server.py
-backend/server.py.bak
-backend/tests/__pycache__/conftest.cpython-313-pytest-8.3.4.pyc
-backend/tests/__pycache__/conftest.cpython-313-pytest-8.3.4.pyc.52116
-backend/tests/__pycache__/conftest.cpython-313-pytest-9.0.2.pyc
-backend/tests/__pycache__/test_api_analyze.cpython-313-pytest-9.0.2.pyc
-backend/tests/__pycache__/test_api_crypto.cpython-313-pytest-9.0.2.pyc
-backend/tests/__pycache__/test_api_opcoes.cpython-313-pytest-9.0.2.pyc
-backend/tests/conftest.py
-backend/tests/crypto/__init__.py
-backend/tests/opcoes/__init__.py
-backend/tests/test_api_analyze.py
-backend/tests/test_api_crypto.py
-frontend/components/modals/crypto/modal-dashboard-crypto.html
+backend/tests/test_api_opcoes.py
 frontend/components/modals/opcoes/modal-analise.html
-frontend/css/crypto.css
-frontend/css/crypto/crypto.css
-frontend/css/modal-analise.css
-frontend/css/opcoes/detalhe-opcoes.css
-frontend/css/opcoes/modal-detalhes.css
-frontend/css/opcoes/modal-resultado-total.css
 frontend/css/opcoes/opcoes.css
-frontend/css/shared/modal-analise.css
-frontend/css/shared/style.css
-frontend/css/shared/y2-styles.css
-frontend/css/style.css
 frontend/html/crypto.html
-frontend/html/detalhe-opcoes.html
 frontend/html/opcoes.html
-frontend/js/core/global.js
-frontend/js/core/layout.js
-frontend/js/crypto.js
-frontend/js/crypto/crypto.js
-frontend/js/crypto/modal-dashboard-crypto.js
-frontend/js/detalhe-opcoes.js
-frontend/js/modal-analise.js
-frontend/js/opcoes.js
-frontend/js/opcoes/detalhe-opcoes.js
-frontend/js/opcoes/modal-resultado-total.js
-frontend/js/opcoes/modal-saldo-medio.js
-frontend/js/opcoes/modal-total-operacoes.js
 frontend/js/opcoes/opcoes.js
-frontend/js/opcoes/opcoes_patch.js
 frontend/js/shared/modal-analise.js
-frontend/js/shared/technical-analysis.js
-frontend/tests/fixtures/crypto-fixtures.json
-frontend/tests/fixtures/opcoes-fixtures.json
-frontend/tests/pages/crypto.spec.js
-frontend/tests/pages/crypto/crypto-assets.spec.js
-frontend/tests/pages/e2e-smoke.spec.js
-frontend/tests/pages/e2e-usuario.spec.js
-frontend/tests/pages/opcoes/opcoes-assets.spec.js
-ideias/14.html
-ideias/15.html
-ideias/16.html
-ideias/MinMax2.html
-ideias/MinMax3.html
-ideias/MinMax4.html
-ideias/MinMax5.html
-ideias/Zai1.html
-ideias/conceito1-painel-detalhado.html
-ideias/conceito10-cyberhud-gamer.html
-ideias/conceito11-quant-terminal.html
-ideias/conceito12-glass-widget.html
-ideias/conceito13-classic-finance.html
-ideias/conceito14-dashboard-card.html
-ideias/conceito15-minimal-card.html
-ideias/conceito16-bento-grid.html
-ideias/conceito2-dashboard-grid.html
-ideias/conceito3-tabela-comparativa.html
-ideias/conceito4-anel-probabilidade.html
-ideias/conceito5-curva-payoff.html
-ideias/conceito6-neon-glass.html
-ideias/conceito7-neo-brutalist.html
-ideias/conceito8-soft-minimalist.html
-ideias/conceito9-pro-trader.html
-ideias/modal-posicao-put.html
-ideias/package.zip
-ideias/posicoesAtuais.html
-memoryIA/ai_update.bat
-memoryIA/log_prompt.bat
-memoryIA/scripts/ai_memory_update.py
-memoryIA/scripts/ai_snapshot.py
-memoryIA/scripts/prompt_logger.py
-memoryIA/setup_ai_memory.bat
-memoryIA/templates/ADR-template.md
-package.json
-playwright.config.js
-playwright.usuario.config.js
-tests/dashboardTestes.css
-tests/dashboardTestes.html
-tests/dashboardTestes.js
-tests/results/ai_results.json
-tests/results/playwright_results.json
-tests/results/pytest_results.json
-tests/results/screenshots/e2e-crypto-assets-ok.png
-tests/results/screenshots/e2e-crypto-carregada.png
-tests/results/screenshots/e2e-crypto-inicial.png
-tests/results/screenshots/e2e-crypto-tabela-visivel.png
-tests/results/screenshots/e2e-opcoes-assets-ok.png
-tests/results/screenshots/e2e-opcoes-carregada.png
-tests/results/screenshots/e2e-opcoes-inicial.png
-tests/results/screenshots/e2e-opcoes-tabela-visivel.png
-tests/results/screenshots/e2e-ui-interacoes-opcoes.png
-tests/results/screenshots/e2e-ui-opcoes-com-dados.png
-tests/results/screenshots/usuario-opcoes-delete04-apos-excluir-id64.png
-tests/results/screenshots/usuario-opcoes-delete04-lista-antes-id64.png
-tests/results/screenshots/usuario-opcoes-delete04-swal-confirm-id64.png
-tests/results/screenshots/usuario-opcoes-pagina-inicial.png
-tests/test_server.py
 
 ---
 
@@ -315,10 +181,11 @@ ControleOperacoes/
 ## ESTADO ATUAL (auto)
 # STATE (auto)
 
-Última atualização: 2026-03-13 16:51:47
+Última atualização: 2026-03-18 15:38:06
 Branch: master
 
 ## Commits recentes (últimos 10)
+  fd1a31d | 2026-03-13 | â€œMarisvaldoâ€ | Tela de cryptos
   c9934aa | 2026-03-13 | â€œMarisvaldoâ€ | Tela de cryptos
   c8f34d5 | 2026-03-05 | â€œMarisvaldoâ€ | Tela de testes
   6482359 | 2026-02-23 | â€œMarisvaldoâ€ | Janela de totais finais
@@ -328,25 +195,29 @@ Branch: master
   2c2b88a | 2026-02-12 | â€œMarisvaldoâ€ | Janela de insigths
   10a5284 | 2026-02-11 | â€œMarisvaldoâ€ | Ajustes no registro de controle
   0fa948d | 2026-02-11 | â€œMarisvaldoâ€ | Janela de insigths
-  f624116 | 2026-02-11 | â€œMarisvaldoâ€ | Janela de insigths
 
 ## Working tree
   M .ai-memory/05-STATE.md
    M .ai-memory/08-CHANGELOG.md
+   M .ai-memory/09-PROMPTS.md
+   M .ai-memory/prompts_log.txt
    M .ai-memory/snapshots/latest.md
-   D _setup_arch.py
+   M .gitignore
+   M backend/data/controle_operacoes.db
+   M backend/routes/__pycache__/crypto.cpython-313.pyc
+   M backend/routes/crypto.py
+   M backend/tests/__pycache__/test_api_crypto.cpython-313-pytest-9.0.2.pyc
+   M backend/tests/__pycache__/test_api_opcoes.cpython-313-pytest-9.0.2.pyc
+   M backend/tests/test_api_crypto.py
+   M frontend/components/modals/crypto/modal-dashboard-crypto.html
+   M frontend/html/crypto.html
+   M frontend/html/opcoes.html
+   M frontend/js/core/layout.js
+   M frontend/js/core/libs.js
+   M frontend/js/crypto/crypto.js
+   M frontend/js/crypt
 
-## Arquivos mais tocados (últimos 20 commits)
-- (sem dados)
-
-## Contexto de testes detectado
-- Python: pytest detectado
-- Node: package.json detectado (verificar scripts de test)
-- Playwright detectado
-
-## Pontos de atenção
-- Revise o working tree acima antes de merge/push.
-- Atualize `.ai-memory/06-TASKS.md` ao concluir etapas.
+... [truncado — 614 chars omitidos]
 
 ---
 
@@ -391,6 +262,29 @@ Branch: master
 ---
 
 ## ÚLTIMOS PROMPTS ENVIADOS
+[2026-03-16 14:19:43]  fonte: clipboard
+Em opcÃ£o, cliquei no botÃ£o fechar operaÃ§Ã£o. Veja a imagem. E agora a operaÃ§Ã£o PETRO424W2 estÃ¡ mostrando que foi exercida e nÃ£o foi. Veja o cÃ¡lculo para apurar o exercÃ­cio. Note que o valor fechado oi menor que o strike. Portando a venda de put nÃ£o foi exercida. Verifique esse cÃ¡lculo e ajuste o resultado na tela.
+
+
+Na tela de cypto, preciso corrigir essa tela da imagem 1
+Nessa mesma te...
+
+[2026-03-16 14:19:11]  fonte: clipboard
+Em opcÃ£o, cliquei no botÃ£o fechar operaÃ§Ã£o. Veja a imagem. E agora a operaÃ§Ã£o PETRO424W2 estÃ¡ mostrando que foi exercida e nÃ£o foi. Veja o cÃ¡lculo para apurar o exercÃ­cio. Note que o valor fechado oi menor que o strike. Portando a venda de put nÃ£o foi exercida. Verifique esse cÃ¡lculo e ajuste o resultado na tela.
+
+
+Na tela de cypto, preciso corrigir essa tela da imagem 1
+Nessa mesma te...
+
+[2026-03-13 16:52:09]  fonte: clipboard
+Na tela de anÃ¡lise temporal de performance de crypto veio totamente vazia em todas as abas
+Recebendo esses erros
+Uncaught (in promise) TypeError: Cannot read properties of null (reading 'includes')
+    at AutofillOverlayContentService.<anonymous> (bootstrap-autofill-overlay.js:9562:81)
+    at Generator.next (<anonymous>)
+    at bootstrap-autofill-overlay.js:8522:71
+    at new Promise (<anonymous>...
+
 [2026-03-12 09:04:29]  fonte: clipboard
 Todas os ajustes abaixo dizem respeito Ã  tela de crypto
 Preciso de ajustes no calculo de dias de duraÃ§Ã£o da operaÃ§Ã£o. Verificar o cÃ¡lculo para ser Ãºnico e utilizado em todas as telas. Veja a imagem abaixo e anlise segundo a data atual e a data de vencimento e verifique o o cÃ¡lculo de dias esta errado.  Hoje sÃ£o 12/03 o vencimento 13/03 portanto deveria aparecer 2 dias e nÃ£o 4 como estÃ¡ ...

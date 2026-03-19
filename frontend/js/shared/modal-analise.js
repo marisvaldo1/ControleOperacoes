@@ -147,10 +147,10 @@
     /* Cálculo de estatísticas                                              */
     /* ------------------------------------------------------------------ */
     function calcStats(ops) {
-        const isCrypto    = state.apiEndpoint.includes('/crypto');
-        // Para crypto: premio_us (US$) é o valor monetário real; resultado armazena % do trade
+        const isCrypto = state.apiEndpoint.includes('/crypto');
+        // Para crypto: resultado = P&L em US$; premio_us = fallback quando resultado ausente
         const resultField = isCrypto
-            ? ['premio_us']
+            ? ['resultado', 'premio_us']
             : ['resultado', 'resultado_total', 'resultado_op', 'resultado_fechamento'];
 
         const totalResult = ops.reduce((s, op) => s + getNumber(op, resultField), 0);
@@ -261,7 +261,7 @@
         };
 
         if (state.chart) {
-            try { state.chart.destroy(); } catch (_) {}
+            try { state.chart.destroy(); } catch (_) { }
             state.chart = null;
         }
 
@@ -346,11 +346,11 @@
     const OPS_SORT_FIELDS = ['date', 'result', 'pct'];
 
     function sortOps(ops, sortKey) {
-        const isCrypto    = state.apiEndpoint.includes('/crypto');
+        const isCrypto = state.apiEndpoint.includes('/crypto');
         const resultField = isCrypto
-            ? ['premio_us']
+            ? ['resultado', 'premio_us']
             : ['resultado', 'resultado_total', 'resultado_op', 'resultado_fechamento'];
-        const saldoField  = ['saldo_abertura', 'saldo', 'saldo_entrada', 'saldo_inicial'];
+        const saldoField = ['saldo_abertura', 'saldo', 'saldo_entrada', 'saldo_inicial'];
 
         function opDate(op) {
             const raw = op.data_operacao || op.created_at || op.data || op.vencimento || null;
@@ -381,11 +381,11 @@
         const el = document.getElementById('maOpsList');
         if (!el) return;
 
-        const isCrypto    = state.apiEndpoint.includes('/crypto');
+        const isCrypto = state.apiEndpoint.includes('/crypto');
         const resultField = isCrypto
-            ? ['premio_us']
+            ? ['resultado', 'premio_us']
             : ['resultado', 'resultado_total', 'resultado_op', 'resultado_fechamento'];
-        const saldoField  = ['saldo_abertura', 'saldo', 'saldo_entrada', 'saldo_inicial'];
+        const saldoField = ['saldo_abertura', 'saldo', 'saldo_entrada', 'saldo_inicial'];
 
         const sorted = sortOps(ops, state.opsSort || 'date');
 
@@ -398,22 +398,22 @@
 
         el.innerHTML = sorted.map((op) => {
             const resultado = getNumber(op, resultField);
-            const saldo     = getNumber(op, saldoField);
-            const pct       = saldo > 0 ? (resultado / saldo) * 100 : null;
-            const barWidth  = maxAbs > 0 ? (Math.abs(resultado) / maxAbs) * 100 : 0;
+            const saldo = getNumber(op, saldoField);
+            const pct = saldo > 0 ? (resultado / saldo) * 100 : null;
+            const barWidth = maxAbs > 0 ? (Math.abs(resultado) / maxAbs) * 100 : 0;
 
-            const tipo       = (op.tipo || '').toUpperCase();
-            const ativoBase  = (op.ativo_base || '').toUpperCase();
-            const ativo      = op.ativo || op.ativo_base || '-';
-            const status     = (op.status || '').toUpperCase();
-            const exercicio  = op.exercicio_automatico !== undefined
+            const tipo = (op.tipo || '').toUpperCase();
+            const ativoBase = (op.ativo_base || '').toUpperCase();
+            const ativo = op.ativo || op.ativo_base || '-';
+            const status = (op.status || '').toUpperCase();
+            const exercicio = op.exercicio_automatico !== undefined
                 ? (op.exercicio_automatico ? 'SIM' : 'NÃO')
                 : (op.exercicio || '-');
 
             /* Vencimento formatado */
             const vencRaw = op.vencimento || op.data_vencimento || null;
             const vencDate = vencRaw ? new Date(vencRaw) : null;
-            const vencStr  = vencDate && !Number.isNaN(vencDate.getTime())
+            const vencStr = vencDate && !Number.isNaN(vencDate.getTime())
                 ? vencDate.toLocaleDateString('pt-BR')
                 : '-';
 
@@ -426,13 +426,13 @@
             const premio = getNumber(op, ['premio_us', 'premio', 'premio_total', 'valor_premio']);
 
             /* Classes de cor */
-            const resClass  = resultado >= 0 ? 'text-success' : 'text-danger';
-            const barClass  = resultado >= 0 ? 'ma-opsbar-pos' : 'ma-opsbar-neg';
+            const resClass = resultado >= 0 ? 'text-success' : 'text-danger';
+            const barClass = resultado >= 0 ? 'ma-opsbar-pos' : 'ma-opsbar-neg';
             const tipoClass = tipo === 'CALL' ? 'ma-badge-call' : tipo === 'PUT' ? 'ma-badge-put' : 'ma-badge-outro';
             const statClass = status === 'FECHADA' ? 'ma-badge-fechada'
-                            : status === 'ABERTA'  ? 'ma-badge-aberta'
-                            : 'ma-badge-outro';
-            const exClass   = exercicio === 'SIM' ? 'ma-badge-sim' : exercicio === 'NÃO' ? 'ma-badge-nao' : '';
+                : status === 'ABERTA' ? 'ma-badge-aberta'
+                    : 'ma-badge-outro';
+            const exClass = exercicio === 'SIM' ? 'ma-badge-sim' : exercicio === 'NÃO' ? 'ma-badge-nao' : '';
 
             const pctStr = pct !== null ? `${pct.toFixed(2)}%` : '-';
             const pctClass = pct !== null ? (pct >= 0 ? 'text-success' : 'text-danger') : '';
@@ -582,22 +582,28 @@
     /* ------------------------------------------------------------------ */
     /* Carregar HTML do modal se ainda não carregado                        */
     /* ------------------------------------------------------------------ */
+    let _loadPromise = null;
+
     async function ensureModalLoaded() {
         if (document.getElementById(state.modalId)) return true;
         const container = document.querySelector(state.containerSelector);
-        if (!container || state.loading) return false;
-        state.loading = true;
-        try {
-            const res = await fetch('../components/modals/opcoes/modal-analise.html');
-            const html = await res.text();
-            container.innerHTML = html;
-            return true;
-        } catch (err) {
-            console.error('[modal-analise] Falha ao carregar HTML:', err);
-            return false;
-        } finally {
-            state.loading = false;
-        }
+        if (!container) return false;
+        // Se já há uma carga em andamento, aguarda a mesma promise (evita duplo-fetch)
+        if (_loadPromise) return _loadPromise;
+        _loadPromise = (async () => {
+            try {
+                const res = await fetch('../components/modals/opcoes/modal-analise.html');
+                const html = await res.text();
+                container.innerHTML = html;
+                return true;
+            } catch (err) {
+                console.error('[modal-analise] Falha ao carregar HTML:', err);
+                return false;
+            } finally {
+                _loadPromise = null;
+            }
+        })();
+        return _loadPromise;
     }
 
     /* ------------------------------------------------------------------ */
@@ -605,10 +611,16 @@
     /* ------------------------------------------------------------------ */
     async function openModal() {
         const loaded = await ensureModalLoaded();
-        if (!loaded) return;
+        if (!loaded) {
+            console.error('[modal-analise] ensureModalLoaded() retornou false — container:', state.containerSelector, '| modalId:', state.modalId);
+            return;
+        }
 
         const modalEl = document.getElementById(state.modalId);
-        if (!modalEl) return;
+        if (!modalEl) {
+            console.error('[modal-analise] Elemento modal não encontrado no DOM: #' + state.modalId);
+            return;
+        }
 
         /* Resetar para aba Desempenho e forçar loadData ao reabrir */
         state.activeTab = 'desempenho';
@@ -637,10 +649,15 @@
         setupFilterButtons();
         setupRefreshButton();
 
-        await refresh();
+        try {
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
+        } catch (err) {
+            console.error('[modal-analise] Erro ao chamar modal.show():', err);
+            return;
+        }
 
-        const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-        modal.show();
+        await refresh();
     }
 
     /* ------------------------------------------------------------------ */
@@ -725,12 +742,12 @@
                 if (op.exercicio !== undefined && op.vencimento === undefined) {
                     return {
                         ...op,
-                        vencimento:    op.exercicio,
-                        preco_atual:   op.cotacao_atual  ?? op.preco_atual,
-                        preco_entrada: op.abertura       ?? op.preco_entrada,
-                        premio:        op.premio_us      ?? op.premio,
-                        quantidade:    op.crypto         ?? op.quantidade ?? 1,
-                        ativo_base:    op.ativo_base     || op.ativo,
+                        vencimento: op.exercicio,
+                        preco_atual: op.cotacao_atual ?? op.preco_atual,
+                        preco_entrada: op.abertura ?? op.preco_entrada,
+                        premio: op.premio_us ?? op.premio,
+                        quantidade: op.crypto ?? op.quantidade ?? 1,
+                        ativo_base: op.ativo_base || op.ativo,
                     };
                 }
                 return op;
@@ -749,11 +766,11 @@
     function renderPosicoesGrid() {
         const container = document.getElementById('maPosCards');
         const loadingEl = document.getElementById('maPosLoading');
-        const emptyEl   = document.getElementById('maPosEmpty');
+        const emptyEl = document.getElementById('maPosEmpty');
         const summaryEl = document.getElementById('maPosSummary');
         if (loadingEl) loadingEl.style.display = 'none';
         if (state.posicoes.length === 0) {
-            if (emptyEl)   emptyEl.style.display   = '';
+            if (emptyEl) emptyEl.style.display = '';
             if (container) container.style.display = 'none';
             if (summaryEl) summaryEl.style.display = 'none';
             return;
@@ -761,17 +778,17 @@
         if (container) {
             // Um accordion por posição individual
             const accItems = state.posicoes.map(op => {
-                const id      = op.id;
-                const ativo   = (op.ativo_base || op.ativo || 'OUTRO').substring(0, 6).toUpperCase();
-                const tipo    = (op.tipo || 'CALL').toUpperCase();
+                const id = op.id;
+                const ativo = (op.ativo_base || op.ativo || 'OUTRO').substring(0, 6).toUpperCase();
+                const tipo = (op.tipo || 'CALL').toUpperCase();
                 const tipoColor = tipo === 'PUT' ? '#f59f00' : '#2dc653';
-                const strike  = parseFloat(op.strike || 0);
+                const strike = parseFloat(op.strike || 0);
                 const premioUs = Math.abs(parseFloat(op.premio_us || op.premio || 0));
                 const vctoRaw = op.vencimento || op.exercicio || null;
                 const vctoDate = vctoRaw ? new Date(vctoRaw) : null;
                 const vctoStr = vctoDate && !isNaN(vctoDate)
                     ? vctoDate.toLocaleDateString('pt-BR') : '—';
-                const safeId  = `pos${id}`;
+                const safeId = `pos${id}`;
                 return `<div class="accordion-item border-0 mb-2">
   <h2 class="accordion-header" id="maPosH-${safeId}">
     <button class="accordion-button collapsed rounded" type="button"
@@ -796,7 +813,7 @@
             container.innerHTML = `<div class="accordion" id="maPosicoesAcc">${accItems}</div>`;
             container.style.display = '';
         }
-        if (emptyEl)   emptyEl.style.display = 'none';
+        if (emptyEl) emptyEl.style.display = 'none';
         if (summaryEl) summaryEl.removeAttribute('style');
     }
 
@@ -805,19 +822,19 @@
     /* ------------------------------------------------------------------ */
     function buildPosCard(op) {
         const id = op.id;
-        const tipo      = (op.tipo || 'CALL').toUpperCase();
+        const tipo = (op.tipo || 'CALL').toUpperCase();
         const ativoBase = (op.ativo_base || op.ativo || '').substring(0, 5).toUpperCase();
-        const ativo     = op.ativo || ativoBase;
-        const strike    = parseFloat(op.strike || 0);
-        const premioAb  = Math.abs(parseFloat(op.premio || op.preco_entrada || 0));
-        const precoAb   = parseFloat(op.preco_ativo_base || 0);
-        const qtdAbs    = Math.abs(parseInt(op.quantidade || 0));
+        const ativo = op.ativo || ativoBase;
+        const strike = parseFloat(op.strike || 0);
+        const premioAb = Math.abs(parseFloat(op.premio || op.preco_entrada || 0));
+        const precoAb = parseFloat(op.preco_ativo_base || 0);
+        const qtdAbs = Math.abs(parseInt(op.quantidade || 0));
         const premioTotalAb = premioAb * qtdAbs;
         const breakeven = tipo === 'PUT' ? strike - premioAb : strike + premioAb;
-        const vctoDate  = op.vencimento ? (() => { const d = new Date(op.vencimento); d.setHours(0,0,0,0); return d; })() : null;
-        const vctoStr   = vctoDate && !isNaN(vctoDate) ? vctoDate.toLocaleDateString('pt-BR') : '—';
+        const vctoDate = op.vencimento ? (() => { const d = new Date(op.vencimento); d.setHours(0, 0, 0, 0); return d; })() : null;
+        const vctoStr = vctoDate && !isNaN(vctoDate) ? vctoDate.toLocaleDateString('pt-BR') : '—';
         // Dias restantes calculados estaticamente (hoje → vencimento), sem depender de refresh
-        const _hojeCard = new Date(); _hojeCard.setHours(0,0,0,0);
+        const _hojeCard = new Date(); _hojeCard.setHours(0, 0, 0, 0);
         const diasRestantesStatic = vctoDate && !isNaN(vctoDate) ? Math.max(0, Math.round((vctoDate.getTime() - _hojeCard.getTime()) / 86400000)) : null;
         let diasAbertos = 0, percTempo = 0;
         if (op.data_operacao) {
@@ -826,7 +843,7 @@
                 diasAbertos = Math.max(0, Math.round((new Date() - dAb) / 86400000));
                 if (vctoDate && !isNaN(vctoDate)) {
                     const total = Math.max(1, Math.round((vctoDate - dAb) / 86400000));
-                    percTempo   = Math.min(100, Math.round(diasAbertos / total * 100));
+                    percTempo = Math.min(100, Math.round(diasAbertos / total * 100));
                 }
             }
         }
@@ -990,7 +1007,7 @@
     /* Construir HTML de seção de evolução para uma posição                 */
     /* ------------------------------------------------------------------ */
     function buildEvoSection(op) {
-        const id  = op.id;
+        const id = op.id;
         const tipo = (op.tipo || 'CALL').toUpperCase();
         const ativoBase = (op.ativo_base || op.ativo || '').substring(0, 5).toUpperCase();
         const strike = parseFloat(op.strike || 0);
@@ -998,7 +1015,7 @@
         const qtdAbs = Math.abs(parseInt(op.quantidade || 0));
         const premioTotalAb = premioAb * qtdAbs;
         const vctoDate = op.vencimento ? new Date(op.vencimento) : null;
-        const vctoStr  = vctoDate && !isNaN(vctoDate) ? vctoDate.toLocaleDateString('pt-BR') : '—';
+        const vctoStr = vctoDate && !isNaN(vctoDate) ? vctoDate.toLocaleDateString('pt-BR') : '—';
         const tipoColor = tipo === 'PUT' ? '#f59f00' : '#2dc653';
         const sp = '<span class="ma-spin-cell"></span>';
         return `
@@ -1045,7 +1062,7 @@
     /* Construir HTML de seção de risco para uma posição                    */
     /* ------------------------------------------------------------------ */
     function buildRiscoSection(op) {
-        const id  = op.id;
+        const id = op.id;
         const tipo = (op.tipo || 'CALL').toUpperCase();
         const ativoBase = (op.ativo_base || op.ativo || '').substring(0, 5).toUpperCase();
         const strike = parseFloat(op.strike || 0);
@@ -1053,65 +1070,65 @@
         const qtdAbs = Math.abs(parseInt(op.quantidade || 0));
         const premioTotalAb = premioAb * qtdAbs;
         const vctoDate = op.vencimento ? new Date(op.vencimento) : null;
-        const vctoStr  = vctoDate && !isNaN(vctoDate) ? vctoDate.toLocaleDateString('pt-BR') : '—';
+        const vctoStr = vctoDate && !isNaN(vctoDate) ? vctoDate.toLocaleDateString('pt-BR') : '—';
         const tipoColor = tipo === 'PUT' ? '#f59f00' : '#2dc653';
         const sp = '<span class="ma-spin-cell"></span>';
         return `
-<div class="ma-pos-section-wrap" id="maposrisco-${id}">
-  <div class="ma-pos-section-hdr">
-    <span class="ma-poscard-tipo-badge" style="background:${tipoColor}22;color:${tipoColor};border:1px solid ${tipoColor}44">${tipo}</span>
-    <strong>${ativoBase}</strong>
-    <span class="text-muted small">Strike ${fmtCurrency(strike)} &middot; Vcto ${vctoStr}</span>
-  </div>
-  <div class="ma-pos-gauges">
-    <div class="ma-gauge-wrap">
-      <div class="ma-pos-section-title">&#128202; VARIA&#199;&#195;O DO PR&#202;MIO</div>
-      <div id="mapos-${id}-gauge-var" style="min-height:160px"></div>
-      <div class="ma-gauge-footer">
-        <span class="ma-gauge-val" id="mapos-${id}-gaugelbl-var">${sp}</span>
-        <span class="ma-gauge-sub">Desde a abertura</span>
-      </div>
-    </div>
-    <div class="ma-gauge-wrap">
-      <div class="ma-pos-section-title">&#127919; DIST&#194;NCIA DO STRIKE</div>
-      <div id="mapos-${id}-gauge-dist" style="min-height:160px"></div>
-      <div class="ma-gauge-footer">
-        <span class="ma-gauge-val" id="mapos-${id}-gaugelbl-dist">${sp}</span>
-        <span class="ma-gauge-sub" id="mapos-${id}-gaugesub-dist">${sp}</span>
-      </div>
-    </div>
-    <div class="ma-gauge-wrap">
-      <div class="ma-pos-section-title">&#9200;&#65039; TEMPO RESTANTE</div>
-      <div id="mapos-${id}-gauge-tempo" style="min-height:160px"></div>
-      <div class="ma-gauge-footer">
-        <span class="ma-gauge-val" id="mapos-${id}-gaugelbl-tempo">${sp}</span>
-        <span class="ma-gauge-sub">At\u00e9 ${vctoStr}</span>
-      </div>
-    </div>
-  </div>
-  <div class="ma-pos-risk-grid">
-    <div class="ma-risk-scenario ma-risk-ideal">
-      <div class="ma-risk-lbl">CEN\u00c1RIO IDEAL</div>
-      <div class="ma-risk-val text-success">Ativo &gt; ${fmtCurrency(strike)}</div>
-      <div class="ma-risk-sub">Lucro m\u00e1x: ${fmtCurrency(premioTotalAb)}</div>
-    </div>
-    <div class="ma-risk-scenario ma-risk-atual">
-      <div class="ma-risk-lbl">ATUAL</div>
-      <div class="ma-risk-val" id="mapos-${id}-riskspot">${sp}</div>
-      <div class="ma-risk-sub" id="mapos-${id}-riskstatus">${sp}</div>
-    </div>
-    <div class="ma-risk-scenario ma-risk-perigo">
-      <div class="ma-risk-lbl">RISCO SE</div>
-      <div class="ma-risk-val text-danger">Ativo &lt; ${fmtCurrency(strike)}</div>
-      <div class="ma-risk-sub">Poss\u00edvel preju\u00edzo</div>
-    </div>
-    <div class="ma-risk-scenario ma-risk-pnl">
-      <div class="ma-risk-lbl">P&amp;L ATUAL</div>
-      <div class="ma-risk-val" id="mapos-${id}-riskpnl">${sp}</div>
-      <div class="ma-risk-sub" id="mapos-${id}-riskpnlsub">${sp}</div>
-    </div>
-  </div>
-</div>`;
+                <div class="ma-pos-section-wrap" id="maposrisco-${id}">
+                <div class="ma-pos-section-hdr">
+                    <span class="ma-poscard-tipo-badge" style="background:${tipoColor}22;color:${tipoColor};border:1px solid ${tipoColor}44">${tipo}</span>
+                    <strong>${ativoBase}</strong>
+                    <span class="text-muted small">Strike ${fmtCurrency(strike)} &middot; Vcto ${vctoStr}</span>
+                </div>
+                <div class="ma-pos-gauges">
+                    <div class="ma-gauge-wrap">
+                    <div class="ma-pos-section-title">&#128202; VARIA&#199;&#195;O DO PR&#202;MIO</div>
+                    <div id="mapos-${id}-gauge-var" style="min-height:160px"></div>
+                    <div class="ma-gauge-footer">
+                        <span class="ma-gauge-val" id="mapos-${id}-gaugelbl-var">${sp}</span>
+                        <span class="ma-gauge-sub">Desde a abertura</span>
+                    </div>
+                    </div>
+                    <div class="ma-gauge-wrap">
+                    <div class="ma-pos-section-title">&#127919; DIST&#194;NCIA DO STRIKE</div>
+                    <div id="mapos-${id}-gauge-dist" style="min-height:160px"></div>
+                    <div class="ma-gauge-footer">
+                        <span class="ma-gauge-val" id="mapos-${id}-gaugelbl-dist">${sp}</span>
+                        <span class="ma-gauge-sub" id="mapos-${id}-gaugesub-dist">${sp}</span>
+                    </div>
+                    </div>
+                    <div class="ma-gauge-wrap">
+                    <div class="ma-pos-section-title">&#9200;&#65039; TEMPO RESTANTE</div>
+                    <div id="mapos-${id}-gauge-tempo" style="min-height:160px"></div>
+                    <div class="ma-gauge-footer">
+                        <span class="ma-gauge-val" id="mapos-${id}-gaugelbl-tempo">${sp}</span>
+                        <span class="ma-gauge-sub">At\u00e9 ${vctoStr}</span>
+                    </div>
+                    </div>
+                </div>
+                <div class="ma-pos-risk-grid">
+                    <div class="ma-risk-scenario ma-risk-ideal">
+                    <div class="ma-risk-lbl">CEN\u00c1RIO IDEAL</div>
+                    <div class="ma-risk-val text-success">Ativo &gt; ${fmtCurrency(strike)}</div>
+                    <div class="ma-risk-sub">Lucro m\u00e1x: ${fmtCurrency(premioTotalAb)}</div>
+                    </div>
+                    <div class="ma-risk-scenario ma-risk-atual">
+                    <div class="ma-risk-lbl">ATUAL</div>
+                    <div class="ma-risk-val" id="mapos-${id}-riskspot">${sp}</div>
+                    <div class="ma-risk-sub" id="mapos-${id}-riskstatus">${sp}</div>
+                    </div>
+                    <div class="ma-risk-scenario ma-risk-perigo">
+                    <div class="ma-risk-lbl">RISCO SE</div>
+                    <div class="ma-risk-val text-danger">Ativo &lt; ${fmtCurrency(strike)}</div>
+                    <div class="ma-risk-sub">Poss\u00edvel preju\u00edzo</div>
+                    </div>
+                    <div class="ma-risk-scenario ma-risk-pnl">
+                    <div class="ma-risk-lbl">P&amp;L ATUAL</div>
+                    <div class="ma-risk-val" id="mapos-${id}-riskpnl">${sp}</div>
+                    <div class="ma-risk-sub" id="mapos-${id}-riskpnlsub">${sp}</div>
+                    </div>
+                </div>
+                </div>`;
     }
 
     /* ------------------------------------------------------------------ */
@@ -1119,12 +1136,12 @@
     /* ------------------------------------------------------------------ */
     function renderEvolucaoPane() {
         const sectionsEl = document.getElementById('maPosEvoSections');
-        const loadingEl  = document.getElementById('maPosEvoLoading');
-        const emptyEl    = document.getElementById('maPosEvoEmpty');
+        const loadingEl = document.getElementById('maPosEvoLoading');
+        const emptyEl = document.getElementById('maPosEvoEmpty');
         if (!sectionsEl) return;
         if (state.posicoes.length === 0) {
             if (loadingEl) loadingEl.style.display = 'none';
-            if (emptyEl)   emptyEl.style.removeProperty('display');
+            if (emptyEl) emptyEl.style.removeProperty('display');
             sectionsEl.style.display = 'none';
             return;
         }
@@ -1138,35 +1155,35 @@
         });
 
         const accItems = Object.entries(groups).map(([ativo, ops]) => {
-            const safeId   = ativo.replace(/[^A-Za-z0-9]/g, '_');
+            const safeId = ativo.replace(/[^A-Za-z0-9]/g, '_');
             const sections = ops.map(op => buildEvoSection(op)).join('');
             return `<div class="accordion-item border-0 mb-2">
-  <h2 class="accordion-header" id="maEvoH-${safeId}">
-    <button class="accordion-button collapsed rounded" type="button"
-            data-bs-toggle="collapse" data-bs-target="#maEvoPan-${safeId}"
-            aria-expanded="false" aria-controls="maEvoPan-${safeId}"
-            style="background:rgba(45,198,83,0.08)">
-      <span class="fw-bold me-2">${ativo}</span>
-      <span class="text-muted small">${ops.length} posição${ops.length !== 1 ? 'ões' : ''}</span>
-    </button>
-  </h2>
-  <div id="maEvoPan-${safeId}" class="accordion-collapse collapse" aria-labelledby="maEvoH-${safeId}"
-       data-evo-ativo="${ativo}">
-    <div class="accordion-body p-0 pt-2">
-      ${sections}
-    </div>
-  </div>
-</div>`;
+                        <h2 class="accordion-header" id="maEvoH-${safeId}">
+                            <button class="accordion-button collapsed rounded" type="button"
+                                    data-bs-toggle="collapse" data-bs-target="#maEvoPan-${safeId}"
+                                    aria-expanded="false" aria-controls="maEvoPan-${safeId}"
+                                    style="background:rgba(45,198,83,0.08)">
+                            <span class="fw-bold me-2">${ativo}</span>
+                            <span class="text-muted small">${ops.length} posição${ops.length !== 1 ? 'ões' : ''}</span>
+                            </button>
+                        </h2>
+                        <div id="maEvoPan-${safeId}" class="accordion-collapse collapse" aria-labelledby="maEvoH-${safeId}"
+                            data-evo-ativo="${ativo}">
+                            <div class="accordion-body p-0 pt-2">
+                            ${sections}
+                            </div>
+                        </div>
+                    </div>`;
         }).join('');
 
         sectionsEl.innerHTML = `<div class="accordion" id="maEvoAcc">${accItems}</div>`;
         sectionsEl.style.removeProperty('display');
         if (loadingEl) loadingEl.style.display = 'none';
-        if (emptyEl)   emptyEl.style.display    = 'none';
+        if (emptyEl) emptyEl.style.display = 'none';
 
         // Renderizar charts ao vivo para dados já carregados (accordion aberto)
         // Charts dentro de collapsed não têm dimensões; renderizamos quando abre
-        document.getElementById('maEvoAcc')?.addEventListener('shown.bs.collapse', function(e) {
+        document.getElementById('maEvoAcc')?.addEventListener('shown.bs.collapse', function (e) {
             if (!e.target.dataset.evoAtivo) return;
             const ativo = e.target.dataset.evoAtivo;
             state.posicoes
@@ -1176,9 +1193,9 @@
                     if (!liveData) return;
                     renderEvolutionChart(op.id, op, liveData);
                     updatePosCardLive(op, {
-                        spot_price:   liveData.spotPrice   || 0,
+                        spot_price: liveData.spotPrice || 0,
                         option_price: liveData.optionPrice || 0,
-                        pop:          liveData.popEst      || 0
+                        pop: liveData.popEst || 0
                     });
                 });
         });
@@ -1189,54 +1206,54 @@
     /* ------------------------------------------------------------------ */
     function renderRiscoPane() {
         const sectionsEl = document.getElementById('maPosRiscoSections');
-        const loadingEl  = document.getElementById('maPosRiscoLoading');
-        const emptyEl    = document.getElementById('maPosRiscoEmpty');
+        const loadingEl = document.getElementById('maPosRiscoLoading');
+        const emptyEl = document.getElementById('maPosRiscoEmpty');
         if (!sectionsEl) return;
         if (state.posicoes.length === 0) {
             if (loadingEl) loadingEl.style.display = 'none';
-            if (emptyEl)   emptyEl.style.removeProperty('display');
+            if (emptyEl) emptyEl.style.removeProperty('display');
             sectionsEl.style.display = 'none';
             return;
         }
 
         // ── Totalizer (primeiro card — aberto) ───────────────────────────
-        const totalOps      = state.posicoes.length;
-        const ativosUnicos  = [...new Set(state.posicoes.map(op => (op.ativo_base || op.ativo || '').toUpperCase()))];
-        const totalPremio   = state.posicoes.reduce((s, op) =>
+        const totalOps = state.posicoes.length;
+        const ativosUnicos = [...new Set(state.posicoes.map(op => (op.ativo_base || op.ativo || '').toUpperCase()))];
+        const totalPremio = state.posicoes.reduce((s, op) =>
             s + Math.abs(parseFloat(op.premio || op.premio_us || 0)), 0);
         const totalAbertura = state.posicoes.reduce((s, op) =>
             s + Math.abs(parseFloat(op.preco_entrada || op.abertura || 0)), 0);
         const totalizerHtml = `<div class="card mb-3 border-primary">
-  <div class="card-header bg-primary-lt">
-    <h4 class="card-title mb-0">📊 Resumo de Risco — Carteira</h4>
-  </div>
-  <div class="card-body">
-    <div class="row g-3">
-      <div class="col-6 col-md-3 text-center">
-        <div class="display-6 fw-bold text-primary">${totalOps}</div>
-        <div class="text-muted small">Posições Abertas</div>
-      </div>
-      <div class="col-6 col-md-3 text-center">
-        <div class="display-6 fw-bold text-info">${ativosUnicos.length}</div>
-        <div class="text-muted small">Ativos Distintos</div>
-      </div>
-      <div class="col-6 col-md-3 text-center">
-        <div class="display-6 fw-bold text-success">US$ ${totalPremio.toFixed(2)}</div>
-        <div class="text-muted small">Total em Prêmios</div>
-      </div>
-      <div class="col-6 col-md-3 text-center">
-        <div class="display-6 fw-bold" id="maRiscoTotalLucro">—</div>
-        <div class="text-muted small">P&L Consolidado</div>
-      </div>
-    </div>
-    <div class="mt-3">
-      <div class="text-muted small mb-1">Ativos em carteira:</div>
-      <div class="d-flex flex-wrap gap-2">
-        ${ativosUnicos.map(a => `<span class="badge bg-blue-lt text-blue">${a}</span>`).join('')}
-      </div>
-    </div>
-  </div>
-</div>`;
+            <div class="card-header bg-primary-lt">
+                <h4 class="card-title mb-0">📊 Resumo de Risco — Carteira</h4>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                <div class="col-6 col-md-3 text-center">
+                    <div class="display-6 fw-bold text-primary">${totalOps}</div>
+                    <div class="text-muted small">Posições Abertas</div>
+                </div>
+                <div class="col-6 col-md-3 text-center">
+                    <div class="display-6 fw-bold text-info">${ativosUnicos.length}</div>
+                    <div class="text-muted small">Ativos Distintos</div>
+                </div>
+                <div class="col-6 col-md-3 text-center">
+                    <div class="display-6 fw-bold text-success">US$ ${totalPremio.toFixed(2)}</div>
+                    <div class="text-muted small">Total em Prêmios</div>
+                </div>
+                <div class="col-6 col-md-3 text-center">
+                    <div class="display-6 fw-bold" id="maRiscoTotalLucro">—</div>
+                    <div class="text-muted small">P&L Consolidado</div>
+                </div>
+                </div>
+                <div class="mt-3">
+                <div class="text-muted small mb-1">Ativos em carteira:</div>
+                <div class="d-flex flex-wrap gap-2">
+                    ${ativosUnicos.map(a => `<span class="badge bg-blue-lt text-blue">${a}</span>`).join('')}
+                </div>
+                </div>
+            </div>
+            </div>`;
 
         // ── Accordion por ativo (todos fechados) ─────────────────────────
         const groups = {};
@@ -1247,35 +1264,35 @@
         });
 
         const accItems = Object.entries(groups).map(([ativo, ops]) => {
-            const safeId   = ativo.replace(/[^A-Za-z0-9]/g, '_');
+            const safeId = ativo.replace(/[^A-Za-z0-9]/g, '_');
             const sections = ops.map(op => buildRiscoSection(op)).join('');
             return `<div class="accordion-item border-0 mb-2">
-  <h2 class="accordion-header" id="maRiscoH-${safeId}">
-    <button class="accordion-button collapsed rounded" type="button"
-            data-bs-toggle="collapse" data-bs-target="#maRiscoPan-${safeId}"
-            aria-expanded="false" aria-controls="maRiscoPan-${safeId}"
-            style="background:rgba(250,82,82,0.08)">
-      <span class="fw-bold me-2">${ativo}</span>
-      <span class="text-muted small">${ops.length} posição${ops.length !== 1 ? 'ões' : ''}</span>
-    </button>
-  </h2>
-  <div id="maRiscoPan-${safeId}" class="accordion-collapse collapse" aria-labelledby="maRiscoH-${safeId}"
-       data-risco-ativo="${ativo}">
-    <div class="accordion-body p-0 pt-2">
-      ${sections}
-    </div>
-  </div>
-</div>`;
+                <h2 class="accordion-header" id="maRiscoH-${safeId}">
+                    <button class="accordion-button collapsed rounded" type="button"
+                            data-bs-toggle="collapse" data-bs-target="#maRiscoPan-${safeId}"
+                            aria-expanded="false" aria-controls="maRiscoPan-${safeId}"
+                            style="background:rgba(250,82,82,0.08)">
+                    <span class="fw-bold me-2">${ativo}</span>
+                    <span class="text-muted small">${ops.length} posição${ops.length !== 1 ? 'ões' : ''}</span>
+                    </button>
+                </h2>
+                <div id="maRiscoPan-${safeId}" class="accordion-collapse collapse" aria-labelledby="maRiscoH-${safeId}"
+                    data-risco-ativo="${ativo}">
+                    <div class="accordion-body p-0 pt-2">
+                    ${sections}
+                    </div>
+                </div>
+                </div>`;
         }).join('');
 
         sectionsEl.innerHTML = totalizerHtml +
             `<div class="accordion" id="maRiscoAcc">${accItems}</div>`;
         sectionsEl.style.removeProperty('display');
         if (loadingEl) loadingEl.style.display = 'none';
-        if (emptyEl)   emptyEl.style.display    = 'none';
+        if (emptyEl) emptyEl.style.display = 'none';
 
         // Renderizar gauges quando accordion abre
-        document.getElementById('maRiscoAcc')?.addEventListener('shown.bs.collapse', function(e) {
+        document.getElementById('maRiscoAcc')?.addEventListener('shown.bs.collapse', function (e) {
             if (!e.target.dataset.riscoAtivo) return;
             const ativo = e.target.dataset.riscoAtivo;
             state.posicoes
@@ -1285,9 +1302,9 @@
                     if (!liveData) return;
                     renderGaugeCharts(op.id, op, liveData);
                     updatePosCardLive(op, {
-                        spot_price:   liveData.spotPrice   || 0,
+                        spot_price: liveData.spotPrice || 0,
                         option_price: liveData.optionPrice || 0,
-                        pop:          liveData.popEst      || 0
+                        pop: liveData.popEst || 0
                     });
                 });
         });
@@ -1298,32 +1315,32 @@
     /* ------------------------------------------------------------------ */
     function updatePosCardLive(op, live) {
         if (!op || !op.id) return;
-        const id          = op.id;
-        const spotPrice   = parseFloat(live.spot_price   || live.spotPrice   || 0);
+        const id = op.id;
+        const spotPrice = parseFloat(live.spot_price || live.spotPrice || 0);
         const optionPrice = parseFloat(live.option_price || live.optionPrice || op.preco_atual || 0);
-        const probRaw     = parseFloat(live.pop          || live.prob_lucro  || 0);
-        const strike      = parseFloat(op.strike   || 0);
-        const premioAb    = Math.abs(parseFloat(op.premio || op.preco_entrada || 0));
-        const precoAb     = parseFloat(op.preco_ativo_base || 0);
-        const qtdAbs      = Math.abs(parseInt(op.quantidade || 0));
+        const probRaw = parseFloat(live.pop || live.prob_lucro || 0);
+        const strike = parseFloat(op.strike || 0);
+        const premioAb = Math.abs(parseFloat(op.premio || op.preco_entrada || 0));
+        const precoAb = parseFloat(op.preco_ativo_base || 0);
+        const qtdAbs = Math.abs(parseInt(op.quantidade || 0));
         const premioTotalAb = premioAb * qtdAbs;
-        const tipo        = (op.tipo || 'CALL').toUpperCase();
-        const isVenda     = (op.tipo_operacao || '').toUpperCase() === 'VENDA' || parseInt(op.quantidade || 0) < 0;
-        const distAtual   = spotPrice > 0 && strike > 0 ? Math.abs((strike - spotPrice) / spotPrice * 100) : 0;
-        const isITM       = spotPrice > 0 ? (tipo === 'PUT' ? spotPrice < strike : spotPrice > strike) : false;
+        const tipo = (op.tipo || 'CALL').toUpperCase();
+        const isVenda = (op.tipo_operacao || '').toUpperCase() === 'VENDA' || parseInt(op.quantidade || 0) < 0;
+        const distAtual = spotPrice > 0 && strike > 0 ? Math.abs((strike - spotPrice) / spotPrice * 100) : 0;
+        const isITM = spotPrice > 0 ? (tipo === 'PUT' ? spotPrice < strike : spotPrice > strike) : false;
         const custoRecompra = optionPrice * qtdAbs;
-        const mtm         = premioTotalAb > 0 ? (isVenda ? premioTotalAb - custoRecompra : custoRecompra - premioTotalAb) : 0;
-        const roiAtual    = premioTotalAb > 0 ? (mtm / premioTotalAb * 100) : 0;
+        const mtm = premioTotalAb > 0 ? (isVenda ? premioTotalAb - custoRecompra : custoRecompra - premioTotalAb) : 0;
+        const roiAtual = premioTotalAb > 0 ? (mtm / premioTotalAb * 100) : 0;
         const pctRestante = premioAb > 0 ? Math.max(0, Math.min(100, optionPrice / premioAb * 100)) : 100;
         const pctCapturado = 100 - pctRestante;
-        const vctoDate    = op.vencimento ? (() => { const d = new Date(op.vencimento); d.setHours(0,0,0,0); return d; })() : null;
-        const _hoje0      = new Date(); _hoje0.setHours(0,0,0,0);
-        const dias        = vctoDate && !isNaN(vctoDate) ? Math.max(0, Math.round((vctoDate - _hoje0) / 86400000)) : 0;
-        const theta       = dias > 0 ? (optionPrice * qtdAbs / dias) : 0;
-        const varSpot     = spotPrice > 0 && precoAb > 0 ? ((spotPrice - precoAb) / precoAb * 100) : 0;
-        const ganhoDecay  = (premioAb - optionPrice) * qtdAbs;
-        const ganhoAcao   = spotPrice > 0 && precoAb > 0 ? (spotPrice - precoAb) * qtdAbs : null;
-        const breakeven   = tipo === 'PUT' ? strike - premioAb : strike + premioAb;
+        const vctoDate = op.vencimento ? (() => { const d = new Date(op.vencimento); d.setHours(0, 0, 0, 0); return d; })() : null;
+        const _hoje0 = new Date(); _hoje0.setHours(0, 0, 0, 0);
+        const dias = vctoDate && !isNaN(vctoDate) ? Math.max(0, Math.round((vctoDate - _hoje0) / 86400000)) : 0;
+        const theta = dias > 0 ? (optionPrice * qtdAbs / dias) : 0;
+        const varSpot = spotPrice > 0 && precoAb > 0 ? ((spotPrice - precoAb) / precoAb * 100) : 0;
+        const ganhoDecay = (premioAb - optionPrice) * qtdAbs;
+        const ganhoAcao = spotPrice > 0 && precoAb > 0 ? (spotPrice - precoAb) * qtdAbs : null;
+        const breakeven = tipo === 'PUT' ? strike - premioAb : strike + premioAb;
 
         // PoP: usa valor da API ou estima heurísticamente
         let popEst = probRaw;
@@ -1333,9 +1350,9 @@
         }
 
         const setH = (eid, html) => { const el = document.getElementById(eid); if (el) el.innerHTML = html; };
-        const c0   = v => v >= 0 ? 'text-success' : 'text-danger';
+        const c0 = v => v >= 0 ? 'text-success' : 'text-danger';
         const distColor = isITM ? 'text-danger' : distAtual < 3 ? 'text-warning' : 'text-success';
-        const popColor  = popEst >= 65 ? 'text-success' : popEst >= 50 ? 'text-warning' : 'text-danger';
+        const popColor = popEst >= 65 ? 'text-success' : popEst >= 50 ? 'text-warning' : 'text-danger';
 
         // ITM/OTM + Decisão badges
         const itmEl = document.getElementById(`mapos-${id}-itmotm`);
@@ -1348,33 +1365,33 @@
         const decEl = document.getElementById(`mapos-${id}-decisao`);
         if (decEl) {
             let txt, fg;
-            if (isITM)               { txt = '🔴 ATENÇÃO';  fg = '#fa5252'; }
-            else if (distAtual < 2)  { txt = '🟠 ROLAR';    fg = '#fd7e14'; }
-            else if (distAtual < 5)  { txt = '🟡 MONITORAR'; fg = '#f59f00'; }
-            else                     { txt = '🟢 MANTER';   fg = '#2dc653'; }
+            if (isITM) { txt = '🔴 ATENÇÃO'; fg = '#fa5252'; }
+            else if (distAtual < 2) { txt = '🟠 ROLAR'; fg = '#fd7e14'; }
+            else if (distAtual < 5) { txt = '🟡 MONITORAR'; fg = '#f59f00'; }
+            else { txt = '🟢 MANTER'; fg = '#2dc653'; }
             decEl.textContent = txt;
             decEl.style.cssText = `background:${fg}22;color:${fg};border:1px solid ${fg}55`;
         }
 
         // 4 KPIs
         setH(`mapos-${id}-lucroaberto`, `<span class="${c0(mtm)}" style="font-size:1.3rem;font-weight:700">${mtm >= 0 ? '+' : ''}${fmtCurrencyShort(mtm)}</span>`);
-        setH(`mapos-${id}-pop2`,        `<span class="${popColor}" style="font-size:1.4rem;font-weight:700">${popEst.toFixed(0)}%</span>`);
-        setH(`mapos-${id}-popstatus`,   `<span class="${popEst >= 50 ? 'text-success' : 'text-danger'} small">${popEst >= 50 ? 'Vencendo' : 'Perdendo'}</span>`);
-        setH(`mapos-${id}-spot2`,       spotPrice > 0 ? `<span style="font-size:1.3rem;font-weight:700;color:#c9d1d9">${fmtCurrency(spotPrice)}</span>` : '<span class="text-muted">—</span>');
+        setH(`mapos-${id}-pop2`, `<span class="${popColor}" style="font-size:1.4rem;font-weight:700">${popEst.toFixed(0)}%</span>`);
+        setH(`mapos-${id}-popstatus`, `<span class="${popEst >= 50 ? 'text-success' : 'text-danger'} small">${popEst >= 50 ? 'Vencendo' : 'Perdendo'}</span>`);
+        setH(`mapos-${id}-spot2`, spotPrice > 0 ? `<span style="font-size:1.3rem;font-weight:700;color:#c9d1d9">${fmtCurrency(spotPrice)}</span>` : '<span class="text-muted">—</span>');
         if (precoAb > 0 && spotPrice > 0) {
             setH(`mapos-${id}-varspot`, `<span class="${c0(varSpot)} small">${varSpot >= 0 ? '+' : ''}${varSpot.toFixed(2)}% vs abertura</span>`);
         } else {
             setH(`mapos-${id}-varspot`, '<span class="text-muted small">sem dado de abertura</span>');
         }
-        setH(`mapos-${id}-dist2`,       `<span class="${distColor}" style="font-size:1.3rem;font-weight:700">${isITM ? '-' : '+'}${distAtual.toFixed(2)}%</span>`);
-        setH(`mapos-${id}-distsub`,     `<span class="text-muted small">${isITM ? 'Dentro do strike' : 'Acima do strike'}</span>`);
+        setH(`mapos-${id}-dist2`, `<span class="${distColor}" style="font-size:1.3rem;font-weight:700">${isITM ? '-' : '+'}${distAtual.toFixed(2)}%</span>`);
+        setH(`mapos-${id}-distsub`, `<span class="text-muted small">${isITM ? 'Dentro do strike' : 'Acima do strike'}</span>`);
 
         // Comparativo mid
-        setH(`mapos-${id}-cpopt`,       `<span class="text-info">${optionPrice.toFixed(2)}</span>`);
+        setH(`mapos-${id}-cpopt`, `<span class="text-info">${optionPrice.toFixed(2)}</span>`);
         const dOptPct = premioAb > 0 ? ((optionPrice - premioAb) / premioAb * 100) : 0;
-        setH(`mapos-${id}-cpopdelta`,   `<span class="${c0(-dOptPct)}">${dOptPct <= 0 ? '▼' : '▲'} ${Math.abs(dOptPct).toFixed(0)}%</span>`);
+        setH(`mapos-${id}-cpopdelta`, `<span class="${c0(-dOptPct)}">${dOptPct <= 0 ? '▼' : '▲'} ${Math.abs(dOptPct).toFixed(0)}%</span>`);
         if (spotPrice > 0) {
-            setH(`mapos-${id}-cspot`,   `<span>${spotPrice.toFixed(2)}</span>`);
+            setH(`mapos-${id}-cspot`, `<span>${spotPrice.toFixed(2)}</span>`);
             if (precoAb > 0) {
                 const dSpot = ((spotPrice - precoAb) / precoAb * 100);
                 setH(`mapos-${id}-cspotdelta`, `<span class="${c0(dSpot)}">${dSpot >= 0 ? '▲' : '▼'} ${Math.abs(dSpot).toFixed(2)}%</span>`);
@@ -1382,61 +1399,61 @@
                 setH(`mapos-${id}-cspotdelta`, '<span class="text-muted">—</span>');
             }
         }
-        setH(`mapos-${id}-gdecay`,      `<span class="${c0(ganhoDecay)}">${ganhoDecay >= 0 ? '+' : ''}${fmtCurrency(ganhoDecay)}</span>`);
-        setH(`mapos-${id}-distatual2`,  `Dist: <strong class="${distColor}">${distAtual.toFixed(2)}%</strong>`);
+        setH(`mapos-${id}-gdecay`, `<span class="${c0(ganhoDecay)}">${ganhoDecay >= 0 ? '+' : ''}${fmtCurrency(ganhoDecay)}</span>`);
+        setH(`mapos-${id}-distatual2`, `Dist: <strong class="${distColor}">${distAtual.toFixed(2)}%</strong>`);
 
         // Probabilidade bar
-        setH(`mapos-${id}-pop3`,        `<span class="${popColor} fw-bold">${popEst.toFixed(0)}%</span>`);
+        setH(`mapos-${id}-pop3`, `<span class="${popColor} fw-bold">${popEst.toFixed(0)}%</span>`);
         const popBar = document.getElementById(`mapos-${id}-popbar`);
         if (popBar) {
             popBar.style.width = popEst.toFixed(1) + '%';
-            popBar.className   = `progress-bar ${popEst >= 65 ? 'bg-success' : popEst >= 50 ? 'bg-warning' : 'bg-danger'}`;
+            popBar.className = `progress-bar ${popEst >= 65 ? 'bg-success' : popEst >= 50 ? 'bg-warning' : 'bg-danger'}`;
         }
 
         // Bottom 3: Comparativo detalhado
-        setH(`mapos-${id}-premopt`,     `<span class="text-info">${fmtCurrency(optionPrice)}</span>`);
-        setH(`mapos-${id}-acaopt`,      spotPrice > 0 ? fmtCurrency(spotPrice) : '—');
-        setH(`mapos-${id}-gdecay2`,     `${ganhoDecay >= 0 ? '+' : ''}${fmtCurrency(ganhoDecay)}`);
+        setH(`mapos-${id}-premopt`, `<span class="text-info">${fmtCurrency(optionPrice)}</span>`);
+        setH(`mapos-${id}-acaopt`, spotPrice > 0 ? fmtCurrency(spotPrice) : '—');
+        setH(`mapos-${id}-gdecay2`, `${ganhoDecay >= 0 ? '+' : ''}${fmtCurrency(ganhoDecay)}`);
         if (ganhoAcao !== null) {
             const gaColor = isVenda ? c0(-ganhoAcao) : c0(ganhoAcao);
-            setH(`mapos-${id}-gacao`,   `<span class="${gaColor}">${ganhoAcao >= 0 ? '+' : ''}${fmtCurrency(ganhoAcao)}</span>`);
+            setH(`mapos-${id}-gacao`, `<span class="${gaColor}">${ganhoAcao >= 0 ? '+' : ''}${fmtCurrency(ganhoAcao)}</span>`);
         } else {
-            setH(`mapos-${id}-gacao`,   '<span class="text-muted">—</span>');
+            setH(`mapos-${id}-gacao`, '<span class="text-muted">—</span>');
         }
 
         // Bottom 3: Projeção
         const premRestante = optionPrice * qtdAbs;
-        setH(`mapos-${id}-premrest`,    fmtCurrency(premRestante));
-        setH(`mapos-${id}-premperder`,  fmtCurrency(premRestante));
+        setH(`mapos-${id}-premrest`, fmtCurrency(premRestante));
+        setH(`mapos-${id}-premperder`, fmtCurrency(premRestante));
 
         // Bottom 3: Posição Atual
-        setH(`mapos-${id}-lucroreal`,   `<span class="${c0(mtm)}">${mtm >= 0 ? '+' : ''}${fmtCurrencyShort(mtm)}</span>`);
-        setH(`mapos-${id}-premopt2`,    fmtCurrency(optionPrice));
-        setH(`mapos-${id}-margem`,      `<span class="${distColor}">${isITM ? '-' : '+'}${distAtual.toFixed(2)}%</span>`);
-        setH(`mapos-${id}-roi`,         `<span class="${c0(roiAtual)}">${roiAtual >= 0 ? '+' : ''}${roiAtual.toFixed(1)}%</span>`);
+        setH(`mapos-${id}-lucroreal`, `<span class="${c0(mtm)}">${mtm >= 0 ? '+' : ''}${fmtCurrencyShort(mtm)}</span>`);
+        setH(`mapos-${id}-premopt2`, fmtCurrency(optionPrice));
+        setH(`mapos-${id}-margem`, `<span class="${distColor}">${isITM ? '-' : '+'}${distAtual.toFixed(2)}%</span>`);
+        setH(`mapos-${id}-roi`, `<span class="${c0(roiAtual)}">${roiAtual >= 0 ? '+' : ''}${roiAtual.toFixed(1)}%</span>`);
 
         // Bars
         const decBar = document.getElementById(`mapos-${id}-decaybar`);
         if (decBar) decBar.style.width = Math.min(pctCapturado, 100).toFixed(1) + '%';
-        setH(`mapos-${id}-decaypct`,    `<span class="${pctCapturado >= 50 ? 'text-success' : 'text-warning'} fw-bold">${pctCapturado.toFixed(1)}%</span>`);
+        setH(`mapos-${id}-decaypct`, `<span class="${pctCapturado >= 50 ? 'text-success' : 'text-warning'} fw-bold">${pctCapturado.toFixed(1)}%</span>`);
 
         // Indicators
-        setH(`mapos-${id}-pop`,         `<span class="${popColor} fw-bold">${popEst.toFixed(1)}%</span>`);
-        setH(`mapos-${id}-theta`,       `<span class="text-success">+${fmtCurrency(theta)}/d</span>`);
+        setH(`mapos-${id}-pop`, `<span class="${popColor} fw-bold">${popEst.toFixed(1)}%</span>`);
+        setH(`mapos-${id}-theta`, `<span class="text-success">+${fmtCurrency(theta)}/d</span>`);
         const drEl = document.getElementById(`mapos-${id}-diasrest`);
         if (drEl) drEl.textContent = dias > 0 ? dias + 'd' : '—';
 
         // Aba Evolução — milestones ("Hoje")
-        setH(`mapos-${id}-evoopt`,     `<span style="font-size:1.15rem;font-weight:700" class="${c0((premioAb - optionPrice) * qtdAbs)}">${fmtCurrency(optionPrice)}</span>`);
+        setH(`mapos-${id}-evoopt`, `<span style="font-size:1.15rem;font-weight:700" class="${c0((premioAb - optionPrice) * qtdAbs)}">${fmtCurrency(optionPrice)}</span>`);
         const descRecomp = isVenda
             ? (mtm >= 0 ? `✓ Lucro: ${fmtCurrency(mtm)}` : `⚠️ Pagaria ${fmtCurrency(custoRecompra)} p/ fechar`)
             : `Valor MTM: ${fmtCurrency(custoRecompra)}`;
-        setH(`mapos-${id}-evorecomp`,  `<span class="${c0(mtm)} small">${descRecomp}</span>`);
+        setH(`mapos-${id}-evorecomp`, `<span class="${c0(mtm)} small">${descRecomp}</span>`);
 
         // Aba Risco — cenários
-        setH(`mapos-${id}-riskspot`,   spotPrice > 0 ? `<span style="font-size:1.1rem;font-weight:700;color:${isITM ? '#fa5252' : '#2dc653'}">${fmtCurrency(spotPrice)}</span>` : '<span class="text-muted">—</span>');
+        setH(`mapos-${id}-riskspot`, spotPrice > 0 ? `<span style="font-size:1.1rem;font-weight:700;color:${isITM ? '#fa5252' : '#2dc653'}">${fmtCurrency(spotPrice)}</span>` : '<span class="text-muted">—</span>');
         setH(`mapos-${id}-riskstatus`, `<span class="${isITM ? 'text-danger' : 'text-success'} small">${isITM ? '⚠️ Dentro do strike (ITM)' : '✓ Acima do strike (OTM)'}</span>`);
-        setH(`mapos-${id}-riskpnl`,    `<span style="font-size:1.1rem;font-weight:700" class="${c0(mtm)}">${mtm >= 0 ? '+' : ''}${fmtCurrency(mtm)}</span>`);
+        setH(`mapos-${id}-riskpnl`, `<span style="font-size:1.1rem;font-weight:700" class="${c0(mtm)}">${mtm >= 0 ? '+' : ''}${fmtCurrency(mtm)}</span>`);
         setH(`mapos-${id}-riskpnlsub`, `<span class="${c0(mtm)} small">${mtm >= 0 ? 'Se fechar agora' : 'Se recomprar agora'}</span>`);
 
         // Enriquecer posLiveData para lazy charts
@@ -1446,7 +1463,7 @@
             const dAb2 = new Date(op.data_operacao);
             if (!isNaN(dAb2)) {
                 diasAbertos2 = Math.max(0, Math.round((new Date() - dAb2) / 86400000));
-                totalDias2   = Math.max(1, Math.round((vctoDate2 - dAb2) / 86400000));
+                totalDias2 = Math.max(1, Math.round((vctoDate2 - dAb2) / 86400000));
             }
         }
         const percTempo2 = totalDias2 > 1 ? Math.min(100, Math.round(diasAbertos2 / totalDias2 * 100)) : 0;
@@ -1469,16 +1486,16 @@
         const el = document.getElementById(`mapos-${id}-payoff`);
         if (!el) return;
         if (state.posPayoffCharts[id]) {
-            try { state.posPayoffCharts[id].destroy(); } catch (_) {}
+            try { state.posPayoffCharts[id].destroy(); } catch (_) { }
         }
         const { spotPrice, premioTotalAb, strike, qtdAbs, tipo, isVenda, breakeven, premioAb } = data;
 
         // Gerar curva de payoff
-        const ref  = spotPrice > 0 ? spotPrice : strike;
+        const ref = spotPrice > 0 ? spotPrice : strike;
         const minP = Math.min(strike, ref) * 0.87;
         const maxP = Math.max(strike, ref) * 1.15;
         const steps = 36;
-        const step  = (maxP - minP) / steps;
+        const step = (maxP - minP) / steps;
         const prices = [], pnl = [];
 
         for (let i = 0; i <= steps; i++) {
@@ -1487,16 +1504,16 @@
             if (tipo === 'PUT') {
                 if (isVenda) {
                     profit = price >= strike ? premioTotalAb
-                           : price >= breakeven ? premioTotalAb - (strike - price) * qtdAbs
-                           : -(strike - price) * qtdAbs + premioTotalAb;
+                        : price >= breakeven ? premioTotalAb - (strike - price) * qtdAbs
+                            : -(strike - price) * qtdAbs + premioTotalAb;
                 } else {
                     profit = price <= breakeven ? (strike - price) * qtdAbs - premioTotalAb : -premioTotalAb;
                 }
             } else {
                 if (isVenda) {
                     profit = price <= strike ? premioTotalAb
-                           : price <= breakeven ? premioTotalAb - (price - strike) * qtdAbs
-                           : -(price - strike) * qtdAbs + premioTotalAb;
+                        : price <= breakeven ? premioTotalAb - (price - strike) * qtdAbs
+                            : -(price - strike) * qtdAbs + premioTotalAb;
                 } else {
                     profit = price >= breakeven ? (price - strike) * qtdAbs - premioTotalAb : -premioTotalAb;
                 }
@@ -1511,8 +1528,10 @@
 
         const annotations = {
             xaxis: [
-                { x: parseFloat(strike.toFixed(2)), strokeDashArray: 5, borderColor: '#fa5252',
-                  label: { text: `Strike ${fmtCurrencyShort(strike)}`, style: { background: '#fa5252', color: '#fff', fontSize: '0.6rem', padding: { top: 2, bottom: 2, left: 4, right: 4 } }, position: 'bottom', offsetY: 0 } },
+                {
+                    x: parseFloat(strike.toFixed(2)), strokeDashArray: 5, borderColor: '#fa5252',
+                    label: { text: `Strike ${fmtCurrencyShort(strike)}`, style: { background: '#fa5252', color: '#fff', fontSize: '0.6rem', padding: { top: 2, bottom: 2, left: 4, right: 4 } }, position: 'bottom', offsetY: 0 }
+                },
                 ...(spotPrice > 0 ? [{
                     x: parseFloat(spotPrice.toFixed(2)), strokeDashArray: 0, borderColor: '#4d9de0', borderWidth: 2,
                     label: { text: `R$${spotPrice.toFixed(2)}`, style: { background: '#4d9de0', color: '#fff', fontSize: '0.6rem', padding: { top: 2, bottom: 2, left: 4, right: 4 } }, offsetY: -20 }
@@ -1544,34 +1563,38 @@
     function renderEvolutionChart(id, op, liveData) {
         const { optionPrice, premioAb, premioTotalAb, spotPrice, strike } = liveData;
         const vctoDate = op.vencimento ? new Date(op.vencimento) : null;
-        const vctoStr  = vctoDate && !isNaN(vctoDate) ? vctoDate.toLocaleDateString('pt-BR') : 'Vcto';
-        const dataAb   = op.data_operacao ? new Date(op.data_operacao).toLocaleDateString('pt-BR') : 'Abertura';
+        const vctoStr = vctoDate && !isNaN(vctoDate) ? vctoDate.toLocaleDateString('pt-BR') : 'Vcto';
+        const dataAb = op.data_operacao ? new Date(op.data_operacao).toLocaleDateString('pt-BR') : 'Abertura';
         const improved = optionPrice <= premioAb;
         const evoColor = improved ? '#2dc653' : '#fa5252';
 
         // Chart 1: evolução linha
         const evoEl = document.getElementById(`mapos-${id}-evochart`);
         if (evoEl) {
-            if (state.posEvolutionCharts[id]) { try { state.posEvolutionCharts[id].destroy(); } catch (_) {} }
+            if (state.posEvolutionCharts[id]) { try { state.posEvolutionCharts[id].destroy(); } catch (_) { } }
             state.posEvolutionCharts[id] = new ApexCharts(evoEl, {
                 chart: { type: 'line', height: 200, background: 'transparent', toolbar: { show: false }, animations: { speed: 400 } },
-                series: [{ name: 'Prêmio', data: [
-                    { x: `Abertura\n${dataAb}`, y: parseFloat(premioAb.toFixed(4)) },
-                    { x: 'Hoje',                 y: parseFloat(optionPrice.toFixed(4)) },
-                    { x: `Vencimento\n${vctoStr}`, y: 0.00 }
-                ]}],
-                stroke:  { curve: 'smooth', width: 3, colors: [evoColor] },
+                series: [{
+                    name: 'Prêmio', data: [
+                        { x: `Abertura\n${dataAb}`, y: parseFloat(premioAb.toFixed(4)) },
+                        { x: 'Hoje', y: parseFloat(optionPrice.toFixed(4)) },
+                        { x: `Vencimento\n${vctoStr}`, y: 0.00 }
+                    ]
+                }],
+                stroke: { curve: 'smooth', width: 3, colors: [evoColor] },
                 markers: { size: 8, colors: ['#2dc653', evoColor, '#2dc653'], strokeColors: '#1a2332', strokeWidth: 2 },
                 annotations: {
-                    yaxis: [{ y: premioAb, borderColor: '#2dc653', strokeDashArray: 5,
-                        label: { text: `Venda: ${fmtCurrency(premioAb)}`, style: { background: '#2dc653', color: '#fff', fontSize: '0.62rem', padding: { top: 2, bottom: 2, left: 4, right: 4 } } } }]
+                    yaxis: [{
+                        y: premioAb, borderColor: '#2dc653', strokeDashArray: 5,
+                        label: { text: `Venda: ${fmtCurrency(premioAb)}`, style: { background: '#2dc653', color: '#fff', fontSize: '0.62rem', padding: { top: 2, bottom: 2, left: 4, right: 4 } } }
+                    }]
                 },
-                xaxis:  { labels: { style: { colors: '#8b949e', fontSize: '0.65rem' } } },
-                yaxis:  { labels: { formatter: v => 'R$' + parseFloat(v).toFixed(2), style: { colors: ['#8b949e'], fontSize: '0.65rem' } }, min: 0 },
-                grid:   { borderColor: 'rgba(255,255,255,0.07)', strokeDashArray: 3 },
+                xaxis: { labels: { style: { colors: '#8b949e', fontSize: '0.65rem' } } },
+                yaxis: { labels: { formatter: v => 'R$' + parseFloat(v).toFixed(2), style: { colors: ['#8b949e'], fontSize: '0.65rem' } }, min: 0 },
+                grid: { borderColor: 'rgba(255,255,255,0.07)', strokeDashArray: 3 },
                 tooltip: { theme: 'dark', y: { formatter: v => fmtCurrency(v) } },
                 dataLabels: { enabled: false },
-                theme:  { mode: 'dark' },
+                theme: { mode: 'dark' },
             });
             state.posEvolutionCharts[id].render();
         }
@@ -1580,23 +1603,25 @@
         const strikeEl = document.getElementById(`mapos-${id}-strikechart`);
         if (strikeEl && spotPrice > 0 && strike > 0) {
             const key = `${id}-strike`;
-            if (state.posGaugeCharts[key]) { try { state.posGaugeCharts[key].destroy(); } catch (_) {} }
+            if (state.posGaugeCharts[key]) { try { state.posGaugeCharts[key].destroy(); } catch (_) { } }
             const minY = Math.min(strike, spotPrice) * 0.97;
             state.posGaugeCharts[key] = new ApexCharts(strikeEl, {
                 chart: { type: 'bar', height: 200, background: 'transparent', toolbar: { show: false }, animations: { speed: 400 } },
-                series: [{ name: 'Valor', data: [
-                    { x: `Strike\n${fmtCurrency(strike)}`,          y: parseFloat(strike.toFixed(2)) },
-                    { x: `Ativo Atual\n${fmtCurrency(spotPrice)}`,   y: parseFloat(spotPrice.toFixed(2)) },
-                ]}],
+                series: [{
+                    name: 'Valor', data: [
+                        { x: `Strike\n${fmtCurrency(strike)}`, y: parseFloat(strike.toFixed(2)) },
+                        { x: `Ativo Atual\n${fmtCurrency(spotPrice)}`, y: parseFloat(spotPrice.toFixed(2)) },
+                    ]
+                }],
                 plotOptions: { bar: { columnWidth: '55%', dataLabels: { position: 'top' }, distributed: true } },
                 colors: ['#fa5252', spotPrice > strike ? '#2dc653' : '#f59f00'],
                 dataLabels: { enabled: true, formatter: v => 'R$' + parseFloat(v).toFixed(2), style: { fontSize: '0.68rem', colors: ['#fff'] }, offsetY: -20 },
                 xaxis: { labels: { style: { colors: '#8b949e', fontSize: '0.65rem' } } },
                 yaxis: { labels: { formatter: v => 'R$' + parseFloat(v).toFixed(0), style: { colors: ['#8b949e'], fontSize: '0.65rem' } }, min: minY },
                 legend: { show: false },
-                grid:   { borderColor: 'rgba(255,255,255,0.07)', strokeDashArray: 3 },
+                grid: { borderColor: 'rgba(255,255,255,0.07)', strokeDashArray: 3 },
                 tooltip: { theme: 'dark', y: { formatter: v => fmtCurrency(v) } },
-                theme:  { mode: 'dark' },
+                theme: { mode: 'dark' },
             });
             state.posGaugeCharts[key].render();
         }
@@ -1614,15 +1639,15 @@
             if (!isNaN(dAb)) totalDias = Math.max(1, Math.round((vctoDate - dAb) / 86400000));
         }
         const pctRestanteTempo = totalDias > 0 ? parseFloat(Math.min(100, (dias / totalDias * 100)).toFixed(1)) : 0;
-        const absVar     = parseFloat(Math.min(100, Math.abs(pctVariacaoPremio || 0)).toFixed(1));
-        const distNorm   = parseFloat(Math.min(100, ((distAtual || 0) / 20 * 100)).toFixed(1));
-        const varColor   = (pctVariacaoPremio || 0) <= 0 ? '#2dc653' : '#fa5252';
+        const absVar = parseFloat(Math.min(100, Math.abs(pctVariacaoPremio || 0)).toFixed(1));
+        const distNorm = parseFloat(Math.min(100, ((distAtual || 0) / 20 * 100)).toFixed(1));
+        const varColor = (pctVariacaoPremio || 0) <= 0 ? '#2dc653' : '#fa5252';
         const distColor2 = isITM ? '#fa5252' : (distAtual || 0) < 3 ? '#f59f00' : '#2dc653';
         const tempoColor = pctRestanteTempo < 20 ? '#fa5252' : pctRestanteTempo < 40 ? '#f59f00' : '#4d9de0';
         const setH = (eid, html) => { const el = document.getElementById(eid); if (el) el.innerHTML = html; };
 
         const gaugeConfig = (val, color, fmt) => ({
-            chart:  { type: 'radialBar', height: 160, background: 'transparent', toolbar: { show: false }, animations: { speed: 500 } },
+            chart: { type: 'radialBar', height: 160, background: 'transparent', toolbar: { show: false }, animations: { speed: 500 } },
             series: [parseFloat(val.toFixed(1))],
             plotOptions: {
                 radialBar: {
@@ -1631,9 +1656,9 @@
                     dataLabels: { name: { show: false }, value: { fontSize: '1.1rem', fontWeight: 700, color, formatter: v => fmt(v) } }
                 }
             },
-            fill:   { colors: [color] },
+            fill: { colors: [color] },
             stroke: { lineCap: 'round' },
-            theme:  { mode: 'dark' },
+            theme: { mode: 'dark' },
             tooltip: { enabled: false },
         });
 
@@ -1641,19 +1666,19 @@
             const el = document.getElementById(elId);
             if (!el) return;
             const existing = state.posGaugeCharts[elId];
-            if (existing) { try { existing.destroy(); } catch (_) {} }
+            if (existing) { try { existing.destroy(); } catch (_) { } }
             const chart = new ApexCharts(el, gaugeConfig(val, color, fmt));
             state.posGaugeCharts[elId] = chart;
             chart.render();
         };
 
-        makeGauge(`mapos-${id}-gauge-var`,   absVar,           varColor,    () => `${(pctVariacaoPremio||0) >= 0 ? '+' : ''}${parseFloat(pctVariacaoPremio||0).toFixed(0)}%`);
-        makeGauge(`mapos-${id}-gauge-dist`,  distNorm,         distColor2,  () => `${isITM ? '-' : '+'}${(distAtual||0).toFixed(1)}%`);
-        makeGauge(`mapos-${id}-gauge-tempo`, pctRestanteTempo, tempoColor,  () => `${dias}d`);
+        makeGauge(`mapos-${id}-gauge-var`, absVar, varColor, () => `${(pctVariacaoPremio || 0) >= 0 ? '+' : ''}${parseFloat(pctVariacaoPremio || 0).toFixed(0)}%`);
+        makeGauge(`mapos-${id}-gauge-dist`, distNorm, distColor2, () => `${isITM ? '-' : '+'}${(distAtual || 0).toFixed(1)}%`);
+        makeGauge(`mapos-${id}-gauge-tempo`, pctRestanteTempo, tempoColor, () => `${dias}d`);
 
-        setH(`mapos-${id}-gaugelbl-var`,  `<span style="color:${varColor};font-size:0.9rem;font-weight:700">${(pctVariacaoPremio||0) >= 0 ? '+' : ''}${(pctVariacaoPremio||0).toFixed(1)}% do prêmio</span>`);
-        setH(`mapos-${id}-gaugelbl-dist`, `<span style="color:${distColor2};font-size:0.9rem;font-weight:700">${isITM ? 'ITM ' : 'OTM '}${(distAtual||0).toFixed(2)}%</span>`);
-        setH(`mapos-${id}-gaugelbl-tempo`,`<span style="color:${tempoColor};font-size:0.9rem;font-weight:700">${dias} dias restantes</span>`);
+        setH(`mapos-${id}-gaugelbl-var`, `<span style="color:${varColor};font-size:0.9rem;font-weight:700">${(pctVariacaoPremio || 0) >= 0 ? '+' : ''}${(pctVariacaoPremio || 0).toFixed(1)}% do prêmio</span>`);
+        setH(`mapos-${id}-gaugelbl-dist`, `<span style="color:${distColor2};font-size:0.9rem;font-weight:700">${isITM ? 'ITM ' : 'OTM '}${(distAtual || 0).toFixed(2)}%</span>`);
+        setH(`mapos-${id}-gaugelbl-tempo`, `<span style="color:${tempoColor};font-size:0.9rem;font-weight:700">${dias} dias restantes</span>`);
         setH(`mapos-${id}-gaugesub-dist`, `<span class="small text-muted">${isITM ? 'Dentro do strike ⚠️' : 'OTM ✓'}</span>`);
     }
 
@@ -1685,9 +1710,9 @@
         state.posicoes.forEach(op => {
             const live = liveMap[op.id] || {};
             updatePosCardLive(op, {
-                spot_price:   live.spot_price  || 0,
+                spot_price: live.spot_price || 0,
                 option_price: live.option_price != null ? live.option_price : parseFloat(op.preco_atual || 0),
-                pop:          live.pop  || 0,
+                pop: live.pop || 0,
             });
         });
 
@@ -1706,19 +1731,19 @@
     /* Renderizar resumo (cards do topo da aba)                             */
     /* ------------------------------------------------------------------ */
     function renderPosSummary() {
-        const lives    = Object.values(state.posLiveData);
-        const count    = state.posicoes.length;
-        const totalMTM = lives.reduce((s, d) => s + (d.mtm    || 0), 0);
-        const avgROI   = lives.length > 0 ? lives.reduce((s, d) => s + (d.roiAtual   || 0), 0) / lives.length : 0;
+        const lives = Object.values(state.posLiveData);
+        const count = state.posicoes.length;
+        const totalMTM = lives.reduce((s, d) => s + (d.mtm || 0), 0);
+        const avgROI = lives.length > 0 ? lives.reduce((s, d) => s + (d.roiAtual || 0), 0) / lives.length : 0;
         const itmCount = lives.filter(d => d.isITM).length;
-        const avgDecay = lives.length > 0 ? lives.reduce((s, d) => s + (d.pctCapturado|| 0), 0) / lives.length : 0;
+        const avgDecay = lives.length > 0 ? lives.reduce((s, d) => s + (d.pctCapturado || 0), 0) / lives.length : 0;
         const mtmColor = totalMTM >= 0 ? '#2dc653' : '#fa5252';
         const setH = (eid, html) => { const el = document.getElementById(eid); if (el) el.innerHTML = html; };
-        setH('maPosCount',     `<span style="color:#c9d1d9;font-weight:700">${count}</span>`);
-        setH('maPosTotalMTM',  `<span style="color:${mtmColor};font-weight:700">${totalMTM >= 0 ? '+' : ''}${fmtCurrencyShort(totalMTM)}</span>`);
-        setH('maPosPctMedio',  `<span style="color:${avgROI >= 0 ? '#2dc653' : '#fa5252'};font-weight:700">${avgROI >= 0 ? '+' : ''}${avgROI.toFixed(1)}%</span>`);
-        setH('maPosRiscoCount',`<span style="color:${itmCount > 0 ? '#fa5252' : '#2dc653'};font-weight:700">${itmCount} ITM</span>`);
-        setH('maPosDecayMedio',`<span style="color:#4d9de0;font-weight:700">${avgDecay.toFixed(1)}%</span>`);
+        setH('maPosCount', `<span style="color:#c9d1d9;font-weight:700">${count}</span>`);
+        setH('maPosTotalMTM', `<span style="color:${mtmColor};font-weight:700">${totalMTM >= 0 ? '+' : ''}${fmtCurrencyShort(totalMTM)}</span>`);
+        setH('maPosPctMedio', `<span style="color:${avgROI >= 0 ? '#2dc653' : '#fa5252'};font-weight:700">${avgROI >= 0 ? '+' : ''}${avgROI.toFixed(1)}%</span>`);
+        setH('maPosRiscoCount', `<span style="color:${itmCount > 0 ? '#fa5252' : '#2dc653'};font-weight:700">${itmCount} ITM</span>`);
+        setH('maPosDecayMedio', `<span style="color:#4d9de0;font-weight:700">${avgDecay.toFixed(1)}%</span>`);
     }
 
     /* ------------------------------------------------------------------ */
@@ -1734,24 +1759,24 @@
     async function refreshPosicoesCompleto() {
         if (state.posRefreshing) return;
         state.posRefreshing = true;
-        state.posLiveData   = {};
+        state.posLiveData = {};
         // Destruir charts antigos
-        Object.values(state.posPayoffCharts).forEach(ch => { try { ch.destroy(); } catch (_) {} });
+        Object.values(state.posPayoffCharts).forEach(ch => { try { ch.destroy(); } catch (_) { } });
         state.posPayoffCharts = {};
-        Object.values(state.posEvolutionCharts).forEach(ch => { try { ch.destroy(); } catch (_) {} });
+        Object.values(state.posEvolutionCharts).forEach(ch => { try { ch.destroy(); } catch (_) { } });
         state.posEvolutionCharts = {};
-        Object.values(state.posGaugeCharts).forEach(ch => { try { ch.destroy(); } catch (_) {} });
+        Object.values(state.posGaugeCharts).forEach(ch => { try { ch.destroy(); } catch (_) { } });
         state.posGaugeCharts = {};
         // Reset panes de posições para estado de loading
-        ['maPosSummary','maPosCards','maPosEmpty'].forEach(eid => {
+        ['maPosSummary', 'maPosCards', 'maPosEmpty'].forEach(eid => {
             const el = document.getElementById(eid);
             if (el) el.style.display = 'none';
         });
-        ['maPosEvoSections','maPosRiscoSections'].forEach(eid => {
+        ['maPosEvoSections', 'maPosRiscoSections'].forEach(eid => {
             const el = document.getElementById(eid);
             if (el) { el.style.display = 'none'; el.innerHTML = ''; }
         });
-        ['maPosEvoLoading','maPosRiscoLoading'].forEach(eid => {
+        ['maPosEvoLoading', 'maPosRiscoLoading'].forEach(eid => {
             const el = document.getElementById(eid);
             if (el) el.style.removeProperty('display');
         });

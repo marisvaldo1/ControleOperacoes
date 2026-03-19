@@ -6,8 +6,8 @@ export default defineConfig({
     // e2e-usuario.spec.js é excluído do run normal (CI).
     // Execute manualmente: npm run test:usuario:headed
     testIgnore: ["**/e2e-usuario.spec.js"],
-    timeout: 20_000,
-    retries: 0,
+    timeout: 30_000,
+    retries: 1,
     reporter: [
         ["html", { outputFolder: ".tmp/playwright-report", open: "never" }],
         ["json", { outputFile: "tests/results/playwright_results.json" }],

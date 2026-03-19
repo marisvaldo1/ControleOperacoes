@@ -1,8 +1,70 @@
 # 09 — PROMPTS LOG
 
-> Atualizado automaticamente. Total registrado: 5 entrada(s).
+> Atualizado automaticamente. Total registrado: 7 entrada(s).
 > Para registrar um novo prompt: `memoryIA\log_prompt.bat`
 
+
+---
+
+**`2026-03-16 14:19:43`**
+
+```
+Em opcÃ£o, cliquei no botÃ£o fechar operaÃ§Ã£o. Veja a imagem. E agora a operaÃ§Ã£o PETRO424W2 estÃ¡ mostrando que foi exercida e nÃ£o foi. Veja o cÃ¡lculo para apurar o exercÃ­cio. Note que o valor fechado oi menor que o strike. Portando a venda de put nÃ£o foi exercida. Verifique esse cÃ¡lculo e ajuste o resultado na tela.
+
+
+Na tela de cypto, preciso corrigir essa tela da imagem 1
+Nessa mesma tela ao clicar no botÃ£o atualizar, nada foi atualizado. Preciso que mostre o loding e atualize os dados.
+
+Na imagem 2, diminuir os cards nos dias do mes, e ao clicar, mostrar as operaÃ§Ãµes abertas e fechadas.
+Atualmente sÃ³ mostra as fechadas.
+Em performance do dia em crypos veja a imagem 3. Os grÃ¡ficos de progresso estÃ£o totalmente errados.
+
+A tela de anÃ¡lise temporal de performance em crypto nÃ£o carregou nada. EstÃ¡ tudo zerado conforme imagem 4. NÃ£o mostrou informaÃ§Ã£o em nenhuma aba. Ao clicar no botÃ£o atualizar, nada acontece.
+
+Estou sempre recebendo esse erro em crypto
+bootstrap-autofill-overlay.js:9562 Uncaught (in promise) TypeError: Cannot read properties of null (reading 'includes')
+    at AutofillOverlayContentService.<anonymous> (bootstrap-autofill-overlay.js:9562:81)
+    at Generator.next (<anonymous>)
+    at bootstrap-autofill-overlay.js:8522:71
+    at new Promise (<anonymous>)
+    at autofill_overlay_content_service_awaiter (bootstrap-autofill-overlay.js:8518:12)
+    at AutofillOverlayContentService.setQualifiedLoginFillType (bootstrap-autofill-overlay.js:9555:16)
+    at AutofillOverlayContentService.isIgnoredField (bootstrap-autofill-overlay.js:9530:23)
+    at AutofillOverlayContentService.<anonymous> (bootstrap-autofill-overlay.js:8981:22)
+    at Generator.next (<anonymous>)
+    at bootstrap-autofill-overlay.js:8522:71
+```
+
+---
+
+**`2026-03-16 14:19:11`**
+
+```
+Em opcÃ£o, cliquei no botÃ£o fechar operaÃ§Ã£o. Veja a imagem. E agora a operaÃ§Ã£o PETRO424W2 estÃ¡ mostrando que foi exercida e nÃ£o foi. Veja o cÃ¡lculo para apurar o exercÃ­cio. Note que o valor fechado oi menor que o strike. Portando a venda de put nÃ£o foi exercida. Verifique esse cÃ¡lculo e ajuste o resultado na tela.
+
+
+Na tela de cypto, preciso corrigir essa tela da imagem 1
+Nessa mesma tela ao clicar no botÃ£o atualizar, nada foi atualizado. Preciso que mostre o loding e atualize os dados.
+
+Na imagem 2, diminuir os cards nos dias do mes, e ao clicar, mostrar as operaÃ§Ãµes abertas e fechadas.
+Atualmente sÃ³ mostra as fechadas.
+Em performance do dia em crypos veja a imagem 3. Os grÃ¡ficos de progresso estÃ£o totalmente errados.
+
+A tela de anÃ¡lise temporal de performance em crypto nÃ£o carregou nada. EstÃ¡ tudo zerado conforme imagem 4. NÃ£o mostrou informaÃ§Ã£o em nenhuma aba. Ao clicar no botÃ£o atualizar, nada acontece.
+
+Estou sempre recebendo esse erro em crypto
+bootstrap-autofill-overlay.js:9562 Uncaught (in promise) TypeError: Cannot read properties of null (reading 'includes')
+    at AutofillOverlayContentService.<anonymous> (bootstrap-autofill-overlay.js:9562:81)
+    at Generator.next (<anonymous>)
+    at bootstrap-autofill-overlay.js:8522:71
+    at new Promise (<anonymous>)
+    at autofill_overlay_content_service_awaiter (bootstrap-autofill-overlay.js:8518:12)
+    at AutofillOverlayContentService.setQualifiedLoginFillType (bootstrap-autofill-overlay.js:9555:16)
+    at AutofillOverlayContentService.isIgnoredField (bootstrap-autofill-overlay.js:9530:23)
+    at AutofillOverlayContentService.<anonymous> (bootstrap-autofill-overlay.js:8981:22)
+    at Generator.next (<anonymous>)
+    at bootstrap-autofill-overlay.js:8522:71
+```
 
 ---
 

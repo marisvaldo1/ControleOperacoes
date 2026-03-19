@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Investimentos</title>
+    <style>
+        body {
+            background-color: #141414;
+            color: white;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-around;
+            height: 100vh;
+            margin: 0;
+        }
+        .gauge-container {
+            display: flex;
+            justify-content: space-around;
+            width: 80%;
+        }
+        .gauge {
+            width: 300px;
+            height: 150px;
+            margin: 20px;
+        }
+        .info-text {
+            font-size: 18px;
+            color: #00a6ed;
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="gauge-container">
+        <!-- Cotação Atual (Gauge) -->
+        <div id="gauge1" class="gauge"></div>
+        <!-- Prêmio Recebido (Gauge) -->
+        <div id="gauge2" class="gauge"></div>
+        <!-- Prêmio Atual (Gauge) -->
+        <div id="gauge3" class="gauge"></div>
+    </div>
+    <div class="gauge-container">
+        <!-- Distância do Strike (Gauge) -->
+        <div id="gauge4" class="gauge"></div>
+        <!-- % Atual do Prêmio (Gauge) -->
+        <div id="gauge5" class="gauge"></div>
+    </div>
+
+    <div class="info-text">
+        <p><strong>Data de Exercício:</strong> 2026-03-10</p>
+        <p><strong>Tempo Restante:</strong> 2 dias</p>
+        <p><strong>Recomendação:</strong> Fechar operação.</p>
+    </div>
+
+    <script src="https://bernii.github.io/gauge.js/dist/gauge.min.js"></script>
+    <script>
+        function createGauge(elementId, value) {
+            var opts = {
+                angle: 0.0, lineWidth: 0.3, radiusScale: 1, pointer: {
+                    length: 0.6, strokeWidth: 0.035, color: '#000000'
+                },
+                limitMax: false, limitMin: false, colorStart: '#6FADCF', colorStop: '#8FC0DA',
+                strokeColor: '#E0E0E0', generateGradient: true, highDpiSupport: true,
+                staticZones: [
+                    {strokeStyle: "red", min: 0, max: 25}, 
+                    {strokeStyle: "yellow", min: 25, max: 75}, 
+                    {strokeStyle: "green", min: 75, max: 100}
+                ],
+                staticLabels: {
+                    font: "15px sans-serif", labels: [0, 25, 50, 75, 100], color: "#FFFFFF", fractionDigits: 0
+                },
+                renderTicks: {divisions: 5, divWidth: 1.1, divLength: 0.7, divColor: "#333333", subDivisions: 4, subLength: 0.5, subWidth: 0.6, subColor: "#666666"}
+            };
+
+            var target = document.getElementById(elementId);
+            var gauge = new Gauge(target).setOptions(opts);
+            gauge.maxValue = 100;
+            gauge.setMinValue(0);
+            gauge.animationSpeed = 32;
+            gauge.set(value);
+        }
+
+        // Exemplo de valores para os gauges
+        createGauge('gauge1', 65);  // Cotação Atual
+        createGauge('gauge2', 80);  // Prêmio Recebido
+        createGauge('gauge3', 75);  // Prêmio Atual
+        createGauge('gauge4', 30);  // Distância do Strike
+        createGauge('gauge5', 45);  // % Atual do Prêmio
+    </script>
+</body>
+</html>

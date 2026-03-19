@@ -8,8 +8,10 @@
  *
  * ► Como executar SEM ver o browser (headless):
  *     npx playwright test e2e-usuario
- *
- * ► Este arquivo é EXCLUÍDO do run_all_tests.bat para não bloquear CI.
+ * * ► Screenshots são opcionais: defina PLAYWRIGHT_SCREENSHOTS=1 ou E2E_SCREENSHOTS=always para habilitá-las.
+ *     Exemplo direto: $env:PLAYWRIGHT_SCREENSHOTS="1"; npx playwright test e2e-usuario
+ *     Via dashboard de testes: Configurações → Captura de Tela → Sempre (passa E2E_SCREENSHOTS=always)
+ * * ► Este arquivo é EXCLUÍDO do run_all_tests.bat para não bloquear CI.
  *   Para incluir: remova "e2e-usuario.spec.js" do testIgnore no playwright.config.js
  *
  * Dados dos testes ficam em:
@@ -31,14 +33,13 @@ const opcoesFx   = require("../fixtures/opcoes-fixtures.json");
 const cryptoFx   = require("../fixtures/crypto-fixtures.json");
 
 // ── Diretório de screenshots ──────────────────────────────────────────────────
-const SHOT_DIR = path.resolve(__dirname, "../../../tests/results/screenshots");
-
-function ensureShotDir() {
-    if (!fs.existsSync(SHOT_DIR)) fs.mkdirSync(SHOT_DIR, { recursive: true });
-}
+const SHOT_DIR    = path.resolve(__dirname, "../../../tests/results/screenshots");
+const SCREENSHOTS = process.env.PLAYWRIGHT_SCREENSHOTS === "1"
+                 || process.env.E2E_SCREENSHOTS === "always";
 
 async function shot(page, name) {
-    ensureShotDir();
+    if (!SCREENSHOTS) return;
+    if (!fs.existsSync(SHOT_DIR)) fs.mkdirSync(SHOT_DIR, { recursive: true });
     const file = path.join(SHOT_DIR, `usuario-${name}.png`);
     await page.screenshot({ path: file, fullPage: true });
     console.log(`  📸 ${file}`);

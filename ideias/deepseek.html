@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modal Resultados Crypto · Demonstração</title>
+    <!-- Bootstrap 5 (CSS) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Fonte JetBrains Mono (opcional) -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ===== modal-resultados.css (versão consolidada com acréscimos) ===== */
+        /* ── Standard Modal Header — .mp-* ────────── */
+        .mp-header {
+            background: #1a1f2e;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 0.75rem 1.25rem;
+        }
+        .mp-title {
+            color: #c9d1d9;
+            font-size: 0.95rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            margin: 0;
+        }
+        .mp-update-status {
+            font-size: 0.75rem;
+            color: #64748b;
+            white-space: nowrap;
+        }
+        .mp-refresh-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #8b949e;
+            border-radius: 6px;
+            padding: 5px 7px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: all 0.15s ease;
+        }
+        .mp-refresh-btn:hover {
+            background: rgba(255, 255, 255, 0.12);
+            color: #c9d1d9;
+        }
+        .mp-refresh-btn.spinning svg {
+            animation: mp-spin 0.8s linear infinite;
+        }
+        @keyframes mp-spin {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(360deg); }
+        }
+
+        /* ── Modal base ───────────────────────────── */
+        .res-modal-content {
+            background: #1a1f2e;
+            color: #f1f5f9;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .res-modal-content .modal-body {
+            height: 680px;
+            max-height: 90vh;
+            overflow: hidden;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            background: #1a1f2e;
+        }
+
+        /* ════════════════════════════════════════════
+           MODAL RESULTADOS CRYPTO v4 — Dark-Theme 
+           Prefixo rmc- para evitar conflito
+           ════════════════════════════════════════════ */
+        #modalResultadosCrypto .modal-dialog {
+            max-width: min(92vw, 1280px);
+        }
+        .res-modal-content {
+            --rmc-bg-base:    #05090f;
+            --rmc-bg-card:    #090f1a;
+            --rmc-bg-card2:   #0b1220;
+            --rmc-bg-sidebar: #070c16;
+            --rmc-border:     #1a2540;
+            --rmc-border-hi:  #253558;
+            --rmc-txt-pri:    #e8f0fe;
+            --rmc-txt-sec:    #5a7090;
+            --rmc-txt-muted:  #2e4060;
+            --rmc-gold:       #f5a623;
+            --rmc-cyan:       #00d4e8;
+            --rmc-green:      #00e87a;
+            --rmc-red:        #ff4d6a;
+            --rmc-blue:       #4d9eff;
+            --rmc-purple:     #a855f7;
+            --rmc-font-mono:  "JetBrains Mono", monospace;
+            background: var(--rmc-bg-base);
+            font-family: var(--rmc-font-mono);
+            color: var(--rmc-txt-pri);
+        }
+        .rmc-btn-refresh {
+            background: rgba(0,212,232,0.08); border: 1px solid rgba(0,212,232,0.2);
+            border-radius: 6px; color: #00d4e8; padding: 0.2rem 0.5rem; font-size: 0.82rem;
+            cursor: pointer; display: flex; align-items: center; gap: 0.3rem; transition: background 0.15s;
+        }
+        .rmc-btn-refresh:hover { background: rgba(0,212,232,0.18); }
+
+        /* Filter bar */
+        .rmc-filter-bar {
+            display: flex; flex-wrap: wrap; gap: 0.25rem 0.5rem;
+            padding: 0.45rem 0.7rem; border-bottom: 1px solid var(--rmc-border);
+            background: rgba(5,9,15,0.7);
+        }
+        .rmc-pills-group { display: flex; flex-wrap: wrap; gap: 0.2rem; align-items: center; }
+        .rmc-pill {
+            background: transparent; border: 1px solid var(--rmc-border); border-radius: 20px;
+            color: var(--rmc-txt-sec); font-family: var(--rmc-font-mono); font-size: 0.75rem;
+            padding: 0.15rem 0.55rem; cursor: pointer; transition: all 0.15s;
+        }
+        .rmc-pill:hover { border-color: var(--rmc-border-hi); color: var(--rmc-txt-pri); }
+        .rmc-pill.active { background: rgba(37,53,88,0.6); border-color: #2563eb; color: #a5c8ff; }
+        .rmc-pill-ab.active  { border-color: var(--rmc-green);  color: var(--rmc-green); }
+        .rmc-pill-call.active{ border-color: var(--rmc-cyan);   color: var(--rmc-cyan); }
+        .rmc-pill-put.active { border-color: var(--rmc-red);    color: var(--rmc-red); }
+
+        /* Op selector */
+        .rmc-op-selector {
+            display: flex; align-items: center; gap: 0.5rem;
+            padding: 0.3rem 0.7rem; border-bottom: 1px solid var(--rmc-border);
+            background: rgba(9,15,26,0.5); overflow: hidden;
+        }
+        .rmc-op-tabs-row { display: flex; gap: 0.4rem; overflow-x: auto; flex: 1; scrollbar-width: none; }
+        .rmc-op-tabs-row::-webkit-scrollbar { display: none; }
+        .rmc-op-tab {
+            flex-shrink: 0; background: rgba(26,37,64,0.4); border: 1px solid var(--rmc-border);
+            border-radius: 6px; padding: 0.2rem 0.6rem; font-family: var(--rmc-font-mono);
+            font-size: 0.75rem; color: var(--rmc-txt-sec); cursor: pointer; transition: all 0.15s;
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .rmc-op-tab.active { background: rgba(15,30,54,0.9); border-color: #2563eb; color: #a5c8ff; }
+        .rmc-op-tab:hover:not(.active) { border-color: var(--rmc-border-hi); color: var(--rmc-txt-pri); }
+        .rmc-op-summary-pills { display: flex; gap: 0.2rem; align-items: center; flex-shrink: 0; }
+        .rmc-s-pill { font-family: var(--rmc-font-mono); font-size: 0.82rem; border-radius: 10px; padding: 0.1rem 0.4rem; font-weight: 600; }
+        .rmc-sp-blue  { background: rgba(37,99,235,0.15); color: #60a0ff; border: 1px solid rgba(37,99,235,0.3); }
+        .rmc-sp-green { background: rgba(0,232,122,0.1);  color: #00e87a; border: 1px solid rgba(0,232,122,0.2); }
+        .rmc-sp-gray  { background: rgba(90,112,144,0.15);color: #8aabcc; border: 1px solid rgba(90,112,144,0.3); }
+        .rmc-sp-gold  { background: rgba(245,166,35,0.1); color: #f5a623; border: 1px solid rgba(245,166,35,0.2); }
+
+        /* Section tabs */
+        .rmc-section-tabs {
+            display: flex; overflow-x: auto; scrollbar-width: none;
+            border-bottom: 1px solid var(--rmc-border); background: #07091a; padding: 0 0.5rem;
+        }
+        .rmc-section-tabs::-webkit-scrollbar { display: none; }
+        .rmc-section-tab {
+            flex-shrink: 0; background: transparent; border: none;
+            border-bottom: 2px solid transparent; color: var(--rmc-txt-sec);
+            font-family: var(--rmc-font-mono); font-size: 0.86rem; padding: 0.5rem 0.9rem;
+            cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 0.35rem;
+        }
+        .rmc-section-tab:hover { color: var(--rmc-txt-pri); }
+        .rmc-section-tab.active { color: var(--rmc-cyan); border-bottom-color: var(--rmc-cyan); }
+        .rmc-stab-icon { font-size: 0.84rem; }
+        .rmc-stab-warn { color: var(--rmc-red); font-size: 0.70rem; }
+
+        /* Dashboard layout */
+        .rmc-dashboard-body {
+            display: flex; height: calc(100vh - 220px);
+            min-height: 500px; max-height: 82vh; overflow: hidden;
+        }
+        .rmc-sidebar {
+            width: 165px; min-width: 165px; background: var(--rmc-bg-sidebar);
+            border-right: 1px solid var(--rmc-border); overflow-y: auto;
+            display: flex; flex-direction: column; gap: 0;
+            scrollbar-width: thin; scrollbar-color: #1a2540 transparent;
+        }
+        .rmc-content {
+            flex: 1; overflow-y: auto; padding: 0.55rem;
+            scrollbar-width: thin; scrollbar-color: #1a2540 transparent;
+            background: var(--rmc-bg-base);
+        }
+        .rmc-sidebar::-webkit-scrollbar, .rmc-content::-webkit-scrollbar { width: 4px; }
+        .rmc-sidebar::-webkit-scrollbar-thumb, .rmc-content::-webkit-scrollbar-thumb { background: #1a2540; border-radius: 2px; }
+
+        /* Sidebar cards */
+        .rmc-sb-card { padding: 0.5rem 0.55rem; border-bottom: 1px solid var(--rmc-border); transition: background 0.15s; }
+        .rmc-sb-card:hover, .rmc-sb-card.active { background: rgba(37,53,88,0.25); }
+        .rmc-sb-label { font-size: 0.75rem; color: var(--rmc-txt-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.15rem; }
+        .rmc-sb-value { font-family: var(--rmc-font-mono); font-size: 1.02rem; font-weight: 700; line-height: 1.1; }
+        .rmc-sb-sub   { font-size: 0.78rem; color: var(--rmc-txt-sec); margin-top: 0.1rem; }
+        .rmc-sb-bar   { height: 2px; background: rgba(26,37,64,0.8); border-radius: 1px; margin-top: 0.3rem; overflow: hidden; }
+        .rmc-sb-bar-fill { height: 100%; border-radius: 1px; transition: width 0.6s ease; }
+
+        /* Content cards */
+        .rmc-card {
+            background: var(--rmc-bg-card); border: 1px solid var(--rmc-border);
+            border-radius: 10px; padding: 0.55rem 0.65rem;
+        }
+        .rmc-card-label {
+            font-size: 0.78rem; color: var(--rmc-txt-sec); text-transform: uppercase;
+            letter-spacing: 0.07em; margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.3rem;
+        }
+        .rmc-card-label-dot { width: 5px; height: 5px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+        .rmc-card-big { font-family: var(--rmc-font-mono); font-size: 1.36rem; font-weight: 700; margin-bottom: 0.25rem; line-height: 1.1; }
+        .rmc-info-row {
+            display: flex; justify-content: space-between; font-size: 0.82rem;
+            border-bottom: 1px solid rgba(26,37,64,0.5); padding: 0.18rem 0; gap: 0.5rem;
+        }
+        .rmc-info-row:last-child { border-bottom: none; }
+        .rmc-ik { color: var(--rmc-txt-sec); }
+        .rmc-iv { font-weight: 600; font-family: var(--rmc-font-mono); white-space: nowrap; }
+        .rmc-pbar { height: 4px; background: rgba(26,37,64,0.8); border-radius: 2px; overflow: hidden; margin: 0.3rem 0; }
+        .rmc-pbar-fill { height: 100%; border-radius: 2px; transition: width 0.6s ease; }
+
+        /* Row grids */
+        .rmc-row-2   { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 0.5rem; }
+        .rmc-row-3   { display: grid; grid-template-columns: repeat(3,1fr); gap: 0.5rem; margin-bottom: 0.5rem; }
+        .rmc-row-4   { display: grid; grid-template-columns: repeat(4,1fr); gap: 0.5rem; margin-bottom: 0.5rem; }
+
+        /* Gauges */
+        .rmc-gauge-wrap { width: 95px; height: 95px; position: relative; flex-shrink: 0; }
+        .rmc-gauge-wrap svg { width: 100%; height: 100%; }
+        .rmc-gauge-inner {
+            position: absolute; inset: 0; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; pointer-events: none;
+        }
+        .rmc-g-track    { fill: none; stroke: rgba(26,37,64,0.8); stroke-width: 6; }
+        .rmc-g-arc      { fill: none; stroke-width: 6; stroke-linecap: round; transition: stroke-dashoffset 0.8s cubic-bezier(.25,.46,.45,.94); }
+        .rmc-g-track-sm { fill: none; stroke: rgba(26,37,64,0.6); stroke-width: 4.5; }
+        .rmc-g-arc-sm   { fill: none; stroke-width: 4.5; stroke-linecap: round; transition: stroke-dashoffset 0.8s cubic-bezier(.25,.46,.45,.94); }
+        .rmc-g-val    { font-family: var(--rmc-font-mono); font-size: 0.90rem; font-weight: 700; line-height: 1; text-align: center; }
+        .rmc-g-val-sm { font-family: var(--rmc-font-mono); font-size: 0.82rem; font-weight: 700; line-height: 1; text-align: center; }
+        .rmc-g-sub    { font-size: 0.70rem; color: var(--rmc-txt-sec); text-align: center; line-height: 1.2; margin-top: 0.1rem; }
+        .rmc-gauge-sm  { width: 76px; height: 76px; }
+        .rmc-gauge-row { display: flex; align-items: center; gap: 0.6rem; }
+        .rmc-gauge-stats { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 0.05rem; }
+
+        /* Compare bar (simplificado) */
+        .rmc-compare-bar-card { margin-bottom: 0.5rem; }
+
+        /* Badges */
+        .rmc-badge-call {
+            display: inline-block; font-family: var(--rmc-font-mono); font-size: 0.67rem; font-weight: 700;
+            padding: 0.1rem 0.4rem; border-radius: 4px; background: rgba(0,212,232,0.12);
+            color: var(--rmc-cyan); border: 1px solid rgba(0,212,232,0.25); text-transform: uppercase;
+        }
+        .rmc-badge-put {
+            display: inline-block; font-family: var(--rmc-font-mono); font-size: 0.67rem; font-weight: 700;
+            padding: 0.1rem 0.4rem; border-radius: 4px; background: rgba(255,77,106,0.12);
+            color: var(--rmc-red); border: 1px solid rgba(255,77,106,0.25); text-transform: uppercase;
+        }
+
+        /* Tab panels */
+        .rmc-tab-panel        { display: none; }
+        .rmc-tab-panel.active { display: block; }
+
+        /* Posições table */
+        .rmc-pos-header, .rmc-pos-row {
+            display: grid; grid-template-columns: 2fr 1fr 1.5fr 1.5fr 1fr 1.5fr;
+            gap: 0.3rem; font-size: 0.73rem; padding: 0.3rem 0.4rem;
+            border-bottom: 1px solid rgba(26,37,64,0.5);
+        }
+        .rmc-pos-header {
+            font-size: 0.63rem; color: var(--rmc-txt-sec); text-transform: uppercase;
+            letter-spacing: 0.06em; background: var(--rmc-bg-card2); border-radius: 6px 6px 0 0;
+        }
+
+        /* Novos grids para a aba Desempenho */
+        .rmc-resumo-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.3rem 0.5rem;
+            font-size: 0.75rem;
+        }
+        .rmc-resumo-grid > div {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(26,37,64,0.5);
+            padding: 0.15rem 0;
+        }
+        .rmc-resumo-grid .rmc-ik {
+            color: var(--rmc-txt-sec);
+        }
+        .rmc-resumo-grid .rmc-iv {
+            font-weight: 600;
+            font-family: var(--rmc-font-mono);
+        }
+        .rmc-greeks-grid, .rmc-prob-grid, .rmc-rr-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.2rem 0.5rem;
+        }
+        .rmc-greeks-grid > div, .rmc-prob-grid > div, .rmc-rr-grid > div {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            border-bottom: 1px dashed rgba(26,37,64,0.3);
+            padding: 0.1rem 0;
+        }
+
+        /* Color utilities */
+        .rmc-c-gold   { color: var(--rmc-gold)!important; }
+        .rmc-c-cyan   { color: var(--rmc-cyan)!important; }
+        .rmc-c-green  { color: var(--rmc-green)!important; }
+        .rmc-c-red    { color: var(--rmc-red)!important; }
+        .rmc-c-blue   { color: var(--rmc-blue)!important; }
+        .rmc-c-purple { color: var(--rmc-purple)!important; }
+        .rmc-c-white  { color: var(--rmc-txt-pri)!important; }
+        .rmc-c-gray   { color: var(--rmc-txt-sec)!important; }
+    </style>
+</head>
+<body style="background: #0a0e1a; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0;">
+    <button type="button" class="btn btn-primary" id="btnResultadosCrypto" style="background: #2563eb; border: none; padding: 12px 24px; font-size: 1rem; border-radius: 40px; box-shadow: 0 0 20px #2563eb;">
+        Abrir Resultados Crypto
+    </button>
+
+    <!-- Container onde o modal será inserido (já contém o modal) -->
+    <div id="modalResultadosCryptoContainer">
+        <!-- Modal HTML (já embutido) -->
+        <div class="modal modal-blur fade" id="modalResultadosCrypto" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog modal-xl modal-dialog-centered">
+                <div class="modal-content res-modal-content">
+
+                    <!-- Header -->
+                    <div class="modal-header mp-header">
+                        <h5 class="modal-title mp-title">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" y1="1" x2="12" y2="23"/>
+                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                            </svg>
+                            Resultados · Crypto
+                        </h5>
+                        <div class="d-flex align-items-center gap-2 ms-auto me-3">
+                            <span class="mp-update-status" id="rcLastUpdate">Atualizado agora</span>
+                            <button type="button" class="mp-refresh-btn" id="rcRefreshBtn" title="Atualizar dados">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
+                                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                    </div>
+
+                    <!-- Modal Body -->
+                    <div class="modal-body p-0">
+
+                        <!-- Filtros -->
+                        <div class="rmc-filter-bar">
+                            <div class="rmc-pills-group" id="rcPeriodPills">
+                                <button class="rmc-pill active" data-period="all">Todos</button>
+                                <button class="rmc-pill" data-period="today">Hoje</button>
+                                <button class="rmc-pill" data-period="7d">7d</button>
+                                <button class="rmc-pill" data-period="15d">15d</button>
+                                <button class="rmc-pill" data-period="mes">Mês</button>
+                                <button class="rmc-pill" data-period="30d">30d</button>
+                                <button class="rmc-pill" data-period="90d">90d</button>
+                                <button class="rmc-pill" data-period="12m">12m</button>
+                                <button class="rmc-pill" data-period="ano">Ano</button>
+                            </div>
+                            <div class="rmc-pills-group" id="rcTypePills">
+                                <button class="rmc-pill rmc-pill-ab" data-type="aberta">Abertas</button>
+                                <button class="rmc-pill rmc-pill-fe" data-type="fechada">Fechadas</button>
+                                <button class="rmc-pill rmc-pill-call" data-tipo="CALL">CALL</button>
+                                <button class="rmc-pill rmc-pill-put" data-tipo="PUT">PUT</button>
+                            </div>
+                        </div>
+
+                        <!-- Op Tabs -->
+                        <div class="rmc-op-selector">
+                            <div class="rmc-op-tabs-row" id="rcOpTabsRow"><!-- renderOpTabs() --></div>
+                            <div class="rmc-op-summary-pills">
+                                <span class="rmc-s-pill rmc-sp-blue"  id="rcSumTotal">0</span>
+                                <span class="rmc-s-pill rmc-sp-green" id="rcSumAbertas">0A</span>
+                                <span class="rmc-s-pill rmc-sp-gray"  id="rcSumFechadas">0F</span>
+                                <span class="rmc-s-pill rmc-sp-gold"  id="rcSumPremio">$0</span>
+                            </div>
+                        </div>
+
+                        <!-- Section Tabs -->
+                        <div class="rmc-section-tabs" id="rcSectionTabs">
+                            <button class="rmc-section-tab active" data-sec="desempenho"><span class="rmc-stab-icon">📊</span> Desempenho</button>
+                            <button class="rmc-section-tab" data-sec="comparativos"><span class="rmc-stab-icon">📐</span> Comparativos</button>
+                            <button class="rmc-section-tab" data-sec="posicoes"><span class="rmc-stab-icon">📋</span> Posições Abertas</button>
+                            <button class="rmc-section-tab" data-sec="evolucao"><span class="rmc-stab-icon">📈</span> Evolução</button>
+                            <button class="rmc-section-tab" data-sec="risco"><span class="rmc-stab-icon">⚠</span> Risco <span class="rmc-stab-warn" id="rcRiscoWarn" style="display:none">●</span></button>
+                        </div>
+
+                        <!-- Dashboard Body: Sidebar + Conteúdo -->
+                        <div class="rmc-dashboard-body" id="rcDashBody">
+
+                            <!-- SIDEBAR -->
+                            <aside class="rmc-sidebar" id="rcSidebar">
+                                <div class="rmc-sb-card active">
+                                    <div class="rmc-sb-label">Cotação</div>
+                                    <div class="rmc-sb-value rmc-c-cyan" id="rcSbCotacao">—</div>
+                                    <div class="rmc-sb-sub rmc-c-green" id="rcSbCotacaoVar">—</div>
+                                    <div class="rmc-sb-bar"><div class="rmc-sb-bar-fill" id="rcSbCotacaoBar" style="background:#00d4e8;width:0%"></div></div>
+                                </div>
+                                <div class="rmc-sb-card">
+                                    <div class="rmc-sb-label">Resultado</div>
+                                    <div class="rmc-sb-value rmc-c-green" id="rcSbResultado">—</div>
+                                    <div class="rmc-sb-sub" id="rcSbResultadoUsd">—</div>
+                                </div>
+                                <div class="rmc-sb-card">
+                                    <div class="rmc-sb-label">TAE ao Ano</div>
+                                    <div class="rmc-sb-value rmc-c-green" id="rcSbTae">—</div>
+                                    <div class="rmc-sb-bar"><div class="rmc-sb-bar-fill" id="rcSbTaeBar" style="background:#00e87a;width:0%"></div></div>
+                                </div>
+                                <div class="rmc-sb-card">
+                                    <div class="rmc-sb-label">Strike</div>
+                                    <div class="rmc-sb-value" id="rcSbStrike">—</div>
+                                    <div class="rmc-sb-sub"><span class="rmc-badge-call" id="rcSbStrikeBadge">CALL</span></div>
+                                </div>
+                                <div class="rmc-sb-card">
+                                    <div class="rmc-sb-label">Distância OTM</div>
+                                    <div class="rmc-sb-value rmc-c-gold" id="rcSbDist">—</div>
+                                    <div class="rmc-sb-bar"><div class="rmc-sb-bar-fill" id="rcSbDistBar" style="background:#f5a623;width:0%"></div></div>
+                                </div>
+                                <div class="rmc-sb-card">
+                                    <div class="rmc-sb-label">Prêmio</div>
+                                    <div class="rmc-sb-value rmc-c-gold" id="rcSbPremio">—</div>
+                                    <div class="rmc-sb-sub" id="rcSbPremioSub">—</div>
+                                    <div class="rmc-sb-bar"><div class="rmc-sb-bar-fill" id="rcSbPremioBar" style="background:#f5a623;width:100%"></div></div>
+                                </div>
+                                <div class="rmc-sb-card">
+                                    <div class="rmc-sb-label">PoP</div>
+                                    <div class="rmc-sb-value rmc-c-green" id="rcSbPoP">—</div>
+                                    <div class="rmc-sb-sub">Prob. de Lucro</div>
+                                    <div class="rmc-sb-bar"><div class="rmc-sb-bar-fill" id="rcSbPoPBar" style="background:#00e87a;width:0%"></div></div>
+                                </div>
+                                <div class="rmc-sb-card">
+                                    <div class="rmc-sb-label">Investido</div>
+                                    <div class="rmc-sb-value rmc-c-cyan" id="rcSbInvestido">—</div>
+                                    <div class="rmc-sb-sub" id="rcSbInvestidoSub">—</div>
+                                </div>
+                            </aside>
+
+                            <!-- CONTEÚDO PRINCIPAL -->
+                            <div class="rmc-content" id="rcContent">
+
+                                <!-- ===== DESEMPENHO (REFORMULADO) ===== -->
+                                <div class="rmc-tab-panel active" id="rcSecDesempenho">
+                                    <!-- Row 1: Resumo da Operação + Performance Chart -->
+                                    <div class="rmc-row-2" style="margin-bottom:0.5rem;">
+                                        <div class="rmc-card">
+                                            <div class="rmc-card-label"><span class="rmc-card-label-dot" style="background:#4d9eff"></span>Resumo da Operação</div>
+                                            <div class="rmc-resumo-grid">
+                                                <div><span class="rmc-ik">Ativo</span><span class="rmc-iv" id="rcResAtivo">—</span></div>
+                                                <div><span class="rmc-ik">Tipo</span><span class="rmc-iv" id="rcResTipoBadge">—</span></div>
+                                                <div><span class="rmc-ik">Strike</span><span class="rmc-iv rmc-c-gold" id="rcResStrike">—</span></div>
+                                                <div><span class="rmc-ik">Abertura</span><span class="rmc-iv rmc-c-cyan" id="rcResAbertura">—</span></div>
+                                                <div><span class="rmc-ik">Cotação</span><span class="rmc-iv rmc-c-green" id="rcResCotacao">—</span></div>
+                                                <div><span class="rmc-ik">Prêmio</span><span class="rmc-iv rmc-c-gold" id="rcResPremio">—</span></div>
+                                                <div><span class="rmc-ik">Quantidade</span><span class="rmc-iv" id="rcResQtd">—</span></div>
+                                                <div><span class="rmc-ik">Investido</span><span class="rmc-iv" id="rcResInvestido">—</span></div>
+                                                <div><span class="rmc-ik">Exercício</span><span class="rmc-iv" id="rcResExDate">—</span></div>
+                                                <div><span class="rmc-ik">Dias Rest.</span><span class="rmc-iv" id="rcResDiasRest">—</span></div>
+                                            </div>
+                                        </div>
+                                        <div class="rmc-card">
+                                            <div class="rmc-card-label"><span class="rmc-card-label-dot" style="background:#00e87a"></span>Performance</div>
+                                            <div style="display:flex; gap:0.5rem; align-items:center;">
+                                                <div style="flex:1; position:relative; height:60px;">
+                                                    <svg width="100%" height="60" viewBox="0 0 200 60" preserveAspectRatio="none" id="rcPerfSvg">
+                                                        <defs><linearGradient id="rcPerfGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#00e87a" stop-opacity=".3"/><stop offset="100%" stop-color="#00e87a" stop-opacity="0"/></linearGradient></defs>
+                                                        <path id="rcPerfPath" d="M0,50 L200,50" fill="none" stroke="#00e87a" stroke-width="2"/>
+                                                        <path id="rcPerfFill" d="M0,50 L200,50 L200,60 L0,60Z" fill="url(#rcPerfGrad)"/>
+                                                    </svg>
+                                                </div>
+                                                <div style="text-align:center;">
+                                                    <div class="rmc-gauge-wrap rmc-gauge-sm" style="width:60px; height:60px;">
+                                                        <svg viewBox="0 0 100 100">
+                                                            <circle class="rmc-g-track-sm" cx="50" cy="50" r="38"/>
+                                                            <circle class="rmc-g-arc-sm" cx="50" cy="50" r="38" stroke="#00e87a" id="rcPerfPoPArc" style="stroke-dasharray:238.76;stroke-dashoffset:238.76"/>
+                                                        </svg>
+                                                        <div class="rmc-gauge-inner"><div class="rmc-g-val-sm" id="rcPerfPoP">—</div><div class="rmc-g-sub">PoP</div></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="rmc-info-row"><span class="rmc-ik">Resultado</span><span class="rmc-iv" id="rcPerfResultado">—</span></div>
+                                            <div class="rmc-info-row"><span class="rmc-ik">Lucro $</span><span class="rmc-iv" id="rcPerfLucroUsd">—</span></div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Row 2: Greeks, Probabilidades, Risco/Retorno -->
+                                    <div class="rmc-row-3" style="margin-bottom:0.5rem;">
+                                        <div class="rmc-card">
+                                            <div class="rmc-card-label"><span class="rmc-card-label-dot" style="background:#a855f7"></span>Gregos</div>
+                                            <div class="rmc-greeks-grid">
+                                                <div><span class="rmc-ik">Delta</span><span class="rmc-iv rmc-c-blue" id="rcGreeksDelta">—</span></div>
+                                                <div><span class="rmc-ik">Gamma</span><span class="rmc-iv" id="rcGreeksGamma">—</span></div>
+                                                <div><span class="rmc-ik">Theta</span><span class="rmc-iv rmc-c-red" id="rcGreeksTheta">—</span></div>
+                                                <div><span class="rmc-ik">Vega</span><span class="rmc-iv" id="rcGreeksVega">—</span></div>
+                                                <div><span class="rmc-ik">IV</span><span class="rmc-iv rmc-c-purple" id="rcGreeksIV">—</span></div>
+                                            </div>
+                                        </div>
+                                        <div class="rmc-card">
+                                            <div class="rmc-card-label"><span class="rmc-card-label-dot" style="background:#00e87a"></span>Probabilidades</div>
+                                            <div class="rmc-prob-grid">
+                                                <div><span class="rmc-ik">PoP</span><span class="rmc-iv" id="rcProbPoP">—</span></div>
+                                                <div><span class="rmc-ik">Prob. ITM</span><span class="rmc-iv rmc-c-red" id="rcProbITM">—</span></div>
+                                                <div><span class="rmc-ik">Prob. OTM</span><span class="rmc-iv rmc-c-green" id="rcProbOTM">—</span></div>
+                                                <div><span class="rmc-ik">Distância OTM</span><span class="rmc-iv rmc-c-gold" id="rcProbDist">—</span></div>
+                                            </div>
+                                        </div>
+                                        <div class="rmc-card">
+                                            <div class="rmc-card-label"><span class="rmc-card-label-dot" style="background:#f5a623"></span>Risco/Retorno</div>
+                                            <div class="rmc-rr-grid">
+                                                <div><span class="rmc-ik">Ganho Máx.</span><span class="rmc-iv rmc-c-gold" id="rcRRGanhoMax">—</span></div>
+                                                <div><span class="rmc-ik">Perda Máx.</span><span class="rmc-iv rmc-c-red" id="rcRRPerdaMax">—</span></div>
+                                                <div><span class="rmc-ik">R/R</span><span class="rmc-iv" id="rcRRRatio">—</span></div>
+                                                <div><span class="rmc-ik">Break-even</span><span class="rmc-iv" id="rcRRBreakeven">—</span></div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Row 3: Theta Decay chart + Cotação vs Strike comparison -->
+                                    <div class="rmc-row-2">
+                                        <div class="rmc-card">
+                                            <div class="rmc-card-label"><span class="rmc-card-label-dot" style="background:#ff4d6a"></span>Decaimento Theta</div>
+                                            <div style="position:relative; height:70px;">
+                                                <svg width="100%" height="70" viewBox="0 0 300 70" preserveAspectRatio="none">
+                                                    <defs><linearGradient id="rcThetaDecayGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ff4d6a" stop-opacity=".3"/><stop offset="100%" stop-color="#ff4d6a" stop-opacity="0"/></linearGradient></defs>
+                                                    <path id="rcThetaDecayPath" d="M0,10 L300,60" fill="none" stroke="#ff4d6a" stroke-width="2"/>
+                                                    <path id="rcThetaDecayFill" d="M0,10 L300,60 L300,70 L0,70Z" fill="url(#rcThetaDecayGrad)"/>
+                                                </svg>
+                                            </div>
+                                            <div class="rmc-info-row"><span class="rmc-ik">Theta/dia</span><span class="rmc-iv rmc-c-red" id="rcThetaDaily">—</span></div>
+                                            <div class="rmc-info-row"><span class="rmc-ik">Decaimento total</span><span class="rmc-iv rmc-c-red" id="rcThetaTotal">—</span></div>
+                                        </div>
+                                        <div class="rmc-card">
+                                            <div class="rmc-card-label"><span class="rmc-card-label-dot" style="background:#00d4e8"></span>Cotação vs Strike</div>
+                                            <div class="rmc-gauge-row">
+                                                <div class="rmc-gauge-wrap rmc-gauge-sm">
+                                                    <svg viewBox="0 0 100 100">
+                                                        <circle class="rmc-g-track-sm" cx="50" cy="50" r="38"/>
+                                                        <circle class="rmc-g-arc-sm" cx="50" cy="50" r="38" stroke="#00d4e8" id="rcVsArc" style="stroke-dasharray:238.76;stroke-dashoffset:238.76"/>
+                                                    </svg>
+                                                    <div class="rmc-gauge-inner"><div class="rmc-g-val-sm" id="rcVsPct">—</div><div class="rmc-g-sub">do strike</div></div>
+                                                </div>
+                                                <div class="rmc-gauge-stats">
+                                                    <div class="rmc-info-row"><span class="rmc-ik">Cotação</span><span class="rmc-iv rmc-c-green" id="rcVsCot">—</span></div>
+                                                    <div class="rmc-info-row"><span class="rmc-ik">Strike</span><span class="rmc-iv rmc-c-gold" id="rcVsStrike">—</span></div>
+                                                    <div class="rmc-info-row"><span class="rmc-ik">Diferença</span><span class="rmc-iv" id="rcVsDiff">—</span></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div><!-- /rcSecDesempenho -->
+
+                                <!-- ===== COMPARATIVOS (simplificado, apenas para referência) ===== -->
+                                <div class="rmc-tab-panel" id="rcSecComparativos">
+                                    <div class="rmc-card">Conteúdo Comparativos (mantido original)</div>
+                                </div>
+
+                                <!-- ===== POSIÇÕES ABERTAS ===== -->
+                                <div class="rmc-tab-panel" id="rcSecPosicoes">
+                                    <div class="rmc-card">
+                                        <div class="rmc-card-label"><span class="rmc-card-label-dot" style="background:#00e87a"></span>Posições Abertas</div>
+                                        <div id="rcPosTabelaWrap">
+                                            <div class="rmc-pos-header">
+                                                <span>Ativo</span><span>Tipo</span><span>Abertura</span><span>Strike</span><span>TAE</span><span>Resultado</span>
+                                            </div>
+                                            <div id="rcPosRows"><!-- renderPosicoes() --></div>
+                                        </div>
+                                    </div>
+                                    <div class="rmc-row-2" id="rcPoPCards"><!-- renderPoP() --></div>
+                                </div>
+
+                                <!-- ===== EVOLUÇÃO ===== -->
+                                <div class="rmc-tab-panel" id="rcSecEvolucao">
+                                    <div class="rmc-card">Conteúdo Evolução (mantido original)</div>
+                                </div>
+
+                                <!-- ===== RISCO ===== -->
+                                <div class="rmc-tab-panel" id="rcSecRisco">
+                                    <div class="rmc-card">Conteúdo Risco (mantido original)</div>
+                                </div>
+
+                            </div><!-- /rmc-content -->
+                        </div><!-- /rmc-dashboard-body -->
+
+                        <!-- Estado vazio -->
+                        <div class="rg-full-empty d-none" id="rcEmptyState">Nenhuma operação encontrada com os filtros selecionados.</div>
+                    </div><!-- /modal-body -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS + Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Dados de exemplo -->
+    <script>
+        window.cryptoOperacoes = [
+            {
+                ativo: 'BTC',
+                tipo: 'CALL',
+                data_operacao: '2026-03-18',
+                exercicio: '2026-04-17',
+                abertura: 62450,
+                cotacao_atual: 63820,
+                strike: 70000,
+                premio_us: 1250,
+                quantidade: 1,
+                saldo_abertura: 62450,
+                status: 'ABERTA',
+                resultado: 2.2,
+                resultado_us: 1370,
+                tae_pct: 18.5,
+                prazo_dias: 30,
+                delta: 0.42,
+                gamma: 0.015,
+                theta: -18.4,
+                vega: 0.22,
+                iv: 62
+            },
+            {
+                ativo: 'ETH',
+                tipo: 'PUT',
+                data_operacao: '2026-03-17',
+                exercicio: '2026-05-15',
+                abertura: 3120,
+                cotacao_atual: 2980,
+                strike: 2800,
+                premio_us: 85,
+                quantidade: 5,
+                saldo_abertura: 15600,
+                status: 'ABERTA',
+                resultado: -1.8,
+                resultado_us: -280,
+                tae_pct: 12.3,
+                prazo_dias: 60,
+                delta: -0.38,
+                gamma: 0.022,
+                theta: -2.1,
+                vega: 0.18,
+                iv: 58
+            },
+            {
+                ativo: 'SOL',
+                tipo: 'CALL',
+                data_operacao: '2026-03-16',
+                exercicio: '2026-04-10',
+                abertura: 148,
+                cotacao_atual: 162,
+                strike: 180,
+                premio_us: 4.20,
+                quantidade: 10,
+                saldo_abertura: 1480,
+                status: 'FECHADA',
+                resultado: 5.6,
+                resultado_us: 83,
+                tae_pct: 42.0,
+                prazo_dias: 25
+            }
+        ];
+    </script>
+
+    <!-- Script do modal (adaptado para carregamento direto) -->
+    <script>
+        (function() {
+            'use strict';
+
+            // ── Configuração ──────────────────────────────
+            const cfg = {
+                triggerBtnId:  'btnResultadosCrypto',
+                containerElId: 'modalResultadosCryptoContainer',
+                modalElId:     'modalResultadosCrypto',
+                getOperacoes:  () => Array.isArray(window.cryptoOperacoes) ? window.cryptoOperacoes : []
+            };
+
+            // ── Estado ────────────────────────────────────
+            let filteredOps = [];
+            let currentIdx  = 0;
+            let activePeriod = 'all';
+            let activeType   = null;
+            let activeTipo   = null;
+
+            // ── Helpers ───────────────────────────────────
+            const setEl = (id, html) => { const e = document.getElementById(id); if (e) e.innerHTML = html; };
+            const setTx = (id, txt)  => { const e = document.getElementById(id); if (e) e.textContent = txt; };
+            const setCss = (id, prop, val) => { const e = document.getElementById(id); if (e) e.style[prop] = val; };
+            const fmtUsd = v => new Intl.NumberFormat('en-US', {style:'currency',currency:'USD',minimumFractionDigits:2,maximumFractionDigits:2}).format(+v||0);
+            const fmtUsdShort = v => { const n = +v||0; const a = Math.abs(n); const p = n<0?'-':''; return a>=1e6? p+'$'+(a/1e6).toFixed(1)+'M' : a>=1e3? p+'$'+(a/1e3).toFixed(1)+'K' : fmtUsd(n); };
+            const fmtPct = v => (Number.isFinite(+v) ? (+v).toFixed(2) : '0.00') + '%';
+            const esc    = s => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            const clamp  = (v, min, max) => Math.min(Math.max(v, min), max);
+
+            function dateOf(str) {
+                if (!str) return null;
+                const d = new Date(str.includes('T') ? str : str + 'T00:00:00');
+                return isNaN(d) ? null : d;
+            }
+            function daysBetween(d1, d2) { return Math.round((d2 - d1) / 86400000); }
+
+            const CIRC = 238.76;
+            function setArc(id, pct) {
+                const el = document.getElementById(id);
+                if (!el) return;
+                const ratio = clamp((pct || 0) / 100, 0, 1);
+                el.style.strokeDashoffset = (CIRC * (1 - ratio)).toFixed(2);
+            }
+
+            // ── Filtros ───────────────────────────────────
+            function filterByPeriod(ops, period) {
+                const now = new Date();
+                const todayStr = now.toISOString().slice(0, 10);
+                const y = now.getFullYear(), m = now.getMonth();
+                const after = days => { const d = new Date(now); d.setDate(d.getDate() - days); return d; };
+                return ops.filter(op => {
+                    const raw = op.data_operacao || op.data_abertura || op.exercicio || '';
+                    const d = dateOf(raw);
+                    if (!d && period !== 'all') return false;
+                    switch (period) {
+                        case 'all':   return true;
+                        case 'today': return raw.slice(0,10) === todayStr;
+                        case '7d':    return d >= after(7);
+                        case '15d':   return d >= after(15);
+                        case '30d':   return d >= after(30);
+                        case '90d':   return d >= after(90);
+                        case '12m':   return d >= after(365);
+                        case 'mes':   return d.getFullYear() === y && d.getMonth() === m;
+                        case 'ano':   return d.getFullYear() === y;
+                        default:      return true;
+                    }
+                });
+            }
+
+            function applyFilters() {
+                let ops = cfg.getOperacoes();
+                ops = filterByPeriod(ops, activePeriod);
+                if (activeType)  ops = ops.filter(o => (o.status || 'ABERTA').toUpperCase() === activeType.toUpperCase());
+                if (activeTipo)  ops = ops.filter(o => (o.tipo || '').toUpperCase() === activeTipo);
+                filteredOps = ops;
+                if (currentIdx >= filteredOps.length) currentIdx = Math.max(0, filteredOps.length - 1);
+            }
+
+            // ── Renderizações ─────────────────────────────
+            function renderSummary() {
+                const ops     = filteredOps;
+                const abertas = ops.filter(o => (o.status||'ABERTA').toUpperCase() === 'ABERTA');
+                const fechadas= ops.filter(o => (o.status||'').toUpperCase() === 'FECHADA');
+                const premio  = ops.reduce((s,o) => s + (parseFloat(o.premio_us)||0), 0);
+                setTx('rcSumTotal',    ops.length);
+                setTx('rcSumAbertas',  abertas.length + 'A');
+                setTx('rcSumFechadas', fechadas.length + 'F');
+                setTx('rcSumPremio',   fmtUsdShort(premio));
+            }
+
+            function renderOpTabs() {
+                const row = document.getElementById('rcOpTabsRow');
+                if (!row) return;
+                row.innerHTML = '';
+                if (!filteredOps.length) return;
+
+                filteredOps.forEach((op, idx) => {
+                    const tipo   = (op.tipo    || 'CALL').toUpperCase();
+                    const ativo  = (op.ativo   || '?').toUpperCase();
+                    const strike = parseFloat(op.strike || 0);
+                    const dataStr = (op.data_operacao || op.data_abertura || '').slice(0,10);
+                    const dataFmt = dataStr ? dataStr.split('-').reverse().slice(0,2).join('/') : '—';
+
+                    const btn = document.createElement('button');
+                    btn.className   = 'rmc-op-tab' + (idx === currentIdx ? ' active' : '');
+                    btn.dataset.idx = idx;
+                    btn.title       = `${ativo} · ${tipo} · Strike $${strike>0?strike.toFixed(0):'—'} · ${dataFmt}`;
+                    const col = tipo === 'CALL' ? '#00d4e8' : '#ff4d6a';
+                    btn.innerHTML =
+                        `<span style="color:${col};font-weight:700;font-size:0.6rem;">${tipo}</span>` +
+                        `<span style="font-size:0.65rem;">${esc(ativo)}</span>` +
+                        `<span style="font-size:0.5rem;color:#5a7090;">${dataFmt}</span>`;
+
+                    btn.addEventListener('click', () => {
+                        currentIdx = idx; render();
+                    });
+                    row.appendChild(btn);
+                });
+
+                const active = row.querySelector('.rmc-op-tab.active');
+                if (active) active.scrollIntoView({ behavior:'smooth', block:'nearest', inline:'nearest' });
+            }
+
+            // Sidebar
+            function renderSidebar(op) {
+                const cotacao   = parseFloat(op.cotacao_atual || 0);
+                const abertura  = parseFloat(op.abertura || 0);
+                const strike    = parseFloat(op.strike || 0);
+                const premio    = parseFloat(op.premio_us || 0);
+                const qtd       = parseFloat(op.quantidade || 1);
+                const tae       = parseFloat(op.tae_pct || op.tae || 0);
+                const resultado = parseFloat(op.resultado || 0);
+                const saldo     = parseFloat(op.saldo_abertura || op.saldo_corretora || (abertura * qtd) || 0);
+                const tipo      = (op.tipo || 'CALL').toUpperCase();
+
+                // Cotação
+                const cotVar = abertura > 0 ? (cotacao - abertura) / abertura * 100 : 0;
+                const cotBarPct = abertura > 0 ? clamp(cotacao / abertura * 50, 0, 100) : 0;
+                setTx('rcSbCotacao', cotacao > 0 ? fmtUsdShort(cotacao) : '—');
+                setEl('rcSbCotacaoVar', `<span class="${cotVar>=0?'rmc-c-green':'rmc-c-red'}">${cotVar>=0?'+':''}${cotVar.toFixed(2)}%</span>`);
+                setCss('rcSbCotacaoBar', 'width', cotBarPct + '%');
+
+                // Resultado
+                const resUs = parseFloat(op.resultado_us || (saldo * resultado / 100) || 0);
+                setEl('rcSbResultado', `<span class="${resultado>=0?'rmc-c-green':'rmc-c-red'}">${resultado>=0?'+':''}${resultado.toFixed(2)}%</span>`);
+                setEl('rcSbResultadoUsd', `<span class="${resUs>=0?'rmc-c-green':'rmc-c-red'}">${fmtUsd(resUs)}</span>`);
+
+                // TAE
+                const taeBarPct = clamp(tae / 50 * 100, 0, 100);
+                setEl('rcSbTae', `<span class="${tae>=0?'rmc-c-green':'rmc-c-red'}">${fmtPct(tae)}</span>`);
+                setCss('rcSbTaeBar', 'width', taeBarPct + '%');
+
+                // Strike
+                setTx('rcSbStrike', strike > 0 ? fmtUsdShort(strike) : '—');
+                setEl('rcSbStrikeBadge', tipo === 'CALL' ? '<span class="rmc-badge-call">CALL</span>' : '<span class="rmc-badge-put">PUT</span>');
+
+                // Distância
+                let dist = 0;
+                if (cotacao > 0 && strike > 0) {
+                    dist = tipo === 'PUT' ? (cotacao - strike)/cotacao*100 : (strike - cotacao)/cotacao*100;
+                }
+                const distBarPct = clamp(Math.abs(dist) * 5, 0, 100);
+                const itm = tipo === 'CALL' ? cotacao >= strike : cotacao <= strike;
+                setEl('rcSbDist', `<span class="${itm?'rmc-c-red':'rmc-c-gold'}">${dist.toFixed(2)}%</span>`);
+                setCss('rcSbDistBar', 'width', distBarPct + '%');
+
+                // Prêmio
+                setTx('rcSbPremio', premio > 0 ? fmtUsd(premio) : '—');
+                setTx('rcSbPremioSub', qtd + ' unid.');
+                setCss('rcSbPremioBar', 'width', '100%');
+
+                // PoP
+                const popPct = calcPoP(dist, Math.abs(dist));
+                setEl('rcSbPoP', `<span class="${popPct>=70?'rmc-c-green':popPct>=50?'rmc-c-gold':'rmc-c-red'}">${popPct.toFixed(1)}%</span>`);
+                setCss('rcSbPoPBar', 'width', popPct + '%');
+
+                // Investido
+                setTx('rcSbInvestido', saldo > 0 ? fmtUsd(saldo) : '—');
+                const qtdCrypto = parseFloat(op.quantidade_crypto || qtd || 0);
+                setTx('rcSbInvestidoSub', qtdCrypto > 0 ? qtdCrypto.toFixed(4) + ' ' + (op.ativo||'').toUpperCase() : '—');
+            }
+
+            function calcPoP(distPct, absDist) {
+                const base = 50;
+                const bonus = absDist > 0 ? Math.min(absDist * 2, 45) : 0;
+                return clamp(base + bonus, 5, 97);
+            }
+
+            // ===== NOVO RENDER DESEMPENHO =====
+            function renderDesempenho(op) {
+                const cotacao   = parseFloat(op.cotacao_atual || 0);
+                const abertura  = parseFloat(op.abertura || 0);
+                const strike    = parseFloat(op.strike || 0);
+                const premio    = parseFloat(op.premio_us || 0);
+                const qtd       = parseFloat(op.quantidade || 1);
+                const tae       = parseFloat(op.tae_pct || op.tae || 0);
+                const prazo     = parseInt(op.prazo_dias || 0, 10);
+                const tipo      = (op.tipo || 'CALL').toUpperCase();
+                const resultado = parseFloat(op.resultado || 0);
+                const saldo     = parseFloat(op.saldo_abertura || op.saldo_corretora || (abertura * qtd) || 0);
+                const resUs     = parseFloat(op.resultado_us || (saldo * resultado / 100) || 0);
+                const exDateStr = op.exercicio || op.vencimento || '';
+                const exDate    = dateOf(exDateStr);
+                const hoje      = new Date(); hoje.setHours(0,0,0,0);
+                const restantes = exDate ? daysBetween(hoje, exDate) : null;
+                const dataAbStr = op.data_operacao || op.data_abertura || '';
+                const dataAb    = dateOf(dataAbStr);
+                const decorrido = dataAb ? daysBetween(dataAb, hoje) : 0;
+
+                // Resumo
+                setTx('rcResAtivo', (op.ativo || '').toUpperCase() || '—');
+                const badgeTipo = tipo === 'CALL' ? '<span class="rmc-badge-call">CALL</span>' : '<span class="rmc-badge-put">PUT</span>';
+                setEl('rcResTipoBadge', badgeTipo);
+                setTx('rcResStrike', strike > 0 ? fmtUsd(strike) : '—');
+                setTx('rcResAbertura', abertura > 0 ? fmtUsd(abertura) : '—');
+                setTx('rcResCotacao', cotacao > 0 ? fmtUsd(cotacao) : '—');
+                setTx('rcResPremio', premio > 0 ? fmtUsd(premio) : '—');
+                setTx('rcResQtd', qtd.toString());
+                setTx('rcResInvestido', saldo > 0 ? fmtUsd(saldo) : '—');
+                setTx('rcResExDate', exDateStr ? exDateStr.slice(0,10).split('-').reverse().join('/') : '—');
+                setTx('rcResDiasRest', restantes !== null ? restantes : '—');
+
+                // Performance (PoP e mini gráfico)
+                let dist = 0;
+                if (cotacao > 0 && strike > 0)
+                    dist = tipo === 'PUT' ? (cotacao-strike)/cotacao*100 : (strike-cotacao)/cotacao*100;
+                const pop = calcPoP(dist, Math.abs(dist));
+                setArc('rcPerfPoPArc', pop);
+                setTx('rcPerfPoP', pop.toFixed(0) + '%');
+                setEl('rcPerfResultado', `<span class="${resultado>=0?'rmc-c-green':'rmc-c-red'}">${resultado>=0?'+':''}${resultado.toFixed(2)}%</span>`);
+                setEl('rcPerfLucroUsd', `<span class="${resUs>=0?'rmc-c-green':'rmc-c-red'}">${fmtUsd(resUs)}</span>`);
+                // Linha de performance simulada
+                const pts = 10;
+                const perfPoints = Array.from({length: pts}, (_, i) => {
+                    const t = i / (pts - 1);
+                    const y = resultado * t;
+                    return { t, y };
+                });
+                const minY = Math.min(0, ...perfPoints.map(p=>p.y));
+                const maxY = Math.max(0.001, ...perfPoints.map(p=>p.y));
+                const scaleY = y => 50 - ((y - minY) / (maxY - minY || 1)) * 40;
+                const pathD = 'M' + perfPoints.map((p,i) => {
+                    const x = i * (200/(pts-1));
+                    return `${x},${scaleY(p.y)}`;
+                }).join(' L');
+                document.getElementById('rcPerfPath')?.setAttribute('d', pathD);
+                const fillD = pathD + ` L200,60 L0,60Z`;
+                document.getElementById('rcPerfFill')?.setAttribute('d', fillD);
+
+                // Gregos
+                const delta = parseFloat(op.delta || (cotacao>0 && strike>0 ? (tipo==='CALL'?0.6: -0.4) : 0));
+                const gamma = parseFloat(op.gamma || 0.02);
+                const theta = parseFloat(op.theta || (prazo>0 ? -premio/prazo : -0.1));
+                const vega  = parseFloat(op.vega || 0.1);
+                const iv    = parseFloat(op.iv || op.volatilidade || 60);
+                setTx('rcGreeksDelta', delta.toFixed(2));
+                setTx('rcGreeksGamma', gamma.toFixed(3));
+                setEl('rcGreeksTheta', `<span class="rmc-c-red">${theta.toFixed(2)}</span>`);
+                setTx('rcGreeksVega', vega.toFixed(2));
+                setEl('rcGreeksIV', `<span class="rmc-c-purple">${iv.toFixed(0)}%</span>`);
+
+                // Probabilidades
+                const probITM = clamp(50 - Math.abs(dist) * 2, 3, 97);
+                const probOTM = 100 - probITM;
+                setTx('rcProbPoP', pop.toFixed(0) + '%');
+                setEl('rcProbITM', `<span class="rmc-c-red">${probITM.toFixed(1)}%</span>`);
+                setEl('rcProbOTM', `<span class="rmc-c-green">${probOTM.toFixed(1)}%</span>`);
+                setEl('rcProbDist', `<span class="rmc-c-gold">${dist.toFixed(2)}%</span>`);
+
+                // Risco/Retorno
+                const ganhoMax = premio;
+                const perdaMax = saldo > 0 ? saldo - premio : 0;
+                const rr = ganhoMax > 0 && perdaMax > 0 ? ganhoMax / perdaMax : 0;
+                const breakeven = tipo === 'CALL' ? strike + premio : strike - premio;
+                setEl('rcRRGanhoMax', `<span class="rmc-c-gold">${fmtUsd(ganhoMax)}</span>`);
+                setEl('rcRRPerdaMax', `<span class="rmc-c-red">${fmtUsd(perdaMax)}</span>`);
+                setTx('rcRRRatio', rr > 0 ? '1:' + (1/rr).toFixed(1) : '—');
+                setTx('rcRRBreakeven', fmtUsd(breakeven));
+
+                // Theta decay
+                setEl('rcThetaDaily', `<span class="rmc-c-red">${fmtUsd(Math.abs(theta))}</span>`);
+                const thetaTotal = Math.abs(theta) * (prazo || 30);
+                setEl('rcThetaTotal', `<span class="rmc-c-red">${fmtUsd(thetaTotal)}</span>`);
+                // Linha de decaimento simples
+                const thetaPath = 'M0,10 L300,60';
+                document.getElementById('rcThetaDecayPath')?.setAttribute('d', thetaPath);
+                document.getElementById('rcThetaDecayFill')?.setAttribute('d', 'M0,10 L300,60 L300,70 L0,70Z');
+
+                // Cotação vs Strike
+                const pctStrike = strike > 0 ? (cotacao / strike) * 100 : 0;
+                setArc('rcVsArc', clamp(pctStrike/1.5, 0, 100));
+                setTx('rcVsPct', pctStrike.toFixed(1) + '%');
+                setTx('rcVsCot', cotacao > 0 ? fmtUsd(cotacao) : '—');
+                setTx('rcVsStrike', strike > 0 ? fmtUsd(strike) : '—');
+                const diff = strike - cotacao;
+                setEl('rcVsDiff', `<span class="${diff>0?'rmc-c-gold':'rmc-c-red'}">${fmtUsd(Math.abs(diff))} ${diff>0?'acima':'abaixo'}</span>`);
+            }
+
+            // Outras renderizações (simplificadas para exemplo)
+            function renderComparativos(op) { /* manter vazio por enquanto */ }
+            function renderPosicoes() {
+                const rows = document.getElementById('rcPosRows');
+                if (!rows) return;
+                const ops = filteredOps;
+                if (!ops.length) { rows.innerHTML = '<div style="text-align:center;color:#5a7090;padding:1rem;">Nenhuma posição</div>'; return; }
+                rows.innerHTML = ops.map((op, idx) => {
+                    const tipo    = (op.tipo || 'CALL').toUpperCase();
+                    const ativo   = (op.ativo || '?').toUpperCase();
+                    const abertura= parseFloat(op.abertura || 0);
+                    const strike  = parseFloat(op.strike || 0);
+                    const tae     = parseFloat(op.tae_pct || op.tae || 0);
+                    const res     = parseFloat(op.resultado || 0);
+                    const typeBadge = tipo === 'CALL' ? '<span class="rmc-badge-call">CALL</span>' : '<span class="rmc-badge-put">PUT</span>';
+                    return `<div class="rmc-pos-row${idx === currentIdx?' active':''}" data-idx="${idx}">
+                        <span>${esc(ativo)}</span>
+                        <span>${typeBadge}</span>
+                        <span class="rmc-c-cyan">${abertura>0?fmtUsd(abertura):'—'}</span>
+                        <span class="rmc-c-gold">${strike>0?fmtUsd(strike):'—'}</span>
+                        <span class="${tae>=0?'rmc-c-green':'rmc-c-red'}">${fmtPct(tae)}</span>
+                        <span class="${res>=0?'rmc-c-green':'rmc-c-red'}">${res>=0?'+':''}${res.toFixed(2)}%</span>
+                    </div>`;
+                }).join('');
+            }
+            function renderEvolucao(op) { /* simplificado */ }
+            function renderRisco(op) { /* simplificado */ }
+
+            function render() {
+                applyFilters();
+                renderSummary();
+                renderOpTabs();
+
+                const empty  = document.getElementById('rcEmptyState');
+                const body   = document.getElementById('rcDashBody');
+                const secTab = document.getElementById('rcSectionTabs');
+                const sidebar= document.getElementById('rcSidebar');
+
+                if (!filteredOps.length) {
+                    if (empty)  empty.classList.remove('d-none');
+                    if (body)   body.classList.add('d-none');
+                    if (secTab) secTab.style.display = 'none';
+                    return;
+                }
+
+                if (empty)  empty.classList.add('d-none');
+                if (body)   body.classList.remove('d-none');
+                if (secTab) secTab.style.display = '';
+
+                const op = filteredOps[currentIdx];
+                renderSidebar(op);
+                renderDesempenho(op);
+                renderComparativos(op);
+                renderPosicoes();
+                renderEvolucao(op);
+                renderRisco(op);
+            }
+
+            function updateTimestamp(id) {
+                const now = new Date();
+                const el = document.getElementById(id);
+                if (el) el.textContent = `Atualizado: ${now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+            }
+
+            function setupFilterListeners() {
+                const modal = document.getElementById(cfg.modalElId);
+                if (!modal) return;
+
+                modal.querySelectorAll('.rmc-pill[data-period]').forEach(btn => {
+                    btn.addEventListener('click', function () {
+                        modal.querySelectorAll('.rmc-pill[data-period]').forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        activePeriod = this.dataset.period || 'all';
+                        currentIdx = 0; render();
+                    });
+                });
+
+                modal.querySelectorAll('.rmc-pill[data-type]').forEach(btn => {
+                    btn.addEventListener('click', function () {
+                        const t = this.dataset.type;
+                        if (activeType === t) { activeType = null; this.classList.remove('active'); }
+                        else {
+                            modal.querySelectorAll('.rmc-pill[data-type]').forEach(b => b.classList.remove('active'));
+                            activeType = t; this.classList.add('active');
+                        }
+                        currentIdx = 0; render();
+                    });
+                });
+
+                modal.querySelectorAll('.rmc-pill[data-tipo]').forEach(btn => {
+                    btn.addEventListener('click', function () {
+                        const t = this.dataset.tipo;
+                        if (activeTipo === t) { activeTipo = null; this.classList.remove('active'); }
+                        else {
+                            modal.querySelectorAll('.rmc-pill[data-tipo]').forEach(b => b.classList.remove('active'));
+                            activeTipo = t; this.classList.add('active');
+                        }
+                        currentIdx = 0; render();
+                    });
+                });
+
+                modal.querySelectorAll('.rmc-section-tab').forEach(btn => {
+                    btn.addEventListener('click', function () {
+                        const sec = this.dataset.sec;
+                        modal.querySelectorAll('.rmc-section-tab').forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        modal.querySelectorAll('.rmc-tab-panel').forEach(p => p.classList.remove('active'));
+                        const panel = document.getElementById('rcSec' + sec.charAt(0).toUpperCase() + sec.slice(1));
+                        if (panel) panel.classList.add('active');
+                    });
+                });
+
+                document.getElementById('rcRefreshBtn')?.addEventListener('click', function () {
+                    this.classList.add('spinning');
+                    setTimeout(() => this.classList.remove('spinning'), 800);
+                    currentIdx = 0;
+                    render();
+                    updateTimestamp('rcLastUpdate');
+                });
+            }
+
+            // Inicialização
+            function init() {
+                // Já temos o modal no DOM, só configurar listeners e estado inicial
+                setupFilterListeners();
+                // Estado inicial
+                activePeriod = 'all';
+                activeType = 'fechada'; // para mostrar apenas abertas? melhor null
+                activeType = null;
+                activeTipo = null;
+                document.querySelectorAll('#modalResultadosCrypto .rmc-pill[data-period]').forEach(b => {
+                    b.classList.toggle('active', b.dataset.period === 'all');
+                });
+                document.querySelectorAll('#modalResultadosCrypto .rmc-pill[data-type]').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('#modalResultadosCrypto .rmc-pill[data-tipo]').forEach(b => b.classList.remove('active'));
+                // Primeira aba ativa
+                document.querySelectorAll('#modalResultadosCrypto .rmc-section-tab').forEach((b, i) => b.classList.toggle('active', i===0));
+                document.querySelectorAll('#modalResultadosCrypto .rmc-tab-panel').forEach((p, i) => p.classList.toggle('active', i===0));
+                render();
+                updateTimestamp('rcLastUpdate');
+            }
+
+            // Botão trigger
+            document.getElementById(cfg.triggerBtnId)?.addEventListener('click', function() {
+                const modalEl = document.getElementById(cfg.modalElId);
+                if (!modalEl) return;
+                let bsModal = bootstrap.Modal.getInstance(modalEl);
+                if (!bsModal) bsModal = new bootstrap.Modal(modalEl, { keyboard: true });
+                bsModal.show();
+            });
+
+            document.addEventListener('DOMContentLoaded', init);
+        })();
+    </script>
+</body>
+</html>

@@ -64,3 +64,97 @@ test("[Crypto] deve responder a requisição da página com status 200", async (
     const response = await page.goto(BASE);
     expect(response?.status()).toBe(200);
 });
+
+// ─── Análise Temporal ────────────────────────────────────────────────────────
+
+test("[Crypto] modal de Análise deve abrir e carregar dados", async ({ page }) => {
+    const jsErrors = [];
+    page.on("pageerror", (err) => jsErrors.push(err.message));
+
+    await page.goto(BASE, { waitUntil: "domcontentloaded" });
+    // Aguarda __appLayoutReady: definido em layout.js APÓS dispatchEvent(layoutReady)
+    // Como dispatchEvent é síncrono, garante que crypto.js setupEventListeners() já rodou
+    await page.waitForFunction(() =>
+        window.__appLayoutReady === true &&
+        typeof window.bootstrap !== 'undefined' &&
+        typeof window.bootstrap.Modal !== 'undefined' &&
+        typeof window.ModalAnalise !== 'undefined'
+    , { timeout: 20000 });
+
+    // Abre o modal de Análise
+    const btnAnalise = page.locator("#btnAnaliseCrypto");
+    await expect(btnAnalise).toBeVisible();
+    await btnAnalise.click({ force: true });
+
+    // Modal abre antes dos dados (template fetch pode demorar sob carga paralela)
+    await page.waitForSelector("#modalAnalise.show", { timeout: 20000 });
+
+    // O modal deve estar visível
+    const modal = page.locator("#modalAnalise");
+    await expect(modal).toBeVisible();
+
+    // Aguarda dados carregarem (fetch /api/crypto pode demorar sob carga paralela)
+    await page.waitForFunction(() => {
+        const el = document.getElementById('maDonutSub');
+        return el && el.textContent && el.textContent.trim() !== '' && !el.textContent.match(/^0 operaç/);
+    }, { timeout: 30000 });
+
+    // Os dados não devem ser zerados (totalOps > 0)
+    const donutSub = await page.locator("#maDonutSub").textContent();
+    expect(donutSub).not.toMatch(/^0 operaç/);
+
+    // Nenhum erro crítico de JS
+    const criticalErrors = jsErrors.filter(e =>
+        !e.includes("bootstrap-autofill") &&
+        !e.includes("net::ERR") &&
+        !e.includes("fetch")
+    );
+    expect(criticalErrors, `Erros JS: ${criticalErrors.join("; ")}`).toHaveLength(0);
+});
+
+test("[Crypto] botão atualizar da Análise deve funcionar", async ({ page }) => {
+    const consoleMessages = [];
+    const jsErrors = [];
+    page.on("console", (msg) => { if (msg.type() === 'error') consoleMessages.push(msg.text()); });
+    page.on("pageerror", (err) => jsErrors.push(err.message));
+
+    await page.goto(BASE, { waitUntil: "domcontentloaded" });
+    // Aguarda __appLayoutReady: definido em layout.js APÓS dispatchEvent(layoutReady)
+    // Como dispatchEvent é síncrono, garante que crypto.js setupEventListeners() já rodou
+    await page.waitForFunction(() =>
+        window.__appLayoutReady === true &&
+        typeof window.bootstrap !== 'undefined' &&
+        typeof window.bootstrap.Modal !== 'undefined' &&
+        typeof window.ModalAnalise !== 'undefined'
+    , { timeout: 20000 });
+
+    // Abre o modal via JS diretamente: este teste cobre o botão de REFRESH,
+    // não a abertura pelo botão (já coberta por "modal deve abrir").
+    // Usar page.evaluate() evita flakiness de clique sob carga paralela.
+    await page.evaluate(() => window.ModalAnalise && window.ModalAnalise.open());
+    await page.waitForSelector("#modalAnalise.show", { timeout: 10000 });
+    // Aguarda dados carregarem para ter valor inicial significativo
+    await page.waitForFunction(() => {
+        const el = document.getElementById('maDonutSub');
+        return el && el.textContent && el.textContent.trim() !== '' && !el.textContent.match(/^0 operaç/);
+    }, { timeout: 30000 });
+
+    // Lê valor inicial
+    const valorAntes = await page.locator("#maDonutValue").textContent();
+
+    // Clica no botão de atualizar (#maRefreshBtn)
+    const btnRefresh = page.locator("#maRefreshBtn");
+    await expect(btnRefresh).toBeVisible();
+    await btnRefresh.click();
+
+    // Aguarda spinner desaparecer e dados recarregarem
+    await page.waitForTimeout(2000);
+
+    // O valor deve continuar não zerado após refresh
+    const valorDepois = await page.locator("#maDonutValue").textContent();
+    expect(valorDepois).not.toBe("R$ 0");
+
+    // O timestamp deve ter sido atualizado
+    const status = await page.locator("#maRefreshStatus").textContent();
+    expect(status).toContain("Atualizado:");
+});

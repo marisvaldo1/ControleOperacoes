@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gauge de Tempo Restante</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .timer-container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 24px;
+            padding: 40px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+
+        .timer-title {
+            color: #fff;
+            font-size: 18px;
+            margin-bottom: 30px;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        .circular-progress {
+            position: relative;
+            width: 250px;
+            height: 250px;
+            margin: 0 auto;
+        }
+
+        .progress-ring {
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+
+        .progress-ring__circle {
+            transition: stroke-dashoffset 0.5s ease-in-out;
+            transform-origin: 50% 50%;
+            stroke-linecap: round;
+        }
+
+        .timer-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .time-value {
+            font-size: 48px;
+            font-weight: 700;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            text-shadow: 0 0 30px rgba(0, 255, 136, 0.5);
+        }
+
+        .time-label {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 5px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 25px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .status-active {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+            border: 1px solid #00ff88;
+        }
+
+        .status-warning {
+            background: rgba(255, 170, 0, 0.2);
+            color: #ffaa00;
+            border: 1px solid #ffaa00;
+        }
+
+        .status-critical {
+            background: rgba(255, 71, 87, 0.2);
+            color: #ff4757;
+            border: 1px solid #ff4757;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .operation-info {
+            margin-top: 30px;
+            padding-top: 25px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .info-item {
+            text-align: left;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 16px;
+            color: #fff;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="timer-container">
+        <h2 class="timer-title">⏱️ TEMPO RESTANTE DA OPERAÇÃO</h2>
+        
+        <div class="circular-progress">
+            <svg class="progress-ring" width="250" height="250">
+                <circle class="progress-ring__circle" id="progressCircle"
+                    stroke="rgba(255, 255, 255, 0.1)"
+                    stroke-width="12"
+                    fill="transparent"
+                    r="110"
+                    cx="125"
+                    cy="125"/>
+                <circle class="progress-ring__circle" id="progressBar"
+                    stroke="#00ff88"
+                    stroke-width="12"
+                    fill="transparent"
+                    r="110"
+                    cx="125"
+                    cy="125"
+                    stroke-dasharray="691"
+                    stroke-dashoffset="0"/>
+            </svg>
+            
+            <div class="timer-display">
+                <div class="time-value" id="timeDisplay">05:00</div>
+                <div class="time-label">Minutos</div>
+            </div>
+        </div>
+
+        <div class="status-badge status-active" id="statusBadge">EM ANDAMENTO</div>
+
+        <div class="operation-info">
+            <div class="info-item">
+                <div class="info-label">Ativo</div>
+                <div class="info-value">BTC/USDT</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Tipo</div>
+                <div class="info-value" style="color: #00ff88;">COMPRA</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Entrada</div>
+                <div class="info-value">$42,350.00</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Lucro Atual</div>
+                <div class="info-value" style="color: #00ff88;">+$234.50</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class OperationTimer {
+            constructor(totalMinutes = 5) {
+                this.totalTime = totalMinutes * 60;
+                this.remainingTime = this.totalTime;
+                this.circle = document.getElementById('progressBar');
+                this.timeDisplay = document.getElementById('timeDisplay');
+                this.statusBadge = document.getElementById('statusBadge');
+                this.circumference = 2 * Math.PI * 110;
+                
+                this.circle.style.strokeDasharray = `${this.circumference} ${this.circumference}`;
+                this.circle.style.strokeDashoffset = 0;
+                
+                this.startTimer();
+            }
+
+            startTimer() {
+                this.interval = setInterval(() => {
+                    this.remainingTime--;
+                    this.updateDisplay();
+                    
+                    if (this.remainingTime <= 0) {
+                        this.completeOperation();
+                    }
+                }, 1000);
+            }
+
+            updateDisplay() {
+                const minutes = Math.floor(this.remainingTime / 60);
+                const seconds = this.remainingTime % 60;
+                this.timeDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                // Atualiza progresso
+                const progress = this.remainingTime / this.totalTime;
+                const offset = this.circumference - (progress * this.circumference);
+                this.circle.style.strokeDashoffset = offset;
+                
+                // Muda cor baseado no tempo restante
+                if (progress > 0.5) {
+                    this.circle.style.stroke = '#00ff88';
+                    this.statusBadge.className = 'status-badge status-active';
+                    this.statusBadge.textContent = 'EM ANDAMENTO';
+                } else if (progress > 0.2) {
+                    this.circle.style.stroke = '#ffaa00';
+                    this.statusBadge.className = 'status-badge status-warning';
+                    this.statusBadge.textContent = 'ATENÇÃO';
+                } else {
+                    this.circle.style.stroke = '#ff4757';
+                    this.statusBadge.className = 'status-badge status-critical';
+                    this.statusBadge.textContent = 'FINALIZANDO';
+                }
+            }
+
+            completeOperation() {
+                clearInterval(this.interval);
+                this.timeDisplay.textContent = '00:00';
+                this.statusBadge.textContent = 'OPERACIÓN FINALIZADA';
+                this.statusBadge.className = 'status-badge status-critical';
+            }
+
+            reset(newTime = 5) {
+                clearInterval(this.interval);
+                this.totalTime = newTime * 60;
+                this.remainingTime = this.totalTime;
+                this.startTimer();
+            }
+        }
+
+        // Inicializa timer de 5 minutos
+        new OperationTimer(5);
+    </script>
+</body>
+</html>

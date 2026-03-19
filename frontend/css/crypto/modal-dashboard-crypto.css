@@ -1,0 +1,205 @@
+/* ============================================================
+   modal-dashboard-crypto.css  v1.0.0
+   Estilos do Dashboard Avançado de Performance · Crypto
+   Espelha opcoes.css/#modalSaldoOperacoes mas scoped para
+   #modalDashboardCrypto
+   ============================================================ */
+
+#modalDashboardCrypto .saldo-dashboard {
+    font-family: 'Inter', sans-serif;
+}
+
+/* ── Metric cards ─────────────────────────────────────────── */
+#modalDashboardCrypto .metric-card {
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    height: 100%;
+}
+
+#modalDashboardCrypto .metric-icon {
+    position: absolute;
+    right: 20px;
+    top: 20px;
+    font-size: 24px;
+    opacity: 0.3;
+}
+
+#modalDashboardCrypto .metric-value-lg {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+#modalDashboardCrypto .metric-label-lg {
+    color: #94a3b8;
+    font-size: 14px;
+}
+
+#modalDashboardCrypto .saldo-metric-success {
+    background: linear-gradient(135deg, #064e3b, #065f46);
+    border-color: #10b981;
+}
+
+#modalDashboardCrypto .saldo-metric-primary {
+    background: linear-gradient(135deg, #1e3a8a, #1e40af);
+    border-color: #3b82f6;
+}
+
+#modalDashboardCrypto .saldo-metric-warning {
+    background: linear-gradient(135deg, #78350f, #92400e);
+    border-color: #f59e0b;
+}
+
+#modalDashboardCrypto .saldo-metric-purple {
+    background: linear-gradient(135deg, #4c1d95, #5b21b6);
+    border-color: #8b5cf6;
+}
+
+/* ── Comparison badge ─────────────────────────────────────── */
+#modalDashboardCrypto .comparison-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+#modalDashboardCrypto .badge-up {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+}
+
+#modalDashboardCrypto .badge-down {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+/* ── Heatmap ──────────────────────────────────────────────── */
+#modalDashboardCrypto .heatmap-month {
+    margin-bottom: 16px;
+}
+
+#modalDashboardCrypto .heatmap-month-title {
+    color: #94a3b8;
+    font-size: 12px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+
+#modalDashboardCrypto .heatmap-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(24px, 1fr));
+    gap: 3px;
+}
+
+#modalDashboardCrypto .heatmap-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(24px, 1fr));
+    gap: 3px;
+    margin-bottom: 4px;
+    text-align: center;
+    font-size: 10px;
+    color: #94a3b8;
+    white-space: nowrap;
+}
+
+#modalDashboardCrypto .heatmap-weekday {
+    padding: 1px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Dias menores conforme solicitado */
+#modalDashboardCrypto .heatmap-day {
+    width: 100%;
+    height: 24px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.62rem;
+    color: #cbd5e1;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+#modalDashboardCrypto .heatmap-day:hover {
+    transform: scale(1.15);
+    z-index: 1;
+    position: relative;
+}
+
+#modalDashboardCrypto .heatmap-profit-high { background: #10b981; color: #fff; }
+#modalDashboardCrypto .heatmap-profit-med  { background: rgba(16, 185, 129, 0.6); }
+#modalDashboardCrypto .heatmap-profit-low  { background: rgba(16, 185, 129, 0.3); }
+#modalDashboardCrypto .heatmap-neutral     { background: rgba(148, 163, 184, 0.15); }
+#modalDashboardCrypto .heatmap-loss-low    { background: rgba(239, 68, 68, 0.3); }
+#modalDashboardCrypto .heatmap-loss-med    { background: rgba(239, 68, 68, 0.6); }
+#modalDashboardCrypto .heatmap-loss-high   { background: #ef4444; color: #fff; }
+
+/* ── Performance por dia da semana ───────────────────────── */
+#modalDashboardCrypto .saldo-weekday-list {
+    display: flex;
+    flex-direction: column;
+}
+
+#modalDashboardCrypto .saldo-weekday-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+#modalDashboardCrypto .saldo-weekday-label {
+    width: 44px;
+    font-size: 12px;
+    color: #cbd5e1;
+}
+
+#modalDashboardCrypto .saldo-weekday-bar {
+    flex: 1;
+    height: 8px;
+    background: #0f1a2b;
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+#modalDashboardCrypto .saldo-weekday-bar span {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    width: 0%;
+}
+
+#modalDashboardCrypto .saldo-weekday-value {
+    min-width: 74px;
+    text-align: right;
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+#modalDashboardCrypto .saldo-best-day {
+    margin-top: 18px;
+    padding-top: 12px;
+    border-top: 1px solid #2d3748;
+}
+
+#modalDashboardCrypto .saldo-legend-box {
+    width: 18px;
+    height: 18px;
+    display: inline-block;
+    border-radius: 4px;
+}
+
+/* ── Botão Atualizar loading ──────────────────────────────── */
+#dcBtnAtualizar[disabled] {
+    opacity: 0.6;
+    cursor: not-allowed;
+}

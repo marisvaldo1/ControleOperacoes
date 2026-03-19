@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Trading - Radar de Oportunidades</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0e27;
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+        }
+
+        h1 {
+            font-size: 36px;
+            font-weight: 700;
+            background: linear-gradient(90deg, #00f2fe, #4facfe, #00f2fe);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shimmer 3s linear infinite;
+            margin-bottom: 10px;
+        }
+
+        @keyframes shimmer {
+            to { background-position: 200% center; }
+        }
+
+        .subtitle {
+            color: #888;
+            font-size: 16px;
+        }
+
+        .radar-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .radar-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .radar-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #00f2fe, #4facfe);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .dot-green { background: #00ff88; box-shadow: 0 0 10px #00ff88; }
+        .dot-yellow { background: #ffc107; box-shadow: 0 0 10px #ffc107; }
+        .dot-red { background: #ff4757; box-shadow: 0 0 10px #ff4757; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        .circular-progress {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 30px;
+        }
+
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+
+        .progress-ring-circle {
+            fill: none;
+            stroke-width: 12;
+        }
+
+        .progress-ring-bg {
+            stroke: rgba(255, 255, 255, 0.1);
+        }
+
+        .progress-ring-fill {
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1s ease-in-out;
+        }
+
+        .progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .progress-value {
+            font-size: 42px;
+            font-weight: bold;
+            line-height: 1;
+        }
+
+        .progress-label {
+            font-size: 14px;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .metrics-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .metric-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            border-left: 3px solid;
+        }
+
+        .metric-item.green { border-left-color: #00ff88; }
+        .metric-item.blue { border-left-color: #4facfe; }
+        .metric-item.yellow { border-left-color: #ffc107; }
+        .metric-item.red { border-left-color: #ff4757; }
+
+        .metric-info {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .metric-name {
+            font-size: 13px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-val {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .metric-change {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .positive { color: #00ff88; }
+        .negative { color: #ff4757; }
+        .neutral { color: #4facfe; }
+        .warning { color: #ffc107; }
+
+        .opportunities-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .opportunity-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .opportunity-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 242, 254, 0.2);
+            border-color: #4facfe;
+        }
+
+        .opp-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .opp-symbol {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4facfe;
+        }
+
+        .opp-score {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .score-excellent {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+            border: 1px solid #00ff88;
+        }
+
+        .score-good {
+            background: rgba(79, 172, 254, 0.2);
+            color: #4facfe;
+            border: 1px solid #4facfe;
+        }
+
+        .score-warning {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+            border: 1px solid #ffc107;
+        }
+
+        .opp-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .opp-detail {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .opp-detail-label {
+            font-size: 11px;
+            color: #888;
+            text-transform: uppercase;
+        }
+
+        .opp-detail-value {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .opp-action {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .action-buy {
+            background: rgba(0, 255, 136, 0.1);
+            color: #00ff88;
+            border: 1px solid #00ff88;
+        }
+
+        .action-wait {
+            background: rgba(255, 193, 7, 0.1);
+            color: #ffc107;
+            border: 1px solid #ffc107;
+        }
+
+        .action-avoid {
+            background: rgba(255, 71, 87, 0.1);
+            color: #ff4757;
+            border: 1px solid #ff4757;
+        }
+
+        .comparison-table {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            padding: 15px;
+            font-size: 13px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .rank-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .rank-1 { background: linear-gradient(135deg, #ffd700, #ffed4e); color: #000; }
+        .rank-2 { background: linear-gradient(135deg, #c0c0c0, #e8e8e8); color: #000; }
+        .rank-3 { background: linear-gradient(135deg, #cd7f32, #e8a87c); color: #000; }
+        .rank-other { background: rgba(255, 255, 255, 0.1); color: #888; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎯 Radar de Oportunidades</h1>
+            <p class="subtitle">Análise inteligente para identificar as melhores operações</p>
+        </header>
+
+        <!-- Radar Principal -->
+        <div class="radar-container">
+            <div class="radar-card">
+                <div class="card-header">
+                    <div class="card-title">📊 Operação Atual - PETR4</div>
+                    <div class="status-dot dot-green"></div>
+                </div>
+
+                <div class="circular-progress">
+                    <svg class="progress-ring" width="200" height="200">
+                        <circle class="progress-ring-circle progress-ring-bg" cx="100" cy="100" r="85"></circle>
+                        <circle class="progress-ring-circle progress-ring-fill" cx="100" cy="100" r="85"
+                                stroke="url(#gradient1)" stroke-dasharray="534" stroke-dashoffset="160"
+                                id="progress1"></circle>
+                        <defs>
+                            <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" style="stop-color:#00ff88;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#00f2fe;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <div class="progress-text">
+                        <div class="progress-value positive">78%</div>
+                        <div class="progress-label">PoP</div>
+                    </div>
+                </div>
+
+                <div class="metrics-list">
+                    <div class="metric-item green">
+                        <div class="metric-info">
+                            <div class="metric-name">Lucro Atual</div>
+                            <div class="metric-val positive">R$ 1,14</div>
+                        </div>
+                        <div class="metric-change positive">+40%</div>
+                    </div>
+                    <div class="metric-item blue">
+                        <div class="metric-info">
+                            <div class="metric-name">Distância Strike</div>
+                            <div class="metric-val neutral">2,03%</div>
+                        </div>
+                        <div class="metric-change positive">OTM</div>
+                    </div>
+                    <div class="metric-item yellow">
+                        <div class="metric-info">
+                            <div class="metric-name">Tempo Restante</div>
+                            <div class="metric-val warning">15 dias</div>
+                        </div>
+                        <div class="metric-change warning">35%</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="radar-card">
+                <div class="card-header">
+                    <div class="card-title">⚡ Score da Operação</div>
+                    <div class="status-dot dot-green"></div>
+                </div>
+
+                <div class="circular-progress">
+                    <svg class="progress-ring" width="200" height="200">
+                        <circle class="progress-ring-circle progress-ring-bg" cx="100" cy="100" r="85"></circle>
+                        <circle class="progress-ring-circle progress-ring-fill" cx="100" cy="100" r="85"
+                                stroke="url(#gradient2)" stroke-dasharray="534" stroke-dashoffset="107"
+                                id="progress2"></circle>
+                        <defs>
+                            <linearGradient id="gradient2" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" style="stop-color:#00f2fe;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#4facfe;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <div class="progress-text">
+                        <div class="progress-value neutral">8.5</div>
+                        <div class="progress-label">de 10</div>
+                    </div>
+                </div>
+
+                <div class="metrics-list">
+                    <div class="metric-item green">
+                        <div class="metric-info">
+                            <div class="metric-name">Risco/Retorno</div>
+                            <div class="metric-val positive">Excelente</div>
+                        </div>
+                        <div class="metric-change positive">9.2</div>
+                    </div>
+                    <div class="metric-item blue">
+                        <div class="metric-info">
+                            <div class="metric-name">Theta Decay</div>
+                            <div class="metric-val neutral">Favorável</div>
+                        </div>
+                        <div class="metric-change positive">8.8</div>
+                    </div>
+                    <div class="metric-item green">
+                        <div class="metric-info">
+                            <div class="metric-name">Volatilidade</div>
+                            <div class="metric-val positive">Baixa</div>
+                        </div>
+                        <div class="metric-change positive">7.5</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Oportunidades -->
+        <h2 style="font-size: 24px; margin-bottom: 20px; color: #fff;">🔍 Melhores Oportunidades do Dia</h2>
+        <div class="opportunities-grid">
+            <div class="opportunity-card">
+                <div class="opp-header">
+                    <div class="opp-symbol">VALE3</div>
+                    <div class="opp-score score-excellent">9.2</div>
+                </div>
+                <div class="opp-details">
+                    <div class="opp-detail">
+                        <div class="opp-detail-label">Strike</div>
+                        <div class="opp-detail-value">R$ 68,00</div>
+                    </div>
+                    <div class="opp-detail">
+                        <div class="opp-detail-label">Prêmio</div>
+                        <div class="opp-detail-value positive">R$ 1,85</div>
+                    </div>
+                    <div class="opp-detail">
+                        <div class="opp-detail-label">PoP</div>
+                        <div class="opp-detail-value positive">82%</div>
+                    </div>
+                    <div class="opp-detail">
+                        <div class="opp-detail-label">Distância</div>
+                        <div class="opp-detail-value positive">3,2%</div>
+                    </div>
+                </div>
+                <div class="opp-action action-buy">
+                    ✓ RECOMENDADO - ABRIR POSIÇÃO
+                </div>
+            </div>
+
+            <div class="opportunity-card">
+                <div class="opp-header">
+                    <div class="opp-symbol">ITUB4</div>
+                    <div class="opp-score score-good">7.8</div>
+                </div>
+                <div class="opp-details">
+                    <div class="opp-detail">
+                        <div class="opp-detail-label">Strike</div>
+                        <div class="opp-detail-value">R$ 35,50</div>
+                    </div>
+                    <div class="opp-detail">
+                        <div class="opp-detail-label">Prêmio</div>
+                        <div class="opp-detail-value positive">R$ 0,95</div>
+                    </div>
+                    <div class="opp-detail">
+                        <div class="opp-detail-label">PoP</div>
+                        <div class="opp-detail-value neutral">75%</div>
+                    </div>
+                    <div class="opp-detail">
+                        <div class="opp-detail-label">Distância</div>
+                        <div class="opp-detail-value neutral">2,5%</div>
+                    </div>
+                </div>
+                <div class="opp-action action-buy">
+                    ✓ BOA OPORTUNIDADE
+                </div>
+            </div>
+
+            <div class="opportunity-card">
+                <div class="opp-header">
+                    <div class="opp-symbol">BBDC4</div>
+                    <div class="opp-score score-warning">6.5</div>
+                </div>
+                <div class="opp-details">
+                    <div class="opp-detail">
+                        <div class="opp-detail-label">Strike</div>
+                        <div class="opp-detail-value">R$ 28,00</div>
+                    </div>
+                    <div class="opp-detail">
+                        <div class="opp-detail-label">Prêmio</div>
+                        <div class="opp-detail-value warning">R$ 0,65</div>
+                    </div>
+                    <div class="opp-detail">
+                        <div class="opp-detail-label">PoP</div>
+                        <div class="opp-detail-value warning">68%</div>
+                    </div>
+                    <div class="opp-detail">
+                        <div class="opp-detail-label">Distância</div>
+                        <div class="opp-detail-value warning">1,8%</div>
+                    </div>
+                </div>
+                <div class="opp-action action-wait">
+                    ⚠ AGUARDAR MELHOR MOMENTO
+                </div>
+            </div>
+
+            <div class="opportunity-card">
+                <div class="opp-header">
+                    <div class="opp-symbol">MGLU3</div>
+                    <div class="opp-score score-warning">5.2</div>
+                </div>
+                <div class="opp-details">
+                    <div class="opp-detail">
+                        <div class="opp-detail-label">Strike</div>
+                        <div class="opp-detail-value">R$ 12,50</div>
+                    </div>
+                    <div class="opp-detail">
+                        <div class="opp-detail-label">Prêmio</div>
+                        <div class="opp-detail-value negative">R$ 0,45</div>
+                    </div>
+                    <div class="opp-detail">
+                        <div class="opp-detail-label">PoP</div>
+                        <div class="opp-detail-value negative">58%</div>
+                    </div>
+                    <div class="opp-detail">
+                        <div class="opp-detail-label">Distância</div>
+                        <div class="opp-detail-value negative">1,2%</div>
+                    </div>
+                </div>
+                <div class="opp-action action-avoid">
+                    ✗ EVITAR - ALTO RISCO
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabela Comparativa -->
+        <div class="comparison-table">
+            <h2 style="font-size: 24px; margin-bottom: 25px; color: #fff;">📊 Ranking de Operações</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Ativo</th>
+                        <th>Strike</th>
+                        <th>Prêmio</th>
+                        <th>PoP</th>
+                        <th>Distância</th>
+                        <th>Dias</th>
+                        <th>Score</th>
+                        <th>Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="rank-badge rank-1">1</span></td>
+                        <td><strong>VALE3</strong></td>
+                        <td>R$ 68,00</td>
+                        <td class="positive">R$ 1,85</td>
+                        <td class="positive">82%</td>
+                        <td class="positive">3,2%</td>
+                        <td>18</td>
+                        <td><span class="opp-score score-excellent">9.2</span></td>
+                        <td><span class="positive">COMPRAR</span></td>
+                    </tr>
+                    <tr>
+                        <td><span class="rank-badge rank-2">2</span></td>
+                        <td><strong>PETR4</strong></td>
+                        <td>R$ 128,00</td>
+                        <td class="positive">R$ 2,85</td>
+                        <td class="positive">78%</td>
+                        <td class="positive">2,0%</td>
+                        <td>15</td>
+                        <td><span class="opp-score score-excellent">8.5</span></td>
+                        <td><span class="positive">MANTER</span></td>
+                    </tr>
+                    <tr>
+                        <td><span class="rank-badge rank-3">3</span></td>
+                        <td><strong>ITUB4</strong></td>
+                        <td>R$ 35,50</td>
+                        <td class="positive">R$ 0,95</td>
+                        <td class="neutral">75%</td>
+                        <td class="neutral">2,5%</td>
+                        <td>20</td>
+                        <td><span class="opp-score score-good">7.8</span></td>
+                        <td><span class="neutral">COMPRAR</span></td>
+                    </tr>
+                    <tr>
+                        <td><span class="rank-badge rank-other">4</span></td>
+                        <td><strong>BBDC4</strong></td>
+                        <td>R$ 28,00</td>
+                        <td class="warning">R$ 0,65</td>
+                        <td class="warning">68%</td>
+                        <td class="warning">1,8%</td>
+                        <td>12</td>
+                        <td><span class="opp-score score-warning">6.5</span></td>
+                        <td><span class="warning">AGUARDAR</span></td>
+                    </tr>
+                    <tr>
+                        <td><span class="rank-badge rank-other">5</span></td>
+                        <td><strong>MGLU3</strong></td>
+                        <td>R$ 12,50</td>
+                        <td class="negative">R$ 0,45</td>
+                        <td class="negative">58%</td>
+                        <td class="negative">1,2%</td>
+                        <td>8</td>
+                        <td><span class="opp-score score-warning">5.2</span></td>
+                        <td><span class="negative">EVITAR</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Animação dos círculos de progresso
+        window.onload = () => {
+            const circle1 = document.getElementById('progress1');
+            const circle2 = document.getElementById('progress2');
+            const radius = 85;
+            const circumference = 2 * Math.PI * radius;
+            
+            circle1.style.strokeDasharray = circumference;
+            circle1.style.strokeDashoffset = circumference;
+            setTimeout(() => {
+                circle1.style.strokeDashoffset = 160;
+            }, 100);
+            
+            circle2.style.strokeDasharray = circumference;
+            circle2.style.strokeDashoffset = circumference;
+            setTimeout(() => {
+                circle2.style.strokeDashoffset = 107;
+            }, 200);
+        };
+    </script>
+</body>
+</html>

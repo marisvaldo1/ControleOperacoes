@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Multi-Gauge</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 100%);
+            min-height: 100vh;
+            padding: 40px;
+        }
+
+        .dashboard-title {
+            color: #fff;
+            text-align: center;
+            font-size: 28px;
+            margin-bottom: 40px;
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .kpi-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .kpi-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .kpi-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+
+        .kpi-title {
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .gauge-wrapper {
+            position: relative;
+            width: 180px;
+            height: 180px;
+            margin: 0 auto 20px;
+        }
+
+        .gauge-svg {
+            transform: rotate(-90deg);
+            width: 100%;
+            height: 100%;
+        }
+
+        .gauge-bg {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.08);
+            stroke-width: 15;
+        }
+
+        .gauge-progress {
+            fill: none;
+            stroke-width: 15;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1.5s ease;
+        }
+
+        .gauge-center-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .gauge-main-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .gauge-sub-value {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 5px;
+        }
+
+        .kpi-footer {
+            display: flex;
+            justify-content: space-between;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .footer-item {
+            text-align: center;
+        }
+
+        .footer-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .footer-label {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.4);
+            margin-top: 3px;
+            text-transform: uppercase;
+        }
+
+        .color-green { color: #00ff88; }
+        .color-red { color: #ff4757; }
+        .color-yellow { color: #ffaa00; }
+        .color-blue { color: #00d4ff; }
+        .color-purple { color: #a855f7; }
+
+        .bg-green { background: rgba(0, 255, 136, 0.15); }
+        .bg-red { background: rgba(255, 71, 87, 0.15); }
+        .bg-yellow { background: rgba(255, 170, 0, 0.15); }
+        .bg-blue { background: rgba(0, 212, 255, 0.15); }
+        .bg-purple { background: rgba(168, 85, 247, 0.15); }
+    </style>
+</head>
+<body>
+    <h1 class="dashboard-title">📊 DASHBOARD DE PERFORMANCE</h1>
+    
+    <div class="dashboard-grid">
+        <!-- KPI 1: Lucro Total -->
+        <div class="kpi-card">
+            <div class="kpi-header">
+                <div class="kpi-icon bg-green">💰</div>
+                <div class="kpi-title">Lucro Total</div>
+            </div>
+            <div class="gauge-wrapper">
+                <svg class="gauge-svg" viewBox="0 0 120 120">
+                    <circle class="gauge-bg" cx="60" cy="60" r="50"/>
+                    <circle class="gauge-progress" id="gauge1" cx="60" cy="60" r="50" 
+                        stroke="#00ff88" stroke-dasharray="314" stroke-dashoffset="314"/>
+                </svg>
+                <div class="gauge-center-content">
+                    <div class="gauge-main-value color-green">+12.5%</div>
+                    <div class="gauge-sub-value">ROI</div>
+                </div>
+            </div>
+            <div class="kpi-footer">
+                <div class="footer-item">
+                    <div class="footer-value color-green">R$ 15.420</div>
+                    <div class="footer-label">Lucro</div>
+                </div>
+                <div class="footer-item">
+                    <div class="footer-value">47</div>
+                    <div class="footer-label">Operações</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI 2: Taxa de Acerto -->
+        <div class="kpi-card">
+            <div class="kpi-header">
+                <div class="kpi-icon bg-blue">🎯</div>
+                <div class="kpi-title">Taxa de Acerto</div>
+            </div>
+            <div class="gauge-wrapper">
+                <svg class="gauge-svg" viewBox="0 0 120 120">
+                    <circle class="gauge-bg" cx="60" cy="60" r="50"/>
+                    <circle class="gauge-progress" id="gauge2" cx="60" cy="60" r="50" 
+                        stroke="#00d4ff" stroke-dasharray="314" stroke-dashoffset="314"/>
+                </svg>
+                <div class="gauge-center-content">
+                    <div class="gauge-main-value color-blue">68%</div>
+                    <div class="gauge-sub-value">Win Rate</div>
+                </div>
+            </div>
+            <div class="kpi-footer">
+                <div class="footer-item">
+                    <div class="footer-value color-green">32</div>
+                    <div class="footer-label">Wins</div>
+                </div>
+                <div class="footer-item">
+                    <div class="footer-value color-red">15</div>
+                    <div class="footer-label">Losses</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI 3: Risk/Reward -->
+        <div class="kpi-card">
+            <div class="kpi-header">
+                <div class="kpi-icon bg-yellow">⚖️</div>
+                <div class="kpi-title">Risk/Reward</div>
+            </div>
+            <div class="gauge-wrapper">
+                <svg class="gauge-svg" viewBox="0 0 120 120">
+                    <circle class="gauge-bg" cx="60" cy="60" r="50"/>
+                    <circle class="gauge-progress" id="gauge3" cx="60" cy="60" r="50" 
+                        stroke="#ffaa00" stroke-dasharray="314" stroke-dashoffset="314"/>
+                </svg>
+                <div class="gauge-center-content">
+                    <div class="gauge-main-value color-yellow">1:2.8</div>
+                    <div class="gauge-sub-value">R:R</div>
+                </div>
+            </div>
+            <div class="kpi-footer">
+                <div class="footer-item">
+                    <div class="footer-value color-green">2.8%</div>
+                    <div class="footer-label">Avg Gain</div>
+                </div>
+                <div class="footer-item">
+                    <div class="footer-value color-red">1.0%</div>
+                    <div class="footer-label">Avg Loss</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI 4: Drawdown -->
+        <div class="kpi-card">
+            <div class="kpi-header">
+                <div class="kpi-icon bg-red">📉</div>
+                <div class="kpi-title">Drawdown Máx</div>
+            </div>
+            <div class="gauge-wrapper">
+                <svg class="gauge-svg" viewBox="0 0 120 120">
+                    <circle class="gauge-bg" cx="60" cy="60" r="50"/>
+                    <circle class="gauge-progress" id="gauge4" cx="60" cy="60" r="50" 
+                        stroke="#ff4757" stroke-dasharray="314" stroke-dashoffset="314"/>
+                </svg>
+                <div class="gauge-center-content">
+                    <div class="gauge-main-value color-red">-8.2%</div>
+                    <div class="gauge-sub-value">Máximo</div>
+                </div>
+            </div>
+            <div class="kpi-footer">
+                <div class="footer-item">
+                    <div class="footer-value color-yellow">-3.1%</div>
+                    <div class="footer-label">Atual</div>
+                </div>
+                <div class="footer-item">
+                    <div class="footer-value">12</div>
+                    <div class="footer-label">Dias</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI 5: Volume Negociado -->
+        <div class="kpi-card">
+            <div class="kpi-header">
+                <div class="kpi-icon bg-purple">📈</div>
+                <div class="kpi-title">Volume</div>
+            </div>
+            <div class="gauge-wrapper">
+                <svg class="gauge-svg" viewBox="0 0 120 120">
+                    <circle class="gauge-bg" cx="60" cy="60" r="50"/>
+                    <circle class="gauge-progress" id="gauge5" cx="60" cy="60" r="50" 
+                        stroke="#a855f7" stroke-dasharray="314" stroke-dashoffset="314"/>
+                </svg>
+                <div class="gauge-center-content">
+                    <div class="gauge-main-value color-purple">78%</div>
+                    <div class="gauge-sub-value">Meta</div>
+                </div>
+            </div>
+            <div class="kpi-footer">
+                <div class="footer-item">
+                    <div class="footer-value color-purple">R$ 234K</div>
+                    <div class="footer-label">Negociado</div>
+                </div>
+                <div class="footer-item">
+                    <div class="footer-value">R$ 300K</div>
+                    <div class="footer-label">Meta</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI 6: Tempo Médio -->
+        <div class="kpi-card">
+            <div class="kpi-header">
+                <div class="kpi-icon bg-green">⏱️</div>
+                <div class="kpi-title">Tempo Médio</div>
+            </div>
+            <div class="gauge-wrapper">
+                <svg class="gauge-svg" viewBox="0 0 120 120">
+                    <circle class="gauge-bg" cx="60" cy="60" r="50"/>
+                    <circle class="gauge-progress" id="gauge6" cx="60" cy="60" r="50" 
+                        stroke="#00ff88" stroke-dasharray="314" stroke-dashoffset="314"/>
+                </svg>
+                <div class="gauge-center-content">
+                    <div class="gauge-main-value color-green">45m</div>
+                    <div class="gauge-sub-value">Duração</div>
+                </div>
+            </div>
+            <div class="kpi-footer">
+                <div class="footer-item">
+                    <div class="footer-value color-green">12m</div>
+                    <div class="footer-label">Mínimo</div>
+                </div>
+                <div class="footer-item">
+                    <div class="footer-value color-yellow">3h</div>
+                    <div class="footer-label">Máximo</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class MultiGaugeDashboard {
+            constructor() {
+                this.gauges = [
+                    { id: 'gauge1', value: 75, color: '#00ff88' },
+                    { id: 'gauge2', value: 68, color: '#00d4ff' },
+                    { id: 'gauge3', value: 82, color: '#ffaa00' },
+                    { id: 'gauge4', value: 45, color: '#ff4757' },
+                    { id: 'gauge5', value: 78, color: '#a855f7' },
+                    { id: 'gauge6', value: 65, color: '#00ff88' }
+                ];
+                this.circumference = 314;
+                this.init();
+            }
+
+            init() {
+                this.gauges.forEach(gauge => {
+                    const element = document.getElementById(gauge.id);
+                    const offset = this.circumference - (gauge.value / 100 * this.circumference);
+                    element.style.strokeDasharray = this.circumference;
+                    element.style.strokeDashoffset = this.circumference;
+                    
+                    setTimeout(() => {
+                        element.style.strokeDashoffset = offset;
+                    }, 500);
+                });
+            }
+
+            updateGauge(id, newValue) {
+                const gauge = this.gauges.find(g => g.id === id);
+                if (gauge) {
+                    gauge.value = newValue;
+                    const element = document.getElementById(id);
+                    const offset = this.circumference - (newValue / 100 * this.circumference);
+                    element.style.strokeDashoffset = offset;
+                }
+            }
+        }
+
+        new MultiGaugeDashboard();
+    </script>
+</body>
+</html>

@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="../css/opcoes/detalhe-opcoes.css?v=1.1.6">
     <link rel="stylesheet" href="../css/opcoes/modal-resultado-total.css?v=1.1.6">
     <link rel="stylesheet" href="../css/shared/modal-analise.css?v=1.0.0">
+    <link rel="stylesheet" href="../css/shared/modal-resultados.css?v=1.0.0">
 </head>
 
 <body data-bs-theme="dark">
@@ -26,6 +27,10 @@
                             <button class="btn btn-secondary me-2" id="btnAnalise">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
                                 Análise
+                            </button>
+                            <button class="btn btn-secondary me-2" id="btnResultadosOpcoes">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+                                Resultados
                             </button>
                             <button class="btn btn-info me-2" id="btnSimularOperacao">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><path d="M2 12h10"/><path d="M9 4v16"/><path d="M3 9l3 3-3 3"/><path d="M14 9l3 3-3 3"/></svg>
@@ -1914,6 +1919,7 @@
     <div id="modalSaldoMedioContainer"></div>
     <div id="modalTotalOperacoesContainer"></div>
     <div id="modalAnaliseContainer"></div>
+    <div id="modalResultadosOpcoesContainer"></div>
 
     <script src="../js/core/libs.js?v=1.1.5"></script>
     <script src="../js/core/global.js?v=1.1.5"></script>
@@ -1922,25 +1928,26 @@
     <script src="../js/opcoes/opcoes.js?v=1.1.6"></script>
     <script src="../js/opcoes/modal-resultado-total.js?v=1.1.5"></script>
     <script src="../js/opcoes/detalhe-opcoes.js?v=1.1.5"></script>
-    <script src="../js/opcoes/modal-saldo-medio.js?v=1.1.0"></script>
-    <script src="../js/opcoes/modal-total-operacoes.js?v=1.1.0"></script>
+    <script src="../js/opcoes/modal-saldo-medio-opcoes.js?v=1.1.0"></script>
+    <script src="../js/opcoes/modal-total-operacoes-opcoes.js?v=1.1.0"></script>
     <script src="../js/shared/modal-analise.js?v=1.5.0"></script>
+    <script src="../js/opcoes/modal-resultados-opcoes.js?v=1.0.0"></script>
     <script>
         // Carregar modal de detalhes
-        fetch('detalhe-opcoes.html')
+        fetch('modal-detalhe-opcoes.html')
             .then(response => response.text())
             .then(html => {
                 document.getElementById('modalDetalheOpcaoContainer').innerHTML = html;
             })
             .catch(error => console.error('Erro ao carregar modal:', error));
         // Carregar modal saldo médio
-        fetch('modal-saldo-medio.html')
+        fetch('modal-saldo-medio-opcoes.html')
             .then(r => r.text())
             .then(html => {
                 document.getElementById('modalSaldoMedioContainer').innerHTML = html;
             })
             .catch(err => console.error('Erro ao carregar modal saldo médio:', err));
-        fetch('modal-total-operacoes.html')
+        fetch('modal-total-operacoes-opcoes.html')
             .then(r => r.text())
             .then(html => {
                 document.getElementById('modalTotalOperacoesContainer').innerHTML = html;

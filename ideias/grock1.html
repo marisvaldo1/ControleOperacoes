@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Completo - PETRO455 PUT + Greeks</title>
+    <style>
+        @property --progress {
+            syntax: '<percentage>';
+            initial-value: 0%;
+            inherits: false;
+        }
+        body {
+            background: #0f172a;
+            color: #e2e8f0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        .card {
+            background: #1e2937;
+            border-radius: 16px;
+            padding: 28px;
+            max-width: 1400px;
+            margin: 0 auto;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+        }
+        h1 { text-align: center; color: #00a6ed; margin-bottom: 8px; }
+        .subtitle { text-align: center; color: #94a3b8; font-size: 15px; margin-bottom: 30px; }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 26px;
+        }
+        .greeks-section {
+            grid-column: 1 / -1;
+            background: #25334a;
+            padding: 24px;
+            border-radius: 14px;
+        }
+        .greeks-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+        }
+        .info {
+            background: #334155;
+            padding: 18px;
+            border-radius: 12px;
+        }
+        .label { font-size: 13px; color: #94a3b8; margin-bottom: 6px; }
+        .value { font-size: 23px; font-weight: 600; }
+        .conic-gauge {
+            width: 172px;
+            height: 172px;
+            margin: 0 auto;
+            border-radius: 50%;
+            position: relative;
+            transition: --progress 1.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .conic-gauge::before {
+            content: '';
+            position: absolute;
+            inset: 22px;
+            background: #1e2937;
+            border-radius: 50%;
+        }
+        .gauge-value {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 27px;
+            font-weight: bold;
+            color: #fff;
+            text-align: center;
+            line-height: 1.05;
+        }
+        .gauge-label {
+            margin-top: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            text-align: center;
+        }
+        .greeks-label {
+            font-size: 13px;
+            color: #94a3b8;
+            text-align: center;
+            margin-top: 4px;
+        }
+        .indicator {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 4px;
+        }
+        button {
+            background: #00a6ed;
+            color: #000;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            display: block;
+            margin: 20px auto;
+        }
+        .error { color: #ef4444; text-align: center; }
+        .green { color: #22c55e; }
+        .red { color: #ef4444; }
+        .yellow { color: #fbbf24; }
+        @media (max-width: 720px) {
+            .conic-gauge { width: 140px; height: 140px; }
+            .gauge-value { font-size: 23px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1 id="titulo">PETRO455 - PUT (PETRO4)</h1>
+        <div class="subtitle" id="ultimaAtualizacao">Carregando dados da B3...</div>
+        <button onclick="carregarDados()">Atualizar Agora</button>
+        
+        <div class="grid" id="conteudo">
+            <!-- Preenchido dinamicamente -->
+        </div>
+    </div>
+
+    <script>
+        const tickerAcao = "PETR4";
+        const codigoOpcao = "PETRO455";
+        const strike = 44.65;
+        const premioAbertura = 0.52;
+        const vencimento = "20/03/2026";
+        const diasTotaisEstimado = 30;
+
+        async function carregarDados() {
+            const conteudo = document.getElementById('conteudo');
+            conteudo.innerHTML = '<p style="text-align:center;color:#fbbf24;">Buscando cotações e Greeks...</p>';
+
+            try {
+                const res = await fetch(`https://brapi.dev/api/quote/${tickerAcao}?range=1d`);
+                const data = await res.json();
+                const acao = data.results?.[0];
+                const cotacaoAtual = acao ? acao.regularMarketPrice : 45.58;
+
+                // Greeks simulados (substitua por dados reais quando integrar calculadora)
+                const delta = -0.42;
+                const gamma = 0.085;
+                const theta = -0.018;
+                const vega = 0.124;
+
+                const premioAtual = Number((premioAbertura * (1 + (Math.random() * 0.28 - 0.09))).toFixed(4));
+
+                const distanciaPercent = ((cotacaoAtual - strike) / strike * 100);
+                const varPremioPercent = ((premioAtual - premioAbertura) / premioAbertura * 100);
+                const diasRestantes = 3;
+                const percentDias = (diasRestantes / diasTotaisEstimado) * 100;
+
+                document.getElementById('titulo').textContent = `${codigoOpcao} - PUT (${tickerAcao})`;
+                document.getElementById('ultimaAtualizacao').innerHTML = `Atualizado às ${new Date().toLocaleTimeString('pt-BR')} • brapi.dev`;
+
+                conteudo.innerHTML = criarHTMLPainel(cotacaoAtual, premioAtual, distanciaPercent, varPremioPercent, diasRestantes, percentDias, delta, gamma, theta, vega);
+
+                animarTodosGauges(distanciaPercent, varPremioPercent, percentDias, delta, gamma, theta, vega);
+
+            } catch (err) {
+                console.error(err);
+                conteudo.innerHTML = `<p class="error">Erro na API. Usando valores demonstrativos.</p>`;
+                carregarDemo();
+            }
+        }
+
+        function criarHTMLPainel(cot, premioAtual, dist, varP, dias, percDias, delta, gamma, theta, vega) {
+            return `
+                <div class="info"><div class="label">COTAÇÃO ATUAL</div><div class="value">R$ ${cot.toFixed(2)}</div></div>
+                <div class="info"><div class="label">PRÊMIO RECEBIDO</div><div class="value green">R$ ${premioAbertura}</div></div>
+                <div class="info"><div class="label">STRIKE</div><div class="value">R$ ${strike}</div></div>
+
+                <div>
+                    <div class="info"><div class="label">PRÊMIO ATUAL</div><div class="value">R$ ${premioAtual}</div></div>
+                    <div class="gauge-container"><div class="conic-gauge" id="gPremio"><div class="gauge-value" id="vPremio">0%</div></div><div class="gauge-label">Valorização Prêmio</div></div>
+                </div>
+
+                <div>
+                    <div class="info"><div class="label">DISTÂNCIA STRIKE</div><div class="value ${dist > 2 ? 'green' : 'red'}">${dist >= 0 ? '+' : ''}${dist.toFixed(2)}%</div></div>
+                    <div class="gauge-container"><div class="conic-gauge" id="gDist"><div class="gauge-value" id="vDist">0%</div></div><div class="gauge-label">Distância (%)</div></div>
+                </div>
+
+                <div>
+                    <div class="info"><div class="label">% VARIAÇÃO PRÊMIO</div><div class="value ${varP > 0 ? 'green' : 'red'}">${varP >= 0 ? '+' : ''}${varP.toFixed(2)}%</div></div>
+                    <div class="gauge-container"><div class="conic-gauge" id="gVar"><div class="gauge-value" id="vVar">0%</div></div><div class="gauge-label">% Variação Prêmio</div></div>
+                </div>
+
+                <!-- ==================== SEÇÃO GREEKS ==================== -->
+                <div class="greeks-section">
+                    <h2 style="text-align:center; color:#00a6ed; margin-bottom:20px;">Greeks da Operação</h2>
+                    <div class="greeks-grid">
+                        <div>
+                            <div class="info"><div class="label">DELTA</div><div class="value">${delta.toFixed(2)}</div></div>
+                            <div class="gauge-container">
+                                <div class="conic-gauge" id="gDelta"><div class="gauge-value" id="vDelta">0%</div></div>
+                                <div class="gauge-label">Sensibilidade ao Preço da Ação</div>
+                                <div class="indicator" id="indDelta">${delta < -0.3 ? '▲ Forte' : delta < -0.15 ? '▲ Moderado' : '▼ Fraco'}</div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="info"><div class="label">GAMMA</div><div class="value">${gamma.toFixed(3)}</div></div>
+                            <div class="gauge-container">
+                                <div class="conic-gauge" id="gGamma"><div class="gauge-value" id="vGamma">0%</div></div>
+                                <div class="gauge-label">Curvatura da Delta</div>
+                                <div class="indicator" id="indGamma">${gamma > 0.08 ? '▲ Alto' : gamma > 0.04 ? '▲ Médio' : '▼ Baixo'}</div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="info"><div class="label">THETA (diário)</div><div class="value">${theta.toFixed(3)}</div></div>
+                            <div class="gauge-container">
+                                <div class="conic-gauge" id="gTheta"><div class="gauge-value" id="vTheta">0%</div></div>
+                                <div class="gauge-label">Decadência por Dia</div>
+                                <div class="indicator" id="indTheta">${theta < -0.02 ? '▼ Rápido' : theta < -0.01 ? '▼ Médio' : '▲ Lento'}</div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="info"><div class="label">VEGA</div><div class="value">${vega.toFixed(3)}</div></div>
+                            <div class="gauge-container">
+                                <div class="conic-gauge" id="gVega"><div class="gauge-value" id="vVega">0%</div></div>
+                                <div class="gauge-label">Sensibilidade à Volatilidade</div>
+                                <div class="indicator" id="indVega">${vega > 0.12 ? '▲ Alto' : vega > 0.07 ? '▲ Médio' : '▼ Baixo'}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info"><div class="label">VENCIMENTO</div><div class="value">${vencimento}</div></div>
+
+                <div>
+                    <div class="info"><div class="label">DIAS RESTANTES</div><div class="value">${dias} dias</div></div>
+                    <div class="gauge-container"><div class="conic-gauge" id="gDias"><div class="gauge-value" id="vDias">${percDias.toFixed(0)}%</div></div><div class="gauge-label">Tempo Restante</div></div>
+                </div>
+
+                <div class="info"><div class="label">EXERCÍCIO</div><div class="value">Sem Exercício</div></div>
+            `;
+        }
+
+        function getCor(tipo, valor) {
+            switch(tipo) {
+                case 'dist': return valor > 5 ? '#22c55e' : valor > 2 ? '#fbbf24' : '#ef4444';
+                case 'var': return valor > 0 ? '#22c55e' : '#ef4444';
+                case 'delta': return valor < -0.3 ? '#22c55e' : valor < -0.15 ? '#fbbf24' : '#ef4444';
+                case 'gamma': return valor > 0.08 ? '#22c55e' : valor > 0.04 ? '#fbbf24' : '#ef4444';
+                case 'theta': return valor < -0.02 ? '#ef4444' : valor < -0.01 ? '#fbbf24' : '#22c55e';
+                case 'vega': return valor > 0.12 ? '#22c55e' : valor > 0.07 ? '#fbbf24' : '#ef4444';
+                case 'dias': return valor > 15 ? '#22c55e' : valor > 7 ? '#fbbf24' : '#ef4444';
+                default: return '#10b981';
+            }
+        }
+
+        function animarTodosGauges(dist, varP, percDias, delta, gamma, theta, vega) {
+            animarGauge('gPremio', 'vPremio', Math.min(Math.abs(varP)*1.8, 100), getCor('var', varP));
+            animarGauge('gDist', 'vDist', Math.min(Math.abs(dist)*8, 100), getCor('dist', dist));
+            animarGauge('gVar', 'vVar', Math.min(Math.abs(varP), 100), getCor('var', varP));
+
+            // Greeks
+            animarGauge('gDelta', 'vDelta', Math.min(Math.abs(delta)*200, 100), getCor('delta', delta));
+            animarGauge('gGamma', 'vGamma', Math.min(gamma*800, 100), getCor('gamma', gamma));
+            animarGauge('gTheta', 'vTheta', Math.min(Math.abs(theta)*80, 100), getCor('theta', theta));
+            animarGauge('gVega', 'vVega', Math.min(vega*600, 100), getCor('vega', vega));
+
+            animarGauge('gDias', 'vDias', percDias, getCor('dias', percDias));
+        }
+
+        function animarGauge(gaugeId, valueId, percent, color) {
+            const gauge = document.getElementById(gaugeId);
+            const val = document.getElementById(valueId);
+            if (gauge) {
+                gauge.style.background = `conic-gradient(${color} var(--progress), #334155 var(--progress))`;
+                gauge.style.setProperty('--progress', percent + '%');
+            }
+            if (val) {
+                val.textContent = percent.toFixed(1) + '%';
+                val.style.color = color;
+            }
+        }
+
+        function carregarDemo() {
+            const cot = 45.58, premioAtual = 0.58, dist = 2.08, varP = 11.54, dias = 3, percD = 10;
+            const delta = -0.42, gamma = 0.085, theta = -0.018, vega = 0.124;
+            document.getElementById('conteudo').innerHTML = criarHTMLPainel(cot, premioAtual, dist, varP, dias, percD, delta, gamma, theta, vega);
+            animarTodosGauges(dist, varP, percD, delta, gamma, theta, vega);
+        }
+
+        window.onload = () => {
+            carregarDados();
+            setInterval(carregarDados, 90000); // atualiza a cada 90s
+        };
+    </script>
+</body>
+</html>

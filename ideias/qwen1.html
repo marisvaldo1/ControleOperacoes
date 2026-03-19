@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gauge de Lucro/Prejuízo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .gauge-container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 40px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .gauge-title {
+            color: #fff;
+            text-align: center;
+            font-size: 18px;
+            margin-bottom: 30px;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        .gauge-wrapper {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 0 auto;
+        }
+
+        .gauge-svg {
+            transform: rotate(-90deg);
+            width: 100%;
+            height: 100%;
+        }
+
+        .gauge-background {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.1);
+            stroke-width: 20;
+        }
+
+        .gauge-fill {
+            fill: none;
+            stroke-width: 20;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1.5s ease-out;
+        }
+
+        .gauge-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .gauge-value {
+            font-size: 42px;
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+        }
+
+        .gauge-label {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 5px;
+        }
+
+        .gauge-indicator {
+            position: absolute;
+            bottom: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+        }
+
+        .indicator-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 13px;
+        }
+
+        .indicator-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .dot-green { background: #00ff88; }
+        .dot-yellow { background: #ffaa00; }
+        .dot-red { background: #ff4757; }
+
+        .stats-row {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 5px;
+        }
+
+        .positive { color: #00ff88; }
+        .negative { color: #ff4757; }
+        .neutral { color: #ffaa00; }
+    </style>
+</head>
+<body>
+    <div class="gauge-container">
+        <h2 class="gauge-title">💰 LUCRO/PREJUÍZO DA OPERAÇÃO</h2>
+        
+        <div class="gauge-wrapper">
+            <svg class="gauge-svg" viewBox="0 0 200 200">
+                <circle class="gauge-background" cx="100" cy="100" r="80"/>
+                <circle class="gauge-fill" id="gaugeFill" cx="100" cy="100" r="80" 
+                    stroke="#00ff88" stroke-dasharray="502" stroke-dashoffset="502"/>
+            </svg>
+            
+            <div class="gauge-center">
+                <div class="gauge-value" id="gaugeValue">+R$ 0,00</div>
+                <div class="gauge-label">Resultado Atual</div>
+            </div>
+        </div>
+
+        <div class="gauge-indicator">
+            <div class="indicator-item">
+                <div class="indicator-dot dot-red"></div>
+                <span>Prejuízo</span>
+            </div>
+            <div class="indicator-item">
+                <div class="indicator-dot dot-yellow"></div>
+                <span>Neutro</span>
+            </div>
+            <div class="indicator-item">
+                <div class="indicator-dot dot-green"></div>
+                <span>Lucro</span>
+            </div>
+        </div>
+
+        <div class="stats-row">
+            <div class="stat-item">
+                <div class="stat-value positive" id="percentValue">+0%</div>
+                <div class="stat-label">Variação %</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="tradeCount">0</div>
+                <div class="stat-label">Operações</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value positive" id="winRate">0%</div>
+                <div class="stat-label">Taxa de Acerto</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class ProfitGauge {
+            constructor() {
+                this.gaugeFill = document.getElementById('gaugeFill');
+                this.gaugeValue = document.getElementById('gaugeValue');
+                this.percentValue = document.getElementById('percentValue');
+                this.circumference = 502;
+                this.init();
+            }
+
+            init() {
+                this.gaugeFill.style.strokeDasharray = this.circumference;
+                this.gaugeFill.style.strokeDashoffset = this.circumference;
+                
+                // Simulação de dados - substitua pelos seus dados reais
+                this.updateGauge(750.50, 10000, 15, 12);
+            }
+
+            updateGauge(profit, initialBalance, trades, wins) {
+                const percent = ((profit / initialBalance) * 100).toFixed(2);
+                const winRate = ((wins / trades) * 100).toFixed(1);
+                
+                // Determina cor baseada no lucro
+                let color, offset;
+                if (profit >= 0) {
+                    color = '#00ff88';
+                    offset = this.circumference - (Math.min(percent, 100) / 100 * this.circumference);
+                } else {
+                    color = '#ff4757';
+                    offset = this.circumference - (Math.min(Math.abs(percent), 100) / 100 * this.circumference);
+                }
+
+                this.gaugeFill.style.stroke = color;
+                this.gaugeFill.style.strokeDashoffset = this.circumference - offset;
+
+                this.gaugeValue.textContent = profit >= 0 ? `+R$ ${profit.toFixed(2)}` : `R$ ${profit.toFixed(2)}`;
+                this.gaugeValue.style.color = color;
+                this.gaugeValue.style.textShadow = `0 0 20px ${color}80`;
+
+                this.percentValue.textContent = `${percent >= 0 ? '+' : ''}${percent}%`;
+                this.percentValue.className = `stat-value ${profit >= 0 ? 'positive' : 'negative'}`;
+
+                document.getElementById('tradeCount').textContent = trades;
+                document.getElementById('winRate').textContent = `${winRate}%`;
+                document.getElementById('winRate').className = `stat-value ${winRate >= 50 ? 'positive' : 'negative'}`;
+            }
+        }
+
+        // Inicializa o gauge
+        new ProfitGauge();
+
+        // Atualização em tempo real (exemplo)
+        setInterval(() => {
+            const randomProfit = (Math.random() * 2000 - 500).toFixed(2);
+            const gauge = new ProfitGauge();
+            gauge.updateGauge(parseFloat(randomProfit), 10000, 15, 12);
+        }, 5000);
+    </script>
+</body>
+</html>

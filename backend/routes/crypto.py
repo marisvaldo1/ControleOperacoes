@@ -62,12 +62,18 @@ def refresh_crypto_quotes():
 
     conn = db.get_db()
 
-    # 1. Auto-fecha operações ABERTAS cujo exercício já passou
-    conn.execute(
-        "UPDATE operacoes_crypto SET status='FECHADA' "
+    # 1. Auto-fecha operações ABERTAS cujo exercício já passou e calcula exercicio_status
+    ops_to_close = conn.execute(
+        "SELECT id, tipo, cotacao_atual, strike FROM operacoes_crypto "
         "WHERE status='ABERTA' AND exercicio IS NOT NULL AND exercicio < ?",
         (today_str,)
-    )
+    ).fetchall()
+    for op in ops_to_close:
+        ex_status = _calc_exercicio_status(op['tipo'], op['cotacao_atual'], op['strike'])
+        conn.execute(
+            "UPDATE operacoes_crypto SET status='FECHADA', exercicio_status=? WHERE id=?",
+            (ex_status, op['id'])
+        )
     conn.commit()
 
     # 2. Busca cotações ao vivo apenas para as que ainda estão ABERTAS
@@ -125,6 +131,8 @@ def get_dual_investment():
     # URLs alternativas — Binance frequentemente muda endpoints públicos
     ENDPOINTS = [
         'https://www.binance.com/bapi/dual/v1/public/dual/product/list',
+        'https://www.binance.com/bapi/dual/v2/public/dual/product/list',
+        'https://www.binance.com/bapi/earn/v2/public/dual/product/list',
         'https://www.binance.com/bapi/earn/v1/friendly/finance-union/simple-earn/rate-history/dual/list',
     ]
 
@@ -294,19 +302,36 @@ def update_crypto(id):
     return jsonify({'success': True})
 
 
+def _calc_exercicio_status(tipo, cotacao_atual, strike):
+    """Calcula se uma operação foi exercida com base em tipo, cotação e strike."""
+    try:
+        cot = float(cotacao_atual or 0)
+        str_ = float(strike or 0)
+        if cot <= 0 or str_ <= 0:
+            return 'NAO'
+        if (tipo or '').upper() == 'CALL':
+            return 'SIM' if cot >= str_ else 'NAO'
+        elif (tipo or '').upper() == 'PUT':
+            return 'SIM' if cot <= str_ else 'NAO'
+    except Exception:
+        pass
+    return 'NAO'
+
+
 # ─── Fechar manualmente ───────────────────────────────────────────────────────
 @crypto_bp.route('/<int:id>/fechar', methods=['PATCH'])
 def fechar_operacao(id):
-    """Fecha manualmente uma operação crypto (muda status para FECHADA)."""
+    """Fecha manualmente uma operação crypto (muda status para FECHADA) e calcula exercicio_status."""
     conn = db.get_db()
-    op = conn.execute('SELECT id, status FROM operacoes_crypto WHERE id=?', (id,)).fetchone()
+    op = conn.execute('SELECT id, status, tipo, cotacao_atual, strike FROM operacoes_crypto WHERE id=?', (id,)).fetchone()
     if not op:
         conn.close()
         return jsonify({'error': 'Operação não encontrada'}), 404
-    conn.execute("UPDATE operacoes_crypto SET status='FECHADA' WHERE id=?", (id,))
+    ex_status = _calc_exercicio_status(op['tipo'], op['cotacao_atual'], op['strike'])
+    conn.execute("UPDATE operacoes_crypto SET status='FECHADA', exercicio_status=? WHERE id=?", (ex_status, id))
     conn.commit()
     conn.close()
-    return jsonify({'success': True, 'message': 'Operação fechada com sucesso'})
+    return jsonify({'success': True, 'message': 'Operação fechada com sucesso', 'exercicio_status': ex_status})
 
 
 # ─── Excluir dados de teste ───────────────────────────────────────────────────

@@ -259,11 +259,100 @@
         }
         html.push('</div>');
         container.innerHTML = html.join('');
+
+        // Delegated click: clique em dia do heatmap → exibe operações daquele dia
+        container.addEventListener('click', function (e) {
+            const dayEl = e.target.closest('.heatmap-day[data-date]');
+            if (!dayEl) return;
+            const date = dayEl.getAttribute('data-date');
+            if (!date) return;
+            // Inclui ops fechadas nesta data (por data de exercício/fechamento)
+            // E ops abertas com data_operacao nesta data
+            const allOps2 = window.cryptoOperacoes || window.allOperacoesCrypto || [];
+            const dayOps = allOps2.filter(op => {
+                const d = getOpDate(op);
+                return d && getDateKey(d) === date;
+            });
+            showDayDetailModal(date, dayOps);
+        });
     }
 
     /* ------------------------------------------------------------------ */
-    /*  Render: CALL vs PUT Bar Chart                                       */
+    /*  Modal de detalhe por dia (heatmap click)                            */
     /* ------------------------------------------------------------------ */
+    function showDayDetailModal(dateKey, dayOps) {
+        const existing = document.getElementById('dcDayDetailModal');
+        if (existing) existing.remove();
+
+        const [year, month, day] = dateKey.split('-');
+        const dateLabel = `${day}/${month}/${year}`;
+        const totalResult = dayOps.reduce((acc, op) => acc + cfg.getResultValue(op), 0);
+
+        const rows = dayOps.length
+            ? dayOps.map(op => {
+                const ativo  = cfg.getAtivo(op);
+                const tipo   = (op.tipo || '-').toUpperCase();
+                const status = (op.status || 'ABERTA').toUpperCase();
+                const val    = cfg.getResultValue(op);
+                const strike = op.strike ? fmtC(op.strike) : '-';
+                const exercicio = op.exercicio || '-';
+                const pct    = parseFloat(op.resultado) || 0;
+                return `<tr>
+                    <td><strong>${ativo}</strong></td>
+                    <td><span class="badge ${tipo === 'CALL' ? 'bg-success' : 'bg-danger'}">${tipo}</span></td>
+                    <td>${strike}</td>
+                    <td>${exercicio}</td>
+                    <td class="${val >= 0 ? 'text-success' : 'text-danger'} fw-bold">${fmtC(val)}</td>
+                    <td class="${pct >= 0 ? 'text-success' : 'text-danger'}">${pct ? pct.toFixed(2) + '%' : '-'}</td>
+                    <td><span class="badge ${status === 'ABERTA' ? 'bg-success' : 'bg-secondary'}">${status}</span></td>
+                </tr>`;
+            }).join('')
+            : '<tr><td colspan="7" class="text-center text-muted py-3">Nenhuma operação nesta data</td></tr>';
+
+        const html = `
+        <div class="modal modal-blur fade" id="dcDayDetailModal" tabindex="-1" style="z-index:1100;">
+            <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            📅 Operações de ${dateLabel}
+                            <span class="badge ms-2 ${totalResult >= 0 ? 'bg-success' : 'bg-danger'}">${fmtC(totalResult)}</span>
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-vcenter table-hover card-table mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Ativo</th>
+                                        <th>Tipo</th>
+                                        <th>Strike</th>
+                                        <th>Exercício</th>
+                                        <th>Prêmio (USD)</th>
+                                        <th>Resultado %</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>${rows}</tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <span class="text-muted me-auto small">${dayOps.length} operação(ões)</span>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+
+        document.body.insertAdjacentHTML('beforeend', html);
+        const modalEl = document.getElementById('dcDayDetailModal');
+        modalEl.addEventListener('hidden.bs.modal', () => modalEl.remove());
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    }
+
     function renderComparacao(ops) {
         const canvas = document.getElementById('dcChartComparacao');
         if (!canvas || typeof Chart === 'undefined') return;
@@ -511,6 +600,27 @@
 
             const btnFiltrar = document.getElementById('dcBtnFiltrar');
             if (btnFiltrar) btnFiltrar.addEventListener('click', renderAll);
+
+            const btnAtualizar = document.getElementById('dcBtnAtualizar');
+            if (btnAtualizar) btnAtualizar.addEventListener('click', async () => {
+                btnAtualizar.disabled = true;
+                const originalHtml = btnAtualizar.innerHTML;
+                btnAtualizar.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Atualizando...';
+                try {
+                    const res = await fetch(cfg.apiEndpoint);
+                    if (res.ok) {
+                        const data = await res.json();
+                        window.cryptoOperacoes = Array.isArray(data) ? data : [];
+                        window.allOperacoesCrypto = window.cryptoOperacoes;
+                        renderAll();
+                    }
+                } catch (err) {
+                    console.error('[ModalDashboardCrypto] Erro ao atualizar:', err);
+                } finally {
+                    btnAtualizar.disabled = false;
+                    btnAtualizar.innerHTML = originalHtml;
+                }
+            });
         }
 
         renderAll();

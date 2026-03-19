@@ -411,12 +411,19 @@ async function loadConfig() {
     }
 }
 
+// Recarrega dados ao voltar via BFCache (botão Voltar/Avançar do browser)
+window.addEventListener('pageshow', function (e) {
+    if (e.persisted) {
+        loadOperacoes();
+    }
+});
+
 async function loadOperacoes() {
     // Carregar configurações do backend para garantir dados atualizados
     await loadConfig();
     
     try {
-        const res = await fetch(`${API_BASE}/api/opcoes`);
+        const res = await fetch(`${API_BASE}/api/opcoes`, { cache: 'no-store' });
         const data = await res.json();
         allOperacoes = Array.isArray(data) ? data.map(op => normalizeResultadoOperacao(op)) : [];
         window.allOperacoes = allOperacoes; // Make available globally
@@ -438,33 +445,10 @@ async function loadOperacoes() {
                     let exercicioCalculado = null;
                     
                     // Calcular se foi exercida baseado em REGRA DE NEGÓCIO
-                    // Lógica: Opção ITM (In The Money) no vencimento é exercida
-                    let exercicioSim = false;
-                    
-                    if (op.preco_atual && op.strike && op.tipo) {
-                        const pa = parseFloatSafe(op.preco_atual);
-                        const str = parseFloatSafe(op.strike);
-                        
-                        // PUT: Exercida quando preco_atual < strike
-                        // (quem vendeu PUT é obrigado a comprar / quem comprou PUT pode vender por mais)
-                        if (op.tipo === 'PUT') {
-                            exercicioSim = (pa < str);
-                        } 
-                        // CALL: Exercida quando preco_atual > strike
-                        // (quem vendeu CALL é obrigado a vender / quem comprou CALL pode comprar por menos)
-                        else if (op.tipo === 'CALL') {
-                            exercicioSim = (pa > str);
-                        }
-                        
-                        exercicioCalculado = exercicioSim ? 'SIM' : 'NAO';
-                    }
-                    
-                    // Definir novo status baseado no exercício
-                    if (exercicioSim) {
-                        novoStatus = 'EXERCIDA';
-                    } else {
-                        novoStatus = 'FECHADA';
-                    }
+                    // Opção vencida sem fechamento manual → status FECHADA
+                    // Não definir EXERCIDA automaticamente: o preco_atual armazena o prêmio da opção,
+                    // não o preço do ativo base, tornando a comparação com strike inválida.
+                    novoStatus = 'FECHADA';
                     
                     // Atualizar apenas status no banco (sem campo exercicio)
                     if (novoStatus && op.status !== novoStatus) {
@@ -643,26 +627,10 @@ async function populateTable(dt, data, showActions = true, updatePrices = false,
         // Só calcula exercício para operações que ainda não venceram ou que estão no vencimento
         // PUT ITM: preço atual < strike (posso vender por mais que vale)
         // CALL ITM: preço atual > strike (posso comprar por menos que vale)
-        let exercicio = false;
-        
-        if (precoAtual && op.strike && op.tipo && op.vencimento) {
-            // Converter valores para numérico (suporta formato brasileiro e americano)
-            const pa = parseFloatSafe(precoAtual);
-            const str = parseFloatSafe(op.strike);
-            
-            // Verificar se já venceu ou está no vencimento
-            const hoje = new Date();
-            hoje.setHours(0, 0, 0, 0);
-            const parts = op.vencimento.split('-');
-            const vencimento = new Date(parts[0], parts[1] - 1, parts[2]);
-            vencimento.setHours(0, 0, 0, 0);
-            
-            // Usar função global para calcular exercício
-            exercicio = calcularExercicio(op.tipo, pa, str);
-        } else if (op.status === 'EXERCIDA') {
-            // Se não tem dados mas status é EXERCIDA
-            exercicio = true;
-        }
+        // Para ops fechadas/exercidas/vencidas: exercício vem do status gravado no banco.
+        // Para ops abertas: calcularExercicio precisaria do preço do ativo base, não do prêmio.
+        // O preço ao vivo do ativo base é atualizado assincronamente na etapa updatePrices.
+        let exercicio = op.status !== 'ABERTA' ? (op.status === 'EXERCIDA') : false;
         
         let actionsHtml = '';
         if (showActions) {
@@ -715,7 +683,10 @@ async function populateTable(dt, data, showActions = true, updatePrices = false,
                     popCell = `${popValue.toFixed(1)}%`;
                 }
             }
-            exercicioCell = gerarBadgeExercicio(calcularExercicio(op.tipo, precoAtualValue, parseFloatSafe(op.strike)), op.status);
+            // Para ops fechadas: usa o status real. Para abertas sem ativo_base:
+            // op.preco_atual é o prêmio da opção, não o preço do ativo base.
+            const ehExercida = op.status !== 'ABERTA' ? (op.status === 'EXERCIDA') : calcularExercicio(op.tipo, precoAtualValue, parseFloatSafe(op.strike));
+            exercicioCell = gerarBadgeExercicio(ehExercida, op.status);
         }
         
         const rowNode = dt.row.add([
@@ -2315,17 +2286,14 @@ function showMonthOperations(year, month) {
         const resultado = parseFloat(op.resultado || 0);
         const perc = saldoInfo.saldo > 0 ? (resultado / saldoInfo.saldo) * 100 : 0;
         
-        // Calcular exercício usando função global
-        const exercida = calcularExercicio(op.tipo, parseFloatSafe(op.preco_atual), parseFloatSafe(op.strike));
+        // Calcular exercício: para ops fechadas usa status do banco; op.preco_atual é o prêmio, não o preço do ativo base
+        const exercida = op.status !== 'ABERTA' ? (op.status === 'EXERCIDA') : false;
         const exercicioBadgeHTML = gerarBadgeExercicio(exercida, op.status);
         
         const tipoBadge = op.tipo === 'CALL' ? 'bg-green text-green-fg' : 'bg-red text-red-fg';
         
         // Badge de tipo de operação (COMPRA/VENDA)
         const isVenda = op.tipo_operacao === 'VENDA' || (op.tipo_operacao === undefined && Number.parseInt(op.quantidade) < 0);
-        const tipoOpBadge = isVenda ? 'bg-red text-red-fg' : 'bg-green text-green-fg';
-        const tipoOpText = isVenda ? 'VENDA' : 'COMPRA';
-
         return `
             <tr>
                 <td>${formatDateCell(op.data_operacao)}</td>
@@ -2505,7 +2473,7 @@ function showWeekOperations(startDate, endDate) {
         const saldoInfo = getSaldoInfo(op, saldoMap);
         const resultado = parseFloat(op.resultado || 0);
         const perc = saldoInfo.saldo > 0 ? (resultado / saldoInfo.saldo) * 100 : 0;
-        const exercida = calcularExercicio(op.tipo, parseFloatSafe(op.preco_atual), parseFloatSafe(op.strike));
+        const exercida = op.status !== 'ABERTA' ? (op.status === 'EXERCIDA') : false;
         const exercicioBadgeHTML = gerarBadgeExercicio(exercida, op.status);
         const tipoBadge = op.tipo === 'CALL' ? 'bg-green text-green-fg' : 'bg-red text-red-fg';
         const isVenda = op.tipo_operacao === 'VENDA' || (op.tipo_operacao === undefined && Number.parseInt(op.quantidade) < 0);
@@ -2673,8 +2641,8 @@ function renderAnnualTable(data) {
             const resultado = parseFloat(op.resultado || 0);
             const perc = saldoInfo.saldo > 0 ? (resultado / saldoInfo.saldo) * 100 : 0;
             
-            // Calcular exercício usando função global
-            const exercida = calcularExercicio(op.tipo, parseFloatSafe(op.preco_atual), parseFloatSafe(op.strike));
+            // Calcular exercício: para ops fechadas usa status do banco; op.preco_atual é o prêmio, não o preço do ativo base
+            const exercida = op.status !== 'ABERTA' ? (op.status === 'EXERCIDA') : false;
             const exercicioBadgeHTML = gerarBadgeExercicio(exercida, op.status);
             
             const tipoBadge = op.tipo === 'CALL' ? 'bg-green text-green-fg' : 'bg-red text-red-fg';
@@ -3436,8 +3404,8 @@ function renderSaldoTabela(ops) {
         const resultado = parseFloat(op.resultado || 0);
         const perc = saldoInfo.saldo > 0 ? (resultado / saldoInfo.saldo) * 100 : 0;
         
-        // Calcular exercício usando função global
-        const exercida = calcularExercicio(op.tipo, parseFloatSafe(op.preco_atual), parseFloatSafe(op.strike));
+        // Calcular exercício: para ops fechadas usa status do banco; op.preco_atual é o prêmio, não o preço do ativo base
+        const exercida = op.status !== 'ABERTA' ? (op.status === 'EXERCIDA') : false;
         const exercicioBadgeHTML = gerarBadgeExercicio(exercida, op.status);
         
         // Badge de tipo de operação (COMPRA/VENDA)

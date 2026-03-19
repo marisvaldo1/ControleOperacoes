@@ -8,3 +8,4 @@ backend/.env
 # AI Memory - snapshots datados (nao versionar)
 .ai-memory/snapshots/20*.md
 .ai-memory/hook.log
+/tests/results/screenshots

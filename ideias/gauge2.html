@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gauge Chart</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #141414;
+            margin: 0;
+        }
+        #gauge-container {
+            width: 300px;
+            height: 150px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gauge-container"></canvas>
+    <script src="https://bernii.github.io/gauge.js/dist/gauge.min.js"></script>
+    <script>
+        var opts = {
+            angle: 0.0, // The span of the gauge arc
+            lineWidth: 0.3, // Increased line thickness
+            radiusScale: 1, // Relative radius
+            pointer: {
+                length: 0.6, // Relative to gauge radius
+                strokeWidth: 0.035, // The thickness
+                color: '#000000' // Fill color
+            },
+            limitMax: false,     // If false, the max value of the gauge will be updated if value surpass max
+            limitMin: false,     // If true, the min value of the gauge will be fixed
+            colorStart: '#6FADCF',   // Colors
+            colorStop: '#8FC0DA',    // just experiment with them
+            strokeColor: '#E0E0E0',  // to see which ones work best for you
+            generateGradient: true,
+            highDpiSupport: true,     // High resolution support
+            staticZones: [
+               {strokeStyle: "red", min: 0, max: 25}, // Red
+               {strokeStyle: "yellow", min: 25, max: 75}, // Yellow
+               {strokeStyle: "green", min: 75, max: 100}  // Green
+            ],
+            staticLabels: {
+                font: "15px sans-serif",  // Specifies font
+                labels: [0, 25, 50, 75, 100],  // Adjusted labels to match max value
+                color: "#FFFFFF",  // Optional: Label text color
+                fractionDigits: 0  // Optional: Numerical precision. 0=round off.
+            },
+            renderTicks: {
+                divisions: 5,
+                divWidth: 1.1,
+                divLength: 0.7,
+                divColor: "#333333",
+                subDivisions: 4,
+                subLength: 0.5,
+                subWidth: 0.6,
+                subColor: "#666666"
+            }
+        };
+        var target = document.getElementById('gauge-container'); // your canvas element
+        var gauge = new Gauge(target).setOptions(opts); // create gauge!
+        gauge.maxValue = 100; // set max gauge value
+        gauge.setMinValue(0);  // set min value
+        gauge.animationSpeed = 32; // set animation speed (32 is default value)
+        gauge.set(25); // set actual value
+
+        // Add value text
+        function drawValueText() {
+            var ctx = target.getContext('2d');
+            ctx.clearRect(0, target.height - 30, target.width, 30); // Clear the previous text
+            ctx.font = "24px Arial";
+            ctx.fillStyle = "#FFFFFF";
+            ctx.textAlign = "center";
+            ctx.fillText(gauge.displayedValue, target.width / 2, target.height - 10);
+        }
+
+        gauge.onAnimationEnd = drawValueText; // Call drawValueText when animation ends
+        drawValueText(); // Initial call to draw the value text
+    </script>
+</body>
+</html>

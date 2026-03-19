@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Opções - Gauges Profissionais</title>
+    <style>
+        :root {
+            --bg-primary: #0a0a1a;
+            --bg-secondary: #1a1a3e;
+            --bg-card: rgba(255, 255, 255, 0.03);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.6);
+            --text-muted: rgba(255, 255, 255, 0.4);
+            --success: #00ff88;
+            --success-glow: rgba(0, 255, 136, 0.3);
+            --danger: #ff4757;
+            --danger-glow: rgba(255, 71, 87, 0.3);
+            --warning: #ffaa00;
+            --warning-glow: rgba(255, 170, 0, 0.3);
+            --info: #00d4ff;
+            --info-glow: rgba(0, 212, 255, 0.3);
+            --purple: #a855f7;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            min-height: 100vh;
+            color: var(--text-primary);
+            padding: 20px;
+            line-height: 1.5;
+        }
+
+        .dashboard-header {
+            text-align: center;
+            padding: 20px 0 40px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 30px;
+        }
+
+        .dashboard-title {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--success), var(--info));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .dashboard-subtitle {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .option-info-bar {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+            padding: 20px;
+            background: var(--bg-card);
+            border-radius: 16px;
+            margin-bottom: 30px;
+            border: 1px solid var(--border-color);
+        }
+
+        .info-item {
+            text-align: center;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .info-value.highlight {
+            color: var(--success);
+            text-shadow: 0 0 20px var(--success-glow);
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .gauge-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 25px;
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .gauge-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .gauge-card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .gauge-card-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .gauge-card-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* GAUGE CIRCULAR */
+        .gauge-wrapper {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 20px;
+        }
+
+        .gauge-svg {
+            transform: rotate(-90deg);
+            width: 100%;
+            height: 100%;
+        }
+
+        .gauge-bg {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.08);
+            stroke-width: 18;
+        }
+
+        .gauge-fill {
+            fill: none;
+            stroke-width: 18;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .gauge-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .gauge-main-value {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+
+        .gauge-unit {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 3px;
+        }
+
+        .gauge-labels {
+            display: flex;
+            justify-content: space-between;
+            padding: 0 10px;
+            margin-top: 10px;
+        }
+
+        .gauge-label {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* GAUGE LINEAR HORIZONTAL */
+        .linear-gauge {
+            margin: 20px 0;
+        }
+
+        .linear-track {
+            height: 12px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .linear-fill {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .linear-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .linear-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .linear-value {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        /* CARD FOOTER */
+        .gauge-footer {
+            display: flex;
+            justify-content: space-between;
+            padding-top: 15px;
+            border-top: 1px solid var(--border-color);
+            margin-top: 10px;
+        }
+
+        .footer-stat {
+            text-align: center;
+        }
+
+        .footer-stat-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .footer-stat-label {
+            font-size: 10px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-top: 3px;
+        }
+
+        /* STATUS BADGE */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-in-the-money {
+            background: rgba(0, 255, 136, 0.15);
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+
+        .status-out-the-money {
+            background: rgba(255, 71, 87, 0.15);
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+
+        .status-at-the-money {
+            background: rgba(255, 170, 0, 0.15);
+            color: var(--warning);
+            border: 1px solid var(--warning);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* PROGRESS TIME */
+        .time-progress {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .time-bar {
+            flex: 1;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .time-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--info), var(--purple));
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .time-text {
+            font-size: 13px;
+            color: var(--text-secondary);
+            min-width: 80px;
+        }
+
+        /* EXERCISE INFO */
+        .exercise-box {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 15px;
+        }
+
+        .exercise-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .exercise-row:last-child {
+            border-bottom: none;
+        }
+
+        .exercise-label {
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .exercise-value {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .exercise-value.positive { color: var(--success); }
+        .exercise-value.negative { color: var(--danger); }
+
+        /* COLOR UTILS */
+        .text-success { color: var(--success); }
+        .text-danger { color: var(--danger); }
+        .text-warning { color: var(--warning); }
+        .text-info { color: var(--info); }
+        
+        .bg-success { background: rgba(0, 255, 136, 0.15); }
+        .bg-danger { background: rgba(255, 71, 87, 0.15); }
+        .bg-warning { background: rgba(255, 170, 0, 0.15); }
+        .bg-info { background: rgba(0, 212, 255, 0.15); }
+        .bg-purple { background: rgba(168, 85, 247, 0.15); }
+
+        /* ANIMATIONS */
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+            opacity: 0;
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .grid-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .option-info-bar {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .gauge-wrapper {
+                width: 180px;
+                height: 180px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="dashboard-header">
+        <h1 class="dashboard-title">📊 DASHBOARD DE OPÇÕES</h1>
+        <p class="dashboard-subtitle">Monitoramento em Tempo Real da Operação</p>
+    </header>
+
+    <!-- Barra de Informações da Opção -->
+    <div class="option-info-bar">
+        <div class="info-item">
+            <div class="info-label">Ativo</div>
+            <div class="info-value">PETR4</div>
+        </div>
+        <div class="info-item">
+            <div class="info-label">Tipo</div>
+            <div class="info-value highlight">CALL</div>
+        </div>
+        <div class="info-item">
+            <div class="info-label">Vencimento</div>
+            <div class="info-value">18/ABR/2024</div>
+        </div>
+        <div class="info-item">
+            <div class="info-label">Strike</div>
+            <div class="info-value">R$ 38,50</div>
+        </div>
+        <div class="info-item">
+            <div class="info-label">Quantidade</div>
+            <div class="info-value">500 opções</div>
+        </div>
+    </div>
+
+    <div class="grid-container">
+        
+        <!-- 1. COTAÇÃO ATUAL -->
+        <div class="gauge-card fade-in" style="animation-delay: 0.1s">
+            <div class="gauge-card-header">
+                <div class="gauge-card-icon bg-info">📈</div>
+                <div class="gauge-card-title">Cotação Atual</div>
+            </div>
+            
+            <div class="gauge-wrapper">
+                <svg class="gauge-svg" viewBox="0 0 200 200">
+                    <circle class="gauge-bg" cx="100" cy="100" r="75"/>
+                    <circle class="gauge-fill" id="gaugeQuote" cx="100" cy="100" r="75" 
+                        stroke="var(--info)" stroke-dasharray="471" stroke-dashoffset="471"/>
+                </svg>
+                <div class="gauge-center">
+                    <div class="gauge-main-value" id="quoteValue">R$ 39,25</div>
+                    <div class="gauge-unit">Preço Mercado</div>
+                </div>
+            </div>
+            
+            <div class="gauge-labels">
+                <span class="gauge-label">Min: R$ 37,80</span>
+                <span class="gauge-label">Max: R$ 40,10</span>
+            </div>
+            
+            <div class="gauge-footer">
+                <div class="footer-stat">
+                    <div class="footer-stat-value text-success">+1.95%</div>
+                    <div class="footer-stat-label">Variação Dia</div>
+                </div>
+                <div class="footer-stat">
+                    <div class="footer-stat-value">R$ 38,50</div>
+                    <div class="footer-stat-label">Fechamento Ant.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. PRÊMIO RECEBIDO -->
+        <div class="gauge-card fade-in" style="animation-delay: 0.2s">
+            <div class="gauge-card-header">
+                <div class="gauge-card-icon bg-success">💰</div>
+                <div class="gauge-card-title">Prêmio Recebido</div>
+            </div>
+            
+            <div style="text-align: center; padding: 30px 0;">
+                <div style="font-size: 42px; font-weight: 800; color: var(--success); text-shadow: 0 0 20px var(--success-glow);">
+                    R$ 1,85
+                </div>
+                <div style="color: var(--text-muted); margin-top: 8px;">Por opção</div>
+            </div>
+            
+            <div class="linear-gauge">
+                <div class="linear-track">
+                    <div class="linear-fill" style="width: 100%; background: var(--success);"></div>
+                </div>
+                <div class="linear-labels">
+                    <span>Entrada</span>
+                    <span>100% Recebido</span>
+                </div>
+            </div>
+            
+            <div class="gauge-footer">
+                <div class="footer-stat">
+                    <div class="footer-stat-value text-success">R$ 925,00</div>
+                    <div class="footer-stat-label">Total Crédito</div>
+                </div>
+                <div class="footer-stat">
+                    <div class="footer-stat-value">500</div>
+                    <div class="footer-stat-label">Contratos</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. STRIKE (Informação Estática com Indicador) -->
+        <div class="gauge-card fade-in" style="animation-delay: 0.3s">
+            <div class="gauge-card-header">
+                <div class="gauge-card-icon bg-warning">🎯</div>
+                <div class="gauge-card-title">Preço de Exercício (Strike)</div>
+            </div>
+            
+            <div style="text-align: center; padding: 25px 0;">
+                <div style="font-size: 48px; font-weight: 800; color: var(--text-primary);">
+                    R$ 38,50
+                </div>
+                <div style="color: var(--text-muted); margin-top: 10px;">
+                    <span class="status-badge status-in-the-money">
+                        <span class="status-dot"></span>
+                        In-The-Money
+                    </span>
+                </div>
+            </div>
+            
+            <div class="exercise-box">
+                <div class="exercise-row">
+                    <span class="exercise-label">Tipo de Opção</span>
+                    <span class="exercise-value">CALL</span>
+                </div>
+                <div class="exercise-row">
+                    <span class="exercise-label">Multiplicador</span>
+                    <span class="exercise-value">100</span>
+                </div>
+                <div class="exercise-row">
+                    <span class="exercise-label">Ponto de Breakeven</span>
+                    <span class="exercise-value text-success">R$ 40,35</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. PRÊMIO ATUAL -->
+        <div class="gauge-card fade-in" style="animation-delay: 0.4s">
+            <div class="gauge-card-header">
+                <div class="gauge-card-icon bg-purple">📊</div>
+                <div class="gauge-card-title">Prêmio Atual de Mercado</div>
+            </div>
+            
+            <div class="gauge-wrapper">
+                <svg class="gauge-svg" viewBox="0 0 200 200">
+                    <circle class="gauge-bg" cx="100" cy="100" r="75"/>
+                    <circle class="gauge-fill" id="gaugePremium" cx="100" cy="100" r="75" 
+                        stroke="var(--purple)" stroke-dasharray="471" stroke-dashoffset="471"/>
+                </svg>
+                <div class="gauge-center">
+                    <div class="gauge-main-value" id="premiumValue">R$ 1,12</div>
+                    <div class="gauge-unit">Valor Atual</div>
+                </div>
+            </div>
+            
+            <div class="linear-gauge">
+                <div class="linear-track">
+                    <div class="linear-fill" id="premiumBar" style="width: 60%; background: var(--purple);"></div>
+                </div>
+                <div class="linear-labels">
+                    <span>R$ 0,00</span>
+                    <span>R$ 3,00</span>
+                </div>
+            </div>
+            
+            <div class="gauge-footer">
+                <div class="footer-stat">
+                    <div class="footer-stat-value text-success">-39.5%</div>
+                    <div class="footer-stat-label">Variação Prêmio</div>
+                </div>
+                <div class="footer-stat">
+                    <div class="footer-stat-value text-info">R$ 365,00</div>
+                    <div class="footer-stat-label">Valor Posição</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. DISTÂNCIA DO STRIKE (%) -->
+        <div class="gauge-card fade-in" style="animation-delay: 0.5s">
+            <div class="gauge-card-header">
+                <div class="gauge-card-icon" style="background: linear-gradient(135deg, var(--success), var(--danger));">📏</div>
+                <div class="gauge-card-title">Distância Strike → Cotação</div>
+            </div>
+            
+            <div class="gauge-wrapper">
+                <svg class="gauge-svg" viewBox="0 0 200 200">
+                    <circle class="gauge-bg" cx="100" cy="100" r="75"/>
+                    <circle class="gauge-fill" id="gaugeDistance" cx="100" cy="100" r="75" 
+                        stroke="var(--success)" stroke-dasharray="471" stroke-dashoffset="471"/>
+                </svg>
+                <div class="gauge-center">
+                    <div class="gauge-main-value" id="distanceValue">+1.95%</div>
+                    <div class="gauge-unit">Acima do Strike</div>
+                </div>
+            </div>
+            
+            <div class="linear-gauge">
+                <div class="linear-track">
+                    <div class="linear-fill" id="distanceBar" style="width: 52%; background: linear-gradient(90deg, var(--danger), var(--warning), var(--success));"></div>
+                </div>
+                <div class="linear-labels">
+                    <span>-5%</span>
+                    <span>0%</span>
+                    <span>+5%</span>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 15px;">
+                <span class="status-badge status-in-the-money">
+                    <span class="status-dot"></span>
+                    CALL: ITM (+R$ 0,75)
+                </span>
+            </div>
+        </div>
+
+        <!-- 6. % ATUAL DO PRÊMIO -->
+        <div class="gauge-card fade-in" style="animation-delay: 0.6s">
+            <div class="gauge-card-header">
+                <div class="gauge-card-icon bg-success">📉</div>
+                <div class="gauge-card-title">Variação do Prêmio</div>
+            </div>
+            
+            <div class="gauge-wrapper">
+                <svg class="gauge-svg" viewBox="0 0 200 200">
+                    <circle class="gauge-bg" cx="100" cy="100" r="75"/>
+                    <circle class="gauge-fill" id="gaugePremiumVar" cx="100" cy="100" r="75" 
+                        stroke="var(--success)" stroke-dasharray="471" stroke-dashoffset="471"/>
+                </svg>
+                <div class="gauge-center">
+                    <div class="gauge-main-value text-success" id="premiumVarValue">+39.5%</div>
+                    <div class="gauge-unit">Lucro no Prêmio</div>
+                </div>
+            </div>
+            
+            <div style="text-align: center; padding: 15px; background: rgba(0,255,136,0.1); border-radius: 12px; margin: 15px 0;">
+                <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 5px;">Cálculo</div>
+                <div style="font-family: monospace; font-size: 12px; color: var(--text-secondary);">
+                    (1,85 - 1,12) / 1,85 = <strong class="text-success">+39.5%</strong>
+                </div>
+            </div>
+            
+            <div class="gauge-footer">
+                <div class="footer-stat">
+                    <div class="footer-stat-value text-success">R$ 560,00</div>
+                    <div class="footer-stat-label">Lucro Realizado*</div>
+                </div>
+                <div class="footer-stat">
+                    <div class="footer-stat-value">R$ 1,85</div>
+                    <div class="footer-stat-label">Prêmio Entrada</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 7. DATA DE EXERCÍCIO + DIAS RESTANTES -->
+        <div class="gauge-card fade-in" style="animation-delay: 0.7s">
+            <div class="gauge-card-header">
+                <div class="gauge-card-icon bg-info">📅</div>
+                <div class="gauge-card-title">Prazo para Exercício</div>
+            </div>
+            
+            <div style="text-align: center; padding: 20px 0;">
+                <div style="font-size: 36px; font-weight: 800; color: var(--text-primary);">
+                    18/ABR/2024
+                </div>
+                <div style="color: var(--text-muted); margin-top: 8px;">Data de Vencimento</div>
+            </div>
+            
+            <div class="time-progress">
+                <div class="time-text" id="daysText">12 dias restantes</div>
+                <div class="time-bar">
+                    <div class="time-fill" id="timeFill" style="width: 65%;"></div>
+                </div>
+                <div class="time-text" id="elapsedText">23 dias decorridos</div>
+            </div>
+            
+            <div class="gauge-wrapper" style="margin-top: 25px;">
+                <svg class="gauge-svg" viewBox="0 0 200 200">
+                    <circle class="gauge-bg" cx="100" cy="100" r="75"/>
+                    <circle class="gauge-fill" id="gaugeTime" cx="100" cy="100" r="75" 
+                        stroke="var(--warning)" stroke-dasharray="471" stroke-dashoffset="471"/>
+                </svg>
+                <div class="gauge-center">
+                    <div class="gauge-main-value" id="timePercent">65%</div>
+                    <div class="gauge-unit">Tempo Decorrido</div>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 10px; color: var(--text-muted); font-size: 12px;">
+                Theta Decay: <span class="text-warning">-R$ 8,50/dia</span>
+            </div>
+        </div>
+
+        <!-- 8. STATUS DE EXERCÍCIO -->
+        <div class="gauge-card fade-in" style="animation-delay: 0.8s">
+            <div class="gauge-card-header">
+                <div class="gauge-card-icon" style="background: linear-gradient(135deg, var(--info), var(--purple));">✅</div>
+                <div class="gauge-card-title">Situação de Exercício</div>
+            </div>
+            
+            <div style="text-align: center; padding: 25px 0;">
+                <div style="font-size: 52px; margin-bottom: 15px;">🟢</div>
+                <div style="font-size: 22px; font-weight: 700; color: var(--success);">
+                    POSIÇÃO FAVORÁVEL
+                </div>
+                <div style="color: var(--text-muted); margin-top: 10px;">
+                    Para CALL: Cotação > Strike
+                </div>
+            </div>
+            
+            <div class="exercise-box">
+                <div class="exercise-row">
+                    <span class="exercise-label">Situação Atual</span>
+                    <span class="exercise-value positive">In-The-Money</span>
+                </div>
+                <div class="exercise-row">
+                    <span class="exercise-label">Prob. Exercício</span>
+                    <span class="exercise-value positive">78%</span>
+                </div>
+                <div class="exercise-row">
+                    <span class="exercise-label">Delta da Opção</span>
+                    <span class="exercise-value">0.72</span>
+                </div>
+                <div class="exercise-row">
+                    <span class="exercise-label">Valor Intrínseco</span>
+                    <span class="exercise-value positive">R$ 0,75</span>
+                </div>
+                <div class="exercise-row">
+                    <span class="exercise-label">Valor Extrínseco</span>
+                    <span class="exercise-value text-info">R$ 0,37</span>
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px; display: flex; gap: 10px;">
+                <button style="flex:1; padding: 12px; background: var(--success); color: #000; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; transition: all 0.3s;">
+                    Encerrar Posição
+                </button>
+                <button style="flex:1; padding: 12px; background: transparent; color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 10px; font-weight: 600; cursor: pointer; transition: all 0.3s;">
+                    Ajustar Strike
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Legenda de Cores -->
+    <div style="max-width: 1400px; margin: 40px auto 0; padding: 20px; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color);">
+        <div style="display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; align-items: center; font-size: 12px; color: var(--text-muted);">
+            <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 12px; height: 12px; background: var(--success); border-radius: 50%;"></span> Favorável / Lucro</span>
+            <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 12px; height: 12px; background: var(--danger); border-radius: 50%;"></span> Desfavorável / Prejuízo</span>
+            <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 12px; height: 12px; background: var(--warning); border-radius: 50%;"></span> Atenção / Neutro</span>
+            <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 12px; height: 12px; background: var(--info); border-radius: 50%;"></span> Informação / Mercado</span>
+            <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 12px; height: 12px; background: var(--purple); border-radius: 50%;"></span> Derivativos / Prêmio</span>
+        </div>
+    </div>
+
+    <script>
+        class OptionsGaugeDashboard {
+            constructor() {
+                this.circumference = 471; // 2 * π * 75
+                this.init();
+                this.startRealTimeUpdates();
+            }
+
+            init() {
+                // Inicializa todos os gauges com animação
+                this.updateGauge('gaugeQuote', 78, '#00d4ff');      // Cotação: 78% da faixa
+                this.updateGauge('gaugePremium', 37, '#a855f7');    // Prêmio atual: 37% do máximo
+                this.updateGauge('gaugeDistance', 52, '#00ff88');   // Distância: 52% (positivo)
+                this.updateGauge('gaugePremiumVar', 40, '#00ff88'); // Variação prêmio: 40%
+                this.updateGauge('gaugeTime', 65, '#ffaa00');       // Tempo: 65% decorrido
+                
+                // Animações de entrada
+                document.querySelectorAll('.fade-in').forEach((el, i) => {
+                    setTimeout(() => {
+                        el.style.opacity = '1';
+                    }, i * 100);
+                });
+            }
+
+            updateGauge(elementId, percent, color) {
+                const element = document.getElementById(elementId);
+                if (!element) return;
+                
+                const offset = this.circumference - (percent / 100 * this.circumference);
+                element.style.strokeDasharray = this.circumference;
+                element.style.strokeDashoffset = this.circumference;
+                element.style.stroke = color;
+                
+                // Animação suave
+                setTimeout(() => {
+                    element.style.strokeDashoffset = offset;
+                }, 300);
+            }
+
+            updateLinearGauge(barId, percent, color) {
+                const bar = document.getElementById(barId);
+                if (bar) {
+                    bar.style.width = `${Math.min(Math.max(percent, 0), 100)}%`;
+                    if (color) bar.style.background = color;
+                }
+            }
+
+            startRealTimeUpdates() {
+                // Simula atualizações em tempo real (substitua por WebSocket/API real)
+                setInterval(() => {
+                    // Simula pequena variação na cotação
+                    const quoteVariation = (Math.random() - 0.5) * 0.3;
+                    const newQuote = 39.25 + quoteVariation;
+                    document.getElementById('quoteValue').textContent = `R$ ${newQuote.toFixed(2)}`;
+                    
+                    // Atualiza distância do strike
+                    const distance = ((newQuote - 38.50) / 38.50) * 100;
+                    const distancePercent = Math.min(Math.max((distance + 5) / 10 * 100, 0), 100);
+                    this.updateGauge('gaugeDistance', distancePercent, distance >= 0 ? '#00ff88' : '#ff4757');
+                    document.getElementById('distanceValue').textContent = `${distance >= 0 ? '+' : ''}${distance.toFixed(2)}%`;
+                    document.getElementById('distanceBar').style.width = `${distancePercent}%`;
+                    
+                    // Simula decay do prêmio
+                    const currentPremium = 1.12 - (Math.random() * 0.02);
+                    document.getElementById('premiumValue').textContent = `R$ ${currentPremium.toFixed(2)}`;
+                    const premiumPercent = (currentPremium / 3.00) * 100;
+                    this.updateGauge('gaugePremium', premiumPercent, '#a855f7');
+                    
+                    // Atualiza % de lucro no prêmio
+                    const premiumProfit = ((1.85 - currentPremium) / 1.85) * 100;
+                    document.getElementById('premiumVarValue').textContent = `${premiumProfit >= 0 ? '+' : ''}${premiumProfit.toFixed(1)}%`;
+                    document.getElementById('premiumVarValue').className = `gauge-main-value ${premiumProfit >= 0 ? 'text-success' : 'text-danger'}`;
+                    
+                }, 3000);
+
+                // Atualiza contador de tempo a cada minuto
+                setInterval(() => {
+                    const now = new Date();
+                    const expiry = new Date('2024-04-18T17:00:00');
+                    const diffMs = expiry - now;
+                    const daysLeft = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+                    const totalDays = 35;
+                    const elapsed = totalDays - daysLeft;
+                    const percent = (elapsed / totalDays) * 100;
+                    
+                    document.getElementById('daysText').textContent = `${daysLeft} dias restantes`;
+                    document.getElementById('elapsedText').textContent = `${elapsed} dias decorridos`;
+                    document.getElementById('timePercent').textContent = `${Math.round(percent)}%`;
+                    document.getElementById('timeFill').style.width = `${percent}%`;
+                    this.updateGauge('gaugeTime', percent, percent > 80 ? '#ff4757' : percent > 50 ? '#ffaa00' : '#00d4ff');
+                    
+                }, 60000);
+            }
+
+            // Método para atualizar com dados reais da API
+            updateFromAPI(data) {
+                // Exemplo de integração:
+                // this.updateGauge('gaugeQuote', data.quotePercent, data.quoteColor);
+                // document.getElementById('quoteValue').textContent = `R$ ${data.currentQuote.toFixed(2)}`;
+                // ... atualizar todos os campos
+                console.log('Atualizando com dados da API:', data);
+            }
+        }
+
+        // Inicializa o dashboard
+        document.addEventListener('DOMContentLoaded', () => {
+            new OptionsGaugeDashboard();
+        });
+
+        // Função utilitária para formatar moeda
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            }).format(value);
+        }
+    </script>
+</body>
+</html>

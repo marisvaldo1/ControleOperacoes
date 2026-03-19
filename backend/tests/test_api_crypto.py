@@ -135,7 +135,7 @@ class TestExcluirCrypto:
 
 class TestFecharCrypto:
     def test_fechar_operacao_existente_retorna_sucesso(self, client, mock_db):
-        mock_db.execute.return_value.fetchone.return_value = {'id': 1, 'status': 'ABERTA'}
+        mock_db.execute.return_value.fetchone.return_value = {'id': 1, 'status': 'ABERTA', 'tipo': 'CALL', 'cotacao_atual': 75000.0, 'strike': 74000.0}
         resp = client.patch('/api/crypto/1/fechar')
         assert resp.status_code == 200
         data = resp.get_json()
@@ -148,6 +148,6 @@ class TestFecharCrypto:
         assert 'error' in resp.get_json()
 
     def test_fechar_operacao_confirma_commit(self, client, mock_db):
-        mock_db.execute.return_value.fetchone.return_value = {'id': 1, 'status': 'ABERTA'}
+        mock_db.execute.return_value.fetchone.return_value = {'id': 1, 'status': 'ABERTA', 'tipo': 'CALL', 'cotacao_atual': 75000.0, 'strike': 74000.0}
         client.patch('/api/crypto/1/fechar')
         mock_db.commit.assert_called()

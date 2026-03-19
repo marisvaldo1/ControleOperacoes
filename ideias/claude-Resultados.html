@@ -1,0 +1,3406 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Resultados · Crypto · Dashboard</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Syne:wght@400;600;700;800&family=Orbitron:wght@400;500;600;700;900&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      /* ======================================================
+   CSS VARIABLES & RESET
+   ====================================================== */
+      :root {
+        --bg-base: #05090f;
+        --bg-card: #090f1a;
+        --bg-card2: #0b1220;
+        --bg-sidebar: #070c16;
+        --border: #1a2540;
+        --border-hi: #253558;
+        --text-pri: #e8f0fe;
+        --text-sec: #5a7090;
+        --text-muted: #2e4060;
+        --gold: #f5a623;
+        --gold-dim: #7a4f0a;
+        --cyan: #00d4e8;
+        --cyan-dim: #003d45;
+        --green: #00e87a;
+        --green-dim: #003d20;
+        --red: #ff4d6a;
+        --red-dim: #40001a;
+        --blue: #4d9eff;
+        --blue-dim: #0a1e40;
+        --purple: #a855f7;
+        --purple-dim: #280a40;
+        --tab-active-bg: #0f1e36;
+        --tab-active-border: #2563eb;
+        --radius-sm: 6px;
+        --radius-md: 10px;
+        --radius-lg: 14px;
+        --font-mono: "JetBrains Mono", monospace;
+        --font-display: "Orbitron", sans-serif;
+        --font-ui: "Syne", sans-serif;
+        --transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        font-size: 13px;
+      }
+      body {
+        background: var(--bg-base);
+        color: var(--text-pri);
+        font-family: var(--font-ui);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+      }
+
+      /* ======================================================
+   MODAL SHELL
+   ====================================================== */
+      .modal {
+        width: 100%;
+        max-width: 1160px;
+        background: var(--bg-base);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        box-shadow:
+          0 24px 80px rgba(0, 0, 0, 0.7),
+          0 0 0 1px rgba(74, 144, 226, 0.06);
+      }
+
+      /* ======================================================
+   MODAL HEADER
+   ====================================================== */
+      .modal-header {
+        background: linear-gradient(135deg, #050d1c 0%, #091626 100%);
+        border-bottom: 1px solid var(--border);
+        padding: 0.55rem 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+      .modal-header-title {
+        font-family: var(--font-ui);
+        font-size: 0.88rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        flex: 1;
+      }
+      .modal-header-title .icon {
+        font-size: 0.95rem;
+      }
+      .modal-header-title .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--green);
+        box-shadow: 0 0 8px var(--green);
+        flex-shrink: 0;
+      }
+      .modal-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+      }
+      .btn-refresh {
+        width: 28px;
+        height: 28px;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border-hi);
+        background: var(--bg-card2);
+        color: var(--blue);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.85rem;
+        transition: var(--transition);
+      }
+      .btn-refresh:hover {
+        border-color: var(--blue);
+        background: var(--blue-dim);
+      }
+      .btn-refresh.spinning svg {
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .btn-close {
+        width: 28px;
+        height: 28px;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--text-sec);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        transition: var(--transition);
+      }
+      .btn-close:hover {
+        border-color: var(--red);
+        color: var(--red);
+        background: var(--red-dim);
+      }
+      .last-update {
+        font-family: var(--font-mono);
+        font-size: 0.58rem;
+        color: var(--text-muted);
+      }
+
+      /* ======================================================
+   FILTER BAR (periods + types)
+   ====================================================== */
+      .filter-bar {
+        padding: 0.4rem 0.9rem;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        background: #060b18;
+      }
+      .pills-group {
+        display: flex;
+        gap: 0.22rem;
+        flex-wrap: wrap;
+      }
+      .pill {
+        padding: 0.18rem 0.52rem;
+        border-radius: 20px;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 600;
+        cursor: pointer;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--text-sec);
+        transition: var(--transition);
+      }
+      .pill:hover {
+        color: var(--text-pri);
+        border-color: var(--border-hi);
+      }
+      .pill.active {
+        background: #1e3a6e;
+        border-color: var(--blue);
+        color: #93c5fd;
+      }
+      .pill.type-ab.active {
+        background: #0a2e18;
+        border-color: var(--green);
+        color: #6ee7b7;
+      }
+      .pill.type-fe.active {
+        background: var(--red-dim);
+        border-color: var(--red);
+        color: #fca5a5;
+      }
+      .pill.type-call.active {
+        background: var(--blue-dim);
+        border-color: var(--blue);
+        color: #93c5fd;
+      }
+      .pill.type-put.active {
+        background: var(--purple-dim);
+        border-color: var(--purple);
+        color: #d8b4fe;
+      }
+
+      /* ======================================================
+   OP SELECTOR (sem setas — abas horizontais)
+   ====================================================== */
+      .op-selector {
+        padding: 0.45rem 0.9rem;
+        border-bottom: 1px solid var(--border);
+        background: #070d1c;
+      }
+      .op-tabs-row {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+      .op-tabs-row::-webkit-scrollbar {
+        display: none;
+      }
+      .op-tab {
+        flex-shrink: 0;
+        padding: 0.28rem 0.7rem;
+        border-radius: 20px;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 600;
+        cursor: pointer;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--text-sec);
+        white-space: nowrap;
+        transition: var(--transition);
+      }
+      .op-tab:hover {
+        color: var(--text-pri);
+        border-color: var(--border-hi);
+      }
+      .op-tab.active {
+        background: var(--tab-active-bg);
+        border-color: var(--tab-active-border);
+        color: #93c5fd;
+      }
+      .op-tab-badge {
+        display: inline-block;
+        margin-left: 0.3rem;
+        padding: 0.05rem 0.3rem;
+        border-radius: 10px;
+        font-size: 0.55rem;
+        font-weight: 700;
+        background: rgba(255, 255, 255, 0.07);
+        color: var(--text-sec);
+      }
+      .op-tab.active .op-tab-badge {
+        background: rgba(37, 99, 235, 0.35);
+        color: #93c5fd;
+      }
+      .op-summary-pills {
+        margin-left: auto;
+        flex-shrink: 0;
+        display: flex;
+        gap: 0.22rem;
+        align-items: center;
+      }
+      .s-pill {
+        padding: 0.14rem 0.4rem;
+        border-radius: 10px;
+        font-family: var(--font-mono);
+        font-size: 0.6rem;
+        font-weight: 700;
+      }
+      .sp-blue {
+        background: #0e2040;
+        color: var(--blue);
+      }
+      .sp-green {
+        background: #0a2e18;
+        color: var(--green);
+      }
+      .sp-gray {
+        background: #1a2540;
+        color: var(--text-sec);
+      }
+      .sp-gold {
+        background: #2e1c00;
+        color: var(--gold);
+      }
+
+      /* ======================================================
+   SECTION TABS (Desempenho | Comparativos | Risco…)
+   ====================================================== */
+      .section-tabs {
+        display: flex;
+        gap: 0;
+        border-bottom: 1px solid var(--border);
+        background: #060b18;
+        padding: 0 0.9rem;
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+      .section-tabs::-webkit-scrollbar {
+        display: none;
+      }
+      .section-tab {
+        padding: 0.5rem 0.85rem;
+        font-family: var(--font-mono);
+        font-size: 0.64rem;
+        font-weight: 600;
+        color: var(--text-sec);
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        white-space: nowrap;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        margin-bottom: -1px;
+      }
+      .section-tab:hover {
+        color: var(--text-pri);
+      }
+      .section-tab.active {
+        color: #93c5fd;
+        border-bottom-color: var(--blue);
+      }
+      .section-tab .stab-icon {
+        font-size: 0.75rem;
+      }
+      .section-tab .stab-warn {
+        color: var(--gold);
+        font-size: 0.65rem;
+      }
+
+      /* ======================================================
+   MAIN LAYOUT: sidebar + content
+   ====================================================== */
+      .dashboard-body {
+        display: flex;
+        min-height: 440px;
+      }
+      .sidebar {
+        flex: 0 0 168px;
+        background: var(--bg-sidebar);
+        border-right: 1px solid var(--border);
+        padding: 0.55rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        overflow-y: auto;
+      }
+      .content {
+        flex: 1;
+        padding: 0.65rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.55rem;
+        overflow: hidden;
+      }
+
+      /* ======================================================
+   SIDEBAR METRIC CARDS
+   ====================================================== */
+      .sb-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: 0.5rem 0.55rem;
+        cursor: pointer;
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+      }
+      .sb-card::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        border-radius: 3px 0 0 3px;
+        background: transparent;
+        transition: var(--transition);
+      }
+      .sb-card:hover {
+        border-color: var(--border-hi);
+      }
+      .sb-card:hover::before {
+        background: var(--blue);
+      }
+      .sb-card.active {
+        background: var(--tab-active-bg);
+        border-color: var(--tab-active-border);
+      }
+      .sb-card.active::before {
+        background: var(--blue);
+      }
+      .sb-label {
+        font-family: var(--font-mono);
+        font-size: 0.55rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 0.25rem;
+      }
+      .sb-value {
+        font-family: var(--font-mono);
+        font-size: 0.88rem;
+        font-weight: 700;
+        line-height: 1;
+        margin-bottom: 0.15rem;
+      }
+      .sb-sub {
+        font-family: var(--font-mono);
+        font-size: 0.6rem;
+        color: var(--text-sec);
+      }
+      .sb-bar {
+        height: 3px;
+        background: var(--border);
+        border-radius: 2px;
+        margin-top: 0.3rem;
+        overflow: hidden;
+      }
+      .sb-bar-fill {
+        height: 100%;
+        border-radius: 2px;
+        transition: width 0.8s ease;
+      }
+
+      /* ======================================================
+   CONTENT ROWS
+   ====================================================== */
+      .row-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.55rem;
+      }
+      .row-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.55rem;
+      }
+      .row-4 {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.55rem;
+      }
+      .row-2-1 {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 0.55rem;
+      }
+
+      /* ======================================================
+   CONTENT CARDS
+   ====================================================== */
+      .card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: 0.6rem 0.7rem;
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+      }
+      .card:hover {
+        border-color: var(--border-hi);
+      }
+      .card-label {
+        font-family: var(--font-mono);
+        font-size: 0.56rem;
+        font-weight: 700;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-bottom: 0.45rem;
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+      }
+      .card-label-dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .card-big {
+        font-family: var(--font-mono);
+        font-size: 1.2rem;
+        font-weight: 700;
+        line-height: 1;
+        margin-bottom: 0.15rem;
+      }
+      .card-big-xl {
+        font-family: var(--font-display);
+        font-size: 1.6rem;
+        font-weight: 700;
+        line-height: 1;
+        margin-bottom: 0.2rem;
+      }
+
+      /* Info rows */
+      .info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.18rem 0;
+        border-bottom: 1px solid rgba(26, 37, 64, 0.6);
+        font-size: 0.64rem;
+      }
+      .info-row:last-child {
+        border-bottom: none;
+      }
+      .info-row .ik {
+        color: var(--text-sec);
+      }
+      .info-row .iv {
+        font-family: var(--font-mono);
+        font-weight: 600;
+      }
+
+      /* Progress bar */
+      .pbar {
+        height: 4px;
+        background: var(--border);
+        border-radius: 2px;
+        margin: 0.35rem 0;
+        overflow: hidden;
+      }
+      .pbar-fill {
+        height: 100%;
+        border-radius: 2px;
+        transition: width 0.8s ease;
+      }
+
+      /* ======================================================
+   GAUGE CIRCULAR
+   ====================================================== */
+      .gauge-wrap {
+        position: relative;
+        width: 84px;
+        height: 84px;
+        margin: 0 auto 0.3rem;
+        flex-shrink: 0;
+      }
+      .gauge-wrap.sm {
+        width: 68px;
+        height: 68px;
+      }
+      .gauge-wrap svg {
+        width: 100%;
+        height: 100%;
+        transform: rotate(-90deg);
+      }
+      .g-track {
+        fill: none;
+        stroke: var(--border);
+        stroke-width: 8;
+      }
+      .g-arc {
+        fill: none;
+        stroke-width: 8;
+        stroke-linecap: round;
+        transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .g-track-sm {
+        fill: none;
+        stroke: var(--border);
+        stroke-width: 7;
+      }
+      .g-arc-sm {
+        fill: none;
+        stroke-width: 7;
+        stroke-linecap: round;
+      }
+      .gauge-inner {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+      .g-val {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 700;
+        line-height: 1;
+      }
+      .g-sub {
+        font-size: 0.5rem;
+        color: var(--text-sec);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-top: 0.1rem;
+      }
+      .g-val-sm {
+        font-size: 0.7rem;
+      }
+
+      /* Center-gauge row layout */
+      .gauge-row {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+      .gauge-stats {
+        flex: 1;
+      }
+
+      /* ======================================================
+   COMPARATIVO PRICE BAR (cotação vs strike vs abertura)
+   ====================================================== */
+      .compare-bar-card {
+        padding: 0.65rem 0.75rem;
+      }
+      .cbar-title {
+        margin-bottom: 0.5rem;
+      }
+      .cbar-wrap {
+        position: relative;
+        height: 28px;
+        background: var(--border);
+        border-radius: 14px;
+        overflow: visible;
+        margin: 0.6rem 0 1.4rem;
+      }
+      .cbar-fill {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        border-radius: 14px 0 0 14px;
+        transition: width 0.8s ease;
+      }
+      .cbar-marker {
+        position: absolute;
+        top: -4px;
+        bottom: -4px;
+        width: 3px;
+        border-radius: 2px;
+        transform: translateX(-50%);
+        transition: left 0.8s ease;
+      }
+      .cbar-marker-label {
+        position: absolute;
+        top: 36px;
+        transform: translateX(-50%);
+        font-family: var(--font-mono);
+        font-size: 0.56rem;
+        font-weight: 700;
+        white-space: nowrap;
+        text-align: center;
+      }
+      .cbar-marker-price {
+        position: absolute;
+        top: 46px;
+        transform: translateX(-50%);
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .cbar-dot {
+        position: absolute;
+        top: 50%;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        border: 2px solid var(--bg-base);
+        transition: left 0.8s ease;
+        z-index: 2;
+      }
+      .cbar-dot-label {
+        position: absolute;
+        top: -22px;
+        transform: translateX(-50%);
+        font-family: var(--font-mono);
+        font-size: 0.55rem;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .cbar-legend {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        margin-top: 0.3rem;
+      }
+      .cbar-legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        font-family: var(--font-mono);
+        font-size: 0.6rem;
+        color: var(--text-sec);
+      }
+      .cbar-legend-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+
+      /* ======================================================
+   DELTA COMPARATIVO (mini comparação)
+   ====================================================== */
+      .delta-compare {
+        display: flex;
+        gap: 0.4rem;
+        margin: 0.3rem 0;
+      }
+      .delta-block {
+        flex: 1;
+        background: var(--bg-card2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 0.35rem 0.4rem;
+        text-align: center;
+      }
+      .delta-lbl {
+        font-family: var(--font-mono);
+        font-size: 0.52rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+      }
+      .delta-val {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        font-weight: 700;
+        margin: 0.1rem 0;
+      }
+      .delta-pct {
+        font-family: var(--font-mono);
+        font-size: 0.6rem;
+        color: var(--text-sec);
+      }
+
+      /* ======================================================
+   PoP — PROBABILITY OF PROFIT
+   ====================================================== */
+      .pop-card {
+        padding: 0.65rem 0.7rem;
+      }
+      .pop-gauge-wrap {
+        position: relative;
+        width: 110px;
+        height: 60px;
+        margin: 0 auto;
+        overflow: visible;
+      }
+      .pop-gauge-wrap svg {
+        width: 100%;
+        height: 100%;
+      }
+      .pop-needle {
+        transform-origin: 55px 55px;
+        transition: transform 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .pop-val-big {
+        font-family: var(--font-display);
+        font-size: 1.5rem;
+        font-weight: 700;
+        text-align: center;
+        margin: 0.2rem 0 0.1rem;
+        line-height: 1;
+      }
+      .pop-status {
+        text-align: center;
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        padding: 0.2rem 0.55rem;
+        border-radius: 20px;
+        display: inline-block;
+        margin: 0 auto 0.3rem;
+      }
+      .pop-status.high {
+        background: rgba(0, 232, 122, 0.1);
+        border: 1px solid rgba(0, 232, 122, 0.3);
+        color: var(--green);
+      }
+      .pop-status.mid {
+        background: rgba(245, 166, 35, 0.1);
+        border: 1px solid rgba(245, 166, 35, 0.3);
+        color: var(--gold);
+      }
+      .pop-status.low {
+        background: rgba(255, 77, 106, 0.1);
+        border: 1px solid rgba(255, 77, 106, 0.3);
+        color: var(--red);
+      }
+      .pop-breakdown {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.3rem;
+        margin-top: 0.4rem;
+      }
+      .pop-item {
+        background: var(--bg-card2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 0.3rem 0.4rem;
+        text-align: center;
+      }
+      .pop-item-lbl {
+        font-family: var(--font-mono);
+        font-size: 0.52rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+      }
+      .pop-item-val {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        font-weight: 700;
+        margin-top: 0.1rem;
+      }
+
+      /* ======================================================
+   EXERCÍCIO & RESULTADO CARD
+   ====================================================== */
+      .resultado-card {
+        background: linear-gradient(135deg, #030e07 0%, #051a0d 100%);
+        border-color: rgba(0, 232, 122, 0.2);
+      }
+      .resultado-main {
+        font-family: var(--font-display);
+        font-size: 2rem;
+        font-weight: 700;
+        text-align: center;
+        margin: 0.3rem 0;
+        line-height: 1;
+      }
+      .resultado-row {
+        display: flex;
+        justify-content: space-around;
+        margin-top: 0.4rem;
+      }
+      .resultado-item {
+        text-align: center;
+      }
+      .resultado-item-val {
+        font-family: var(--font-mono);
+        font-size: 0.9rem;
+        font-weight: 700;
+      }
+      .resultado-item-lbl {
+        font-family: var(--font-mono);
+        font-size: 0.52rem;
+        color: rgba(0, 232, 122, 0.5);
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        margin-top: 0.1rem;
+      }
+
+      /* ======================================================
+   EXERCISE INDICATOR
+   ====================================================== */
+      .ex-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.22rem 0.6rem;
+        border-radius: 20px;
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .ex-badge.otm {
+        background: rgba(0, 232, 122, 0.1);
+        border: 1px solid rgba(0, 232, 122, 0.3);
+        color: var(--green);
+      }
+      .ex-badge.itm {
+        background: rgba(255, 77, 106, 0.1);
+        border: 1px solid rgba(255, 77, 106, 0.3);
+        color: var(--red);
+      }
+      .ex-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .ex-dot.green {
+        background: var(--green);
+        box-shadow: 0 0 6px var(--green);
+      }
+      .ex-dot.red {
+        background: var(--red);
+        box-shadow: 0 0 6px var(--red);
+      }
+
+      /* ======================================================
+   TIMEBOX
+   ====================================================== */
+      .timebox {
+        display: flex;
+        gap: 0.3rem;
+      }
+      .timebox-cell {
+        flex: 1;
+        background: var(--bg-card2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 0.28rem 0.2rem;
+        text-align: center;
+      }
+      .timebox-num {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        font-weight: 700;
+      }
+      .timebox-lbl {
+        font-size: 0.5rem;
+        color: var(--text-sec);
+        margin-top: 0.1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+
+      /* ======================================================
+   BADGE
+   ====================================================== */
+      .badge-call {
+        background: rgba(37, 99, 235, 0.3);
+        color: #93c5fd;
+        padding: 0.08rem 0.35rem;
+        border-radius: 4px;
+        font-family: var(--font-mono);
+        font-size: 0.58rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+      }
+      .badge-put {
+        background: rgba(168, 85, 247, 0.3);
+        color: #d8b4fe;
+        padding: 0.08rem 0.35rem;
+        border-radius: 4px;
+        font-family: var(--font-mono);
+        font-size: 0.58rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+      }
+
+      /* ======================================================
+   LOADING SHIMMER
+   ====================================================== */
+      .skeleton {
+        display: inline-block;
+        background: linear-gradient(
+          90deg,
+          var(--border) 25%,
+          var(--border-hi) 50%,
+          var(--border) 75%
+        );
+        background-size: 200% 100%;
+        animation: shimmer 1.4s infinite;
+        border-radius: 4px;
+        color: transparent !important;
+        pointer-events: none;
+        user-select: none;
+        min-width: 60px;
+        min-height: 1em;
+      }
+      @keyframes shimmer {
+        0% {
+          background-position: 200% 0;
+        }
+        100% {
+          background-position: -200% 0;
+        }
+      }
+      /* Override text color on skeleton children */
+      .loading-mode .loadable {
+        color: transparent !important;
+      }
+      .loading-mode .loadable::after {
+        content: "████";
+        display: inline-block;
+        background: linear-gradient(
+          90deg,
+          var(--border) 25%,
+          var(--border-hi) 50%,
+          var(--border) 75%
+        );
+        background-size: 200% 100%;
+        animation: shimmer 1.4s infinite;
+        border-radius: 3px;
+        color: transparent;
+        font-size: inherit;
+      }
+      .loadable {
+        display: inline-block;
+        transition: opacity 0.3s ease;
+        border-radius: 3px;
+      }
+      .loading-mode .loadable {
+        background: linear-gradient(
+          90deg,
+          var(--border) 25%,
+          var(--border-hi) 50%,
+          var(--border) 75%
+        );
+        background-size: 200% 100%;
+        animation: shimmer 1.4s infinite;
+        border-radius: 4px;
+        min-width: 50px;
+        text-indent: -9999px;
+        overflow: hidden;
+      }
+      /* SVG arcs loading */
+      .loading-mode .g-arc,
+      .loading-mode .sb-bar-fill,
+      .loading-mode .pbar-fill,
+      .loading-mode .cbar-fill,
+      .loading-mode .cbar-dot,
+      .loading-mode .cbar-marker {
+        opacity: 0.15;
+      }
+      .loading-mode .pop-needle {
+        opacity: 0.1;
+      }
+
+      /* ======================================================
+   COLORS
+   ====================================================== */
+      .c-gold {
+        color: var(--gold);
+      }
+      .c-cyan {
+        color: var(--cyan);
+      }
+      .c-green {
+        color: var(--green);
+      }
+      .c-red {
+        color: var(--red);
+      }
+      .c-blue {
+        color: var(--blue);
+      }
+      .c-gray {
+        color: var(--text-sec);
+      }
+      .c-white {
+        color: var(--text-pri);
+      }
+      .c-purple {
+        color: var(--purple);
+      }
+
+      /* ======================================================
+   SECTION CONTENT PANELS
+   ====================================================== */
+      .tab-panel {
+        display: none;
+      }
+      .tab-panel.active {
+        display: flex;
+        flex-direction: column;
+        gap: 0.55rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="modal" id="mainModal">
+      <!-- ====== HEADER ====== -->
+      <div class="modal-header">
+        <div class="modal-header-title">
+          <span class="icon">📊</span>
+          Resultados · Crypto
+          <span class="dot"></span>
+        </div>
+        <span class="last-update" id="lastUpdate">Atualizado: 10:00</span>
+        <div class="modal-header-actions">
+          <button
+            class="btn-refresh"
+            id="btnRefresh"
+            title="Atualizar dados"
+            onclick="refreshData()"
+          >
+            <svg
+              id="refreshIcon"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+              <path d="M21 3v5h-5" />
+              <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+              <path d="M8 16H3v5" />
+            </svg>
+          </button>
+          <button class="btn-close" onclick="alert('Fechar modal')">✕</button>
+        </div>
+      </div>
+
+      <!-- ====== FILTER BAR (períodos + tipos) ====== -->
+      <div class="filter-bar">
+        <div class="pills-group" id="periodPills">
+          <button class="pill active" data-p="all">Todos</button>
+          <button class="pill" data-p="today">Hoje</button>
+          <button class="pill" data-p="7d">7d</button>
+          <button class="pill" data-p="15d">15d</button>
+          <button class="pill" data-p="mes">Mês</button>
+          <button class="pill" data-p="30d">30d</button>
+          <button class="pill" data-p="90d">90d</button>
+          <button class="pill" data-p="12m">12m</button>
+          <button class="pill" data-p="ano">Ano</button>
+        </div>
+        <div class="pills-group" id="typePills">
+          <button class="pill type-ab active" data-t="ab">Abertas</button>
+          <button class="pill type-fe" data-t="fe">Fechadas</button>
+          <button class="pill type-call active" data-t="call">CALL</button>
+          <button class="pill type-put" data-t="put">PUT</button>
+        </div>
+      </div>
+
+      <!-- ====== OP TABS (lista horizontal sem setas) ====== -->
+      <div class="op-selector">
+        <div class="op-tabs-row" id="opTabsRow">
+          <button class="op-tab active" data-op="0">
+            BTC · CALL · 17/03 <span class="op-tab-badge">ABERTA</span>
+          </button>
+          <button class="op-tab" data-op="1">
+            ETH · CALL · 15/03 <span class="op-tab-badge">ABERTA</span>
+          </button>
+          <button class="op-tab" data-op="2">
+            BTC · PUT · 10/03 <span class="op-tab-badge">FECHADA</span>
+          </button>
+          <div class="op-summary-pills">
+            <span class="s-pill sp-blue">3</span>
+            <span class="s-pill sp-green">2A</span>
+            <span class="s-pill sp-gray">1F</span>
+            <span class="s-pill sp-gold">$33.67</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ====== SECTION TABS (assunto do indicador) ====== -->
+      <div class="section-tabs" id="sectionTabs">
+        <button class="section-tab active" data-sec="desempenho">
+          <span class="stab-icon">📊</span> Desempenho
+        </button>
+        <button class="section-tab" data-sec="comparativos">
+          <span class="stab-icon">📐</span> Comparativos
+        </button>
+        <button class="section-tab" data-sec="posicoes">
+          <span class="stab-icon">📋</span> Posições Abertas
+        </button>
+        <button class="section-tab" data-sec="evolucao">
+          <span class="stab-icon">📈</span> Evolução
+        </button>
+        <button class="section-tab" data-sec="risco">
+          <span class="stab-icon">⚠</span> Risco
+          <span class="stab-warn">●</span>
+        </button>
+      </div>
+
+      <!-- ====== DASHBOARD BODY ====== -->
+      <div class="dashboard-body" id="dashBody">
+        <!-- SIDEBAR -->
+        <div class="sidebar" id="sidebar">
+          <div class="sb-card active">
+            <div class="sb-label">Cotação BTC</div>
+            <div class="sb-value c-cyan">
+              <span class="loadable" id="sb-cotacao">$72,441.81</span>
+            </div>
+            <div class="sb-sub c-green">
+              <span class="loadable" id="sb-cotacao-var">▲ +2,438.11%</span>
+            </div>
+            <div class="sb-bar">
+              <div
+                class="sb-bar-fill"
+                id="sb-cotacao-bar"
+                style="background: var(--cyan); width: 72%"
+              ></div>
+            </div>
+          </div>
+          <div class="sb-card">
+            <div class="sb-label">Resultado</div>
+            <div class="sb-value c-green">
+              <span class="loadable" id="sb-resultado">+0.40%</span>
+            </div>
+            <div class="sb-sub">
+              <span class="loadable" id="sb-resultado-usd">$11.51 lucro</span>
+            </div>
+          </div>
+          <div class="sb-card">
+            <div class="sb-label">TAE ao Ano</div>
+            <div class="sb-value c-green">
+              <span class="loadable" id="sb-tae">129.47%</span>
+            </div>
+            <div class="sb-bar">
+              <div
+                class="sb-bar-fill"
+                id="sb-tae-bar"
+                style="background: var(--green); width: 75%"
+              ></div>
+            </div>
+          </div>
+          <div class="sb-card">
+            <div class="sb-label">Strike</div>
+            <div class="sb-value">
+              <span class="loadable" id="sb-strike">$75,000.00</span>
+            </div>
+            <div class="sb-sub"><span class="badge-call">CALL</span></div>
+          </div>
+          <div class="sb-card">
+            <div class="sb-label">Distância OTM</div>
+            <div class="sb-value c-gold">
+              <span class="loadable" id="sb-dist">3.53%</span>
+            </div>
+            <div class="sb-bar">
+              <div
+                class="sb-bar-fill"
+                id="sb-dist-bar"
+                style="background: var(--gold); width: 7%"
+              ></div>
+            </div>
+          </div>
+          <div class="sb-card">
+            <div class="sb-label">Prêmio</div>
+            <div class="sb-value c-gold">
+              <span class="loadable" id="sb-premio">$10.12</span>
+            </div>
+            <div class="sb-sub">
+              <span class="loadable" id="sb-premio-sub">Qtd: 1</span>
+            </div>
+            <div class="sb-bar">
+              <div
+                class="sb-bar-fill"
+                id="sb-premio-bar"
+                style="background: var(--gold); width: 100%"
+              ></div>
+            </div>
+          </div>
+          <div class="sb-card">
+            <div class="sb-label">PoP</div>
+            <div class="sb-value c-green">
+              <span class="loadable" id="sb-pop">82.4%</span>
+            </div>
+            <div class="sb-sub">Prob. de Lucro</div>
+            <div class="sb-bar">
+              <div
+                class="sb-bar-fill"
+                id="sb-pop-bar"
+                style="background: var(--green); width: 82%"
+              ></div>
+            </div>
+          </div>
+          <div class="sb-card">
+            <div class="sb-label">Investido</div>
+            <div class="sb-value c-cyan">
+              <span class="loadable" id="sb-investido">$2,854.16</span>
+            </div>
+            <div class="sb-sub">1.0000 BTC</div>
+          </div>
+        </div>
+        <!-- /sidebar -->
+
+        <!-- MAIN CONTENT -->
+        <div class="content" id="mainContent">
+          <!-- ===== SECTION: DESEMPENHO ===== -->
+          <div class="tab-panel active" id="sec-desempenho">
+            <!-- Row 1: Resultado + Cotação + TAE -->
+            <div class="row-3">
+              <!-- Resultado card -->
+              <div class="card resultado-card">
+                <div class="card-label">
+                  <span
+                    class="card-label-dot"
+                    style="
+                      background: var(--green);
+                      box-shadow: 0 0 6px var(--green);
+                    "
+                  ></span>
+                  Resultado Atual
+                </div>
+                <div class="resultado-main c-green">
+                  <span class="loadable" id="r-pct">+0.40%</span>
+                </div>
+                <div style="text-align: center; margin-bottom: 0.35rem">
+                  <span class="ex-badge otm"
+                    ><span class="ex-dot green"></span
+                    ><span class="loadable" id="r-exstatus"
+                      >OTM — SEGURO</span
+                    ></span
+                  >
+                </div>
+                <div class="resultado-row">
+                  <div class="resultado-item">
+                    <div class="resultado-item-val c-green">
+                      <span class="loadable" id="r-usd">$11.51</span>
+                    </div>
+                    <div class="resultado-item-lbl">Lucro $</div>
+                  </div>
+                  <div
+                    style="width: 1px; background: rgba(0, 232, 122, 0.1)"
+                  ></div>
+                  <div class="resultado-item">
+                    <div class="resultado-item-val c-green">
+                      <span class="loadable" id="r-saldo">0.35%</span>
+                    </div>
+                    <div class="resultado-item-lbl">% Saldo</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Cotação gauge -->
+              <div class="card">
+                <div class="card-label">
+                  <span
+                    class="card-label-dot"
+                    style="background: var(--cyan)"
+                  ></span
+                  >Cotação Atual BTC
+                </div>
+                <div class="gauge-row">
+                  <div class="gauge-wrap">
+                    <svg viewBox="0 0 100 100">
+                      <circle class="g-track" cx="50" cy="50" r="38" />
+                      <circle
+                        class="g-arc"
+                        cx="50"
+                        cy="50"
+                        r="38"
+                        stroke="var(--cyan)"
+                        style="
+                          stroke-dasharray: 238.76;
+                          stroke-dashoffset: 50;
+                          transform-origin: center;
+                          transform: rotate(-90deg);
+                        "
+                        id="arc-cotacao"
+                      />
+                    </svg>
+                    <div class="gauge-inner">
+                      <div class="g-val c-cyan">
+                        <span class="loadable" id="g-cotacao">$72k</span>
+                      </div>
+                      <div class="g-sub">BTC</div>
+                    </div>
+                  </div>
+                  <div class="gauge-stats">
+                    <div class="info-row">
+                      <span class="ik">Cotação</span
+                      ><span class="iv c-cyan"
+                        ><span class="loadable" id="g-cotacao-full"
+                          >$72,441.81</span
+                        ></span
+                      >
+                    </div>
+                    <div class="info-row">
+                      <span class="ik">Abertura</span
+                      ><span class="iv c-gold"
+                        ><span class="loadable" id="g-abertura"
+                          >$2,854.16</span
+                        ></span
+                      >
+                    </div>
+                    <div class="info-row">
+                      <span class="ik">Variação</span
+                      ><span class="iv c-green"
+                        ><span class="loadable" id="g-variacao"
+                          >+2,438.11%</span
+                        ></span
+                      >
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- TAE gauge -->
+              <div class="card">
+                <div class="card-label">
+                  <span
+                    class="card-label-dot"
+                    style="background: var(--green)"
+                  ></span
+                  >TAE ao Ano
+                </div>
+                <div class="gauge-row">
+                  <div class="gauge-wrap">
+                    <svg viewBox="0 0 100 100">
+                      <circle class="g-track" cx="50" cy="50" r="38" />
+                      <circle
+                        class="g-arc"
+                        cx="50"
+                        cy="50"
+                        r="38"
+                        stroke="var(--green)"
+                        style="
+                          stroke-dasharray: 238.76;
+                          stroke-dashoffset: 60;
+                          transform-origin: center;
+                          transform: rotate(-90deg);
+                        "
+                        id="arc-tae"
+                      />
+                    </svg>
+                    <div class="gauge-inner">
+                      <div class="g-val c-green">
+                        <span class="loadable" id="g-tae">129%</span>
+                      </div>
+                      <div class="g-sub">a.a.</div>
+                    </div>
+                  </div>
+                  <div class="gauge-stats">
+                    <div class="info-row">
+                      <span class="ik">TAE</span
+                      ><span class="iv c-green"
+                        ><span class="loadable" id="g-tae-full"
+                          >129.47%</span
+                        ></span
+                      >
+                    </div>
+                    <div class="info-row">
+                      <span class="ik">Data</span
+                      ><span class="iv"
+                        ><span class="loadable" id="g-data"
+                          >17/03/2026</span
+                        ></span
+                      >
+                    </div>
+                    <div class="info-row">
+                      <span class="ik">Prazo</span
+                      ><span class="iv"
+                        ><span class="loadable" id="g-prazo"
+                          >1d total</span
+                        ></span
+                      >
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Row 2: Distância + Prazo + Prêmio + Strike -->
+            <div class="row-4">
+              <!-- Distância gauge -->
+              <div class="card">
+                <div class="card-label">
+                  <span
+                    class="card-label-dot"
+                    style="background: var(--gold)"
+                  ></span
+                  >Distância OTM
+                </div>
+                <div
+                  class="gauge-wrap sm"
+                  style="width: 72px; height: 72px; margin: 0.1rem auto 0.25rem"
+                >
+                  <svg viewBox="0 0 100 100">
+                    <circle class="g-track-sm" cx="50" cy="50" r="38" />
+                    <circle
+                      class="g-arc-sm"
+                      cx="50"
+                      cy="50"
+                      r="38"
+                      stroke="var(--gold)"
+                      style="
+                        stroke-dasharray: 238.76;
+                        stroke-dashoffset: 215;
+                        transform-origin: center;
+                        transform: rotate(-90deg);
+                      "
+                      id="arc-dist"
+                    />
+                  </svg>
+                  <div class="gauge-inner">
+                    <div class="g-val-sm c-gold">
+                      <span class="loadable" id="g-dist">3.53%</span>
+                    </div>
+                    <div class="g-sub">OTM</div>
+                  </div>
+                </div>
+                <div class="info-row">
+                  <span class="ik">Strike</span
+                  ><span class="iv"
+                    ><span class="loadable" id="g-dist-strike"
+                      >$75,000.00</span
+                    ></span
+                  >
+                </div>
+              </div>
+
+              <!-- Prazo gauge -->
+              <div class="card">
+                <div class="card-label">
+                  <span
+                    class="card-label-dot"
+                    style="background: var(--red)"
+                  ></span
+                  >Prazo
+                </div>
+                <div
+                  class="gauge-wrap sm"
+                  style="width: 72px; height: 72px; margin: 0.1rem auto 0.25rem"
+                >
+                  <svg viewBox="0 0 100 100">
+                    <circle class="g-track-sm" cx="50" cy="50" r="38" />
+                    <circle
+                      class="g-arc-sm"
+                      cx="50"
+                      cy="50"
+                      r="38"
+                      stroke="var(--red)"
+                      style="
+                        stroke-dasharray: 238.76;
+                        stroke-dashoffset: 238;
+                        transform-origin: center;
+                        transform: rotate(-90deg);
+                      "
+                      id="arc-prazo"
+                    />
+                  </svg>
+                  <div class="gauge-inner">
+                    <div class="g-val-sm c-red">
+                      <span class="loadable" id="g-prazo-val">0</span>
+                    </div>
+                    <div class="g-sub">dias</div>
+                  </div>
+                </div>
+                <div class="info-row">
+                  <span class="ik">Total</span
+                  ><span class="iv"
+                    ><span class="loadable" id="g-prazo-total">1d</span></span
+                  >
+                </div>
+                <div class="info-row">
+                  <span class="ik">Decorrido</span
+                  ><span class="iv c-gold"
+                    ><span class="loadable" id="g-prazo-dec">1d</span></span
+                  >
+                </div>
+              </div>
+
+              <!-- Prêmio -->
+              <div class="card">
+                <div class="card-label">
+                  <span
+                    class="card-label-dot"
+                    style="background: var(--gold)"
+                  ></span
+                  >Prêmio
+                </div>
+                <div class="card-big c-gold">
+                  <span class="loadable" id="g-premio">$10.12</span>
+                </div>
+                <div class="pbar">
+                  <div
+                    class="pbar-fill"
+                    id="pb-premio"
+                    style="background: var(--gold); width: 100%"
+                  ></div>
+                </div>
+                <div class="info-row">
+                  <span class="ik">Quantidade</span
+                  ><span class="iv"
+                    ><span class="loadable" id="g-premio-qtd">1</span></span
+                  >
+                </div>
+                <div class="info-row">
+                  <span class="ik">Total</span
+                  ><span class="iv c-gold"
+                    ><span class="loadable" id="g-premio-total"
+                      >$10.12</span
+                    ></span
+                  >
+                </div>
+              </div>
+
+              <!-- Strike + Data Exercício -->
+              <div class="card">
+                <div class="card-label">
+                  <span
+                    class="card-label-dot"
+                    style="background: var(--blue)"
+                  ></span
+                  >Strike &amp; Exercício
+                </div>
+                <div class="card-big c-white">
+                  <span class="loadable" id="g-strike">$75,000.00</span>
+                </div>
+                <div style="margin-bottom: 0.3rem">
+                  <span class="badge-call">CALL</span>
+                </div>
+                <div class="info-row">
+                  <span class="ik">Exercício</span
+                  ><span class="iv"
+                    ><span class="loadable" id="g-ex-data"
+                      >18 MAR 2026</span
+                    ></span
+                  >
+                </div>
+                <div class="timebox" style="margin-top: 0.35rem">
+                  <div class="timebox-cell">
+                    <div class="timebox-num">
+                      <span class="loadable" id="tb-hoje">18/03</span>
+                    </div>
+                    <div class="timebox-lbl">Hoje</div>
+                  </div>
+                  <div class="timebox-cell">
+                    <div class="timebox-num c-green">
+                      <span class="loadable" id="tb-rest">0</span>
+                    </div>
+                    <div class="timebox-lbl">Restantes</div>
+                  </div>
+                  <div class="timebox-cell">
+                    <div class="timebox-num c-gold">
+                      <span class="loadable" id="tb-dec">1</span>
+                    </div>
+                    <div class="timebox-lbl">Decorridos</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- /sec-desempenho -->
+
+          <!-- ===== SECTION: COMPARATIVOS ===== -->
+          <div class="tab-panel" id="sec-comparativos">
+            <!-- Barra comparativa principal -->
+            <div class="card compare-bar-card">
+              <div class="card-label cbar-title">
+                <span
+                  class="card-label-dot"
+                  style="background: var(--blue)"
+                ></span>
+                Comparativo de Preços — Cotação vs. Strike vs. Abertura
+              </div>
+              <div class="cbar-wrap" id="cbarWrap">
+                <!-- Faixa de range (abertura → strike) -->
+                <div
+                  id="cbarRangeFill"
+                  class="cbar-fill"
+                  style="
+                    background: linear-gradient(
+                      90deg,
+                      rgba(0, 212, 232, 0.15),
+                      rgba(245, 166, 35, 0.15)
+                    );
+                    width: 100%;
+                    left: 0;
+                  "
+                ></div>
+                <!-- Marcador Abertura -->
+                <div
+                  class="cbar-marker"
+                  id="cbarAbertura"
+                  style="background: var(--cyan); left: 4%"
+                >
+                  <div class="cbar-marker-label" style="color: var(--cyan)">
+                    ABERTURA
+                  </div>
+                  <div class="cbar-marker-price" style="color: var(--cyan)">
+                    <span class="loadable" id="cb-abert">$2,854.16</span>
+                  </div>
+                </div>
+                <!-- Marcador Strike -->
+                <div
+                  class="cbar-marker"
+                  id="cbarStrike"
+                  style="background: var(--gold); left: 96%"
+                >
+                  <div class="cbar-marker-label" style="color: var(--gold)">
+                    STRIKE
+                  </div>
+                  <div class="cbar-marker-price" style="color: var(--gold)">
+                    <span class="loadable" id="cb-strike">$75,000.00</span>
+                  </div>
+                </div>
+                <!-- Dot cotação atual -->
+                <div
+                  class="cbar-dot"
+                  id="cbarCotacao"
+                  style="background: var(--green); left: 93%"
+                >
+                  <div class="cbar-dot-label" style="color: var(--green)">
+                    COTAÇÃO
+                  </div>
+                </div>
+              </div>
+              <div class="cbar-legend">
+                <div class="cbar-legend-item">
+                  <div
+                    class="cbar-legend-dot"
+                    style="background: var(--cyan)"
+                  ></div>
+                  Abertura
+                  <strong
+                    style="
+                      color: var(--cyan);
+                      font-family: var(--font-mono);
+                      margin-left: 0.3rem;
+                    "
+                    class="loadable"
+                    id="leg-ab"
+                    >$2,854.16</strong
+                  >
+                </div>
+                <div class="cbar-legend-item">
+                  <div
+                    class="cbar-legend-dot"
+                    style="background: var(--green)"
+                  ></div>
+                  Cotação Atual
+                  <strong
+                    style="
+                      color: var(--green);
+                      font-family: var(--font-mono);
+                      margin-left: 0.3rem;
+                    "
+                    class="loadable"
+                    id="leg-cot"
+                    >$72,441.81</strong
+                  >
+                </div>
+                <div class="cbar-legend-item">
+                  <div
+                    class="cbar-legend-dot"
+                    style="background: var(--gold)"
+                  ></div>
+                  Strike
+                  <strong
+                    style="
+                      color: var(--gold);
+                      font-family: var(--font-mono);
+                      margin-left: 0.3rem;
+                    "
+                    class="loadable"
+                    id="leg-strike"
+                    >$75,000.00</strong
+                  >
+                </div>
+              </div>
+            </div>
+
+            <!-- Deltas -->
+            <div class="row-2">
+              <div class="card">
+                <div class="card-label">
+                  <span
+                    class="card-label-dot"
+                    style="background: var(--cyan)"
+                  ></span
+                  >Cotação vs. Abertura da Operação
+                </div>
+                <div class="delta-compare">
+                  <div class="delta-block">
+                    <div class="delta-lbl">Abertura</div>
+                    <div class="delta-val c-cyan">
+                      <span class="loadable" id="d-ab-val">$2,854.16</span>
+                    </div>
+                    <div class="delta-pct">base 100%</div>
+                  </div>
+                  <div class="delta-block">
+                    <div class="delta-lbl">Cotação Atual</div>
+                    <div class="delta-val c-green">
+                      <span class="loadable" id="d-cot-val">$72,441.81</span>
+                    </div>
+                    <div class="delta-pct c-green">
+                      <span class="loadable" id="d-cot-pct">+2,438.11%</span>
+                    </div>
+                  </div>
+                  <div
+                    class="delta-block"
+                    style="
+                      background: rgba(0, 232, 122, 0.05);
+                      border-color: rgba(0, 232, 122, 0.2);
+                    "
+                  >
+                    <div class="delta-lbl" style="color: var(--green)">
+                      Variação $
+                    </div>
+                    <div class="delta-val c-green">
+                      <span class="loadable" id="d-delta-val">+$69,587.65</span>
+                    </div>
+                    <div class="delta-pct c-green">desde abertura</div>
+                  </div>
+                </div>
+                <div class="pbar">
+                  <div
+                    class="pbar-fill"
+                    id="pb-vs-ab"
+                    style="
+                      background: linear-gradient(
+                        90deg,
+                        var(--cyan),
+                        var(--green)
+                      );
+                      width: 97%;
+                    "
+                  ></div>
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    margin-top: 0.2rem;
+                  "
+                >
+                  <span
+                    style="
+                      font-family: var(--font-mono);
+                      font-size: 0.55rem;
+                      color: var(--text-sec);
+                    "
+                    >$2,854.16</span
+                  >
+                  <span
+                    style="
+                      font-family: var(--font-mono);
+                      font-size: 0.55rem;
+                      color: var(--green);
+                    "
+                    >$72,441.81</span
+                  >
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-label">
+                  <span
+                    class="card-label-dot"
+                    style="background: var(--gold)"
+                  ></span
+                  >Cotação vs. Strike
+                </div>
+                <div class="delta-compare">
+                  <div class="delta-block">
+                    <div class="delta-lbl">Cotação Atual</div>
+                    <div class="delta-val c-green">
+                      <span class="loadable" id="d2-cot">$72,441.81</span>
+                    </div>
+                    <div class="delta-pct c-green">atual</div>
+                  </div>
+                  <div class="delta-block">
+                    <div class="delta-lbl">Strike</div>
+                    <div class="delta-val c-gold">
+                      <span class="loadable" id="d2-strike">$75,000.00</span>
+                    </div>
+                    <div class="delta-pct">
+                      <span class="badge-call">CALL</span>
+                    </div>
+                  </div>
+                  <div
+                    class="delta-block"
+                    style="
+                      background: rgba(245, 166, 35, 0.05);
+                      border-color: rgba(245, 166, 35, 0.2);
+                    "
+                  >
+                    <div class="delta-lbl" style="color: var(--gold)">
+                      Distância
+                    </div>
+                    <div class="delta-val c-gold">
+                      <span class="loadable" id="d2-dist">-$2,558.19</span>
+                    </div>
+                    <div class="delta-pct c-gold">
+                      <span class="loadable" id="d2-dist-pct">3.53% OTM</span>
+                    </div>
+                  </div>
+                </div>
+                <!-- Gauge horizontal de distância -->
+                <div style="position: relative; margin: 0.4rem 0">
+                  <div class="pbar" style="height: 8px; border-radius: 4px">
+                    <div
+                      class="pbar-fill"
+                      id="pb-vs-strike"
+                      style="
+                        background: linear-gradient(
+                          90deg,
+                          var(--green),
+                          var(--gold)
+                        );
+                        width: 93%;
+                        border-radius: 4px;
+                        height: 100%;
+                      "
+                    ></div>
+                  </div>
+                  <div
+                    style="
+                      position: absolute;
+                      right: 7%;
+                      top: -4px;
+                      bottom: -4px;
+                      width: 2px;
+                      background: var(--gold);
+                      border-radius: 1px;
+                    "
+                  ></div>
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    font-family: var(--font-mono);
+                    font-size: 0.55rem;
+                    color: var(--text-sec);
+                  "
+                >
+                  <span>$0</span>
+                  <span style="color: var(--green)"
+                    >Cotação:
+                    <span class="loadable" id="pb-cot-lbl"
+                      >$72,441.81</span
+                    ></span
+                  >
+                  <span style="color: var(--gold)"
+                    >Strike:
+                    <span class="loadable" id="pb-strike-lbl"
+                      >$75,000.00</span
+                    ></span
+                  >
+                </div>
+              </div>
+            </div>
+
+            <!-- Gauges de comparação -->
+            <div class="row-3">
+              <div class="card">
+                <div class="card-label">
+                  <span
+                    class="card-label-dot"
+                    style="background: var(--green)"
+                  ></span
+                  >% Cotação / Strike
+                </div>
+                <div class="gauge-row">
+                  <div class="gauge-wrap">
+                    <svg viewBox="0 0 100 100">
+                      <circle class="g-track" cx="50" cy="50" r="38" />
+                      <circle
+                        class="g-arc"
+                        cx="50"
+                        cy="50"
+                        r="38"
+                        stroke="var(--green)"
+                        style="
+                          stroke-dasharray: 238.76;
+                          stroke-dashoffset: 17;
+                          transform-origin: center;
+                          transform: rotate(-90deg);
+                        "
+                        id="arc-cot-strike"
+                      />
+                    </svg>
+                    <div class="gauge-inner">
+                      <div class="g-val c-green">
+                        <span class="loadable" id="gc-pct-strike">96.5%</span>
+                      </div>
+                      <div class="g-sub">do strike</div>
+                    </div>
+                  </div>
+                  <div class="gauge-stats">
+                    <div class="info-row">
+                      <span class="ik">Cotação</span
+                      ><span class="iv c-green"
+                        ><span class="loadable" id="gc-cot1"
+                          >$72,441.81</span
+                        ></span
+                      >
+                    </div>
+                    <div class="info-row">
+                      <span class="ik">Strike</span
+                      ><span class="iv c-gold"
+                        ><span class="loadable" id="gc-strike1"
+                          >$75,000.00</span
+                        ></span
+                      >
+                    </div>
+                    <div class="info-row">
+                      <span class="ik">Falta</span
+                      ><span class="iv c-gold"
+                        ><span class="loadable" id="gc-falta"
+                          >$2,558.19</span
+                        ></span
+                      >
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-label">
+                  <span
+                    class="card-label-dot"
+                    style="background: var(--cyan)"
+                  ></span
+                  >Crescimento vs. Abertura
+                </div>
+                <div class="gauge-row">
+                  <div class="gauge-wrap">
+                    <svg viewBox="0 0 100 100">
+                      <circle class="g-track" cx="50" cy="50" r="38" />
+                      <circle
+                        class="g-arc"
+                        cx="50"
+                        cy="50"
+                        r="38"
+                        stroke="var(--cyan)"
+                        style="
+                          stroke-dasharray: 238.76;
+                          stroke-dashoffset: 5;
+                          transform-origin: center;
+                          transform: rotate(-90deg);
+                        "
+                        id="arc-cot-ab"
+                      />
+                    </svg>
+                    <div class="gauge-inner">
+                      <div class="g-val c-cyan">
+                        <span class="loadable" id="gc-pct-ab">25x</span>
+                      </div>
+                      <div class="g-sub">abertura</div>
+                    </div>
+                  </div>
+                  <div class="gauge-stats">
+                    <div class="info-row">
+                      <span class="ik">Abertura</span
+                      ><span class="iv c-cyan"
+                        ><span class="loadable" id="gc-ab2"
+                          >$2,854.16</span
+                        ></span
+                      >
+                    </div>
+                    <div class="info-row">
+                      <span class="ik">Atual</span
+                      ><span class="iv c-green"
+                        ><span class="loadable" id="gc-cot2"
+                          >$72,441.81</span
+                        ></span
+                      >
+                    </div>
+                    <div class="info-row">
+                      <span class="ik">Mult.</span
+                      ><span class="iv c-green"
+                        ><span class="loadable" id="gc-mult">25.38x</span></span
+                      >
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-label">
+                  <span
+                    class="card-label-dot"
+                    style="background: var(--gold)"
+                  ></span
+                  >Distância ao Strike
+                </div>
+                <div class="gauge-row">
+                  <div class="gauge-wrap">
+                    <svg viewBox="0 0 100 100">
+                      <circle class="g-track" cx="50" cy="50" r="38" />
+                      <circle
+                        class="g-arc"
+                        cx="50"
+                        cy="50"
+                        r="38"
+                        stroke="var(--gold)"
+                        style="
+                          stroke-dasharray: 238.76;
+                          stroke-dashoffset: 215;
+                          transform-origin: center;
+                          transform: rotate(-90deg);
+                        "
+                        id="arc-dist2"
+                      />
+                    </svg>
+                    <div class="gauge-inner">
+                      <div class="g-val c-gold">
+                        <span class="loadable" id="gc-dist-pct">3.53%</span>
+                      </div>
+                      <div class="g-sub">OTM</div>
+                    </div>
+                  </div>
+                  <div class="gauge-stats">
+                    <div class="info-row">
+                      <span class="ik">Falta $</span
+                      ><span class="iv c-gold"
+                        ><span class="loadable" id="gc-dist-usd"
+                          >$2,558.19</span
+                        ></span
+                      >
+                    </div>
+                    <div class="info-row">
+                      <span class="ik">Status</span
+                      ><span class="iv c-green">OTM Seguro</span>
+                    </div>
+                    <div class="info-row">
+                      <span class="ik">Tipo</span
+                      ><span class="iv"
+                        ><span class="badge-call">CALL</span></span
+                      >
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- /sec-comparativos -->
+
+          <!-- ===== SECTION: POSIÇÕES ABERTAS ===== -->
+          <div class="tab-panel" id="sec-posicoes">
+            <div class="card">
+              <div class="card-label">
+                <span
+                  class="card-label-dot"
+                  style="background: var(--green)"
+                ></span
+                >Posições Abertas
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 0.3rem">
+                <div
+                  style="
+                    display: grid;
+                    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
+                    gap: 0.4rem;
+                    padding: 0.3rem 0.4rem;
+                    background: var(--bg-card2);
+                    border-radius: var(--radius-sm);
+                    font-family: var(--font-mono);
+                    font-size: 0.58rem;
+                    color: var(--text-sec);
+                    text-transform: uppercase;
+                    letter-spacing: 0.07em;
+                  "
+                >
+                  <span>Ativo</span><span>Tipo</span><span>Abertura</span
+                  ><span>Strike</span><span>TAE</span><span>Resultado</span>
+                </div>
+                <div
+                  style="
+                    display: grid;
+                    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
+                    gap: 0.4rem;
+                    padding: 0.4rem;
+                    background: rgba(37, 99, 235, 0.05);
+                    border: 1px solid rgba(37, 99, 235, 0.2);
+                    border-radius: var(--radius-sm);
+                    align-items: center;
+                  "
+                >
+                  <span
+                    style="
+                      font-family: var(--font-mono);
+                      font-size: 0.72rem;
+                      font-weight: 700;
+                    "
+                    >BTC</span
+                  >
+                  <span><span class="badge-call">CALL</span></span>
+                  <span style="font-family: var(--font-mono); font-size: 0.7rem"
+                    >$2,854.16</span
+                  >
+                  <span
+                    style="
+                      font-family: var(--font-mono);
+                      font-size: 0.7rem;
+                      color: var(--gold);
+                    "
+                    >$75,000.00</span
+                  >
+                  <span
+                    style="
+                      font-family: var(--font-mono);
+                      font-size: 0.7rem;
+                      color: var(--green);
+                    "
+                    >129.47%</span
+                  >
+                  <span
+                    style="
+                      font-family: var(--font-mono);
+                      font-size: 0.72rem;
+                      font-weight: 700;
+                      color: var(--green);
+                    "
+                    >+0.40%</span
+                  >
+                </div>
+                <div
+                  style="
+                    display: grid;
+                    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
+                    gap: 0.4rem;
+                    padding: 0.4rem;
+                    background: rgba(37, 99, 235, 0.03);
+                    border: 1px solid var(--border);
+                    border-radius: var(--radius-sm);
+                    align-items: center;
+                  "
+                >
+                  <span
+                    style="
+                      font-family: var(--font-mono);
+                      font-size: 0.72rem;
+                      font-weight: 700;
+                    "
+                    >ETH</span
+                  >
+                  <span><span class="badge-call">CALL</span></span>
+                  <span style="font-family: var(--font-mono); font-size: 0.7rem"
+                    >$1,240.00</span
+                  >
+                  <span
+                    style="
+                      font-family: var(--font-mono);
+                      font-size: 0.7rem;
+                      color: var(--gold);
+                    "
+                    >$4,500.00</span
+                  >
+                  <span
+                    style="
+                      font-family: var(--font-mono);
+                      font-size: 0.7rem;
+                      color: var(--green);
+                    "
+                    >98.20%</span
+                  >
+                  <span
+                    style="
+                      font-family: var(--font-mono);
+                      font-size: 0.72rem;
+                      font-weight: 700;
+                      color: var(--green);
+                    "
+                    >+1.12%</span
+                  >
+                </div>
+              </div>
+            </div>
+            <!-- PoP no painel de posições -->
+            <div class="row-2">
+              <div class="card pop-card">
+                <div class="card-label">
+                  <span
+                    class="card-label-dot"
+                    style="
+                      background: var(--green);
+                      box-shadow: 0 0 6px var(--green);
+                    "
+                  ></span
+                  >PoP — Probabilidade de Lucro (BTC CALL)
+                </div>
+                <div style="display: flex; align-items: center; gap: 1rem">
+                  <div style="flex-shrink: 0">
+                    <!-- Semicircular gauge PoP -->
+                    <div class="pop-gauge-wrap">
+                      <svg viewBox="0 0 110 65" style="overflow: visible">
+                        <!-- Track semicircle -->
+                        <path
+                          d="M 10,55 A 45,45 0 0,1 100,55"
+                          fill="none"
+                          stroke="var(--border)"
+                          stroke-width="10"
+                          stroke-linecap="round"
+                        />
+                        <!-- Zones: red(0-30%), gold(30-60%), green(60-100%) -->
+                        <path
+                          d="M 10,55 A 45,45 0 0,1 100,55"
+                          fill="none"
+                          stroke="url(#popGrad)"
+                          stroke-width="10"
+                          stroke-linecap="round"
+                          opacity=".25"
+                        />
+                        <defs>
+                          <linearGradient
+                            id="popGrad"
+                            x1="0%"
+                            y1="0%"
+                            x2="100%"
+                            y2="0%"
+                          >
+                            <stop offset="0%" stop-color="var(--red)" />
+                            <stop offset="40%" stop-color="var(--gold)" />
+                            <stop offset="100%" stop-color="var(--green)" />
+                          </linearGradient>
+                        </defs>
+                        <!-- Active arc (82.4%) -->
+                        <path
+                          id="popArc"
+                          d="M 10,55 A 45,45 0 0,1 100,55"
+                          fill="none"
+                          stroke="var(--green)"
+                          stroke-width="10"
+                          stroke-linecap="round"
+                          style="
+                            stroke-dasharray: 141.37;
+                            stroke-dashoffset: 24.9;
+                          "
+                        />
+                        <!-- Needle -->
+                        <g
+                          id="popNeedle"
+                          class="pop-needle"
+                          style="transform: rotate(68deg)"
+                        >
+                          <line
+                            x1="55"
+                            y1="55"
+                            x2="55"
+                            y2="16"
+                            stroke="white"
+                            stroke-width="1.5"
+                            stroke-linecap="round"
+                            opacity=".9"
+                          />
+                          <circle
+                            cx="55"
+                            cy="55"
+                            r="4"
+                            fill="white"
+                            opacity=".8"
+                          />
+                        </g>
+                      </svg>
+                    </div>
+                    <div class="pop-val-big c-green">
+                      <span class="loadable" id="pop-pct">82.4%</span>
+                    </div>
+                    <div style="text-align: center">
+                      <span class="pop-status high"
+                        ><span class="loadable" id="pop-status"
+                          >ALTA PROBABILIDADE</span
+                        ></span
+                      >
+                    </div>
+                  </div>
+                  <div style="flex: 1">
+                    <div class="pop-breakdown">
+                      <div class="pop-item">
+                        <div class="pop-item-lbl">Prob. OTM (lucro)</div>
+                        <div class="pop-item-val c-green">
+                          <span class="loadable" id="pop-otm">82.4%</span>
+                        </div>
+                      </div>
+                      <div class="pop-item">
+                        <div class="pop-item-lbl">Prob. ITM (exercício)</div>
+                        <div class="pop-item-val c-red">
+                          <span class="loadable" id="pop-itm">17.6%</span>
+                        </div>
+                      </div>
+                      <div class="pop-item">
+                        <div class="pop-item-lbl">Distância OTM</div>
+                        <div class="pop-item-val c-gold">
+                          <span class="loadable" id="pop-dist">3.53%</span>
+                        </div>
+                      </div>
+                      <div class="pop-item">
+                        <div class="pop-item-lbl">Dias até Venc.</div>
+                        <div class="pop-item-val c-red">
+                          <span class="loadable" id="pop-dias">0</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div
+                      style="
+                        margin-top: 0.4rem;
+                        font-family: var(--font-mono);
+                        font-size: 0.58rem;
+                        color: var(--text-sec);
+                        line-height: 1.5;
+                      "
+                    >
+                      PoP calculado com base na distância ao strike e
+                      volatilidade implícita. Quanto maior o OTM, maior a
+                      probabilidade de lucro (prêmio retido).
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="card pop-card">
+                <div class="card-label">
+                  <span
+                    class="card-label-dot"
+                    style="background: var(--blue)"
+                  ></span
+                  >PoP — ETH CALL
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.75rem">
+                  <div style="flex-shrink: 0">
+                    <div class="pop-gauge-wrap">
+                      <svg viewBox="0 0 110 65" style="overflow: visible">
+                        <path
+                          d="M 10,55 A 45,45 0 0,1 100,55"
+                          fill="none"
+                          stroke="var(--border)"
+                          stroke-width="10"
+                          stroke-linecap="round"
+                        />
+                        <path
+                          d="M 10,55 A 45,45 0 0,1 100,55"
+                          fill="none"
+                          stroke="url(#popGrad2)"
+                          stroke-width="10"
+                          stroke-linecap="round"
+                          opacity=".25"
+                        />
+                        <defs>
+                          <linearGradient
+                            id="popGrad2"
+                            x1="0%"
+                            y1="0%"
+                            x2="100%"
+                            y2="0%"
+                          >
+                            <stop offset="0%" stop-color="var(--red)" />
+                            <stop offset="40%" stop-color="var(--gold)" />
+                            <stop offset="100%" stop-color="var(--green)" />
+                          </linearGradient>
+                        </defs>
+                        <path
+                          d="M 10,55 A 45,45 0 0,1 100,55"
+                          fill="none"
+                          stroke="var(--green)"
+                          stroke-width="10"
+                          stroke-linecap="round"
+                          style="
+                            stroke-dasharray: 141.37;
+                            stroke-dashoffset: 18;
+                          "
+                        />
+                        <g class="pop-needle" style="transform: rotate(57deg)">
+                          <line
+                            x1="55"
+                            y1="55"
+                            x2="55"
+                            y2="16"
+                            stroke="white"
+                            stroke-width="1.5"
+                            stroke-linecap="round"
+                            opacity=".9"
+                          />
+                          <circle
+                            cx="55"
+                            cy="55"
+                            r="4"
+                            fill="white"
+                            opacity=".8"
+                          />
+                        </g>
+                      </svg>
+                    </div>
+                    <div class="pop-val-big c-green">74.3%</div>
+                    <div style="text-align: center">
+                      <span class="pop-status high">ALTA PROB.</span>
+                    </div>
+                  </div>
+                  <div style="flex: 1">
+                    <div class="pop-breakdown">
+                      <div class="pop-item">
+                        <div class="pop-item-lbl">OTM (lucro)</div>
+                        <div class="pop-item-val c-green">74.3%</div>
+                      </div>
+                      <div class="pop-item">
+                        <div class="pop-item-lbl">ITM (exercício)</div>
+                        <div class="pop-item-val c-gold">25.7%</div>
+                      </div>
+                      <div class="pop-item">
+                        <div class="pop-item-lbl">Distância</div>
+                        <div class="pop-item-val c-gold">5.81%</div>
+                      </div>
+                      <div class="pop-item">
+                        <div class="pop-item-lbl">Dias Venc.</div>
+                        <div class="pop-item-val c-gold">3</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- /sec-posicoes -->
+
+          <!-- ===== SECTION: EVOLUÇÃO ===== -->
+          <div class="tab-panel" id="sec-evolucao">
+            <div class="card" style="padding: 1rem">
+              <div class="card-label">
+                <span
+                  class="card-label-dot"
+                  style="background: var(--blue)"
+                ></span
+                >Evolução do Resultado
+              </div>
+              <div
+                style="position: relative; height: 120px; margin-top: 0.5rem"
+              >
+                <svg
+                  width="100%"
+                  height="120"
+                  viewBox="0 0 600 120"
+                  preserveAspectRatio="none"
+                >
+                  <defs>
+                    <linearGradient id="evoGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop
+                        offset="0%"
+                        stop-color="var(--green)"
+                        stop-opacity=".4"
+                      />
+                      <stop
+                        offset="100%"
+                        stop-color="var(--green)"
+                        stop-opacity="0"
+                      />
+                    </linearGradient>
+                  </defs>
+                  <path
+                    d="M0,100 C50,95 100,85 150,70 C200,55 250,45 300,35 C350,25 400,20 450,15 C500,10 550,8 600,5"
+                    fill="none"
+                    stroke="var(--green)"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                  />
+                  <path
+                    d="M0,100 C50,95 100,85 150,70 C200,55 250,45 300,35 C350,25 400,20 450,15 C500,10 550,8 600,5 L600,120 L0,120Z"
+                    fill="url(#evoGrad)"
+                  />
+                  <line
+                    x1="0"
+                    y1="100"
+                    x2="600"
+                    y2="100"
+                    stroke="var(--border)"
+                    stroke-width="1"
+                    stroke-dasharray="4,4"
+                  />
+                </svg>
+                <div
+                  style="
+                    position: absolute;
+                    left: 0;
+                    bottom: 0;
+                    font-family: var(--font-mono);
+                    font-size: 0.55rem;
+                    color: var(--text-sec);
+                  "
+                >
+                  Início
+                </div>
+                <div
+                  style="
+                    position: absolute;
+                    right: 0;
+                    top: 0;
+                    font-family: var(--font-mono);
+                    font-size: 0.6rem;
+                    color: var(--green);
+                    font-weight: 700;
+                  "
+                >
+                  +0.40%
+                </div>
+              </div>
+              <div
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  font-family: var(--font-mono);
+                  font-size: 0.58rem;
+                  color: var(--text-sec);
+                  margin-top: 0.3rem;
+                "
+              >
+                <span>17/03</span><span>17/03 12h</span><span>18/03 00h</span
+                ><span>18/03</span>
+              </div>
+            </div>
+            <div class="row-3">
+              <div class="card">
+                <div class="card-label">
+                  <span
+                    class="card-label-dot"
+                    style="background: var(--cyan)"
+                  ></span
+                  >Cotação ao Longo do Tempo
+                </div>
+                <div style="position: relative; height: 70px">
+                  <svg
+                    width="100%"
+                    height="70"
+                    viewBox="0 0 300 70"
+                    preserveAspectRatio="none"
+                  >
+                    <defs>
+                      <linearGradient id="cotGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop
+                          offset="0%"
+                          stop-color="var(--cyan)"
+                          stop-opacity=".3"
+                        />
+                        <stop
+                          offset="100%"
+                          stop-color="var(--cyan)"
+                          stop-opacity="0"
+                        />
+                      </linearGradient>
+                    </defs>
+                    <path
+                      d="M0,60 C30,55 60,50 90,42 C120,34 150,28 180,22 C210,16 240,12 270,8 L300,5"
+                      fill="none"
+                      stroke="var(--cyan)"
+                      stroke-width="2"
+                    />
+                    <path
+                      d="M0,60 C30,55 60,50 90,42 C120,34 150,28 180,22 C210,16 240,12 270,8 L300,5 L300,70 L0,70Z"
+                      fill="url(#cotGrad)"
+                    />
+                  </svg>
+                </div>
+                <div class="info-row">
+                  <span class="ik">Mín.</span
+                  ><span class="iv c-cyan">$2,600.00</span>
+                </div>
+                <div class="info-row">
+                  <span class="ik">Máx.</span
+                  ><span class="iv c-cyan">$72,441.81</span>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-label">
+                  <span
+                    class="card-label-dot"
+                    style="background: var(--gold)"
+                  ></span
+                  >Decaimento do Prêmio (Theta)
+                </div>
+                <div style="position: relative; height: 70px">
+                  <svg
+                    width="100%"
+                    height="70"
+                    viewBox="0 0 300 70"
+                    preserveAspectRatio="none"
+                  >
+                    <defs>
+                      <linearGradient
+                        id="thetaGrad"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="0%"
+                          stop-color="var(--gold)"
+                          stop-opacity=".3"
+                        />
+                        <stop
+                          offset="100%"
+                          stop-color="var(--gold)"
+                          stop-opacity="0"
+                        />
+                      </linearGradient>
+                    </defs>
+                    <path
+                      d="M0,10 C30,18 60,28 90,38 C120,48 150,55 180,58 C210,62 240,64 270,65 L300,66"
+                      fill="none"
+                      stroke="var(--gold)"
+                      stroke-width="2"
+                    />
+                    <path
+                      d="M0,10 C30,18 60,28 90,38 C120,48 150,55 180,58 C210,62 240,64 270,65 L300,66 L300,70 L0,70Z"
+                      fill="url(#thetaGrad)"
+                    />
+                  </svg>
+                </div>
+                <div class="info-row">
+                  <span class="ik">Início</span
+                  ><span class="iv c-gold">$10.12</span>
+                </div>
+                <div class="info-row">
+                  <span class="ik">Atual</span
+                  ><span class="iv c-gold">$0.00</span>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-label">
+                  <span
+                    class="card-label-dot"
+                    style="background: var(--green)"
+                  ></span
+                  >PoP ao Longo do Tempo
+                </div>
+                <div style="position: relative; height: 70px">
+                  <svg
+                    width="100%"
+                    height="70"
+                    viewBox="0 0 300 70"
+                    preserveAspectRatio="none"
+                  >
+                    <defs>
+                      <linearGradient
+                        id="popHistGrad"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="0%"
+                          stop-color="var(--green)"
+                          stop-opacity=".3"
+                        />
+                        <stop
+                          offset="100%"
+                          stop-color="var(--green)"
+                          stop-opacity="0"
+                        />
+                      </linearGradient>
+                    </defs>
+                    <path
+                      d="M0,40 C30,38 60,35 90,30 C120,25 150,20 180,18 C210,15 240,12 270,10 L300,8"
+                      fill="none"
+                      stroke="var(--green)"
+                      stroke-width="2"
+                    />
+                    <path
+                      d="M0,40 C30,38 60,35 90,30 C120,25 150,20 180,18 C210,15 240,12 270,10 L300,8 L300,70 L0,70Z"
+                      fill="url(#popHistGrad)"
+                    />
+                  </svg>
+                </div>
+                <div class="info-row">
+                  <span class="ik">Início</span
+                  ><span class="iv c-green">72.0%</span>
+                </div>
+                <div class="info-row">
+                  <span class="ik">Atual</span
+                  ><span class="iv c-green">82.4%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- /sec-evolucao -->
+
+          <!-- ===== SECTION: RISCO ===== -->
+          <div class="tab-panel" id="sec-risco">
+            <div class="row-2">
+              <div class="card pop-card">
+                <div class="card-label">
+                  <span
+                    class="card-label-dot"
+                    style="
+                      background: var(--gold);
+                      box-shadow: 0 0 6px var(--gold);
+                    "
+                  ></span
+                  >Análise de Risco — BTC CALL
+                </div>
+                <div
+                  style="display: flex; gap: 0.75rem; align-items: flex-start"
+                >
+                  <div>
+                    <div class="gauge-wrap" style="margin-bottom: 0.3rem">
+                      <svg viewBox="0 0 100 100">
+                        <circle class="g-track" cx="50" cy="50" r="38" />
+                        <circle
+                          class="g-arc"
+                          cx="50"
+                          cy="50"
+                          r="38"
+                          stroke="var(--red)"
+                          style="
+                            stroke-dasharray: 238.76;
+                            stroke-dashoffset: 197;
+                            transform-origin: center;
+                            transform: rotate(-90deg);
+                          "
+                        />
+                      </svg>
+                      <div class="gauge-inner">
+                        <div class="g-val c-red">17.6%</div>
+                        <div class="g-sub">Risco ITM</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div style="flex: 1">
+                    <div class="info-row">
+                      <span class="ik">Prob. Exercício</span
+                      ><span class="iv c-red">17.6%</span>
+                    </div>
+                    <div class="info-row">
+                      <span class="ik">Prob. Lucro (PoP)</span
+                      ><span class="iv c-green">82.4%</span>
+                    </div>
+                    <div class="info-row">
+                      <span class="ik">Perda Máx.</span
+                      ><span class="iv c-red">-$2,854.16</span>
+                    </div>
+                    <div class="info-row">
+                      <span class="ik">Ganho Máx.</span
+                      ><span class="iv c-gold">$10.12</span>
+                    </div>
+                    <div class="info-row">
+                      <span class="ik">Risco/Retorno</span
+                      ><span class="iv c-gold">282:1</span>
+                    </div>
+                    <div class="info-row">
+                      <span class="ik">Distância Segura</span
+                      ><span class="iv c-green">3.53% OTM</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-label">
+                  <span
+                    class="card-label-dot"
+                    style="background: var(--red)"
+                  ></span
+                  >Cenários
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 0.3rem">
+                  <div
+                    style="
+                      padding: 0.4rem 0.5rem;
+                      border-radius: var(--radius-sm);
+                      background: rgba(0, 232, 122, 0.07);
+                      border: 1px solid rgba(0, 232, 122, 0.2);
+                    "
+                  >
+                    <div
+                      style="
+                        font-family: var(--font-mono);
+                        font-size: 0.6rem;
+                        color: var(--green);
+                        font-weight: 700;
+                        margin-bottom: 0.2rem;
+                      "
+                    >
+                      ✓ CENÁRIO ATUAL (OTM)
+                    </div>
+                    <div
+                      style="font-family: var(--font-mono); font-size: 0.65rem"
+                    >
+                      Cotação abaixo do strike → prêmio retido integralmente →
+                      <span class="c-green">+$10.12</span>
+                    </div>
+                  </div>
+                  <div
+                    style="
+                      padding: 0.4rem 0.5rem;
+                      border-radius: var(--radius-sm);
+                      background: rgba(255, 77, 106, 0.07);
+                      border: 1px solid rgba(255, 77, 106, 0.2);
+                    "
+                  >
+                    <div
+                      style="
+                        font-family: var(--font-mono);
+                        font-size: 0.6rem;
+                        color: var(--red);
+                        font-weight: 700;
+                        margin-bottom: 0.2rem;
+                      "
+                    >
+                      ✗ CENÁRIO ITM
+                    </div>
+                    <div
+                      style="font-family: var(--font-mono); font-size: 0.65rem"
+                    >
+                      Cotação acima de $75,000.00 → exercício → perda parcial do
+                      ativo
+                    </div>
+                  </div>
+                  <div
+                    style="
+                      padding: 0.4rem 0.5rem;
+                      border-radius: var(--radius-sm);
+                      background: rgba(245, 166, 35, 0.07);
+                      border: 1px solid rgba(245, 166, 35, 0.2);
+                    "
+                  >
+                    <div
+                      style="
+                        font-family: var(--font-mono);
+                        font-size: 0.6rem;
+                        color: var(--gold);
+                        font-weight: 700;
+                        margin-bottom: 0.2rem;
+                      "
+                    >
+                      ⚡ PONTO DE EQUILÍBRIO
+                    </div>
+                    <div
+                      style="font-family: var(--font-mono); font-size: 0.65rem"
+                    >
+                      Break-even: $75,010.12 (strike + prêmio)
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row-3">
+              <div class="card">
+                <div class="card-label">
+                  <span
+                    class="card-label-dot"
+                    style="background: var(--purple)"
+                  ></span
+                  >Volatilidade Implícita
+                </div>
+                <div class="gauge-wrap">
+                  <svg viewBox="0 0 100 100">
+                    <circle class="g-track" cx="50" cy="50" r="38" />
+                    <circle
+                      class="g-arc"
+                      cx="50"
+                      cy="50"
+                      r="38"
+                      stroke="var(--purple)"
+                      style="
+                        stroke-dasharray: 238.76;
+                        stroke-dashoffset: 100;
+                        transform-origin: center;
+                        transform: rotate(-90deg);
+                      "
+                    />
+                  </svg>
+                  <div class="gauge-inner">
+                    <div class="g-val c-purple">58%</div>
+                    <div class="g-sub">IV</div>
+                  </div>
+                </div>
+                <div class="info-row">
+                  <span class="ik">IV Rank</span
+                  ><span class="iv c-purple">Moderada</span>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-label">
+                  <span
+                    class="card-label-dot"
+                    style="background: var(--blue)"
+                  ></span
+                  >Delta
+                </div>
+                <div class="gauge-wrap">
+                  <svg viewBox="0 0 100 100">
+                    <circle class="g-track" cx="50" cy="50" r="38" />
+                    <circle
+                      class="g-arc"
+                      cx="50"
+                      cy="50"
+                      r="38"
+                      stroke="var(--blue)"
+                      style="
+                        stroke-dasharray: 238.76;
+                        stroke-dashoffset: 158;
+                        transform-origin: center;
+                        transform: rotate(-90deg);
+                      "
+                    />
+                  </svg>
+                  <div class="gauge-inner">
+                    <div class="g-val c-blue">0.34</div>
+                    <div class="g-sub">delta</div>
+                  </div>
+                </div>
+                <div class="info-row">
+                  <span class="ik">Sensibilidade</span
+                  ><span class="iv c-blue">Baixa</span>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-label">
+                  <span
+                    class="card-label-dot"
+                    style="background: var(--red)"
+                  ></span
+                  >Theta (decay/dia)
+                </div>
+                <div class="gauge-wrap">
+                  <svg viewBox="0 0 100 100">
+                    <circle class="g-track" cx="50" cy="50" r="38" />
+                    <circle
+                      class="g-arc"
+                      cx="50"
+                      cy="50"
+                      r="38"
+                      stroke="var(--red)"
+                      style="
+                        stroke-dasharray: 238.76;
+                        stroke-dashoffset: 238;
+                        transform-origin: center;
+                        transform: rotate(-90deg);
+                      "
+                    />
+                  </svg>
+                  <div class="gauge-inner">
+                    <div class="g-val c-red">-$10</div>
+                    <div class="g-sub">por dia</div>
+                  </div>
+                </div>
+                <div class="info-row">
+                  <span class="ik">Total decay</span
+                  ><span class="iv c-red">$10.12</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- /sec-risco -->
+        </div>
+        <!-- /content -->
+      </div>
+      <!-- /dashboard-body -->
+    </div>
+    <!-- /modal -->
+
+    <script>
+      /* ======================================================
+   DEMO DATA
+   ====================================================== */
+      const operacoes = [
+        {
+          ticker: "BTC",
+          tipo: "CALL",
+          data: "17/03/2026",
+          status: "ABERTA",
+          cotacao: 72441.81,
+          abertura: 2854.16,
+          strike: 75000.0,
+          tae: 129.47,
+          variacao: 2438.11,
+          premio: 10.12,
+          premioQtd: 1,
+          dist: 3.53,
+          distSub: "OTM",
+          diasRest: 0,
+          prazoTotal: 1,
+          prazoDecorrido: 1,
+          investido: 2854.16,
+          investidoCrypto: "1.0000 BTC",
+          resultadoPct: 0.4,
+          resultadoUsd: 11.51,
+          resultadoSaldo: 0.35,
+          pop: 82.4,
+          popITM: 17.6,
+          exData: "18 MAR 2026",
+          exDiasHoje: "18/03",
+          exRest: 0,
+          exDec: 1,
+          exStatus: "OTM — SEGURO",
+          exOTM: true,
+        },
+        {
+          ticker: "ETH",
+          tipo: "CALL",
+          data: "15/03/2026",
+          status: "ABERTA",
+          cotacao: 3180.5,
+          abertura: 1240.0,
+          strike: 4500.0,
+          tae: 98.2,
+          variacao: 156.49,
+          premio: 23.55,
+          premioQtd: 1,
+          dist: 5.81,
+          distSub: "OTM",
+          diasRest: 3,
+          prazoTotal: 7,
+          prazoDecorrido: 4,
+          investido: 1240.0,
+          investidoCrypto: "1.0000 ETH",
+          resultadoPct: 1.12,
+          resultadoUsd: 13.89,
+          resultadoSaldo: 0.51,
+          pop: 74.3,
+          popITM: 25.7,
+          exData: "22 MAR 2026",
+          exDiasHoje: "18/03",
+          exRest: 3,
+          exDec: 4,
+          exStatus: "OTM — SEGURO",
+          exOTM: true,
+        },
+        {
+          ticker: "BTC",
+          tipo: "PUT",
+          data: "10/03/2026",
+          status: "FECHADA",
+          cotacao: 71200.0,
+          abertura: 2200.0,
+          strike: 60000.0,
+          tae: 74.1,
+          variacao: 194.52,
+          premio: 8.9,
+          premioQtd: 1,
+          dist: 18.6,
+          distSub: "OTM",
+          diasRest: 0,
+          prazoTotal: 5,
+          prazoDecorrido: 5,
+          investido: 2200.0,
+          investidoCrypto: "1.0000 BTC",
+          resultadoPct: 0.4,
+          resultadoUsd: 8.9,
+          resultadoSaldo: 0.28,
+          pop: 91.0,
+          popITM: 9.0,
+          exData: "15 MAR 2026",
+          exDiasHoje: "15/03",
+          exRest: 0,
+          exDec: 5,
+          exStatus: "OTM — EXPIRADO",
+          exOTM: true,
+        },
+      ]
+
+      let currentOp = 0
+      let isLoading = false
+
+      function fmt(n) {
+        return (
+          "$" +
+          Number(n).toLocaleString("en-US", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })
+        )
+      }
+      function fmtPct(n, sign = true) {
+        return (sign && n >= 0 ? "+" : "") + n.toFixed(2) + "%"
+      }
+
+      /* ======================================================
+   RENDER DATA
+   ====================================================== */
+      function renderOp(op) {
+        const set = (id, val) => {
+          const el = document.getElementById(id)
+          if (el) el.textContent = val
+        }
+
+        // Sidebar
+        set("sb-cotacao", fmt(op.cotacao))
+        set(
+          "sb-cotacao-var",
+          (op.variacao >= 0 ? "▲ +" : " ▼ ") + fmtPct(op.variacao, false),
+        )
+        document.getElementById("sb-cotacao-var").className =
+          "loadable " + (op.variacao >= 0 ? "c-green" : "c-red")
+        set("sb-resultado", fmtPct(op.resultadoPct))
+        set("sb-resultado-usd", fmt(op.resultadoUsd) + " lucro")
+        set("sb-tae", fmtPct(op.tae, false))
+        set("sb-strike", fmt(op.strike))
+        set("sb-dist", fmtPct(op.dist, false))
+        set("sb-premio", fmt(op.premio))
+        set("sb-pop", op.pop.toFixed(1) + "%")
+        set("sb-investido", fmt(op.investido))
+
+        // Desempenho
+        set("r-pct", fmtPct(op.resultadoPct))
+        set("r-usd", fmt(op.resultadoUsd))
+        set("r-saldo", fmtPct(op.resultadoSaldo, false))
+        set("r-exstatus", op.exStatus)
+        set("g-cotacao", "$" + Math.round(op.cotacao / 1000) + "k")
+        set("g-cotacao-full", fmt(op.cotacao))
+        set("g-abertura", fmt(op.abertura))
+        set("g-variacao", fmtPct(op.variacao))
+        set("g-tae", Math.round(op.tae) + "%")
+        set("g-tae-full", fmtPct(op.tae, false))
+        set("g-data", op.data)
+        set("g-prazo", op.prazoTotal + "d total")
+        set("g-dist", fmtPct(op.dist, false))
+        set("g-dist-strike", fmt(op.strike))
+        set("g-prazo-val", op.diasRest)
+        set("g-prazo-total", op.prazoTotal + "d")
+        set("g-prazo-dec", op.prazoDecorrido + "d")
+        set("g-premio", fmt(op.premio))
+        set("g-premio-qtd", op.premioQtd)
+        set("g-premio-total", fmt(op.premio * op.premioQtd))
+        set("g-strike", fmt(op.strike))
+        set("g-ex-data", op.exData)
+        set("tb-hoje", op.exDiasHoje)
+        set("tb-rest", op.exRest)
+        set("tb-dec", op.exDec)
+
+        // Comparativos
+        const deltaAb = op.cotacao - op.abertura
+        const deltaStrike = op.cotacao - op.strike
+        const mult = op.cotacao / op.abertura
+        const pctStrike = (op.cotacao / op.strike) * 100
+
+        set("cb-abert", fmt(op.abertura))
+        set("cb-strike", fmt(op.strike))
+        set("leg-ab", fmt(op.abertura))
+        set("leg-cot", fmt(op.cotacao))
+        set("leg-strike", fmt(op.strike))
+        set("d-ab-val", fmt(op.abertura))
+        set("d-cot-val", fmt(op.cotacao))
+        set("d-cot-pct", fmtPct(op.variacao))
+        set("d-delta-val", (deltaAb >= 0 ? "+" : "") + fmt(deltaAb))
+        set("d2-cot", fmt(op.cotacao))
+        set("d2-strike", fmt(op.strike))
+        set("d2-dist", (deltaStrike >= 0 ? "+" : "") + fmt(deltaStrike))
+        set("d2-dist-pct", fmtPct(op.dist, false) + " OTM")
+        set("pb-cot-lbl", fmt(op.cotacao))
+        set("pb-strike-lbl", fmt(op.strike))
+        set("gc-pct-strike", pctStrike.toFixed(1) + "%")
+        set("gc-cot1", fmt(op.cotacao))
+        set("gc-strike1", fmt(op.strike))
+        set("gc-falta", fmt(Math.abs(deltaStrike)))
+        set("gc-pct-ab", mult.toFixed(0) + "x")
+        set("gc-ab2", fmt(op.abertura))
+        set("gc-cot2", fmt(op.cotacao))
+        set("gc-mult", mult.toFixed(2) + "x")
+        set("gc-dist-pct", fmtPct(op.dist, false))
+        set("gc-dist-usd", fmt(Math.abs(deltaStrike)))
+
+        // PoP
+        set("pop-pct", op.pop.toFixed(1) + "%")
+        set(
+          "pop-status",
+          op.pop >= 70
+            ? "ALTA PROBABILIDADE"
+            : op.pop >= 40
+              ? "PROBABILIDADE MÉDIA"
+              : "BAIXA PROBABILIDADE",
+        )
+        set("pop-otm", op.pop.toFixed(1) + "%")
+        set("pop-itm", op.popITM.toFixed(1) + "%")
+        set("pop-dist", fmtPct(op.dist, false))
+        set("pop-dias", op.diasRest)
+
+        // Bar widths
+        const maxCot = Math.max(op.cotacao, op.strike, op.abertura)
+        const abPct = (op.abertura / maxCot) * 100
+        const cotPct = (op.cotacao / maxCot) * 100
+        const strikePct = (op.strike / maxCot) * 100
+
+        const el = (id) => document.getElementById(id)
+        if (el("cbarAbertura")) el("cbarAbertura").style.left = abPct + "%"
+        if (el("cbarStrike")) el("cbarStrike").style.left = strikePct + "%"
+        if (el("cbarCotacao")) el("cbarCotacao").style.left = cotPct + "%"
+        if (el("pb-vs-ab"))
+          el("pb-vs-ab").style.width =
+            (
+              ((op.cotacao - op.abertura) / (maxCot - op.abertura)) *
+              100
+            ).toFixed(1) + "%"
+        if (el("pb-vs-strike")) el("pb-vs-strike").style.width = cotPct + "%"
+        if (el("sb-dist-bar"))
+          el("sb-dist-bar").style.width = Math.min(op.dist * 5, 100) + "%"
+        if (el("sb-pop-bar")) el("sb-pop-bar").style.width = op.pop + "%"
+        if (el("sb-tae-bar"))
+          el("sb-tae-bar").style.width = Math.min(op.tae / 2, 100) + "%"
+
+        // Arc gauge: stroke-dashoffset = circumference * (1 - ratio)
+        const circ = 238.76
+        const setArc = (id, ratio) => {
+          const arc = document.getElementById(id)
+          if (arc)
+            arc.style.strokeDashoffset = (
+              circ *
+              (1 - Math.min(ratio, 1))
+            ).toFixed(2)
+        }
+        setArc("arc-tae", op.tae / 200)
+        setArc("arc-dist", op.dist / 100)
+        setArc(
+          "arc-prazo",
+          op.diasRest > 0 ? op.prazoDecorrido / op.prazoTotal : 1,
+        )
+        setArc("arc-cot-strike", pctStrike / 100)
+        setArc("arc-cot-ab", Math.min(mult / 30, 1))
+        setArc("arc-dist2", op.dist / 100)
+      }
+
+      /* ======================================================
+   REFRESH / LOADING
+   ====================================================== */
+      function refreshData() {
+        if (isLoading) return
+        isLoading = true
+
+        const btn = document.getElementById("btnRefresh")
+        btn.classList.add("spinning")
+
+        // Enter loading mode
+        document.getElementById("dashBody").classList.add("loading-mode")
+
+        setTimeout(() => {
+          // Simulate new data (slightly randomized)
+          const op = { ...operacoes[currentOp] }
+          op.cotacao = op.cotacao * (1 + (Math.random() - 0.5) * 0.01)
+          op.variacao += (Math.random() - 0.5) * 10
+          op.pop = Math.min(99, Math.max(1, op.pop + (Math.random() - 0.5) * 2))
+          op.popITM = 100 - op.pop
+
+          operacoes[currentOp] = op
+          renderOp(op)
+
+          // Exit loading mode
+          document.getElementById("dashBody").classList.remove("loading-mode")
+          btn.classList.remove("spinning")
+          isLoading = false
+
+          // Update time
+          const now = new Date()
+          document.getElementById("lastUpdate").textContent =
+            "Atualizado: " +
+            now.getHours().toString().padStart(2, "0") +
+            ":" +
+            now.getMinutes().toString().padStart(2, "0")
+        }, 1800)
+      }
+
+      /* ======================================================
+   TAB SWITCHING
+   ====================================================== */
+      // Period pills
+      document.querySelectorAll("#periodPills .pill").forEach((btn) => {
+        btn.addEventListener("click", function () {
+          document
+            .querySelectorAll("#periodPills .pill")
+            .forEach((b) => b.classList.remove("active"))
+          this.classList.add("active")
+        })
+      })
+      // Type pills (toggle)
+      document.querySelectorAll("#typePills .pill").forEach((btn) => {
+        btn.addEventListener("click", function () {
+          this.classList.toggle("active")
+        })
+      })
+
+      // Op tabs
+      document.querySelectorAll("#opTabsRow .op-tab").forEach((btn) => {
+        btn.addEventListener("click", function () {
+          document
+            .querySelectorAll("#opTabsRow .op-tab")
+            .forEach((b) => b.classList.remove("active"))
+          this.classList.add("active")
+          currentOp = parseInt(this.dataset.op)
+          renderOp(operacoes[currentOp])
+        })
+      })
+
+      // Section tabs
+      document.querySelectorAll("#sectionTabs .section-tab").forEach((btn) => {
+        btn.addEventListener("click", function () {
+          document
+            .querySelectorAll("#sectionTabs .section-tab")
+            .forEach((b) => b.classList.remove("active"))
+          this.classList.add("active")
+          const sec = this.dataset.sec
+          document
+            .querySelectorAll(".tab-panel")
+            .forEach((p) => p.classList.remove("active"))
+          document.getElementById("sec-" + sec).classList.add("active")
+        })
+      })
+
+      // Init
+      renderOp(operacoes[0])
+    </script>
+  </body>
+</html>

@@ -1,0 +1,204 @@
+/* modal-total-operacoes-crypto.css */
+
+.toc-modal-content {
+    background: var(--tblr-bg-surface, #1a1a2e);
+    color: var(--tblr-body-color, #e0e0e0);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.toc-modal-header {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    padding: 1.5rem 1.75rem;
+    color: #fff;
+}
+
+.toc-eyebrow {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    opacity: 0.85;
+    margin-bottom: 0.25rem;
+}
+
+.toc-amount {
+    font-size: 2.2rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+}
+
+.toc-sub {
+    font-size: 0.82rem;
+    opacity: 0.9;
+    margin-bottom: 0.6rem;
+}
+
+.toc-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.5rem;
+}
+
+.toc-pill {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+}
+
+.toc-modal-body {
+    padding: 1.25rem 1.5rem;
+}
+
+.toc-ftabs {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.2rem;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    padding-bottom: 0.75rem;
+}
+
+.toc-ftab {
+    background: none;
+    border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.6);
+    border-radius: 6px;
+    padding: 0.3rem 0.8rem;
+    font-size: 0.78rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all .15s;
+}
+
+.toc-ftab:hover,
+.toc-ftab.active {
+    background: #f59e0b;
+    border-color: #f59e0b;
+    color: #fff;
+}
+
+.toc-card-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+}
+
+@media (max-width: 768px) {
+    .toc-card-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.toc-card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+    text-align: center;
+}
+
+.toc-card-label {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 0.3rem;
+}
+
+.toc-card-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #f59e0b;
+}
+
+.toc-accordion .accordion-button {
+    background: rgba(255,255,255,0.03);
+    color: inherit;
+    font-size: 0.88rem;
+    font-weight: 600;
+    border-radius: 8px;
+}
+
+.toc-accordion .accordion-button:not(.collapsed) {
+    background: rgba(245, 158, 11, 0.12);
+    color: #f59e0b;
+    box-shadow: none;
+}
+
+.toc-accordion .accordion-button::after {
+    filter: invert(1);
+}
+
+.toc-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+}
+
+.toc-table th {
+    text-transform: uppercase;
+    font-size: 0.68rem;
+    letter-spacing: .5px;
+    color: rgba(255,255,255,0.5);
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    white-space: nowrap;
+}
+
+.toc-table td {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    vertical-align: middle;
+}
+
+.toc-table tr:hover td {
+    background: rgba(255,255,255,0.03);
+}
+
+.toc-meta-card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.toc-meta-icon {
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.toc-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    padding-left: 1rem;
+    border-left: 2px solid rgba(245, 158, 11, 0.3);
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.toc-timeline-item {
+    position: relative;
+    padding-left: 1rem;
+}
+
+.toc-timeline-item.toc-timeline-neg .toc-timeline-dot {
+    background: #ef4444;
+}
+
+.toc-timeline-dot {
+    position: absolute;
+    left: -1.42rem;
+    top: 0.25rem;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #f59e0b;
+    border: 2px solid var(--tblr-bg-surface, #1a1a2e);
+}

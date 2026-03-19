@@ -1,0 +1,14 @@
+/* modal-resultado-total-crypto.css v1.0.0
+ * Override de cores para o modal Análise Temporal - Crypto (tema dourado).
+ * O CSS base (modal-resultado-total.css) deve ser carregado antes deste.
+ */
+
+/* Cor de acento: dourado BTC ao invés do azul padrão */
+.modal-resultado-total .rt-filter-btn.active {
+    background: #f6c23e;
+    color: #1a1a2e;
+}
+
+.modal-resultado-total .rt-hero-total {
+    color: #f6c23e;
+}

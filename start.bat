@@ -37,3 +37,11 @@ echo  SERVIDOR RODANDO (CTRL+C para parar)
 echo ========================================
 echo.
 python server.py
+
+echo.
+echo ========================================
+echo  Servidor interrompido
+echo ========================================
+echo.
+
+call stop.bat
