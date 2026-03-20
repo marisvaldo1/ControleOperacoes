@@ -55,8 +55,9 @@ function setupEventListeners() {
     document.getElementById("btnSimularCrypto")?.addEventListener("click", openSimuladorModal);
     document.getElementById("btnCalcularSim")?.addEventListener("click", calcularSimulador);
     document.getElementById("btnAplicarSim")?.addEventListener("click", aplicarSimulacao);
-    document.getElementById("btnBuscarDI")?.addEventListener("click", buscarProdutosDI);
     document.getElementById("btnSimCotacaoLive")?.addEventListener("click", buscarCotacaoSimLive);
+    // Atualiza cotação automaticamente ao trocar o par
+    document.getElementById("simPar")?.addEventListener("change", buscarCotacaoSimLive);
     // Botão refresh da navbar
     document.getElementById("btnRefresh")?.addEventListener("click", refreshQuotes);
     if (window.ModalAnalise) {
@@ -399,7 +400,14 @@ function updateUI() {
 
     // Saldo: usa o configurado; se zero, exibe total capital nas posições abertas
     const abertasOps   = allOperacoes.filter(o => (o.status || "ABERTA") === "ABERTA");
-    const totalAbertura = abertasOps.reduce((s, o) => s + (parseFloat(o.abertura) || 0), 0);
+    // Valora investido: novo formato -> abertura(preço) × crypto(qtd); antigo -> abertura era USD direto
+    const totalAbertura = abertasOps.reduce((s, o) => {
+        const abr = parseFloat(o.abertura) || 0;
+        const cot = parseFloat(o.cotacao_atual) || 0;
+        const qty = parseFloat(o.crypto) || 0;
+        if (abr > 0 && cot > 0 && abr < cot * 0.1) return s + abr;  // formato antigo (USD)
+        return s + (abr > 0 && qty > 0 ? abr * qty : abr);           // formato novo (preço × qtd)
+    }, 0);
     const saldoDisplay  = saldo > 0 ? saldo : totalAbertura;
     document.getElementById("cardTotalOps").textContent       = allOperacoes.length;
     document.getElementById("cardSaldoCrypto").textContent    = fmtUsd(saldoDisplay);
@@ -822,7 +830,16 @@ function editOperacao(id) {
     document.getElementById("inputTipo").value               = op.tipo || "CALL";
     document.getElementById("inputStatus").value             = op.status || "ABERTA";
     document.getElementById("inputDataOperacao").value       = op.data_operacao || "";
-    document.getElementById("inputAbertura").value           = op.abertura || "";
+    // Valor Investido (USD) derivado: novo formato = preço × qtd; antigo = abertura era USD
+    (() => {
+        const abr = parseFloat(op.abertura) || 0;
+        const cot = parseFloat(op.cotacao_atual) || 0;
+        const qty = parseFloat(op.crypto) || 0;
+        const isOldFormat = abr > 0 && cot > 0 && abr < cot * 0.1;
+        document.getElementById("inputAbertura").value = isOldFormat
+            ? abr.toFixed(2)
+            : (abr > 0 && qty > 0 ? (abr * qty).toFixed(2) : (abr || ""));
+    })();
     document.getElementById("inputStrike").value             = op.strike || "";
     document.getElementById("inputTae").value                = op.tae || "";
     document.getElementById("inputPrazo").value              = op.prazo || "";
@@ -846,7 +863,8 @@ async function saveOperacao() {
         status: document.getElementById("inputStatus").value,
         data_operacao:    document.getElementById("inputDataOperacao").value,
         cotacao_atual:    parseFloat(document.getElementById("inputCotacaoAtual").value) || null,
-        abertura:         parseFloat(document.getElementById("inputAbertura").value)     || null,
+        // abertura = preço da crypto na abertura (cotação), não o valor investido
+        abertura:         parseFloat(document.getElementById("inputCotacaoAtual").value) || null,
         tae:              parseFloat(document.getElementById("inputTae").value)          || null,
         strike:           parseFloat(document.getElementById("inputStrike").value)       || null,
         distancia:        parseFloat(document.getElementById("inputDistancia").value)    || null,
@@ -906,9 +924,6 @@ async function deleteOperacao(id) {
 function openSimuladorModal() {
     document.getElementById("simResultContainer").style.display = "none";
     document.getElementById("btnAplicarSim").disabled = true;
-    document.getElementById("diProdutosEmpty").style.display = "";
-    document.getElementById("diProdutosTable").style.display = "none";
-    document.getElementById("diProdutosTbody").innerHTML = "";
     document.getElementById("simCotacaoLiveInfo").textContent = "";
     _lastSimData = null;
     new bootstrap.Modal(document.getElementById("modalSimuladorCrypto")).show();
@@ -1125,7 +1140,10 @@ function aplicarSimulacao() {
             if (el("inputTipo"))   el("inputTipo").value   = _lastSimData.tipo;   // CALL ou PUT
             if (el("inputStatus")) el("inputStatus").value = "ABERTA";
             // Campos numéricos
-            if (el("inputAbertura"))     el("inputAbertura").value     = _lastSimData.abertura;
+            // Valor investido em USD (não a cotação do ativo)
+            setInvestidoMode('usd');
+            const valorInvestido = parseFloat(_lastSimData.abertura || 0);
+            if (el("inputAbertura"))     el("inputAbertura").value     = valorInvestido > 0 ? valorInvestido.toFixed(2) : "";
             if (el("inputTae"))          el("inputTae").value          = _lastSimData.tae;
             if (el("inputPrazo"))        el("inputPrazo").value        = _lastSimData.prazo;
             if (el("inputStrike"))       el("inputStrike").value       = _lastSimData.strike;

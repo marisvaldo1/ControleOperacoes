@@ -8,7 +8,7 @@
 
     // ── Configuração ──────────────────────────────────────────────────────────
     const cfg = {
-        triggerBtnId:  'btnResultadosCrypto',
+        triggerBtnId:  'btnResultadosCryptoDetalhado',  // disparado pelo botão dentro do modal compacto
         containerElId: 'modalResultadosCryptoContainer',
         modalElId:     'modalResultadosCrypto',
         templatePath:  '../components/modals/crypto/modal-resultados-crypto.html',

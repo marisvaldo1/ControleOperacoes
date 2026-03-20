@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Resultados · Crypto</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+/* ─── DESIGN SYSTEM (baseado na imagem) ─── */
+:root {
+  --bg:        #141b28;
+  --bg-card:   #1a2436;
+  --bg-card2:  #1e2a3d;
+  --bg-card3:  #222f42;
+  --bdr:       #263347;
+  --bdr-hi:    #334560;
+  --tx1:       #e8f0f8;
+  --tx2:       #6b82a0;
+  --tx3:       #3a4d63;
+  --green:     #3dd68c;
+  --green-bg:  #1a3028;
+  --green-bdr: #2a5040;
+  --red:       #e85555;
+  --red-bg:    #2d1a1a;
+  --red-bdr:   #4a2828;
+  --amber:     #e8a830;
+  --amber-bg:  #2d2010;
+  --amber-bdr: #4a3820;
+  --blue:      #4db8d4;
+  --blue-bg:   #162430;
+  --blue-bdr:  #254050;
+  --purple:    #9b72d4;
+  --mono:      'JetBrains Mono', monospace;
+  --ui:        'Inter', sans-serif;
+  --rad:       8px;
+  --rad-lg:    10px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; }
+body {
+  background: #0f1520;
+  color: var(--tx1);
+  font-family: var(--ui);
+  min-height: 100vh;
+  padding: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+}
+
+/* ── SWITCHER ── */
+.sw {
+  display: flex; gap: .35rem; flex-wrap: wrap;
+  background: var(--bg); border: 1px solid var(--bdr);
+  border-radius: 24px; padding: .4rem .65rem;
+  position: sticky; top: .6rem; z-index: 500;
+  box-shadow: 0 4px 20px rgba(0,0,0,.5);
+}
+.sw span { font-family: var(--mono); font-size: .68rem; color: var(--tx2); align-self: center; padding-right: .2rem; }
+.sw-btn {
+  padding: .24rem .82rem; border-radius: 20px;
+  border: 1px solid var(--bdr); background: transparent;
+  color: var(--tx2); font-family: var(--mono); font-size: .66rem; font-weight: 500;
+  cursor: pointer; transition: all .18s; white-space: nowrap;
+}
+.sw-btn:hover { color: var(--tx1); border-color: var(--bdr-hi); }
+.sw-btn.on { background: var(--bg-card2); border-color: var(--blue); color: var(--blue); }
+
+/* ── MODAL ── */
+.modal {
+  width: 100%; max-width: 1340px;
+  background: var(--bg); border: 1px solid var(--bdr);
+  border-radius: var(--rad-lg); overflow: hidden;
+  box-shadow: 0 16px 60px rgba(0,0,0,.6);
+  display: none;
+}
+.modal.on { display: block; }
+
+/* ── HEADER ── */
+.hdr {
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--bdr);
+  padding: .55rem 1rem;
+  display: flex; align-items: center; gap: .65rem;
+}
+.hdr-icon { color: var(--tx2); font-size: .95rem; }
+.hdr-title {
+  font-family: var(--ui); font-size: .92rem; font-weight: 600;
+  color: var(--tx1); flex: 1;
+  display: flex; align-items: center; gap: .4rem;
+}
+.hdr-live {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--green); flex-shrink: 0;
+  animation: blink 2.5s infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 60%{opacity:.3} }
+.hdr-time { font-family: var(--mono); font-size: .68rem; color: var(--tx2); }
+.hdr-btn {
+  width: 28px; height: 28px; border-radius: 6px;
+  border: 1px solid var(--bdr-hi);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all .18s; font-size: .78rem;
+}
+.hdr-btn.ref { background: var(--bg-card2); color: var(--blue); }
+.hdr-btn.ref:hover { border-color: var(--blue); }
+.hdr-btn.ref.spin svg { animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.hdr-btn.cls { background: transparent; color: var(--tx2); }
+.hdr-btn.cls:hover { border-color: var(--red); color: var(--red); background: var(--red-bg); }
+
+/* ── FILTER BAR ── */
+.fbar {
+  padding: .4rem 1rem; border-bottom: 1px solid var(--bdr);
+  display: flex; align-items: center; gap: .25rem; flex-wrap: wrap;
+  background: var(--bg);
+}
+.pill {
+  padding: .19rem .5rem; border-radius: 20px;
+  font-family: var(--mono); font-size: .67rem; font-weight: 500;
+  cursor: pointer; border: 1px solid var(--bdr);
+  background: transparent; color: var(--tx2); transition: all .15s; white-space: nowrap;
+}
+.pill:hover { color: var(--tx1); border-color: var(--bdr-hi); }
+.pill.ap  { background: var(--bg-card2); border-color: var(--blue);   color: var(--blue); }
+.pill.aa  { background: var(--green-bg); border-color: var(--green);  color: var(--green); }
+.pill.af  { background: var(--red-bg);   border-color: var(--red);    color: var(--red); }
+.pill.ac  { background: var(--blue-bg);  border-color: var(--blue);   color: var(--blue); }
+.pill.apu { background: #221838;         border-color: var(--purple); color: var(--purple); }
+.sep { width: 1px; height: 16px; background: var(--bdr); flex-shrink: 0; margin: 0 .1rem; }
+
+/* ── OP TABS ── */
+.op-row {
+  padding: .35rem 1rem; border-bottom: 1px solid var(--bdr);
+  background: var(--bg-card); display: flex; align-items: center; gap: .25rem;
+  overflow-x: auto; scrollbar-width: none;
+}
+.op-row::-webkit-scrollbar { display: none; }
+.op-tab {
+  flex-shrink: 0; padding: .26rem .58rem; border-radius: 6px;
+  border: 1px solid var(--bdr); background: var(--bg);
+  cursor: pointer; transition: all .15s; text-align: center; min-width: 54px;
+}
+.op-tab:hover { border-color: var(--bdr-hi); }
+.op-tab.sel { background: var(--bg-card2); border-color: var(--blue); }
+.op-tab.cl  { border-color: var(--tx3); background: transparent; opacity: .55; }
+.ot-t { font-family: var(--mono); font-size: .6rem; font-weight: 600; color: var(--tx2); }
+.op-tab.sel .ot-t { color: var(--blue); }
+.op-tab.cl .ot-t  { color: var(--tx3); }
+.ot-a { font-family: var(--mono); font-size: .68rem; font-weight: 700; color: var(--tx1); }
+.op-tab.cl .ot-a  { color: var(--tx2); }
+.ot-d { font-family: var(--mono); font-size: .54rem; color: var(--tx2); }
+.op-sum { margin-left: auto; flex-shrink: 0; display: flex; gap: .22rem; align-items: center; }
+.tag {
+  padding: .12rem .38rem; border-radius: 10px;
+  font-family: var(--mono); font-size: .63rem; font-weight: 600;
+}
+.tag-b { background: var(--bg-card3); color: var(--blue); border: 1px solid var(--blue-bdr); }
+.tag-g { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-bdr); }
+.tag-r { background: #1e1e28; color: var(--tx2); border: 1px solid var(--bdr); }
+.tag-a { background: var(--amber-bg); color: var(--amber); border: 1px solid var(--amber-bdr); }
+
+/* ── BADGES ── */
+.badge {
+  display: inline-block; padding: .08rem .38rem;
+  border-radius: 4px; font-family: var(--mono); font-size: .62rem; font-weight: 600;
+}
+.b-call { background: var(--blue-bg);  color: var(--blue);  border: 1px solid var(--blue-bdr); }
+.b-put  { background: #221838;         color: var(--purple);border: 1px solid #352858; }
+.b-cl   { background: var(--bg-card3); color: var(--tx2);   border: 1px solid var(--bdr); }
+.b-otm  { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-bdr); padding: .08rem .45rem; }
+.b-itm  { background: var(--red-bg);   color: var(--red);   border: 1px solid var(--red-bdr);  padding: .08rem .45rem; }
+.b-mon  { background: var(--amber-bg); color: var(--amber); border: 1px solid var(--amber-bdr);padding: .08rem .45rem; }
+
+/* ── BODY ── */
+.body { padding: .75rem 1rem .95rem; }
+
+/* ── KPI STRIP (barra de resumo topo) ── */
+.kpi-strip {
+  display: grid; grid-template-columns: repeat(6, 1fr);
+  background: var(--bg-card); border: 1px solid var(--bdr);
+  border-radius: var(--rad-lg); overflow: hidden; margin-bottom: .65rem;
+}
+.kpi-item {
+  padding: .7rem .75rem; border-right: 1px solid var(--bdr);
+  text-align: center;
+}
+.kpi-item:last-child { border-right: none; }
+.kpi-val  { font-family: var(--mono); font-size: 1.3rem; font-weight: 700; line-height: 1; margin-bottom: .18rem; }
+.kpi-lbl  { font-family: var(--mono); font-size: .6rem;  font-weight: 500; color: var(--tx2); text-transform: uppercase; letter-spacing: .08em; }
+
+/* ── METRIC GAUGE ROW ── */
+.mg-row {
+  display: grid; gap: 0;
+  background: var(--bg-card); border: 1px solid var(--bdr);
+  border-radius: var(--rad-lg); overflow: hidden;
+  margin-bottom: .55rem;
+}
+/* 7 métrica + 1 total = 8 colunas */
+.mg-row.cols-8 { grid-template-columns: repeat(8, 1fr); }
+.mg-row.cols-7 { grid-template-columns: repeat(7, 1fr); }
+.mg-cell {
+  padding: .62rem .35rem .55rem;
+  text-align: center;
+  border-right: 1px solid var(--bdr);
+}
+.mg-cell:last-child { border-right: none; }
+.mg-cell.text-cell {
+  display: flex; flex-direction: column; justify-content: center;
+  text-align: left; padding: .62rem .7rem; border-right: none;
+  border-left: 1px solid var(--bdr);
+}
+.mg-cell-lbl {
+  font-family: var(--mono); font-size: .58rem; font-weight: 500;
+  color: var(--tx2); text-transform: uppercase; letter-spacing: .07em;
+  margin-top: .18rem;
+}
+.mg-cell-sub {
+  font-family: var(--mono); font-size: .6rem; color: var(--tx2);
+  margin-top: .06rem;
+}
+.mg-prem-val {
+  font-family: var(--mono); font-size: 1.15rem; font-weight: 700;
+  color: var(--amber); line-height: 1; margin-bottom: .18rem;
+}
+.mg-prem-lbl { font-family: var(--mono); font-size: .6rem; color: var(--tx2); text-transform: uppercase; letter-spacing: .07em; margin-bottom: .18rem; }
+.mg-prem-sub { font-family: var(--mono); font-size: .62rem; color: var(--tx2); line-height: 1.65; }
+
+/* ── OP CARD (sidebar) ── */
+.op-card {
+  background: var(--bg-card2); border: 1px solid var(--bdr);
+  border-radius: var(--rad); padding: .52rem .6rem;
+  margin-bottom: .3rem; transition: border-color .15s;
+}
+.op-card:hover { border-color: var(--bdr-hi); }
+.op-card.ex-itm { border-left: 2px solid var(--red);   }
+.op-card.ex-otm { border-left: 2px solid var(--green); }
+.oc-head { display: flex; align-items: center; gap: .35rem; margin-bottom: .3rem; }
+.oc-asset { font-family: var(--mono); font-size: .76rem; font-weight: 700; }
+.oc-date  { font-family: var(--mono); font-size: .62rem; color: var(--tx2); margin-left: auto; }
+.oc-row   { display: flex; justify-content: space-between; font-size: .68rem; padding: .1rem 0; border-bottom: 1px solid var(--bdr); }
+.oc-row:last-of-type { border-bottom: none; }
+.oc-k { color: var(--tx2); font-family: var(--mono); }
+.oc-v { font-family: var(--mono); font-weight: 600; }
+/* progress bar dias */
+.oc-days { margin-top: .32rem; }
+.oc-days-top { display: flex; justify-content: space-between; font-family: var(--mono); font-size: .61rem; color: var(--tx2); margin-bottom: .12rem; }
+.oc-days-bar { height: 5px; background: var(--bg-card); border-radius: 3px; overflow: hidden; }
+.oc-days-fill { height: 100%; border-radius: 3px; transition: width .5s ease; }
+
+/* ── OP EXPANDED CARD (layouts 2/5/6) ── */
+.op-exp {
+  background: var(--bg-card); border: 1px solid var(--bdr);
+  border-radius: var(--rad-lg); overflow: hidden; margin-bottom: .4rem;
+}
+.op-exp-head {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .5rem .7rem; border-bottom: 1px solid var(--bdr);
+}
+.op-exp-head.otm { background: var(--green-bg); border-bottom-color: var(--green-bdr); }
+.op-exp-head.itm { background: var(--red-bg);   border-bottom-color: var(--red-bdr);   }
+.op-exp-asset { font-family: var(--mono); font-size: .82rem; font-weight: 700; }
+.op-exp-date  { font-family: var(--mono); font-size: .64rem; color: var(--tx2); margin-left: auto; }
+.op-exp-body  { padding: .5rem .7rem; }
+.op-exp-grid  { display: grid; grid-template-columns: 1fr 1fr; gap: .2rem .6rem; }
+.oeg-lbl { font-family: var(--mono); font-size: .58rem; color: var(--tx2); text-transform: uppercase; letter-spacing: .06em; }
+.oeg-val { font-family: var(--mono); font-size: .78rem; font-weight: 700; }
+
+/* ── COMPARATIVO TABLE ── */
+.cmp-table { width: 100%; border-collapse: collapse; }
+.cmp-table th { font-family: var(--mono); font-size: .6rem; color: var(--tx2); text-transform: uppercase; letter-spacing: .07em; padding: .3rem .5rem; text-align: left; border-bottom: 1px solid var(--bdr); }
+.cmp-table td { font-family: var(--mono); font-size: .7rem; padding: .32rem .5rem; border-bottom: 1px solid var(--bg-card3); }
+.cmp-table tr:last-child td { border-bottom: none; }
+.cmp-table td:not(:first-child) { text-align: right; }
+
+/* ── CHART CARD ── */
+.chart-card {
+  background: var(--bg-card); border: 1px solid var(--bdr);
+  border-radius: var(--rad-lg); padding: .65rem .75rem;
+}
+.chart-title { font-family: var(--mono); font-size: .62rem; color: var(--tx2); text-transform: uppercase; letter-spacing: .08em; margin-bottom: .5rem; }
+
+/* ── PROB BAR ── */
+.prob-wrap {
+  background: var(--bg-card); border: 1px solid var(--bdr);
+  border-radius: var(--rad-lg); padding: .55rem .75rem;
+}
+.prob-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: .32rem; }
+.prob-label { font-family: var(--mono); font-size: .62rem; color: var(--tx2); text-transform: uppercase; letter-spacing: .08em; }
+.prob-pct   { font-family: var(--mono); font-size: .88rem; font-weight: 700; }
+.prob-track { height: 8px; background: var(--bg-card3); border-radius: 4px; overflow: hidden; position: relative; margin-bottom: .2rem; }
+.prob-fill  { height: 100%; border-radius: 4px; transition: width .6s ease; }
+.prob-foot  { display: flex; justify-content: space-between; font-family: var(--mono); font-size: .6rem; color: var(--tx2); }
+
+/* ── CLOSED FOOTER ── */
+.closed-footer {
+  background: var(--bg-card); border: 1px solid var(--bdr);
+  border-radius: var(--rad-lg); padding: .52rem .7rem; margin-top: .55rem;
+}
+.cf-title { font-family: var(--mono); font-size: .62rem; color: var(--tx2); text-transform: uppercase; letter-spacing: .1em; margin-bottom: .32rem; }
+.cf-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: .25rem; }
+.cf-item {
+  display: flex; align-items: center; gap: .28rem;
+  padding: .22rem .38rem; background: var(--bg-card2); border-radius: 6px;
+  border: 1px solid var(--bdr); opacity: .5;
+}
+.cf-asset { font-family: var(--mono); font-size: .66rem; font-weight: 700; }
+.cf-val   { font-family: var(--mono); font-size: .64rem; color: var(--tx2); margin-left: auto; }
+
+/* ── LOADING ── */
+.loading .ld {
+  background: linear-gradient(90deg, var(--bdr) 25%, var(--bdr-hi) 50%, var(--bdr) 75%);
+  background-size: 200% 100%; animation: shim 1.3s infinite;
+  border-radius: 3px; color: transparent !important; min-width: 28px; display: inline-block;
+}
+@keyframes shim { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+</style>
+</head>
+<body>
+
+<div class="sw">
+  <span>Variação:</span>
+  <button class="sw-btn on" data-v="1">① Padrão Limpo</button>
+  <button class="sw-btn" data-v="2">② Cards Detalhados</button>
+  <button class="sw-btn" data-v="3">③ Comparativo</button>
+  <button class="sw-btn" data-v="4">④ Score + PoP</button>
+  <button class="sw-btn" data-v="5">⑤ Expandido Completo</button>
+  <button class="sw-btn" data-v="6">⑥ Dashboard Analítico</button>
+</div>
+
+<div class="modal on" id="m1"></div>
+<div class="modal" id="m2"></div>
+<div class="modal" id="m3"></div>
+<div class="modal" id="m4"></div>
+<div class="modal" id="m5"></div>
+<div class="modal" id="m6"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+/* ══ DATA ══ */
+const OPS = [
+  {id:1, asset:'ETH',tipo:'CALL',cotacao:2049.45,abertura:2034.51,tae:17.36, strike:2325.00,dist:14.28,prazo:2,corridos:1,premU:1.59, premPct:0.078,res:0.10,exData:'06/03',ex:'NÃO',open:true},
+  {id:2, asset:'ETH',tipo:'CALL',cotacao:2019.92,abertura:2009.71,tae:38.60, strike:2150.00,dist:6.98, prazo:1,corridos:1,premU:1.74, premPct:0.087,res:0.11,exData:'11/03',ex:'NÃO',open:true},
+  {id:3, asset:'ETH',tipo:'CALL',cotacao:2066.70,abertura:2020.87,tae:49.24, strike:2100.00,dist:3.92, prazo:1,corridos:1,premU:2.24, premPct:0.111,res:0.13,exData:'12/03',ex:'NÃO',open:true},
+  {id:4, asset:'BTC',tipo:'PUT', cotacao:70742.2,abertura:69529.1,tae:196.79,strike:69000.0,dist:0.76, prazo:1,corridos:1,premU:2.75, premPct:0.004,res:0.54,exData:'12/03',ex:'NÃO',open:true},
+  {id:5, asset:'BTC',tipo:'PUT', cotacao:72272.6,abertura:70436.3,tae:134.14,strike:69500.0,dist:1.33, prazo:1,corridos:1,premU:1.88, premPct:0.003,res:0.37,exData:'13/03',ex:'NÃO',open:true},
+  {id:6, asset:'ETH',tipo:'CALL',cotacao:2066.80,abertura:2069.58,tae:39.76, strike:2150.00,dist:3.89, prazo:1,corridos:1,premU:1.85, premPct:0.090,res:0.11,exData:'13/03',ex:'NÃO',open:true},
+  {id:7, asset:'BTC',tipo:'PUT', cotacao:71177.9,abertura:72267.5,tae:69.72, strike:71000.0,dist:1.75, prazo:3,corridos:2,premU:2.95, premPct:0.004,res:0.57,exData:'16/03',ex:'NÃO',open:true},
+  {id:8, asset:'ETH',tipo:'CALL',cotacao:2104.66,abertura:2119.48,tae:30.21, strike:2250.00,dist:6.16, prazo:3,corridos:2,premU:4.33, premPct:0.205,res:0.25,exData:'16/03',ex:'NÃO',open:true},
+  {id:9, asset:'BTC',tipo:'CALL',cotacao:74321.9,abertura:73455.2,tae:178.06,strike:74000.0,dist:0.74, prazo:1,corridos:1,premU:0.32, premPct:0.001,res:0.49,exData:'17/03',ex:'SIM',open:true},
+  {id:10,asset:'ETH',tipo:'PUT', cotacao:2307.97,abertura:2266.03,tae:306.98,strike:2250.00,dist:0.71, prazo:1,corridos:1,premU:19.96,premPct:0.865,res:0.84,exData:'17/03',ex:'NÃO',open:true},
+  {id:11,asset:'BTC',tipo:'CALL',cotacao:73664.0,abertura:73455.2,tae:108.25,strike:75000.0,dist:2.10, prazo:1,corridos:1,premU:8.34, premPct:0.011,res:0.30,exData:'17/03',ex:'NÃO',open:true},
+  {id:12,asset:'ETH',tipo:'CALL',cotacao:2329.62,abertura:2266.03,tae:184.66,strike:2325.00,dist:2.60, prazo:1,corridos:1,premU:0.07, premPct:0.003,res:0.51,exData:'17/03',ex:'SIM',open:true},
+  {id:13,asset:'BTC',tipo:'CALL',cotacao:74213.2,abertura:74113.7,tae:129.47,strike:75000.0,dist:1.20, prazo:1,corridos:1,premU:10.12,premPct:0.014,res:0.35,exData:'18/03',ex:'NÃO',open:false},
+  {id:14,asset:'ETH',tipo:'PUT', cotacao:2325.34,abertura:2330.94,tae:347.33,strike:2325.00,dist:0.25, prazo:1,corridos:1,premU:23.54,premPct:1.010,res:0.95,exData:'18/03',ex:'NÃO',open:false},
+  {id:15,asset:'BTC',tipo:'CALL',cotacao:70435.4,abertura:74150.5,tae:134.51,strike:75000.0,dist:1.15, prazo:1,corridos:1,premU:10.55,premPct:0.014,res:0.37,exData:'19/03',ex:'NÃO',open:false},
+  {id:16,asset:'ETH',tipo:'CALL',cotacao:2183.61,abertura:2323.36,tae:172.26,strike:2375.00,dist:2.22, prazo:1,corridos:1,premU:16.85,premPct:0.727,res:1.57,exData:'19/03',ex:'NÃO',open:false},
+  {id:17,asset:'BTC',tipo:'CALL',cotacao:70376.8,abertura:70500.0,tae:115.26,strike:71500.0,dist:1.42, prazo:1,corridos:1,premU:8.62, premPct:0.012,res:0.32,exData:'20/03',ex:'NÃO',open:false},
+  {id:18,asset:'ETH',tipo:'CALL',cotacao:2142.66,abertura:2184.29,tae:106.76,strike:2250.00,dist:3.01, prazo:1,corridos:1,premU:6.89, premPct:0.316,res:0.29,exData:'20/03',ex:'NÃO',open:false},
+  {id:19,asset:'ETH',tipo:'CALL',cotacao:2142.66,abertura:2184.29,tae:143.42,strike:2225.00,dist:1.86, prazo:1,corridos:1,premU:3.41, premPct:0.158,res:0.39,exData:'20/03',ex:'NÃO',open:false},
+  {id:20,asset:'BTC',tipo:'CALL',cotacao:70228.9,abertura:70298.7,tae:23.20, strike:73500.0,dist:4.55, prazo:3,corridos:3,premU:5.20, premPct:0.007,res:0.19,exData:'23/03',ex:'NÃO',open:false},
+  {id:21,asset:'ETH',tipo:'CALL',cotacao:2133.07,abertura:2136.26,tae:31.01, strike:2275.00,dist:6.49, prazo:3,corridos:3,premU:8.06, premPct:0.378,res:0.25,exData:'23/03',ex:'NÃO',open:false},
+];
+
+let flt={status:'all',tipo:'all'};
+let selIdx={1:0,2:0,3:0,4:0,5:0,6:0};
+let charts={};
+
+/* ── utils ── */
+const $ = id=>document.getElementById(id);
+const fmt  = n=>'$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtK = n=>n>=1000?'$'+(n/1000).toFixed(1)+'K':fmt(n);
+const pp   = n=>(n>=0?'+':'')+n.toFixed(2)+'%';
+const colD = d=>d<2?'var(--red)':d<5?'var(--amber)':'var(--green)';
+const colP = n=>n>0?'var(--green)':n<0?'var(--red)':'var(--tx2)';
+const assetCol = a=>a==='BTC'?'var(--amber)':'var(--blue)';
+
+function typeBadge(t,open=true){
+  if(!open) return `<span class="badge b-cl">${t}</span>`;
+  return t==='CALL'?`<span class="badge b-call">CALL</span>`:`<span class="badge b-put">PUT</span>`;
+}
+function exBadge(e,open=true){
+  if(!open) return `<span class="badge b-cl">${e}</span>`;
+  return e==='SIM'?`<span class="badge b-itm">ITM</span>`:`<span class="badge b-otm">OTM</span>`;
+}
+function getFilt(){
+  return OPS.filter(o=>{
+    if(flt.status==='ab'&&!o.open)return false;
+    if(flt.status==='fe'&&o.open)return false;
+    if(flt.tipo==='call'&&o.tipo!=='CALL')return false;
+    if(flt.tipo==='put'&&o.tipo!=='PUT')return false;
+    return true;
+  });
+}
+
+/* ── Semi-gauge (formato da imagem) ── */
+function sg(pct, col, val, lbl, size=70){
+  pct=Math.max(0,Math.min(pct,1));
+  const r=size*.42;const cx=size/2;const cy=size*.62;
+  const c=Math.PI*r;const off=c*(1-pct);
+  return `<svg width="${size}" height="${(size*.65).toFixed(0)}" viewBox="0 0 ${size} ${(size*.65).toFixed(0)}" style="display:block;margin:0 auto;overflow:visible;">
+    <path d="M${(cx-r).toFixed(1)},${cy} A${r},${r} 0 0,1 ${(cx+r).toFixed(1)},${cy}"
+      fill="none" stroke="#263347" stroke-width="6" stroke-linecap="round"/>
+    <path d="M${(cx-r).toFixed(1)},${cy} A${r},${r} 0 0,1 ${(cx+r).toFixed(1)},${cy}"
+      fill="none" stroke="${col}" stroke-width="6" stroke-linecap="round"
+      stroke-dasharray="${c.toFixed(2)}" stroke-dashoffset="${off.toFixed(2)}"/>
+    <text x="${cx}" y="${(cy-3).toFixed(0)}" text-anchor="middle"
+      font-family="JetBrains Mono,monospace" font-size="11" font-weight="700" fill="${col}">${val}</text>
+  </svg>
+  <div class="mg-cell-lbl">${lbl}</div>`;
+}
+
+/* ── Metric gauge row — 7 gauges + totals ── */
+function mgRow(op, allOps, size=70){
+  if(!op) return `<div style="padding:1.2rem;font-family:var(--mono);font-size:.72rem;color:var(--tx2);">Selecione uma operação acima.</div>`;
+  const am=op.asset==='BTC'?100000:5000;
+  const delta=op.cotacao-op.abertura;
+  const dPct=(delta/op.abertura)*100;
+  const dCol=colP(delta);
+  const open=allOps.filter(o=>o.open);
+  const closed=allOps.filter(o=>!o.open);
+  const tp=allOps.reduce((a,o)=>a+o.premU,0);
+
+  const cells=[
+    {p:Math.min(op.cotacao/am,1),   c:assetCol(op.asset), v:fmtK(op.cotacao),         l:'Cotação Atual',    s:op.asset},
+    {p:Math.min(op.abertura/am,1),  c:'var(--tx2)',        v:fmtK(op.abertura),         l:'Abertura Op.',     s:op.tipo+' · '+op.exData},
+    {p:Math.min(Math.abs(dPct)/25,1),c:dCol,              v:(delta>=0?'+':'')+fmtK(delta),l:'Δ Cot. vs Ab.',s:pp(dPct)},
+    {p:Math.min(op.strike/am,1),    c:'var(--amber)',      v:fmtK(op.strike),            l:'Strike',           s:op.tipo},
+    {p:Math.min(op.dist/20,1),      c:colD(op.dist),      v:op.dist.toFixed(2)+'%',     l:'Dist. Ab→Cot',     s:op.dist<2?'RISCO':op.dist<5?'ATENÇÃO':'SEGURO'},
+    {p:Math.min(op.premU/25,1),     c:'var(--amber)',      v:fmt(op.premU),              l:'Prêmio Rec.',      s:'Qtd: '+op.premPct.toFixed(3)+'%'},
+    {p:Math.min(op.premPct/1.5,1),  c:'var(--purple)',    v:op.premPct.toFixed(3)+'%',  l:'% do Prêmio',      s:op.ex==='SIM'?'EXERCIDO':'SEGURO'},
+  ];
+  const cellsHtml=cells.map(c=>`
+    <div class="mg-cell">
+      ${sg(c.p,c.c,c.v,c.l,size)}
+      <div class="mg-cell-sub" style="color:${c.c==='var(--tx2)'?'var(--tx2)':c.c};">${c.s}</div>
+    </div>`).join('');
+
+  return `<div class="mg-row cols-8">
+    ${cellsHtml}
+    <div class="mg-cell text-cell">
+      <div class="mg-prem-lbl">Prêmio Total</div>
+      <div class="mg-prem-val">${fmt(tp)}</div>
+      <div class="mg-prem-sub">${open.length}A · ${closed.length}F<br>${allOps.filter(o=>o.ex==='SIM').length} exercícios</div>
+    </div>
+  </div>`;
+}
+
+/* ── Op card (sidebar) ── */
+function opCard(op){
+  const ac=assetCol(op.asset);
+  const dias=Math.max(op.prazo-op.corridos,0);
+  const bw=Math.min(Math.round((op.corridos/Math.max(op.prazo,1))*100),100);
+  const dc=dias===0?'var(--red)':dias===1?'var(--amber)':'var(--green)';
+  const delta=op.cotacao-op.abertura;
+  const dPct=(delta/op.abertura)*100;
+
+  return `<div class="op-card ${op.ex==='SIM'?'ex-itm':'ex-otm'}">
+    <div class="oc-head">
+      <span class="oc-asset" style="color:${ac};">${op.asset}</span>
+      ${typeBadge(op.tipo,op.open)}
+      ${exBadge(op.ex,op.open)}
+      <span class="oc-date">${op.exData}</span>
+    </div>
+    <div class="oc-row"><span class="oc-k">Cotação</span><span class="oc-v" style="color:${ac};">${fmtK(op.cotacao)}</span></div>
+    <div class="oc-row"><span class="oc-k">Abertura</span><span class="oc-v" style="color:var(--tx2);">${fmtK(op.abertura)}</span></div>
+    <div class="oc-row"><span class="oc-k">Δ Ab→Cot</span><span class="oc-v" style="color:${colP(delta)};">${pp(dPct)}</span></div>
+    <div class="oc-row"><span class="oc-k">Strike</span><span class="oc-v" style="color:var(--amber);">${fmtK(op.strike)}</span></div>
+    <div class="oc-row"><span class="oc-k">Dist. OTM</span><span class="oc-v" style="color:${colD(op.dist)};">${op.dist.toFixed(2)}%</span></div>
+    <div class="oc-row"><span class="oc-k">Prêmio</span><span class="oc-v" style="color:var(--amber);">${fmt(op.premU)}</span></div>
+    <div class="oc-days">
+      <div class="oc-days-top"><span>Prazo ${op.prazo}d</span><span style="color:${dc};">${dias}d rest.</span></div>
+      <div class="oc-days-bar"><div class="oc-days-fill" style="width:${bw}%;background:${dc};"></div></div>
+    </div>
+  </div>`;
+}
+
+/* ── Op expanded card (v2/5/6) ── */
+function opExp(op){
+  const ac=assetCol(op.asset);
+  const dias=Math.max(op.prazo-op.corridos,0);
+  const bw=Math.min(Math.round((op.corridos/Math.max(op.prazo,1))*100),100);
+  const dc=dias===0?'var(--red)':dias===1?'var(--amber)':'var(--green)';
+  const delta=op.cotacao-op.abertura;
+  const dPct=(delta/op.abertura)*100;
+  const cls=op.ex==='SIM'?'itm':'otm';
+
+  return `<div class="op-exp">
+    <div class="op-exp-head ${cls}">
+      <span class="op-exp-asset" style="color:${ac};">${op.asset}</span>
+      ${typeBadge(op.tipo,op.open)}
+      ${exBadge(op.ex,op.open)}
+      <span class="op-exp-date">${op.exData} · ${op.prazo}d</span>
+    </div>
+    <div class="op-exp-body">
+      <div class="op-exp-grid">
+        <div><div class="oeg-lbl">Cotação</div><div class="oeg-val" style="color:${ac};">${fmtK(op.cotacao)}</div></div>
+        <div><div class="oeg-lbl">Abertura</div><div class="oeg-val" style="color:var(--tx2);">${fmtK(op.abertura)}</div></div>
+        <div><div class="oeg-lbl">Δ Ab→Cot</div><div class="oeg-val" style="color:${colP(delta)};">${pp(dPct)}</div></div>
+        <div><div class="oeg-lbl">Strike</div><div class="oeg-val" style="color:var(--amber);">${fmtK(op.strike)}</div></div>
+        <div><div class="oeg-lbl">Dist. OTM</div><div class="oeg-val" style="color:${colD(op.dist)};">${op.dist.toFixed(2)}%</div></div>
+        <div><div class="oeg-lbl">Prêmio</div><div class="oeg-val" style="color:var(--amber);">${fmt(op.premU)}</div></div>
+      </div>
+      <div style="margin-top:.38rem;">
+        <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:.62rem;margin-bottom:.1rem;">
+          <span style="color:var(--tx2);">Prazo ${op.prazo}d</span>
+          <span style="color:${dc};">${dias}d restante${dias!==1?'s':''}</span>
+        </div>
+        <div class="oc-days-bar"><div class="oc-days-fill" style="width:${bw}%;background:${dc};"></div></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ── Line chart (golden) ── */
+function lineChart(ops,id){
+  const dm={};
+  ops.forEach(o=>{if(!dm[o.exData])dm[o.exData]=0;dm[o.exData]+=o.premU;});
+  const labs=Object.keys(dm).sort((a,b)=>{
+    const [da,ma]=[+a.split('/')[0],+a.split('/')[1]];
+    const [db,mb]=[+b.split('/')[0],+b.split('/')[1]];
+    return ma!==mb?ma-mb:da-db;
+  });
+  const data=labs.map(l=>+dm[l].toFixed(2));
+  const k='c_'+id;
+  if(charts[k]){try{charts[k].destroy();}catch(e){}}
+  const el=$(id);if(!el)return;
+  charts[k]=new Chart(el,{
+    type:'line',
+    data:{labels:labs,datasets:[{
+      data,borderColor:'#e8a830',
+      backgroundColor:'rgba(232,168,48,.1)',
+      borderWidth:2.5,
+      pointBackgroundColor:'#e8a830',
+      pointRadius:4,pointHoverRadius:6,
+      fill:true,tension:.32
+    }]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'$'+c.raw.toFixed(2)}}},
+      scales:{
+        x:{grid:{display:false},ticks:{color:'#6b82a0',font:{family:'JetBrains Mono',size:10},maxRotation:0}},
+        y:{grid:{color:'rgba(38,51,71,.8)'},ticks:{color:'#6b82a0',font:{family:'JetBrains Mono',size:10},callback:v=>'$'+v.toFixed(1)}}
+      }
+    }
+  });
+}
+
+/* ── Closed footer ── */
+function closedFoot(closed){
+  if(!closed.length) return '';
+  return `<div class="closed-footer">
+    <div class="cf-title">Fechadas (${closed.length})</div>
+    <div class="cf-grid">
+      ${closed.map(o=>`<div class="cf-item">
+        <span class="cf-asset" style="color:${assetCol(o.asset)};">${o.asset}</span>
+        ${typeBadge(o.tipo,false)}
+        <span style="font-family:var(--mono);font-size:.62rem;color:var(--tx2);">${o.exData}</span>
+        <span class="cf-val">${fmt(o.premU)}</span>
+      </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+/* ── KPI Strip ── */
+function kpiStrip(ops){
+  const open=ops.filter(o=>o.open);
+  const simQ=ops.filter(o=>o.ex==='SIM').length;
+  const avgDist=open.length?open.reduce((a,o)=>a+o.dist,0)/open.length:0;
+  const avgTae=open.length?open.reduce((a,o)=>a+o.tae,0)/open.length:0;
+  const tp=ops.reduce((a,o)=>a+o.premU,0);
+  const now=new Date();
+  const ts=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+
+  return `<div class="kpi-strip">
+    <div class="kpi-item"><div class="kpi-val" style="color:var(--blue);">${open.length}</div><div class="kpi-lbl">Posições Abertas</div></div>
+    <div class="kpi-item"><div class="kpi-val" style="color:var(--amber);">${fmt(tp)}</div><div class="kpi-lbl">Prêmio Total</div></div>
+    <div class="kpi-item"><div class="kpi-val" style="color:${avgDist<3?'var(--red)':avgDist<6?'var(--amber)':'var(--green)'};">${avgDist.toFixed(2)}%</div><div class="kpi-lbl">Dist. Méd. OTM</div></div>
+    <div class="kpi-item"><div class="kpi-val" style="color:var(--green);">${avgTae.toFixed(0)}%</div><div class="kpi-lbl">TAE Médio</div></div>
+    <div class="kpi-item"><div class="kpi-val" style="color:${simQ>0?'var(--red)':'var(--green)'};">${simQ}</div><div class="kpi-lbl">Em Risco (ITM)</div></div>
+    <div class="kpi-item"><div class="kpi-val" style="color:var(--tx2);">${ts}</div><div class="kpi-lbl">Atualizado</div></div>
+  </div>`;
+}
+
+/* ── Prob bar ── */
+function probBar(op){
+  if(!op) return '';
+  const pop=Math.max(0,Math.min(100,Math.round(40+op.dist*4)));
+  const col=pop>=70?'var(--green)':pop>=50?'var(--amber)':'var(--red)';
+  return `<div class="prob-wrap">
+    <div class="prob-head">
+      <span class="prob-label">Probabilidade de Lucro Total</span>
+      <span class="prob-pct" style="color:${col};">${pop}%</span>
+    </div>
+    <div class="prob-track">
+      <div class="prob-fill" style="width:${pop}%;background:${col};"></div>
+    </div>
+    <div class="prob-foot">
+      <span>0%</span>
+      <span>Break: ${fmtK(op.strike+op.premU)}</span>
+      <span>Strike: ${fmtK(op.strike)}</span>
+      <span>100%</span>
+    </div>
+  </div>`;
+}
+
+/* ═══════════════════════════════════════
+   SHELL (header + filtros + op-tabs)
+═══════════════════════════════════════ */
+function shell(n,ops){
+  const el=$('m'+n);
+  const open=ops.filter(o=>o.open);
+  const closed=ops.filter(o=>!o.open);
+  const tp=open.reduce((a,o)=>a+o.premU,0);
+  const cur=selIdx[n];
+
+  el.innerHTML=`
+    <div class="hdr">
+      <span class="hdr-icon">⚡</span>
+      <span class="hdr-title">Análise de Performance <span class="hdr-live"></span></span>
+      <span class="hdr-time" id="ht${n}">Atualizado: 07:41</span>
+      <button class="hdr-btn ref" id="br${n}" onclick="doRef(${n})">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <path d="M3 12a9 9 0 0 1 15.74-6.74L21 8"/><path d="M21 3v5h-5"/>
+          <path d="M21 12a9 9 0 0 1-15.74 6.74L3 16"/><path d="M3 21v-5h5"/>
+        </svg>
+      </button>
+      <button class="hdr-btn cls">✕</button>
+    </div>
+    <div class="fbar" id="fb${n}">
+      <button class="pill ap" data-p="all">Todos</button>
+      <button class="pill" data-p="hj">Hoje</button>
+      <button class="pill" data-p="7d">7d</button>
+      <button class="pill" data-p="mes">Mês</button>
+      <button class="pill" data-p="30d">30d</button>
+      <button class="pill" data-p="ano">Ano</button>
+      <div class="sep"></div>
+      <button class="pill" data-s="ab">Abertas</button>
+      <button class="pill" data-s="fe">Fechadas</button>
+      <button class="pill" data-t="call">CALL</button>
+      <button class="pill" data-t="put">PUT</button>
+    </div>
+    <div class="op-row" id="opr${n}"></div>
+    <div class="body" id="bd${n}"></div>`;
+  bindFb(n);
+  buildTabs(n,ops);
+}
+
+function buildTabs(n,ops){
+  const open=ops.filter(o=>o.open);
+  const closed=ops.filter(o=>!o.open);
+  const tp=open.reduce((a,o)=>a+o.premU,0);
+  const cur=selIdx[n];
+  const el=$('opr'+n); if(!el) return;
+  el.innerHTML=[...open,...closed].map(op=>{
+    const ri=OPS.indexOf(op);
+    const cls=[op.open?'':'cl',ri===cur?'sel':''].filter(Boolean).join(' ');
+    return `<div class="op-tab ${cls}" onclick="doSel(${n},${ri})">
+      <div class="ot-t">${op.tipo}</div>
+      <div class="ot-a">${op.asset}</div>
+      <div class="ot-d">${op.exData}</div>
+    </div>`;
+  }).join('')
+  +`<div class="op-sum">
+    <span class="tag tag-b">${ops.length}</span>
+    <span class="tag tag-g">${open.length}A</span>
+    <span class="tag tag-r">${closed.length}F</span>
+    <span class="tag tag-a">${fmt(tp)}</span>
+  </div>`;
+}
+
+function bindFb(n){
+  const bar=$('fb'+n); if(!bar) return;
+  bar.querySelectorAll('.pill').forEach(btn=>{
+    btn.addEventListener('click',function(){
+      if(this.dataset.p){bar.querySelectorAll('[data-p]').forEach(b=>b.classList.remove('ap'));this.classList.add('ap');}
+      if(this.dataset.s){const w=this.classList.contains('aa')||this.classList.contains('af');bar.querySelectorAll('[data-s]').forEach(b=>b.classList.remove('aa','af'));if(!w){this.classList.add(this.dataset.s==='ab'?'aa':'af');flt.status=this.dataset.s;}else flt.status='all';}
+      if(this.dataset.t){const w=this.classList.contains('ac')||this.classList.contains('apu');bar.querySelectorAll('[data-t]').forEach(b=>b.classList.remove('ac','apu'));if(!w){this.classList.add(this.dataset.t==='call'?'ac':'apu');flt.tipo=this.dataset.t;}else flt.tipo='all';}
+      renderAll();
+    });
+  });
+}
+
+function doSel(n,idx){selIdx[n]=idx;renderAll();}
+
+/* ══════════════════════════════════════════════════════════
+   LAYOUT 1 — PADRÃO LIMPO
+   KPI strip → metric-gauge row → 3 cols (BTC | chart | ETH)
+   → prob bar → closed
+══════════════════════════════════════════════════════════ */
+function r1(ops){
+  shell(1,ops);
+  const open=ops.filter(o=>o.open);
+  const closed=ops.filter(o=>!o.open);
+  const btc=open.filter(o=>o.asset==='BTC');
+  const eth=open.filter(o=>o.asset==='ETH');
+  const cur=OPS[selIdx[1]]||open[0]||null;
+
+  function side(col,title,list){
+    return `<div style="background:var(--bg-card);border:1px solid var(--bdr);border-radius:var(--rad-lg);padding:.6rem;border-top:2px solid ${col};">
+      <div style="font-family:var(--mono);font-size:.65rem;font-weight:600;color:${col};text-transform:uppercase;letter-spacing:.08em;margin-bottom:.12rem;">${title}</div>
+      <div style="font-family:var(--mono);font-size:.62rem;color:var(--tx2);margin-bottom:.42rem;">Prêmio: <strong style="color:${col};">${fmt(list.reduce((a,o)=>a+o.premU,0))}</strong> · ${list.length} ops</div>
+      ${list.map(opCard).join('')||'<div style="font-family:var(--mono);font-size:.7rem;color:var(--tx3);">Sem operações</div>'}
+    </div>`;
+  }
+
+  $('bd1').innerHTML=`
+    ${kpiStrip(ops)}
+    ${mgRow(cur,ops)}
+    <div style="display:grid;grid-template-columns:222px 1fr 222px;gap:.6rem;align-items:start;">
+      ${side('var(--amber)','Bitcoin',btc)}
+      <div>
+        <div class="chart-card" style="margin-bottom:.5rem;">
+          <div class="chart-title">Prêmio acumulado por data de exercício</div>
+          <div style="position:relative;height:155px;"><canvas id="c1"></canvas></div>
+        </div>
+        ${probBar(cur)}
+      </div>
+      ${side('var(--blue)','Ethereum',eth)}
+    </div>
+    ${closedFoot(closed)}`;
+  lineChart(ops,'c1');
+}
+
+/* ══════════════════════════════════════════════════════════
+   LAYOUT 2 — CARDS DETALHADOS
+   KPI strip → metric-gauge → 3 colunas iguais (exp cards)
+   → chart + prob → closed
+══════════════════════════════════════════════════════════ */
+function r2(ops){
+  shell(2,ops);
+  const open=ops.filter(o=>o.open);
+  const closed=ops.filter(o=>!o.open);
+  const btc=open.filter(o=>o.asset==='BTC');
+  const eth=open.filter(o=>o.asset==='ETH');
+  const cur=OPS[selIdx[2]]||open[0]||null;
+
+  $('bd2').innerHTML=`
+    ${kpiStrip(ops)}
+    ${mgRow(cur,ops)}
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.6rem;align-items:start;margin-bottom:.55rem;">
+      <div>
+        <div style="font-family:var(--mono);font-size:.65rem;font-weight:600;color:var(--amber);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.38rem;">Bitcoin <span style="color:var(--tx2);font-weight:400;">(${btc.length} ops)</span></div>
+        ${btc.map(opExp).join('')||'<div style="font-family:var(--mono);font-size:.7rem;color:var(--tx3);padding:.5rem 0;">Sem operações BTC</div>'}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:.5rem;">
+        <div class="chart-card">
+          <div class="chart-title">Prêmio acumulado por data de exercício</div>
+          <div style="position:relative;height:165px;"><canvas id="c2"></canvas></div>
+        </div>
+        ${probBar(cur)}
+      </div>
+      <div>
+        <div style="font-family:var(--mono);font-size:.65rem;font-weight:600;color:var(--blue);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.38rem;">Ethereum <span style="color:var(--tx2);font-weight:400;">(${eth.length} ops)</span></div>
+        ${eth.map(opExp).join('')||'<div style="font-family:var(--mono);font-size:.7rem;color:var(--tx3);padding:.5rem 0;">Sem operações ETH</div>'}
+      </div>
+    </div>
+    ${closedFoot(closed)}`;
+  lineChart(ops,'c2');
+}
+
+/* ══════════════════════════════════════════════════════════
+   LAYOUT 3 — COMPARATIVO
+   KPI strip → metric-gauge → comparativo table + chart → prob
+══════════════════════════════════════════════════════════ */
+function r3(ops){
+  shell(3,ops);
+  const open=ops.filter(o=>o.open);
+  const closed=ops.filter(o=>!o.open);
+  const cur=OPS[selIdx[3]]||open[0]||null;
+  const btc=open.filter(o=>o.asset==='BTC');
+  const eth=open.filter(o=>o.asset==='ETH');
+
+  let cmpRows='';
+  if(cur){
+    const delta=cur.cotacao-cur.abertura;
+    const dPct=(delta/cur.abertura)*100;
+    cmpRows=`
+      <tr><td style="color:var(--tx2);">Prêmio</td><td>${fmt(cur.premU)}</td><td style="color:var(--amber);">${fmt(cur.premU*1.15)}</td><td style="color:var(--green);">+15%</td></tr>
+      <tr><td style="color:var(--tx2);">Ativo</td><td>${fmtK(cur.abertura)}</td><td style="color:var(--tx1);">${fmtK(cur.cotacao)}</td><td style="color:${colP(delta)};">${pp(dPct)}</td></tr>
+      <tr><td style="color:var(--tx2);">Dist. OTM</td><td>—</td><td style="color:${colD(cur.dist)};">${cur.dist.toFixed(2)}%</td><td>—</td></tr>
+      <tr><td style="color:var(--tx2);">TAE</td><td>—</td><td style="color:var(--green);">${cur.tae.toFixed(2)}%</td><td>—</td></tr>`;
+  }
+
+  $('bd3').innerHTML=`
+    ${kpiStrip(ops)}
+    ${mgRow(cur,ops)}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:.55rem;">
+      <div style="background:var(--bg-card);border:1px solid var(--bdr);border-radius:var(--rad-lg);padding:.65rem;">
+        <div class="chart-title">Comparativo: Abertura vs Atual</div>
+        <table class="cmp-table">
+          <thead><tr><th>Métrica</th><th>Abertura</th><th>Atual</th><th>Δ</th></tr></thead>
+          <tbody>${cmpRows||'<tr><td colspan="4" style="color:var(--tx2);text-align:center;padding:.8rem 0;">Selecione uma operação</td></tr>'}</tbody>
+        </table>
+        ${cur?probBar(cur):''}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:.5rem;">
+        <div class="chart-card">
+          <div class="chart-title">Prêmio acumulado por data de exercício</div>
+          <div style="position:relative;height:158px;"><canvas id="c3"></canvas></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;">
+          <div style="background:var(--bg-card);border:1px solid var(--bdr);border-radius:var(--rad-lg);padding:.6rem;">
+            <div style="font-family:var(--mono);font-size:.62rem;font-weight:600;color:var(--amber);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.3rem;">BTC</div>
+            ${btc.slice(0,3).map(opCard).join('')}
+          </div>
+          <div style="background:var(--bg-card);border:1px solid var(--bdr);border-radius:var(--rad-lg);padding:.6rem;">
+            <div style="font-family:var(--mono);font-size:.62rem;font-weight:600;color:var(--blue);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.3rem;">ETH</div>
+            ${eth.slice(0,3).map(opCard).join('')}
+          </div>
+        </div>
+      </div>
+    </div>
+    ${closedFoot(closed)}`;
+  lineChart(ops,'c3');
+}
+
+/* ══════════════════════════════════════════════════════════
+   LAYOUT 4 — SCORE + POP
+   KPI strip → metric-gauge → grid de score cards 4 cols → chart+prob
+══════════════════════════════════════════════════════════ */
+function r4(ops){
+  shell(4,ops);
+  const open=ops.filter(o=>o.open);
+  const closed=ops.filter(o=>!o.open);
+  const cur=OPS[selIdx[4]]||open[0]||null;
+
+  function scoreCard(op){
+    const pop=Math.max(0,Math.min(100,Math.round(40+op.dist*4)));
+    const popCol=pop>=70?'var(--green)':pop>=50?'var(--amber)':'var(--red)';
+    const dias=Math.max(op.prazo-op.corridos,0);
+    const bw=Math.min(Math.round((op.corridos/Math.max(op.prazo,1))*100),100);
+    const dc=dias===0?'var(--red)':dias===1?'var(--amber)':'var(--green)';
+    const ac=assetCol(op.asset);
+    const delta=op.cotacao-op.abertura;
+    const dPct=(delta/op.abertura)*100;
+
+    return `<div style="background:var(--bg-card);border:1px solid var(--bdr);border-radius:var(--rad-lg);overflow:hidden;transition:border-color .15s;" onmouseover="this.style.borderColor='var(--bdr-hi)'" onmouseout="this.style.borderColor='var(--bdr)'">
+      <!-- topo com badge exercício -->
+      <div style="padding:.45rem .62rem;background:${op.ex==='SIM'?'var(--red-bg)':'var(--green-bg)'};border-bottom:1px solid ${op.ex==='SIM'?'var(--red-bdr)':'var(--green-bdr)'};display:flex;align-items:center;gap:.38rem;">
+        <span style="font-family:var(--mono);font-size:.78rem;font-weight:700;color:${ac};">${op.asset}</span>
+        ${typeBadge(op.tipo,op.open)}
+        ${exBadge(op.ex,op.open)}
+        <span style="font-family:var(--mono);font-size:.62rem;color:var(--tx2);margin-left:auto;">${op.exData}</span>
+      </div>
+      <div style="padding:.52rem .62rem;">
+        <!-- PoP semicircle -->
+        <div style="text-align:center;margin-bottom:.35rem;">
+          ${sg(pop/100,popCol,pop+'%','Prob. Lucro',66)}
+        </div>
+        <!-- dados -->
+        <div style="font-size:.68rem;display:flex;flex-direction:column;gap:.14rem;">
+          <div style="display:flex;justify-content:space-between;"><span style="color:var(--tx2);font-family:var(--mono);">Cotação</span><span style="font-family:var(--mono);font-weight:600;color:${ac};">${fmtK(op.cotacao)}</span></div>
+          <div style="display:flex;justify-content:space-between;"><span style="color:var(--tx2);font-family:var(--mono);">Strike</span><span style="font-family:var(--mono);font-weight:600;color:var(--amber);">${fmtK(op.strike)}</span></div>
+          <div style="display:flex;justify-content:space-between;"><span style="color:var(--tx2);font-family:var(--mono);">Δ Ab→Cot</span><span style="font-family:var(--mono);font-weight:600;color:${colP(delta)};">${pp(dPct)}</span></div>
+          <div style="display:flex;justify-content:space-between;"><span style="color:var(--tx2);font-family:var(--mono);">Dist. OTM</span><span style="font-family:var(--mono);font-weight:600;color:${colD(op.dist)};">${op.dist.toFixed(2)}%</span></div>
+          <div style="display:flex;justify-content:space-between;"><span style="color:var(--tx2);font-family:var(--mono);">Prêmio</span><span style="font-family:var(--mono);font-weight:600;color:var(--amber);">${fmt(op.premU)}</span></div>
+        </div>
+        <!-- bar dias -->
+        <div style="margin-top:.38rem;">
+          <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:.61rem;color:var(--tx2);margin-bottom:.1rem;">
+            <span>${op.prazo}d prazo</span><span style="color:${dc};">${dias}d rest.</span>
+          </div>
+          <div class="oc-days-bar"><div class="oc-days-fill" style="width:${bw}%;background:${dc};"></div></div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  $('bd4').innerHTML=`
+    ${kpiStrip(ops)}
+    ${mgRow(cur,ops)}
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;margin-bottom:.55rem;">
+      ${open.map(scoreCard).join('')}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.55rem;margin-bottom:.55rem;">
+      <div class="chart-card">
+        <div class="chart-title">Prêmio acumulado por data de exercício</div>
+        <div style="position:relative;height:148px;"><canvas id="c4"></canvas></div>
+      </div>
+      ${cur?probBar(cur):'<div></div>'}
+    </div>
+    ${closedFoot(ops.filter(o=>!o.open))}`;
+  lineChart(ops,'c4');
+}
+
+/* ══════════════════════════════════════════════════════════
+   LAYOUT 5 — EXPANDIDO COMPLETO
+   KPI strip → metric-gauge → 2 cols largas (BTC exp | ETH exp)
+   → chart + prob
+══════════════════════════════════════════════════════════ */
+function r5(ops){
+  shell(5,ops);
+  const open=ops.filter(o=>o.open);
+  const closed=ops.filter(o=>!o.open);
+  const btc=open.filter(o=>o.asset==='BTC');
+  const eth=open.filter(o=>o.asset==='ETH');
+  const cur=OPS[selIdx[5]]||open[0]||null;
+
+  $('bd5').innerHTML=`
+    ${kpiStrip(ops)}
+    ${mgRow(cur,ops)}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:.55rem;">
+      <div>
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem;">
+          <span style="font-family:var(--mono);font-size:.68rem;font-weight:600;color:var(--amber);text-transform:uppercase;letter-spacing:.08em;">Bitcoin</span>
+          <span style="font-family:var(--mono);font-size:.62rem;color:var(--tx2);">${btc.length} ops · <strong style="color:var(--amber);">${fmt(btc.reduce((a,o)=>a+o.premU,0))}</strong></span>
+        </div>
+        ${btc.map(opExp).join('')||'<div style="font-family:var(--mono);font-size:.7rem;color:var(--tx3);">Sem operações BTC</div>'}
+      </div>
+      <div>
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem;">
+          <span style="font-family:var(--mono);font-size:.68rem;font-weight:600;color:var(--blue);text-transform:uppercase;letter-spacing:.08em;">Ethereum</span>
+          <span style="font-family:var(--mono);font-size:.62rem;color:var(--tx2);">${eth.length} ops · <strong style="color:var(--blue);">${fmt(eth.reduce((a,o)=>a+o.premU,0))}</strong></span>
+        </div>
+        ${eth.map(opExp).join('')||'<div style="font-family:var(--mono);font-size:.7rem;color:var(--tx3);">Sem operações ETH</div>'}
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:.6rem;margin-bottom:.55rem;">
+      <div class="chart-card">
+        <div class="chart-title">Prêmio acumulado por data de exercício</div>
+        <div style="position:relative;height:148px;"><canvas id="c5"></canvas></div>
+      </div>
+      ${cur?probBar(cur):'<div></div>'}
+    </div>
+    ${closedFoot(closed)}`;
+  lineChart(ops,'c5');
+}
+
+/* ══════════════════════════════════════════════════════════
+   LAYOUT 6 — DASHBOARD ANALÍTICO
+   KPI strip → metric-gauge → chart grande + side-panel resumo
+   → 3 cols grid (op cards all) → prob → closed
+══════════════════════════════════════════════════════════ */
+function r6(ops){
+  shell(6,ops);
+  const open=ops.filter(o=>o.open);
+  const closed=ops.filter(o=>!o.open);
+  const cur=OPS[selIdx[6]]||open[0]||null;
+  const tp=ops.reduce((a,o)=>a+o.premU,0);
+  const avgD=open.length?open.reduce((a,o)=>a+o.dist,0)/open.length:0;
+  const avgT=open.length?open.reduce((a,o)=>a+o.tae,0)/open.length:0;
+  const best=open.length?Math.max(...open.map(o=>o.res)):0;
+
+  $('bd6').innerHTML=`
+    ${kpiStrip(ops)}
+    ${mgRow(cur,ops)}
+    <div style="display:grid;grid-template-columns:1fr 260px;gap:.6rem;margin-bottom:.55rem;">
+      <div class="chart-card">
+        <div class="chart-title">Prêmio acumulado por data de exercício</div>
+        <div style="position:relative;height:172px;"><canvas id="c6"></canvas></div>
+      </div>
+      <!-- painel resumo analítico -->
+      <div style="background:var(--bg-card);border:1px solid var(--bdr);border-radius:var(--rad-lg);padding:.65rem;display:flex;flex-direction:column;gap:.35rem;">
+        <div style="font-family:var(--mono);font-size:.62rem;font-weight:600;color:var(--tx2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.08rem;">Resumo Analítico</div>
+        ${[
+          {l:'Prêmio Total',v:fmt(tp),c:'var(--amber)'},
+          {l:'Dist. Média OTM',v:avgD.toFixed(2)+'%',c:avgD<3?'var(--red)':avgD<6?'var(--amber)':'var(--green)'},
+          {l:'TAE Médio',v:avgT.toFixed(0)+'%',c:'var(--green)'},
+          {l:'Melhor Resultado',v:'+'+best.toFixed(2)+'%',c:'var(--green)'},
+          {l:'Em Risco (ITM)',v:ops.filter(o=>o.ex==='SIM').length+'',c:ops.filter(o=>o.ex==='SIM').length>0?'var(--red)':'var(--green)'},
+          {l:'Total Operações',v:ops.length+'',c:'var(--blue)'},
+        ].map(i=>`
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.28rem 0;border-bottom:1px solid var(--bdr);">
+            <span style="font-family:var(--mono);font-size:.65rem;color:var(--tx2);">${i.l}</span>
+            <span style="font-family:var(--mono);font-size:.72rem;font-weight:700;color:${i.c};">${i.v}</span>
+          </div>`).join('')}
+        ${cur?`<div style="margin-top:.22rem;">${probBar(cur)}</div>`:''}
+      </div>
+    </div>
+    <!-- grid de todos os cards abertos -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.45rem;margin-bottom:.55rem;">
+      ${open.map(opCard).join('')}
+    </div>
+    ${closedFoot(closed)}`;
+  lineChart(ops,'c6');
+}
+
+/* ══ RENDER ALL ══ */
+function renderAll(){
+  const ops=getFilt();
+  r1(ops);r2(ops);r3(ops);r4(ops);r5(ops);r6(ops);
+}
+
+/* ══ SWITCHER ══ */
+document.querySelectorAll('.sw-btn').forEach(b=>{
+  b.addEventListener('click',function(){
+    document.querySelectorAll('.sw-btn').forEach(x=>x.classList.remove('on'));
+    document.querySelectorAll('.modal').forEach(x=>x.classList.remove('on'));
+    this.classList.add('on');
+    $('m'+this.dataset.v).classList.add('on');
+    window.scrollTo({top:document.querySelector('.sw').offsetTop-16,behavior:'smooth'});
+  });
+});
+
+/* ══ REFRESH ══ */
+function doRef(n){
+  const btn=$('br'+n);
+  const modal=$('m'+n);
+  if(btn.dataset.loading)return;
+  btn.dataset.loading='1';
+  btn.classList.add('spin');
+  modal.classList.add('loading');
+  setTimeout(()=>{
+    OPS.filter(o=>o.open).forEach(o=>{
+      o.cotacao*=1+(Math.random()-.5)*.004;
+      o.dist=Math.max(0.1,o.dist+(Math.random()-.5)*.15);
+      o.res=Math.max(0.01,o.res+(Math.random()-.5)*.03);
+    });
+    renderAll();
+    modal.classList.remove('loading');
+    btn.classList.remove('spin');
+    delete btn.dataset.loading;
+    const now=new Date();
+    $('ht'+n).textContent='Atualizado: '+now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  },1700);
+}
+
+renderAll();
+</script>
+</body>
+</html>

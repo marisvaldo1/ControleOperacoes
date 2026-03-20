@@ -392,54 +392,6 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <!-- Produtos disponíveis na Binance -->
-                    <div class="card mb-4">
-                        <div class="card-header d-flex align-items-center justify-content-between">
-                            <h4 class="card-title mb-0">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-                                Produtos Disponíveis na Binance
-                            </h4>
-                            <div class="d-flex gap-2 align-items-center">
-                                <select class="form-select form-select-sm" id="simDiPar" style="width:auto">
-                                    <option value="BTC">BTC/USDT</option>
-                                    <option value="ETH">ETH/USDT</option>
-                                    <option value="BNB">BNB/USDT</option>
-                                    <option value="SOL">SOL/USDT</option>
-                                </select>
-                                <select class="form-select form-select-sm" id="simDiTipoFiltro" style="width:auto">
-                                    <option value="">Todos</option>
-                                    <option value="CALL">CALL</option>
-                                    <option value="PUT">PUT</option>
-                                </select>
-                                <button class="btn btn-sm btn-outline-primary" id="btnBuscarDI">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1"><path d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/></svg>
-                                    Buscar
-                                </button>
-                            </div>
-                        </div>
-                        <div id="diProdutosContainer">
-                            <div class="card-body text-muted text-center py-3" id="diProdutosEmpty">
-                                Clique em <strong>Buscar</strong> para carregar produtos da Binance.
-                            </div>
-                            <div class="table-responsive" id="diProdutosTable" style="display:none">
-                                <table class="table table-sm table-hover card-table" id="tableProdutosDI">
-                                    <thead>
-                                        <tr>
-                                            <th>Par</th>
-                                            <th>Tipo</th>
-                                            <th>Strike</th>
-                                            <th>TAE % a.a.</th>
-                                            <th>Prazo (dias)</th>
-                                            <th>Vencimento</th>
-                                            <th>Ação</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="diProdutosTbody"></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- Formulário de simulação manual -->
                     <div class="card">
                         <div class="card-header">
@@ -742,6 +694,7 @@
         </div>
     </div>
 </div></div>
+    <div id="modalResultadosCryptoCompactContainer"></div>
     <div id="modalResultadosCryptoContainer"></div>
 
     <!-- Modal containers -->
@@ -756,6 +709,7 @@
     <script src="../js/core/global.js?v=1.2.1"></script>
     <script src="../js/core/layout.js?v=1.2.1"></script>
     <script src="../js/shared/modal-analise.js?v=1.5.0"></script>
+    <script src="../js/crypto/modal-resultados-crypto-compact.js?v=1.0.0"></script>
     <script src="../js/crypto/modal-resultados-crypto.js?v=1.0.0"></script>
     <script src="../js/crypto/modal-resultado-total-crypto.js?v=1.0.0"></script>
     <script src="../js/crypto/modal-saldo-medio-crypto.js?v=1.0.0"></script>

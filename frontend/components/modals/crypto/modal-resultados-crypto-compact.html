@@ -1,0 +1,360 @@
+<!-- Modal Resultados Crypto — Dashboard Analítico v6 (claude2.html layout 6) -->
+<style>
+#modalResultadosCryptoCompact {
+  --dsh-bg:       #141b28;
+  --dsh-card:     #1a2436;
+  --dsh-card2:    #1e2a3d;
+  --dsh-card3:    #222f42;
+  --dsh-bdr:      #263347;
+  --dsh-bdr-hi:   #334560;
+  --dsh-tx1:      #e8f0f8;
+  --dsh-tx2:      #6b82a0;
+  --dsh-tx3:      #3a4d63;
+  --dsh-green:    #3dd68c;
+  --dsh-grn-bg:   #1a3028;
+  --dsh-grn-bdr:  #2a5040;
+  --dsh-red:      #e85555;
+  --dsh-red-bg:   #2d1a1a;
+  --dsh-red-bdr:  #4a2828;
+  --dsh-amber:    #e8a830;
+  --dsh-amb-bg:   #2d2010;
+  --dsh-amb-bdr:  #4a3820;
+  --dsh-blue:     #4db8d4;
+  --dsh-blu-bg:   #162430;
+  --dsh-blu-bdr:  #254050;
+  --dsh-purple:   #9b72d4;
+  --dsh-mono:     'JetBrains Mono', monospace;
+  --dsh-ui:       'Inter', sans-serif;
+  --dsh-rad:      8px;
+  --dsh-radlg:    10px;
+}
+#modalResultadosCryptoCompact .modal-content {
+  background: var(--dsh-bg);
+  border: 1px solid var(--dsh-bdr);
+  border-radius: 12px;
+  overflow: hidden;
+  color: var(--dsh-tx1);
+  box-shadow: 0 24px 80px rgba(0,0,0,.75);
+}
+
+/* Header */
+#modalResultadosCryptoCompact .dsh-hdr {
+  background: var(--dsh-card);
+  border-bottom: 1px solid var(--dsh-bdr);
+  padding: .55rem 1rem;
+  display: flex; align-items: center; gap: .65rem;
+}
+#modalResultadosCryptoCompact .dsh-hdr-icon { color: var(--dsh-tx2); font-size: .95rem; }
+#modalResultadosCryptoCompact .dsh-hdr-title {
+  font-family: var(--dsh-ui); font-size: .92rem; font-weight: 600;
+  color: var(--dsh-tx1); flex: 1; display: flex; align-items: center; gap: .4rem;
+}
+#modalResultadosCryptoCompact .dsh-live {
+  width: 7px; height: 7px; border-radius: 50%; background: var(--dsh-green);
+  flex-shrink: 0; animation: dshBlink 2.5s infinite;
+}
+@keyframes dshBlink { 0%,100%{opacity:1} 60%{opacity:.3} }
+#modalResultadosCryptoCompact .dsh-hdr-time { font-family: var(--dsh-mono); font-size: .68rem; color: var(--dsh-tx2); }
+#modalResultadosCryptoCompact .dsh-hdr-btn {
+  width: 28px; height: 28px; border-radius: 6px;
+  border: 1px solid var(--dsh-bdr-hi);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all .18s; font-size: .78rem; background: transparent; color: var(--dsh-tx2);
+}
+#modalResultadosCryptoCompact .dsh-hdr-btn.ref { background: var(--dsh-card2); color: var(--dsh-blue); }
+#modalResultadosCryptoCompact .dsh-hdr-btn.ref:hover { border-color: var(--dsh-blue); }
+#modalResultadosCryptoCompact .dsh-hdr-btn.ref.spin svg { animation: dshSpin .8s linear infinite; }
+@keyframes dshSpin { to { transform: rotate(360deg); } }
+#modalResultadosCryptoCompact .dsh-hdr-btn.cls:hover { border-color: var(--dsh-red); color: var(--dsh-red); background: var(--dsh-red-bg); }
+#modalResultadosCryptoCompact .dsh-btn-det {
+  padding: .22rem .58rem; border-radius: 6px; border: 1px solid var(--dsh-bdr-hi);
+  background: rgba(77,184,212,.1); color: #6ed4ea;
+  font-family: var(--dsh-mono); font-size: .67rem; font-weight: 600;
+  cursor: pointer; display: flex; align-items: center; gap: .28rem; transition: all .18s; white-space: nowrap;
+}
+#modalResultadosCryptoCompact .dsh-btn-det:hover { background: rgba(77,184,212,.22); border-color: var(--dsh-blue); }
+
+/* Filter bar */
+#modalResultadosCryptoCompact .dsh-fbar {
+  padding: .4rem 1rem; border-bottom: 1px solid var(--dsh-bdr);
+  display: flex; align-items: center; gap: .25rem; flex-wrap: wrap;
+  background: var(--dsh-bg);
+}
+#modalResultadosCryptoCompact .dsh-pill {
+  padding: .19rem .5rem; border-radius: 20px;
+  font-family: var(--dsh-mono); font-size: .67rem; font-weight: 500;
+  cursor: pointer; border: 1px solid var(--dsh-bdr);
+  background: transparent; color: var(--dsh-tx2); transition: all .15s; white-space: nowrap;
+}
+#modalResultadosCryptoCompact .dsh-pill:hover { color: var(--dsh-tx1); border-color: var(--dsh-bdr-hi); }
+#modalResultadosCryptoCompact .dsh-pill.ap  { background: var(--dsh-card2); border-color: var(--dsh-blue);   color: var(--dsh-blue); }
+#modalResultadosCryptoCompact .dsh-pill.aa  { background: var(--dsh-grn-bg); border-color: var(--dsh-green); color: var(--dsh-green); }
+#modalResultadosCryptoCompact .dsh-pill.af  { background: var(--dsh-red-bg); border-color: var(--dsh-red);   color: var(--dsh-red); }
+#modalResultadosCryptoCompact .dsh-pill.ac  { background: var(--dsh-blu-bg); border-color: var(--dsh-blue);  color: var(--dsh-blue); }
+#modalResultadosCryptoCompact .dsh-pill.apu { background: #221838;           border-color: var(--dsh-purple);color: var(--dsh-purple); }
+#modalResultadosCryptoCompact .dsh-fsep { width: 1px; height: 16px; background: var(--dsh-bdr); flex-shrink: 0; margin: 0 .1rem; }
+
+/* Op tabs */
+#modalResultadosCryptoCompact .dsh-op-row {
+  padding: .35rem 1rem; border-bottom: 1px solid var(--dsh-bdr);
+  background: var(--dsh-card); display: flex; align-items: center; gap: .25rem;
+  overflow-x: auto; scrollbar-width: none;
+}
+#modalResultadosCryptoCompact .dsh-op-row::-webkit-scrollbar { display: none; }
+#modalResultadosCryptoCompact .dsh-op-tab {
+  flex-shrink: 0; padding: .26rem .58rem; border-radius: 6px;
+  border: 1px solid var(--dsh-bdr); background: var(--dsh-bg);
+  cursor: pointer; transition: all .15s; text-align: center; min-width: 54px;
+}
+#modalResultadosCryptoCompact .dsh-op-tab:hover { border-color: var(--dsh-bdr-hi); }
+#modalResultadosCryptoCompact .dsh-op-tab.cl  { border-color: var(--dsh-tx3); background: transparent; opacity: .5; }
+#modalResultadosCryptoCompact .dsh-ot-t { font-family: var(--dsh-mono); font-size: .6rem; font-weight: 600; color: var(--dsh-tx2); }
+#modalResultadosCryptoCompact .dsh-op-tab.cl .dsh-ot-t { color: var(--dsh-tx3); }
+#modalResultadosCryptoCompact .dsh-ot-a { font-family: var(--dsh-mono); font-size: .68rem; font-weight: 700; color: var(--dsh-tx1); }
+#modalResultadosCryptoCompact .dsh-op-tab.cl .dsh-ot-a { color: var(--dsh-tx2); }
+#modalResultadosCryptoCompact .dsh-ot-d { font-family: var(--dsh-mono); font-size: .54rem; color: var(--dsh-tx2); }
+#modalResultadosCryptoCompact .dsh-op-sum { margin-left: auto; flex-shrink: 0; display: flex; gap: .3rem; align-items: center; }
+#modalResultadosCryptoCompact .dsh-tag {
+  padding: .22rem .55rem; border-radius: 10px;
+  font-family: var(--dsh-mono); font-size: .70rem; font-weight: 600;
+  white-space: nowrap;
+}
+#modalResultadosCryptoCompact .dsh-tag-b { background: var(--dsh-card3); color: var(--dsh-blue);   border: 1px solid var(--dsh-blu-bdr); }
+#modalResultadosCryptoCompact .dsh-tag-g { background: var(--dsh-grn-bg); color: var(--dsh-green); border: 1px solid var(--dsh-grn-bdr); }
+#modalResultadosCryptoCompact .dsh-tag-r { background: #1e1e28;            color: var(--dsh-tx2);   border: 1px solid var(--dsh-bdr); }
+#modalResultadosCryptoCompact .dsh-tag-a { background: var(--dsh-amb-bg);  color: var(--dsh-amber); border: 1px solid var(--dsh-amb-bdr); }
+/* Tab selecionada */
+#modalResultadosCryptoCompact .dsh-op-tab.sel { border-color: var(--dsh-amber); background: var(--dsh-amb-bg); }
+#modalResultadosCryptoCompact .dsh-op-tab.sel .dsh-ot-a { color: var(--dsh-amber); }
+/* Select de operações fechadas */
+#modalResultadosCryptoCompact .dsh-closed-sel-wrap { flex-shrink: 0; }
+#modalResultadosCryptoCompact .dsh-closed-sel {
+  background: var(--dsh-card2); border: 1px solid var(--dsh-bdr); border-radius: 6px;
+  color: var(--dsh-tx2); font-family: var(--dsh-mono); font-size: .67rem;
+  padding: .26rem .5rem; cursor: pointer; outline: none; min-width: 140px;
+}
+#modalResultadosCryptoCompact .dsh-closed-sel:hover { border-color: var(--dsh-bdr-hi); color: var(--dsh-tx1); }
+
+/* Badges */
+#modalResultadosCryptoCompact .dsh-badge {
+  display: inline-block; padding: .08rem .38rem;
+  border-radius: 4px; font-family: var(--dsh-mono); font-size: .62rem; font-weight: 600;
+}
+#modalResultadosCryptoCompact .db-call { background: var(--dsh-blu-bg);  color: var(--dsh-blue);   border: 1px solid var(--dsh-blu-bdr); }
+#modalResultadosCryptoCompact .db-put  { background: #221838;             color: var(--dsh-purple); border: 1px solid #352858; }
+#modalResultadosCryptoCompact .db-cl   { background: var(--dsh-card3);    color: var(--dsh-tx2);    border: 1px solid var(--dsh-bdr); }
+#modalResultadosCryptoCompact .db-otm  { background: var(--dsh-grn-bg);   color: var(--dsh-green);  border: 1px solid var(--dsh-grn-bdr); padding: .08rem .45rem; }
+#modalResultadosCryptoCompact .db-itm  { background: var(--dsh-red-bg);   color: var(--dsh-red);    border: 1px solid var(--dsh-red-bdr); padding: .08rem .45rem; }
+
+/* Body */
+#modalResultadosCryptoCompact .dsh-body {
+  padding: .75rem 1rem .95rem;
+  overflow-y: auto;
+  max-height: calc(90vh - 140px);
+}
+
+/* MG row (semi-gauge bar) */
+#modalResultadosCryptoCompact .dsh-mg-row {
+  display: grid; background: var(--dsh-card); border: 1px solid var(--dsh-bdr);
+  border-radius: var(--dsh-radlg); overflow: hidden; margin-bottom: .55rem;
+}
+#modalResultadosCryptoCompact .dsh-mg-row.cols-8 { grid-template-columns: repeat(8, 1fr); }
+#modalResultadosCryptoCompact .dsh-mg-cell {
+  padding: .85rem .35rem .7rem; text-align: center;
+  border-right: 1px solid var(--dsh-bdr);
+}
+#modalResultadosCryptoCompact .dsh-mg-cell:last-child { border-right: none; }
+#modalResultadosCryptoCompact .dsh-mg-lbl {
+  font-family: var(--dsh-mono); font-size: .68rem; font-weight: 500;
+  color: var(--dsh-tx2); text-transform: uppercase; letter-spacing: .07em; margin-top: .2rem;
+}
+#modalResultadosCryptoCompact .dsh-mg-sub {
+  font-family: var(--dsh-mono); font-size: .72rem; color: var(--dsh-tx2); margin-top: .08rem;
+}
+#modalResultadosCryptoCompact .dsh-mg-text {
+  display: flex; flex-direction: column; justify-content: center;
+  text-align: left; padding: .6rem .7rem; border-right: none;
+  border-left: 1px solid var(--dsh-bdr);
+}
+#modalResultadosCryptoCompact .dsh-mg-pval {
+  font-family: var(--dsh-mono); font-size: 1.25rem; font-weight: 700;
+  color: var(--dsh-amber); line-height: 1; margin-bottom: .18rem;
+}
+#modalResultadosCryptoCompact .dsh-mg-plbl {
+  font-family: var(--dsh-mono); font-size: .70rem; color: var(--dsh-tx2);
+  text-transform: uppercase; letter-spacing: .07em; margin-bottom: .18rem;
+}
+#modalResultadosCryptoCompact .dsh-mg-psub {
+  font-family: var(--dsh-mono); font-size: .72rem; color: var(--dsh-tx2); line-height: 1.65;
+}
+
+/* Op card */
+#modalResultadosCryptoCompact .dsh-op-card {
+  background: var(--dsh-card2); border: 1px solid var(--dsh-bdr);
+  border-radius: var(--dsh-rad); padding: .52rem .6rem;
+  margin-bottom: .3rem; transition: border-color .15s;
+}
+#modalResultadosCryptoCompact .dsh-op-card:hover { border-color: var(--dsh-bdr-hi); }
+#modalResultadosCryptoCompact .dsh-op-card.itm { border-left: 2px solid var(--dsh-red); }
+#modalResultadosCryptoCompact .dsh-op-card.otm { border-left: 2px solid var(--dsh-green); }
+#modalResultadosCryptoCompact .dsh-oc-head { display: flex; align-items: center; gap: .35rem; margin-bottom: .3rem; }
+#modalResultadosCryptoCompact .dsh-oc-asset { font-family: var(--dsh-mono); font-size: .84rem; font-weight: 700; }
+#modalResultadosCryptoCompact .dsh-oc-date  { font-family: var(--dsh-mono); font-size: .70rem; color: var(--dsh-tx2); margin-left: auto; }
+#modalResultadosCryptoCompact .dsh-oc-row   { display: flex; justify-content: space-between; font-size: .76rem; padding: .14rem 0; border-bottom: 1px solid var(--dsh-bdr); }
+#modalResultadosCryptoCompact .dsh-oc-row:last-of-type { border-bottom: none; }
+#modalResultadosCryptoCompact .dsh-oc-k { color: var(--dsh-tx2); font-family: var(--dsh-mono); }
+#modalResultadosCryptoCompact .dsh-oc-v { font-family: var(--dsh-mono); font-weight: 600; }
+#modalResultadosCryptoCompact .dsh-oc-days { margin-top: .32rem; }
+#modalResultadosCryptoCompact .dsh-oc-days-top { display: flex; justify-content: space-between; font-family: var(--dsh-mono); font-size: .61rem; color: var(--dsh-tx2); margin-bottom: .12rem; }
+#modalResultadosCryptoCompact .dsh-oc-days-bar  { height: 5px; background: var(--dsh-card); border-radius: 3px; overflow: hidden; }
+#modalResultadosCryptoCompact .dsh-oc-days-fill { height: 100%; border-radius: 3px; transition: width .5s ease; }
+
+/* Chart card */
+#modalResultadosCryptoCompact .dsh-chart-card {
+  background: var(--dsh-card); border: 1px solid var(--dsh-bdr);
+  border-radius: var(--dsh-radlg); padding: .65rem .75rem;
+  display: flex; flex-direction: column;
+}
+#modalResultadosCryptoCompact .dsh-chart-title {
+  font-family: var(--dsh-mono); font-size: .70rem; color: var(--dsh-tx2);
+  text-transform: uppercase; letter-spacing: .08em; margin-bottom: .5rem;
+}
+
+/* Prob bar */
+#modalResultadosCryptoCompact .dsh-prob {
+  background: var(--dsh-card); border: 1px solid var(--dsh-bdr);
+  border-radius: var(--dsh-radlg); padding: .55rem .75rem;
+}
+#modalResultadosCryptoCompact .dsh-prob-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: .32rem; }
+#modalResultadosCryptoCompact .dsh-prob-lbl  { font-family: var(--dsh-mono); font-size: .70rem; color: var(--dsh-tx2); text-transform: uppercase; letter-spacing: .08em; }
+#modalResultadosCryptoCompact .dsh-prob-pct  { font-family: var(--dsh-mono); font-size: .96rem; font-weight: 700; }
+#modalResultadosCryptoCompact .dsh-prob-track { height: 8px; background: var(--dsh-card3); border-radius: 4px; overflow: hidden; margin-bottom: .2rem; }
+#modalResultadosCryptoCompact .dsh-prob-fill  { height: 100%; border-radius: 4px; transition: width .6s ease; }
+#modalResultadosCryptoCompact .dsh-prob-foot  { display: flex; justify-content: space-between; font-family: var(--dsh-mono); font-size: .68rem; color: var(--dsh-tx2); }
+
+/* Resumo analítico */
+#modalResultadosCryptoCompact .dsh-resumo {
+  background: var(--dsh-card); border: 1px solid var(--dsh-bdr);
+  border-radius: var(--dsh-radlg); padding: .65rem;
+  display: flex; flex-direction: column; gap: .35rem;
+}
+#modalResultadosCryptoCompact .dsh-resumo-title {
+  font-family: var(--dsh-mono); font-size: .70rem; font-weight: 600;
+  color: var(--dsh-tx2); text-transform: uppercase; letter-spacing: .08em; margin-bottom: .08rem;
+}
+#modalResultadosCryptoCompact .dsh-resumo-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: .32rem 0; border-bottom: 1px solid var(--dsh-bdr);
+}
+#modalResultadosCryptoCompact .dsh-resumo-row:last-child { border-bottom: none; }
+#modalResultadosCryptoCompact .dsh-resumo-k { font-family: var(--dsh-mono); font-size: .74rem; color: var(--dsh-tx2); }
+#modalResultadosCryptoCompact .dsh-resumo-v { font-family: var(--dsh-mono); font-size: .82rem; font-weight: 700; }
+
+/* Closed footer */
+#modalResultadosCryptoCompact .dsh-closed {
+  background: var(--dsh-card); border: 1px solid var(--dsh-bdr);
+  border-radius: var(--dsh-radlg); padding: .52rem .7rem; margin-top: .55rem;
+}
+#modalResultadosCryptoCompact .dsh-closed-title {
+  font-family: var(--dsh-mono); font-size: .70rem; color: var(--dsh-tx2);
+  text-transform: uppercase; letter-spacing: .1em; margin-bottom: .32rem;
+}
+/* Toggle do accordion de fechadas */
+#modalResultadosCryptoCompact .dsh-closed-toggle {
+  width: 100%; background: none; border: none; padding: 0; text-align: left;
+  display: flex; align-items: center; justify-content: space-between;
+  cursor: pointer; color: var(--dsh-tx2);
+  font-family: var(--dsh-mono); font-size: .70rem;
+  text-transform: uppercase; letter-spacing: .1em;
+}
+#modalResultadosCryptoCompact .dsh-closed-toggle:hover { color: var(--dsh-tx1); }
+#modalResultadosCryptoCompact .dsh-toggle-caret { flex-shrink: 0; transition: transform .25s; }
+#modalResultadosCryptoCompact .dsh-closed-toggle[aria-expanded="true"] .dsh-toggle-caret { transform: rotate(180deg); }
+#modalResultadosCryptoCompact .dsh-closed-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: .25rem;
+}
+#modalResultadosCryptoCompact .dsh-cf-item {
+  display: flex; align-items: center; gap: .28rem;
+  padding: .22rem .38rem; background: var(--dsh-card2);
+  border-radius: 6px; border: 1px solid var(--dsh-bdr); opacity: .5;
+}
+#modalResultadosCryptoCompact .dsh-cf-asset { font-family: var(--dsh-mono); font-size: .74rem; font-weight: 700; }
+#modalResultadosCryptoCompact .dsh-cf-val   { font-family: var(--dsh-mono); font-size: .72rem; color: var(--dsh-tx2); margin-left: auto; }
+
+/* Skeleton loading */
+#modalResultadosCryptoCompact .dsh-skeleton {
+  background: linear-gradient(90deg, var(--dsh-card) 25%, var(--dsh-card2) 50%, var(--dsh-card) 75%);
+  background-size: 200% 100%;
+  animation: dshShimmer 1.4s infinite;
+  margin-bottom: .55rem; border-radius: var(--dsh-rad);
+  border: 1px solid var(--dsh-bdr);
+}
+@keyframes dshShimmer { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
+/* Opened accordion */
+#modalResultadosCryptoCompact .dsh-opened {
+  background: var(--dsh-card); border: 1px solid var(--dsh-bdr);
+  border-radius: var(--dsh-radlg); padding: .52rem .7rem; margin-bottom: .4rem;
+}
+/* Responsive */
+@media (max-width: 900px) {
+  #modalResultadosCryptoCompact .dsh-mg-row.cols-8 { grid-template-columns: repeat(4,1fr); }
+  #modalResultadosCryptoCompact .dsh-grid-main { grid-template-columns: 1fr !important; }
+  #modalResultadosCryptoCompact .dsh-grid-cards { grid-template-columns: 1fr 1fr !important; }
+  #modalResultadosCryptoCompact .dsh-closed-grid { grid-template-columns: 1fr 1fr; }
+}
+</style>
+
+<div class="modal modal-blur fade" id="modalResultadosCryptoCompact" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered" style="max-width:1360px">
+    <div class="modal-content">
+
+      <!-- Header -->
+      <div class="dsh-hdr">
+        <span class="dsh-hdr-icon">⚡</span>
+        <span class="dsh-hdr-title">
+          Dashboard Analítico · Crypto
+          <span class="dsh-live"></span>
+        </span>
+        <span class="dsh-hdr-time" id="dshTime">—</span>
+        <button class="dsh-btn-det" id="btnResultadosCryptoDetalhado" title="Abrir análise detalhada">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0 0h18"/></svg>
+          Análise Detalhada
+        </button>
+        <button class="dsh-hdr-btn ref" id="btnDshRefresh" title="Atualizar">
+          <svg id="dshRefIco" xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <path d="M3 12a9 9 0 0 1 15.74-6.74L21 8"/><path d="M21 3v5h-5"/>
+            <path d="M21 12a9 9 0 0 1-15.74 6.74L3 16"/><path d="M3 21v-5h5"/>
+          </svg>
+        </button>
+        <button class="dsh-hdr-btn cls" data-bs-dismiss="modal">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <!-- Filter bar -->
+      <div class="dsh-fbar" id="dshFbar">
+        <button class="dsh-pill ap" data-dsh-p="all">Todos</button>
+        <button class="dsh-pill" data-dsh-p="today">Hoje</button>
+        <button class="dsh-pill" data-dsh-p="7d">7d</button>
+        <button class="dsh-pill" data-dsh-p="mes">Mês</button>
+        <button class="dsh-pill" data-dsh-p="30d">30d</button>
+        <button class="dsh-pill" data-dsh-p="ano">Ano</button>
+        <div class="dsh-fsep"></div>
+        <button class="dsh-pill" data-dsh-s="aberta">Abertas</button>
+        <button class="dsh-pill" data-dsh-s="fechada">Fechadas</button>
+        <button class="dsh-pill" data-dsh-t="CALL">CALL</button>
+        <button class="dsh-pill" data-dsh-t="PUT">PUT</button>
+        <div id="dshAssetPills" style="display:flex;gap:.25rem;align-items:center;"></div>
+      </div>
+
+      <!-- Op tabs -->
+      <div class="dsh-op-row" id="dshOpRow"></div>
+
+      <!-- Body -->
+      <div class="dsh-body" id="dshBody">
+        <!-- populado pelo JS -->
+      </div>
+
+    </div>
+  </div>
+</div>
