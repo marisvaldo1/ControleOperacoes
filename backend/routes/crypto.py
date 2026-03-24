@@ -49,24 +49,30 @@ def get_estrategias():
     return jsonify(ESTRATEGIAS_CRYPTO)
 
 
-# ─── Refresh de cotações ao vivo (Binance) para posições abertas ─────────────
-@crypto_bp.route('/refresh', methods=['POST'])
-def refresh_crypto_quotes():
-    """Busca cotação atual (Binance) para cada operação crypto com status=ABERTA.
-       Também auto-fecha operações cujo exercício (vencimento) já passou.
-       Retorna lista [{id, spot_price, option_price, pop}] — mesmo contrato do
-       endpoint /api/opcoes/refresh, permitindo que modal-analise.js reutilize
-       a mesma lógica."""
-    from datetime import date
-    today_str = date.today().strftime('%Y-%m-%d')
+# ─── Fechamento automático de operações vencidas ─────────────────────────────
+def _auto_close_expired(conn):
+    """Fecha operações ABERTAS cujo exercício já venceu.
 
-    conn = db.get_db()
+    Regra:
+      - exercicio < hoje               → sempre fecha
+      - exercicio == hoje e hora >= 05:00  → fecha no dia do vencimento
+    Retorna o número de operações fechadas."""
+    from datetime import datetime, time as dt_time
+    now       = datetime.now()
+    today_str = now.strftime('%Y-%m-%d')
 
-    # 1. Auto-fecha operações ABERTAS cujo exercício já passou e calcula exercicio_status
+    # Determina limite superior da comparação
+    if now.time() >= dt_time(5, 0):  # após 05:00 h fecha também as de hoje
+        cutoff = today_str          # exercicio <= today
+        op_str = "exercicio <= ?"
+    else:
+        cutoff = today_str          # exercicio < today (ontem ou antes)
+        op_str = "exercicio < ?"
+
     ops_to_close = conn.execute(
-        "SELECT id, tipo, cotacao_atual, strike FROM operacoes_crypto "
-        "WHERE status='ABERTA' AND exercicio IS NOT NULL AND exercicio < ?",
-        (today_str,)
+        f"SELECT id, tipo, cotacao_atual, strike FROM operacoes_crypto "
+        f"WHERE status='ABERTA' AND exercicio IS NOT NULL AND {op_str}",
+        (cutoff,)
     ).fetchall()
     for op in ops_to_close:
         ex_status = _calc_exercicio_status(op['tipo'], op['cotacao_atual'], op['strike'])
@@ -74,7 +80,24 @@ def refresh_crypto_quotes():
             "UPDATE operacoes_crypto SET status='FECHADA', exercicio_status=? WHERE id=?",
             (ex_status, op['id'])
         )
-    conn.commit()
+    if ops_to_close:
+        conn.commit()
+    return len(ops_to_close)
+
+
+# ─── Refresh de cotações ao vivo (Binance) para posições abertas ─────────────
+@crypto_bp.route('/refresh', methods=['POST'])
+def refresh_crypto_quotes():
+    """Busca cotação atual (Binance) para cada operação crypto com status=ABERTA.
+       Também auto-fecha operações cujo exercício (vencimento) já passou ou vence
+       hoje após 05:00 h.
+       Retorna lista [{id, spot_price, option_price, pop}] — mesmo contrato do
+       endpoint /api/opcoes/refresh, permitindo que modal-analise.js reutilize
+       a mesma lógica."""
+    conn = db.get_db()
+
+    # 1. Auto-fecha operações vencidas (inclui hoje se >= 05:00 h)
+    _auto_close_expired(conn)
 
     # 2. Busca cotações ao vivo apenas para as que ainda estão ABERTAS
     ops  = conn.execute(
@@ -200,6 +223,8 @@ def get_dual_investment():
 def get_crypto():
     tipo_estrategia = request.args.get('tipo_estrategia')
     conn = db.get_db()
+    # Auto-fecha operações vencidas antes de retornar a lista
+    _auto_close_expired(conn)
     if tipo_estrategia:
         ops = conn.execute(
             'SELECT * FROM operacoes_crypto WHERE tipo_estrategia=? ORDER BY data_operacao DESC',

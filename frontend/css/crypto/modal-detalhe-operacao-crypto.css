@@ -1,0 +1,231 @@
+/**
+ * modal-detalhe-operacao-crypto.css  v1.0.0
+ * Modal visual de detalhes de operação crypto (Crypto Pulse style)
+ * Abre ao clicar no badge do ativo na datatable
+ */
+
+/* ─── Reset de fonte para igualar ao datatable ─── */
+#modalDetalheOperacaoCrypto {
+    font-size: 13px;
+}
+
+/* ─── Header ─── */
+#modalDetalheOperacaoCrypto .modal-header {
+    padding: 0.6rem 1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    gap: 0.5rem;
+    align-items: center;
+}
+
+/* ─── Anel pulsante do ativo ─── */
+.mdoc-pulse-ring {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    position: relative;
+    font-size: 11px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+}
+
+.mdoc-pulse-ring::before {
+    content: '';
+    position: absolute;
+    inset: -5px;
+    border-radius: 50%;
+    border: 2px solid currentColor;
+    animation: mdoc-pulse 2.2s ease-out infinite;
+    opacity: 0.55;
+}
+
+@keyframes mdoc-pulse {
+    0%   { transform: scale(1); opacity: 0.6; }
+    70%  { transform: scale(1.5); opacity: 0; }
+    100% { transform: scale(1.5); opacity: 0; }
+}
+
+.mdoc-pulse-btc  { background: #2e1a00; color: #f59f00; }
+.mdoc-pulse-eth  { background: #0c1830; color: #38bdf8; }
+.mdoc-pulse-bnb  { background: #2a2000; color: #fbbf24; }
+.mdoc-pulse-sol  { background: #1a2000; color: #a3e635; }
+.mdoc-pulse-xrp  { background: #001a2e; color: #38bdf8; }
+.mdoc-pulse-btc::before { border-color: #f59f00; }
+.mdoc-pulse-eth::before { border-color: #38bdf8; }
+.mdoc-pulse-bnb::before { border-color: #fbbf24; }
+.mdoc-pulse-sol::before { border-color: #a3e635; }
+.mdoc-pulse-xrp::before { border-color: #38bdf8; }
+
+/* ─── Cabeçalho: nome + preço ─── */
+.mdoc-head-info { flex: 1; min-width: 0; }
+.mdoc-head-asset {
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.1;
+    white-space: nowrap;
+}
+.mdoc-head-sub {
+    font-size: 11px;
+    opacity: 0.55;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 1px;
+}
+.mdoc-head-price { text-align: right; flex-shrink: 0; }
+.mdoc-head-price-val {
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.1;
+}
+.mdoc-head-price-delta {
+    font-size: 11px;
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    text-align: right;
+    margin-top: 1px;
+}
+
+/* ─── Body ─── */
+#modalDetalheOperacaoCrypto .modal-body {
+    padding: 0.75rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+/* ─── Área principal: semáforo + info-rows ─── */
+.mdoc-main-area {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Semáforo lateral */
+.mdoc-semaforo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0.4rem 0.3rem;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+.mdoc-sema-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    transition: box-shadow 0.3s;
+}
+.mdoc-sema-dot.active { box-shadow: 0 0 7px 1px currentColor; }
+
+/* Info rows */
+.mdoc-rows { flex: 1; display: flex; flex-direction: column; gap: 0.3rem; }
+.mdoc-row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 7px;
+    padding: 0.28rem 0.5rem;
+}
+.mdoc-row-ico { font-size: 13px; flex-shrink: 0; width: 18px; text-align: center; }
+.mdoc-row-body { flex: 1; min-width: 0; }
+.mdoc-row-lbl {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.5;
+    line-height: 1;
+}
+.mdoc-row-val {
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    line-height: 1.2;
+}
+.mdoc-row-right {
+    font-size: 11px;
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+/* ─── Sparkline ─── */
+.mdoc-spark-wrap {
+    background: rgba(255,255,255,0.025);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 7px;
+    padding: 0.35rem 0.5rem;
+}
+.mdoc-spark-title {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    opacity: 0.5;
+    margin-bottom: 4px;
+}
+.mdoc-spark-svg { width: 100%; height: 40px; display: block; }
+
+/* ─── Countdown / Prazo ─── */
+.mdoc-countdown {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 7px;
+    padding: 0.3rem 0.6rem;
+}
+.mdoc-countdown-label {
+    font-size: 11px;
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    flex-shrink: 0;
+}
+.mdoc-countdown-bar-wrap {
+    flex: 1;
+    height: 5px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 3px;
+    overflow: hidden;
+}
+.mdoc-countdown-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.6s ease;
+}
+.mdoc-countdown-rem {
+    font-size: 11px;
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    flex-shrink: 0;
+}
+
+/* ─── Footer ─── */
+#modalDetalheOperacaoCrypto .modal-footer {
+    padding: 0.5rem 1rem;
+    border-top: 1px solid rgba(255,255,255,0.07);
+    gap: 0.35rem;
+}
+
+/* ─── Cores utilitárias ─── */
+.mdoc-color-btc  { color: #f59f00; }
+.mdoc-color-eth  { color: #38bdf8; }
+.mdoc-color-bnb  { color: #fbbf24; }
+.mdoc-color-sol  { color: #a3e635; }
+.mdoc-color-call { color: #38bdf8; }
+.mdoc-color-put  { color: #a78bfa; }
+.mdoc-color-grn  { color: #2ee89a; }
+.mdoc-color-red  { color: #ff4d6d; }
+.mdoc-color-amb  { color: #f59f00; }
+.mdoc-color-cyn  { color: #38bdf8; }
+
+/* ─── Badge tipo (override para o modal) ─── */
+#modalDetalheOperacaoCrypto .badge {
+    font-size: 10px;
+}

@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes da Operação - Versão 4: Sidebar Navigation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .modal-wrapper {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-box {
+            background: #1e293b;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 1100px;
+            max-height: 95vh;
+            overflow: hidden;
+            border: 1px solid #334155;
+            display: flex;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+            border-right: 1px solid #334155;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            margin-bottom: 30px;
+        }
+
+        .sidebar-title {
+            font-size: 24px;
+            font-weight: 800;
+            color: #3b82f6;
+            margin-bottom: 5px;
+        }
+
+        .sidebar-subtitle {
+            font-size: 13px;
+            color: #94a3b8;
+        }
+
+        .nav-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: auto;
+        }
+
+        .nav-item {
+            padding: 15px 20px;
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-item:hover {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: #3b82f6;
+            transform: translateX(5px);
+        }
+
+        .nav-item.active {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: #3b82f6;
+            color: #3b82f6;
+        }
+
+        .nav-icon {
+            font-size: 20px;
+        }
+
+        .nav-text {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .sidebar-footer {
+            padding-top: 20px;
+            border-top: 1px solid #334155;
+        }
+
+        .close-sidebar-btn {
+            width: 100%;
+            padding: 14px;
+            background: rgba(239, 68, 68, 0.2);
+            border: 2px solid #ef4444;
+            border-radius: 10px;
+            color: #ef4444;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .close-sidebar-btn:hover {
+            background: #ef4444;
+            color: white;
+        }
+
+        .main-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+        }
+
+        .main-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 25px;
+            border-bottom: 2px solid #334155;
+        }
+
+        .main-title {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .coin-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 800;
+        }
+
+        .title-info h2 {
+            font-size: 28px;
+            font-weight: 800;
+            color: #f1f5f9;
+            margin-bottom: 5px;
+        }
+
+        .title-badges {
+            display: flex;
+            gap: 10px;
+        }
+
+        .badge {
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .badge-call { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .badge-open { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+
+        .price-display {
+            text-align: right;
+        }
+
+        .price-big {
+            font-size: 32px;
+            font-weight: 800;
+            color: #f1f5f9;
+            margin-bottom: 5px;
+        }
+
+        .price-change {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 10px;
+            background: rgba(239, 68, 68, 0.2);
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #ef4444;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .info-card {
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid #334155;
+            transition: all 0.3s;
+        }
+
+        .info-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border-color: #3b82f6;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .card-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+
+        .card-label {
+            font-size: 13px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .card-value {
+            font-size: 26px;
+            font-weight: 700;
+            color: #f1f5f9;
+            margin-bottom: 8px;
+        }
+
+        .card-extra {
+            font-size: 13px;
+            color: #94a3b8;
+        }
+
+        .bg-yellow { background: rgba(245, 158, 11, 0.2); }
+        .bg-red { background: rgba(239, 68, 68, 0.2); }
+        .bg-green { background: rgba(16, 185, 129, 0.2); }
+        .bg-blue { background: rgba(59, 130, 246, 0.2); }
+        .bg-purple { background: rgba(168, 85, 247, 0.2); }
+
+        .text-green { color: #10b981; }
+        .text-red { color: #ef4444; }
+
+        .wide-card {
+            grid-column: span 2;
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid #334155;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chart-container {
+            height: 150px;
+            background: linear-gradient(180deg, rgba(16, 185, 129, 0.15) 0%, transparent 100%);
+            border-radius: 12px;
+            margin-top: 15px;
+        }
+
+        .progress-section {
+            margin-top: 20px;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .progress-label {
+            font-size: 14px;
+            color: #94a3b8;
+            font-weight: 600;
+        }
+
+        .progress-value {
+            font-size: 14px;
+            color: #f1f5f9;
+            font-weight: 700;
+        }
+
+        .progress-track {
+            height: 12px;
+            background: #334155;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #f59e0b, #ef4444);
+            border-radius: 6px;
+            transition: width 1s ease;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+            padding-top: 25px;
+            border-top: 1px solid #334155;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid #3b82f6;
+            color: #3b82f6;
+        }
+
+        .btn-outline:hover {
+            background: #3b82f6;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .btn-gradient {
+            background: linear-gradient(135deg, #f97316, #ea580c);
+            color: white;
+            box-shadow: 0 4px 15px rgba(249, 115, 22, 0.4);
+        }
+
+        .btn-gradient:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(249, 115, 22, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="modal-wrapper">
+        <div class="modal-box">
+            <div class="sidebar">
+                <div class="sidebar-header">
+                    <div class="sidebar-title">ETH/USDT</div>
+                    <div class="sidebar-subtitle">CALL • Venc: 24/03</div>
+                </div>
+                
+                <div class="nav-menu">
+                    <div class="nav-item active">
+                        <span class="nav-icon">📊</span>
+                        <span class="nav-text">Visão Geral</span>
+                    </div>
+                    <div class="nav-item">
+                        <span class="nav-icon">📈</span>
+                        <span class="nav-text">Performance</span>
+                    </div>
+                    <div class="nav-item">
+                        <span class="nav-icon">📅</span>
+                        <span class="nav-text">Cronograma</span>
+                    </div>
+                    <div class="nav-item">
+                        <span class="nav-icon">⚙️</span>
+                        <span class="nav-text">Configurações</span>
+                    </div>
+                    <div class="nav-item">
+                        <span class="nav-icon">📊</span>
+                        <span class="nav-text">Relatórios</span>
+                    </div>
+                </div>
+
+                <div class="sidebar-footer">
+                    <button class="close-sidebar-btn" onclick="closeModal()">
+                        ✕ Fechar Operação
+                    </button>
+                </div>
+            </div>
+
+            <div class="main-area">
+                <div class="main-header">
+                    <div class="main-title">
+                        <div class="coin-icon">ETH</div>
+                        <div class="title-info">
+                            <h2>ETH/USDT</h2>
+                            <div class="title-badges">
+                                <span class="badge badge-call">CALL</span>
+                                <span class="badge badge-open">ABERTA</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="price-display">
+                        <div class="price-big">US$ 2.126,70</div>
+                        <div class="price-change">▼ -1.61%</div>
+                    </div>
+                </div>
+
+                <div class="content-grid">
+                    <div class="info-card">
+                        <div class="card-header">
+                            <div class="card-icon bg-yellow">💰</div>
+                            <div class="card-label">Valor Investido</div>
+                        </div>
+                        <div class="card-value">US$ 2.161,52</div>
+                        <div class="card-extra">Capital alocado</div>
+                    </div>
+
+                    <div class="info-card">
+                        <div class="card-header">
+                            <div class="card-icon bg-red">🎯</div>
+                            <div class="card-label">Strike Price</div>
+                        </div>
+                        <div class="card-value">US$ 2.325,00</div>
+                        <div class="card-extra text-green">9.32% OTM</div>
+                    </div>
+
+                    <div class="info-card">
+                        <div class="card-header">
+                            <div class="card-icon bg-green">📈</div>
+                            <div class="card-label">TAE / APY</div>
+                        </div>
+                        <div class="card-value text-green">17.34%</div>
+                        <div class="card-extra">Rentabilidade</div>
+                    </div>
+
+                    <div class="info-card">
+                        <div class="card-header">
+                            <div class="card-icon bg-purple">💎</div>
+                            <div class="card-label">Prêmio</div>
+                        </div>
+                        <div class="card-value">US$ 1,92</div>
+                        <div class="card-extra">0.0283%</div>
+                    </div>
+
+                    <div class="wide-card">
+                        <div class="section-title">📊 Probabilidade de Lucro (POP)</div>
+                        <div style="font-size: 42px; font-weight: 800; color: #10b981; margin-bottom: 10px;">76%</div>
+                        <div style="color: #94a3b8; margin-bottom: 20px;">Alta probabilidade de sucesso</div>
+                        <div class="chart-container"></div>
+                    </div>
+
+                    <div class="info-card">
+                        <div class="card-header">
+                            <div class="card-icon bg-blue">🪙</div>
+                            <div class="card-label">Qtd Crypto</div>
+                        </div>
+                        <div class="card-value">1.484400 ETH</div>
+                        <div class="card-extra">~US$ 3.156</div>
+                    </div>
+
+                    <div class="wide-card">
+                        <div class="section-title">📈 Simulação OTM</div>
+                        <div class="chart-container"></div>
+                    </div>
+
+                    <div class="wide-card">
+                        <div class="progress-section">
+                            <div class="progress-header">
+                                <span class="progress-label">⏱️ Tempo Decorrido</span>
+                                <span class="progress-value">1 dia restante</span>
+                            </div>
+                            <div class="progress-track">
+                                <div class="progress-fill" style="width: 0%" id="progressBar"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-outline">📊 Análise</button>
+                    <button class="btn btn-gradient">✏️ Editar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function closeModal() {
+            document.querySelector('.modal-wrapper').style.display = 'none';
+        }
+
+        setTimeout(() => {
+            document.getElementById('progressBar').style.width = '95%';
+        }, 500);
+    </script>
+</body>
+</html>

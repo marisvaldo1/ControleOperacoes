@@ -507,7 +507,7 @@ function populateTable(dt, data) {
         const resultado   = parseFloat(op.resultado) || 0;
         const resHtml     = op.resultado != null ? "<span class=\"" + (resultado >= 0 ? "text-success" : "text-danger") + "\">" + resultado.toFixed(2) + "%</span>" : "-";
         dt.row.add([
-            "<span class=\"badge bg-warning text-dark\">" + (op.ativo || "-") + "</span>",
+            "<span class=\"badge bg-warning text-dark\" style=\"cursor:pointer\" title=\"Ver detalhes\" onclick=\"showDetalhesOperacao(" + op.id + ")\">" + (op.ativo || "-") + "</span>",
             tipoBadge,
             op.cotacao_atual ? fmtUsd(op.cotacao_atual) : "-",
             op.abertura      ? fmtUsd(op.abertura)      : "-",

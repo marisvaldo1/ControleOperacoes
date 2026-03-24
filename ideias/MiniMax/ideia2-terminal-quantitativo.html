@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ideia 2 - Terminal Quantitativo</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0D1117;
+            --bg-terminal: #161B22;
+            --bg-cell: #21262D;
+            --text-primary: #E6EDF3;
+            --text-secondary: #8B949E;
+            --text-muted: #484F58;
+            --profit: #3FB950;
+            --profit-bg: rgba(63, 185, 80, 0.15);
+            --loss: #F85149;
+            --loss-bg: rgba(248, 81, 73, 0.15);
+            --accent: #58A6FF;
+            --accent-bg: rgba(88, 166, 255, 0.15);
+            --warning: #D29922;
+            --border: #30363D;
+            --glow-green: 0 0 20px rgba(63, 185, 80, 0.4);
+            --glow-red: 0 0 20px rgba(248, 81, 73, 0.4);
+            --glow-blue: 0 0 20px rgba(88, 166, 255, 0.4);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg-dark);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: var(--text-primary);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .terminal-card {
+            background: var(--bg-terminal);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 580px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            font-family: 'JetBrains Mono', monospace;
+            box-shadow: 0 16px 70px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Terminal Header */
+        .terminal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 20px;
+            background: var(--bg-cell);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .terminal-dots {
+            display: flex;
+            gap: 8px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .dot-red { background: #FF5F56; }
+        .dot-yellow { background: #FFBD2E; }
+        .dot-green { background: #27C93F; }
+
+        .terminal-title {
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .terminal-title .symbol {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .terminal-title .type {
+            background: var(--loss-bg);
+            color: var(--loss);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .terminal-title .status {
+            background: var(--profit-bg);
+            color: var(--profit);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .terminal-title .status::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: var(--profit);
+            border-radius: 50%;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .close-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 24px;
+            line-height: 1;
+            padding: 4px 8px;
+            transition: all 0.2s;
+        }
+
+        .close-btn:hover {
+            color: var(--loss);
+            background: var(--loss-bg);
+            border-radius: 4px;
+        }
+
+        /* Main P&L Display */
+        .pnl-display {
+            padding: 24px;
+            background: linear-gradient(180deg, var(--bg-cell), var(--bg-terminal));
+            border-bottom: 1px solid var(--border);
+        }
+
+        .pnl-main {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .pnl-value-block {
+            text-align: center;
+            flex: 1;
+        }
+
+        .pnl-label {
+            font-size: 10px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+
+        .pnl-value {
+            font-size: 48px;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .pnl-value.profit {
+            color: var(--profit);
+            text-shadow: var(--glow-green);
+        }
+        .pnl-value.loss {
+            color: var(--loss);
+            text-shadow: var(--glow-red);
+        }
+
+        .pnl-percent {
+            font-size: 18px;
+            margin-top: 8px;
+            opacity: 0.8;
+        }
+
+        .pnl-percent.profit { color: var(--profit); }
+        .pnl-percent.loss { color: var(--loss); }
+
+        /* Status Bar */
+        .status-bar {
+            margin-top: 20px;
+            background: var(--bg-cell);
+            border-radius: 8px;
+            padding: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .status-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .status-icon.win {
+            background: var(--profit-bg);
+            color: var(--profit);
+        }
+
+        .status-icon.lose {
+            background: var(--loss-bg);
+            color: var(--loss);
+        }
+
+        .status-text {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .status-text.win { color: var(--profit); }
+        .status-text.lose { color: var(--loss); }
+
+        /* Data Grid */
+        .data-grid {
+            padding: 20px;
+        }
+
+        .grid-section {
+            margin-bottom: 20px;
+        }
+
+        .grid-section:last-child { margin-bottom: 0; }
+
+        .section-header {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-header::before {
+            content: '//';
+            color: var(--accent);
+        }
+
+        .data-table {
+            background: var(--bg-cell);
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .data-row {
+            display: flex;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+        }
+
+        .data-row:last-child { border-bottom: none; }
+
+        .data-key {
+            width: 45%;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .data-key .icon {
+            font-size: 14px;
+            opacity: 0.7;
+        }
+
+        .data-values {
+            flex: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .data-old {
+            color: var(--text-muted);
+            text-decoration: line-through;
+            font-size: 12px;
+        }
+
+        .data-arrow {
+            color: var(--text-muted);
+            font-size: 10px;
+        }
+
+        .data-current {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .data-current.up { color: var(--profit); }
+        .data-current.down { color: var(--loss); }
+        .data-current.neutral { color: var(--accent); }
+
+        .data-change {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .data-change.positive {
+            background: var(--profit-bg);
+            color: var(--profit);
+        }
+
+        .data-change.negative {
+            background: var(--loss-bg);
+            color: var(--loss);
+        }
+
+        /* Sparkline */
+        .sparkline-container {
+            height: 60px;
+            background: var(--bg-cell);
+            border-radius: 8px;
+            margin: 16px 0;
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sparkline-container svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .sparkline-label {
+            position: absolute;
+            top: 8px;
+            left: 12px;
+            font-size: 10px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Progress Indicators */
+        .progress-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .progress-item {
+            background: var(--bg-cell);
+            border-radius: 8px;
+            padding: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .progress-title {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .progress-value {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .progress-value.profit { color: var(--profit); }
+        .progress-value.loss { color: var(--loss); }
+        .progress-value.accent { color: var(--accent); }
+
+        .progress-bar {
+            height: 6px;
+            background: var(--bg-terminal);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        .progress-fill.green { background: var(--profit); }
+        .progress-fill.red { background: var(--loss); }
+        .progress-fill.blue { background: var(--accent); }
+        .progress-fill.orange { background: var(--warning); }
+
+        .progress-markers {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 6px;
+            font-size: 9px;
+            color: var(--text-muted);
+        }
+
+        /* Footer */
+        .terminal-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            background: var(--bg-cell);
+            border-top: 1px solid var(--border);
+        }
+
+        .footer-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .live-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--profit);
+            border-radius: 50%;
+            animation: pulse-live 1.5s infinite;
+        }
+
+        @keyframes pulse-live {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.7; }
+        }
+
+        .sync-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--accent);
+            color: var(--bg-dark);
+            border: none;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .sync-btn:hover {
+            box-shadow: var(--glow-blue);
+            transform: translateY(-1px);
+        }
+
+        .sync-btn.loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .sync-btn .spinner {
+            display: none;
+            animation: spin 1s linear infinite;
+        }
+
+        .sync-btn.loading .spinner { display: inline; }
+        .sync-btn.loading .btn-text { display: none; }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* Key Metrics Cards */
+        .metrics-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .metric-card {
+            background: var(--bg-cell);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .metric-label {
+            font-size: 9px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .metric-value {
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .metric-value.profit { color: var(--profit); }
+        .metric-value.loss { color: var(--loss); }
+        .metric-value.accent { color: var(--accent); }
+
+        .metric-sub {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="modal-overlay">
+        <div class="terminal-card">
+            <div class="terminal-header">
+                <div class="terminal-dots">
+                    <div class="dot dot-red"></div>
+                    <div class="dot dot-yellow"></div>
+                    <div class="dot dot-green"></div>
+                </div>
+                <div class="terminal-title">
+                    <span class="symbol">ETH/USDT</span>
+                    <span class="type">PUT</span>
+                    <span class="status">ABERTA</span>
+                </div>
+                <button class="close-btn">×</button>
+            </div>
+
+            <div class="pnl-display">
+                <div class="pnl-main">
+                    <div class="pnl-value-block">
+                        <div class="pnl-label">Profit & Loss</div>
+                        <div class="pnl-value profit" id="pnlValue">+$ 980</div>
+                        <div class="pnl-percent profit" id="pnlPercent">+39.20%</div>
+                    </div>
+                </div>
+
+                <div class="status-bar">
+                    <div class="status-row">
+                        <div class="status-item">
+                            <div class="status-icon win">✓</div>
+                            <span class="status-text win" id="statusText">VENCENDO</span>
+                        </div>
+                        <div class="status-item">
+                            <span style="color: var(--text-muted)">Vencimento:</span>
+                            <span style="font-weight: 600">24/03/2026</span>
+                        </div>
+                        <div class="status-item">
+                            <span style="color: var(--text-muted)">Prazo:</span>
+                            <span style="font-weight: 600; color: var(--accent)">1 dia</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="data-grid">
+                <div class="metrics-row">
+                    <div class="metric-card">
+                        <div class="metric-label">Cotação Atual</div>
+                        <div class="metric-value" id="cotacaoAtual">$ 2.126,70</div>
+                        <div class="metric-sub" id="variacaoCot">-1.61% hoje</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Premio Atual</div>
+                        <div class="metric-value profit" id="premioAtual">$ 1,52</div>
+                        <div class="metric-sub" id="variacaoPremio">-39% vs abert.</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Probabilidade</div>
+                        <div class="metric-value profit" id="probValue">76%</div>
+                        <div class="metric-sub">Vencendo</div>
+                    </div>
+                </div>
+
+                <div class="sparkline-container">
+                    <span class="sparkline-label">Variação do Premio</span>
+                    <svg viewBox="0 0 300 60" preserveAspectRatio="none" id="sparkline">
+                        <path d="M0,45 Q30,40 60,35 T120,25 T180,30 T240,15 T300,10"
+                              fill="none" stroke="var(--profit)" stroke-width="2"/>
+                        <path d="M0,45 Q30,40 60,35 T120,25 T180,30 T240,15 T300,10 L300,60 L0,60 Z"
+                              fill="url(#sparkGrad)" opacity="0.3"/>
+                        <defs>
+                            <linearGradient id="sparkGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" style="stop-color:var(--profit)"/>
+                                <stop offset="100%" style="stop-color:transparent"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+
+                <div class="grid-section">
+                    <div class="section-header">Preço do Ativo</div>
+                    <div class="data-table">
+                        <div class="data-row">
+                            <span class="data-key">
+                                <span class="icon">📊</span>
+                                Cotação Abertura
+                            </span>
+                            <div class="data-values">
+                                <span class="data-old" id="aberturaOld">$ 2.162,50</span>
+                                <span class="data-arrow">→</span>
+                                <span class="data-current up" id="aberturaAtual">$ 2.126,70</span>
+                            </div>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-key">
+                                <span class="icon">📉</span>
+                                Variação
+                            </span>
+                            <div class="data-values">
+                                <span class="data-current down" id="variacaoValor">-1.66%</span>
+                                <span class="data-change negative" id="variacaoBadge">▼ Queda</span>
+                            </div>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-key">
+                                <span class="icon">🎯</span>
+                                Strike Price
+                            </span>
+                            <div class="data-values">
+                                <span class="data-current neutral" style="color: var(--warning)">$ 2.325,00</span>
+                                <span class="data-change positive" id="distOtm">9.32% OTM</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid-section">
+                    <div class="section-header">Premio Opção</div>
+                    <div class="data-table">
+                        <div class="data-row">
+                            <span class="data-key">
+                                <span class="icon">💰</span>
+                                Premio Abertura
+                            </span>
+                            <div class="data-values">
+                                <span class="data-old">$ 2,50</span>
+                                <span class="data-arrow">→</span>
+                                <span class="data-current up" id="premioTable">$ 1,52</span>
+                            </div>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-key">
+                                <span class="icon">📊</span>
+                                Variação Premio
+                            </span>
+                            <div class="data-values">
+                                <span class="data-current up" id="varPremioValor">-39.20%</span>
+                                <span class="data-change positive" id="premioStatus">▼ Lucro</span>
+                            </div>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-key">
+                                <span class="icon">💎</span>
+                                Premio Restante
+                            </span>
+                            <div class="data-values">
+                                <span class="data-current profit" id="lucroPremio">$ 0,98</span>
+                                <span class="data-change positive">Por contrato</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid-section">
+                    <div class="section-header">Indicadores</div>
+                    <div class="progress-grid">
+                        <div class="progress-item">
+                            <div class="progress-header">
+                                <span class="progress-title">Prob. de Lucro</span>
+                                <span class="progress-value profit" id="probBar">76%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill green" id="probFill" style="width: 76%"></div>
+                            </div>
+                            <div class="progress-markers">
+                                <span>0%</span>
+                                <span>50%</span>
+                                <span>100%</span>
+                            </div>
+                        </div>
+                        <div class="progress-item">
+                            <div class="progress-header">
+                                <span class="progress-title">Dist. Strike</span>
+                                <span class="progress-value accent" id="distBar">9.32%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill blue" id="distFill" style="width: 47%"></div>
+                            </div>
+                            <div class="progress-markers">
+                                <span>0%</span>
+                                <span>Strike</span>
+                                <span>20%</span>
+                            </div>
+                        </div>
+                        <div class="progress-item">
+                            <div class="progress-header">
+                                <span class="progress-title">TAE / APY</span>
+                                <span class="progress-value accent">17.34%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill orange" style="width: 35%"></div>
+                            </div>
+                            <div class="progress-markers">
+                                <span>0%</span>
+                                <span>Médio</span>
+                                <span>50%</span>
+                            </div>
+                        </div>
+                        <div class="progress-item">
+                            <div class="progress-header">
+                                <span class="progress-title">Prazo Restante</span>
+                                <span class="progress-value" style="color: var(--text-secondary)">25%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill blue" style="width: 25%"></div>
+                            </div>
+                            <div class="progress-markers">
+                                <span>Início</span>
+                                <span>Agora</span>
+                                <span>Vcto</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="terminal-footer">
+                <div class="footer-left">
+                    <div class="live-indicator">
+                        <span class="live-dot"></span>
+                        <span>LIVE</span>
+                    </div>
+                    <span>|</span>
+                    <span>Última att: <span id="timestamp">--:--:--</span></span>
+                </div>
+                <button class="sync-btn" id="syncBtn" onclick="atualizar()">
+                    <span class="spinner">⟳</span>
+                    <span class="btn-text">SYNC DATA</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const operacao = {
+            strike: 2325.00,
+            premioAbertura: 2.50,
+            premioAtual: 1.52,
+            ativoAbertura: 2162.50,
+            ativoAtual: 2126.70,
+            quantidade: 1000,
+            prazoTotal: 4,
+            prazoRestante: 1
+        };
+
+        function atualizar() {
+            const btn = document.getElementById('syncBtn');
+            btn.classList.add('loading');
+
+            setTimeout(() => {
+                const variacaoAtivo = (Math.random() - 0.5) * 50;
+                const variacaoPremio = (Math.random() - 0.5) * 0.4;
+
+                operacao.ativoAtual = parseFloat((operacao.ativoAtual + variacaoAtivo).toFixed(2));
+                operacao.premioAtual = Math.max(0.01, parseFloat((operacao.premioAtual + variacaoPremio).toFixed(2)));
+
+                atualizarInterface();
+                btn.classList.remove('loading');
+                document.getElementById('timestamp').textContent = new Date().toLocaleTimeString('pt-BR');
+            }, 600);
+        }
+
+        function atualizarInterface() {
+            const distancia = ((operacao.ativoAtual - operacao.strike) / operacao.strike) * 100;
+            const probabilidade = Math.min(99, Math.max(20, 76 + (distancia - 9.32) * 3));
+            const lucro = (operacao.premioAbertura - operacao.premioAtual) * operacao.quantidade;
+            const variacaoPremio = ((operacao.premioAtual - operacao.premioAbertura) / operacao.premioAbertura) * 100;
+            const variacaoAtivo = ((operacao.ativoAtual - operacao.ativoAbertura) / operacao.ativoAbertura) * 100;
+            const isWinning = probabilidade >= 60;
+
+            // P&L
+            const pnlValue = document.getElementById('pnlValue');
+            const pnlPercent = document.getElementById('pnlPercent');
+            pnlValue.textContent = (lucro >= 0 ? '+' : '-') + '$ ' + Math.abs(Math.round(lucro));
+            pnlValue.className = 'pnl-value ' + (lucro >= 0 ? 'profit' : 'loss');
+            pnlPercent.textContent = (lucro >= 0 ? '+' : '-') + Math.abs((lucro / (operacao.premioAbertura * operacao.quantidade) * 100)).toFixed(2) + '%';
+            pnlPercent.className = 'pnl-percent ' + (lucro >= 0 ? 'profit' : 'loss');
+
+            // Status
+            const statusText = document.getElementById('statusText');
+            if (isWinning) {
+                statusText.textContent = 'VENCENDO';
+                statusText.className = 'status-text win';
+            } else {
+                statusText.textContent = 'ATENÇÃO';
+                statusText.className = 'status-text lose';
+            }
+
+            // Metrics
+            document.getElementById('cotacaoAtual').textContent = '$ ' + operacao.ativoAtual.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            document.getElementById('variacaoCot').textContent = (variacaoAtivo >= 0 ? '+' : '') + variacaoAtivo.toFixed(2) + '% hoje';
+            document.getElementById('variacaoCot').style.color = variacaoAtivo >= 0 ? 'var(--profit)' : 'var(--loss)';
+
+            document.getElementById('premioAtual').textContent = '$ ' + operacao.premioAtual.toFixed(2);
+            document.getElementById('variacaoPremio').textContent = Math.round(variacaoPremio) + '% vs abert.';
+
+            document.getElementById('probValue').textContent = Math.round(probabilidade) + '%';
+            document.getElementById('probValue').className = 'metric-value ' + (isWinning ? 'profit' : 'loss');
+
+            // Table
+            document.getElementById('aberturaAtual').textContent = '$ ' + operacao.ativoAtual.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            document.getElementById('variacaoValor').textContent = (variacaoAtivo >= 0 ? '+' : '') + variacaoAtivo.toFixed(2) + '%';
+            document.getElementById('variacaoValor').className = 'data-current ' + (variacaoAtivo >= 0 ? 'up' : 'down');
+            document.getElementById('variacaoBadge').textContent = (variacaoAtivo >= 0 ? '▲ Alta' : '▼ Queda');
+            document.getElementById('variacaoBadge').className = 'data-change ' + (variacaoAtivo >= 0 ? 'positive' : 'negative');
+
+            document.getElementById('distOtm').textContent = Math.abs(distancia).toFixed(2) + '% OTM';
+
+            document.getElementById('premioTable').textContent = '$ ' + operacao.premioAtual.toFixed(2);
+            document.getElementById('varPremioValor').textContent = Math.round(variacaoPremio) + '%';
+            document.getElementById('premioStatus').textContent = (variacaoPremio < 0 ? '▼ Lucro' : '▲ Perda');
+
+            document.getElementById('lucroPremio').textContent = '$ ' + Math.abs((operacao.premioAbertura - operacao.premioAtual)).toFixed(2);
+
+            // Progress bars
+            document.getElementById('probBar').textContent = Math.round(probabilidade) + '%';
+            document.getElementById('probFill').style.width = probabilidade + '%';
+            document.getElementById('distBar').textContent = Math.abs(distancia).toFixed(2) + '%';
+            document.getElementById('distFill').style.width = (Math.abs(distancia) / 20 * 100) + '%';
+        }
+
+        document.getElementById('timestamp').textContent = new Date().toLocaleTimeString('pt-BR');
+        atualizarInterface();
+    </script>
+</body>
+</html>

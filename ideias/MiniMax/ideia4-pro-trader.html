@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ideia 4 - Pro Trader com Termômetro</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0F0F0F;
+            --bg-card: #1A1A1A;
+            --bg-elevated: #252525;
+            --bg-accent: #2D2D2D;
+            --text-primary: #FFFFFF;
+            --text-secondary: #A0A0A0;
+            --text-muted: #666666;
+            --profit: #00D26A;
+            --profit-glow: rgba(0, 210, 106, 0.3);
+            --profit-bg: rgba(0, 210, 106, 0.1);
+            --loss: #FF4757;
+            --loss-glow: rgba(255, 71, 87, 0.3);
+            --loss-bg: rgba(255, 71, 87, 0.1);
+            --accent: #4A90D9;
+            --accent-glow: rgba(74, 144, 217, 0.3);
+            --warning: #FFA502;
+            --border: #333333;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg-dark);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: var(--text-primary);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.88);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .pro-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 540px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Header */
+        .pro-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            background: var(--bg-elevated);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .asset-badge {
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, var(--accent), #6C5CE7);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 800;
+            box-shadow: 0 8px 24px var(--accent-glow);
+        }
+
+        .header-info h3 {
+            font-size: 20px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .type-badge {
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .type-badge.put {
+            background: var(--loss-bg);
+            color: var(--loss);
+            border: 1px solid var(--loss);
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 700;
+            background: var(--profit-bg);
+            color: var(--profit);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-badge::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: var(--profit);
+            border-radius: 50%;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .header-meta {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            display: flex;
+            gap: 16px;
+        }
+
+        .close-btn {
+            width: 40px;
+            height: 40px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            transition: all 0.2s;
+        }
+
+        .close-btn:hover {
+            background: var(--loss);
+            border-color: var(--loss);
+            color: white;
+        }
+
+        /* Main Display */
+        .main-display {
+            padding: 28px;
+            background: linear-gradient(180deg, var(--bg-elevated), var(--bg-card));
+            border-bottom: 1px solid var(--border);
+        }
+
+        .pnl-hero {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .pnl-main {
+            text-align: center;
+            flex: 1;
+        }
+
+        .pnl-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+
+        .pnl-value {
+            font-size: 52px;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .pnl-value.profit {
+            color: var(--profit);
+            text-shadow: 0 0 40px var(--profit-glow);
+        }
+
+        .pnl-value.loss {
+            color: var(--loss);
+            text-shadow: 0 0 40px var(--loss-glow);
+        }
+
+        .pnl-percent {
+            font-size: 18px;
+            margin-top: 8px;
+            font-weight: 600;
+        }
+
+        .pnl-percent.profit { color: var(--profit); }
+        .pnl-percent.loss { color: var(--loss); }
+
+        /* Status Card */
+        .status-card {
+            background: var(--bg-accent);
+            border-radius: 14px;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .status-icon.win {
+            background: var(--profit-bg);
+        }
+
+        .status-icon.lose {
+            background: var(--loss-bg);
+        }
+
+        .status-text {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .status-text.win { color: var(--profit); }
+        .status-text.lose { color: var(--loss); }
+
+        .status-right {
+            text-align: right;
+        }
+
+        .status-right .value {
+            font-size: 18px;
+            font-weight: 700;
+            font-family: 'Space Mono', monospace;
+        }
+
+        .status-right .label {
+            font-size: 10px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        /* Thermometer Section */
+        .thermo-section {
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .thermo-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .thermo-title {
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .thermo-value {
+            font-size: 28px;
+            font-weight: 800;
+            font-family: 'Space Mono', monospace;
+        }
+
+        .thermo-value.profit { color: var(--profit); }
+        .thermo-value.loss { color: var(--loss); }
+
+        .thermo-track {
+            height: 28px;
+            background: var(--bg-accent);
+            border-radius: 14px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .thermo-fill {
+            height: 100%;
+            border-radius: 14px;
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .thermo-fill.profit {
+            background: linear-gradient(90deg, var(--profit), #00FF88);
+        }
+
+        .thermo-fill.loss {
+            background: linear-gradient(90deg, var(--loss), #FF6B7A);
+        }
+
+        .thermo-fill::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 30px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4));
+        }
+
+        .thermo-markers {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 12px;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .thermo-marker {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .thermo-marker .value {
+            font-weight: 700;
+            font-family: 'Space Mono', monospace;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .thermo-marker .label {
+            font-size: 9px;
+            text-transform: uppercase;
+        }
+
+        /* Data Grid */
+        .data-section {
+            padding: 24px;
+        }
+
+        .section-title {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .data-card {
+            background: var(--bg-elevated);
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .data-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .data-card-title {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .data-card-change {
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .data-card-change.up {
+            background: var(--profit-bg);
+            color: var(--profit);
+        }
+
+        .data-card-change.down {
+            background: var(--loss-bg);
+            color: var(--loss);
+        }
+
+        .data-card-values {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+
+        .data-old {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-decoration: line-through;
+        }
+
+        .data-arrow {
+            color: var(--text-muted);
+            font-size: 10px;
+        }
+
+        .data-current {
+            font-size: 20px;
+            font-weight: 700;
+            font-family: 'Space Mono', monospace;
+        }
+
+        .data-current.up { color: var(--profit); }
+        .data-current.down { color: var(--loss); }
+        .data-current.neutral { color: var(--accent); }
+
+        /* Progress Bars */
+        .progress-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-top: 8px;
+        }
+
+        .progress-item {
+            background: var(--bg-elevated);
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .progress-title {
+            font-size: 12px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .progress-value {
+            font-size: 16px;
+            font-weight: 700;
+            font-family: 'Space Mono', monospace;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: var(--bg-accent);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .progress-fill.green { background: var(--profit); }
+        .progress-fill.blue { background: var(--accent); }
+        .progress-fill.orange { background: var(--warning); }
+        .progress-fill.red { background: var(--loss); }
+
+        .progress-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 6px;
+            font-size: 9px;
+            color: var(--text-muted);
+        }
+
+        /* Footer */
+        .pro-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            background: var(--bg-elevated);
+            border-top: 1px solid var(--border);
+        }
+
+        .footer-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--profit);
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.5; }
+        }
+
+        .update-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, var(--accent), #3A7BD5);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 14px 24px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .update-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px var(--accent-glow);
+        }
+
+        .update-btn.loading { opacity: 0.7; pointer-events: none; }
+
+        .update-btn .spinner {
+            display: none;
+            animation: spin 1s linear infinite;
+        }
+
+        .update-btn.loading .spinner { display: inline; }
+        .update-btn.loading .btn-text { display: none; }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="modal-overlay">
+        <div class="pro-card">
+            <div class="pro-header">
+                <div class="header-left">
+                    <div class="asset-badge">ETH</div>
+                    <div class="header-info">
+                        <h3>
+                            ETH/USDT
+                            <span class="type-badge put">PUT</span>
+                            <span class="status-badge">ABERTA</span>
+                        </h3>
+                        <div class="header-meta">
+                            <span>Venc. 24/03/2026</span>
+                            <span>•</span>
+                            <span>1 dia restante</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="close-btn">×</button>
+            </div>
+
+            <div class="main-display">
+                <div class="pnl-hero">
+                    <div class="pnl-main">
+                        <div class="pnl-label">Profit / Loss</div>
+                        <div class="pnl-value profit" id="pnlValue">$ 980</div>
+                        <div class="pnl-percent profit" id="pnlPercent">+39.20%</div>
+                    </div>
+                </div>
+
+                <div class="status-card">
+                    <div class="status-left">
+                        <div class="status-icon win" id="statusIcon">✓</div>
+                        <div class="status-text win" id="statusText">VENCENDO</div>
+                    </div>
+                    <div class="status-right">
+                        <div class="value" id="cotacaoValue">$ 2.126,70</div>
+                        <div class="label" id="variacaoCot">-1.61% hoje</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="thermo-section">
+                <div class="thermo-header">
+                    <div class="thermo-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--profit)" stroke-width="2">
+                            <path d="M12 20V10"/>
+                            <path d="M18 20V4"/>
+                            <path d="M6 20v-4"/>
+                        </svg>
+                        Probabilidade de Lucro
+                    </div>
+                    <div class="thermo-value profit" id="probValue">76%</div>
+                </div>
+                <div class="thermo-track">
+                    <div class="thermo-fill profit" id="thermoFill" style="width: 76%"></div>
+                </div>
+                <div class="thermo-markers">
+                    <div class="thermo-marker">
+                        <span class="value">0%</span>
+                        <span class="label">Zero</span>
+                    </div>
+                    <div class="thermo-marker">
+                        <span class="value">$ 2.126</span>
+                        <span class="label">Atual</span>
+                    </div>
+                    <div class="thermo-marker">
+                        <span class="value">$ 2.325</span>
+                        <span class="label">Strike</span>
+                    </div>
+                    <div class="thermo-marker">
+                        <span class="value">100%</span>
+                        <span class="label">Máximo</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="data-section">
+                <div class="section-title">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="20" x2="18" y2="10"/>
+                        <line x1="12" y1="20" x2="12" y2="4"/>
+                        <line x1="6" y1="20" x2="6" y2="14"/>
+                    </svg>
+                    Comparativo de Preços
+                </div>
+
+                <div class="data-grid">
+                    <div class="data-card">
+                        <div class="data-card-header">
+                            <span class="data-card-title">Cotação Atual</span>
+                            <span class="data-card-change down" id="cotacaoChange">-1.66%</span>
+                        </div>
+                        <div class="data-card-values">
+                            <span class="data-old" id="cotacaoOld">$ 2.162,50</span>
+                            <span class="data-arrow">→</span>
+                            <span class="data-current down" id="cotacaoAtual">$ 2.126,70</span>
+                        </div>
+                    </div>
+
+                    <div class="data-card">
+                        <div class="data-card-header">
+                            <span class="data-card-title">Premio Opção</span>
+                            <span class="data-card-change up" id="premioChange">-39%</span>
+                        </div>
+                        <div class="data-card-values">
+                            <span class="data-old" id="premioOld">$ 2,50</span>
+                            <span class="data-arrow">→</span>
+                            <span class="data-current up" id="premioAtual">$ 1,52</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-title" style="margin-top: 20px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                    </svg>
+                    Indicadores Detalhados
+                </div>
+
+                <div class="progress-list">
+                    <div class="progress-item">
+                        <div class="progress-header">
+                            <span class="progress-title">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <polyline points="12 6 12 12 16 14"/>
+                                </svg>
+                                Distância Strike (OTM)
+                            </span>
+                            <span class="progress-value" style="color: var(--profit)" id="distValue">9.32%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill green" id="distFill" style="width: 47%"></div>
+                        </div>
+                        <div class="progress-labels">
+                            <span>0% (ATM)</span>
+                            <span>Strike: $ 2.325</span>
+                            <span>20% OTM</span>
+                        </div>
+                    </div>
+
+                    <div class="progress-item">
+                        <div class="progress-header">
+                            <span class="progress-title">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+                                    <line x1="12" y1="20" x2="12" y2="10"/>
+                                    <line x1="18" y1="20" x2="18" y2="4"/>
+                                    <line x1="6" y1="20" x2="6" y2="16"/>
+                                </svg>
+                                TAE / APY ao Ano
+                            </span>
+                            <span class="progress-value" style="color: var(--accent)">17.34%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill blue" style="width: 35%"></div>
+                        </div>
+                        <div class="progress-labels">
+                            <span>0%</span>
+                            <span>Médio</span>
+                            <span>50%</span>
+                        </div>
+                    </div>
+
+                    <div class="progress-item">
+                        <div class="progress-header">
+                            <span class="progress-title">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--loss)" stroke-width="2">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                                    <line x1="16" y1="2" x2="16" y2="6"/>
+                                    <line x1="8" y1="2" x2="8" y2="6"/>
+                                    <line x1="3" y1="10" x2="21" y2="10"/>
+                                </svg>
+                                Prazo Restante
+                            </span>
+                            <span class="progress-value" style="color: var(--text-secondary)">1 dia</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill red" style="width: 25%"></div>
+                        </div>
+                        <div class="progress-labels">
+                            <span>Início</span>
+                            <span>Agora</span>
+                            <span>Vencimento</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pro-footer">
+                <div class="footer-left">
+                    <span class="live-dot"></span>
+                    <span>Live • Atualizado: <span id="timestamp">--:--:--</span></span>
+                </div>
+                <button class="update-btn" id="updateBtn" onclick="atualizar()">
+                    <span class="spinner">⟳</span>
+                    <span class="btn-text">Atualizar Dados</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const operacao = {
+            strike: 2325.00,
+            premioAbertura: 2.50,
+            premioAtual: 1.52,
+            ativoAbertura: 2162.50,
+            ativoAtual: 2126.70,
+            quantidade: 1000
+        };
+
+        function atualizar() {
+            const btn = document.getElementById('updateBtn');
+            btn.classList.add('loading');
+
+            setTimeout(() => {
+                const variacaoAtivo = (Math.random() - 0.5) * 50;
+                const variacaoPremio = (Math.random() - 0.5) * 0.4;
+
+                operacao.ativoAtual = parseFloat((operacao.ativoAtual + variacaoAtivo).toFixed(2));
+                operacao.premioAtual = Math.max(0.01, parseFloat((operacao.premioAtual + variacaoPremio).toFixed(2)));
+
+                atualizarInterface();
+                btn.classList.remove('loading');
+                document.getElementById('timestamp').textContent = new Date().toLocaleTimeString('pt-BR');
+            }, 600);
+        }
+
+        function atualizarInterface() {
+            const distancia = ((operacao.ativoAtual - operacao.strike) / operacao.strike) * 100;
+            const probabilidade = Math.min(99, Math.max(20, 76 + (distancia - 9.32) * 3));
+            const lucro = (operacao.premioAbertura - operacao.premioAtual) * operacao.quantidade;
+            const variacaoPremio = ((operacao.premioAtual - operacao.premioAbertura) / operacao.premioAbertura) * 100;
+            const variacaoAtivo = ((operacao.ativoAtual - operacao.ativoAbertura) / operacao.ativoAbertura) * 100;
+            const isWinning = probabilidade >= 60;
+
+            // P&L
+            const pnlValue = document.getElementById('pnlValue');
+            const pnlPercent = document.getElementById('pnlPercent');
+            pnlValue.textContent = (lucro >= 0 ? '+' : '-') + '$ ' + Math.abs(Math.round(lucro));
+            pnlValue.className = 'pnl-value ' + (lucro >= 0 ? 'profit' : 'loss');
+            pnlPercent.textContent = (lucro >= 0 ? '+' : '-') + Math.abs((lucro / (operacao.premioAbertura * operacao.quantidade) * 100)).toFixed(2) + '%';
+            pnlPercent.className = 'pnl-percent ' + (lucro >= 0 ? 'profit' : 'loss');
+
+            // Status
+            const statusIcon = document.getElementById('statusIcon');
+            const statusText = document.getElementById('statusText');
+            if (isWinning) {
+                statusIcon.textContent = '✓';
+                statusIcon.className = 'status-icon win';
+                statusText.textContent = 'VENCENDO';
+                statusText.className = 'status-text win';
+            } else {
+                statusIcon.textContent = '!';
+                statusIcon.className = 'status-icon lose';
+                statusText.textContent = 'ATENÇÃO';
+                statusText.className = 'status-text lose';
+            }
+
+            // Cotação
+            document.getElementById('cotacaoValue').textContent = '$ ' + operacao.ativoAtual.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            document.getElementById('variacaoCot').textContent = (variacaoAtivo >= 0 ? '+' : '') + variacaoAtivo.toFixed(2) + '% hoje';
+            document.getElementById('variacaoCot').style.color = variacaoAtivo >= 0 ? 'var(--profit)' : 'var(--loss)';
+
+            // Probabilidade
+            document.getElementById('probValue').textContent = Math.round(probabilidade) + '%';
+            document.getElementById('probValue').className = 'thermo-value ' + (isWinning ? 'profit' : 'loss');
+            document.getElementById('thermoFill').style.width = probabilidade + '%';
+            document.getElementById('thermoFill').className = 'thermo-fill ' + (isWinning ? 'profit' : 'loss');
+
+            // Comparativo
+            document.getElementById('cotacaoOld').textContent = '$ ' + operacao.ativoAbertura.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            document.getElementById('cotacaoAtual').textContent = '$ ' + operacao.ativoAtual.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            document.getElementById('cotacaoChange').textContent = (variacaoAtivo >= 0 ? '+' : '') + variacaoAtivo.toFixed(2) + '%';
+            document.getElementById('cotacaoChange').className = 'data-card-change ' + (variacaoAtivo >= 0 ? 'up' : 'down');
+
+            document.getElementById('premioOld').textContent = '$ ' + operacao.premioAbertura.toFixed(2);
+            document.getElementById('premioAtual').textContent = '$ ' + operacao.premioAtual.toFixed(2);
+            document.getElementById('premioChange').textContent = Math.round(variacaoPremio) + '%';
+
+            // Distância
+            document.getElementById('distValue').textContent = Math.abs(distancia).toFixed(2) + '%';
+            document.getElementById('distFill').style.width = (Math.abs(distancia) / 20 * 100) + '%';
+        }
+
+        document.getElementById('timestamp').textContent = new Date().toLocaleTimeString('pt-BR');
+        atualizarInterface();
+    </script>
+</body>
+</html>

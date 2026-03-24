@@ -55,9 +55,9 @@ test("[Crypto] deve exibir a página de Cryptos (sem redirect)", async ({ page }
     await page.goto(BASE, { waitUntil: "domcontentloaded" });
     // Confirma que permanece na URL correta (sem redirect)
     expect(page.url()).toContain("crypto.html");
-    // Confirma que a estrutura principal está presente
-    const heading = await page.locator("h2.page-title").textContent();
-    expect(heading).toBeTruthy();
+    // Confirma que a estrutura do page-header está presente
+    const pageHeader = await page.locator(".page-header").count();
+    expect(pageHeader).toBeGreaterThan(0);
 });
 
 test("[Crypto] deve responder a requisição da página com status 200", async ({ page }) => {

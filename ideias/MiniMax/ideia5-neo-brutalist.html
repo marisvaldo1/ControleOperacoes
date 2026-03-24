@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ideia 5 - Neo-Brutalist com Gráficos Impactantes</title>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #FFE500;
+            --bg-dark: #1A1A1A;
+            --card: #FFFFFF;
+            --text-dark: #000000;
+            --text-light: #FFFFFF;
+            --text-gray: #666666;
+            --profit: #00C853;
+            --loss: #FF1744;
+            --accent: #2979FF;
+            --border: #000000;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg-dark);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: var(--text-light);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .brutalist-card {
+            background: var(--card);
+            border-radius: 0;
+            width: 100%;
+            max-width: 560px;
+            border: 4px solid var(--border);
+            box-shadow: 12px 12px 0 var(--border);
+            overflow: hidden;
+            color: var(--text-dark);
+        }
+
+        /* Header */
+        .brut-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            background: var(--bg);
+            border-bottom: 4px solid var(--border);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .asset-box {
+            width: 60px;
+            height: 60px;
+            background: var(--border);
+            color: var(--bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 800;
+            font-family: 'Archivo Black', sans-serif;
+        }
+
+        .header-info h2 {
+            font-size: 28px;
+            font-weight: 800;
+            font-family: 'Archivo Black', sans-serif;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-transform: uppercase;
+        }
+
+        .brut-badge {
+            padding: 6px 14px;
+            border-radius: 0;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            border: 3px solid var(--border);
+        }
+
+        .brut-badge.put {
+            background: var(--loss);
+            color: var(--text-light);
+        }
+
+        .brut-badge.status {
+            background: var(--profit);
+            color: var(--text-dark);
+        }
+
+        .header-meta {
+            font-size: 13px;
+            color: var(--text-gray);
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
+        .close-btn {
+            width: 48px;
+            height: 48px;
+            background: var(--loss);
+            border: 3px solid var(--border);
+            color: var(--text-light);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 800;
+            transition: all 0.1s;
+        }
+
+        .close-btn:hover {
+            background: var(--border);
+            color: var(--bg);
+        }
+
+        /* Main P&L */
+        .brut-main {
+            padding: 32px;
+            background: var(--text-dark);
+            color: var(--text-light);
+            border-bottom: 4px solid var(--border);
+        }
+
+        .pnl-hero {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .pnl-left {
+            text-align: center;
+            flex: 1;
+        }
+
+        .pnl-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: var(--text-gray);
+            margin-bottom: 8px;
+        }
+
+        .pnl-value {
+            font-size: 72px;
+            font-weight: 800;
+            font-family: 'Archivo Black', sans-serif;
+            line-height: 1;
+        }
+
+        .pnl-value.profit { color: var(--profit); }
+        .pnl-value.loss { color: var(--loss); }
+
+        .pnl-percent {
+            font-size: 24px;
+            font-weight: 700;
+            margin-top: 8px;
+        }
+
+        .pnl-percent.profit { color: var(--profit); }
+        .pnl-percent.loss { color: var(--loss); }
+
+        .pnl-right {
+            text-align: right;
+        }
+
+        .status-block {
+            background: var(--profit);
+            padding: 16px 24px;
+            border: 3px solid var(--border);
+        }
+
+        .status-block.lose {
+            background: var(--loss);
+        }
+
+        .status-text {
+            font-size: 18px;
+            font-weight: 800;
+            text-transform: uppercase;
+            font-family: 'Archivo Black', sans-serif;
+            color: var(--text-dark);
+        }
+
+        .status-sub {
+            font-size: 12px;
+            margin-top: 4px;
+            color: var(--text-dark);
+            font-weight: 600;
+        }
+
+        /* Stats Grid */
+        .brut-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            border-bottom: 4px solid var(--border);
+        }
+
+        .brut-stat {
+            padding: 24px;
+            border-right: 4px solid var(--border);
+            text-align: center;
+        }
+
+        .brut-stat:last-child { border-right: none; }
+
+        .stat-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-gray);
+            margin-bottom: 6px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 800;
+            font-family: 'Archivo Black', sans-serif;
+        }
+
+        .stat-value.profit { color: var(--profit); }
+        .stat-value.loss { color: var(--loss); }
+        .stat-value.accent { color: var(--accent); }
+        .stat-value.dark { color: var(--text-dark); }
+
+        .stat-sub {
+            font-size: 11px;
+            color: var(--text-gray);
+            margin-top: 4px;
+        }
+
+        /* Comparativo */
+        .brut-comp {
+            padding: 24px;
+            background: var(--bg);
+            border-bottom: 4px solid var(--border);
+        }
+
+        .comp-title {
+            font-size: 14px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .comp-title::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: var(--border);
+        }
+
+        .comp-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .comp-item {
+            background: var(--card);
+            border: 3px solid var(--border);
+            padding: 16px;
+        }
+
+        .comp-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .comp-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-gray);
+        }
+
+        .comp-change {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 0;
+        }
+
+        .comp-change.up {
+            background: var(--profit);
+            color: var(--text-dark);
+        }
+
+        .comp-change.down {
+            background: var(--loss);
+            color: var(--text-light);
+        }
+
+        .comp-values {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+
+        .comp-old {
+            font-size: 14px;
+            color: var(--text-gray);
+            text-decoration: line-through;
+        }
+
+        .comp-arrow {
+            font-size: 16px;
+            font-weight: 800;
+        }
+
+        .comp-current {
+            font-size: 22px;
+            font-weight: 800;
+            font-family: 'Archivo Black', sans-serif;
+        }
+
+        .comp-current.up { color: var(--profit); }
+        .comp-current.down { color: var(--loss); }
+
+        /* Progress Bars */
+        .brut-progress {
+            padding: 24px;
+            background: var(--text-dark);
+            color: var(--text-light);
+            border-bottom: 4px solid var(--border);
+        }
+
+        .progress-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-gray);
+            margin-bottom: 16px;
+        }
+
+        .progress-item {
+            margin-bottom: 20px;
+        }
+
+        .progress-item:last-child { margin-bottom: 0; }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .progress-label {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .progress-value {
+            font-size: 16px;
+            font-weight: 800;
+            font-family: 'Archivo Black', sans-serif;
+        }
+
+        .progress-value.profit { color: var(--profit); }
+        .progress-value.accent { color: var(--accent); }
+
+        .progress-track {
+            height: 20px;
+            background: var(--text-gray);
+            border: 2px solid var(--text-light);
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            transition: width 0.5s ease;
+        }
+
+        .progress-fill.green {
+            background: var(--profit);
+        }
+
+        .progress-fill.blue {
+            background: var(--accent);
+        }
+
+        .progress-fill.orange {
+            background: #FF9100;
+        }
+
+        .progress-markers {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 6px;
+            font-size: 10px;
+            color: var(--text-gray);
+        }
+
+        /* Footer */
+        .brut-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            background: var(--border);
+            color: var(--text-light);
+        }
+
+        .footer-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .live-dot {
+            width: 10px;
+            height: 10px;
+            background: var(--profit);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.5); }
+        }
+
+        .update-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--accent);
+            color: var(--text-light);
+            border: 3px solid var(--text-light);
+            padding: 14px 24px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.1s;
+        }
+
+        .update-btn:hover {
+            background: var(--text-light);
+            color: var(--border);
+        }
+
+        .update-btn.loading { opacity: 0.7; pointer-events: none; }
+
+        .update-btn .spinner {
+            display: none;
+            animation: spin 1s linear infinite;
+        }
+
+        .update-btn.loading .spinner { display: inline; }
+        .update-btn.loading .btn-text { display: none; }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* Big Chart */
+        .chart-section {
+            padding: 24px;
+            background: var(--card);
+            border-bottom: 4px solid var(--border);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .chart-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-gray);
+        }
+
+        .chart-values {
+            display: flex;
+            gap: 20px;
+        }
+
+        .chart-val {
+            text-align: right;
+        }
+
+        .chart-val-label {
+            font-size: 9px;
+            color: var(--text-gray);
+            text-transform: uppercase;
+        }
+
+        .chart-val-num {
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .chart-bar {
+            height: 60px;
+            background: var(--bg-dark);
+            border: 3px solid var(--border);
+            display: flex;
+            align-items: flex-end;
+            padding: 4px;
+            gap: 4px;
+        }
+
+        .chart-segment {
+            flex: 1;
+            background: var(--text-gray);
+            transition: height 0.3s ease;
+        }
+
+        .chart-segment.active {
+            background: var(--profit);
+        }
+
+        .chart-segment.warning {
+            background: #FF9100;
+        }
+
+        .chart-segment.danger {
+            background: var(--loss);
+        }
+    </style>
+</head>
+<body>
+    <div class="modal-overlay">
+        <div class="brutalist-card">
+            <div class="brut-header">
+                <div class="header-left">
+                    <div class="asset-box">ETH</div>
+                    <div class="header-info">
+                        <h2>
+                            ETH/USDT
+                            <span class="brut-badge put">PUT</span>
+                            <span class="brut-badge status">ABERTA</span>
+                        </h2>
+                        <div class="header-meta">Vencimento: 24/03/2026 • 1 dia restante</div>
+                    </div>
+                </div>
+                <button class="close-btn">×</button>
+            </div>
+
+            <div class="brut-main">
+                <div class="pnl-hero">
+                    <div class="pnl-left">
+                        <div class="pnl-label">Lucro Aberto</div>
+                        <div class="pnl-value profit" id="lucroValue">$ 980</div>
+                        <div class="pnl-percent profit" id="lucroPercent">+39.20%</div>
+                    </div>
+                    <div class="pnl-right">
+                        <div class="status-block" id="statusBlock">
+                            <div class="status-text" id="statusText">VENCENDO</div>
+                            <div class="status-sub" id="probText">76% probabilidade</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="brut-stats">
+                <div class="brut-stat">
+                    <div class="stat-icon">💹</div>
+                    <div class="stat-label">Cotação Atual</div>
+                    <div class="stat-value accent" id="cotacaoValue">$ 2.126,70</div>
+                    <div class="stat-sub" id="variacaoCot">-1.61% hoje</div>
+                </div>
+                <div class="brut-stat">
+                    <div class="stat-icon">🎯</div>
+                    <div class="stat-label">Strike</div>
+                    <div class="stat-value dark">$ 2.325</div>
+                    <div class="stat-sub" id="distValue">9.32% OTM</div>
+                </div>
+                <div class="brut-stat">
+                    <div class="stat-icon">💎</div>
+                    <div class="stat-label">Premio Atual</div>
+                    <div class="stat-value profit" id="premioValue">$ 1,52</div>
+                    <div class="stat-sub" id="premioVar">-39%</div>
+                </div>
+            </div>
+
+            <div class="chart-section">
+                <div class="chart-header">
+                    <div class="chart-title">Histórico de Variação</div>
+                    <div class="chart-values">
+                        <div class="chart-val">
+                            <div class="chart-val-label">Abertura</div>
+                            <div class="chart-val-num" style="color: var(--text-gray)">$ 2.162,50</div>
+                        </div>
+                        <div class="chart-val">
+                            <div class="chart-val-label">Atual</div>
+                            <div class="chart-val-num" style="color: var(--profit)" id="chartAtual">$ 2.126,70</div>
+                        </div>
+                        <div class="chart-val">
+                            <div class="chart-val-label">Strike</div>
+                            <div class="chart-val-num" style="color: #FF9100">$ 2.325,00</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-bar" id="chartBar">
+                    <div class="chart-segment" style="height: 80%"></div>
+                    <div class="chart-segment" style="height: 65%"></div>
+                    <div class="chart-segment" style="height: 72%"></div>
+                    <div class="chart-segment active" style="height: 85%"></div>
+                    <div class="chart-segment" style="height: 60%"></div>
+                    <div class="chart-segment warning" style="height: 75%"></div>
+                    <div class="chart-segment active" style="height: 90%"></div>
+                    <div class="chart-segment" style="height: 55%"></div>
+                </div>
+            </div>
+
+            <div class="brut-comp">
+                <div class="comp-title">Comparativo: Abertura vs Atual</div>
+                <div class="comp-grid">
+                    <div class="comp-item">
+                        <div class="comp-header">
+                            <span class="comp-label">Cotação</span>
+                            <span class="comp-change down" id="cotacaoChange">-1.66%</span>
+                        </div>
+                        <div class="comp-values">
+                            <span class="comp-old" id="cotacaoOld">$ 2.162,50</span>
+                            <span class="comp-arrow">→</span>
+                            <span class="comp-current down" id="cotacaoAtual">$ 2.126,70</span>
+                        </div>
+                    </div>
+                    <div class="comp-item">
+                        <div class="comp-header">
+                            <span class="comp-label">Premio</span>
+                            <span class="comp-change up" id="premioChange">-39%</span>
+                        </div>
+                        <div class="comp-values">
+                            <span class="comp-old" id="premioOld">$ 2,50</span>
+                            <span class="comp-arrow">→</span>
+                            <span class="comp-current up" id="premioAtual">$ 1,52</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="brut-progress">
+                <div class="progress-title">Indicadores de Performance</div>
+                <div class="progress-item">
+                    <div class="progress-header">
+                        <span class="progress-label">Probabilidade de Lucro</span>
+                        <span class="progress-value profit" id="probBar">76%</span>
+                    </div>
+                    <div class="progress-track">
+                        <div class="progress-fill green" id="probFill" style="width: 76%"></div>
+                    </div>
+                    <div class="progress-markers">
+                        <span>0%</span>
+                        <span>50%</span>
+                        <span>100%</span>
+                    </div>
+                </div>
+                <div class="progress-item">
+                    <div class="progress-header">
+                        <span class="progress-label">Distância Strike (OTM)</span>
+                        <span class="progress-value accent" id="distBar">9.32%</span>
+                    </div>
+                    <div class="progress-track">
+                        <div class="progress-fill blue" id="distFill" style="width: 47%"></div>
+                    </div>
+                    <div class="progress-markers">
+                        <span>0% (ATM)</span>
+                        <span>Strike</span>
+                        <span>20% OTM</span>
+                    </div>
+                </div>
+                <div class="progress-item">
+                    <div class="progress-header">
+                        <span class="progress-label">Prazo Restante</span>
+                        <span class="progress-value accent">25%</span>
+                    </div>
+                    <div class="progress-track">
+                        <div class="progress-fill orange" style="width: 25%"></div>
+                    </div>
+                    <div class="progress-markers">
+                        <span>Início</span>
+                        <span>Agora</span>
+                        <span>Vencimento</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="brut-footer">
+                <div class="footer-left">
+                    <span class="live-dot"></span>
+                    <span>Live • Atualizado: <span id="timestamp">--:--:--</span></span>
+                </div>
+                <button class="update-btn" id="updateBtn" onclick="atualizar()">
+                    <span class="spinner">⟳</span>
+                    <span class="btn-text">ATUALIZAR</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const operacao = {
+            strike: 2325.00,
+            premioAbertura: 2.50,
+            premioAtual: 1.52,
+            ativoAbertura: 2162.50,
+            ativoAtual: 2126.70,
+            quantidade: 1000
+        };
+
+        function atualizar() {
+            const btn = document.getElementById('updateBtn');
+            btn.classList.add('loading');
+
+            setTimeout(() => {
+                const variacaoAtivo = (Math.random() - 0.5) * 50;
+                const variacaoPremio = (Math.random() - 0.5) * 0.4;
+
+                operacao.ativoAtual = parseFloat((operacao.ativoAtual + variacaoAtivo).toFixed(2));
+                operacao.premioAtual = Math.max(0.01, parseFloat((operacao.premioAtual + variacaoPremio).toFixed(2)));
+
+                atualizarInterface();
+                btn.classList.remove('loading');
+                document.getElementById('timestamp').textContent = new Date().toLocaleTimeString('pt-BR');
+
+                // Animate chart
+                const segments = document.querySelectorAll('.chart-segment');
+                segments.forEach((seg, i) => {
+                    setTimeout(() => {
+                        seg.style.height = (Math.random() * 80 + 20) + '%';
+                        seg.className = 'chart-segment';
+                        if (Math.random() > 0.7) seg.classList.add('active');
+                        else if (Math.random() > 0.5) seg.classList.add('warning');
+                    }, i * 50);
+                });
+            }, 600);
+        }
+
+        function atualizarInterface() {
+            const distancia = ((operacao.ativoAtual - operacao.strike) / operacao.strike) * 100;
+            const probabilidade = Math.min(99, Math.max(20, 76 + (distancia - 9.32) * 3));
+            const lucro = (operacao.premioAbertura - operacao.premioAtual) * operacao.quantidade;
+            const variacaoPremio = ((operacao.premioAtual - operacao.premioAbertura) / operacao.premioAbertura) * 100;
+            const variacaoAtivo = ((operacao.ativoAtual - operacao.ativoAbertura) / operacao.ativoAbertura) * 100;
+            const isWinning = probabilidade >= 60;
+
+            // P&L
+            document.getElementById('lucroValue').textContent = (lucro >= 0 ? '+' : '-') + '$ ' + Math.abs(Math.round(lucro));
+            document.getElementById('lucroValue').className = 'pnl-value ' + (lucro >= 0 ? 'profit' : 'loss');
+            document.getElementById('lucroPercent').textContent = (lucro >= 0 ? '+' : '-') + Math.abs((lucro / (operacao.premioAbertura * operacao.quantidade) * 100)).toFixed(2) + '%';
+            document.getElementById('lucroPercent').className = 'pnl-percent ' + (lucro >= 0 ? 'profit' : 'loss');
+
+            // Status
+            const statusBlock = document.getElementById('statusBlock');
+            const statusText = document.getElementById('statusText');
+            const probText = document.getElementById('probText');
+            if (isWinning) {
+                statusBlock.className = 'status-block';
+                statusText.textContent = 'VENCENDO';
+                probText.textContent = Math.round(probabilidade) + '% probabilidade';
+            } else {
+                statusBlock.className = 'status-block lose';
+                statusText.textContent = 'ATENÇÃO';
+                probText.textContent = Math.round(probabilidade) + '% probabilidade';
+            }
+
+            // Stats
+            document.getElementById('cotacaoValue').textContent = '$ ' + operacao.ativoAtual.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            document.getElementById('variacaoCot').textContent = (variacaoAtivo >= 0 ? '+' : '') + variacaoAtivo.toFixed(2) + '% hoje';
+            document.getElementById('distValue').textContent = Math.abs(distancia).toFixed(2) + '% OTM';
+            document.getElementById('premioValue').textContent = '$ ' + operacao.premioAtual.toFixed(2);
+            document.getElementById('premioVar').textContent = Math.round(variacaoPremio) + '%';
+
+            // Chart
+            document.getElementById('chartAtual').textContent = '$ ' + operacao.ativoAtual.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+            // Comparativo
+            document.getElementById('cotacaoOld').textContent = '$ ' + operacao.ativoAbertura.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            document.getElementById('cotacaoAtual').textContent = '$ ' + operacao.ativoAtual.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            document.getElementById('cotacaoChange').textContent = (variacaoAtivo >= 0 ? '+' : '') + variacaoAtivo.toFixed(2) + '%';
+            document.getElementById('premioOld').textContent = '$ ' + operacao.premioAbertura.toFixed(2);
+            document.getElementById('premioAtual').textContent = '$ ' + operacao.premioAtual.toFixed(2);
+            document.getElementById('premioChange').textContent = Math.round(variacaoPremio) + '%';
+
+            // Progress
+            document.getElementById('probBar').textContent = Math.round(probabilidade) + '%';
+            document.getElementById('probFill').style.width = probabilidade + '%';
+            document.getElementById('distBar').textContent = Math.abs(distancia).toFixed(2) + '%';
+            document.getElementById('distFill').style.width = (Math.abs(distancia) / 20 * 100) + '%';
+        }
+
+        document.getElementById('timestamp').textContent = new Date().toLocaleTimeString('pt-BR');
+        atualizarInterface();
+    </script>
+</body>
+</html>
