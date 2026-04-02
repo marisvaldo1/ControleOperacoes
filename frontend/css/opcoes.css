@@ -1998,6 +1998,8 @@
     border-radius: 12px;
     overflow: hidden;
     transition: border-color .2s;
+    display: flex;
+    flex-direction: column;
 }
 #modalSaldoMedio .sm-panel:hover {
     border-color: rgba(255,255,255,.11);
@@ -2014,8 +2016,9 @@
     letter-spacing: .5px;
     color: rgba(255,255,255,.3);
     background: rgba(255,255,255,.02);
+    flex-shrink: 0;
 }
-#modalSaldoMedio .sm-panel-body { padding: 1rem; }
+#modalSaldoMedio .sm-panel-body { padding: 1rem; flex: 1; overflow-y: auto; }
 
 /* Ops table */
 #modalSaldoMedio .sm-ops-tbl {
@@ -2334,8 +2337,8 @@
 #modalSaldoMedio .sm-op-card {
     background: rgba(255,255,255,.025);
     border: 1px solid rgba(255,255,255,.07);
-    border-radius: 12px;
-    padding: 1rem;
+    border-radius: 10px;
+    padding: .55rem .8rem;
     transition: all .2s;
     position: relative;
     overflow: hidden;

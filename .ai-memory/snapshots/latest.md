@@ -1,6 +1,6 @@
 # AI PROJECT SNAPSHOT
 > Cole todo este arquivo na IA para retomar o projeto sem perder contexto.
-> Gerado em: 2026-03-18 15:38:08 | Branch: master
+> Gerado em: 2026-04-01 16:07:57 | Branch: master
 
 ---
 
@@ -12,29 +12,46 @@
 ---
 
 ## GIT — últimos 5 commits
+3716e53 2026-03-24 Tela de resultados
+3aa8644 2026-03-20 Tela de resultados
+edbb352 2026-03-19 Tela de resultados
 fd1a31d 2026-03-13 Tela de cryptos
 c9934aa 2026-03-13 Tela de cryptos
-c8f34d5 2026-03-05 Tela de testes
-6482359 2026-02-23 Janela de totais finais
-308a0b6 2026-02-23 Janela de totais finais
 
 ## Arquivos alterados no último commit
-.ai-memory/05-STATE.md
-.ai-memory/08-CHANGELOG.md
-.ai-memory/09-PROMPTS.md
-.ai-memory/prompts_log.txt
-.ai-memory/snapshots/latest.md
-_setup_arch.py
+.tmp/playwright-report/index.html
+.tmp/test-results/.last-run.json
 backend/data/controle_operacoes.db
-backend/routes/__pycache__/opcoes.cpython-313.pyc
-backend/routes/opcoes.py
-backend/tests/test_api_opcoes.py
-frontend/components/modals/opcoes/modal-analise.html
-frontend/css/opcoes/opcoes.css
+backend/routes/__pycache__/crypto.cpython-313.pyc
+backend/routes/crypto.py
+frontend/css/crypto/crypto.css
+frontend/css/crypto/modal-detalhe-crypto.css
+frontend/css/crypto/modal-detalhe-operacao-crypto.css
 frontend/html/crypto.html
-frontend/html/opcoes.html
-frontend/js/opcoes/opcoes.js
-frontend/js/shared/modal-analise.js
+frontend/html/modal-detalhe-crypto.html
+frontend/js/crypto/crypto.js
+frontend/js/crypto/modal-detalhe-crypto-old.js
+frontend/js/crypto/modal-detalhe-crypto.js
+frontend/js/crypto/modal-detalhe-operacao-crypto.js
+frontend/tests/pages/crypto.spec.js
+ideias/MiniMax/id1.html
+ideias/MiniMax/id2.html
+ideias/MiniMax/ideia1-dashboard-executivo.html
+ideias/MiniMax/ideia2-terminal-quantitativo.html
+ideias/MiniMax/ideia3-bento-grid.html
+ideias/MiniMax/ideia4-pro-trader.html
+ideias/MiniMax/ideia5-neo-brutalist.html
+ideias/MiniMax/ideia6-glass-ui.html
+ideias/MiniMax/ideia7-cyberhud.html
+ideias/MiniMax/ideia8-classic-finance.html
+ideias/MiniMax/q1.html
+ideias/MiniMax/q2.html
+ideias/MiniMax/q3.html
+ideias/MiniMax/q4.html
+ideias/claude3-v2.html
+ideias/claude3.html
+tests/results/playwright_results.json
+tests/results/pytest_results.json
 
 ---
 
@@ -181,10 +198,13 @@ ControleOperacoes/
 ## ESTADO ATUAL (auto)
 # STATE (auto)
 
-Última atualização: 2026-03-18 15:38:06
+Última atualização: 2026-04-01 16:07:55
 Branch: master
 
 ## Commits recentes (últimos 10)
+  3716e53 | 2026-03-24 | â€œMarisvaldoâ€ | Tela de resultados
+  3aa8644 | 2026-03-20 | â€œMarisvaldoâ€ | Tela de resultados
+  edbb352 | 2026-03-19 | â€œMarisvaldoâ€ | Tela de resultados
   fd1a31d | 2026-03-13 | â€œMarisvaldoâ€ | Tela de cryptos
   c9934aa | 2026-03-13 | â€œMarisvaldoâ€ | Tela de cryptos
   c8f34d5 | 2026-03-05 | â€œMarisvaldoâ€ | Tela de testes
@@ -192,9 +212,6 @@ Branch: master
   308a0b6 | 2026-02-23 | â€œMarisvaldoâ€ | Janela de totais finais
   0d01e39 | 2026-02-18 | â€œMarisvaldoâ€ | Janela de totais finais
   8dd62bc | 2026-02-13 | â€œMarisvaldoâ€ | Janela de totais finais
-  2c2b88a | 2026-02-12 | â€œMarisvaldoâ€ | Janela de insigths
-  10a5284 | 2026-02-11 | â€œMarisvaldoâ€ | Ajustes no registro de controle
-  0fa948d | 2026-02-11 | â€œMarisvaldoâ€ | Janela de insigths
 
 ## Working tree
   M .ai-memory/05-STATE.md
@@ -202,22 +219,22 @@ Branch: master
    M .ai-memory/09-PROMPTS.md
    M .ai-memory/prompts_log.txt
    M .ai-memory/snapshots/latest.md
-   M .gitignore
+   D .tmp/playwright-report/index.html
+   D .tmp/test-results/.last-run.json
    M backend/data/controle_operacoes.db
-   M backend/routes/__pycache__/crypto.cpython-313.pyc
-   M backend/routes/crypto.py
-   M backend/tests/__pycache__/test_api_crypto.cpython-313-pytest-9.0.2.pyc
-   M backend/tests/__pycache__/test_api_opcoes.cpython-313-pytest-9.0.2.pyc
-   M backend/tests/test_api_crypto.py
    M frontend/components/modals/crypto/modal-dashboard-crypto.html
-   M frontend/html/crypto.html
-   M frontend/html/opcoes.html
-   M frontend/js/core/layout.js
-   M frontend/js/core/libs.js
-   M frontend/js/crypto/crypto.js
-   M frontend/js/crypt
+   M frontend/components/modals/opcoes/modal-resultado-total.html
+   M frontend/css/crypto.css
+   M frontend/css/crypto/modal-resultado-total-crypto.css
+   M frontend/css/opcoes.css
+   M frontend/css/opcoes/modal-detalhes.css
+   M frontend/css/opcoes/modal-resultado-total.css
+   M frontend/css/opcoes/opcoes.css
+   M frontend/css/shared/modal-analise.css
+   M frontend/css/shared/style.css
+   M frontend/cs
 
-... [truncado — 614 chars omitidos]
+... [truncado — 1213 chars omitidos]
 
 ---
 
@@ -262,6 +279,15 @@ Branch: master
 ---
 
 ## ÚLTIMOS PROMPTS ENVIADOS
+[2026-04-01 09:56:44]  fonte: clipboard
+10037396267
+
+[2026-03-31 11:28:20]  fonte: clipboard
+https://sei.correios.com.br/sei/controlador.php?acao=procedimento_trabalhar&acao_origem=procedimento_gerar&acao_retorno=procedimento_escolher_tipo&id_procedimento=70129174&atualizar_arvore=1&infra_sistema=100000100&infra_unidade_atual=439410&infra_hash=9a73d05b47d666fe32c75c5c621edb62550b1b592ead4c2dacb4dcd9228445dd#ID-70129174
+
+[2026-03-31 11:19:08]  fonte: clipboard
+GERENTE CORPORATIVO
+
 [2026-03-16 14:19:43]  fonte: clipboard
 Em opcÃ£o, cliquei no botÃ£o fechar operaÃ§Ã£o. Veja a imagem. E agora a operaÃ§Ã£o PETRO424W2 estÃ¡ mostrando que foi exercida e nÃ£o foi. Veja o cÃ¡lculo para apurar o exercÃ­cio. Note que o valor fechado oi menor que o strike. Portando a venda de put nÃ£o foi exercida. Verifique esse cÃ¡lculo e ajuste o resultado na tela.
 
@@ -275,23 +301,6 @@ Em opcÃ£o, cliquei no botÃ£o fechar operaÃ§Ã£o. Veja a imagem. E agora a
 
 Na tela de cypto, preciso corrigir essa tela da imagem 1
 Nessa mesma te...
-
-[2026-03-13 16:52:09]  fonte: clipboard
-Na tela de anÃ¡lise temporal de performance de crypto veio totamente vazia em todas as abas
-Recebendo esses erros
-Uncaught (in promise) TypeError: Cannot read properties of null (reading 'includes')
-    at AutofillOverlayContentService.<anonymous> (bootstrap-autofill-overlay.js:9562:81)
-    at Generator.next (<anonymous>)
-    at bootstrap-autofill-overlay.js:8522:71
-    at new Promise (<anonymous>...
-
-[2026-03-12 09:04:29]  fonte: clipboard
-Todas os ajustes abaixo dizem respeito Ã  tela de crypto
-Preciso de ajustes no calculo de dias de duraÃ§Ã£o da operaÃ§Ã£o. Verificar o cÃ¡lculo para ser Ãºnico e utilizado em todas as telas. Veja a imagem abaixo e anlise segundo a data atual e a data de vencimento e verifique o o cÃ¡lculo de dias esta errado.  Hoje sÃ£o 12/03 o vencimento 13/03 portanto deveria aparecer 2 dias e nÃ£o 4 como estÃ¡ ...
-
-[2026-03-12 08:35:57]  fonte: clipboard
-[Thu Mar 12 08:29:21 2026] 127.0.0.1:58597 [200]: GET /resultados/results.json?_=1773314961912
-[Thu Mar 12 08:29:21 2026] 127.0.0.1:58597 Closing
 
 ---
 

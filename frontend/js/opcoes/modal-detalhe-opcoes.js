@@ -1,25 +1,27 @@
-﻿/**
- * modal-detalhe-crypto.js  v3.0.0
- * Modal de Detalhes da Operação Crypto — Com Anel Pulsante + Semáforo
+/**
+ * modal-detalhe-opcoes.js  v1.0.0
+ * Modal de Detalhes da Operação de Opções — Com Anel Pulsante + Semáforo
  *
- * 7 Melhorias + Anel Pulsante + Semáforo Visual:
- *  1. Hero Header com anel pulsante por ativo e semáforo de 3 dots
- *  2. Cards principais com ícones grandes e fontes maiores
+ * Adaptado de modal-detalhe-crypto.js v3.0.0 para o contexto de Opções (BRL).
+ *
+ *  1. Hero Header com anel pulsante por ativo base (PETR, VALE, ITUB, etc.)
+ *  2. Cards financeiros: Strike, Prêmio, Quantidade, Cotação Base, Total, Resultado
  *  3. Gauge SVG semicircular de distância ao strike (OTM/ITM)
- *  4. Progress bar de tempo real com contagem regressiva até 05:00 AM do vencimento
+ *  4. Progress bar de tempo real com contagem regressiva até 18:00 do vencimento
  *  5. Timeline visual Abertura → Hoje → Vencimento
- *  6. Cards de cenários possíveis (exercido vs não exercido)
- *  7. Painel de informações adicionais com layout limpo
+ *  6. Cards de cenários possíveis no vencimento (CALL/PUT × VENDA/COMPRA)
  *
- * Usa: window.cryptoOperacoes, window.editOperacao (de crypto.js)
- * Expõe: window.ModalDetalheCrypto = { show, ensureLoaded }
+ * Usa: window.allOperacoes (de opcoes.js)
+ * Expõe: window.ModalDetalhesOpcoes = { show, ensureLoaded }
+ *        window.showDetalhesOpcao(id)
+ *        window.openDetalheOperacao(id)  ← redireciona o botão de detalhes existente
  */
 (function () {
     'use strict';
 
-    const TEMPLATE_PATH = 'modal-detalhe-crypto.html';
-    const CONTAINER_ID  = 'modalDetalheCryptoContainer';
-    const MODAL_ID      = 'modalDetalhesCrypto';
+    const TEMPLATE_PATH = 'modal-detalhe-opcoes.html';
+    const CONTAINER_ID  = 'modalDetalheOpcaoContainer';
+    const MODAL_ID      = 'modalDetalhesOpcoes';
 
     let _loadPromise    = null;
     let _countdownTimer = null;
@@ -27,8 +29,9 @@
     let _buttonsWired   = false;
 
     // ─── Formatadores ────────────────────────────────────────────────────────
-    function fmtUsd(v) {
-        return 'US$\u00a0' + (parseFloat(v) || 0).toLocaleString('pt-BR', {
+
+    function fmtBrl(v) {
+        return 'R$\u00a0' + (parseFloat(v) || 0).toLocaleString('pt-BR', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
         });
@@ -40,26 +43,51 @@
         return parts.length === 3 ? parts[2] + '/' + parts[1] + '/' + parts[0] : s;
     }
 
+    function parseF(v) {
+        if (typeof v === 'number') return v;
+        if (!v) return 0;
+        const s = String(v).trim();
+        if (s.includes(',') && s.includes('.')) return parseFloat(s.replace(/\./g, '').replace(',', '.'));
+        if (s.includes(',')) return parseFloat(s.replace(',', '.'));
+        return parseFloat(s) || 0;
+    }
+
     // ─── Helpers de ativo (anel pulsante) ────────────────────────────────────
+
     function assetPulseClass(ativo) {
         const a = (ativo || '').toUpperCase();
-        if (a === 'BTC') return 'mdc-pulse-btc';
-        if (a === 'ETH') return 'mdc-pulse-eth';
-        if (a === 'BNB') return 'mdc-pulse-bnb';
-        if (a === 'SOL') return 'mdc-pulse-sol';
-        return 'mdc-pulse-xrp';
+        if (a.startsWith('PETR')) return 'mdo-pulse-petr';
+        if (a.startsWith('VALE')) return 'mdo-pulse-vale';
+        if (a.startsWith('ITUB')) return 'mdo-pulse-itub';
+        if (a.startsWith('BBAS') || a.startsWith('BBDC')) return 'mdo-pulse-bbas';
+        if (a.startsWith('ABEV')) return 'mdo-pulse-abev';
+        if (a.startsWith('WEGE') || a.startsWith('EGIE')) return 'mdo-pulse-enrg';
+        return 'mdo-pulse-default';
+    }
+
+    // ─── Distância do strike ─────────────────────────────────────────────────
+    // CALL OTM: spot < strike → dist = (strike - spot) / spot * 100 > 0  (seguro)
+    // PUT  OTM: spot > strike → dist = (spot - strike) / strike * 100 > 0 (seguro)
+
+    function calcDist(tipo, spot, strike) {
+        if (!spot || !strike) return null;
+        return (tipo || '').toUpperCase() === 'CALL'
+            ? ((strike - spot) / spot) * 100
+            : ((spot - strike) / strike) * 100;
     }
 
     // ─── Lógica de Tempo ─────────────────────────────────────────────────────
-    function getVencEnd(exercicioStr) {
-        if (!exercicioStr) return null;
-        const [y, m, d] = exercicioStr.split('-').map(Number);
-        return new Date(y, m - 1, d, 5, 0, 0, 0).getTime();
+
+    function getVencEnd(vencStr) {
+        if (!vencStr) return null;
+        const [y, m, d] = vencStr.split('-').map(Number);
+        // Fechamento BM&FBOVESPA: terceira sexta-feira, 18:00 BRT
+        return new Date(y, m - 1, d, 18, 0, 0, 0).getTime();
     }
 
-    function calcTimePct(dataOperacao, exercicio) {
+    function calcTimePct(dataOperacao, vencimento) {
         const start = dataOperacao ? new Date(dataOperacao + 'T00:00:00').getTime() : null;
-        const end   = getVencEnd(exercicio);
+        const end   = getVencEnd(vencimento);
         if (!start || !end) return null;
         const total = end - start;
         if (total <= 0) return 100;
@@ -78,6 +106,7 @@
     }
 
     // ─── Gauge SVG ───────────────────────────────────────────────────────────
+
     function buildGaugeSVG(distRaw, tipo) {
         const dist = parseFloat(distRaw) || 0;
         let zoneColor, zoneLabel, zoneEmoji;
@@ -123,6 +152,7 @@
     }
 
     // ─── Risk level ──────────────────────────────────────────────────────────
+
     function getRisk(distNum) {
         if (distNum < 0)  return { color: '#e85d4a', bg: 'rgba(232,93,74,0.12)',   label: 'ITM — EXERCÍCIO PROVÁVEL',    level: 'danger'  };
         if (distNum < 2)  return { color: '#f59f00', bg: 'rgba(245,159,0,0.12)',   label: 'ATENÇÃO — PRÓXIMO DO STRIKE', level: 'warning' };
@@ -131,8 +161,9 @@
     }
 
     // ─── Timestamp do header do modal ────────────────────────────────────────
+
     function _updateModalTs() {
-        const el = document.getElementById('mdcLastUpdated');
+        const el = document.getElementById('mdoLastUpdated');
         if (!el) return;
         const now = new Date();
         el.textContent = 'Atualizado: ' +
@@ -140,38 +171,24 @@
             String(now.getMinutes()).padStart(2, '0');
     }
 
-    // ─── Skeleton de loading no corpo do modal ────────────────────────────────
-    function _showBodySkeleton() {
-        const body = document.getElementById('modalDetalhesBody');
-        if (!body) return;
-        const row6 = Array(6).fill('<div class="mdc-skel mdc-skel-card flex-fill"></div>').join('');
-        body.innerHTML = `
-<div class="mdc-skel mdc-skel-hero mb-2"></div>
-<div class="d-flex gap-2 mb-3">${row6}</div>
-<div class="d-flex gap-3 mb-3">
-  <div class="mdc-skel flex-fill" style="height:190px"></div>
-  <div class="mdc-skel flex-fill" style="height:190px"></div>
-</div>
-<div class="mdc-skel" style="height:70px"></div>`;
-    }
-
     // ─── Wire botões do header (executado uma única vez após template carregado) ─
+
     function _wireButtons() {
         if (_buttonsWired) return;
         _buttonsWired = true;
 
-        document.getElementById('mdcBtnRefresh')?.addEventListener('click', async function () {
+        document.getElementById('mdoBtnRefresh')?.addEventListener('click', async function () {
             const id = _currentOpId;
             if (!id) return;
             this.classList.add('mdh-spin');
             this.disabled = true;
-            const tsEl = document.getElementById('mdcLastUpdated');
+            const tsEl = document.getElementById('mdoLastUpdated');
             if (tsEl) tsEl.textContent = 'Atualizando...';
 
-            // Skeleton apenas nos 3 campos dinâmicos — mantém altura da janela
-            const cotEl   = document.getElementById('mdcCardCotacao');
-            const gaugeEl = document.getElementById('mdcGaugeArea');
-            const probEl  = document.getElementById('mdcProbLucro');
+            // Skeleton apenas nos 3 campos dinâmicos
+            const cotEl   = document.getElementById('mdoCardCotacao');
+            const gaugeEl = document.getElementById('mdoGaugeArea');
+            const probEl  = document.getElementById('mdoProbLucro');
             const skelInline = '<span class="mdc-skel d-inline-block" style="width:70%;height:1em;border-radius:4px"></span>';
             const skelGauge  = '<div class="mdc-skel" style="height:130px;border-radius:8px"></div>';
             if (cotEl)   cotEl.innerHTML   = skelInline;
@@ -179,56 +196,53 @@
             if (probEl)  probEl.innerHTML  = skelInline;
 
             try {
-                const ops = window.cryptoOperacoes || [];
+                const ops = window.allOperacoes || [];
                 const op  = ops.find(o => String(o.id) === String(id));
                 if (!op) throw new Error('Operação #' + id + ' não encontrada');
-                const sym = ((op.ativo || '') + 'USDT').replace(/USDTUSDT$/i, 'USDT');
-                const r   = await fetch((window.API_BASE || '') + '/api/proxy/crypto/' + sym, { cache: 'no-store' });
-                if (!r.ok) throw new Error('HTTP ' + r.status);
-                const d   = await r.json();
-                const rawPrice = d.price ?? d.lastPrice ?? d.last ?? d.c ?? d.close;
-                if (!rawPrice) throw new Error('Preço não retornado pela API');
-                op._livePrice    = parseFloat(rawPrice);
-                op.cotacao_atual = parseFloat(rawPrice);
+                const ativoBase = (op.ativo_base || '').toUpperCase();
+                if (!ativoBase) throw new Error('Ativo base não definido');
+
+                // Reutiliza buscarCotacaoAtivo de opcoes.js (cache + normalização completa)
+                if (typeof buscarCotacaoAtivo !== 'function') throw new Error('buscarCotacaoAtivo não disponível');
+                const spotPrice = await buscarCotacaoAtivo(ativoBase);
+                if (!spotPrice) throw new Error('Cotação não disponível para ' + ativoBase);
+                op._liveSpot = spotPrice;
                 const tipo   = (op.tipo || '').toUpperCase();
-                const strike = parseFloat(op.strike) || 0;
-                if (strike) {
-                    op._liveDist = tipo === 'CALL'
-                        ? ((strike - op._livePrice) / op._livePrice) * 100
-                        : ((op._livePrice - strike) / strike) * 100;
-                }
-                // Atualiza apenas os 3 campos dinâmicos
-                const dist2    = op._liveDist !== undefined ? op._liveDist : op.distancia;
-                const distNum2 = parseFloat(dist2) || 0;
+                const strike = parseF(op.strike);
+                const dist2  = calcDist(tipo, spotPrice, strike);
+                op._liveDist = dist2;
+
+                const distNum2   = parseFloat(dist2) || 0;
                 const probLucro2 = op.pop != null ? op.pop + '%'
                     : Math.min(95, Math.max(5, 50 + distNum2 * 3)).toFixed(0) + '% <small style="opacity:.6">(estimado)</small>';
-                const isLive2 = true;
-                if (cotEl)  cotEl.innerHTML  = fmtUsd(op._livePrice) 
+
+                if (cotEl)   cotEl.innerHTML   = fmtBrl(spotPrice);
                 if (gaugeEl) gaugeEl.innerHTML = buildGaugeSVG(dist2, tipo);
                 if (probEl)  probEl.innerHTML  =
                     `<span class="mdc-info-label">📐 Prob. Lucro</span>
                      <span class="mdc-info-value" style="color:${distNum2 >= 5 ? '#47b96c' : distNum2 >= 2 ? '#4da6ff' : '#f59f00'}">${probLucro2}</span>`;
                 _updateModalTs();
+
             } catch (e) {
-                console.error('[mdcRefresh]', e);
-                // Restaura conteúdo sem re-render completo
-                const ops = window.cryptoOperacoes || [];
+                console.error('[mdoRefresh]', e);
+                const ops = window.allOperacoes || [];
                 const op  = ops.find(o => String(o.id) === String(id));
                 if (op) {
-                    const dist2    = op._liveDist !== undefined ? op._liveDist : op.distancia;
-                    const distNum2 = parseFloat(dist2) || 0;
                     const tipo2    = (op.tipo || '').toUpperCase();
-                    const cotacao2 = op._livePrice || op.cotacao_atual;
+                    const dist2    = op._liveDist !== undefined ? op._liveDist
+                        : calcDist(tipo2, parseF(op.preco_atual), parseF(op.strike));
+                    const distNum2 = parseFloat(dist2) || 0;
+                    const cotacao2 = op._liveSpot || parseF(op.preco_atual);
                     const probLucro2 = op.pop != null ? op.pop + '%'
                         : Math.min(95, Math.max(5, 50 + distNum2 * 3)).toFixed(0) + '% <small style="opacity:.6">(estimado)</small>';
-                    if (cotEl)  cotEl.textContent  = cotacao2 ? fmtUsd(cotacao2) : '—';
-                    if (gaugeEl) gaugeEl.innerHTML = buildGaugeSVG(dist2, tipo2);
-                    if (probEl)  probEl.innerHTML  =
+                    if (cotEl)   cotEl.textContent   = cotacao2 ? fmtBrl(cotacao2) : '—';
+                    if (gaugeEl) gaugeEl.innerHTML   = buildGaugeSVG(dist2, tipo2);
+                    if (probEl)  probEl.innerHTML    =
                         `<span class="mdc-info-label">📐 Prob. Lucro</span>
                          <span class="mdc-info-value" style="color:${distNum2 >= 5 ? '#47b96c' : distNum2 >= 2 ? '#4da6ff' : '#f59f00'}">${probLucro2}</span>`;
                 }
                 _updateModalTs();
-                const body = document.getElementById('modalDetalhesBody');
+                const body = document.getElementById('modalDetalhesOpcoesBody');
                 if (body) {
                     const err = document.createElement('div');
                     err.className = 'alert alert-warning py-2 px-3 mt-2';
@@ -242,26 +256,26 @@
                 this.disabled = false;
             }
         });
-
-        document.getElementById('mdcBtnAnalise')?.addEventListener('click', function () {
-            if (window.ModalAnaliseCrypto) window.ModalAnaliseCrypto.open(_currentOpId);
-        });
     }
 
     // ─── Template loader ─────────────────────────────────────────────────────
+
     function ensureLoaded() {
         if (_loadPromise) return _loadPromise;
         _loadPromise = (async function () {
             if (document.getElementById(MODAL_ID)) return true;
             const container = document.getElementById(CONTAINER_ID);
-            if (!container) return false;
+            if (!container) {
+                console.warn('[ModalDetalhesOpcoes] Container #' + CONTAINER_ID + ' não encontrado');
+                return false;
+            }
             try {
-                const r = await fetch(TEMPLATE_PATH + '?v=3.1.0', { cache: 'no-store' });
+                const r = await fetch(TEMPLATE_PATH + '?v=1.0.0', { cache: 'no-store' });
                 if (!r.ok) throw new Error('HTTP ' + r.status);
                 container.innerHTML = await r.text();
                 return !!document.getElementById(MODAL_ID);
             } catch (err) {
-                console.error('[ModalDetalheCrypto] Falha ao carregar template', err);
+                console.error('[ModalDetalhesOpcoes] Falha ao carregar template', err);
                 _loadPromise = null;
                 return false;
             }
@@ -269,80 +283,103 @@
         return _loadPromise;
     }
 
-    // ─── Render content (sem re-abrir o modal) ──────────────────────────────────────────────────
+    // ─── Render content ──────────────────────────────────────────────────────
+
     function _renderContent(op) {
         if (_countdownTimer) { clearInterval(_countdownTimer); _countdownTimer = null; }
 
-        const dist      = op._liveDist !== undefined ? op._liveDist : op.distancia;
-        const cotacao   = op._livePrice || op.cotacao_atual;
-        const isClosed  = (op.status || 'ABERTA') === 'FECHADA';
-        const isLive    = !!op._livePrice;
+        const tipo      = (op.tipo || '').toUpperCase();
+        const ativoBase = (op.ativo_base || op.ativo || '').toUpperCase();
+        const spot      = op._liveSpot || parseF(op.preco_atual);
+        const strike    = parseF(op.strike);
+        const dist      = op._liveDist !== undefined ? op._liveDist : calcDist(tipo, spot, strike);
+        const isClosed  = !['ABERTA'].includes((op.status || '').toUpperCase());
+        const isLive    = !!op._liveSpot;
         const distNum   = parseFloat(dist) || 0;
-        const tae       = parseFloat(op.tae) || 0;
-        const premio    = parseFloat(op.premio_us) || 0;
-        const ativo     = (op.ativo || 'BTC').toUpperCase();
+        const premio    = Math.abs(parseF(op.premio || op.preco_entrada));
+        const quantidade = Math.abs(parseInt(op.quantidade) || 0);
+        const resultado = parseF(op.resultado);
+        const isVenda   = (op.tipo_operacao || '').toUpperCase() === 'VENDA'
+            || (!op.tipo_operacao && parseInt(op.quantidade) < 0);
 
         const risk = getRisk(distNum);
 
-        const timePct       = calcTimePct(op.data_operacao, op.exercicio) || 0;
-        const vcEnd         = getVencEnd(op.exercicio);
+        const timePct       = calcTimePct(op.data_operacao, op.vencimento) || 0;
+        const vcEnd         = getVencEnd(op.vencimento);
         const msLeft        = vcEnd ? Math.max(0, vcEnd - Date.now()) : 0;
         const startTs       = op.data_operacao ? new Date(op.data_operacao + 'T00:00:00').getTime() : null;
         const corridosDias  = startTs ? Math.max(0, Math.floor((Date.now() - startTs) / 86400000)) : '—';
         const restantesDias = vcEnd   ? Math.max(0, Math.ceil((vcEnd - Date.now()) / 86400000))    : '—';
 
-        const tipoBadge = (op.tipo || '').toUpperCase() === 'CALL'
-            ? "<span class='badge crypto-badge-high ms-1'>▲ HIGH (CALL)</span>"
-            : "<span class='badge crypto-badge-low ms-1'>▼ LOW (PUT)</span>";
+        const tipoBadge = tipo === 'CALL'
+            ? "<span class='badge crypto-badge-high ms-1'>▲ CALL</span>"
+            : "<span class='badge crypto-badge-low ms-1'>▼ PUT</span>";
 
-        // Semáforo de 3 dots baseado na distância
+        // Semáforo de 3 dots
         const isRed = distNum < 2;
         const isAmb = distNum >= 2 && distNum < 5;
         const isGrn = distNum >= 5;
         const semaforoHTML = `
 <div class="mdc-semaforo" title="Semáforo de Distância ao Strike · Atual: ${distNum.toFixed(1)}%">
-  <div class="mdc-sema-dot" title="🔴 Perigo — distância < 2%: preço muito próximo ao strike, risco elevado de exercício" style="background:#e85d4a;box-shadow:${isRed ? '0 0 10px #e85d4a' : 'none'};opacity:${isRed ? '1' : '0.2'}"></div>
+  <div class="mdc-sema-dot" title="🔴 Perigo — distância < 2%: risco elevado de exercício" style="background:#e85d4a;box-shadow:${isRed ? '0 0 10px #e85d4a' : 'none'};opacity:${isRed ? '1' : '0.2'}"></div>
   <div class="mdc-sema-dot" title="🟡 Atenção — distância entre 2% e 5%: monitorar de perto" style="background:#f59f00;box-shadow:${isAmb ? '0 0 10px #f59f00' : 'none'};opacity:${isAmb ? '1' : '0.2'}"></div>
   <div class="mdc-sema-dot" title="🟢 Seguro — distância ≥ 5%: baixo risco de exercício" style="background:#47b96c;box-shadow:${isGrn ? '0 0 10px #47b96c' : 'none'};opacity:${isGrn ? '1' : '0.2'}"></div>
 </div>`;
 
-        // Cenários
-        const tipo = (op.tipo || '').toUpperCase();
-        let c1emoji, c1label, c1val, c2emoji, c2label, c2val;
-        const premioFmt = premio ? '+' + fmtUsd(premio) : (tae ? tae.toFixed(2) + '% aa' : '—');
-        if (tipo === 'CALL') {
-            c1emoji = '✅'; c1label = 'BTC fica abaixo do Strike';
-            c1val   = premioFmt + ' de prêmio em USDT';
-            c2emoji = '🔄'; c2label = 'BTC sobe acima do Strike';
-            c2val   = 'Recebe USD ou vende pelo valor do strike';
-        } else {
-            c1emoji = '✅'; c1label = 'BTC permanece acima do Strike';
-            c1val   = premioFmt + ' de prêmio em USDT';
-            c2emoji = '🔄'; c2label = 'BTC cai abaixo do Strike';
-            c2val   = 'Recebe BTC ao preço do strike (custo médio reduzido)';
-        }
-
-        const resultadoColor = (parseFloat(op.resultado) || 0) >= 0 ? '#47b96c' : '#e85d4a';
-        const resultadoFmt   = op.resultado != null
-            ? ((parseFloat(op.resultado) >= 0 ? '+' : '') + parseFloat(op.resultado).toFixed(2) + '%')
-            : null;
-        const exercidoBadge = op.exercicio_status === 'SIM'
+        // Badge de exercício
+        const exercidoBadge = op.status === 'EXERCIDA'
             ? "<span class='badge bg-warning text-dark' style='font-size:0.7rem'>✅ SIM</span>"
             : "<span class='badge bg-secondary' style='font-size:0.7rem'>❌ NÃO</span>";
+
+        // Probabilidade de lucro
         const probLucro = op.pop != null ? op.pop + '%'
             : (dist !== null && dist !== undefined
                 ? Math.min(95, Math.max(5, 50 + parseFloat(dist) * 3)).toFixed(0) + '% <small style="opacity:.6">(estimado)</small>'
                 : '—');
 
-        const html = `
+        // Cenários possíveis
+        const premioTotal = premio * quantidade;
+        const premioFmt   = premioTotal ? '+' + fmtBrl(premioTotal) : '—';
+        let c1emoji, c1label, c1val, c2emoji, c2label, c2val;
+        if (tipo === 'CALL') {
+            if (isVenda) {
+                c1emoji = '✅'; c1label = ativoBase + ' fica abaixo do Strike';
+                c1val   = premioFmt + ' mantido como prêmio';
+                c2emoji = '🔄'; c2label = ativoBase + ' sobe acima do Strike';
+                c2val   = 'Obrigação de vender as ações ao preço do strike';
+            } else {
+                c1emoji = '✅'; c1label = ativoBase + ' sobe acima do Strike';
+                c1val   = 'Direito de comprar ações ao preço do strike';
+                c2emoji = '❌'; c2label = ativoBase + ' fica abaixo do Strike';
+                c2val   = 'Perde o prêmio pago (' + fmtBrl(premioTotal) + ')';
+            }
+        } else { // PUT
+            if (isVenda) {
+                c1emoji = '✅'; c1label = ativoBase + ' permanece acima do Strike';
+                c1val   = premioFmt + ' mantido como prêmio';
+                c2emoji = '🔄'; c2label = ativoBase + ' cai abaixo do Strike';
+                c2val   = 'Obrigação de comprar ação pelo strike';
+            } else {
+                c1emoji = '✅'; c1label = ativoBase + ' cai abaixo do Strike';
+                c1val   = 'Direito de vender ações ao preço do strike';
+                c2emoji = '❌'; c2label = ativoBase + ' permanece acima do Strike';
+                c2val   = 'Perde o prêmio pago (' + fmtBrl(premioTotal) + ')';
+            }
+        }
 
+        const resultadoColor = resultado >= 0 ? '#47b96c' : '#e85d4a';
+        const resultadoFmt   = op.resultado != null
+            ? ((resultado >= 0 ? '+' : '') + fmtBrl(resultado))
+            : null;
+
+        const html = `
 <!-- ══════════ 1. HERO HEADER ══════════ -->
 <div class="mdc-hero" style="background:${risk.bg};border:1px solid ${risk.color}44">
   <div class="d-flex align-items-center gap-3">
-    <div class="mdc-pulse-ring ${assetPulseClass(ativo)}">${ativo.slice(0, 3)}</div>
+    <div class="mdc-pulse-ring ${assetPulseClass(ativoBase)}">${ativoBase.slice(0, 4)}</div>
     <div class="flex-grow-1" style="min-width:0">
       <div class="d-flex align-items-center justify-content-between gap-2">
-        <div class="mdc-hero-title" style="flex:1;min-width:0">${op.ativo || 'CRYPTO'}/USDT${tipoBadge}</div>
+        <div class="mdc-hero-title" style="flex:1;min-width:0">${op.ativo || ativoBase}${tipoBadge}</div>
         <div class="d-flex align-items-center gap-2 flex-shrink-0">
           <div style="text-align:right;line-height:1.3">
             <div style="font-size:0.62rem;text-transform:uppercase;letter-spacing:.05em;color:var(--tblr-secondary);margin-bottom:2px">🏁 Exercido</div>
@@ -363,38 +400,38 @@
 <div class="row g-2 mb-3">
   <div class="col-4 col-md-2">
     <div class="mdc-card text-center">
-      <div class="mdc-card-label">Investido</div>
-      <div class="mdc-card-value">${op.abertura ? fmtUsd(op.abertura) : '—'}</div>
-    </div>
-  </div>
-  <div class="col-4 col-md-2">
-    <div class="mdc-card text-center">
       <div class="mdc-card-label">Strike</div>
-      <div class="mdc-card-value">${op.strike ? fmtUsd(op.strike) : '—'}</div>
+      <div class="mdc-card-value">${strike ? fmtBrl(strike) : '—'}</div>
     </div>
   </div>
   <div class="col-4 col-md-2">
     <div class="mdc-card text-center">
-      <div class="mdc-card-label">Cotação ${isLive ? " 🟢 " : ''}</div>
-      <div class="mdc-card-value" id="mdcCardCotacao">${cotacao ? fmtUsd(cotacao) : '—'}</div>
+      <div class="mdc-card-label">Cotação${isLive ? ' 🟢' : ''}</div>
+      <div class="mdc-card-value" id="mdoCardCotacao">${spot ? fmtBrl(spot) : '—'}</div>
     </div>
   </div>
   <div class="col-4 col-md-2">
     <div class="mdc-card text-center">
-      <div class="mdc-card-label">TAE</div>
-      <div class="mdc-card-value" style="color:#4da6ff">${tae ? tae.toFixed(2) + '%' : '—'}</div>
+      <div class="mdc-card-label">Prêmio unit.</div>
+      <div class="mdc-card-value" style="color:#47b96c">${premio ? fmtBrl(premio) : '—'}</div>
     </div>
   </div>
   <div class="col-4 col-md-2">
     <div class="mdc-card text-center">
-      <div class="mdc-card-label">Prêmio</div>
-      <div class="mdc-card-value" style="color:#47b96c">${op.premio_us ? fmtUsd(op.premio_us) : '—'}</div>
+      <div class="mdc-card-label">Quantidade</div>
+      <div class="mdc-card-value">${quantidade || '—'}</div>
     </div>
   </div>
   <div class="col-4 col-md-2">
     <div class="mdc-card text-center">
-      <div class="mdc-card-label">Qtd Crypto</div>
-      <div class="mdc-card-value">${op.crypto ? parseFloat(op.crypto).toFixed(5) : '—'}<br><small style="font-size:0.65rem;opacity:.6"></small></div>
+      <div class="mdc-card-label">Total Prêmio</div>
+      <div class="mdc-card-value" style="color:#4da6ff">${premioTotal ? fmtBrl(premioTotal) : '—'}</div>
+    </div>
+  </div>
+  <div class="col-4 col-md-2">
+    <div class="mdc-card text-center">
+      <div class="mdc-card-label">Resultado</div>
+      <div class="mdc-card-value" style="color:${resultadoColor}">${resultadoFmt || '—'}</div>
     </div>
   </div>
 </div>
@@ -404,9 +441,9 @@
   <div class="col-md-5">
     <div class="mdc-section-box h-100">
       <div class="mdc-section-title">🎯 Distância do Strike</div>
-      <div id="mdcGaugeArea">${buildGaugeSVG(dist, tipo)}</div>
+      <div id="mdoGaugeArea">${buildGaugeSVG(dist, tipo)}</div>
       <div style="font-size:0.8rem;line-height:1rem">&nbsp;</div>
-      <div class="mdc-prob-row mt-2" id="mdcProbLucro">
+      <div class="mdc-prob-row mt-2" id="mdoProbLucro">
         <span class="mdc-info-label">📐 Prob. Lucro</span>
         <span class="mdc-info-value" style="color:${distNum >= 5 ? '#47b96c' : distNum >= 2 ? '#4da6ff' : '#f59f00'}">${probLucro}</span>
       </div>
@@ -417,21 +454,21 @@
       <div class="mdc-section-title">⏳ Progresso do Prazo</div>
       <div class="d-flex justify-content-between align-items-center mb-1">
         <span style="font-size:0.82rem;color:var(--tblr-secondary)">Tempo decorrido</span>
-        <span id="mdcPctLabel" class="badge" style="background:${risk.color}22;color:${risk.color};font-size:0.8rem;font-weight:700">${timePct.toFixed(1)}%</span>
+        <span id="mdoPctLabel" class="badge" style="background:${risk.color}22;color:${risk.color};font-size:0.8rem;font-weight:700">${timePct.toFixed(1)}%</span>
       </div>
       <div class="mdc-progress-track mb-1">
-        <div class="mdc-progress-fill" id="mdcProgressBar"
+        <div class="mdc-progress-fill" id="mdoProgressBar"
           style="width:${timePct.toFixed(2)}%;background:linear-gradient(90deg,${risk.color}99,${risk.color});">
         </div>
       </div>
       <div class="d-flex justify-content-between mb-3" style="font-size:0.72rem;color:var(--tblr-secondary)">
         <span>📌 ${fmtDate(op.data_operacao)}</span>
-        <span>🏁 ${fmtDate(op.exercicio)} <span style="color:#f59f00;font-weight:700">05:00 AM</span></span>
+        <span>🏁 ${fmtDate(op.vencimento)} <span style="color:#f59f00;font-weight:700">18:00</span></span>
       </div>
       <div class="mdc-countdown-box" style="border-color:${risk.color}44">
-        <div class="mdc-countdown-sub">${isClosed ? '⏸ Operação encerrada' : '⏰ Tempo restante até fechamento (05:00 AM)'}</div>
-        <div class="mdc-countdown-value" id="mdcCountdown" style="color:${risk.color}">${isClosed ? '—' : formatCountdown(msLeft)}</div>
-        <div class="mdc-countdown-dias" id="mdcDiasInfo">
+        <div class="mdc-countdown-sub">${isClosed ? '⏸ Operação encerrada' : '⏰ Tempo restante até vencimento (18:00)'}</div>
+        <div class="mdc-countdown-value" id="mdoCountdown" style="color:${risk.color}">${isClosed ? '—' : formatCountdown(msLeft)}</div>
+        <div class="mdc-countdown-dias" id="mdoDiasInfo">
           ${!isClosed ? `<span>${corridosDias} dias corridos</span>&nbsp;·&nbsp;<b style="color:${risk.color}">${restantesDias} dias restantes</b>` : ''}
         </div>
       </div>
@@ -476,30 +513,19 @@
       </div>
     </div>
   </div>
-</div>
+</div>`;
 
-${op.observacoes ? `
-<div class="mdc-info-row" style="flex-direction:column;align-items:flex-start;gap:4px;margin-top:8px">
-  <span class="mdc-info-label">📝 Observações</span>
-  <span style="font-size:0.84rem;color:var(--tblr-secondary);line-height:1.5">${op.observacoes}</span>
-</div>` : ''}
-`;
-
-        document.getElementById('modalDetalhesBody').innerHTML = html;
-        const tipoBadgeColor = op.tipo === 'PUT' ? '#ae3ec9' : '#206bc4';
-        const statusBadgeColor = isClosed ? 'rgba(47,179,68,.2)' : 'rgba(245,159,0,.2)';
-        const statusTextColor  = isClosed ? '#2fb344' : '#f59f00';
-        const strikeLabel = op.strike ? ' · K ' + parseFloat(op.strike).toLocaleString('en-US', {style:'currency',currency:'USD',maximumFractionDigits:0}) : '';
-        const exLabel     = op.exercicio ? ' · ' + op.exercicio : '';
-        document.getElementById('modalDetalhesTitle').innerHTML = "Detetalhes da operação";
+        document.getElementById('modalDetalhesOpcoesBody').innerHTML = html;
+        document.getElementById('modalDetalhesOpcoesTitle').textContent = op.ativo_base
+            ? 'Detalhes — ' + op.ativo_base : 'Detalhes da Operação';
 
         if (!isClosed && vcEnd) {
             _countdownTimer = setInterval(function () {
                 const msNow  = Math.max(0, vcEnd - Date.now());
-                const pctNow = calcTimePct(op.data_operacao, op.exercicio) || 0;
-                const cdEl   = document.getElementById('mdcCountdown');
-                const pbEl   = document.getElementById('mdcProgressBar');
-                const pctEl  = document.getElementById('mdcPctLabel');
+                const pctNow = calcTimePct(op.data_operacao, op.vencimento) || 0;
+                const cdEl   = document.getElementById('mdoCountdown');
+                const pbEl   = document.getElementById('mdoProgressBar');
+                const pctEl  = document.getElementById('mdoPctLabel');
                 if (!cdEl) { clearInterval(_countdownTimer); _countdownTimer = null; return; }
                 cdEl.textContent = formatCountdown(msNow);
                 if (pbEl)  pbEl.style.width  = pctNow.toFixed(3) + '%';
@@ -507,15 +533,18 @@ ${op.observacoes ? `
                 if (msNow <= 0) { clearInterval(_countdownTimer); _countdownTimer = null; }
             }, 1000);
         }
-
     }
 
-    // ─── show() principal ──────────────────────────────────────────────────────────────────────────
+    // ─── show() principal ────────────────────────────────────────────────────
+
     async function show(id) {
-        const ops = window.cryptoOperacoes || [];
-        const op  = ops.find(o => o.id === id);
-        if (!op) return;
-        _currentOpId = id;
+        const ops = window.allOperacoes || [];
+        const op  = ops.find(o => String(o.id) === String(id));
+        if (!op) {
+            console.warn('[ModalDetalhesOpcoes] Operação #' + id + ' não encontrada em allOperacoes');
+            return;
+        }
+        _currentOpId = String(id);
 
         const loaded = await ensureLoaded();
         if (!loaded) return;
@@ -525,6 +554,8 @@ ${op.observacoes ? `
         _updateModalTs();
 
         const modalEl = document.getElementById(MODAL_ID);
+        if (!modalEl) return;
+
         modalEl.addEventListener('hidden.bs.modal', function () {
             if (_countdownTimer) { clearInterval(_countdownTimer); _countdownTimer = null; }
             _currentOpId = null;
@@ -533,10 +564,13 @@ ${op.observacoes ? `
         new bootstrap.Modal(modalEl).show();
     }
 
-    window.ModalDetalheCrypto = { show: show, ensureLoaded: ensureLoaded };
+    // ─── Exposição pública ───────────────────────────────────────────────────
 
-    // Badge do ativo / botão info da tabela abrem esta janela
-    window.showDetalhesOperacao = function (id) { show(id); };
-    window.showDetalhes         = function (id) { show(id); };
+    window.ModalDetalhesOpcoes = { show: show, ensureLoaded: ensureLoaded };
+    window.showDetalhesOpcao   = function (id) { show(id); };
+
+    // Redireciona o botão de detalhes existente (ícone de olho) para o novo modal
+    // (o modal antigo foi substituído pelo novo template)
+    window.openDetalheOperacao = function (id) { show(id); };
 
 }());

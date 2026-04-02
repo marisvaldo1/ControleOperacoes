@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Conceito 6 — Score Dashboard: Preço Médio Crypto</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+:root{
+  --bg:#0d1117;--bg2:#161b22;--bg3:#21262d;
+  --amber:#f59f00;--blue:#4da6ff;--green:#3fb950;--red:#f85149;--purple:#bc8cff;
+  --tx:#e6edf3;--tx2:#8b949e;--mono:'JetBrains Mono','Courier New',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--tx);font-family:'Segoe UI',sans-serif;min-height:100vh}
+.modal-header{background:var(--bg2);border-bottom:1px solid #30363d;padding:12px 20px;
+  display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:.95rem;font-weight:700}
+.header-meta{display:flex;align-items:center;gap:10px}
+.ts{font-family:var(--mono);font-size:.72rem;color:var(--tx2)}
+.btn-refresh{background:none;border:1px solid #30363d;border-radius:6px;color:var(--tx2);cursor:pointer;padding:5px 8px;transition:.2s}
+.btn-refresh:hover{border-color:var(--amber);color:var(--amber)}
+.btn-close{background:none;border:none;cursor:pointer;color:var(--tx2);font-size:1.1rem;
+  width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:.2s}
+.btn-close:hover{background:#30363d;color:var(--tx)}
+
+.body{padding:16px;background:var(--bg)}
+
+/* Asset Tabs */
+.atabs{display:flex;gap:6px;margin-bottom:14px}
+.atab{padding:5px 14px;border-radius:6px;cursor:pointer;font-size:.78rem;font-weight:600;
+  border:1px solid #21262d;background:var(--bg2);color:var(--tx2);transition:.2s}
+.atab.a-btc{border-color:var(--amber);color:var(--amber);background:rgba(245,159,0,.06)}
+.atab.a-eth{border-color:var(--blue);color:var(--blue);background:rgba(77,166,255,.06)}
+
+/* Score Circle */
+.score-section{display:grid;grid-template-columns:160px 1fr;gap:16px;margin-bottom:14px;align-items:center}
+.score-circle{position:relative;width:160px;height:160px}
+.sc-svg{position:absolute;top:0;left:0}
+.sc-text{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center}
+.sc-num{font-family:var(--mono);font-size:2.6rem;font-weight:700;line-height:1}
+.sc-lbl{font-size:.6rem;text-transform:uppercase;letter-spacing:1px;color:var(--tx2);margin-top:4px}
+.sc-sublbl{font-size:.65rem;margin-top:2px}
+
+/* Score breakdown */
+.score-breakdown{}
+.sb-title{font-size:.7rem;text-transform:uppercase;letter-spacing:.8px;color:var(--tx2);margin-bottom:10px}
+.sb-item{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.sb-emoji{font-size:.9rem;width:20px;text-align:center}
+.sb-bar-wrap{flex:1}
+.sb-lbl{font-size:.72rem;color:var(--tx);margin-bottom:3px}
+.sb-bar{height:5px;background:var(--bg3);border-radius:3px}
+.sb-fill{height:5px;border-radius:3px;transition:width .6s}
+.sb-score{font-family:var(--mono);font-size:.72rem;font-weight:700;width:36px;text-align:right}
+
+/* PM Section */
+.pm-section{background:var(--bg2);border:1px solid #21262d;border-radius:12px;padding:16px;margin-bottom:14px}
+.pm-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.pm-title{font-size:.7rem;text-transform:uppercase;letter-spacing:.8px;color:var(--tx2)}
+.pm-badge{padding:3px 10px;border-radius:10px;font-size:.72rem;font-weight:700}
+.badge-up{background:rgba(63,185,80,.12);border:1px solid rgba(63,185,80,.3);color:var(--green)}
+.badge-down{background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);color:var(--red)}
+.badge-warn{background:rgba(245,159,0,.12);border:1px solid rgba(245,159,0,.3);color:var(--amber)}
+
+.pm-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.pm-cell{text-align:center}
+.pc-val{font-family:var(--mono);font-size:1.1rem;font-weight:700;margin-bottom:2px}
+.pc-lbl{font-size:.62rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px}
+.pc-arrow{font-size:.7rem}
+
+/* Next OP */
+.next-section{margin-bottom:14px}
+.ns-title{font-size:.7rem;text-transform:uppercase;letter-spacing:.8px;color:var(--tx2);margin-bottom:10px}
+.ns-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.ns-card{background:var(--bg2);border-radius:10px;padding:12px;text-align:center;border:1px solid transparent;transition:.15s}
+.ns-card.danger{border-color:rgba(248,81,73,.3);background:rgba(248,81,73,.04)}
+.ns-card.warn{border-color:rgba(245,159,0,.3);background:rgba(245,159,0,.04)}
+.ns-card.safe{border-color:rgba(63,185,80,.3);background:rgba(63,185,80,.04)}
+.nc-icon{font-size:1.4rem;margin-bottom:6px}
+.nc-lbl{font-size:.62rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.nc-range{font-family:var(--mono);font-size:.78rem;font-weight:700}
+.nc-margin{font-size:.65rem;margin-top:3px;color:var(--tx2)}
+.ns-card.danger .nc-range{color:var(--red)}
+.ns-card.warn .nc-range{color:var(--amber)}
+.ns-card.safe .nc-range{color:var(--green)}
+
+.chart-section{background:var(--bg2);border:1px solid #21262d;border-radius:12px;padding:14px}
+.chart-lbl{font-size:.68rem;text-transform:uppercase;letter-spacing:.8px;color:var(--tx2);margin-bottom:10px}
+</style>
+</head>
+<body>
+<div class="modal-header">
+  <div class="modal-title">🏆 Score de Portfólio &amp; Preço Médio</div>
+  <div class="header-meta">
+    <span class="ts" id="tsLabel">—</span>
+    <button class="btn-refresh">↻ Sync</button>
+    <button class="btn-close" onclick="history.back()">✕</button>
+  </div>
+</div>
+
+<div class="body">
+  <div class="atabs">
+    <button class="atab a-btc" id="tBTC" onclick="setA('BTC',this)">₿ BTC</button>
+    <button class="atab" id="tETH" onclick="setA('ETH',this)">Ξ ETH</button>
+  </div>
+
+  <!-- Score Circle + Breakdown -->
+  <div class="score-section">
+    <div class="score-circle">
+      <svg class="sc-svg" width="160" height="160" viewBox="0 0 160 160">
+        <circle cx="80" cy="80" r="68" fill="none" stroke="#21262d" stroke-width="10" stroke-linecap="round"/>
+        <circle id="scoreArc" cx="80" cy="80" r="68" fill="none" stroke="#56d364" stroke-width="10"
+          stroke-linecap="round" stroke-dasharray="427.26" stroke-dashoffset="427.26"
+          transform="rotate(-90 80 80)" style="transition:stroke-dashoffset .8s ease,stroke .4s"/>
+      </svg>
+      <div class="sc-text">
+        <div class="sc-num" id="scoreNum">0</div>
+        <div class="sc-lbl">Score</div>
+        <div class="sc-sublbl" id="scoreGrade">—</div>
+      </div>
+    </div>
+    <div class="score-breakdown">
+      <div class="sb-title">📊 Componentes do Score</div>
+      <div id="sbItems"></div>
+    </div>
+  </div>
+
+  <!-- PM Section -->
+  <div class="pm-section">
+    <div class="pm-header">
+      <div class="pm-title">💰 Preço Médio Efetivo</div>
+      <div class="pm-badge badge-warn" id="pmStatusBadge">—</div>
+    </div>
+    <div class="pm-row" id="pmRow"></div>
+  </div>
+
+  <!-- Next OP -->
+  <div class="next-section">
+    <div class="ns-title">🎯 Selecionar Próxima Operação</div>
+    <div class="ns-grid" id="nsGrid"></div>
+  </div>
+
+  <!-- Chart -->
+  <div class="chart-section">
+    <div class="chart-lbl">Evolução Prêmio Acumulado &amp; Score</div>
+    <div style="height:120px"><canvas id="cht"></canvas></div>
+  </div>
+</div>
+
+<script>
+const D={
+  BTC:{ac:'#f59f00',cot:71403.68,pm:73943.60,strikeEx:74000,premios:56.40,ops:12,winRate:91.7,tae:94.1,
+    evo:[2.75,5.00,10.52,19.14,29.58,40.05,48.43,53.83,55.24,56.82,56.40]},
+  ETH:{ac:'#4da6ff',cot:2192.0,pm:2225.04,strikeEx:2325,premios:99.96,ops:15,winRate:93.3,tae:116.6,
+    evo:[1.59,3.33,7.42,28.22,52.06,69.06,76.06,84.18,85.68,88.76,93.59]}
+};
+let cur='BTC',_chart=null;
+const f=(v,d=2)=>v.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fu=v=>'$'+f(v);
+const fp=v=>(v>0?'+':'')+f(v,2)+'%';
+
+function calcScore(d){
+  const pct=(d.cot-d.pm)/d.pm*100;
+  const s1=Math.min(30,Math.max(0,(pct+10)/15*30)); // PM distance
+  const s2=d.winRate/100*25;                          // win rate
+  const s3=Math.min(20,d.tae/300*20);                // TAE
+  const s4=Math.min(15,d.premios/100*15);             // premios
+  const s5=Math.min(10,d.ops/20*10);                  // num ops
+  return {total:Math.round(s1+s2+s3+s4+s5),s1,s2,s3,s4,s5};
+}
+
+function setA(s,el){
+  cur=s;
+  document.getElementById('tBTC').className='atab'+(s==='BTC'?' a-btc':'');
+  document.getElementById('tETH').className='atab'+(s==='ETH'?' a-eth':'');
+  render(s);
+}
+
+function render(s){
+  const d=D[s];
+  const pct=(d.cot-d.pm)/d.pm*100;
+  const pc=pct>=0?'#3fb950':pct>-3?'#f59f00':'#f85149';
+  const score=calcScore(d);
+  const grade=score.total>=80?'🥇 EXCELENTE':score.total>=65?'🥈 BOM':score.total>=50?'🥉 REGULAR':'⚠️ ATENÇÃO';
+  const arcColor=score.total>=75?'#3fb950':score.total>=55?'#f59f00':'#f85149';
+  const arcLen=427.26*(1-score.total/100);
+
+  document.getElementById('scoreNum').textContent=score.total;
+  document.getElementById('scoreGrade').textContent=grade.split(' ')[1];
+  document.getElementById('scoreGrade').style.color=arcColor;
+  const arc=document.getElementById('scoreArc');
+  arc.setAttribute('stroke',arcColor);
+  arc.setAttribute('stroke-dashoffset',arcLen);
+
+  // Breakdown
+  const items=[
+    {e:'📍',l:'Distância PM',v:fp(pct),w:Math.round(score.s1/30*100),s:score.s1.toFixed(1)+'/30',c:pc},
+    {e:'🏆',l:'Win Rate',v:f(d.winRate)+'%',w:Math.round(score.s2/25*100),s:score.s2.toFixed(1)+'/25',c:'#3fb950'},
+    {e:'⚡',l:'TAE',v:f(d.tae)+'%',w:Math.round(score.s3/20*100),s:score.s3.toFixed(1)+'/20',c:'#bc8cff'},
+    {e:'💰',l:'Prêmios',v:fu(d.premios),w:Math.round(score.s4/15*100),s:score.s4.toFixed(1)+'/15',c:'#f59f00'},
+    {e:'📊',l:'Num. Ops',v:d.ops+'',w:Math.round(score.s5/10*100),s:score.s5.toFixed(1)+'/10',c:'#4da6ff'},
+  ];
+  document.getElementById('sbItems').innerHTML=items.map(i=>`
+    <div class="sb-item">
+      <span class="sb-emoji">${i.e}</span>
+      <div class="sb-bar-wrap">
+        <div class="sb-lbl">${i.l} <span style="color:${i.c};font-family:var(--mono)">${i.v}</span></div>
+        <div class="sb-bar"><div class="sb-fill" style="width:${i.w}%;background:${i.c}"></div></div>
+      </div>
+      <span class="sb-score" style="color:${i.c}">${i.s}</span>
+    </div>`).join('');
+
+  // PM Row
+  const statusBadge=pct>=0?'badge-up':pct>-3?'badge-warn':'badge-down';
+  const statusTxt=pct>=0?'✅ SEGURO':pct>-3?'⚠️ ATENÇÃO':'🔴 ALERTA';
+  document.getElementById('pmStatusBadge').className='pm-badge '+statusBadge;
+  document.getElementById('pmStatusBadge').textContent=statusTxt;
+  document.getElementById('pmRow').innerHTML=`
+    <div class="pm-cell"><div class="pc-val" style="color:var(--amber)">${fu(d.strikeEx)}</div><div class="pc-lbl">Strike Exercida</div></div>
+    <div class="pm-cell"><div class="pc-val" style="color:var(--green)">−${fu(d.premios)}</div><div class="pc-lbl">Prêmios Acum.</div></div>
+    <div class="pm-cell"><div class="pc-val" style="color:${d.ac}">${fu(d.pm)}</div><div class="pc-lbl">Preço Médio</div></div>
+    <div class="pm-cell"><div class="pc-val" style="color:${pc}">${fp(pct)}</div><div class="pc-lbl">Cotação vs PM</div></div>`;
+
+  // Next OP zones
+  const pm=d.pm;
+  document.getElementById('nsGrid').innerHTML=`
+    <div class="ns-card danger">
+      <div class="nc-icon">🔴</div>
+      <div class="nc-lbl">Não Operar</div>
+      <div class="nc-range">Strike &lt; ${fu(pm*1.005)}</div>
+      <div class="nc-margin">Margem &lt; 0.5%</div>
+    </div>
+    <div class="ns-card warn">
+      <div class="nc-icon">🟡</div>
+      <div class="nc-lbl">Cuidado</div>
+      <div class="nc-range">${fu(pm*1.005)} – ${fu(pm*1.02)}</div>
+      <div class="nc-margin">Margem 0.5–2%</div>
+    </div>
+    <div class="ns-card safe">
+      <div class="nc-icon">🟢</div>
+      <div class="nc-lbl">Recomendado</div>
+      <div class="nc-range">Strike &gt; ${fu(pm*1.02)}</div>
+      <div class="nc-margin">Margem &gt; 2%</div>
+    </div>`;
+
+  buildChart(d);
+}
+
+function buildChart(d){
+  if(_chart){try{_chart.destroy()}catch(e){}}
+  const ctx=document.getElementById('cht').getContext('2d');
+  _chart=new Chart(ctx,{type:'line',data:{labels:d.evo.map((_,i)=>'D'+(i+1)),
+    datasets:[{label:'Prêmios Acum.',data:d.evo,borderColor:d.ac,backgroundColor:d.ac+'1a',
+      fill:true,tension:.4,borderWidth:2,pointRadius:2}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'$'+c.raw.toFixed(2)}}},
+      scales:{x:{display:false},y:{grid:{color:'rgba(255,255,255,.04)'},
+        ticks:{color:'#8b949e',font:{size:9},callback:v=>'$'+v}}}}});
+}
+
+document.getElementById('tsLabel').textContent='Atualizado: '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+render('BTC');
+</script>
+</body>
+</html>

@@ -148,9 +148,9 @@
     /* ------------------------------------------------------------------ */
     function calcStats(ops) {
         const isCrypto = state.apiEndpoint.includes('/crypto');
-        // Para crypto: resultado = P&L em US$; premio_us = fallback quando resultado ausente
+        // Para crypto: resultado = P&L em US$; premio_us = prêmio USD (usa como resultado principal)
         const resultField = isCrypto
-            ? ['resultado', 'premio_us']
+            ? ['premio_us', 'resultado']
             : ['resultado', 'resultado_total', 'resultado_op', 'resultado_fechamento'];
 
         const totalResult = ops.reduce((s, op) => s + getNumber(op, resultField), 0);
@@ -564,6 +564,18 @@
     /* ------------------------------------------------------------------ */
     /* Refresh completo (carrega + renderiza)                               */
     /* ------------------------------------------------------------------ */
+    /* Loading visual nos valores durante refresh                          */
+    /* ------------------------------------------------------------------ */
+    const _LOADING_SPIN = '<span class="spinner-border spinner-border-sm text-secondary" role="status"></span>';
+    function setMetricsLoading() {
+        ['maDonutValue', 'maDonutSub', 'maWinRate', 'maRoiValue', 'maRoiFooter',
+         'maRightResult', 'maRightSub'].forEach(function(id) {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = _LOADING_SPIN;
+        });
+    }
+
+    /* ------------------------------------------------------------------ */
     async function refresh() {
         const btn = document.getElementById('maRefreshBtn');
         if (btn) btn.classList.add('spinning');
@@ -572,6 +584,7 @@
             if (state.activeTab === 'evolucao') ensureApex(() => renderEvolucaoPane());
             else if (state.activeTab === 'risco') ensureApex(() => renderRiscoPane());
         } else {
+            setMetricsLoading();
             await loadData();
             renderAll(state.ops);
         }
@@ -743,11 +756,18 @@
                     return {
                         ...op,
                         vencimento: op.exercicio,
-                        preco_atual: op.cotacao_atual ?? op.preco_atual,
-                        preco_entrada: op.abertura ?? op.preco_entrada,
+                        // CRYPTO: cotacao_atual = spot price do ativo (BTC/...), NÃO é o preço da opção.
+                        // Não mapear para preco_atual (usado como fallback de option price).
+                        preco_atual: null,
+                        // Preço do ativo base na abertura (BTC price quando entrou na operação)
+                        preco_ativo_base: op.abertura ?? op.preco_ativo_base,
+                        preco_entrada: op.preco_entrada,
                         premio: op.premio_us ?? op.premio,
-                        quantidade: op.crypto ?? op.quantidade ?? 1,
+                        // Para crypto: quantidade = 1 (prêmio já representa o valor total em USD)
+                        quantidade: 1,
                         ativo_base: op.ativo_base || op.ativo,
+                        // Preserva o spot atual para exibição informativa
+                        cotacao_spot_atual: op.cotacao_atual,
                     };
                 }
                 return op;
@@ -777,7 +797,7 @@
         }
         if (container) {
             // Um accordion por posição individual
-            const accItems = state.posicoes.map(op => {
+            const accItems = state.posicoes.map((op, index) => {
                 const id = op.id;
                 const ativo = (op.ativo_base || op.ativo || 'OUTRO').substring(0, 6).toUpperCase();
                 const tipo = (op.tipo || 'CALL').toUpperCase();
@@ -789,11 +809,12 @@
                 const vctoStr = vctoDate && !isNaN(vctoDate)
                     ? vctoDate.toLocaleDateString('pt-BR') : '—';
                 const safeId = `pos${id}`;
+                                const isOpen = index === 0;
                 return `<div class="accordion-item border-0 mb-2">
   <h2 class="accordion-header" id="maPosH-${safeId}">
-    <button class="accordion-button collapsed rounded" type="button"
+        <button class="accordion-button${isOpen ? '' : ' collapsed'} rounded" type="button"
             data-bs-toggle="collapse" data-bs-target="#maPosPan-${safeId}"
-            aria-expanded="false" aria-controls="maPosPan-${safeId}"
+                        aria-expanded="${isOpen ? 'true' : 'false'}" aria-controls="maPosPan-${safeId}"
             style="background:rgba(66,153,225,0.08)">
       <span class="badge me-2" style="background:#4299e122;color:#4299e1;border:1px solid #4299e144">${ativo}</span>
       <span class="badge me-2" style="background:${tipoColor}22;color:${tipoColor};border:1px solid ${tipoColor}44">${tipo}</span>
@@ -802,7 +823,7 @@
       <span class="ms-auto me-2 fw-bold" style="color:#2dc653">US$&nbsp;${premioUs.toFixed(2)}</span>
     </button>
   </h2>
-  <div id="maPosPan-${safeId}" class="accordion-collapse collapse" aria-labelledby="maPosH-${safeId}">
+    <div id="maPosPan-${safeId}" class="accordion-collapse collapse${isOpen ? ' show' : ''}" aria-labelledby="maPosH-${safeId}">
     <div class="accordion-body p-0 pt-3">
       ${buildPosCard(op)}
     </div>
@@ -828,7 +849,7 @@
         const strike = parseFloat(op.strike || 0);
         const premioAb = Math.abs(parseFloat(op.premio || op.preco_entrada || 0));
         const precoAb = parseFloat(op.preco_ativo_base || 0);
-        const qtdAbs = Math.abs(parseInt(op.quantidade || 0));
+        const qtdAbs = Math.abs(parseFloat(op.quantidade || 1) || 1);
         const premioTotalAb = premioAb * qtdAbs;
         const breakeven = tipo === 'PUT' ? strike - premioAb : strike + premioAb;
         const vctoDate = op.vencimento ? (() => { const d = new Date(op.vencimento); d.setHours(0, 0, 0, 0); return d; })() : null;
@@ -1012,7 +1033,7 @@
         const ativoBase = (op.ativo_base || op.ativo || '').substring(0, 5).toUpperCase();
         const strike = parseFloat(op.strike || 0);
         const premioAb = Math.abs(parseFloat(op.premio || op.preco_entrada || 0));
-        const qtdAbs = Math.abs(parseInt(op.quantidade || 0));
+        const qtdAbs = Math.abs(parseFloat(op.quantidade || 1) || 1);
         const premioTotalAb = premioAb * qtdAbs;
         const vctoDate = op.vencimento ? new Date(op.vencimento) : null;
         const vctoStr = vctoDate && !isNaN(vctoDate) ? vctoDate.toLocaleDateString('pt-BR') : '—';
@@ -1067,7 +1088,7 @@
         const ativoBase = (op.ativo_base || op.ativo || '').substring(0, 5).toUpperCase();
         const strike = parseFloat(op.strike || 0);
         const premioAb = Math.abs(parseFloat(op.premio || op.preco_entrada || 0));
-        const qtdAbs = Math.abs(parseInt(op.quantidade || 0));
+        const qtdAbs = Math.abs(parseFloat(op.quantidade || 1) || 1);
         const premioTotalAb = premioAb * qtdAbs;
         const vctoDate = op.vencimento ? new Date(op.vencimento) : null;
         const vctoStr = vctoDate && !isNaN(vctoDate) ? vctoDate.toLocaleDateString('pt-BR') : '—';
@@ -1131,6 +1152,47 @@
                 </div>`;
     }
 
+    function buildLivePayload(op, live = {}) {
+        const hasSpot = live.spot_price != null || live.spotPrice != null;
+        const hasOption = live.option_price != null || live.optionPrice != null;
+
+        return {
+            spot_price: hasSpot ? (live.spot_price ?? live.spotPrice) : parseFloat(op.cotacao_spot_atual || op.preco_ativo_base || op.abertura || 0),
+            option_price: hasOption ? (live.option_price ?? live.optionPrice) : parseFloat(op.preco_atual || op.preco_entrada || op.premio || op.premio_us || 0),
+            pop: live.pop ?? live.prob_lucro ?? 0,
+        };
+    }
+
+    function renderEvolucaoChartsForAtivo(ativo) {
+        state.posicoes
+            .filter(op => (op.ativo_base || op.ativo || '').toUpperCase() === ativo)
+            .forEach(op => {
+                const liveData = state.posLiveData[op.id] || state.posLiveData[parseInt(op.id, 10)];
+                if (!liveData) {
+                    updatePosCardLive(op, buildLivePayload(op));
+                }
+                const resolvedLiveData = state.posLiveData[op.id] || state.posLiveData[parseInt(op.id, 10)];
+                if (!resolvedLiveData) return;
+                renderEvolutionChart(op.id, op, resolvedLiveData);
+                updatePosCardLive(op, buildLivePayload(op, resolvedLiveData));
+            });
+    }
+
+    function renderRiscoChartsForAtivo(ativo) {
+        state.posicoes
+            .filter(op => (op.ativo_base || op.ativo || '').toUpperCase() === ativo)
+            .forEach(op => {
+                const liveData = state.posLiveData[op.id] || state.posLiveData[parseInt(op.id, 10)];
+                if (!liveData) {
+                    updatePosCardLive(op, buildLivePayload(op));
+                }
+                const resolvedLiveData = state.posLiveData[op.id] || state.posLiveData[parseInt(op.id, 10)];
+                if (!resolvedLiveData) return;
+                renderGaugeCharts(op.id, op, resolvedLiveData);
+                updatePosCardLive(op, buildLivePayload(op, resolvedLiveData));
+            });
+    }
+
     /* ------------------------------------------------------------------ */
     /* Renderizar aba Evolução (accordion por ativo + charts lazy)         */
     /* ------------------------------------------------------------------ */
@@ -1154,20 +1216,22 @@
             groups[k].push(op);
         });
 
-        const accItems = Object.entries(groups).map(([ativo, ops]) => {
+        const groupEntries = Object.entries(groups);
+        const accItems = groupEntries.map(([ativo, ops], index) => {
             const safeId = ativo.replace(/[^A-Za-z0-9]/g, '_');
             const sections = ops.map(op => buildEvoSection(op)).join('');
+            const isOpen = index === 0;
             return `<div class="accordion-item border-0 mb-2">
                         <h2 class="accordion-header" id="maEvoH-${safeId}">
-                            <button class="accordion-button collapsed rounded" type="button"
+                            <button class="accordion-button${isOpen ? '' : ' collapsed'} rounded" type="button"
                                     data-bs-toggle="collapse" data-bs-target="#maEvoPan-${safeId}"
-                                    aria-expanded="false" aria-controls="maEvoPan-${safeId}"
+                                    aria-expanded="${isOpen ? 'true' : 'false'}" aria-controls="maEvoPan-${safeId}"
                                     style="background:rgba(45,198,83,0.08)">
                             <span class="fw-bold me-2">${ativo}</span>
                             <span class="text-muted small">${ops.length} posição${ops.length !== 1 ? 'ões' : ''}</span>
                             </button>
                         </h2>
-                        <div id="maEvoPan-${safeId}" class="accordion-collapse collapse" aria-labelledby="maEvoH-${safeId}"
+                        <div id="maEvoPan-${safeId}" class="accordion-collapse collapse${isOpen ? ' show' : ''}" aria-labelledby="maEvoH-${safeId}"
                             data-evo-ativo="${ativo}">
                             <div class="accordion-body p-0 pt-2">
                             ${sections}
@@ -1183,21 +1247,14 @@
 
         // Renderizar charts ao vivo para dados já carregados (accordion aberto)
         // Charts dentro de collapsed não têm dimensões; renderizamos quando abre
+        const firstAtivo = groupEntries[0]?.[0];
+        if (firstAtivo) {
+            renderEvolucaoChartsForAtivo(firstAtivo);
+        }
+
         document.getElementById('maEvoAcc')?.addEventListener('shown.bs.collapse', function (e) {
             if (!e.target.dataset.evoAtivo) return;
-            const ativo = e.target.dataset.evoAtivo;
-            state.posicoes
-                .filter(op => (op.ativo_base || op.ativo || '').toUpperCase() === ativo)
-                .forEach(op => {
-                    const liveData = state.posLiveData[op.id] || state.posLiveData[parseInt(op.id)];
-                    if (!liveData) return;
-                    renderEvolutionChart(op.id, op, liveData);
-                    updatePosCardLive(op, {
-                        spot_price: liveData.spotPrice || 0,
-                        option_price: liveData.optionPrice || 0,
-                        pop: liveData.popEst || 0
-                    });
-                });
+            renderEvolucaoChartsForAtivo(e.target.dataset.evoAtivo);
         });
     }
 
@@ -1263,20 +1320,22 @@
             groups[k].push(op);
         });
 
-        const accItems = Object.entries(groups).map(([ativo, ops]) => {
+        const groupEntries = Object.entries(groups);
+        const accItems = groupEntries.map(([ativo, ops], index) => {
             const safeId = ativo.replace(/[^A-Za-z0-9]/g, '_');
             const sections = ops.map(op => buildRiscoSection(op)).join('');
+            const isOpen = index === 0;
             return `<div class="accordion-item border-0 mb-2">
                 <h2 class="accordion-header" id="maRiscoH-${safeId}">
-                    <button class="accordion-button collapsed rounded" type="button"
+                    <button class="accordion-button${isOpen ? '' : ' collapsed'} rounded" type="button"
                             data-bs-toggle="collapse" data-bs-target="#maRiscoPan-${safeId}"
-                            aria-expanded="false" aria-controls="maRiscoPan-${safeId}"
+                            aria-expanded="${isOpen ? 'true' : 'false'}" aria-controls="maRiscoPan-${safeId}"
                             style="background:rgba(250,82,82,0.08)">
                     <span class="fw-bold me-2">${ativo}</span>
                     <span class="text-muted small">${ops.length} posição${ops.length !== 1 ? 'ões' : ''}</span>
                     </button>
                 </h2>
-                <div id="maRiscoPan-${safeId}" class="accordion-collapse collapse" aria-labelledby="maRiscoH-${safeId}"
+                <div id="maRiscoPan-${safeId}" class="accordion-collapse collapse${isOpen ? ' show' : ''}" aria-labelledby="maRiscoH-${safeId}"
                     data-risco-ativo="${ativo}">
                     <div class="accordion-body p-0 pt-2">
                     ${sections}
@@ -1292,21 +1351,14 @@
         if (emptyEl) emptyEl.style.display = 'none';
 
         // Renderizar gauges quando accordion abre
+        const firstAtivo = groupEntries[0]?.[0];
+        if (firstAtivo) {
+            renderRiscoChartsForAtivo(firstAtivo);
+        }
+
         document.getElementById('maRiscoAcc')?.addEventListener('shown.bs.collapse', function (e) {
             if (!e.target.dataset.riscoAtivo) return;
-            const ativo = e.target.dataset.riscoAtivo;
-            state.posicoes
-                .filter(op => (op.ativo_base || op.ativo || '').toUpperCase() === ativo)
-                .forEach(op => {
-                    const liveData = state.posLiveData[op.id] || state.posLiveData[parseInt(op.id)];
-                    if (!liveData) return;
-                    renderGaugeCharts(op.id, op, liveData);
-                    updatePosCardLive(op, {
-                        spot_price: liveData.spotPrice || 0,
-                        option_price: liveData.optionPrice || 0,
-                        pop: liveData.popEst || 0
-                    });
-                });
+            renderRiscoChartsForAtivo(e.target.dataset.riscoAtivo);
         });
     }
 
@@ -1322,10 +1374,10 @@
         const strike = parseFloat(op.strike || 0);
         const premioAb = Math.abs(parseFloat(op.premio || op.preco_entrada || 0));
         const precoAb = parseFloat(op.preco_ativo_base || 0);
-        const qtdAbs = Math.abs(parseInt(op.quantidade || 0));
+        const qtdAbs = Math.abs(parseFloat(op.quantidade || 1) || 1);
         const premioTotalAb = premioAb * qtdAbs;
         const tipo = (op.tipo || 'CALL').toUpperCase();
-        const isVenda = (op.tipo_operacao || '').toUpperCase() === 'VENDA' || parseInt(op.quantidade || 0) < 0;
+        const isVenda = (op.tipo_operacao || '').toUpperCase() === 'VENDA' || parseFloat(op.quantidade || 0) < 0;
         const distAtual = spotPrice > 0 && strike > 0 ? Math.abs((strike - spotPrice) / spotPrice * 100) : 0;
         const isITM = spotPrice > 0 ? (tipo === 'PUT' ? spotPrice < strike : spotPrice > strike) : false;
         const custoRecompra = optionPrice * qtdAbs;
@@ -1708,12 +1760,8 @@
 
         // 3. Atualizar cada card com dados mesclados
         state.posicoes.forEach(op => {
-            const live = liveMap[op.id] || {};
-            updatePosCardLive(op, {
-                spot_price: live.spot_price || 0,
-                option_price: live.option_price != null ? live.option_price : parseFloat(op.preco_atual || 0),
-                pop: live.pop || 0,
-            });
+            const live = buildLivePayload(op, liveMap[op.id] || {});
+            updatePosCardLive(op, live);
         });
 
         renderPosSummary();
@@ -1759,33 +1807,43 @@
     async function refreshPosicoesCompleto() {
         if (state.posRefreshing) return;
         state.posRefreshing = true;
-        state.posLiveData = {};
-        // Destruir charts antigos
-        Object.values(state.posPayoffCharts).forEach(ch => { try { ch.destroy(); } catch (_) { } });
-        state.posPayoffCharts = {};
-        Object.values(state.posEvolutionCharts).forEach(ch => { try { ch.destroy(); } catch (_) { } });
-        state.posEvolutionCharts = {};
-        Object.values(state.posGaugeCharts).forEach(ch => { try { ch.destroy(); } catch (_) { } });
-        state.posGaugeCharts = {};
-        // Reset panes de posições para estado de loading
-        ['maPosSummary', 'maPosCards', 'maPosEmpty'].forEach(eid => {
-            const el = document.getElementById(eid);
-            if (el) el.style.display = 'none';
-        });
-        ['maPosEvoSections', 'maPosRiscoSections'].forEach(eid => {
-            const el = document.getElementById(eid);
-            if (el) { el.style.display = 'none'; el.innerHTML = ''; }
-        });
-        ['maPosEvoLoading', 'maPosRiscoLoading'].forEach(eid => {
-            const el = document.getElementById(eid);
-            if (el) el.style.removeProperty('display');
-        });
-        const loadingEl = document.getElementById('maPosLoading');
-        if (loadingEl) loadingEl.style.removeProperty('display');
-        await loadPosicoesAbertas();
-        renderPosicoesGrid();
-        if (state.posicoes.length > 0) await refreshPosicoesCotacoes();
-        state.posRefreshing = false;
+        try {
+            state.posLiveData = {};
+            // Destruir charts antigos
+            Object.values(state.posPayoffCharts).forEach(ch => { try { ch.destroy(); } catch (_) { } });
+            state.posPayoffCharts = {};
+            Object.values(state.posEvolutionCharts).forEach(ch => { try { ch.destroy(); } catch (_) { } });
+            state.posEvolutionCharts = {};
+            Object.values(state.posGaugeCharts).forEach(ch => { try { ch.destroy(); } catch (_) { } });
+            state.posGaugeCharts = {};
+            // Reset panes de posições para estado de loading
+            ['maPosSummary', 'maPosCards', 'maPosEmpty'].forEach(eid => {
+                const el = document.getElementById(eid);
+                if (el) el.style.display = 'none';
+            });
+            ['maPosEvoSections', 'maPosRiscoSections'].forEach(eid => {
+                const el = document.getElementById(eid);
+                if (el) { el.style.display = 'none'; el.innerHTML = ''; }
+            });
+            ['maPosEvoLoading', 'maPosRiscoLoading'].forEach(eid => {
+                const el = document.getElementById(eid);
+                if (el) el.style.removeProperty('display');
+            });
+            const loadingEl = document.getElementById('maPosLoading');
+            if (loadingEl) loadingEl.style.removeProperty('display');
+            await loadPosicoesAbertas();
+            renderPosicoesGrid();
+            if (state.posicoes.length > 0) {
+                await refreshPosicoesCotacoes();
+            } else {
+                ['maPosEvoLoading', 'maPosRiscoLoading'].forEach(eid => {
+                    const el = document.getElementById(eid);
+                    if (el) el.style.display = 'none';
+                });
+            }
+        } finally {
+            state.posRefreshing = false;
+        }
     }
 
     /* ------------------------------------------------------------------ */

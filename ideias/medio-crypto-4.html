@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Conceito 4 — Terminal CLI: Preço Médio Crypto</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+:root{--bg:#0c0c0c;--bg2:#111;--green:#00ff41;--amber:#ffb300;--blue:#00bcd4;--red:#ff1744;
+  --tx:#ccc;--tx2:#555;--mono:'JetBrains Mono','Courier New',monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--tx);font-family:var(--mono);min-height:100vh;font-size:.82rem}
+
+/* Header */
+.modal-header{background:#080808;border-bottom:1px solid #1a1a1a;padding:10px 18px;
+  display:flex;align-items:center;justify-content:space-between}
+.modal-title{color:var(--green);font-size:.85rem;letter-spacing:1px}
+.header-meta{display:flex;align-items:center;gap:10px}
+.ts{font-size:.7rem;color:var(--tx2)}
+.btn-refresh{background:none;border:1px solid #333;color:var(--green);cursor:pointer;padding:4px 10px;font-family:var(--mono);font-size:.7rem;transition:.15s}
+.btn-refresh:hover{border-color:var(--green);box-shadow:0 0 8px rgba(0,255,65,.2)}
+.btn-close{background:none;border:1px solid #333;color:var(--tx2);cursor:pointer;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:.9rem;transition:.15s}
+.btn-close:hover{border-color:var(--red);color:var(--red)}
+
+.body{padding:12px 16px}
+
+/* Terminal blocks */
+.term-block{background:var(--bg2);border:1px solid #1e1e1e;padding:12px 14px;margin-bottom:8px;position:relative}
+.term-block::before{content:attr(data-tag);position:absolute;top:-9px;left:10px;background:var(--bg);
+  padding:0 6px;font-size:.6rem;color:var(--tx2);letter-spacing:1px}
+.prompt{color:var(--green)}
+.cmd{color:var(--amber)}
+.output{color:var(--tx);margin-top:6px;line-height:1.7}
+.hili-green{color:var(--green);font-weight:700}
+.hili-amber{color:var(--amber);font-weight:700}
+.hili-blue{color:var(--blue);font-weight:700}
+.hili-red{color:var(--red);font-weight:700}
+.hili-grey{color:var(--tx2)}
+
+/* Asset selector as terminal command */
+.asset-sel{display:flex;gap:0;margin-bottom:8px}
+.as-opt{padding:6px 16px;border:1px solid #1e1e1e;cursor:pointer;font-family:var(--mono);font-size:.78rem;
+  background:var(--bg2);color:var(--tx2);transition:.15s;margin-right:-1px}
+.as-opt.active{background:#001a05;border-color:var(--green);color:var(--green)}
+
+/* ASCII gauge */
+.ascii-gauge{font-size:.7rem;color:var(--tx2);line-height:1.4}
+.ag-bar{letter-spacing:0}
+.ag-btc{color:var(--amber)}
+.ag-eth{color:var(--blue)}
+.ag-safe{color:var(--green)}
+.ag-risk{color:var(--red)}
+
+/* Chart */
+.chart-term{position:relative;height:110px;border:1px solid #1e1e1e;background:#080808;padding:4px}
+.chart-title-t{font-size:.6rem;color:var(--tx2);margin-bottom:4px;letter-spacing:1px}
+
+/* Progress bar terminal style */
+.tprog{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.tprog-lbl{width:120px;color:var(--tx2);font-size:.72rem}
+.tprog-bar{flex:1;height:6px;background:#1a1a1a;border:1px solid #222}
+.tprog-fill{height:4px;margin:0 1px;transition:width .5s}
+.tprog-val{width:60px;text-align:right;font-size:.72rem;font-weight:700}
+
+/* Zones table */
+.zones-table{width:100%;border-collapse:collapse}
+.zones-table td{padding:5px 10px;border-bottom:1px solid #1a1a1a;font-size:.75rem;vertical-align:middle}
+.zones-table td:first-child{color:var(--tx2);width:90px}
+.zone-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+
+/* 3-col grid */
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px}
+.stat-box{background:var(--bg2);border:1px solid #1e1e1e;padding:10px;text-align:center}
+.sb-lbl{font-size:.6rem;color:var(--tx2);margin-bottom:4px;letter-spacing:.5px}
+.sb-val{font-size:1.1rem;font-weight:700}
+</style>
+</head>
+<body>
+<div class="modal-header">
+  <div class="modal-title">$ crypto-pm-monitor v2.0.0</div>
+  <div class="header-meta">
+    <span class="ts" id="tsLabel">—</span>
+    <button class="btn-refresh">↻ refresh</button>
+    <button class="btn-close" onclick="history.back()">✕</button>
+  </div>
+</div>
+
+<div class="body">
+  <!-- Asset selector -->
+  <div class="asset-sel">
+    <div class="as-opt active" id="asBTC" onclick="setA('BTC')">₿ btc</div>
+    <div class="as-opt" id="asETH" onclick="setA('ETH')">Ξ eth</div>
+  </div>
+
+  <!-- Section 1: PM Calc -->
+  <div class="term-block" data-tag="CÁLCULO PM">
+    <div><span class="prompt">❯ </span><span class="cmd">calc_preco_medio --asset <span id="assetLabel">BTC</span></span></div>
+    <div class="output" id="pmCalc"></div>
+  </div>
+
+  <!-- Stat boxes -->
+  <div class="g3" id="statBoxes"></div>
+
+  <!-- Section 2: Zones -->
+  <div class="term-block" data-tag="ZONAS DE STRIKE">
+    <div><span class="prompt">❯ </span><span class="cmd">suggest_strike --next-op</span></div>
+    <div class="output" style="margin-top:8px" id="zoneTable"></div>
+  </div>
+
+  <!-- Section 3: Indicators -->
+  <div class="term-block" data-tag="INDICADORES">
+    <div><span class="prompt">❯ </span><span class="cmd">show_metrics</span></div>
+    <div style="margin-top:8px" id="progBars"></div>
+  </div>
+
+  <!-- Section 4: Chart -->
+  <div class="term-block" data-tag="EVOLUÇÃO PRÊMIO">
+    <div><span class="prompt">❯ </span><span class="cmd">plot_premios --type accumulative</span></div>
+    <div class="chart-term" style="margin-top:8px">
+      <canvas id="cht"></canvas>
+    </div>
+  </div>
+</div>
+
+<script>
+const D={
+  BTC:{icon:'₿',ac:'#ffb300',cot:71403.68,pm:73943.60,strikeEx:74000,premios:56.40,ops:12,winRate:91.7,tae:94.1,
+    evo:[0,2.75,5.00,10.52,19.14,29.58,40.05,48.43,53.83,55.24,56.82,56.40]},
+  ETH:{icon:'Ξ',ac:'#00bcd4',cot:2192.0,pm:2225.04,strikeEx:2325,premios:99.96,ops:15,winRate:93.3,tae:116.6,
+    evo:[0,1.59,3.33,7.42,28.22,52.06,69.06,76.06,84.18,85.68,88.76,93.59]}
+};
+let cur='BTC',_chart=null;
+const f=(v,d=2)=>v.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fu=v=>'$'+f(v);
+const fp=v=>(v>0?'+':'')+f(v,2)+'%';
+
+function bar(pct,len=20,fillChar='█',emptyChar='░'){
+  const filled=Math.round(pct/100*len);
+  return fillChar.repeat(filled)+emptyChar.repeat(len-filled);
+}
+
+function setA(s){
+  cur=s;
+  document.getElementById('asBTC').className='as-opt'+(s==='BTC'?' active':'');
+  document.getElementById('asETH').className='as-opt'+(s==='ETH'?' active':'');
+  document.getElementById('assetLabel').textContent=s;
+  render(s);
+}
+
+function render(s){
+  const d=D[s];
+  const pct=(d.cot-d.pm)/d.pm*100;
+  const pc=pct>=0?'hili-green':pct>-3?'hili-amber':'hili-red';
+  const statusText=pct>=0?'[ACIMA DO PM ✓]':pct>-3?'[PRÓXIMO AO PM ⚠]':'[ABAIXO DO PM ✗]';
+
+  // PM Calc
+  document.getElementById('pmCalc').innerHTML=`
+<span class="hili-grey">  Strike exercida  :</span> <span class="hili-amber">${fu(d.strikeEx)}</span>
+<span class="hili-grey">  Prêmios acum.    :</span> <span class="hili-green">-${fu(d.premios)}</span>
+<span class="hili-grey">  ─────────────────────────────</span>
+<span class="hili-grey">  PREÇO MÉDIO (PM) :</span> <span style="color:${d.ac};font-size:1rem;font-weight:700">${fu(d.pm)}</span>
+<span class="hili-grey">  Cotação atual    :</span> <span style="color:${d.ac}">${fu(d.cot)}</span>
+<span class="hili-grey">  Δ Cotação vs PM  :</span> <span class="${pc}">${fp(pct)} ${statusText}</span>`;
+
+  // Stat boxes
+  document.getElementById('statBoxes').innerHTML=`
+    <div class="stat-box"><div class="sb-lbl">OPERAÇÕES</div><div class="sb-val" style="color:var(--blue)">${d.ops}</div></div>
+    <div class="stat-box"><div class="sb-lbl">WIN RATE</div><div class="sb-val" style="color:var(--green)">${f(d.winRate)}%</div></div>
+    <div class="stat-box"><div class="sb-lbl">TAE MÉDIO</div><div class="sb-val" style="color:#a855f7">${f(d.tae)}%</div></div>`;
+
+  // Zones
+  const pm=d.pm;
+  const zones=[
+    {dot:'🔴',lbl:'PERIGO',range:`&lt; ${fu(pm*1.005)}`,msg:'Não operar — strike abaixo do PM',c:'var(--red)'},
+    {dot:'🟡',lbl:'ATENÇÃO',range:`${fu(pm*1.005)} – ${fu(pm*1.02)}`,msg:'Margem mínima de 0.5–2%',c:'var(--amber)'},
+    {dot:'✅',lbl:'SEGURO',range:`&gt; ${fu(pm*1.02)}`,msg:'Operação com margem &gt; 2%',c:'var(--green)'},
+  ];
+  document.getElementById('zoneTable').innerHTML=`
+    <table class="zones-table">${zones.map(z=>`
+      <tr>
+        <td>${z.dot} <span style="color:${z.c}">${z.lbl}</span></td>
+        <td style="font-family:var(--mono);color:${z.c}">${z.range}</td>
+        <td style="color:var(--tx2)">${z.msg}</td>
+      </tr>`).join('')}
+    </table>`;
+
+  // Progress bars
+  const metrics=[
+    {l:'win_rate',v:f(d.winRate,1)+'%',w:d.winRate,c:'#00ff41'},
+    {l:'tae_medio',v:f(d.tae,1)+'%',w:Math.min(d.tae/200*100,100),c:'#a855f7'},
+    {l:'dist_pm_cot',v:fp(pct),w:Math.min(Math.abs(pct)/10*100,100),c:pct>=0?'#00ff41':pct>-3?'#ffb300':'#ff1744'},
+    {l:'premios_rec',v:fu(d.premios),w:Math.min(d.premios/200*100,100),c:'#ffb300'},
+  ];
+  document.getElementById('progBars').innerHTML=metrics.map(m=>`
+    <div class="tprog">
+      <span class="tprog-lbl">${m.l}</span>
+      <div class="tprog-bar"><div class="tprog-fill" style="width:${m.w}%;background:${m.c}"></div></div>
+      <span class="tprog-val" style="color:${m.c}">${m.v}</span>
+    </div>`).join('');
+
+  buildChart(d);
+}
+
+function buildChart(d){
+  if(_chart){try{_chart.destroy()}catch(e){}}
+  const ctx=document.getElementById('cht');
+  _chart=new Chart(ctx,{type:'line',data:{labels:Array.from({length:d.evo.length},(_,i)=>i+1),
+    datasets:[{data:d.evo,borderColor:d.ac,backgroundColor:'transparent',tension:.3,borderWidth:1.5,pointRadius:0}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'$'+c.raw.toFixed(2)}}},
+      scales:{x:{display:false},y:{grid:{color:'#1a1a1a'},ticks:{color:'#555',font:{family:'monospace',size:9},callback:v=>'$'+v}}}}});
+}
+
+document.getElementById('tsLabel').textContent=new Date().toISOString().slice(0,19).replace('T',' ');
+render('BTC');
+</script>
+</body>
+</html>

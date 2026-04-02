@@ -12,6 +12,7 @@
     min-height: 88vh;
     display: flex;
     flex-direction: column;
+    overflow-x: hidden;
 }
 
 .modal-resultado-total .modal-footer {
@@ -22,15 +23,30 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    min-height: 0;
+    overflow-x: hidden;
 }
 
 .modal-resultado-total .rt-modal-header {
     padding: 1.25rem 0 0;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 2;
+}
+
+.modal-resultado-total .rt-modal-header .px-4,
+.modal-resultado-total .nav-tabs-custom {
+    position: relative;
+    z-index: 3;
 }
 
 .modal-resultado-total .rt-modal-scroll {
     flex: 1 1 auto;
     overflow-y: auto;
+    overflow-x: hidden;
+    position: relative;
+    z-index: 1;
+    min-height: 0;
 }
 
 .modal-resultado-total .rt-hero-card {
@@ -140,7 +156,7 @@
 
 .modal-resultado-total .rt-insights {
     display: grid;
-    grid-template-columns: repeat(2, minmax(320px, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 16px;
 }
 
@@ -342,6 +358,7 @@
 
 .modal-resultado-total .rt-calendar-grid {
     margin-bottom: 12px;
+    min-width: 0;
 }
 
 .modal-resultado-total .rt-day {
@@ -473,6 +490,7 @@
 .modal-resultado-total .rt-chart-container {
     position: relative;
     height: 320px;
+    min-width: 0;
 }
 
 .modal-resultado-total .rt-category {

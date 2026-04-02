@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Conceito 5 — Donut Ring Dashboard: Preço Médio Crypto</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+:root{
+  --bg:#0d1117;--bg2:#161b22;--bg3:#21262d;
+  --amber:#e8a830;--blue:#58a6ff;--green:#56d364;--red:#f85149;--purple:#bc8cff;
+  --tx:#e6edf3;--tx2:#8b949e;--mono:'JetBrains Mono','Courier New',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--tx);font-family:'Segoe UI',sans-serif;min-height:100vh}
+.modal-header{background:var(--bg2);border-bottom:1px solid #30363d;padding:12px 20px;
+  display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:.95rem;font-weight:700;display:flex;align-items:center;gap:8px}
+.header-meta{display:flex;align-items:center;gap:10px}
+.ts{font-family:var(--mono);font-size:.72rem;color:var(--tx2)}
+.btn-refresh{background:none;border:1px solid #30363d;border-radius:6px;color:var(--tx2);cursor:pointer;padding:5px 8px;transition:.2s}
+.btn-refresh:hover{border-color:var(--amber);color:var(--amber)}
+.btn-close{background:none;border:none;cursor:pointer;color:var(--tx2);font-size:1.1rem;
+  width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:.2s}
+.btn-close:hover{background:#30363d;color:var(--tx)}
+
+.body{padding:16px;background:var(--bg)}
+
+/* Tabs */
+.tabs{display:flex;gap:6px;margin-bottom:14px}
+.tab{padding:6px 16px;border-radius:20px;cursor:pointer;font-size:.8rem;font-weight:600;
+  border:1.5px solid #30363d;background:var(--bg2);color:var(--tx2);transition:.2s}
+.tab.t-btc{border-color:var(--amber);color:var(--amber);background:rgba(232,168,48,.08)}
+.tab.t-eth{border-color:var(--blue);color:var(--blue);background:rgba(88,166,255,.08)}
+.tab:not(.t-btc):not(.t-eth):hover{border-color:var(--tx2)}
+
+/* Main layout */
+.main-layout{display:grid;grid-template-columns:auto 1fr;gap:16px;margin-bottom:14px;align-items:start}
+
+/* Donut Ring */
+.donut-wrap{width:200px;position:relative}
+.donut-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
+.dc-label{font-size:.6rem;text-transform:uppercase;letter-spacing:1px;color:var(--tx2)}
+.dc-val{font-family:var(--mono);font-size:1.4rem;font-weight:700;margin:2px 0}
+.dc-sub{font-size:.65rem;color:var(--tx2)}
+
+/* Right stats */
+.stat-stack{display:flex;flex-direction:column;gap:10px}
+.stat-card{background:var(--bg2);border:1px solid #21262d;border-radius:10px;padding:12px 14px;
+  display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px}
+.sc-icon{font-size:1.3rem}
+.sc-center{}
+.sc-lbl{font-size:.65rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px}
+.sc-val{font-family:var(--mono);font-size:1rem;font-weight:700}
+.sc-right{}
+.sc-badge{padding:3px 9px;border-radius:12px;font-size:.65rem;font-weight:700}
+.badge-up{background:rgba(86,211,100,.12);border:1px solid rgba(86,211,100,.3);color:var(--green)}
+.badge-down{background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);color:var(--red)}
+.badge-warn{background:rgba(232,168,48,.12);border:1px solid rgba(232,168,48,.3);color:var(--amber)}
+.badge-n{background:var(--bg3);border:1px solid #30363d;color:var(--tx2)}
+
+/* PM Equation */
+.pm-eq{background:var(--bg2);border:1px solid #21262d;border-radius:12px;padding:14px;margin-bottom:14px;
+  display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap}
+.eq-block{text-align:center}
+.eq-b-val{font-family:var(--mono);font-size:1.3rem;font-weight:700}
+.eq-b-lbl{font-size:.6rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.8px;margin-top:3px}
+.eq-op{font-size:1.5rem;color:var(--tx2);font-weight:300}
+
+/* Strike Zones visual */
+.szv{background:var(--bg2);border:1px solid #21262d;border-radius:12px;padding:14px;margin-bottom:14px}
+.szv-title{font-size:.7rem;text-transform:uppercase;letter-spacing:.8px;color:var(--tx2);margin-bottom:10px}
+.szv-bar{height:24px;border-radius:6px;position:relative;overflow:hidden;margin-bottom:6px;background:#21262d}
+.szv-zone{position:absolute;top:0;bottom:0;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700}
+.szv-cursor{position:absolute;top:-3px;bottom:-3px;width:3px;border-radius:2px;transition:left .5s}
+.szv-labels{display:flex;justify-content:space-between;font-size:.63rem;color:var(--tx2);margin-top:4px}
+.szv-rec{margin-top:8px;font-size:.75rem;display:flex;align-items:center;gap:6px}
+
+/* Chart row */
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.chart-card{background:var(--bg2);border:1px solid #21262d;border-radius:12px;padding:12px}
+.chart-lbl{font-size:.68rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
+</style>
+</head>
+<body>
+<div class="modal-header">
+  <div class="modal-title">🔢 Portfolio Médio — Dual Investment</div>
+  <div class="header-meta">
+    <span class="ts" id="tsLabel">—</span>
+    <button class="btn-refresh">↻</button>
+    <button class="btn-close" onclick="history.back()">✕</button>
+  </div>
+</div>
+
+<div class="body">
+  <div class="tabs">
+    <button class="tab t-btc" id="tBTC" onclick="setA('BTC',this)">₿ BTC</button>
+    <button class="tab" id="tETH" onclick="setA('ETH',this)">Ξ ETH</button>
+  </div>
+
+  <!-- PM Equation -->
+  <div class="pm-eq" id="pmEq"></div>
+
+  <!-- Main Layout: donut + stats -->
+  <div class="main-layout">
+    <div class="donut-wrap">
+      <canvas id="donut" width="200" height="200"></canvas>
+      <div class="donut-center">
+        <div class="dc-label" id="dcLabel">PM vs Cot</div>
+        <div class="dc-val" id="dcVal">—</div>
+        <div class="dc-sub" id="dcSub">—</div>
+      </div>
+    </div>
+    <div class="stat-stack" id="statStack"></div>
+  </div>
+
+  <!-- Strike Zone Visual -->
+  <div class="szv">
+    <div class="szv-title">🎯 Zona de Strike Recomendada</div>
+    <div class="szv-bar" id="szvBar"></div>
+    <div class="szv-labels" id="szvLabels"></div>
+    <div class="szv-rec" id="szvRec"></div>
+  </div>
+
+  <!-- Charts -->
+  <div class="chart-row">
+    <div class="chart-card">
+      <div class="chart-lbl">Acumulado de Prêmios</div>
+      <div style="height:100px"><canvas id="chtLine"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-lbl">Distribuição BTC / ETH</div>
+      <div style="height:100px"><canvas id="chtPie"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const D={
+  BTC:{ac:'#e8a830',cot:71403.68,pm:73943.60,strikeEx:74000,premios:56.40,ops:12,winRate:91.7,tae:94.1,
+    evo:[2.75,5.00,10.52,19.14,29.58,40.05,48.43,53.83,55.24,56.82,56.40]},
+  ETH:{ac:'#58a6ff',cot:2192.0,pm:2225.04,strikeEx:2325,premios:99.96,ops:15,winRate:93.3,tae:116.6,
+    evo:[1.59,3.33,7.42,28.22,52.06,69.06,76.06,84.18,85.68,88.76,93.59]}
+};
+let cur='BTC',_donut=null,_line=null,_pie=null;
+const f=(v,d=2)=>v.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fu=v=>'$'+f(v);
+const fp=v=>(v>0?'+':'')+f(v,2)+'%';
+
+function setA(s,el){
+  cur=s;
+  document.getElementById('tBTC').className='tab'+(s==='BTC'?' t-btc':'');
+  document.getElementById('tETH').className='tab'+(s==='ETH'?' t-eth':'');
+  render(s);
+}
+
+function render(s){
+  const d=D[s];
+  const pct=(d.cot-d.pm)/d.pm*100;
+  const pc=pct>=0?'#56d364':pct>-3?'#e8a830':'#f85149';
+  const bgc=pct>=0?'rgba(86,211,100,.1)':pct>-3?'rgba(232,168,48,.1)':'rgba(248,81,73,.1)';
+  const absPct=Math.abs(pct);
+
+  // PM Equation
+  document.getElementById('pmEq').innerHTML=`
+    <div class="eq-block"><div class="eq-b-val" style="color:var(--amber)">${fu(d.strikeEx)}</div><div class="eq-b-lbl">Strike Exercida</div></div>
+    <div class="eq-op">−</div>
+    <div class="eq-block"><div class="eq-b-val" style="color:var(--green)">${fu(d.premios)}</div><div class="eq-b-lbl">Prêmios Total</div></div>
+    <div class="eq-op">=</div>
+    <div class="eq-block"><div class="eq-b-val" style="color:${d.ac}">${fu(d.pm)}</div><div class="eq-b-lbl">Preço Médio</div></div>`;
+
+  // Donut
+  if(_donut){try{_donut.destroy()}catch(e){}}
+  const ctx=document.getElementById('donut').getContext('2d');
+  const safeZone=Math.max(0,pct);
+  const riskZone=Math.abs(Math.min(0,pct));
+  const neutral=Math.max(0,10-safeZone-riskZone);
+  _donut=new Chart(ctx,{type:'doughnut',data:{datasets:[{data:[safeZone||0.1,riskZone||0.1,neutral],
+    backgroundColor:[pct>=0?'#56d364':'rgba(86,211,100,.1)','#f85149',d.ac+'33'],
+    borderColor:['transparent','transparent','transparent'],borderWidth:0,hoverOffset:0}]},
+    options:{cutout:'72%',responsive:false,plugins:{legend:{display:false},tooltip:{enabled:false}},animation:{duration:600}}});
+  document.getElementById('dcVal').innerHTML=`<span style="color:${pc}">${fp(pct)}</span>`;
+  document.getElementById('dcSub').textContent=pct>=0?'✅ Acima PM':pct>-3?'⚠️ Próximo':'🔴 Abaixo';
+
+  // Stat Stack
+  const stats=[
+    {i:'💰',l:'Preço Médio (PM)',v:fu(d.pm),b:null,bc:'badge-n'},
+    {i:'💹',l:'Cotação Atual',v:fu(d.cot),b:fp(pct),bc:pct>=0?'badge-up':'badge-down'},
+    {i:'🏅',l:'Prêmios Acumulados',v:fu(d.premios),b:d.ops+' ops',bc:'badge-n'},
+    {i:'🎯',l:'Win Rate',v:f(d.winRate)+'%',b:d.tae.toFixed(0)+'% TAE',bc:'badge-up'},
+  ];
+  document.getElementById('statStack').innerHTML=stats.map(s=>`
+    <div class="stat-card">
+      <div class="sc-icon">${s.i}</div>
+      <div class="sc-center"><div class="sc-lbl">${s.l}</div><div class="sc-val" style="color:${s.bc==='badge-up'?'var(--green)':s.bc==='badge-down'?'var(--red)':'var(--tx)'}">${s.v}</div></div>
+      <div class="sc-right">${s.b?`<div class="sc-badge ${s.bc}">${s.b}</div>`:''}</div>
+    </div>`).join('');
+
+  // Strike Zone
+  const low=d.pm*0.97,high=d.pm*1.06;
+  const p0=0; // low
+  const pPm=((d.pm-low)/(high-low)*100).toFixed(0);
+  const pSafe1=((d.pm*1.005-low)/(high-low)*100).toFixed(0);
+  const pSafe2=((d.pm*1.02-low)/(high-low)*100).toFixed(0);
+  const pCot=Math.max(2,Math.min(98,((d.cot-low)/(high-low)*100))).toFixed(0);
+  document.getElementById('szvBar').innerHTML=`
+    <div class="szv-zone" style="left:0;width:${pSafe1}%;background:rgba(248,81,73,.25);color:var(--red)">Perigo</div>
+    <div class="szv-zone" style="left:${pSafe1}%;width:${pSafe2-pSafe1}%;background:rgba(232,168,48,.2);color:var(--amber)">Atenção</div>
+    <div class="szv-zone" style="left:${pSafe2}%;width:${100-pSafe2}%;background:rgba(86,211,100,.2);color:var(--green)">Seguro ✓</div>
+    <div class="szv-cursor" style="left:${pPm}%;background:var(--amber);box-shadow:0 0 6px var(--amber)"></div>
+    <div class="szv-cursor" style="left:${pCot}%;background:${d.ac};box-shadow:0 0 6px ${d.ac}"></div>`;
+  document.getElementById('szvLabels').innerHTML=`
+    <span style="color:var(--red)">Abaixo PM</span>
+    <span>PM ${fu(d.pm)}</span><span style="color:var(--tx2)">Cot ${fu(d.cot)}</span>
+    <span style="color:var(--green)">Alvo &gt; ${fu(d.pm*1.02)}</span>`;
+  document.getElementById('szvRec').innerHTML=pct<0
+    ?`<span style="background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);color:var(--red);padding:3px 10px;border-radius:6px;font-size:.72rem">⚠️ Cotação ${fp(pct)} abaixo do PM — strike mínimo recomendado: ${fu(d.pm*1.015)}</span>`
+    :`<span style="background:rgba(86,211,100,.1);border:1px solid rgba(86,211,100,.3);color:var(--green);padding:3px 10px;border-radius:6px;font-size:.72rem">✅ Strike acima do PM — operação segura acima de ${fu(d.pm*1.01)}</span>`;
+
+  buildCharts(d);
+}
+
+function buildCharts(d){
+  if(_line){try{_line.destroy()}catch(e){}}
+  if(_pie){try{_pie.destroy()}catch(e){}}
+  const lctx=document.getElementById('chtLine').getContext('2d');
+  _line=new Chart(lctx,{type:'line',data:{labels:d.evo.map((_,i)=>'D'+(i+1)),
+    datasets:[{data:d.evo,borderColor:d.ac,backgroundColor:d.ac+'22',fill:true,tension:.4,borderWidth:2,pointRadius:2}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{display:false},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#8b949e',font:{size:9},callback:v=>'$'+v}}}}});
+  const pctx=document.getElementById('chtPie').getContext('2d');
+  _pie=new Chart(pctx,{type:'doughnut',data:{labels:['BTC','ETH'],
+    datasets:[{data:[D.BTC.premios,D.ETH.premios],backgroundColor:['rgba(232,168,48,.7)','rgba(88,166,255,.7)'],
+      borderColor:['#e8a830','#58a6ff'],borderWidth:1}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'55%',
+      plugins:{legend:{position:'bottom',labels:{color:'#8b949e',font:{size:9},padding:6}},
+        tooltip:{callbacks:{label:c=>`${c.label}: $${c.raw.toFixed(2)}`}}}}});
+}
+
+document.getElementById('tsLabel').textContent='Atualizado: '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+render('BTC');
+</script>
+</body>
+</html>

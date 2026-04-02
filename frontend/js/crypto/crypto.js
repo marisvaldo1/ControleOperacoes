@@ -1,4 +1,4 @@
-/** crypto.js v1.5.3 - Controle de Dual Investment Cryptos */
+﻿/** crypto.js v1.5.3 - Controle de Dual Investment Cryptos */
 
 let allOperacoes = [];
 let tableMesAtual, tableHistorico;
@@ -7,6 +7,12 @@ let currentFilterCrypto = "ABERTA";
 let _lastSimData = null;
 let _investidoMode = 'usd';
 const CRYPTO_CFG_KEY = "cryptoConfig";
+const historicoQuickFilter = {
+    periodo: "all",
+    status: "all",
+    tipo: "all"
+};
+let historicoFilterRegistered = false;
 
 function setInvestidoMode(mode) {
     _investidoMode = mode;
@@ -32,6 +38,7 @@ function _initCrypto() {
     setupEventListeners();
     setupCardClicks();
     setupFilterButtons();
+    setupHistoricoQuickFilters();
 }
 
 // Garante inicialização mesmo se layoutReady já disparou antes de este script ser parseado
@@ -170,21 +177,8 @@ function setupEventListeners() {
 }
 
 function setupCardClicks() {
-    // cardResultadoTotalCryptoCard, cardResultadoMedioCryptoCard e cardSaldoCryptoCard
-    // são tratados pelos modais configurados externamente em crypto.html.
-    const handlers = {
-        "cardTotalOpsCryptoCard": () => {
-            if (window.ModalTotalOperacoesCrypto && window.ModalTotalOperacoesCrypto.openModal) {
-                window.ModalTotalOperacoesCrypto.openModal();
-            }
-        },
-    };
-    for (const [id, fn] of Object.entries(handlers)) {
-        const el = document.getElementById(id);
-        if (!el) continue;
-        el.addEventListener("click", fn);
-        el.addEventListener("keydown", e => (e.key === "Enter" || e.key === " ") && fn());
-    }
+    // cardTotalOpsCryptoCard é gerenciado por modal-total-operacoes-crypto.js (initTriggers).
+    // Outros cards são tratados pelos modais configurados externamente em crypto.html.
 }
 
 function openCryptoDashboardModal(type) {
@@ -335,12 +329,31 @@ function setupFilterButtons() {
             document.querySelectorAll(".crypto-filter-btn").forEach(b => b.classList.remove("active"));
             this.classList.add("active");
             currentFilterCrypto = this.dataset.filter || "all";
-            if (tableMesAtual) {
-                if (currentFilterCrypto === "all") tableMesAtual.column(14).search("").draw();
-                else tableMesAtual.column(14).search(currentFilterCrypto).draw();
-            }
+            applyStatusFilterMesAtual();
         });
     });
+}
+
+function applyStatusFilterMesAtual() {
+    if (!tableMesAtual) return;
+    const statusCol = tableMesAtual.column(14);
+
+    if (currentFilterCrypto === "all") {
+        statusCol.search("", false, false).draw();
+        return;
+    }
+
+    if (currentFilterCrypto === "ABERTA") {
+        statusCol.search("^ABERTA$", true, false).draw();
+        return;
+    }
+
+    if (currentFilterCrypto === "FECHADA") {
+        statusCol.search("FECHADA|EXERCIDA|ENCERRADA", true, false).draw();
+        return;
+    }
+
+    statusCol.search(currentFilterCrypto, false, false).draw();
 }
 
 function initDataTables() {
@@ -357,9 +370,10 @@ function initDataTables() {
         ]
     };
     tableMesAtual  = $('#tableMesAtual').DataTable(dtConfig);
-    tableHistorico = $('#tableHistorico').DataTable(dtConfig);
-    // Recalcula larguras das colunas após o tab ser exibido
-    document.querySelectorAll('a[data-bs-toggle="tab"]').forEach(tab => {
+    tableHistorico = $('#tableHistorico').DataTable({ ...dtConfig, order: [] });
+    registerHistoricoQuickFilter();
+    // Recalcula larguras das colunas apenas nas tabs principais da tela crypto
+    document.querySelectorAll('#cryptoTabs a[data-bs-toggle="tab"]').forEach(tab => {
         tab.addEventListener('shown.bs.tab', () => {
             tableMesAtual?.columns.adjust();
             tableHistorico?.columns.adjust();
@@ -441,14 +455,12 @@ function updateUI() {
         </div>`;
 
     document.getElementById("mesAtualTitle").textContent = "Operacoes - " + getMonthName(currentMonth);
-    populateTable(tableMesAtual,  mesAtualData);
-    populateTable(tableHistorico, allOperacoes);
+    populateTable(tableMesAtual,  mesAtualData, { prioritizeOpen: true });
+    populateTable(tableHistorico, allOperacoes, { prioritizeOpen: false });
     renderHistoricoMensal();
     renderChartAnual(anoData, currentYear);
     // Reaplica filtro de status ativo após recarregar a tabela
-    if (tableMesAtual) {
-        tableMesAtual.column(14).search(currentFilterCrypto === "all" ? "" : currentFilterCrypto).draw();
-    }
+    applyStatusFilterMesAtual();
 }
 
 function fmtUsd(v) {
@@ -475,13 +487,110 @@ function getSaldoCrypto() {
     } catch { return 0; }
 }
 
-function populateTable(dt, data) {
+function getOpEventDate(op) {
+    const raw = op?.exercicio || op?.vencimento || op?.data_operacao || op?.created_at || op?.data_fechamento;
+    if (!raw) return null;
+    const dt = new Date(raw);
+    return Number.isNaN(dt.getTime()) ? null : dt;
+}
+
+function isTypeExercised(op, type) {
+    const opType = String(op?.tipo || '').toUpperCase();
+    if (opType !== type) return false;
+    const exStatus = String(op?.exercicio_status || '').toUpperCase();
+    const status = String(op?.status || '').toUpperCase();
+    if (exStatus === 'SIM' || status === 'EXERCIDA') return true;
+
+    const strike = parseFloat(op?.strike || 0);
+    const current = parseFloat(op?.cotacao_atual || 0);
+    if (!strike || !current) return false;
+    if (type === 'CALL') return current >= strike;
+    if (type === 'PUT') return current <= strike;
+    return false;
+}
+
+function computeRecoverySnapshot(opsSource) {
+    const ops = Array.isArray(opsSource) ? opsSource : (allOperacoes || []);
+    const sorted = ops
+        .map(op => ({ op, eventDate: getOpEventDate(op) }))
+        .filter(item => !!item.eventDate)
+        .sort((a, b) => a.eventDate - b.eventDate);
+
+    const calls = sorted.filter(item => isTypeExercised(item.op, 'CALL'));
+    const puts = sorted.filter(item => isTypeExercised(item.op, 'PUT'));
+    const lastCall = calls.length ? calls[calls.length - 1] : null;
+    const lastPut = puts.length ? puts[puts.length - 1] : null;
+
+    if (!lastCall) {
+        return { hasCycle: false, hasLoss: false, reason: 'Sem CALL exercida no histórico.' };
+    }
+
+    const callStrike = parseFloat(lastCall.op.strike || 0) || 0;
+    const putStrike = lastPut ? (parseFloat(lastPut.op.strike || 0) || 0) : 0;
+
+    const premiumsBetween = sorted
+        .filter(item => {
+            if (item.eventDate <= lastCall.eventDate) return false;
+            if (lastPut && item.eventDate >= lastPut.eventDate) return false;
+            return true;
+        })
+        .reduce((acc, item) => acc + (parseFloat(item.op.premio_us) || 0), 0);
+
+    const adjustedCall = callStrike - premiumsBetween;
+    const diff = lastPut ? (putStrike - adjustedCall) : null;
+    const diffPct = Number.isFinite(diff) && adjustedCall !== 0 ? (diff / adjustedCall) * 100 : null;
+    const hasLoss = Number.isFinite(diff) ? diff < 0 : false;
+    const lossValue = hasLoss ? Math.abs(diff) : 0;
+
+    const premiumsAfterPut = lastPut
+        ? sorted
+            .filter(item => item.eventDate > lastPut.eventDate)
+            .reduce((acc, item) => acc + (parseFloat(item.op.premio_us) || 0), 0)
+        : 0;
+
+    const recovered = Math.max(0, premiumsAfterPut);
+    const missing = Math.max(0, lossValue - recovered);
+    const progressPct = lossValue > 0 ? Math.min(100, (recovered / lossValue) * 100) : 100;
+
+    return {
+        hasCycle: true,
+        hasLoss,
+        lastCall,
+        lastPut,
+        callStrike,
+        putStrike,
+        premiumsBetween,
+        adjustedCall,
+        diff,
+        diffPct,
+        lossValue,
+        recovered,
+        missing,
+        progressPct
+    };
+}
+
+function notifyRecoveryLossContext(contextLabel) {
+    const snapshot = computeRecoverySnapshot();
+    if (!snapshot.hasLoss) return snapshot;
+    iziToast.warning({
+        title: 'Prejuízo pendente',
+        message: `${contextLabel}: falta cobrir ${fmtUsd(snapshot.missing)} (${snapshot.progressPct.toFixed(2)}% coberto).`
+    });
+    return snapshot;
+}
+
+function populateTable(dt, data, options) {
     if (!dt) return; // DataTable não inicializado ainda
+    const cfg = options || {};
+    const prioritizeOpen = cfg.prioritizeOpen !== false;
     dt.clear();
     [...data].sort((a, b) => {
-        const aOpen = (a.status || 'ABERTA') === 'ABERTA' ? 0 : 1;
-        const bOpen = (b.status || 'ABERTA') === 'ABERTA' ? 0 : 1;
-        if (aOpen !== bOpen) return aOpen - bOpen;
+        if (prioritizeOpen) {
+            const aOpen = (a.status || 'ABERTA') === 'ABERTA' ? 0 : 1;
+            const bOpen = (b.status || 'ABERTA') === 'ABERTA' ? 0 : 1;
+            if (aOpen !== bOpen) return aOpen - bOpen;
+        }
         return new Date(b.exercicio || b.data_operacao || 0) - new Date(a.exercicio || a.data_operacao || 0);
     }).forEach(op => {
         const pct = (op.abertura && op.premio_us)
@@ -507,7 +616,7 @@ function populateTable(dt, data) {
         const resultado   = parseFloat(op.resultado) || 0;
         const resHtml     = op.resultado != null ? "<span class=\"" + (resultado >= 0 ? "text-success" : "text-danger") + "\">" + resultado.toFixed(2) + "%</span>" : "-";
         dt.row.add([
-            "<span class=\"badge bg-warning text-dark\" style=\"cursor:pointer\" title=\"Ver detalhes\" onclick=\"showDetalhesOperacao(" + op.id + ")\">" + (op.ativo || "-") + "</span>",
+            "<span class=\"badge bg-warning text-dark\" style=\"cursor:pointer\" title=\"Análise completa\" onclick=\"if(window.ModalAnaliseCrypto)window.ModalAnaliseCrypto.open(" + op.id + ")\">" + (op.ativo || "-") + "</span>",
             tipoBadge,
             op.cotacao_atual ? fmtUsd(op.cotacao_atual) : "-",
             op.abertura      ? fmtUsd(op.abertura)      : "-",
@@ -530,6 +639,107 @@ function populateTable(dt, data) {
     });
     dt.draw();
     dt.columns.adjust();
+}
+
+function setupHistoricoQuickFilters() {
+    document.querySelectorAll(".history-filter-btn").forEach(btn => {
+        btn.addEventListener("click", function () {
+            const group = this.dataset.filterGroup;
+            const value = this.dataset.filterValue;
+            if (!group || !value) return;
+
+            document.querySelectorAll(`.history-filter-btn[data-filter-group="${group}"]`).forEach(item => {
+                item.classList.remove("active");
+            });
+            this.classList.add("active");
+
+            historicoQuickFilter[group] = value;
+            tableHistorico?.draw();
+        });
+    });
+}
+
+function registerHistoricoQuickFilter() {
+    if (historicoFilterRegistered || !window.jQuery || !$.fn?.dataTable?.ext?.search) return;
+    historicoFilterRegistered = true;
+
+    $.fn.dataTable.ext.search.push(function (settings, data) {
+        if (settings?.nTable?.id !== "tableHistorico") return true;
+
+        const tipo = normalizeTableCell(data[1]);
+        const vencimento = parseDateFromTableCell(data[10]);
+        const status = normalizeTableCell(data[14]);
+
+        if (historicoQuickFilter.tipo !== "all" && tipo !== historicoQuickFilter.tipo) {
+            return false;
+        }
+
+        if (historicoQuickFilter.status === "ABERTA" && status !== "ABERTA") {
+            return false;
+        }
+        if (historicoQuickFilter.status === "FECHADA" && !(status === "FECHADA" || status === "EXERCIDA" || status === "ENCERRADA")) {
+            return false;
+        }
+
+        return matchPeriodoFilter(vencimento, historicoQuickFilter.periodo);
+    });
+}
+
+function normalizeTableCell(rawValue) {
+    return String(rawValue || "")
+        .replace(/<[^>]*>/g, "")
+        .replace(/&nbsp;/g, " ")
+        .trim()
+        .toUpperCase();
+}
+
+function parseDateFromTableCell(rawValue) {
+    const text = normalizeTableCell(rawValue);
+    const parts = text.split("/");
+    if (parts.length !== 3) return null;
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10);
+    const year = parseInt(parts[2], 10);
+    if (!day || !month || !year) return null;
+    const date = new Date(year, month - 1, day);
+    date.setHours(0, 0, 0, 0);
+    return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function matchPeriodoFilter(date, periodo) {
+    if (periodo === "all") return true;
+    if (!date) return false;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (periodo === "today") {
+        return date.getTime() === today.getTime();
+    }
+
+    if (periodo === "month") {
+        return date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear();
+    }
+
+    if (periodo === "year") {
+        return date.getFullYear() === today.getFullYear();
+    }
+
+    if (periodo === "12m") {
+        const from = new Date(today);
+        from.setMonth(from.getMonth() - 12);
+        return date >= from && date <= today;
+    }
+
+    if (periodo.endsWith("d")) {
+        const days = parseInt(periodo, 10);
+        if (Number.isNaN(days)) return true;
+        const from = new Date(today);
+        from.setDate(from.getDate() - days);
+        return date >= from && date <= today;
+    }
+
+    return true;
 }
 
 function renderHistoricoMensal() {
@@ -668,7 +878,7 @@ function renderChartAnual(data, year) {
                     : `<span class="badge bg-azure text-white">${op.status || "FECHADA"}</span>`;
                 opRows += `<tr>
                     <td>${op.data_operacao || "-"}</td>
-                    <td><strong>${op.ativo || "-"}</strong></td>
+                    <td><strong style="cursor:pointer;color:#4299e1" onclick="if(window.ModalAnaliseCrypto)window.ModalAnaliseCrypto.open(${op.id})" title="Análise completa">${op.ativo || "-"}</strong></td>
                     <td>${tipoBadge}</td>
                     <td>${op.strike ? fmtUsd(op.strike) : "-"}</td>
                     <td>${op.exercicio || "-"}</td>
@@ -810,6 +1020,7 @@ function showCryptoMonthOps(year, monthKey) {
 
 
 function openNewModal() {
+    notifyRecoveryLossContext('Nova operação');
     document.getElementById("modalOperacaoTitle").textContent = "Nova Operacao";
     document.getElementById("formOperacao").reset();
     document.getElementById("operacaoId").value = "";
@@ -857,6 +1068,19 @@ function editOperacao(id) {
 
 async function saveOperacao() {
     const id = document.getElementById("operacaoId").value;
+    const isNew = !id;
+    const recoverySnapshot = computeRecoverySnapshot();
+    if (isNew && recoverySnapshot.hasLoss) {
+        const proceed = await Swal.fire({
+            title: 'Prejuízo pendente detectado',
+            text: `Ainda faltam ${fmtUsd(recoverySnapshot.missing)} para cobrir o ciclo CALL/PUT. Deseja salvar mesmo assim?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Salvar mesmo assim',
+            cancelButtonText: 'Revisar operação'
+        });
+        if (!proceed.isConfirmed) return;
+    }
     const data = {
         ativo: document.getElementById("inputAtivo").value,
         tipo:  document.getElementById("inputTipo").value,
@@ -922,18 +1146,35 @@ async function deleteOperacao(id) {
 }
 
 function openSimuladorModal() {
-    document.getElementById("simResultContainer").style.display = "none";
+    notifyRecoveryLossContext('Simulação');
     document.getElementById("btnAplicarSim").disabled = true;
     document.getElementById("simCotacaoLiveInfo").textContent = "";
+    const timeEl = document.getElementById("simHeaderTime");
+    if (timeEl) timeEl.textContent = "";
     _lastSimData = null;
+    // Limpa painel direito
+    simResetRight();
     new bootstrap.Modal(document.getElementById("modalSimuladorCrypto")).show();
+    // Renderiza estado inicial com os valores padrão após o modal estar visível
+    setTimeout(() => onSimInput(), 300);
 }
 
 // Busca cotação ao vivo para o campo de simulação
 async function buscarCotacaoSimLive() {
     const par = document.getElementById("simPar").value || "BTC";
-    const btn = document.getElementById("btnSimCotacaoLive");
+    const btn        = document.getElementById("btnSimCotacaoLive");
+    const headerBtn  = document.getElementById("btnSimHeaderRefresh");
+    const headerIcon = document.getElementById("simHeaderRefreshIcon");
     if (btn) { btn.disabled = true; btn.innerHTML = "<span class='spinner-border spinner-border-sm'></span>"; }
+    if (headerBtn)  headerBtn.disabled = true;
+    if (headerIcon) headerIcon.classList.add("sim-spin");
+    // Loading nos KPIs e cards do painel direito
+    const _spinSm = '<span class="spinner-border" style="width:.55rem;height:.55rem;border-width:1px"></span>';
+    ['simPremioEstimado','simRoi','simDistancia','simTaeAnual'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.innerHTML = _spinSm;
+    });
+    const cotEl = document.getElementById('simCotacao');
+    if (cotEl) { cotEl.readOnly = true; cotEl.style.opacity = '.5'; }
     try {
         const sym  = par + "USDT";
         const res  = await fetch(API_BASE + "/api/proxy/crypto/" + sym);
@@ -943,11 +1184,22 @@ async function buscarCotacaoSimLive() {
             document.getElementById("simCotacao").value = price.toFixed(2);
             document.getElementById("simCotacaoLiveInfo").textContent = "● ao vivo";
             document.getElementById("simCotacaoLiveInfo").className = "text-success ms-1";
+            // Atualiza timestamp do header
+            const timeEl = document.getElementById("simHeaderTime");
+            if (timeEl) {
+                const now = new Date();
+                timeEl.textContent = "Atualizado: " + now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
+            }
         }
     } catch {
         iziToast.error({ title: "Erro", message: "Erro ao buscar cotação." });
     } finally {
         if (btn) { btn.disabled = false; btn.innerHTML = "<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8'/><path d='M3 3v5h5'/><path d='M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16'/><path d='M16 16h5v5'/></svg>"; }
+        if (headerBtn)  headerBtn.disabled = false;
+        if (headerIcon) headerIcon.classList.remove("sim-spin");
+        const cotEl2 = document.getElementById('simCotacao');
+        if (cotEl2) { cotEl2.readOnly = false; cotEl2.style.opacity = ''; }
+        onSimInput(); // atualiza painel direito após atualizar cotação
     }
 }
 
@@ -1035,8 +1287,537 @@ function usarProdutoDI(ativo, tipo, strike, tae, prazo, vencimento) {
     document.getElementById("simValor").focus();
 }
 
-// ── Simulador: Toggle USD ↔ Crypto ────────────────────────────────────────────
+// ── Simulador: variável do chart P&L ─────────────────────────────────────────
+let _simPnLChart  = null;
+let _simInputTimer = null;
 let _simModo = 'usd'; // 'usd' | 'crypto'
+
+// Chamada em todo oninput — debounce 250ms para não sobrecarregar
+function onSimInput() {
+    clearTimeout(_simInputTimer);
+    _simInputTimer = setTimeout(() => simAtualizar(), 250);
+}
+
+// Reset do painel direito
+function simResetRight() {
+    const ids = ['simPremioEstimado', 'simRoi', 'simTaeAnual'];
+    ids.forEach(id => { const el = document.getElementById(id); if (el) el.textContent = '—'; });
+    const dist = document.getElementById('simDistancia');
+    if (dist) dist.innerHTML = '—';
+    document.getElementById('simPmBody').innerHTML = '<div class="sim-empty-state" style="min-height:80px">Informe os dados para ver o PM do portfólio</div>';
+    document.getElementById('simNextOpBody').innerHTML = '<div class="sim-empty-state" style="min-height:80px">Informe Strike e Cotação para análise de risco</div>';
+    const prevBody = document.getElementById('simPrevBody');
+    if (prevBody) prevBody.innerHTML = '<div class="sim-empty-state" style="min-height:60px">Preencha Strike e Cotação para ver a previsão</div>';
+    const prevBadge = document.getElementById('simPrevBadge');
+    if (prevBadge) { prevBadge.textContent = ''; prevBadge.style.cssText = ''; }
+    const empty = document.getElementById('simPnLEmpty');
+    if (empty) empty.style.display = 'flex';
+    if (_simPnLChart) { try { _simPnLChart.destroy(); } catch(e) {} _simPnLChart = null; }
+}
+
+// Atualiza TODOS os componentes do painel direito com os valores atuais dos inputs
+function simAtualizar() {
+    const valor   = parseFloat(document.getElementById("simValor")?.value)  || 0;
+    const tae     = parseFloat(document.getElementById("simTae")?.value)    || 0;
+    const prazo   = parseInt(document.getElementById("simPrazo")?.value)    || 7;
+    const strike  = parseFloat(document.getElementById("simStrike")?.value) || 0;
+    const cotacao = parseFloat(document.getElementById("simCotacao")?.value) || 0;
+    const tipo    = document.getElementById("simTipo")?.value || 'CALL';
+    const par     = document.getElementById("simPar")?.value || 'BTC';
+
+    // KPIs
+    if (valor && tae) {
+        const premioEstimado = valor * (tae / 100) * (prazo / 365);
+        const roi = (premioEstimado / valor) * 100;
+        document.getElementById("simPremioEstimado").textContent = fmtUsd(premioEstimado);
+        document.getElementById("simRoi").textContent = roi.toFixed(4) + "%";
+        document.getElementById("simTaeAnual").textContent = tae.toFixed(2) + "% a.a.";
+        // Preenche _lastSimData para Calcular/Aplicar (retrocompat)
+        const distanciaVal = (cotacao && strike) ? ((strike - cotacao) / cotacao) * 100 : 0;
+        _lastSimData = { ativo: par, tipo, abertura: valor, tae, prazo, strike, cotacao_atual: cotacao || null,
+                         premio_us: premioEstimado, distancia: distanciaVal || null, data_operacao: getCurrentDate() };
+        document.getElementById("btnAplicarSim").disabled = false;
+    } else {
+        document.getElementById("simPremioEstimado").textContent = '—';
+        document.getElementById("simRoi").textContent = '—';
+        document.getElementById("simTaeAnual").textContent = '—';
+    }
+
+    // Distância
+    if (cotacao && strike) {
+        const distanciaVal = ((strike - cotacao) / cotacao) * 100;
+        const sign = distanciaVal > 0 ? "+" : "";
+        const cls  = distanciaVal > 0 ? "text-success" : "text-danger";
+        document.getElementById("simDistancia").innerHTML =
+            `<span class="${cls}">${sign}${distanciaVal.toFixed(2)}%</span>`;
+    } else {
+        document.getElementById("simDistancia").innerHTML = '—';
+    }
+
+    // PM do portfólio para o ativo selecionado
+    simRenderPmCard(par, cotacao);
+
+    // Risco da Operação
+    simRenderNextOpCard(par, strike, cotacao, tipo);
+
+    // Previsão / POP
+    const _qty = (valor > 0 && strike > 0) ? valor / strike : 0;
+    const _premioEst = (valor > 0 && tae > 0) ? valor * (tae / 100) * (prazo / 365) : 0;
+    const _breakEven = tipo === 'CALL'
+        ? strike + (_qty > 0 ? _premioEst / _qty : 0)
+        : strike - (_qty > 0 ? _premioEst / _qty : 0);
+    simRenderPrevisao(calcPOP(tipo, cotacao, strike), cotacao, strike, _premioEst, _breakEven, tipo);
+
+    // Gráfico P&L
+    if (valor && strike && tae) {
+        simRenderPnLChart(valor, strike, cotacao, tipo, prazo, tae);
+    }
+}
+
+// Renderiza o card de Preço Médio do portfólio para o ativo selecionado
+function simRenderPmCard(par, cotacaoInput) {
+    const body = document.getElementById('simPmBody');
+    const title = document.getElementById('simPmCardTitle');
+    if (!body) return;
+
+    // Busca operações do portfólio
+    const ops = (allOperacoes || []).filter(o => {
+        const ativo = (o.ativo || '').toUpperCase().replace('USDT','').replace('/','').trim();
+        return ativo === par.toUpperCase();
+    });
+
+    if (!ops.length) {
+        body.innerHTML = `<div class="sim-empty-state" style="min-height:80px">Sem operações de ${par} no portfólio</div>`;
+        if (title) title.textContent = `📊 Preço Médio ${par}`;
+        return;
+    }
+
+    // Encontra última CALL exercida (strike exercida = PM base)
+    const callsExercidas = ops.filter(o => (o.tipo||'').toUpperCase() === 'CALL' && (o.exercicio_status||'').toUpperCase() === 'SIM');
+    const strikeExercida = callsExercidas.length
+        ? Math.max(...callsExercidas.map(o => parseFloat(o.strike||0)))
+        : parseFloat(ops.reduce((max, o) => parseFloat(o.strike||0) > parseFloat(max.strike||0) ? o : max, ops[0])?.strike || 0);
+
+    // Soma todos os prêmios do ativo
+    const totalPremios = ops.reduce((s, o) => s + (parseFloat(o.premio_us)||0), 0);
+    const pm = strikeExercida - totalPremios;
+    const cotacao = cotacaoInput || parseFloat(ops.find(o => parseFloat(o.cotacao_atual||0) > 0)?.cotacao_atual || 0);
+    const pctVsPm = cotacao && pm ? ((cotacao - pm) / pm) * 100 : null;
+
+    const acCor = par === 'BTC' ? '#f59f00' : par === 'ETH' ? '#4da6ff' : '#3fb950';
+    const icone = par === 'BTC' ? '₿' : par === 'ETH' ? 'Ξ' : '◎';
+    const pctColor = pctVsPm === null ? '' : pctVsPm >= 0 ? 'color:#3fb950' : pctVsPm > -3 ? 'color:#f59f00' : 'color:#f85149';
+    const pctSign  = pctVsPm === null ? '?' : (pctVsPm >= 0 ? '+' : '') + pctVsPm.toFixed(2) + '%';
+
+    if (title) title.textContent = `${icone} PREÇO MÉDIO ${par}`;
+
+    body.innerHTML = `
+        <div class="sim-pm-val" style="color:${acCor}">$${pm.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+        <div class="sim-pm-row"><span class="sim-pm-key">● Strike Exercido</span><span class="sim-pm-v" style="color:var(--tblr-warning)">$${strikeExercida.toLocaleString('en-US',{minimumFractionDigits:2})}</span></div>
+        <div class="sim-pm-row"><span class="sim-pm-key">− Prêmios</span><span class="sim-pm-v" style="color:#3fb950">−$${totalPremios.toLocaleString('en-US',{minimumFractionDigits:2})}</span></div>
+        ${cotacao ? `<div class="sim-pm-row"><span class="sim-pm-key">● Cotação</span><span class="sim-pm-v" style="${pctColor}">$${cotacao.toLocaleString('en-US',{minimumFractionDigits:2})}</span></div>` : ''}
+        ${pctVsPm !== null ? `<div class="sim-pm-row"><span class="sim-pm-key">● vs PM</span><span class="sim-pm-v" style="${pctColor}">${pctSign}</span></div>` : ''}
+    `;
+}
+
+// Renderiza card de Risco da Operação atual
+function simRenderNextOpCard(par, strike, cotacao, tipo) {
+    const body = document.getElementById('simNextOpBody');
+    if (!body) return;
+
+    if (!strike || !cotacao) {
+        body.innerHTML = `<div class="sim-empty-state" style="min-height:80px">Informe Strike e Cotação para análise de risco</div>`;
+        return;
+    }
+
+    const dist = tipo === 'CALL'
+        ? (cotacao - strike) / strike * 100   // positivo = cotação acima do strike
+        : (strike - cotacao) / cotacao * 100;  // positivo = strike acima da cotação
+    const absDist = Math.abs(dist);
+
+    let riskClass, riskLabel, riskMsg;
+    if (absDist < 1) {
+        riskClass = 'danger'; riskLabel = '🔴 RISCO ALTO';
+        riskMsg = 'Strike muito próximo da cotação. Exercício imediato possível.';
+    } else if (absDist < 5) {
+        riskClass = 'warn'; riskLabel = '🟡 RISCO MÉDIO';
+        riskMsg = dist > 0
+            ? 'Cotação favorável ao exercício. Monitorar de perto.'
+            : 'Margem moderada de segurança. Atenção ao movimento.';
+    } else {
+        riskClass = 'safe'; riskLabel = '🟢 RISCO BAIXO';
+        riskMsg = dist > 0
+            ? 'Boa probabilidade de exercício — retorno em ' + (tipo === 'CALL' ? 'BTC' : 'USDT') + ' esperado.'
+            : 'Baixa probabilidade de exercício — retorno em ' + (tipo === 'CALL' ? 'USDT' : 'BTC') + ' esperado.';
+    }
+
+    const distSign = dist > 0 ? '+' : '';
+    const distColor = riskClass === 'danger' ? '#f85149' : riskClass === 'warn' ? '#f59f00' : '#3fb950';
+    const recovery = computeRecoverySnapshot();
+    const recoveryWarning = recovery.hasLoss
+        ? `<div style="margin-top:8px;padding:8px;border:1px solid rgba(248,81,73,.45);border-radius:8px;background:rgba(248,81,73,.10)">
+                <div style="font-size:.72rem;font-weight:700;color:#f85149">⚠ Prejuízo pendente no ciclo</div>
+                <div style="font-size:.68rem;color:#fca5a5">Falta cobrir ${fmtUsd(recovery.missing)} (${recovery.progressPct.toFixed(2)}% coberto).</div>
+           </div>`
+        : '';
+    body.innerHTML = `
+        <div class="sim-zone ${riskClass}" style="margin-bottom:8px">
+            <span style="font-weight:700;font-size:.75rem">${riskLabel}</span>
+        </div>
+        <div class="sim-pm-row">
+            <span class="sim-pm-key">● Cotação</span>
+            <span class="sim-pm-v">$${cotacao.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</span>
+        </div>
+        <div class="sim-pm-row">
+            <span class="sim-pm-key">● Strike</span>
+            <span class="sim-pm-v">$${strike.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</span>
+        </div>
+        <div class="sim-pm-row">
+            <span class="sim-pm-key">● Distância</span>
+            <span class="sim-pm-v" style="color:${distColor}">${distSign}${dist.toFixed(2)}%</span>
+        </div>
+        <div style="margin-top:7px;font-size:.68rem;color:var(--tblr-secondary)">${riskMsg}</div>
+        ${recoveryWarning}
+    `;
+}
+
+// Calcula Probabilidade de Exercício (POP) aproximada — modelo linear simplificado
+function calcPOP(tipo, cotacao, strike) {
+    if (!cotacao || !strike) return null;
+    const dist = tipo === 'CALL'
+        ? (cotacao - strike) / strike * 100
+        : (strike - cotacao) / cotacao * 100;
+    return Math.max(5, Math.min(95, 50 + dist * 2.5));
+}
+
+// Auto-fetch cotação ao sair do campo simValor em modo crypto
+function simAutoFetchCotacao() {
+    if (_simModo === 'crypto') {
+        const cotEl = document.getElementById("simCotacao");
+        if (cotEl && !parseFloat(cotEl.value)) {
+            buscarCotacaoSimLive();
+        }
+    }
+}
+
+// Renderiza card de Previsão: POP circle + items + progress bar
+function simRenderPrevisao(pop, cotacao, strike, premio, breakEven, tipo) {
+    const body  = document.getElementById('simPrevBody');
+    const badge = document.getElementById('simPrevBadge');
+    if (!body) return;
+
+    if (pop === null || !cotacao || !strike) {
+        body.innerHTML = '<div class="sim-empty-state" style="min-height:60px">Preencha Strike e Cotação para ver a previsão</div>';
+        if (badge) { badge.textContent = ''; badge.style.cssText = ''; }
+        return;
+    }
+
+    const arcColor = pop >= 65 ? '#3fb950' : pop >= 35 ? '#f59f00' : '#f85149';
+    const CIRC = 175.93; // 2π × 28
+    const dashOffset = CIRC * (1 - pop / 100);
+
+    let badgeText, badgeColor, badgeBg;
+    if (pop >= 65) {
+        badgeText = 'Exercício Provável'; badgeColor = '#3fb950'; badgeBg = 'rgba(47,179,68,.15)';
+    } else if (pop >= 35) {
+        badgeText = 'Zona Neutra'; badgeColor = '#f59f00'; badgeBg = 'rgba(245,159,0,.15)';
+    } else {
+        badgeText = tipo === 'CALL' ? 'Retorno em USDT' : 'Retorno em Crypto';
+        badgeColor = '#4da6ff'; badgeBg = 'rgba(77,166,255,.15)';
+    }
+    if (badge) {
+        badge.textContent = badgeText;
+        badge.style.cssText = `color:${badgeColor};background:${badgeBg};border:1px solid ${badgeColor};padding:2px 9px;border-radius:10px;font-size:.63rem;font-weight:700`;
+    }
+
+    const pMin = strike * 0.85, pMax = strike * 1.15;
+    const markerPct = Math.max(2, Math.min(98, (cotacao - pMin) / (pMax - pMin) * 100));
+    const barFillPct = Math.max(0, Math.min(100, (strike - pMin) / (pMax - pMin) * 100));
+
+    const dist = tipo === 'CALL'
+        ? (cotacao - strike) / strike * 100
+        : (strike - cotacao) / cotacao * 100;
+    const distSign = dist > 0 ? '+' : '';
+    let riskMsg, msgBg, msgColor;
+    if (pop >= 65) {
+        const retorno = tipo === 'CALL' ? 'BTC' : 'USDT';
+        riskMsg = `✅ Cotação ${distSign}${dist.toFixed(2)}% do Strike — alta probabilidade de exercício (retorno em ${retorno})`;
+        msgBg = 'rgba(47,179,68,.10)'; msgColor = '#3fb950';
+    } else if (pop >= 35) {
+        riskMsg = `⚖️ Zona de indefinição — Cotação ${distSign}${dist.toFixed(2)}% do Strike`;
+        msgBg = 'rgba(245,159,0,.10)'; msgColor = '#f59f00';
+    } else {
+        const retorno = tipo === 'CALL' ? 'USDT' : 'BTC';
+        riskMsg = `💵 Cotação ${distSign}${dist.toFixed(2)}% do Strike — baixa probabilidade de exercício (retorno em ${retorno})`;
+        msgBg = 'rgba(77,166,255,.10)'; msgColor = '#4da6ff';
+    }
+
+    const fmt  = v => v ? v.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}) : '—';
+    const fmtK = v => v >= 1000 ? '$' + (v/1000).toFixed(0) + 'k' : '$' + v.toFixed(0);
+
+    body.innerHTML = `
+        <div style="display:flex;gap:12px;align-items:center">
+            <div class="sim-pop-wrap">
+                <svg width="72" height="72" viewBox="0 0 72 72">
+                    <circle cx="36" cy="36" r="28" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="6"/>
+                    <circle cx="36" cy="36" r="28" fill="none" stroke="${arcColor}" stroke-width="6"
+                        stroke-linecap="round" stroke-dasharray="${CIRC.toFixed(2)}" stroke-dashoffset="${dashOffset.toFixed(2)}"
+                        transform="rotate(-90 36 36)"/>
+                </svg>
+                <div class="sim-pop-center">
+                    <div class="sim-pop-pct" style="color:${arcColor}">${pop.toFixed(1)}%</div>
+                    <div class="sim-pop-lbl">POP</div>
+                </div>
+            </div>
+            <div style="flex:1">
+                <div class="sim-prev-item">
+                    <span class="sim-prev-item-dot" style="background:#4da6ff"></span>
+                    <span class="sim-prev-item-lbl">Cotação Atual</span>
+                    <span class="sim-prev-item-val" style="color:#4da6ff">$${fmt(cotacao)}</span>
+                </div>
+                <div class="sim-prev-item">
+                    <span class="sim-prev-item-dot" style="background:#f59f00"></span>
+                    <span class="sim-prev-item-lbl">Strike</span>
+                    <span class="sim-prev-item-val" style="color:#f59f00">$${fmt(strike)}</span>
+                </div>
+                ${premio > 0 ? `<div class="sim-prev-item">
+                    <span class="sim-prev-item-dot" style="background:#3fb950"></span>
+                    <span class="sim-prev-item-lbl">Prêmio Est.</span>
+                    <span class="sim-prev-item-val" style="color:#3fb950">+$${premio.toFixed(2)}</span>
+                </div>` : ''}
+                ${breakEven > 0 ? `<div class="sim-prev-item">
+                    <span class="sim-prev-item-dot" style="background:rgba(255,255,255,.3)"></span>
+                    <span class="sim-prev-item-lbl">Break-Even</span>
+                    <span class="sim-prev-item-val">$${fmt(breakEven)}</span>
+                </div>` : ''}
+            </div>
+        </div>
+        <div class="sim-prev-bar-track">
+            <div class="sim-prev-bar-fill" style="width:${barFillPct.toFixed(1)}%;background:${arcColor};opacity:.45"></div>
+            <div class="sim-prev-bar-marker" style="left:${markerPct.toFixed(1)}%"></div>
+        </div>
+        <div class="sim-prev-bar-lbl">
+            <span>${fmtK(pMin)}</span><span>Strike ${fmtK(strike)}</span><span>${fmtK(pMax)}</span>
+        </div>
+        <div class="sim-prev-msg" style="background:${msgBg};color:${msgColor}">${riskMsg}</div>
+    `;
+}
+
+// Renderiza curva P&L no canvas
+function simRenderPnLChart(valor, strike, cotacao, tipo, prazo, tae) {
+    const empty = document.getElementById('simPnLEmpty');
+    if (empty) empty.style.display = 'none';
+
+    if (_simPnLChart) { try { _simPnLChart.destroy(); } catch(e) {} _simPnLChart = null; }
+
+    const premioEstimado = valor * (tae / 100) * (prazo / 365);
+    const qty = valor / strike;
+    const priceMin = strike * 0.88;
+    const priceMax = strike * 1.12;
+    const N = 100;
+
+    const prices  = [];
+    const pnlVals = [];
+    for (let i = 0; i <= N; i++) {
+        const p = priceMin + (priceMax - priceMin) * i / N;
+        prices.push(p);
+        // CALL DI: acima do strike recebe BTC que vale mais → P&L sobe
+        // PUT DI:  abaixo do strike recebe BTC que pode cair → P&L desce
+        const pnl = tipo === 'CALL'
+            ? premioEstimado + (p >= strike ? (p - strike) * qty : 0)
+            : (p >= strike ? premioEstimado : premioEstimado - (strike - p) * qty);
+        pnlVals.push(pnl);
+    }
+
+    // Break-even: CALL DI nunca cruza zero (sempre positivo), PUT DI tem BEP abaixo do strike
+    const breakEvenPrice = tipo === 'PUT'
+        ? strike - (premioEstimado / qty)
+        : null; // CALL DI: sem break-even negativo
+
+    const getClosestIdx = (arr, val) => {
+        let minD = Infinity, idx = 0;
+        arr.forEach((v, i) => { const d = Math.abs(v - val); if (d < minD) { minD = d; idx = i; } });
+        return idx;
+    };
+
+    const canvas = document.getElementById('simPnLCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    _simPnLChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: prices.map(p => p.toFixed(0)),
+            datasets: [{
+                label: 'P&L (US$)',
+                data: pnlVals,
+                // CALL DI: sempre positivo → tudo verde. PUT DI: mantém bicolor
+                fill: tipo === 'CALL'
+                    ? { target: { value: 0 }, above: 'rgba(63,185,80,.15)' }
+                    : { target: { value: 0 }, above: 'rgba(63,185,80,.18)', below: 'rgba(248,81,73,.18)' },
+                segment: tipo === 'CALL'
+                    ? { borderColor: () => '#3fb950' }
+                    : { borderColor: ctx2 => ctx2.p1.parsed.y >= 0 ? '#3fb950' : '#f85149' },
+                tension: 0,
+                borderWidth: 2.5,
+                pointRadius: 0,
+                pointHoverRadius: 4,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: { duration: 300 },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        title: c => `Preço: $${parseFloat(c[0].label).toLocaleString('en-US',{minimumFractionDigits:0})}`,
+                        label: c => {
+                            const p = parseFloat(c.label);
+                            const zone = tipo === 'CALL'
+                                ? (p < strike ? 'Recebe USDT' : 'Recebe BTC')
+                                : (p >= strike ? 'Recebe USDT' : 'Recebe BTC');
+                            return `${zone} | Retorno: ${c.raw >= 0 ? '+' : ''}$${c.raw.toFixed(2)}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: { grid: { color: 'rgba(255,255,255,.04)' },
+                     ticks: { color: '#8b949e', font: { size: 9 }, maxTicksLimit: 9,
+                               callback: (_, idx) => { const p = prices[idx]; if (!p) return ''; return p >= 1000 ? '$' + (p/1000).toFixed(0) + 'k' : '$' + p.toFixed(0); } } },
+                y: { grid: { color: 'rgba(255,255,255,.05)' },
+                     ticks: { color: '#8b949e', font: { size: 9 }, callback: v => (v >= 0 ? '+' : '') + '$' + Math.abs(v).toFixed(0) } }
+            }
+        },
+        plugins: [{
+            id: 'simOverlay',
+            afterDraw: chart => {
+                const c2  = chart.ctx;
+                const xs  = chart.scales.x;
+                const ys  = chart.scales.y;
+                const ca  = chart.chartArea;
+
+                c2.save();
+                // Linha zero tracejada
+                const y0 = ys.getPixelForValue(0);
+                c2.strokeStyle = 'rgba(255,255,255,.18)';
+                c2.lineWidth = 1;
+                c2.setLineDash([4,4]);
+                c2.beginPath(); c2.moveTo(ca.left, y0); c2.lineTo(ca.right, y0); c2.stroke();
+                c2.setLineDash([]);
+
+                const drawVLine = (val, color, label, labelY) => {
+                    const idx = getClosestIdx(prices, val);
+                    const xP  = xs.getPixelForValue(idx);
+                    c2.strokeStyle = color;
+                    c2.lineWidth = 1.5;
+                    c2.setLineDash([5,3]);
+                    c2.beginPath(); c2.moveTo(xP, ca.top); c2.lineTo(xP, ca.bottom); c2.stroke();
+                    c2.setLineDash([]);
+                    c2.fillStyle = color;
+                    c2.font = 'bold 9px monospace';
+                    c2.textAlign = 'center';
+                    c2.fillText(label, xP, labelY);
+                };
+
+                // Strike
+                drawVLine(strike, '#f59f00',
+                    `Strike $${strike >= 1000 ? (strike/1000).toFixed(0)+'k' : strike.toFixed(0)}`,
+                    ca.top + 11);
+
+                // Break-even: só para PUT DI
+                if (breakEvenPrice !== null) {
+                    drawVLine(breakEvenPrice, 'rgba(255,255,255,.5)', 'B/E', ca.top + 22);
+                }
+
+                // Anotações de zona para CALL DI
+                if (tipo === 'CALL') {
+                    const strikeIdx = getClosestIdx(prices, strike);
+                    const xStrike = xs.getPixelForValue(strikeIdx);
+                    c2.save();
+                    c2.font = '8px monospace';
+                    c2.textAlign = 'center';
+                    c2.fillStyle = 'rgba(63,185,80,.55)';
+                    if (xStrike - ca.left > 60) c2.fillText('Recebe USDT', (ca.left + xStrike) / 2, ca.bottom - 6);
+                    if (ca.right - xStrike > 60) c2.fillText('Recebe BTC', (ca.right + xStrike) / 2, ca.bottom - 6);
+                    c2.restore();
+                }
+
+                // Cotação atual
+                if (cotacao) {
+                    const idx = getClosestIdx(prices, cotacao);
+                    const xC  = xs.getPixelForValue(idx);
+                    const pnlAtCot = pnlVals[idx] !== undefined ? pnlVals[idx] : 0;
+                    const yC  = ys.getPixelForValue(pnlAtCot);
+                    // Linha vertical azul
+                    c2.strokeStyle = 'rgba(77,166,255,.7)';
+                    c2.lineWidth = 1.5;
+                    c2.setLineDash([5,3]);
+                    c2.beginPath(); c2.moveTo(xC, ca.top); c2.lineTo(xC, ca.bottom); c2.stroke();
+                    c2.setLineDash([]);
+                    // Ponto no cruzamento
+                    c2.fillStyle = '#4da6ff';
+                    c2.beginPath(); c2.arc(xC, yC, 4, 0, Math.PI * 2); c2.fill();
+                    // Label do P&L
+                    const lbl = (pnlAtCot >= 0 ? '+$' : '-$') + Math.abs(pnlAtCot).toFixed(2);
+                    c2.fillStyle = '#4da6ff';
+                    c2.font = 'bold 9px monospace';
+                    c2.textAlign = 'center';
+                    const labelY = yC > ca.top + 20 ? yC - 8 : yC + 16;
+                    c2.fillText(lbl, xC, labelY);
+                    c2.fillStyle = 'rgba(77,166,255,.6)';
+                    c2.font = '8px monospace';
+                    c2.fillText('Atual', xC, ca.bottom - 2);
+                }
+
+                c2.restore();
+            }
+        }]
+    });
+}
+
+function calcularSimulador() {
+    // Garantir que o valor está em USD antes de calcular
+    if (_simModo === 'crypto') {
+        const cotacao = parseFloat(document.getElementById('simCotacao')?.value || 0);
+        if (!cotacao) { iziToast.warning({ title: 'Aviso', message: 'Informe a cotação para converter antes de calcular.' }); return; }
+        converterSimValor();
+    }
+    const valor   = parseFloat(document.getElementById("simValor").value)  || 0;
+    const tae     = parseFloat(document.getElementById("simTae").value)    || 0;
+    const prazo   = parseInt(document.getElementById("simPrazo").value)    || 7;
+    const strike  = parseFloat(document.getElementById("simStrike").value) || 0;
+    const cotacao = parseFloat(document.getElementById("simCotacao").value) || 0;
+    const tipo    = document.getElementById("simTipo").value;
+    const par     = document.getElementById("simPar").value;
+    if (!valor || !tae) { iziToast.warning({ title: "Aviso", message: "Preencha Valor e TAE." }); return; }
+
+    simAtualizar(); // Atualiza todos os painéis reativos
+
+    const premioEstimado = valor * (tae / 100) * (prazo / 365);
+    const recoverySnapshot = computeRecoverySnapshot();
+    if (recoverySnapshot.hasLoss && premioEstimado < recoverySnapshot.missing) {
+        iziToast.warning({
+            title: 'Meta de recuperação',
+            message: `Prêmio estimado (${fmtUsd(premioEstimado)}) ainda abaixo do faltante (${fmtUsd(recoverySnapshot.missing)}).`
+        });
+    }
+    const roi = (premioEstimado / valor) * 100;
+    const distanciaVal = (cotacao && strike) ? ((strike - cotacao) / cotacao) * 100 : 0;
+
+    // compat retroativa com cenários (hidden)
+    const cenarioWin     = tipo === "CALL" ? "Preço acima do Strike (" + fmtUsd(strike) + ")" : "Preço abaixo do Strike (" + fmtUsd(strike) + ")";
+    document.getElementById("simCenarioWin").textContent     = cenarioWin;
+    document.getElementById("simCenarioWinDesc").textContent = "Recebe prêmio: " + fmtUsd(premioEstimado);
+    document.getElementById("simCenarioAlt").textContent     = tipo === "CALL" ? "Preço abaixo do Strike" : "Preço acima do Strike";
+    document.getElementById("simCenarioAltDesc").textContent = tipo === "CALL" ? "Recebe em " + par : "Recebe USDT + prêmio";
+
+    document.getElementById("btnAplicarSim").disabled = false;
+    _lastSimData = { ativo: par, tipo, abertura: valor, tae, prazo, strike, cotacao_atual: cotacao || null,
+                     premio_us: premioEstimado, distancia: distanciaVal || null, data_operacao: getCurrentDate() };
+}
 
 function setSimModo(modo) {
     _simModo = modo;
@@ -1078,45 +1859,6 @@ function converterSimValor() {
     if (simValorEl) simValorEl.value = usdEquiv.toFixed(2);
     setSimModo('usd');
     iziToast.success({ title: 'Convertido', message: `${qty} crypto × ${cotacao.toFixed(2)} = US$ ${usdEquiv.toFixed(2)}` });
-}
-
-function calcularSimulador() {
-    // Garantir que o valor está em USD antes de calcular
-    if (_simModo === 'crypto') {
-        const cotacao = parseFloat(document.getElementById('simCotacao')?.value || 0);
-        if (!cotacao) { iziToast.warning({ title: 'Aviso', message: 'Informe a cotação para converter antes de calcular.' }); return; }
-        converterSimValor();
-    }
-    const valor   = parseFloat(document.getElementById("simValor").value)  || 0;
-    const tae     = parseFloat(document.getElementById("simTae").value)    || 0;
-    const prazo   = parseInt(document.getElementById("simPrazo").value)    || 7;
-    const strike  = parseFloat(document.getElementById("simStrike").value) || 0;
-    const cotacao = parseFloat(document.getElementById("simCotacao").value) || 0;
-    const tipo    = document.getElementById("simTipo").value;
-    if (!valor || !tae) { iziToast.warning({ title: "Aviso", message: "Preencha Valor e TAE." }); return; }
-    const premioEstimado = valor * (tae / 100) * (prazo / 365);
-    const roi = (premioEstimado / valor) * 100;
-    let distanciaHtml = "-", distanciaVal = 0;
-    if (cotacao && strike) {
-        distanciaVal = ((strike - cotacao) / cotacao) * 100;
-        const sign = distanciaVal > 0 ? "+" : "";
-        distanciaHtml = "<span class=\"" + (distanciaVal > 0 ? "text-success" : "text-danger") + "\">" + sign + distanciaVal.toFixed(2) + "%</span>";
-    }
-    const cenarioWin     = tipo === "CALL" ? "Preco acima do Strike (" + fmtUsd(strike) + ")" : "Preco abaixo do Strike (" + fmtUsd(strike) + ")";
-    const cenarioWinDesc = "Recebe premio: " + fmtUsd(premioEstimado);
-    const cenarioAlt     = tipo === "CALL" ? "Preco abaixo do Strike" : "Preco acima do Strike";
-    const cenarioAltDesc = tipo === "CALL" ? "Recebe em " + document.getElementById("simPar").value : "Recebe USDT + premio";
-    document.getElementById("simPremioEstimado").textContent = fmtUsd(premioEstimado);
-    document.getElementById("simRoi").textContent            = roi.toFixed(4) + "%";
-    document.getElementById("simDistancia").innerHTML        = distanciaHtml;
-    document.getElementById("simTaeAnual").textContent       = tae.toFixed(2) + "% a.a.";
-    document.getElementById("simCenarioWin").textContent     = cenarioWin;
-    document.getElementById("simCenarioWinDesc").textContent = cenarioWinDesc;
-    document.getElementById("simCenarioAlt").textContent     = cenarioAlt;
-    document.getElementById("simCenarioAltDesc").textContent = cenarioAltDesc;
-    document.getElementById("simResultContainer").style.display = "";
-    document.getElementById("btnAplicarSim").disabled = false;
-    _lastSimData = { ativo: document.getElementById("simPar").value, tipo, abertura: valor, tae, prazo, strike, cotacao_atual: cotacao || null, premio_us: premioEstimado, distancia: distanciaVal || null, data_operacao: getCurrentDate() };
 }
 
 function aplicarSimulacao() {
@@ -1171,6 +1913,8 @@ function aplicarSimulacao() {
 function loadLocalConfig() {
     try { return JSON.parse(localStorage.getItem(CRYPTO_CFG_KEY)) || {}; } catch { return {}; }
 }
+
+window.getCryptoRecoverySnapshot = computeRecoverySnapshot;
 
 function loadConfig() {
     const cfg = loadLocalConfig();

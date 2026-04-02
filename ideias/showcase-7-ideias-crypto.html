@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Showcase — 7 Ideias UX Crypto</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.5.0/dist/tabler-icons.min.css">
+    <style>
+        /* ── Variáveis globais ──────────────────────────────────────────────── */
+        :root {
+            --bg: #0f172a;
+            --bg-card: #1e293b;
+            --bg-card2: #0f172a;
+            --border: rgba(148,163,184,.16);
+            --btc: #f7931a;
+            --eth: #627eea;
+            --bnb: #f0b90b;
+            --green: #22c55e;
+            --red: #ef4444;
+            --yellow: #f59e0b;
+            --text: #e2e8f0;
+            --muted: #94a3b8;
+            --radius: 12px;
+        }
+
+        * { box-sizing: border-box; }
+        body { background: #060d1a; color: var(--text); font-family: 'Inter', system-ui, sans-serif; margin: 0; }
+
+        /* ── Nav fixa de seções ─────────────────────────────────────────────── */
+        .showcase-nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            background: rgba(6,13,26,.90); backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; gap: 4px; padding: 8px 20px; overflow-x: auto;
+        }
+        .showcase-nav a {
+            color: var(--muted); text-decoration: none; padding: 6px 14px;
+            border-radius: 20px; font-size: .82rem; white-space: nowrap;
+            border: 1px solid transparent; transition: all .2s;
+        }
+        .showcase-nav a:hover { color: var(--text); border-color: var(--border); background: var(--bg-card); }
+        .showcase-nav .badge-idea {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 20px; height: 20px; border-radius: 50%; font-size: .7rem;
+            background: var(--btc); color: #000; font-weight: 700; margin-right: 5px;
+        }
+
+        .page-content { padding: 80px 20px 60px; max-width: 1200px; margin: 0 auto; }
+
+        /* ── Seção individul ────────────────────────────────────────────────── */
+        .idea-section {
+            margin-bottom: 80px; scroll-margin-top: 70px;
+        }
+        .idea-header {
+            display: flex; align-items: center; gap: 14px; margin-bottom: 24px;
+        }
+        .idea-number {
+            width: 42px; height: 42px; border-radius: 50%; background: var(--btc);
+            color: #000; font-weight: 800; font-size: 1.1rem;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .idea-title { font-size: 1.3rem; font-weight: 700; }
+        .idea-subtitle { color: var(--muted); font-size: .9rem; margin-top: 2px; }
+        .idea-body {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 28px; overflow: hidden;
+        }
+
+        /* ───────────────────────────────────────────────────────────────────── */
+        /* IDEIA 1 — Barra de saúde operacional                                 */
+        /* ───────────────────────────────────────────────────────────────────── */
+        .health-row { display: flex; gap: 12px; flex-wrap: wrap; }
+        .health-asset {
+            flex: 1; min-width: 200px;
+            background: var(--bg-card2); border: 1px solid var(--border);
+            border-radius: 10px; padding: 16px;
+        }
+        .health-asset-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+        .asset-icon {
+            width: 32px; height: 32px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-size: .75rem; font-weight: 800;
+        }
+        .asset-icon.btc { background: rgba(247,147,26,.2); color: var(--btc); }
+        .asset-icon.eth { background: rgba(98,126,234,.2); color: var(--eth); }
+        .asset-icon.bnb { background: rgba(240,185,11,.2); color: var(--bnb); }
+
+        .health-bar-track {
+            height: 8px; background: rgba(148,163,184,.1); border-radius: 4px; overflow: hidden;
+        }
+        .health-bar-fill {
+            height: 100%; border-radius: 4px; transition: width .6s ease;
+        }
+        .health-bar-fill.safe { background: var(--green); }
+        .health-bar-fill.warn { background: var(--yellow); }
+        .health-bar-fill.risk { background: var(--red); }
+
+        .health-semaphore { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+        .semaphore-pill {
+            font-size: .75rem; padding: 3px 10px; border-radius: 20px; font-weight: 600;
+        }
+        .semaphore-pill.safe { background: rgba(34,197,94,.15); color: var(--green); }
+        .semaphore-pill.warn { background: rgba(245,158,11,.15); color: var(--yellow); }
+        .semaphore-pill.risk { background: rgba(239,68,68,.15); color: var(--red); }
+
+        /* ───────────────────────────────────────────────────────────────────── */
+        /* IDEIA 2 — Card "Hoje exige ação?"                                     */
+        /* ───────────────────────────────────────────────────────────────────── */
+        .action-card {
+            background: linear-gradient(135deg, rgba(247,147,26,.08), rgba(15,23,42,0));
+            border: 1px solid rgba(247,147,26,.25); border-radius: var(--radius);
+            padding: 24px; display: flex; gap: 20px; align-items: flex-start;
+            flex-wrap: wrap;
+        }
+        .action-card .status-icon {
+            width: 56px; height: 56px; border-radius: 12px; background: rgba(245,158,11,.15);
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+            font-size: 1.6rem;
+        }
+        .action-card .status-icon.ok { background: rgba(34,197,94,.15); }
+        .action-card .status-label { font-size: 1rem; font-weight: 700; margin-bottom: 4px; }
+        .action-items { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+        .action-item {
+            display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+            border-radius: 8px; font-size: .88rem;
+        }
+        .action-item.urgent { background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.25); }
+        .action-item.monitor { background: rgba(245,158,11,.1); border: 1px solid rgba(245,158,11,.2); }
+        .action-item.ok { background: rgba(34,197,94,.08); border: 1px solid rgba(34,197,94,.15); }
+
+        /* ───────────────────────────────────────────────────────────────────── */
+        /* IDEIA 3 — Timeline de vencimento (mini Gantt)                         */
+        /* ───────────────────────────────────────────────────────────────────── */
+        .timeline-gantt {
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        .gantt-row {
+            display: grid; grid-template-columns: 120px 1fr 70px;
+            align-items: center; gap: 12px;
+        }
+        .gantt-label { font-size: .82rem; color: var(--muted); }
+        .gantt-label strong { color: var(--text); display: block; font-size: .85rem; }
+        .gantt-track { background: rgba(148,163,184,.08); border-radius: 4px; height: 24px; position: relative; overflow: hidden; }
+        .gantt-bar {
+            position: absolute; top: 4px; bottom: 4px; border-radius: 3px;
+            display: flex; align-items: center; padding: 0 8px; font-size: .72rem; font-weight: 600; white-space: nowrap;
+        }
+        .gantt-bar.safe { background: rgba(34,197,94,.35); color: var(--green); }
+        .gantt-bar.warn { background: rgba(245,158,11,.35); color: var(--yellow); }
+        .gantt-bar.risk { background: rgba(239,68,68,.35); color: var(--red); }
+        .gantt-days { font-size: .82rem; text-align: right; }
+        .days-value { font-weight: 700; }
+        .days-value.safe { color: var(--green); }
+        .days-value.warn { color: var(--yellow); }
+        .days-value.risk { color: var(--red); }
+        .gantt-today-line {
+            position: absolute; top: 0; bottom: 0; width: 2px;
+            background: rgba(148,163,184,.5); pointer-events: none;
+        }
+        .gantt-header { display: grid; grid-template-columns: 120px 1fr 70px; gap: 12px; margin-bottom: 6px; }
+        .gantt-header span { font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+
+        /* ───────────────────────────────────────────────────────────────────── */
+        /* IDEIA 4 — Modo cockpit por criticidade                                */
+        /* ───────────────────────────────────────────────────────────────────── */
+        .cockpit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+        .cockpit-card {
+            background: var(--bg-card2); border-radius: 12px; padding: 18px;
+            border-left: 4px solid transparent; position: relative; overflow: hidden;
+        }
+        .cockpit-card.p1 { border-color: var(--red); }
+        .cockpit-card.p2 { border-color: var(--yellow); }
+        .cockpit-card.p3 { border-color: var(--green); }
+        .cockpit-priority {
+            position: absolute; top: 12px; right: 12px;
+            font-size: .7rem; font-weight: 700; padding: 3px 8px; border-radius: 20px;
+        }
+        .cockpit-priority.p1 { background: rgba(239,68,68,.2); color: var(--red); }
+        .cockpit-priority.p2 { background: rgba(245,158,11,.2); color: var(--yellow); }
+        .cockpit-priority.p3 { background: rgba(34,197,94,.15); color: var(--green); }
+
+        .cockpit-ativo { font-weight: 700; font-size: 1rem; margin-bottom: 4px; }
+        .cockpit-tipo { font-size: .75rem; color: var(--muted); margin-bottom: 14px; }
+        .cockpit-metric { display: flex; justify-content: space-between; font-size: .8rem; padding: 4px 0; border-bottom: 1px solid var(--border); }
+        .cockpit-metric:last-child { border-bottom: none; }
+        .cockpit-metric .label { color: var(--muted); }
+        .cockpit-metric .value { font-weight: 600; }
+        .cockpit-metric .value.bad { color: var(--red); }
+        .cockpit-metric .value.warn { color: var(--yellow); }
+        .cockpit-metric .value.good { color: var(--green); }
+
+        /* ───────────────────────────────────────────────────────────────────── */
+        /* IDEIA 5 — Curva de payoff visual por operação                         */
+        /* ───────────────────────────────────────────────────────────────────── */
+        .payoff-list { display: flex; flex-direction: column; gap: 14px; }
+        .payoff-row {
+            background: var(--bg-card2); border: 1px solid var(--border);
+            border-radius: 10px; padding: 16px;
+        }
+        .payoff-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .payoff-title { display: flex; align-items: center; gap: 8px; }
+        .payoff-title .badge-ativo {
+            font-size: .78rem; font-weight: 700; padding: 3px 10px;
+            border-radius: 20px; background: rgba(247,147,26,.15); color: var(--btc);
+        }
+        .payoff-title .badge-ativo.eth { background: rgba(98,126,234,.15); color: var(--eth); }
+        .payoff-canvas {
+            height: 64px; background: rgba(148,163,184,.04); border-radius: 6px;
+            display: flex; align-items: flex-end; gap: 3px; padding: 6px;
+        }
+        .payoff-bar-mini {
+            flex: 1; border-radius: 2px 2px 0 0; min-height: 4px; transition: height .3s;
+        }
+        .payoff-bar-mini.loss { background: rgba(239,68,68,.6); }
+        .payoff-bar-mini.win { background: rgba(34,197,94,.6); }
+        .payoff-bar-mini.neutral { background: rgba(148,163,184,.2); }
+        .payoff-bar-mini.active { background: var(--btc); outline: 1px solid var(--btc); }
+
+        .payoff-labels { display: flex; justify-content: space-between; font-size: .72rem; color: var(--muted); margin-top: 4px; }
+        .payoff-summary { display: flex; gap: 16px; font-size: .8rem; margin-top: 10px; }
+        .payoff-summary .ps-item { display: flex; flex-direction: column; }
+        .payoff-summary .ps-label { color: var(--muted); font-size: .72rem; }
+        .payoff-summary .ps-value { font-weight: 700; }
+
+        /* ───────────────────────────────────────────────────────────────────── */
+        /* IDEIA 6 — Heatmap híbrido (resultado + contador abertas)              */
+        /* ───────────────────────────────────────────────────────────────────── */
+        .heatmap-demo {
+            display: flex; flex-direction: column; gap: 6px;
+        }
+        .heatmap-weekdays {
+            display: grid; grid-template-columns: 40px repeat(7, 1fr);
+            gap: 4px; margin-bottom: 2px;
+        }
+        .heatmap-weekdays span { text-align: center; font-size: .7rem; color: var(--muted); }
+        .heatmap-row { display: grid; grid-template-columns: 40px repeat(7, 1fr); gap: 4px; align-items: center; }
+        .heatmap-month-label { font-size: .72rem; color: var(--muted); }
+        .heatmap-cell {
+            aspect-ratio: 1; border-radius: 5px; background: rgba(148,163,184,.07);
+            display: flex; align-items: center; justify-content: center;
+            position: relative; cursor: pointer; transition: transform .15s;
+            border: 1px solid transparent;
+        }
+        .heatmap-cell:hover { transform: scale(1.15); z-index: 2; border-color: rgba(148,163,184,.3); }
+        .heatmap-cell.win-strong { background: rgba(34,197,94,.45); }
+        .heatmap-cell.win-mid   { background: rgba(34,197,94,.25); }
+        .heatmap-cell.win-low   { background: rgba(34,197,94,.12); }
+        .heatmap-cell.loss-low  { background: rgba(239,68,68,.15); }
+        .heatmap-cell.loss-mid  { background: rgba(239,68,68,.30); }
+        .heatmap-cell.today     { border-color: var(--btc); }
+        .heatmap-cell.empty     { background: transparent; border: none; pointer-events: none; }
+        .heatmap-open-badge {
+            position: absolute; top: 2px; right: 2px;
+            background: var(--btc); color: #000; font-size: .55rem; font-weight: 800;
+            width: 13px; height: 13px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .heatmap-result {
+            font-size: .68rem; font-weight: 700; color: rgba(255,255,255,.8);
+        }
+
+        /* ───────────────────────────────────────────────────────────────────── */
+        /* IDEIA 7 — Métricas contextuais com faixas de saúde                    */
+        /* ───────────────────────────────────────────────────────────────────── */
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+        .metric-card {
+            background: var(--bg-card2); border: 1px solid var(--border);
+            border-radius: 10px; padding: 16px;
+        }
+        .metric-card .mc-label { font-size: .75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 2px; }
+        .metric-card .mc-value { font-size: 1.6rem; font-weight: 800; margin-bottom: 4px; }
+        .metric-card .mc-value.good { color: var(--green); }
+        .metric-card .mc-value.warn { color: var(--yellow); }
+        .metric-card .mc-value.bad  { color: var(--red); }
+        .metric-card .mc-target { font-size: .75rem; color: var(--muted); margin-bottom: 10px; }
+        .metric-range-track {
+            height: 6px; background: rgba(148,163,184,.1); border-radius: 3px; position: relative;
+        }
+        .metric-range-zone {
+            position: absolute; top: 0; bottom: 0; border-radius: 3px;
+        }
+        .metric-range-zone.good { background: rgba(34,197,94,.4); }
+        .metric-range-zone.warn { background: rgba(245,158,11,.35); }
+        .metric-range-zone.bad  { background: rgba(239,68,68,.35); }
+        .metric-range-marker {
+            position: absolute; top: -4px; width: 14px; height: 14px;
+            background: white; border-radius: 50%; transform: translateX(-50%);
+            border: 2px solid #0f172a; box-shadow: 0 0 6px rgba(0,0,0,.6);
+        }
+        .metric-hint { font-size: .72rem; color: var(--muted); margin-top: 6px; }
+
+        /* ── Divider e separadores ──────────────────────────────────────────── */
+        hr { border-color: var(--border); opacity: 1; }
+
+        /* ── Scrollbar ──────────────────────────────────────────────────────── */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(148,163,184,.25); border-radius: 3px; }
+    </style>
+</head>
+<body>
+
+<!-- Navegação fixa -->
+<nav class="showcase-nav">
+    <span style="color:var(--btc);font-weight:700;font-size:.85rem;margin-right:8px;">Crypto UX</span>
+    <a href="#ideia1"><span class="badge-idea">1</span>Saúde Operacional</a>
+    <a href="#ideia2"><span class="badge-idea">2</span>Hoje exige ação?</a>
+    <a href="#ideia3"><span class="badge-idea">3</span>Timeline Vencimentos</a>
+    <a href="#ideia4"><span class="badge-idea">4</span>Cockpit Criticidade</a>
+    <a href="#ideia5"><span class="badge-idea">5</span>Curva Payoff</a>
+    <a href="#ideia6"><span class="badge-idea">6</span>Heatmap Híbrido</a>
+    <a href="#ideia7"><span class="badge-idea">7</span>Métricas Contextuais</a>
+</nav>
+
+<div class="page-content">
+
+    <!-- ════════════════════════════════════════════════════════════════════════ -->
+    <!-- IDEIA 1 — Barra de saúde operacional por ativo                          -->
+    <!-- ════════════════════════════════════════════════════════════════════════ -->
+    <section class="idea-section" id="ideia1">
+        <div class="idea-header">
+            <div class="idea-number">1</div>
+            <div>
+                <div class="idea-title">Barra de Saúde Operacional</div>
+                <div class="idea-subtitle">Semáforo por ativo — distância ao strike, tempo restante e prêmio coletado</div>
+            </div>
+        </div>
+        <div class="idea-body">
+            <p style="color:var(--muted);font-size:.85rem;margin-bottom:20px;">
+                Aparece no topo da página crypto como um painel sempre visível.
+                Cada ativo mostra quantas operações estão <span style="color:var(--green)">seguras</span>,
+                <span style="color:var(--yellow)">em atenção</span> ou <span style="color:var(--red)">em risco</span>,
+                com base em 3 critérios: distância preço×strike, dias restantes e % do prêmio já coletado.
+            </p>
+            <div class="health-row">
+                <!-- BTC -->
+                <div class="health-asset">
+                    <div class="health-asset-header">
+                        <div class="asset-icon btc">BTC</div>
+                        <div>
+                            <div style="font-weight:700;font-size:.9rem;">Bitcoin</div>
+                            <div style="color:var(--muted);font-size:.75rem;">3 abertas</div>
+                        </div>
+                    </div>
+                    <div class="health-bar-track">
+                        <div class="health-bar-fill safe" style="width:66%"></div>
+                    </div>
+                    <div class="health-semaphore" style="margin-top:8px">
+                        <span class="semaphore-pill safe">2 seguras</span>
+                        <span class="semaphore-pill warn">1 atenção</span>
+                    </div>
+                    <div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+                        <div style="font-size:.75rem;color:var(--muted)">Distância média strike</div>
+                        <div style="font-size:.75rem;text-align:right;font-weight:600;color:var(--green)">+8,3%</div>
+                        <div style="font-size:.75rem;color:var(--muted)">Dias até vencimento</div>
+                        <div style="font-size:.75rem;text-align:right;font-weight:600;color:var(--yellow)">4 dias</div>
+                        <div style="font-size:.75rem;color:var(--muted)">Prêmio coletado</div>
+                        <div style="font-size:.75rem;text-align:right;font-weight:600;color:var(--green)">US$ 312,40</div>
+                    </div>
+                </div>
+                <!-- ETH -->
+                <div class="health-asset">
+                    <div class="health-asset-header">
+                        <div class="asset-icon eth">ETH</div>
+                        <div>
+                            <div style="font-weight:700;font-size:.9rem;">Ethereum</div>
+                            <div style="color:var(--muted);font-size:.75rem;">2 abertas</div>
+                        </div>
+                    </div>
+                    <div class="health-bar-track">
+                        <div class="health-bar-fill warn" style="width:50%"></div>
+                    </div>
+                    <div class="health-semaphore" style="margin-top:8px">
+                        <span class="semaphore-pill warn">1 atenção</span>
+                        <span class="semaphore-pill risk">1 risco</span>
+                    </div>
+                    <div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+                        <div style="font-size:.75rem;color:var(--muted)">Distância média strike</div>
+                        <div style="font-size:.75rem;text-align:right;font-weight:600;color:var(--yellow)">+2,1%</div>
+                        <div style="font-size:.75rem;color:var(--muted)">Dias até vencimento</div>
+                        <div style="font-size:.75rem;text-align:right;font-weight:600;color:var(--red)">1 dia</div>
+                        <div style="font-size:.75rem;color:var(--muted)">Prêmio coletado</div>
+                        <div style="font-size:.75rem;text-align:right;font-weight:600;color:var(--green)">US$ 88,20</div>
+                    </div>
+                </div>
+                <!-- BNB -->
+                <div class="health-asset">
+                    <div class="health-asset-header">
+                        <div class="asset-icon bnb">BNB</div>
+                        <div>
+                            <div style="font-weight:700;font-size:.9rem;">BNB</div>
+                            <div style="color:var(--muted);font-size:.75rem;">1 aberta</div>
+                        </div>
+                    </div>
+                    <div class="health-bar-track">
+                        <div class="health-bar-fill safe" style="width:100%"></div>
+                    </div>
+                    <div class="health-semaphore" style="margin-top:8px">
+                        <span class="semaphore-pill safe">1 segura</span>
+                    </div>
+                    <div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+                        <div style="font-size:.75rem;color:var(--muted)">Distância média strike</div>
+                        <div style="font-size:.75rem;text-align:right;font-weight:600;color:var(--green)">+15,7%</div>
+                        <div style="font-size:.75rem;color:var(--muted)">Dias até vencimento</div>
+                        <div style="font-size:.75rem;text-align:right;font-weight:600;color:var(--green)">12 dias</div>
+                        <div style="font-size:.75rem;color:var(--muted)">Prêmio coletado</div>
+                        <div style="font-size:.75rem;text-align:right;font-weight:600;color:var(--green)">US$ 54,00</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════════════════════ -->
+    <!-- IDEIA 2 — Card "Hoje exige ação?"                                        -->
+    <!-- ════════════════════════════════════════════════════════════════════════ -->
+    <section class="idea-section" id="ideia2">
+        <div class="idea-header">
+            <div class="idea-number">2</div>
+            <div>
+                <div class="idea-title">Card "Hoje exige ação?"</div>
+                <div class="idea-subtitle">Resposta direta e acionável — sem precisar vasculhar a tabela</div>
+            </div>
+        </div>
+        <div class="idea-body">
+            <p style="color:var(--muted);font-size:.85rem;margin-bottom:20px;">
+                Card fixo no topo ou na aba "Mês Atual" que responde em segundos o que fazer hoje. Versão <b>Atenção</b> (baixo):
+            </p>
+            <div class="action-card">
+                <div class="status-icon">⚠️</div>
+                <div style="flex:1">
+                    <div class="status-label" style="color:var(--yellow)">Hoje exige atenção</div>
+                    <div style="font-size:.82rem;color:var(--muted);margin-bottom:14px;">Março 31, 2026 · 3 operações abertas</div>
+                    <div class="action-items">
+                        <div class="action-item urgent">
+                            <span style="font-size:1rem">🔴</span>
+                            <div>
+                                <div style="font-weight:600;color:var(--red)">ETH — Proteger posição</div>
+                                <div style="color:var(--muted);font-size:.8rem;">Strike US$ 3.200 · Preço atual US$ 3.145 · Vence amanhã</div>
+                            </div>
+                        </div>
+                        <div class="action-item monitor">
+                            <span style="font-size:1rem">🟡</span>
+                            <div>
+                                <div style="font-weight:600;color:var(--yellow)">BTC — Monitorar</div>
+                                <div style="color:var(--muted);font-size:.8rem;">Strike US$ 85.000 · Preço atual US$ 83.800 · Vence em 4 dias</div>
+                            </div>
+                        </div>
+                        <div class="action-item ok">
+                            <span style="font-size:1rem">🟢</span>
+                            <div>
+                                <div style="font-weight:600;color:var(--green)">BNB — OK, nenhuma ação</div>
+                                <div style="color:var(--muted);font-size:.8rem;">Strike US$ 550 · Preço atual US$ 472 · Vence em 12 dias</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div style="margin-top:20px">
+                <p style="color:var(--muted);font-size:.85rem;margin-bottom:14px;">Versão <b>Tudo OK</b>:</p>
+                <div class="action-card" style="background:linear-gradient(135deg,rgba(34,197,94,.07),rgba(15,23,42,0));border-color:rgba(34,197,94,.2)">
+                    <div class="status-icon ok">✅</div>
+                    <div>
+                        <div class="status-label" style="color:var(--green)">Nenhuma ação necessária hoje</div>
+                        <div style="font-size:.82rem;color:var(--muted)">Todas as 4 operações abertas estão dentro de parâmetros seguros.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════════════════════ -->
+    <!-- IDEIA 3 — Timeline de vencimento (mini Gantt)                            -->
+    <!-- ════════════════════════════════════════════════════════════════════════ -->
+    <section class="idea-section" id="ideia3">
+        <div class="idea-header">
+            <div class="idea-number">3</div>
+            <div>
+                <div class="idea-title">Timeline de Vencimento</div>
+                <div class="idea-subtitle">Mini Gantt mostrando quanto tempo resta para cada operação aberta</div>
+            </div>
+        </div>
+        <div class="idea-body">
+            <p style="color:var(--muted);font-size:.85rem;margin-bottom:20px;">
+                Linha de tempo horizontal. A barra começa na data de entrada e termina no vencimento.
+                A linha vertical tracejada é <b>hoje</b>. A cor indica urgência por dias restantes.
+            </p>
+            <div class="timeline-gantt">
+                <div class="gantt-header">
+                    <span></span>
+                    <span style="text-align:center">← Jan ─────────── Fev ──────────── Mar ─────────── Abr →</span>
+                    <span style="text-align:right">Restam</span>
+                </div>
+                <!-- BNB segura -->
+                <div class="gantt-row">
+                    <div class="gantt-label"><strong>BNB</strong>DI #027</div>
+                    <div class="gantt-track">
+                        <div class="gantt-today-line" style="left:72%"></div>
+                        <div class="gantt-bar safe" style="left:50%;width:36%">DI – US$54</div>
+                    </div>
+                    <div class="gantt-days"><span class="days-value safe">12d</span></div>
+                </div>
+                <!-- BTC atenção -->
+                <div class="gantt-row">
+                    <div class="gantt-label"><strong>BTC</strong>DI #031</div>
+                    <div class="gantt-track">
+                        <div class="gantt-today-line" style="left:72%"></div>
+                        <div class="gantt-bar warn" style="left:60%;width:16%">DI – US$215</div>
+                    </div>
+                    <div class="gantt-days"><span class="days-value warn">4d</span></div>
+                </div>
+                <!-- BTC atenção 2 -->
+                <div class="gantt-row">
+                    <div class="gantt-label"><strong>BTC</strong>DI #028</div>
+                    <div class="gantt-track">
+                        <div class="gantt-today-line" style="left:72%"></div>
+                        <div class="gantt-bar warn" style="left:45%;width:32%">DI – US$97,60</div>
+                    </div>
+                    <div class="gantt-days"><span class="days-value warn">5d</span></div>
+                </div>
+                <!-- ETH risco -->
+                <div class="gantt-row">
+                    <div class="gantt-label"><strong>ETH</strong>DI #033</div>
+                    <div class="gantt-track">
+                        <div class="gantt-today-line" style="left:72%"></div>
+                        <div class="gantt-bar risk" style="left:67%;width:7%">DI</div>
+                    </div>
+                    <div class="gantt-days"><span class="days-value risk">1d</span></div>
+                </div>
+                <!-- ETH risco 2 -->
+                <div class="gantt-row">
+                    <div class="gantt-label"><strong>ETH</strong>DI #029</div>
+                    <div class="gantt-track">
+                        <div class="gantt-today-line" style="left:72%"></div>
+                        <div class="gantt-bar risk" style="left:57%;width:18%">DI – US$88</div>
+                    </div>
+                    <div class="gantt-days"><span class="days-value warn">3d</span></div>
+                </div>
+            </div>
+            <div style="margin-top:14px;display:flex;gap:16px;flex-wrap:wrap">
+                <div style="display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--muted)">
+                    <div style="width:12px;height:12px;border-radius:2px;background:rgba(34,197,94,.4)"></div> &gt; 7 dias (seguro)
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--muted)">
+                    <div style="width:12px;height:12px;border-radius:2px;background:rgba(245,158,11,.4)"></div> 3–7 dias (atenção)
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--muted)">
+                    <div style="width:12px;height:12px;border-radius:2px;background:rgba(239,68,68,.4)"></div> &lt; 3 dias (risco)
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--muted)">
+                    <div style="width:2px;height:14px;background:rgba(148,163,184,.5)"></div> Hoje
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════════════════════ -->
+    <!-- IDEIA 4 — Modo cockpit por criticidade                                   -->
+    <!-- ════════════════════════════════════════════════════════════════════════ -->
+    <section class="idea-section" id="ideia4">
+        <div class="idea-header">
+            <div class="idea-number">4</div>
+            <div>
+                <div class="idea-title">Modo Cockpit por Criticidade</div>
+                <div class="idea-subtitle">Ativos ranqueados por urgência, não por ordem alfabética</div>
+            </div>
+        </div>
+        <div class="idea-body">
+            <p style="color:var(--muted);font-size:.85rem;margin-bottom:20px;">
+                Substitui a visualização de cards em lista por um grid ordenado por prioridade.
+                P1 = risco hoje · P2 = atenção em breve · P3 = tranquilo.
+            </p>
+            <div class="cockpit-grid">
+                <!-- P1 -->
+                <div class="cockpit-card p1">
+                    <span class="cockpit-priority p1">🔴 P1 — Risco</span>
+                    <div class="cockpit-ativo">ETH · DI #033</div>
+                    <div class="cockpit-tipo">Dual Investment · CALL</div>
+                    <div class="cockpit-metric"><span class="label">Vencimento</span><span class="value bad">Amanhã</span></div>
+                    <div class="cockpit-metric"><span class="label">Strike</span><span class="value">US$ 3.200</span></div>
+                    <div class="cockpit-metric"><span class="label">Preço atual</span><span class="value bad">US$ 3.145 (-1,7%)</span></div>
+                    <div class="cockpit-metric"><span class="label">Prêmio</span><span class="value">US$ 88,20 (3,2%)</span></div>
+                    <div class="cockpit-metric"><span class="label">Distância strike</span><span class="value bad">−1,7%</span></div>
+                </div>
+                <!-- P1 -->
+                <div class="cockpit-card p1">
+                    <span class="cockpit-priority p1">🔴 P1 — Risco</span>
+                    <div class="cockpit-ativo">BTC · DI #031</div>
+                    <div class="cockpit-tipo">Dual Investment · CALL</div>
+                    <div class="cockpit-metric"><span class="label">Vencimento</span><span class="value warn">4 dias</span></div>
+                    <div class="cockpit-metric"><span class="label">Strike</span><span class="value">US$ 85.000</span></div>
+                    <div class="cockpit-metric"><span class="label">Preço atual</span><span class="value warn">US$ 83.800 (+1,4%)</span></div>
+                    <div class="cockpit-metric"><span class="label">Prêmio</span><span class="value">US$ 215,00 (2,8%)</span></div>
+                    <div class="cockpit-metric"><span class="label">Distância strike</span><span class="value warn">+1,4%</span></div>
+                </div>
+                <!-- P2 -->
+                <div class="cockpit-card p2">
+                    <span class="cockpit-priority p2">🟡 P2 — Atenção</span>
+                    <div class="cockpit-ativo">BTC · DI #028</div>
+                    <div class="cockpit-tipo">Dual Investment · CALL</div>
+                    <div class="cockpit-metric"><span class="label">Vencimento</span><span class="value warn">5 dias</span></div>
+                    <div class="cockpit-metric"><span class="label">Strike</span><span class="value">US$ 88.000</span></div>
+                    <div class="cockpit-metric"><span class="label">Preço atual</span><span class="value good">US$ 83.800 (+5,0%)</span></div>
+                    <div class="cockpit-metric"><span class="label">Prêmio</span><span class="value">US$ 97,60 (1,8%)</span></div>
+                    <div class="cockpit-metric"><span class="label">Distância strike</span><span class="value good">+5,0%</span></div>
+                </div>
+                <!-- P3 -->
+                <div class="cockpit-card p3">
+                    <span class="cockpit-priority p3">🟢 P3 — OK</span>
+                    <div class="cockpit-ativo">BNB · DI #027</div>
+                    <div class="cockpit-tipo">Dual Investment · CALL</div>
+                    <div class="cockpit-metric"><span class="label">Vencimento</span><span class="value good">12 dias</span></div>
+                    <div class="cockpit-metric"><span class="label">Strike</span><span class="value">US$ 550</span></div>
+                    <div class="cockpit-metric"><span class="label">Preço atual</span><span class="value good">US$ 472 (+16,5%)</span></div>
+                    <div class="cockpit-metric"><span class="label">Prêmio</span><span class="value">US$ 54,00 (2,0%)</span></div>
+                    <div class="cockpit-metric"><span class="label">Distância strike</span><span class="value good">+16,5%</span></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════════════════════ -->
+    <!-- IDEIA 5 — Curva de payoff visual por operação                            -->
+    <!-- ════════════════════════════════════════════════════════════════════════ -->
+    <section class="idea-section" id="ideia5">
+        <div class="idea-header">
+            <div class="idea-number">5</div>
+            <div>
+                <div class="idea-title">Curva de Payoff Visual</div>
+                <div class="idea-subtitle">Histograma miniaturo por operação — onde o preço está em relação ao cenário de payoff</div>
+            </div>
+        </div>
+        <div class="idea-body">
+            <p style="color:var(--muted);font-size:.85rem;margin-bottom:20px;">
+                Em cada linha da tabela (ou no modal de detalhe), um micro gráfico de barras mostra
+                os cenários de preço: barras vermelhas = perda do prêmio, barras verdes = prêmio pleno.
+                A barra laranja destaca onde o preço atual está.
+            </p>
+            <div class="payoff-list">
+                <!-- BTC -->
+                <div class="payoff-row">
+                    <div class="payoff-header">
+                        <div class="payoff-title">
+                            <span class="badge-ativo">BTC · DI #031</span>
+                            <span style="font-size:.82rem;color:var(--muted)">CALL · Strike US$ 85.000</span>
+                        </div>
+                        <div style="font-size:.82rem;color:var(--yellow)">Atual: US$ 83.800</div>
+                    </div>
+                    <div class="payoff-canvas" title="Curva de payoff">
+                        <!-- Simulação de barras: preços de $70k até $90k em passos de $2k -->
+                        <div class="payoff-bar-mini loss" style="height:80%"></div>
+                        <div class="payoff-bar-mini loss" style="height:60%"></div>
+                        <div class="payoff-bar-mini loss" style="height:55%"></div>
+                        <div class="payoff-bar-mini loss" style="height:50%"></div>
+                        <div class="payoff-bar-mini loss" style="height:55%"></div>
+                        <div class="payoff-bar-mini loss" style="height:65%"></div>
+                        <div class="payoff-bar-mini active" style="height:72%" title="Preço atual US$ 83.800"></div>
+                        <div class="payoff-bar-mini neutral" style="height:85%"></div>
+                        <div class="payoff-bar-mini win" style="height:95%"></div>
+                        <div class="payoff-bar-mini win" style="height:100%"></div>
+                    </div>
+                    <div class="payoff-labels">
+                        <span>US$ 70k</span><span style="color:var(--btc)">← atual</span><span>US$ 90k+</span>
+                    </div>
+                    <div class="payoff-summary">
+                        <div class="ps-item"><span class="ps-label">Prêmio máx</span><span class="ps-value" style="color:var(--green)">US$ 215,00</span></div>
+                        <div class="ps-item"><span class="ps-label">Perda máx</span><span class="ps-value" style="color:var(--red)">−US$ 215,00</span></div>
+                        <div class="ps-item"><span class="ps-label">Cenário atual</span><span class="ps-value" style="color:var(--yellow)">Indefinido</span></div>
+                        <div class="ps-item"><span class="ps-label">P(prêmio pleno)</span><span class="ps-value">~58%</span></div>
+                    </div>
+                </div>
+                <!-- ETH -->
+                <div class="payoff-row">
+                    <div class="payoff-header">
+                        <div class="payoff-title">
+                            <span class="badge-ativo eth">ETH · DI #033</span>
+                            <span style="font-size:.82rem;color:var(--muted)">CALL · Strike US$ 3.200</span>
+                        </div>
+                        <div style="font-size:.82rem;color:var(--red)">Atual: US$ 3.145 ⚠️</div>
+                    </div>
+                    <div class="payoff-canvas">
+                        <div class="payoff-bar-mini loss" style="height:80%"></div>
+                        <div class="payoff-bar-mini loss" style="height:70%"></div>
+                        <div class="payoff-bar-mini active" style="height:75%" title="Preço atual US$ 3.145 — abaixo do strike"></div>
+                        <div class="payoff-bar-mini neutral" style="height:80%"></div>
+                        <div class="payoff-bar-mini win" style="height:90%"></div>
+                        <div class="payoff-bar-mini win" style="height:100%"></div>
+                        <div class="payoff-bar-mini win" style="height:95%"></div>
+                        <div class="payoff-bar-mini win" style="height:90%"></div>
+                        <div class="payoff-bar-mini win" style="height:95%"></div>
+                        <div class="payoff-bar-mini win" style="height:100%"></div>
+                    </div>
+                    <div class="payoff-labels">
+                        <span>US$ 2.800</span><span style="color:var(--red)">← atual ⚠️</span><span>US$ 3.600+</span>
+                    </div>
+                    <div class="payoff-summary">
+                        <div class="ps-item"><span class="ps-label">Prêmio máx</span><span class="ps-value" style="color:var(--green)">US$ 88,20</span></div>
+                        <div class="ps-item"><span class="ps-label">Perda máx</span><span class="ps-value" style="color:var(--red)">−US$ 88,20</span></div>
+                        <div class="ps-item"><span class="ps-label">Cenário atual</span><span class="ps-value" style="color:var(--red)">Perda provável</span></div>
+                        <div class="ps-item"><span class="ps-label">P(prêmio pleno)</span><span class="ps-value" style="color:var(--red)">~28%</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════════════════════ -->
+    <!-- IDEIA 6 — Heatmap híbrido                                                -->
+    <!-- ════════════════════════════════════════════════════════════════════════ -->
+    <section class="idea-section" id="ideia6">
+        <div class="idea-header">
+            <div class="idea-number">6</div>
+            <div>
+                <div class="idea-title">Heatmap Híbrido</div>
+                <div class="idea-subtitle">Calendário com cor de resultado + badge de operações abertas no canto</div>
+            </div>
+        </div>
+        <div class="idea-body">
+            <p style="color:var(--muted);font-size:.85rem;margin-bottom:20px;">
+                Aprimora o calendário já existente: a cor de fundo indica o resultado financeiro do dia (verde/vermelho/intensidade proporcional).
+                O badge laranja no canto superior direito indica quantas operações <b>ainda estão abertas</b> naquela data.
+                Clica → abre o modal de operações do dia.
+            </p>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                <div style="font-weight:700;font-size:1rem;">Março 2026</div>
+                <div style="display:flex;gap:12px;flex-wrap:wrap">
+                    <div style="display:flex;align-items:center;gap:6px;font-size:.75rem;color:var(--muted)">
+                        <div style="width:14px;height:14px;border-radius:3px;background:rgba(34,197,94,.45)"></div>resultado positivo forte
+                    </div>
+                    <div style="display:flex;align-items:center;gap:6px;font-size:.75rem;color:var(--muted)">
+                        <div style="width:14px;height:14px;border-radius:3px;background:rgba(239,68,68,.3)"></div>resultado negativo
+                    </div>
+                    <div style="display:flex;align-items:center;gap:6px;font-size:.75rem;color:var(--muted)">
+                        <div class="heatmap-open-badge" style="position:relative;width:14px;height:14px;font-size:.65rem">2</div>operações abertas
+                    </div>
+                </div>
+            </div>
+
+            <div class="heatmap-demo">
+                <div class="heatmap-weekdays">
+                    <span></span>
+                    <span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span>
+                </div>
+
+                <!-- Semana 1: 1–7 Mar (começa domingo=1) -->
+                <div class="heatmap-row">
+                    <div class="heatmap-month-label">Mar</div>
+                    <div class="heatmap-cell win-low"><span class="heatmap-result">1</span></div>
+                    <div class="heatmap-cell win-mid">
+                        <span class="heatmap-result">2</span>
+                        <span class="heatmap-open-badge">1</span>
+                    </div>
+                    <div class="heatmap-cell"><span class="heatmap-result">3</span></div>
+                    <div class="heatmap-cell win-strong">
+                        <span class="heatmap-result">4</span>
+                        <span class="heatmap-open-badge">2</span>
+                    </div>
+                    <div class="heatmap-cell loss-low"><span class="heatmap-result">5</span></div>
+                    <div class="heatmap-cell win-low"><span class="heatmap-result">6</span></div>
+                    <div class="heatmap-cell"><span class="heatmap-result">7</span></div>
+                </div>
+
+                <!-- Semana 2: 8–14 -->
+                <div class="heatmap-row">
+                    <div class="heatmap-month-label"></div>
+                    <div class="heatmap-cell win-mid"><span class="heatmap-result">8</span></div>
+                    <div class="heatmap-cell win-strong">
+                        <span class="heatmap-result">9</span>
+                        <span class="heatmap-open-badge">3</span>
+                    </div>
+                    <div class="heatmap-cell loss-mid"><span class="heatmap-result">10</span></div>
+                    <div class="heatmap-cell win-low"><span class="heatmap-result">11</span></div>
+                    <div class="heatmap-cell win-mid">
+                        <span class="heatmap-result">12</span>
+                        <span class="heatmap-open-badge">1</span>
+                    </div>
+                    <div class="heatmap-cell"><span class="heatmap-result">13</span></div>
+                    <div class="heatmap-cell win-low"><span class="heatmap-result">14</span></div>
+                </div>
+
+                <!-- Semana 3: 15–21 -->
+                <div class="heatmap-row">
+                    <div class="heatmap-month-label"></div>
+                    <div class="heatmap-cell win-strong">
+                        <span class="heatmap-result">15</span>
+                        <div class="heatmap-open-badge">2</div>
+                    </div>
+                    <div class="heatmap-cell loss-low"><span class="heatmap-result">16</span></div>
+                    <div class="heatmap-cell win-mid"><span class="heatmap-result">17</span></div>
+                    <div class="heatmap-cell win-strong">
+                        <span class="heatmap-result">18</span>
+                        <div class="heatmap-open-badge">4</div>
+                    </div>
+                    <div class="heatmap-cell"><span class="heatmap-result">19</span></div>
+                    <div class="heatmap-cell win-low"><span class="heatmap-result">20</span></div>
+                    <div class="heatmap-cell win-mid"><span class="heatmap-result">21</span></div>
+                </div>
+
+                <!-- Semana 4: 22–28 -->
+                <div class="heatmap-row">
+                    <div class="heatmap-month-label"></div>
+                    <div class="heatmap-cell loss-low"><span class="heatmap-result">22</span></div>
+                    <div class="heatmap-cell win-mid">
+                        <span class="heatmap-result">23</span>
+                        <div class="heatmap-open-badge">1</div>
+                    </div>
+                    <div class="heatmap-cell win-strong"><span class="heatmap-result">24</span></div>
+                    <div class="heatmap-cell win-low"><span class="heatmap-result">25</span></div>
+                    <div class="heatmap-cell loss-mid"><span class="heatmap-result">26</span></div>
+                    <div class="heatmap-cell win-mid">
+                        <span class="heatmap-result">27</span>
+                        <div class="heatmap-open-badge">2</div>
+                    </div>
+                    <div class="heatmap-cell win-low"><span class="heatmap-result">28</span></div>
+                </div>
+
+                <!-- Semana 5: 29–31 -->
+                <div class="heatmap-row">
+                    <div class="heatmap-month-label"></div>
+                    <div class="heatmap-cell win-strong">
+                        <span class="heatmap-result">29</span>
+                        <div class="heatmap-open-badge">3</div>
+                    </div>
+                    <div class="heatmap-cell loss-mid"><span class="heatmap-result">30</span></div>
+                    <div class="heatmap-cell today">
+                        <span class="heatmap-result" style="color:var(--btc);font-weight:900">31</span>
+                        <div class="heatmap-open-badge">5</div>
+                    </div>
+                    <div class="heatmap-cell empty"></div>
+                    <div class="heatmap-cell empty"></div>
+                    <div class="heatmap-cell empty"></div>
+                    <div class="heatmap-cell empty"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════════════════════ -->
+    <!-- IDEIA 7 — Métricas contextuais com faixas de saúde                       -->
+    <!-- ════════════════════════════════════════════════════════════════════════ -->
+    <section class="idea-section" id="ideia7">
+        <div class="idea-header">
+            <div class="idea-number">7</div>
+            <div>
+                <div class="idea-title">Métricas Contextuais com Faixas de Saúde</div>
+                <div class="idea-subtitle">Cada métrica com valor atual, meta saudável e faixa de atenção visualizada</div>
+            </div>
+        </div>
+        <div class="idea-body">
+            <p style="color:var(--muted);font-size:.85rem;margin-bottom:20px;">
+                Substitui ou complementa a aba de métricas atual. Em vez de só mostrar o número,
+                mostra <b>onde você está</b> em relação ao que é considerado saudável para esse tipo de operação.
+            </p>
+            <div class="metrics-grid">
+
+                <!-- ROI Mensal -->
+                <div class="metric-card">
+                    <div class="mc-label">ROI Mensal</div>
+                    <div class="mc-value good">+4,8%</div>
+                    <div class="mc-target">Meta: ≥ 3% · Atenção: 1–3% · Risco: &lt; 1%</div>
+                    <div class="metric-range-track" id="track-roi">
+                        <div class="metric-range-zone bad"   style="left:0%;width:20%"></div>
+                        <div class="metric-range-zone warn"  style="left:20%;width:25%"></div>
+                        <div class="metric-range-zone good"  style="left:45%;width:55%"></div>
+                        <div class="metric-range-marker" style="left:75%"></div>
+                    </div>
+                    <div class="metric-hint">Acima da meta. Continue.</div>
+                </div>
+
+                <!-- Win Rate -->
+                <div class="metric-card">
+                    <div class="mc-label">Win Rate</div>
+                    <div class="mc-value warn">62,5%</div>
+                    <div class="mc-target">Meta: ≥ 70% · Atenção: 55–70% · Risco: &lt; 55%</div>
+                    <div class="metric-range-track">
+                        <div class="metric-range-zone bad"   style="left:0%;width:30%"></div>
+                        <div class="metric-range-zone warn"  style="left:30%;width:30%"></div>
+                        <div class="metric-range-zone good"  style="left:60%;width:40%"></div>
+                        <div class="metric-range-marker" style="left:53%"></div>
+                    </div>
+                    <div class="metric-hint">Abaixo da meta ideal. Revisar seleção de strikes.</div>
+                </div>
+
+                <!-- Profit Factor -->
+                <div class="metric-card">
+                    <div class="mc-label">Profit Factor</div>
+                    <div class="mc-value good">2,1</div>
+                    <div class="mc-target">Meta: ≥ 2 · Atenção: 1,2–2 · Risco: &lt; 1,2</div>
+                    <div class="metric-range-track">
+                        <div class="metric-range-zone bad"   style="left:0%;width:15%"></div>
+                        <div class="metric-range-zone warn"  style="left:15%;width:35%"></div>
+                        <div class="metric-range-zone good"  style="left:50%;width:50%"></div>
+                        <div class="metric-range-marker" style="left:55%"></div>
+                    </div>
+                    <div class="metric-hint">Na faixa saudável.</div>
+                </div>
+
+                <!-- Drawdown -->
+                <div class="metric-card">
+                    <div class="mc-label">Drawdown Máximo</div>
+                    <div class="mc-value warn">−6,2%</div>
+                    <div class="mc-target">Seguro: &lt; 5% · Atenção: 5–10% · Risco: &gt; 10%</div>
+                    <div class="metric-range-track">
+                        <div class="metric-range-zone good"  style="left:0%;width:35%"></div>
+                        <div class="metric-range-zone warn"  style="left:35%;width:35%"></div>
+                        <div class="metric-range-zone bad"   style="left:70%;width:30%"></div>
+                        <div class="metric-range-marker" style="left:45%"></div>
+                    </div>
+                    <div class="metric-hint">Drawdown aceitável mas monitorar.</div>
+                </div>
+
+                <!-- Payoff Ratio -->
+                <div class="metric-card">
+                    <div class="mc-label">Payoff Ratio</div>
+                    <div class="mc-value warn">0,9</div>
+                    <div class="mc-target">Meta: ≥ 1,0 · Atenção: 0,7–1,0 · Risco: &lt; 0,7</div>
+                    <div class="metric-range-track">
+                        <div class="metric-range-zone bad"   style="left:0%;width:25%"></div>
+                        <div class="metric-range-zone warn"  style="left:25%;width:35%"></div>
+                        <div class="metric-range-zone good"  style="left:60%;width:40%"></div>
+                        <div class="metric-range-marker" style="left:57%"></div>
+                    </div>
+                    <div class="metric-hint">Ganho médio levemente menor que perda média.</div>
+                </div>
+
+                <!-- Ops / Mês -->
+                <div class="metric-card">
+                    <div class="mc-label">Operações / Mês</div>
+                    <div class="mc-value good">18</div>
+                    <div class="mc-target">Ótimo: 12–25 · Atenção: 6–12 ou 25–40 · Excesso: &gt; 40</div>
+                    <div class="metric-range-track">
+                        <div class="metric-range-zone bad"   style="left:0%;width:10%"></div>
+                        <div class="metric-range-zone warn"  style="left:10%;width:15%"></div>
+                        <div class="metric-range-zone good"  style="left:25%;width:35%"></div>
+                        <div class="metric-range-zone warn"  style="left:60%;width:25%"></div>
+                        <div class="metric-range-zone bad"   style="left:85%;width:15%"></div>
+                        <div class="metric-range-marker" style="left:48%"></div>
+                    </div>
+                    <div class="metric-hint">Volume ideal de diversificação.</div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+</div>
+
+<script>
+    // Efeito hover no heatmap — tooltip tooltip com resultado fictício
+    document.querySelectorAll('.heatmap-cell:not(.empty)').forEach(cell => {
+        const day = cell.querySelector('.heatmap-result')?.textContent;
+        const badge = cell.querySelector('.heatmap-open-badge');
+        cell.title = badge
+            ? `Março ${day} · ${badge.textContent} op(s) abertas · Clique para ver detalhes`
+            : `Março ${day} · Sem operações abertas`;
+    });
+
+    // Navegação suave
+    document.querySelectorAll('.showcase-nav a').forEach(link => {
+        link.addEventListener('click', e => {
+            e.preventDefault();
+            const target = document.querySelector(link.getAttribute('href'));
+            if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    });
+
+    // Highlight nav ativa no scroll
+    const sections = document.querySelectorAll('.idea-section');
+    const navLinks = document.querySelectorAll('.showcase-nav a');
+    const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const id = entry.target.id;
+                navLinks.forEach(l => {
+                    const isActive = l.getAttribute('href') === '#' + id;
+                    l.style.color = isActive ? 'var(--text)' : '';
+                    l.style.background = isActive ? 'var(--bg-card)' : '';
+                    l.style.borderColor = isActive ? 'var(--border)' : 'transparent';
+                });
+            }
+        });
+    }, { threshold: 0.4 });
+    sections.forEach(s => observer.observe(s));
+</script>
+
+</body>
+</html>

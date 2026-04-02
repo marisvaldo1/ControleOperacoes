@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Dual Investment Dashboard | 8 Indicadores + Preço Médio</title>
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Chart.js para gráfico de rosca extra -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: radial-gradient(circle at 10% 20%, #0a0f1e, #03060c);
+            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            padding: 2rem 1.5rem;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #e2e8f0;  /* COR GLOBAL PARA GARANTIR LEGIBILIDADE */
+        }
+
+        /* modal container style */
+        .dashboard-modal {
+            max-width: 1440px;
+            width: 100%;
+            background: rgba(12, 18, 28, 0.85);
+            backdrop-filter: blur(12px);
+            border-radius: 2.5rem;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0, 255, 255, 0.1);
+            overflow: hidden;
+            padding: 1.8rem 2rem 2rem 2rem;
+            transition: all 0.2s;
+        }
+
+        h1, h2, h3 {
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            color: #f0f6ff;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #B3F0FF, #5BC0FF);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 0.25rem 0.75rem;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(4px);
+            border: 0.5px solid rgba(255,255,255,0.2);
+            color: #cbd5e6;
+        }
+
+        .badge-success {
+            background: rgba(0, 230, 150, 0.2);
+            border-color: #00e69640;
+            color: #8effc4;
+        }
+
+        .badge-warning {
+            background: rgba(255, 170, 0, 0.2);
+            border-color: #ffaa0040;
+            color: #ffcd7e;
+        }
+
+        .badge-danger {
+            background: rgba(255, 70, 70, 0.2);
+            border-color: #ff464640;
+            color: #ff9b9b;
+        }
+
+        .card {
+            background: rgba(18, 24, 36, 0.75);
+            backdrop-filter: blur(4px);
+            border-radius: 1.8rem;
+            border: 1px solid rgba(72, 187, 255, 0.2);
+            padding: 1.25rem 1.5rem;
+            transition: transform 0.1s ease, box-shadow 0.2s;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            color: #e2e8f0;
+        }
+
+        .card:hover {
+            border-color: rgba(0, 200, 255, 0.5);
+            box-shadow: 0 12px 28px rgba(0, 160, 255, 0.1);
+        }
+
+        .stat-number {
+            font-size: 2.2rem;
+            font-weight: 800;
+            line-height: 1;
+            background: linear-gradient(145deg, #F0F9FF, #C0E0FF);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .progress-bar-bg {
+            background: #1e2a3a;
+            border-radius: 20px;
+            height: 8px;
+            overflow: hidden;
+            width: 100%;
+            margin: 8px 0;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #2dd4bf, #3b82f6);
+            width: 0%;
+            height: 100%;
+            border-radius: 20px;
+        }
+
+        .grid-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 500;
+            color: #9bb5da;
+        }
+
+        hr {
+            border-color: #2a3a4e;
+            margin: 1rem 0;
+        }
+
+        .table-mini {
+            font-size: 0.8rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 0.6rem 0.2rem;
+            border-bottom: 1px solid rgba(72, 187, 255, 0.2);
+            text-align: left;
+        }
+        th {
+            color: #9bb5da;
+            font-weight: 500;
+        }
+
+        .emoji-icon {
+            font-size: 1.4rem;
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3));
+        }
+
+        .risk-fill {
+            background: linear-gradient(90deg, #f97316, #ef4444);
+        }
+
+        @media (max-width: 700px) {
+            .dashboard-modal { padding: 1.2rem; }
+            .stat-number { font-size: 1.7rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="dashboard-modal">
+    <!-- header -->
+    <div class="flex-between" style="flex-wrap: wrap; gap: 12px;">
+        <div>
+            <h1 style="font-size: 1.8rem;"><i class="fas fa-chart-line" style="color: #3b82f6; margin-right: 10px;"></i> <span class="gradient-text">Dual Vision</span> · 8 Indicadores Estratégicos</h1>
+            <p style="color: #9bb5da; margin-top: 6px;">Preço médio calculado com CALLs exercidas − prêmios acumulados</p>
+        </div>
+        <div class="badge" style="background: #0f172a;"><i class="fas fa-calendar-alt"></i> atualizado: 25/03/2026</div>
+    </div>
+
+    <!-- Cards principais: preço médio BTC e ETH (indicadores 1 e 2) -->
+    <div class="grid-cards" id="assetsMetricsContainer"></div>
+
+    <!-- Grid dos outros 6 indicadores (total 8) -->
+    <div style="margin-top: 2rem;">
+        <div class="flex-between" style="margin-bottom: 1rem;">
+            <h2><i class="fas fa-chart-simple"></i> Indicadores 3 a 8</h2>
+            <span class="badge"><i class="fas-regular fa-lightbulb"></i> dados em tempo real</span>
+        </div>
+        <div class="grid-cards" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));" id="indicatorsGrid"></div>
+    </div>
+
+    <!-- Tabela com últimas operações + rodapé (indicador 8) -->
+    <div style="margin-top: 2rem;">
+        <div class="card" style="padding: 1rem 1.5rem;">
+            <div class="flex-between">
+                <h3><i class="fas fa-history"></i> 📋 Últimas 5 operações encerradas</h3>
+                <span class="badge badge-success"><i class="fas fa-chart-line"></i> ciclo fechado</span>
+            </div>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr><th>Ativo</th><th>Tipo</th><th>Strike (USDT)</th><th>Prêmio (USDT)</th><th>Status execução</th><th>Result.</th></tr>
+                    </thead>
+                    <tbody id="lastTradesBody"></tbody>
+                </table>
+            </div>
+            <div class="badge" style="margin-top: 1rem; background:#0a111e;"><i class="fas-regular fa-chart-line"></i> * Resultado = (prêmio / valor investido) aproximado</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ===================== DADOS FORNECIDOS (convertidos para números) =====================
+    const rawData = {
+        "rows": [
+            {"id":74,"ativo":"BTC","tipo":"PUT","cotacao_atual":72272.61,"abertura":70436.31,"tae":134.14,"strike":69500.0,"distancia":1.33,"prazo":1,"crypto":0.00708844,"premio_us":1.88,"resultado":0.37,"exercicio":"2026-03-13","dias":1,"exercicio_status":"NAO","data_operacao":"2026-03-12","created_at":"2026-03-12 11:45:58","tipo_estrategia":"DUAL_INVESTMENT","status":"FECHADA","observacoes":null,"is_test_data":0},
+            {"id":84,"ativo":"ETH","tipo":"CALL","cotacao_atual":2067.88,"abertura":2069.58,"tae":39.76,"strike":2150.0,"distancia":3.89,"prazo":1,"crypto":0.8222,"premio_us":1.85,"resultado":0.11,"exercicio":"2026-03-13","dias":1,"exercicio_status":"NAO","data_operacao":"2026-03-12","created_at":"2026-03-12 19:40:01","tipo_estrategia":"DUAL_INVESTMENT","status":"FECHADA","observacoes":null,"is_test_data":0},
+            {"id":95,"ativo":"BTC","tipo":"PUT","cotacao_atual":71177.90,"abertura":72267.52,"tae":69.72,"strike":71000.0,"distancia":1.75,"prazo":3,"crypto":0.0071,"premio_us":2.95,"resultado":0.57,"exercicio":"2026-03-16","dias":3,"exercicio_status":"NAO","data_operacao":"2026-03-13","created_at":"2026-03-13 12:23:42","tipo_estrategia":"DUAL_INVESTMENT","status":"FECHADA","observacoes":null,"is_test_data":0},
+            {"id":96,"ativo":"ETH","tipo":"CALL","cotacao_atual":2104.66,"abertura":2199.48,"tae":30.21,"strike":2250.0,"distancia":6.16,"prazo":3,"crypto":0.823,"premio_us":4.33,"resultado":0.25,"exercicio":"2026-03-16","dias":3,"exercicio_status":"NAO","data_operacao":"2026-03-13","created_at":"2026-03-13 12:25:19","tipo_estrategia":"DUAL_INVESTMENT","status":"FECHADA","observacoes":null,"is_test_data":0},
+            {"id":103,"ativo":"ETH","tipo":"CALL","cotacao_atual":2049.45,"abertura":2034.51,"tae":17.36,"strike":2325.0,"distancia":14.28,"prazo":2,"crypto":0.82,"premio_us":1.59,"resultado":0.10,"exercicio":"2026-03-06","dias":2,"exercicio_status":"NAO","data_operacao":"2026-03-04","created_at":"2026-03-13 15:38:04","tipo_estrategia":"DUAL_INVESTMENT","status":"FECHADA","observacoes":null,"is_test_data":0},
+            {"id":104,"ativo":"ETH","tipo":"CALL","cotacao_atual":2019.92,"abertura":2009.71,"tae":38.6,"strike":2150.0,"distancia":6.98,"prazo":1,"crypto":0.820328,"premio_us":1.74,"resultado":0.11,"exercicio":"2026-03-11","dias":1,"exercicio_status":"NAO","data_operacao":"2026-03-10","created_at":"2026-03-13 15:49:30","tipo_estrategia":"DUAL_INVESTMENT","status":"FECHADA","observacoes":null,"is_test_data":0},
+            {"id":105,"ativo":"BTC","tipo":"PUT","cotacao_atual":70742.2,"abertura":69529.09,"tae":196.79,"strike":69000.0,"distancia":0.76,"prazo":1,"crypto":0.00720362,"premio_us":2.75,"resultado":0.54,"exercicio":"2026-03-12","dias":1,"exercicio_status":"NAO","data_operacao":"2026-03-11","created_at":"2026-03-13 15:53:24","tipo_estrategia":"DUAL_INVESTMENT","status":"FECHADA","observacoes":null,"is_test_data":0},
+            {"id":106,"ativo":"ETH","tipo":"CALL","cotacao_atual":2066.7,"abertura":2020.87,"tae":49.24,"strike":2100.0,"distancia":3.92,"prazo":1,"crypto":0.8211,"premio_us":2.24,"resultado":0.13,"exercicio":"2026-03-12","dias":1,"exercicio_status":"NAO","data_operacao":"2026-03-11","created_at":"2026-03-13 15:56:16","tipo_estrategia":"DUAL_INVESTMENT","status":"FECHADA","observacoes":null,"is_test_data":0},
+            {"id":125,"ativo":"BTC","tipo":"CALL","cotacao_atual":74321.94,"abertura":73455.24,"tae":178.06,"strike":74000.0,"distancia":0.74,"prazo":1,"crypto":0.0009,"premio_us":0.32,"resultado":0.49,"exercicio":"2026-03-17","dias":1,"exercicio_status":"SIM","data_operacao":"2026-03-16","created_at":"2026-03-16 10:35:21","tipo_estrategia":"DUAL_INVESTMENT","status":"FECHADA","observacoes":null,"is_test_data":0},
+            {"id":126,"ativo":"ETH","tipo":"PUT","cotacao_atual":2307.97,"abertura":2266.03,"tae":306.98,"strike":2250.0,"distancia":0.71,"prazo":1,"crypto":1.0507418,"premio_us":19.96,"resultado":0.84,"exercicio":"2026-03-17","dias":1,"exercicio_status":"NAO","data_operacao":"2026-03-16","created_at":"2026-03-16 10:36:38","tipo_estrategia":"DUAL_INVESTMENT","status":"FECHADA","observacoes":null,"is_test_data":0},
+            {"id":137,"ativo":"BTC","tipo":"CALL","cotacao_atual":73664.01,"abertura":73445.24,"tae":108.25,"strike":75000.0,"distancia":2.10,"prazo":1,"crypto":0.0383,"premio_us":8.3,"resultado":0.3,"exercicio":"2026-03-17","dias":1,"exercicio_status":"NAO","data_operacao":"2026-03-16","created_at":"2026-03-16 13:15:20","tipo_estrategia":"DUAL_INVESTMENT","status":"FECHADA","observacoes":null,"is_test_data":0},
+            {"id":138,"ativo":"ETH","tipo":"CALL","cotacao_atual":2329.62,"abertura":2266.03,"tae":184.66,"strike":2325.0,"distancia":2.60,"prazo":1,"crypto":0.00599504,"premio_us":0.07,"resultado":0.51,"exercicio":"2026-03-17","dias":1,"exercicio_status":"SIM","data_operacao":"2026-03-16","created_at":"2026-03-16 13:16:07","tipo_estrategia":"DUAL_INVESTMENT","status":"FECHADA","observacoes":null,"is_test_data":0},
+            {"id":165,"ativo":"BTC","tipo":"CALL","cotacao_atual":74213.17,"abertura":74113.70,"tae":129.47,"strike":75000.0,"distancia":1.20,"prazo":1,"crypto":0.0385239,"premio_us":10.12,"resultado":0.35,"exercicio":"2026-03-18","dias":1,"exercicio_status":"NAO","data_operacao":"2026-03-17","created_at":"2026-03-17 11:56:56","tipo_estrategia":"DUAL_INVESTMENT","status":"FECHADA","observacoes":null,"is_test_data":0},
+            {"id":166,"ativo":"ETH","tipo":"PUT","cotacao_atual":2326.39,"abertura":2330.94,"tae":347.33,"strike":2325.0,"distancia":0.25,"prazo":1,"crypto":1.06349322,"premio_us":23.54,"resultado":0.95,"exercicio":"2026-03-18","dias":1,"exercicio_status":"NAO","data_operacao":"2026-03-17","created_at":"2026-03-17 11:57:47","tipo_estrategia":"DUAL_INVESTMENT","status":"FECHADA","observacoes":null,"is_test_data":0},
+            {"id":221,"ativo":"BTC","tipo":"CALL","cotacao_atual":72373.74,"abertura":74150.50,"tae":134.51,"strike":75000.0,"distancia":1.15,"prazo":1,"crypto":0.0386,"premio_us":10.55,"resultado":0.37,"exercicio":"2026-03-19","dias":1,"exercicio_status":"NAO","data_operacao":"2026-03-18","created_at":"2026-03-18 13:09:56","tipo_estrategia":"DUAL_INVESTMENT","status":"FECHADA","observacoes":null,"is_test_data":0},
+            {"id":222,"ativo":"ETH","tipo":"CALL","cotacao_atual":2235.75,"abertura":2323.36,"tae":172.26,"strike":2375.0,"distancia":2.22,"prazo":1,"crypto":1.074,"premio_us":16.85,"resultado":1.57,"exercicio":"2026-03-19","dias":1,"exercicio_status":"NAO","data_operacao":"2026-03-18","created_at":"2026-03-18 13:13:42","tipo_estrategia":"DUAL_INVESTMENT","status":"FECHADA","observacoes":null,"is_test_data":0},
+            {"id":238,"ativo":"ETH","tipo":"CALL","cotacao_atual":2118.81,"abertura":862.95,"tae":143.42,"strike":2225.0,"distancia":2.3605,"prazo":1,"crypto":0.39699773,"premio_us":3.41,"resultado":0.0628,"exercicio":"2026-03-20","dias":1,"exercicio_status":"NAO","data_operacao":"2026-03-19","created_at":"2026-03-19 11:23:47","tipo_estrategia":"DUAL_INVESTMENT","status":"FECHADA","observacoes":null,"is_test_data":0},
+            {"id":239,"ativo":"ETH","tipo":"CALL","cotacao_atual":2118.4,"abertura":2345.16,"tae":106.76,"strike":2250.0,"distancia":3.5216,"prazo":1,"crypto":1.07899846,"premio_us":6.89,"resultado":0.1271,"exercicio":"2026-03-20","dias":1,"exercicio_status":"NAO","data_operacao":"2026-03-19","created_at":"2026-03-19 11:24:58","tipo_estrategia":"DUAL_INVESTMENT","status":"FECHADA","observacoes":null,"is_test_data":0},
+            {"id":240,"ativo":"BTC","tipo":"CALL","cotacao_atual":70386.11,"abertura":70499.99,"tae":115.26,"strike":71500.0,"distancia":1.5825,"prazo":1,"crypto":0.03869996,"premio_us":8.62,"resultado":0.159,"exercicio":"2026-03-20","dias":1,"exercicio_status":"NAO","data_operacao":"2026-03-19","created_at":"2026-03-19 11:25:27","tipo_estrategia":"DUAL_INVESTMENT","status":"FECHADA","observacoes":null,"is_test_data":0},
+            {"id":255,"ativo":"BTC","tipo":"CALL","cotacao_atual":70271.36,"abertura":70298.72,"tae":23.2,"strike":73500.0,"distancia":4.5945,"prazo":3,"crypto":0.0388,"premio_us":5.2,"resultado":0.19,"exercicio":"2026-03-23","dias":3,"exercicio_status":"NAO","data_operacao":"2026-03-20","created_at":"2026-03-20 10:23:00","tipo_estrategia":"DUAL_INVESTMENT","status":"FECHADA","observacoes":null,"is_test_data":0},
+            {"id":256,"ativo":"ETH","tipo":"CALL","cotacao_atual":2136.55,"abertura":2132.26,"tae":31.01,"strike":2275.0,"distancia":6.4801,"prazo":3,"crypto":0.00377396,"premio_us":8.06,"resultado":0.25,"exercicio":"2026-03-23","dias":3,"exercicio_status":"NAO","data_operacao":"2026-03-20","created_at":"2026-03-20 10:32:04","tipo_estrategia":"DUAL_INVESTMENT","status":"FECHADA","observacoes":null,"is_test_data":0},
+            {"id":278,"ativo":"BTC","tipo":"CALL","cotacao_atual":70332.03,"abertura":70332.03,"tae":18.52,"strike":74000.0,"distancia":4.471,"prazo":1,"crypto":0.03910604,"premio_us":1.40549,"resultado":0.026,"exercicio":"2026-03-24","dias":1,"exercicio_status":"NAO","data_operacao":"2026-03-23","created_at":"2026-03-23 11:18:57","tipo_estrategia":"DUAL_INVESTMENT","status":"FECHADA","observacoes":null,"is_test_data":0},
+            {"id":279,"ativo":"ETH","tipo":"CALL","cotacao_atual":2161.52,"abertura":2161.52,"tae":17.34,"strike":2325.0,"distancia":7.5632,"prazo":1,"crypto":1.48439987,"premio_us":1.524286,"resultado":0.0283,"exercicio":"2026-03-24","dias":1,"exercicio_status":"NAO","data_operacao":"2026-03-23","created_at":"2026-03-23 11:25:38","tipo_estrategia":"DUAL_INVESTMENT","status":"FECHADA","observacoes":null,"is_test_data":0},
+            {"id":289,"ativo":"BTC","tipo":"CALL","cotacao_atual":71188.28,"abertura":71188.28,"tae":20.08,"strike":74000.0,"distancia":3.9497,"prazo":1,"crypto":0.03889994,"premio_us":1.58,"resultado":0.0282,"exercicio":"2026-03-25","dias":1,"exercicio_status":"NAO","data_operacao":"2026-03-24","created_at":"2026-03-24 11:44:00","tipo_estrategia":"DUAL_INVESTMENT","status":"FECHADA","observacoes":null,"is_test_data":0},
+            {"id":290,"ativo":"ETH","tipo":"CALL","cotacao_atual":2160.81,"abertura":2160.81,"tae":33.23,"strike":2275.0,"distancia":5.2846,"prazo":1,"crypto":1.48499868,"premio_us":3.08,"resultado":0.0541,"exercicio":"2026-03-25","dias":1,"exercicio_status":"NAO","data_operacao":"2026-03-24","created_at":"2026-03-24 11:44:53","tipo_estrategia":"DUAL_INVESTMENT","status":"FECHADA","observacoes":null,"is_test_data":0}
+        ]
+    };
+    const operations = rawData.rows.filter(op => op.is_test_data === 0);
+
+    // ========== CÁLCULO DO PREÇO MÉDIO (CALLS EXERCIDAS - PRÊMIOS TOTAIS) ==========
+    function getAvgCostAndMetrics(asset) {
+        const closedOps = operations.filter(op => op.ativo === asset && op.status === 'FECHADA');
+        const exercisedCalls = closedOps.filter(op => op.tipo === 'CALL' && op.exercicio_status === 'SIM');
+        const totalPremiums = closedOps.reduce((sum, op) => sum + Number(op.premio_us), 0);
+        let totalCrypto = 0;
+        let totalStrikeValue = 0;
+        exercisedCalls.forEach(call => {
+            const cryptoAmount = Number(call.crypto);
+            const strike = Number(call.strike);
+            totalCrypto += cryptoAmount;
+            totalStrikeValue += cryptoAmount * strike;
+        });
+        let avgCost = null;
+        if (totalCrypto > 0) {
+            avgCost = (totalStrikeValue - totalPremiums) / totalCrypto;
+        }
+        // preço atual: última cotacao_atual ordenada por created_at
+        const sorted = [...closedOps].sort((a,b)=> new Date(b.created_at) - new Date(a.created_at));
+        const currentPrice = sorted.length ? Number(sorted[0].cotacao_atual) : 0;
+        const winRate = closedOps.length ? (closedOps.filter(op => op.exercicio_status === 'NAO').length / closedOps.length * 100) : 0;
+        const avgTAE = closedOps.length ? closedOps.reduce((a,op)=> a + Number(op.tae),0)/closedOps.length : 0;
+        return { avgCost, currentPrice, totalPremiums, winRate, closedCount: closedOps.length, exercisedCount: exercisedCalls.length, avgTAE, totalStrikeValue, totalCrypto };
+    }
+
+    const btc = getAvgCostAndMetrics('BTC');
+    const eth = getAvgCostAndMetrics('ETH');
+
+    // Renderiza os cards de preço médio (indicadores 1 e 2)
+    function renderAssetCard(asset, data) {
+        const hasAvg = data.avgCost !== null && data.avgCost > 0;
+        const diffPercent = hasAvg ? ((data.currentPrice - data.avgCost) / data.avgCost * 100) : null;
+        const progressWidth = hasAvg ? Math.min(100, Math.max(0, (data.currentPrice / data.avgCost) * 100)) : 0;
+        const safe = hasAvg && data.currentPrice > data.avgCost;
+        return `
+            <div class="card">
+                <div class="flex-between">
+                    <div><i class="fab fa-${asset === 'BTC' ? 'bitcoin' : 'ethereum'} fa-2x" style="color:${asset === 'BTC' ? '#F7931A' : '#627EEA'}"></i> <span style="font-weight:700; margin-left:8px;">${asset}/USDT</span></div>
+                    <div class="badge ${safe ? 'badge-success' : 'badge-warning'}">${hasAvg ? (safe ? '🔒 Acima do custo' : '⚠️ Abaixo do custo') : 'Sem CALL exercida'}</div>
+                </div>
+                <div style="margin-top: 12px;">
+                    <div class="flex-between"><span class="metric-label">PREÇO MÉDIO (custo real)</span><span class="stat-number">${hasAvg ? `$${data.avgCost.toFixed(2)}` : '—'}</span></div>
+                    <div class="flex-between"><span class="metric-label">COTAÇÃO ATUAL</span><span>$${data.currentPrice.toFixed(2)}</span></div>
+                    ${hasAvg ? `<div class="progress-bar-bg"><div class="progress-fill" style="width: ${progressWidth}%;"></div></div>
+                    <div class="flex-between"><span>📊 Diferença</span><span style="color:${diffPercent >= 0 ? '#8effc4' : '#ff9b9b'};">${diffPercent >= 0 ? '+' : ''}${diffPercent?.toFixed(2)}%</span></div>` : '<div class="badge" style="margin-top:8px;">⚡ aguardar primeira CALL exercida</div>'}
+                </div>
+                <hr>
+                <div class="flex-between"><span><i class="fas fa-coins"></i> Prêmios totais</span><strong>$${data.totalPremiums.toFixed(2)}</strong></div>
+                <div class="flex-between"><span><i class="fas fa-chart-line"></i> Win Rate (NAO)</span><strong>${data.winRate.toFixed(1)}%</strong></div>
+                <div class="flex-between"><span><i class="fas fa-percent"></i> TAE médio</span><strong>${data.avgTAE.toFixed(1)}%</strong></div>
+                <div class="flex-between"><span><i class="fas fa-check-circle"></i> Ops encerradas</span><strong>${data.closedCount}</strong></div>
+            </div>
+        `;
+    }
+
+    // Indicadores 3 a 7
+    function buildOtherIndicators() {
+        const totalPremiumsAll = btc.totalPremiums + eth.totalPremiums;
+        const totalClosedAll = btc.closedCount + eth.closedCount;
+        const totalExercised = btc.exercisedCount + eth.exercisedCount;
+        const globalWinRate = totalClosedAll ? (operations.filter(op=>op.status==='FECHADA' && op.exercicio_status==='NAO').length / totalClosedAll * 100) : 0;
+        const avgTaeGlobal = (btc.avgTAE + eth.avgTAE)/2;
+        // Margem de segurança BTC
+        const btcMargin = btc.avgCost ? ((btc.currentPrice - btc.avgCost) / btc.avgCost * 100) : 0;
+        const riskLevel = btcMargin > 5 ? 'Baixo risco' : (btcMargin > -3 ? 'Risco moderado' : 'Risco elevado');
+        const progressRisk = Math.min(100, Math.max(0, (btcMargin + 15) * 2.5));
+        const suggestedStrikeBTC = btc.avgCost ? (btc.avgCost * 1.05).toFixed(0) : '74000';
+        const suggestedStrikeETH = eth.avgCost ? (eth.avgCost * 1.045).toFixed(0) : '2375';
+        return [
+            { icon:"💰", title:"Total Prêmios Coletados", value:`$${totalPremiumsAll.toFixed(2)}`, detail:"USDT líquido", progress:null, badge:"+ prêmios"},
+            { icon:"🏆", title:"Taxa de Sucesso (não execução)", value:`${globalWinRate.toFixed(1)}%`, detail:`${totalClosedAll} ops • ${totalExercised} exercidas`, progress:globalWinRate, badge:"win-rate"},
+            { icon:"⚡", title:"TAE Médio Ponderado", value:`${avgTaeGlobal.toFixed(1)}%`, detail:"Rentabilidade anualizada", progress:Math.min(100, avgTaeGlobal/3), badge:"yield"},
+            { icon:"📈", title:`Margem BTC vs Preço Médio`, value:`${btc.avgCost ? btcMargin.toFixed(1)+'%' : 'N/A'}`, detail:`Custo: ${btc.avgCost ? '$'+btc.avgCost.toFixed(0) : '—'} | Atual: $${btc.currentPrice.toFixed(0)}`, progress:btc.avgCost ? (btc.currentPrice/btc.avgCost*100) : 0, badge:btc.avgCost && btc.currentPrice > btc.avgCost ? '🚀 Lucro flutuante' : '⚖️ Aguardar'},
+            { icon:"🎯", title:"Próximo Strike Sugerido (CALL)", value:`BTC: $${suggestedStrikeBTC}`, detail:`ETH: $${suggestedStrikeETH} • 5% acima do custo`, progress:null, badge:"<i class='fas fa-bullseye'></i> evitar prejuízo"},
+            { icon:"⚠️", title:"Métrica Risco (BTC)", value:riskLevel, detail:`Margem ${btcMargin>0?'+':''}${btcMargin.toFixed(1)}% vs preço médio`, progress:progressRisk, badge:`${btcMargin>3?'safe':'cuidado'}`, risk:true}
+        ];
+    }
+
+    function renderIndicatorsGrid() {
+        const indicators = buildOtherIndicators();
+        const grid = document.getElementById('indicatorsGrid');
+        grid.innerHTML = indicators.map(ind => `
+            <div class="card">
+                <div class="flex-between"><div><span class="emoji-icon">${ind.icon}</span> <span style="font-weight:600;">${ind.title}</span></div> <div class="badge">${ind.badge}</div></div>
+                <div class="stat-number" style="font-size:1.7rem; margin: 10px 0 4px;">${ind.value}</div>
+                <div class="metric-label">${ind.detail}</div>
+                ${ind.progress !== null ? `<div class="progress-bar-bg"><div class="progress-fill ${ind.risk ? 'risk-fill' : ''}" style="width: ${Math.min(100,ind.progress)}%;"></div></div>` : ''}
+            </div>
+        `).join('');
+    }
+
+    // Últimas 5 operações (indicador 8)
+    function renderLastTrades() {
+        const sorted = [...operations].sort((a,b)=> new Date(b.created_at) - new Date(a.created_at)).slice(0,5);
+        const tbody = document.getElementById('lastTradesBody');
+        tbody.innerHTML = sorted.map(op => {
+            const prem = Number(op.premio_us).toFixed(2);
+            const strike = Number(op.strike).toFixed(0);
+            const badgeStatus = op.exercicio_status === 'SIM' ? '<span class="badge badge-danger"><i class="fas fa-exchange-alt"></i> EXERCIDA</span>' : '<span class="badge badge-success"><i class="fas fa-check-circle"></i> NÃO EXERCIDA</span>';
+            const resultVal = op.resultado ? (Number(op.resultado)*100).toFixed(1)+'%' : '-';
+            return `<tr>
+                        <td><i class="fab fa-${op.ativo === 'BTC' ? 'bitcoin' : 'ethereum'}"></i> ${op.ativo}</td>
+                        <td>${op.tipo}</td>
+                        <td>$${strike}</td>
+                        <td>$${prem}</td>
+                        <td>${badgeStatus}</td>
+                        <td>${resultVal}</td>
+                    </tr>`;
+        }).join('');
+    }
+
+    // Montagem final
+    document.getElementById('assetsMetricsContainer').innerHTML = renderAssetCard('BTC', btc) + renderAssetCard('ETH', eth);
+    renderIndicatorsGrid();
+    renderLastTrades();
+</script>
+</body>
+</html>

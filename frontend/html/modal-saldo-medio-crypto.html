@@ -26,20 +26,21 @@
                     <div class="sm-pills" id="smPills"></div>
                 </div>
 
-                <!-- Botões: X + Atualizar empilhados -->
-                <div class="d-flex flex-column align-items-center gap-2 ms-3">
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                <!-- Botões: timestamp · ⟳ · X em linha -->
+                <div class="d-flex align-items-center gap-2 flex-shrink-0 ms-3">
+                    <span class="mdh-ts" id="smLastUpdated">Atualizado: --:--</span>
                     <button type="button"
-                            class="btn btn-sm btn-icon btn-outline-secondary sm-btn-refresh"
+                            class="mdh-refresh"
                             id="btnRefreshSaldoMedio"
                             title="Atualizar dados">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                             fill="none" stroke="currentColor" stroke-width="2"
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
+                             fill="none" stroke="currentColor" stroke-width="2.2"
                              stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="23 4 23 10 17 10"/>
-                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                            <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
                         </svg>
                     </button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
                 </div>
             </div>
 
@@ -71,7 +72,7 @@
                 </div>
 
                 <div class="d-flex align-items-center gap-3 mb-3">
-                    <span class="sm-section-lbl">Operações</span>
+                    <span class="sm-section-lbl" id="smOpsLabel">Operações</span>
                     <div class="sm-ftabs" id="smFtabs">
                         <button class="sm-ftab active" onclick="smFilterCard('all',this)">Todas</button>
                         <button class="sm-ftab" onclick="smFilterCard('ABERTA',this)">Abertas</button>
@@ -79,6 +80,7 @@
                         <button class="sm-ftab" onclick="smFilterCard('CALL',this)">CALL</button>
                         <button class="sm-ftab" onclick="smFilterCard('PUT',this)">PUT</button>
                     </div>
+                    <span class="text-muted small ms-auto" id="smOpsTotal"></span>
                 </div>
                 <div class="sm-op-strip" id="smOpStrip"></div>
 
@@ -123,7 +125,7 @@
                                             </svg>
                                             Operações · Log
                                         </div>
-                                        <div style="overflow:auto;max-height:340px;">
+                                        <div style="flex:1;min-height:0;overflow-y:auto;">
                                             <table class="sm-ops-tbl">
                                                 <thead>
                                                     <tr>

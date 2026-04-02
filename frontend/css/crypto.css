@@ -100,6 +100,18 @@
     opacity: 0.4;
 }
 
+/* Fix: evita que conteúdo das tabs sobreponha o nav-tabs */
+#cryptoTabs {
+    position: relative;
+    z-index: 2;
+}
+
+#cryptoTabs ~ .card-body,
+.card-header + .card-body {
+    position: relative;
+    z-index: 1;
+}
+
 /* Tabela crypto */
 #tableMesAtual .badge,
 #tableHistorico .badge {

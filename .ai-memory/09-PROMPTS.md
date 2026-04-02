@@ -1,8 +1,52 @@
 # 09 — PROMPTS LOG
 
-> Atualizado automaticamente. Total registrado: 7 entrada(s).
+> Atualizado automaticamente. Total registrado: 11 entrada(s).
 > Para registrar um novo prompt: `memoryIA\log_prompt.bat`
 
+
+---
+
+**`2026-04-01 16:08:22`**
+
+```
+Esse filtro da imagem nÃ£o estÃ¡ sendo aplicado nessa tela.
+
+Preciso de uma tela que analise minha posiÃ§Ã£o atual pra ser colocada em uma nova aba nessa tela da imagem. aba Resultado Final
+O que aconteceu foi que fui exercido em call a 74.000 (btc) e fui fazendo venda de put porÃ©m fui exercido a 68,500. Portanto um prejuÃ­zo. Preciso de uma tela que mostre a execuÃ§Ã£o da Ãºltima call, as operaÃ§Ãµe feitas depois disso, a Ãºltima put exercida, a diferenÃ§a - lucro (verde) ou prejuÃ­zo (vermelho) com valor e percentual, e o lucro ou prejuÃ­zo total que tive em todo o histÃ³rico ou perÃ­odo selecionado.
+Se for prejuÃ­zo, comeÃ§ar a calcular depois de cada operaÃ§Ã£o apÃ³s o exercicio e mostre o valor, o percentual e um progress bar do valor exercido para o valor atual e o quanto falta para cubrir o prejuÃ­zo caso tenha ocorrido na venda da put.
+
+Meu exemplo
+fui exercido em call a 74.000
+fiz vÃ¡rias operaÃ§Ãµes sem exercicio
+Os prÃªmio de devem ser subtraÃ­dos do valor de exercÃ­cio
+74.000 - total de prÃ©mios depois do exercÃ­cio e antes de prÃ³ximo exercÃ­cio
+Fui exercido em put a 68.500. Estou no prejuÃ­zo pois 74.000 - 192.00 (premios) > 68.500
+Preciso de uma idÃ©ia de como vou mostra isso na tela de forma bem clara para que eu analise minha situaÃ§Ã£o atual e possa calcular o valor para reentrada levando em consideraÃ§Ã£o esse lucro ou prejuÃ­zo. Preciso tambÃ©m que o sistema me sinalize na simulaÃ§Ã£o e nessa nova aba, caso eu tente abrir novas operaÃ§Ãµes em prejuÃ­zo depois desses cÃ¡lculos
+```
+
+---
+
+**`2026-04-01 09:56:44`**
+
+```
+10037396267
+```
+
+---
+
+**`2026-03-31 11:28:20`**
+
+```
+https://sei.correios.com.br/sei/controlador.php?acao=procedimento_trabalhar&acao_origem=procedimento_gerar&acao_retorno=procedimento_escolher_tipo&id_procedimento=70129174&atualizar_arvore=1&infra_sistema=100000100&infra_unidade_atual=439410&infra_hash=9a73d05b47d666fe32c75c5c621edb62550b1b592ead4c2dacb4dcd9228445dd#ID-70129174
+```
+
+---
+
+**`2026-03-31 11:19:08`**
+
+```
+GERENTE CORPORATIVO
+```
 
 ---
 

@@ -1,0 +1,101 @@
+/* ============================================================
+   modal-analise-detalhe-crypto.css  v1.0.0
+   Estilos do Modal de Análise Completa — Crypto
+   ============================================================ */
+
+/* ── KPI Cards superiores ─────────────────────────────────── */
+.mac-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+
+.mac-kpi-card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-left: 3px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    padding: 10px 12px 9px;
+    transition: border-left-color 0.25s, background 0.25s;
+    position: relative;
+    overflow: hidden;
+}
+
+.mac-kpi-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: var(--mac-kpi-color, rgba(255,255,255,.08));
+    opacity: 0.4;
+}
+
+.mac-kpi-label {
+    font-size: 0.67rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: rgba(255, 255, 255, 0.45);
+    margin-bottom: 4px;
+    white-space: nowrap;
+}
+
+.mac-kpi-val {
+    font-size: 1.25rem;
+    font-weight: 700;
+    font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+    line-height: 1.1;
+    color: var(--mac-kpi-color, rgba(255, 255, 255, 0.85));
+    transition: color 0.25s;
+}
+
+.mac-kpi-sub {
+    font-size: 0.6rem;
+    opacity: 0.5;
+    margin-top: 2px;
+    white-space: nowrap;
+}
+
+/* ── Seções do painel direito ────────────────────────────── */
+.mac-section {
+    background: rgba(255,255,255,.03);
+    border: 1px solid rgba(255,255,255,.09);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.mac-section-title {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: rgba(255,255,255,.75);
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+    background: rgba(255,255,255,.02);
+}
+
+.mac-section-body {
+    padding: 10px 12px;
+}
+
+/* inner cards (PM + Risco) */
+.mac-inner-card {
+    background: rgba(255,255,255,.025);
+    border: 1px solid rgba(255,255,255,.07);
+    border-radius: 6px;
+    padding: 9px 10px;
+    height: 100%;
+}
+
+.mac-inner-title {
+    font-size: 0.67rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: rgba(255,255,255,.45);
+    margin-bottom: 7px;
+    font-weight: 600;
+}
+
+/* ── Skeleton ────────────────────────────────────────────── */
+.mac-skel-kpi {
+    height: 62px;
+    border-radius: 8px;
+}

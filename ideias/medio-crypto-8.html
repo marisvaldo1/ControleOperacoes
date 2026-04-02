@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Conceito 8 — Comparativo BTC vs ETH Side-by-Side</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+:root{
+  --bg:#0d1117;--bg2:#161b22;--bg3:#21262d;
+  --amber:#f59f00;--blue:#4da6ff;--green:#3fb950;--red:#f85149;--purple:#bc8cff;
+  --tx:#e6edf3;--tx2:#8b949e;--mono:'JetBrains Mono','Courier New',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--tx);font-family:'Segoe UI',sans-serif;min-height:100vh}
+.modal-header{background:var(--bg2);border-bottom:1px solid #30363d;padding:12px 20px;
+  display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:.95rem;font-weight:700}
+.ts{font-family:var(--mono);font-size:.72rem;color:var(--tx2)}
+.btn-refresh{background:none;border:1px solid #30363d;border-radius:6px;color:var(--tx2);cursor:pointer;padding:5px 8px;transition:.2s}
+.btn-refresh:hover{border-color:var(--amber);color:var(--amber)}
+.btn-close{background:none;border:none;cursor:pointer;color:var(--tx2);font-size:1.1rem;
+  width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:.2s}
+.btn-close:hover{background:#30363d;color:var(--tx)}
+.header-meta{display:flex;align-items:center;gap:10px}
+
+.body{padding:16px}
+
+/* Split title bar */
+.split-header{display:grid;grid-template-columns:1fr 1fr;gap:1px;margin-bottom:14px;border-radius:10px;overflow:hidden;border:1px solid #30363d}
+.sh-col{padding:10px 14px;display:flex;align-items:center;gap:8px}
+.sh-col.btc{background:rgba(245,159,0,.07)}
+.sh-col.eth{background:rgba(77,166,255,.07)}
+.sh-icon{font-size:1.2rem}
+.sh-name{font-size:.9rem;font-weight:700}
+.sh-name.btc{color:var(--amber)}
+.sh-name.eth{color:var(--blue)}
+.sh-sub{font-size:.65rem;color:var(--tx2)}
+
+/* Split panels */
+.split-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+
+/* PM Hero */
+.pm-hero{background:var(--bg2);border:1px solid #21262d;border-radius:10px;padding:12px;text-align:center;margin-bottom:10px}
+.pmh-lbl{font-size:.58rem;text-transform:uppercase;letter-spacing:.8px;color:var(--tx2);margin-bottom:5px}
+.pmh-val{font-family:var(--mono);font-size:1.5rem;font-weight:700;margin-bottom:5px}
+.pmh-pct{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.7rem;font-weight:600}
+
+/* Metric card */
+.met-card{background:var(--bg2);border:1px solid #21262d;border-radius:8px;padding:8px 10px;margin-bottom:6px}
+.mc-row{display:flex;align-items:center;justify-content:space-between}
+.mc-lbl{font-size:.65rem;color:var(--tx2)}
+.mc-val{font-family:var(--mono);font-size:.8rem;font-weight:600}
+.mc-bar{height:3px;background:var(--bg3);border-radius:2px;margin-top:5px}
+.mc-fill{height:3px;border-radius:2px}
+
+/* Comparison bar */
+.compare-section{background:var(--bg2);border:1px solid #21262d;border-radius:10px;padding:14px;margin-bottom:14px}
+.cs-title{font-size:.68rem;text-transform:uppercase;letter-spacing:.8px;color:var(--tx2);margin-bottom:12px}
+.cb-row{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.cb-lbl{width:100px;font-size:.65rem;color:var(--tx2);text-align:right}
+.cb-bars{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:3px}
+.cb-b{height:16px;border-radius:3px;display:flex;align-items:center;justify-content:flex-end;padding-right:5px;
+  font-family:var(--mono);font-size:.6rem;font-weight:600;color:#fff;transition:width .6s}
+.cb-b.btc{background:var(--amber);justify-content:flex-end}
+.cb-b.eth{background:var(--blue);justify-content:flex-start;padding-right:0;padding-left:5px}
+
+/* Next op suggestion */
+.next-section{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.next-card{background:var(--bg2);border:1px solid #21262d;border-radius:10px;padding:12px}
+.nc-title{font-size:.65rem;text-transform:uppercase;letter-spacing:.7px;color:var(--tx2);margin-bottom:8px}
+.nc-rec{display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:6px;margin-bottom:4px}
+.nc-rec.danger{background:rgba(248,81,73,.08);border:1px solid rgba(248,81,73,.2)}
+.nc-rec.warn{background:rgba(245,159,0,.08);border:1px solid rgba(245,159,0,.2)}
+.nc-rec.safe{background:rgba(63,185,80,.08);border:1px solid rgba(63,185,80,.2)}
+.nr-dot{width:8px;height:8px;border-radius:50%}
+.nr-dot.d{background:var(--red)}
+.nr-dot.w{background:var(--amber)}
+.nr-dot.s{background:var(--green)}
+.nr-range{font-family:var(--mono);font-size:.65rem;font-weight:600}
+
+/* Chart */
+.chart-section{background:var(--bg2);border:1px solid #21262d;border-radius:10px;padding:14px}
+.chart-title{font-size:.68rem;text-transform:uppercase;letter-spacing:.8px;color:var(--tx2);margin-bottom:8px}
+</style>
+</head>
+<body>
+<div class="modal-header">
+  <div class="modal-title">⚖️ Comparativo BTC vs ETH — Preço Médio</div>
+  <div class="header-meta">
+    <span class="ts" id="tsLabel">—</span>
+    <button class="btn-refresh">↻ Sync</button>
+    <button class="btn-close">✕</button>
+  </div>
+</div>
+
+<div class="body">
+  <!-- Asset header split -->
+  <div class="split-header">
+    <div class="sh-col btc">
+      <div class="sh-icon">₿</div>
+      <div>
+        <div class="sh-name btc">Bitcoin (BTC)</div>
+        <div class="sh-sub">12 operações · TAE 94.1%</div>
+      </div>
+    </div>
+    <div class="sh-col eth">
+      <div class="sh-icon">Ξ</div>
+      <div>
+        <div class="sh-name eth">Ethereum (ETH)</div>
+        <div class="sh-sub">15 operações · TAE 116.6%</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PM Heroes + metrics -->
+  <div class="split-grid" id="splitGrid"></div>
+
+  <!-- Comparison bars -->
+  <div class="compare-section">
+    <div class="cs-title">📊 Comparativo de Métricas</div>
+    <div id="compareBars"></div>
+  </div>
+
+  <!-- Next OP -->
+  <div class="next-section" id="nextSection"></div>
+
+  <!-- Combined Chart -->
+  <div class="chart-section">
+    <div class="chart-title">📈 Prêmio Acumulado — BTC ₿ vs ETH Ξ</div>
+    <div style="height:120px"><canvas id="comboChart"></canvas></div>
+  </div>
+</div>
+
+<script>
+const D={
+  BTC:{ac:'#f59f00',cot:71403.68,pm:73943.60,strikeEx:74000,premios:56.40,ops:12,winRate:91.7,tae:94.1,
+    evo:[2.75,5.00,10.52,19.14,29.58,40.05,48.43,53.83,55.24,56.82,56.40]},
+  ETH:{ac:'#4da6ff',cot:2192.0,pm:2225.04,strikeEx:2325,premios:99.96,ops:15,winRate:93.3,tae:116.6,
+    evo:[1.59,3.33,7.42,28.22,52.06,69.06,76.06,84.18,85.68,88.76,93.59]}
+};
+const f=(v,d=2)=>v.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fu=v=>'$'+f(v);
+const fp=v=>(v>0?'+':'')+f(v,2)+'%';
+
+function buildSplit(){
+  const cols=['BTC','ETH'].map(s=>{
+    const d=D[s];
+    const pct=(d.cot-d.pm)/d.pm*100;
+    const pc=pct>=0?'#3fb950':pct>-3?'#f59f00':'#f85149';
+    const badgeCls=pct>=0?'background:rgba(63,185,80,.15);border:1px solid rgba(63,185,80,.3);color:#3fb950':
+      pct>-3?'background:rgba(245,159,0,.15);border:1px solid rgba(245,159,0,.3);color:#f59f00':
+              'background:rgba(248,81,73,.15);border:1px solid rgba(248,81,73,.3);color:#f85149';
+    return`<div>
+      <div class="pm-hero">
+        <div class="pmh-lbl">💰 Preço Médio ${s}</div>
+        <div class="pmh-val" style="color:${d.ac}">${fu(d.pm)}</div>
+        <span class="pmh-pct" style="${badgeCls}">${fp(pct)} vs cotação</span>
+      </div>
+      <div class="met-card">
+        <div class="mc-row"><span class="mc-lbl">📍 Strike Exercida</span><span class="mc-val" style="color:var(--amber)">${fu(d.strikeEx)}</span></div>
+      </div>
+      <div class="met-card">
+        <div class="mc-row"><span class="mc-lbl">💸 Prêmios Acum.</span><span class="mc-val" style="color:var(--green)">${fu(d.premios)}</span></div>
+        <div class="mc-bar"><div class="mc-fill" style="width:${Math.min(100,d.premios)}%;background:var(--green)"></div></div>
+      </div>
+      <div class="met-card">
+        <div class="mc-row"><span class="mc-lbl">📊 Cotação Atual</span><span class="mc-val" style="color:${pc}">${fu(d.cot)}</span></div>
+      </div>
+      <div class="met-card">
+        <div class="mc-row"><span class="mc-lbl">🏆 Win Rate</span><span class="mc-val" style="color:var(--green)">${f(d.winRate)}%</span></div>
+        <div class="mc-bar"><div class="mc-fill" style="width:${d.winRate}%;background:var(--green)"></div></div>
+      </div>
+      <div class="met-card">
+        <div class="mc-row"><span class="mc-lbl">⚡ TAE</span><span class="mc-val" style="color:var(--purple)">${f(d.tae)}%</span></div>
+        <div class="mc-bar"><div class="mc-fill" style="width:${Math.min(100,d.tae/150*100)}%;background:var(--purple)"></div></div>
+      </div>
+    </div>`;
+  });
+  document.getElementById('splitGrid').innerHTML=cols.join('');
+}
+
+function buildCompare(){
+  const rows=[
+    {l:'Win Rate',bBTC:D.BTC.winRate/100,bETH:D.ETH.winRate/100,vBTC:f(D.BTC.winRate)+'%',vETH:f(D.ETH.winRate)+'%'},
+    {l:'TAE',bBTC:Math.min(1,D.BTC.tae/150),bETH:Math.min(1,D.ETH.tae/150),vBTC:f(D.BTC.tae)+'%',vETH:f(D.ETH.tae)+'%'},
+    {l:'Num. Ops',bBTC:D.BTC.ops/20,bETH:D.ETH.ops/20,vBTC:D.BTC.ops+'',vETH:D.ETH.ops+''},
+  ];
+  document.getElementById('compareBars').innerHTML=rows.map(r=>`
+    <div class="cb-row">
+      <div class="cb-lbl">${r.l}</div>
+      <div class="cb-bars">
+        <div class="cb-b btc" style="width:${Math.round(r.bBTC*100)}%">${r.vBTC}</div>
+        <div class="cb-b eth" style="width:${Math.round(r.bETH*100)}%">${r.vETH}</div>
+      </div>
+    </div>`).join('');
+}
+
+function buildNext(){
+  const cols=['BTC','ETH'].map(s=>{
+    const pm=D[s].pm;
+    return`<div class="next-card">
+      <div class="nc-title">🎯 Próxima Op. ${s}</div>
+      <div class="nc-rec danger">
+        <div class="nr-dot d"></div>
+        <span class="nr-range" style="color:var(--red)">🚫 &lt; ${fu(pm*1.005)}</span>
+      </div>
+      <div class="nc-rec warn">
+        <div class="nr-dot w"></div>
+        <span class="nr-range" style="color:var(--amber)">⚠️ ${fu(pm*1.005)} – ${fu(pm*1.02)}</span>
+      </div>
+      <div class="nc-rec safe">
+        <div class="nr-dot s"></div>
+        <span class="nr-range" style="color:var(--green)">✅ &gt; ${fu(pm*1.02)}</span>
+      </div>
+    </div>`;
+  });
+  document.getElementById('nextSection').innerHTML=cols.join('');
+}
+
+function buildChart(){
+  const ctx=document.getElementById('comboChart').getContext('2d');
+  const n=Math.max(D.BTC.evo.length,D.ETH.evo.length);
+  new Chart(ctx,{type:'line',data:{
+    labels:Array.from({length:n},(_,i)=>'D'+(i+1)),
+    datasets:[
+      {label:'BTC',data:D.BTC.evo,borderColor:'#f59f00',backgroundColor:'rgba(245,159,0,.08)',
+        fill:true,tension:.4,borderWidth:2,pointRadius:2},
+      {label:'ETH',data:D.ETH.evo,borderColor:'#4da6ff',backgroundColor:'rgba(77,166,255,.08)',
+        fill:true,tension:.4,borderWidth:2,pointRadius:2}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#8b949e',font:{size:10},boxWidth:12}}},
+      scales:{x:{display:false},y:{grid:{color:'rgba(255,255,255,.04)'},
+        ticks:{color:'#8b949e',font:{size:9},callback:v=>'$'+v.toFixed(0)}}}}});
+}
+
+document.getElementById('tsLabel').textContent='Atualizado: '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+buildSplit();
+buildCompare();
+buildNext();
+buildChart();
+</script>
+</body>
+</html>

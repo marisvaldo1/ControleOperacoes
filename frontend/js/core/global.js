@@ -21,6 +21,51 @@ document.addEventListener('libsLoaded', function() {
             new bootstrap.Tooltip(tooltipTriggerEl);
         });
     }
+
+    if (typeof Swal !== 'undefined' && !Swal.__themePatched) {
+        const originalFire = Swal.fire.bind(Swal);
+
+        function getActiveTheme() {
+            const bodyTheme = document.body?.getAttribute('data-bs-theme');
+            return bodyTheme || localStorage.getItem('theme') || 'dark';
+        }
+
+        function getSwalThemeOptions() {
+            const theme = getActiveTheme();
+            const isDark = theme === 'dark';
+            return {
+                background: isDark ? '#1f2937' : '#ffffff',
+                color: isDark ? '#f8fafc' : '#1f2937',
+                customClass: {
+                    popup: isDark ? 'swal-theme-popup swal-theme-dark' : 'swal-theme-popup swal-theme-light'
+                }
+            };
+        }
+
+        Swal.fire = function(options, ...args) {
+            if (options && typeof options === 'object' && !Array.isArray(options)) {
+                const themeOpts = getSwalThemeOptions();
+                const mergedCustomClass = {
+                    ...(themeOpts.customClass || {}),
+                    ...(options.customClass || {})
+                };
+                return originalFire({
+                    ...themeOpts,
+                    ...options,
+                    customClass: mergedCustomClass
+                }, ...args);
+            }
+            return originalFire(options, ...args);
+        };
+
+        Swal.__themePatched = true;
+
+        document.addEventListener('themeChanged', function() {
+            if (!Swal.isVisible()) return;
+            const themeOpts = getSwalThemeOptions();
+            Swal.update(themeOpts);
+        });
+    }
 });
 
 // Formatar moeda

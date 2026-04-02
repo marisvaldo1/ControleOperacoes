@@ -6,6 +6,7 @@
     const state = {
         period: '60d',
         chart: null,
+        finalChart: null,
         loading: false,
         updating: false
     };
@@ -21,7 +22,8 @@
             } catch (e) { return 0; }
         },
         getResultValue: function (op) {
-            const v = parseFloat(op.resultado || op.premio_us);
+            // Prioriza premio_us (valor USD real); resultado é percentual sobre o saldo
+            const v = parseFloat(op.premio_us ?? op.resultado);
             return Number.isFinite(v) ? v : 0;
         },
         triggerCard: 'cardResultadoTotalCryptoCard',
@@ -69,7 +71,7 @@
     }
 
     function getOpVencimentoDate(op) {
-        return parseDate(op.vencimento);
+        return parseDate(op.vencimento) || parseDate(op.exercicio);
     }
 
     function getOpResultadoFinal(op) {
@@ -204,6 +206,9 @@
             start.setMonth(start.getMonth() - 12);
         }
 
+        if (start) start.setHours(0, 0, 0, 0);
+        if (end) end.setHours(23, 59, 59, 999);
+
         return { start, end };
     }
 
@@ -256,6 +261,78 @@
         return 'CRYPTO';
     }
 
+    function isPutExercised(op) {
+        if (getOpType(op) !== 'PUT') return false;
+        const status = String(op.status || '').toUpperCase();
+        const exStatus = String(op.exercicio_status || '').toUpperCase();
+        if (exStatus === 'SIM') return true;
+        if (status === 'EXERCIDA') return true;
+        if (!isOpenOperation(op)) {
+            const current = parseFloat(op.cotacao_atual ?? NaN);
+            const strike = parseFloat(op.strike ?? NaN);
+            if (Number.isFinite(current) && Number.isFinite(strike)) return current <= strike;
+        }
+        return false;
+    }
+
+    function getDaysToExpiry(op) {
+        const due = getOpVencimentoDate(op);
+        if (!due) return null;
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        due.setHours(0, 0, 0, 0);
+        return Math.round((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    }
+
+    function getDistanceToStrikePct(op) {
+        const current = parseFloat(op.cotacao_atual ?? op.preco_atual ?? op.preco ?? NaN);
+        const strike = parseFloat(op.strike ?? NaN);
+        if (!Number.isFinite(current) || !Number.isFinite(strike) || current <= 0) return null;
+        const type = getOpType(op);
+        if (type === 'PUT') return ((current - strike) / current) * 100;
+        return ((strike - current) / current) * 100;
+    }
+
+    function getPremiumPct(op) {
+        const premio = parseFloat(op.premio_us ?? NaN);
+        const abertura = parseFloat(op.abertura ?? NaN);
+        if (!Number.isFinite(premio) || !Number.isFinite(abertura) || abertura <= 0) return null;
+        return (premio / abertura) * 100;
+    }
+
+    function evaluateUrgency(op) {
+        const days = getDaysToExpiry(op);
+        const distance = getDistanceToStrikePct(op);
+        const premiumPct = getPremiumPct(op);
+
+        let level = 'safe';
+        if ((days !== null && days <= 2) || (distance !== null && distance <= 1.5)) level = 'risk';
+        else if ((days !== null && days <= 5) || (distance !== null && distance <= 4)) level = 'warn';
+
+        if (premiumPct !== null && premiumPct < 0.8 && level === 'safe') level = 'warn';
+
+        const riskBase = level === 'risk' ? 90 : level === 'warn' ? 60 : 25;
+        const daysScore = days === null ? 0 : Math.max(0, 15 - days);
+        const distanceScore = distance === null ? 0 : Math.max(0, 12 - distance);
+        const score = riskBase + daysScore + distanceScore;
+
+        return { level, days, distance, premiumPct, score };
+    }
+
+    function isCallExercised(op) {
+        if (getOpType(op) !== 'CALL') return false;
+        const status = String(op.status || '').toUpperCase();
+        const exStatus = String(op.exercicio_status || '').toUpperCase();
+        if (exStatus === 'SIM') return true;
+        if (status === 'EXERCIDA') return true;
+        if (!isOpenOperation(op)) {
+            const current = parseFloat(op.cotacao_atual ?? NaN);
+            const strike = parseFloat(op.strike ?? NaN);
+            if (Number.isFinite(current) && Number.isFinite(strike)) return current >= strike;
+        }
+        return false;
+    }
+
     function formatDurationDays(days) {
         if (!Number.isFinite(days)) return '-';
         return `${days} dias`;
@@ -285,6 +362,19 @@
             .replace(/#+\s*/g, '')
             .replace(/\s+/g, ' ')
             .trim();
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function isOpenOperation(op) {
+        return (op.status || 'ABERTA') === 'ABERTA';
     }
 
     function calcSummary(ops) {
@@ -421,10 +511,22 @@
             if (value > maxPositive) maxPositive = value;
         });
 
+        const dayOperationsMap = new Map();
+        ops.forEach(op => {
+            const opDate = getOpDate(op);
+            if (!opDate) return;
+            const key = normalizeDateKey(opDate);
+            if (!dayOperationsMap.has(key)) {
+                dayOperationsMap.set(key, []);
+            }
+            dayOperationsMap.get(key).push(op);
+        });
+
         for (let day = 1; day <= totalDays; day += 1) {
             const date = new Date(year, month, day);
             const key = normalizeDateKey(date);
             const value = summary.dailyMap.get(key) || 0;
+            const dayOps = dayOperationsMap.get(key) || [];
             const dayEl = document.createElement('div');
             dayEl.className = 'rt-day';
 
@@ -455,24 +557,198 @@
             dayValue.className = 'rt-day-value';
             dayValue.textContent = value !== 0 ? fmtC(value) : '';
 
-            const weekStart = new Date(date);
-            weekStart.setDate(date.getDate() - date.getDay());
-            weekStart.setHours(0, 0, 0, 0);
-            const weekEnd = new Date(weekStart);
-            weekEnd.setDate(weekStart.getDate() + 6);
-            weekEnd.setHours(23, 59, 59, 999);
-
             dayEl.classList.add('rt-week-clickable');
             dayEl.addEventListener('click', () => {
-                if (typeof showWeekOperations === 'function') {
-                    showWeekOperations(weekStart, weekEnd);
-                }
+                showDayOperations(date, dayOps);
             });
 
             dayEl.appendChild(dayNumber);
             dayEl.appendChild(dayValue);
             calendarGrid.appendChild(dayEl);
         }
+    }
+
+    function ensureDayOperationsModal() {
+        let modalEl = document.getElementById('rtDayOperationsModal');
+        if (modalEl) return modalEl;
+
+        const modalHtml = `
+            <div class="modal modal-blur fade" id="rtDayOperationsModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+                    <div class="modal-content rt-dayops-modal">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="rtDayOperationsTitle">Operações do dia</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div id="rtDayOperationsSummary" class="rt-dayops-summary"></div>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-vcenter rt-dayops-table mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Hora</th>
+                                            <th>Ativo</th>
+                                            <th>Tipo</th>
+                                            <th>Entrada</th>
+                                            <th>Atual / Strike</th>
+                                            <th>Resultado</th>
+                                            <th>Status</th>
+                                            <th class="text-center">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="rtDayOperationsBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        modalEl = document.getElementById('rtDayOperationsModal');
+        if (modalEl && modalEl.dataset.bound !== 'true') {
+            modalEl.dataset.bound = 'true';
+            modalEl.addEventListener('click', event => {
+                const button = event.target.closest('[data-open-crypto-op]');
+                if (!button) return;
+                const opId = button.getAttribute('data-open-crypto-op');
+                if (!opId) return;
+
+                const launchDetail = () => {
+                    if (window.ModalAnaliseCrypto && typeof window.ModalAnaliseCrypto.open === 'function') {
+                        window.ModalAnaliseCrypto.open(opId);
+                    }
+                };
+
+                const modalInstance = bootstrap.Modal.getInstance(modalEl);
+                if (!modalInstance) {
+                    launchDetail();
+                    return;
+                }
+
+                modalEl.addEventListener('hidden.bs.modal', launchDetail, { once: true });
+                modalInstance.hide();
+            });
+        }
+
+        return modalEl;
+    }
+
+    function showDayOperations(date, ops) {
+        const modalEl = ensureDayOperationsModal();
+        if (!modalEl) return;
+
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        const titleEl = document.getElementById('rtDayOperationsTitle');
+        const summaryEl = document.getElementById('rtDayOperationsSummary');
+        const bodyEl = document.getElementById('rtDayOperationsBody');
+        if (!bodyEl) return;
+
+        const sortedOps = [...ops].sort((a, b) => {
+            const aOpen = isOpenOperation(a) ? 0 : 1;
+            const bOpen = isOpenOperation(b) ? 0 : 1;
+            if (aOpen !== bOpen) return aOpen - bOpen;
+
+            const da = getOpDate(a);
+            const db = getOpDate(b);
+            if (!da && !db) return 0;
+            if (!da) return 1;
+            if (!db) return -1;
+            return db - da;
+        });
+
+        const openOps = sortedOps.filter(isOpenOperation);
+        const closedOps = sortedOps.length - openOps.length;
+        const displayOps = openOps.length > 0 ? openOps : sortedOps;
+        const total = displayOps.reduce((acc, op) => acc + getOpResultadoFinal(op), 0);
+        const saldoBase = cfg.getSaldo();
+        const roiDay = saldoBase > 0 ? (total / saldoBase) * 100 : 0;
+
+        if (titleEl) {
+            titleEl.textContent = `Operações do Dia (${date.toLocaleDateString('pt-BR')})`;
+        }
+        if (summaryEl) {
+            summaryEl.innerHTML = `
+                <div class="row g-2 rt-dayops-cards">
+                    <div class="col-6 col-lg-3">
+                        <div class="card rt-dayops-card">
+                            <div class="card-body p-2">
+                                <div class="subheader small">Registros no dia</div>
+                                <div class="h2 mb-0">${displayOps.length}</div>
+                                <div class="small text-muted">${sortedOps.length} registro${sortedOps.length === 1 ? '' : 's'} no dia</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-lg-3">
+                        <div class="card rt-dayops-card">
+                            <div class="card-body p-2">
+                                <div class="subheader small">Abertas</div>
+                                <div class="h2 mb-0 text-success">${openOps.length}</div>
+                                <div class="small text-muted">${closedOps} fechada${closedOps === 1 ? '' : 's'}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-lg-3">
+                        <div class="card rt-dayops-card">
+                            <div class="card-body p-2">
+                                <div class="subheader small">Resultado do dia</div>
+                                <div class="h2 mb-0 ${total >= 0 ? 'text-success' : 'text-danger'}">${fmtC(total)}</div>
+                                <div class="small text-muted">${displayOps.length === 1 ? '1 operação exibida' : `${displayOps.length} operações exibidas`}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-lg-3">
+                        <div class="card rt-dayops-card">
+                            <div class="card-body p-2">
+                                <div class="subheader small">ROI sobre saldo</div>
+                                <div class="h2 mb-0 ${roiDay >= 0 ? 'text-success' : 'text-danger'}">${roiDay.toFixed(2)}%</div>
+                                <div class="small text-muted">Base atual ${fmtC(saldoBase)}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        bodyEl.innerHTML = displayOps.length > 0
+            ? displayOps.map(op => {
+                const opDate = getOpDate(op);
+                const entry = getEntryPrice(op);
+                const exit = getExitPrice(op);
+                const result = getOpResultadoFinal(op);
+                const type = escapeHtml(getOpType(op));
+                const ativo = escapeHtml(op.ativo || '-');
+                const status = escapeHtml(op.status || 'ABERTA');
+                const statusBadge = isOpenOperation(op)
+                    ? '<span class="badge bg-success text-white rt-dayops-status">ABERTA</span>'
+                    : `<span class="badge bg-azure text-white rt-dayops-status">${status}</span>`;
+                const tipoBadgeClass = type === 'CALL'
+                    ? 'bg-green-lt text-green'
+                    : (type === 'PUT' ? 'bg-red-lt text-red' : 'bg-secondary-lt text-secondary');
+                return `
+                    <tr>
+                        <td>${opDate ? opDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '-'}</td>
+                        <td>
+                            <div class="fw-semibold">${ativo}</div>
+                            <div class="small text-muted">ID ${escapeHtml(op.id || '-')}</div>
+                        </td>
+                        <td><span class="badge ${tipoBadgeClass}">${type}</span></td>
+                        <td>${entry !== null ? fmtC(entry) : '-'}</td>
+                        <td>${exit !== null ? fmtC(exit) : '-'}</td>
+                        <td class="${result >= 0 ? 'text-green' : 'text-danger'} fw-semibold">${fmtC(result)}</td>
+                        <td>${statusBadge}</td>
+                        <td class="text-center">
+                            <button type="button" class="btn btn-sm btn-info btn-icon" data-open-crypto-op="${escapeHtml(op.id || '')}" title="Abrir análise completa">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('')
+            : '<tr><td colspan="8" class="text-muted text-center py-3">Nenhuma operação registrada neste dia.</td></tr>';
+
+        modal.show();
     }
 
     function renderWeekdayList(summary) {
@@ -807,9 +1083,16 @@
         const container = document.getElementById('rtAssetPerformance');
         if (!container) return;
         const map = new Map();
-        ops.forEach(op => {
+        // Ordena: abertas primeiro, depois por data decrescente
+        const sorted = [...ops].sort((a, b) => {
+            const aOpen = (a.status || 'ABERTA') === 'ABERTA' ? 0 : 1;
+            const bOpen = (b.status || 'ABERTA') === 'ABERTA' ? 0 : 1;
+            if (aOpen !== bOpen) return aOpen - bOpen;
+            return (getOpDate(b) || 0) - (getOpDate(a) || 0);
+        });
+        sorted.forEach(op => {
             const key = op.ativo || 'N/A';
-            const entry = map.get(key) || { total: 0, wins: 0, losses: 0, ops: 0 };
+            const entry = map.get(key) || { total: 0, wins: 0, losses: 0, ops: 0, lastOpId: op.id };
             const result = getOpResultadoFinal(op);
             entry.total += result;
             entry.ops += 1;
@@ -830,6 +1113,8 @@
             const card = document.createElement('div');
             const tone = data.total > 0 ? 'positive' : data.total < 0 ? 'negative' : 'neutral';
             card.className = `financial-card ${tone} rt-asset-card`;
+            card.style.cursor = 'pointer';
+            card.title = `Ver detalhes de ${asset}`;
             card.innerHTML = `
                 <div class="rt-asset-header">
                     <div class="rt-asset-name">${asset}</div>
@@ -840,6 +1125,10 @@
                     <span>Win ${formatPercent(winRate)}</span>
                 </div>
             `;
+            // Abre o modal-detalhe-crypto da operação mais recente deste ativo
+            if (data.lastOpId && typeof window.showDetalhes === 'function') {
+                card.addEventListener('click', () => window.showDetalhes(data.lastOpId));
+            }
             container.appendChild(card);
         });
     }
@@ -960,6 +1249,606 @@
         body.innerHTML = rows || '<tr><td colspan="8" class="text-muted">Sem operações no período.</td></tr>';
     }
 
+    function renderCockpitBlend(ops) {
+        const container = document.getElementById('rtCockpitBlendBody');
+        const stampEl = document.getElementById('rtCockpitLastUpdate');
+        if (!container) return;
+
+        const openOps = ops.filter(isOpenOperation);
+        if (stampEl) {
+            const now = new Date();
+            stampEl.textContent = `Atualizado ${now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+        }
+
+        if (!openOps.length) {
+            container.innerHTML = '<div class="text-muted">Sem operações abertas no período selecionado.</div>';
+            return;
+        }
+
+        const byAsset = new Map();
+        const ranked = openOps.map(op => ({ op, urgency: evaluateUrgency(op) }))
+            .sort((a, b) => b.urgency.score - a.urgency.score);
+
+        ranked.forEach(item => {
+            const asset = item.op.ativo || 'N/A';
+            if (!byAsset.has(asset)) {
+                byAsset.set(asset, { total: 0, safe: 0, warn: 0, risk: 0, avgDistance: 0, _distanceCount: 0 });
+            }
+            const agg = byAsset.get(asset);
+            agg.total += 1;
+            agg[item.urgency.level] += 1;
+            if (Number.isFinite(item.urgency.distance)) {
+                agg.avgDistance += item.urgency.distance;
+                agg._distanceCount += 1;
+            }
+        });
+
+        const healthHtml = [...byAsset.entries()].map(([asset, agg]) => {
+            const safePct = agg.total > 0 ? (agg.safe / agg.total) * 100 : 0;
+            const warnPct = agg.total > 0 ? (agg.warn / agg.total) * 100 : 0;
+            const avgDistance = agg._distanceCount > 0 ? agg.avgDistance / agg._distanceCount : null;
+            const tone = agg.risk > 0 ? 'risk' : agg.warn > 0 ? 'warn' : 'safe';
+            return `
+                <div class="rt-cockpit-card ${tone}">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <div class="fw-bold">${escapeHtml(asset)}</div>
+                        <span class="badge bg-dark-lt">${agg.total} aberta(s)</span>
+                    </div>
+                    <div class="rt-health-track mb-2">
+                        <div class="rt-health-fill" style="width:${safePct.toFixed(1)}%"></div>
+                    </div>
+                    <div class="small text-muted d-flex justify-content-between">
+                        <span>Seguras: ${agg.safe}</span>
+                        <span>Atenção: ${agg.warn}</span>
+                        <span>Risco: ${agg.risk}</span>
+                    </div>
+                    <div class="small text-muted mt-1">Distância média strike: ${avgDistance === null ? '-' : `${avgDistance.toFixed(2)}%`}</div>
+                    <div class="small text-muted">Saúde operacional: ${(100 - warnPct - (agg.risk / agg.total) * 100).toFixed(1)}%</div>
+                </div>
+            `;
+        }).join('');
+
+        const timelineHtml = ranked.slice(0, 8).map(({ op, urgency }) => {
+            const days = urgency.days;
+            const daysLabel = days === null ? '-' : `${days}d`;
+            const severity = urgency.level;
+            const fill = severity === 'risk' ? 100 : severity === 'warn' ? 65 : 35;
+            return `
+                <div class="rt-timeline-row">
+                    <div class="small">
+                        <span class="fw-semibold">${escapeHtml(op.ativo || 'N/A')}</span>
+                        <span class="text-muted">#${escapeHtml(op.id || '-')}</span>
+                    </div>
+                    <div class="rt-timeline-track">
+                        <div class="rt-timeline-fill ${severity}" style="width:${fill}%"></div>
+                    </div>
+                    <div class="text-end small ${severity === 'risk' ? 'text-danger' : severity === 'warn' ? 'text-warning' : 'text-green'}">${daysLabel}</div>
+                </div>
+            `;
+        }).join('');
+
+        const cockpitHtml = ranked.slice(0, 6).map(({ op, urgency }) => {
+            const result = getOpResultadoFinal(op);
+            const levelLabel = urgency.level === 'risk' ? 'P1 Risco' : urgency.level === 'warn' ? 'P2 Atenção' : 'P3 OK';
+            const levelClass = urgency.level;
+            return `
+                <div class="rt-cockpit-card ${levelClass}">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <div class="fw-bold">${escapeHtml(op.ativo || 'N/A')} <span class="text-muted">#${escapeHtml(op.id || '-')}</span></div>
+                        <span class="badge ${levelClass === 'risk' ? 'bg-danger' : levelClass === 'warn' ? 'bg-warning text-dark' : 'bg-success'}">${levelLabel}</span>
+                    </div>
+                    <div class="small text-muted">Tipo: ${escapeHtml(getOpType(op))} · Venc.: ${formatDateTime(op.exercicio || op.vencimento)}</div>
+                    <div class="small text-muted">Distância: ${Number.isFinite(urgency.distance) ? `${urgency.distance.toFixed(2)}%` : '-'} · Prêmio: ${Number.isFinite(urgency.premiumPct) ? `${urgency.premiumPct.toFixed(2)}%` : '-'}</div>
+                    <div class="small mt-1">Resultado atual: <span class="value ${result >= 0 ? 'text-green' : 'text-danger'}">${fmtC(result)}</span></div>
+                </div>
+            `;
+        }).join('');
+
+        container.innerHTML = `
+            <div class="mb-2 small text-muted">Mesclagem de Barra de Saúde Operacional + Modo Cockpit por Criticidade + Timeline de Vencimento.</div>
+            <div class="rt-cockpit-grid">${healthHtml}</div>
+            <div class="row g-3">
+                <div class="col-lg-6">
+                    <div class="card bg-transparent border">
+                        <div class="card-body">
+                            <div class="fw-semibold mb-2">Cockpit por criticidade</div>
+                            <div class="rt-cockpit-grid">${cockpitHtml}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card bg-transparent border h-100">
+                        <div class="card-body">
+                            <div class="fw-semibold mb-2">Timeline de vencimento (abertas)</div>
+                            <div class="rt-timeline-list">${timelineHtml}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderExercisedCallsCoverage(ops) {
+        const container = document.getElementById('rtExercisedCallsBody');
+        if (!container) return;
+
+        const exercisedCalls = ops
+            .filter(isCallExercised)
+            .map(op => ({
+                op,
+                eventDate: getOpVencimentoDate(op) || getOpDate(op)
+            }))
+            .filter(item => !!item.eventDate)
+            .sort((a, b) => b.eventDate - a.eventDate)
+            .slice(0, 6);
+
+        if (!exercisedCalls.length) {
+            container.innerHTML = '<div class="text-muted">Nenhuma CALL exercida identificada no período selecionado.</div>';
+            return;
+        }
+
+        const rows = exercisedCalls.map(({ op, eventDate }) => {
+            const pnl = getOpResultadoFinal(op);
+            const afterOps = ops.filter(candidate => {
+                if (candidate.id === op.id) return false;
+                const candidateDate = getOpDate(candidate);
+                return candidateDate && candidateDate > eventDate;
+            });
+            const afterNet = afterOps.reduce((acc, item) => acc + getOpResultadoFinal(item), 0);
+            const afterCount = afterOps.length;
+
+            let coverageHtml = '<div class="meta">Sem necessidade de cobertura.</div>';
+            if (pnl < 0) {
+                const loss = Math.abs(pnl);
+                const coveredValue = Math.max(0, afterNet);
+                const remaining = Math.max(0, loss - coveredValue);
+                const coveredPct = loss > 0 ? Math.min(100, (coveredValue / loss) * 100) : 100;
+                const remainingPct = loss > 0 ? (remaining / loss) * 100 : 0;
+                coverageHtml = `
+                    <div class="meta">Cobertura por operações posteriores (${afterCount}): <span class="${coveredValue > 0 ? 'text-green' : 'text-muted'}">${fmtC(coveredValue)}</span></div>
+                    <div class="meta">Falta cobrir: <span class="${remaining > 0 ? 'text-danger' : 'text-green'}">${fmtC(remaining)} (${remainingPct.toFixed(2)}%)</span></div>
+                    <div class="progress mt-1" style="height: 6px;">
+                        <div class="progress-bar ${coveredPct >= 100 ? 'bg-success' : 'bg-warning'}" style="width:${coveredPct.toFixed(2)}%"></div>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="rt-exercised-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="fw-semibold">${escapeHtml(op.ativo || 'N/A')} <span class="text-muted">#${escapeHtml(op.id || '-')}</span></div>
+                        <span class="badge ${pnl >= 0 ? 'bg-success' : 'bg-danger'}">${pnl >= 0 ? 'Lucro' : 'Prejuízo'}</span>
+                    </div>
+                    <div class="meta">Exercida em ${eventDate.toLocaleDateString('pt-BR')} · Strike ${Number.isFinite(parseFloat(op.strike)) ? fmtC(op.strike) : '-'}</div>
+                    <div class="mt-1">Resultado da CALL exercida: <span class="value ${pnl >= 0 ? 'text-green' : 'text-danger'}">${fmtC(pnl)}</span></div>
+                    ${coverageHtml}
+                </div>
+            `;
+        }).join('');
+
+        const totalPnl = exercisedCalls.reduce((acc, item) => acc + getOpResultadoFinal(item.op), 0);
+        const losses = exercisedCalls.filter(item => getOpResultadoFinal(item.op) < 0);
+        const totalRemaining = losses.reduce((acc, item) => {
+            const loss = Math.abs(getOpResultadoFinal(item.op));
+            const afterNet = ops.filter(candidate => {
+                if (candidate.id === item.op.id) return false;
+                const candidateDate = getOpDate(candidate);
+                return candidateDate && candidateDate > item.eventDate;
+            }).reduce((sum, op) => sum + getOpResultadoFinal(op), 0);
+            const remaining = Math.max(0, loss - Math.max(0, afterNet));
+            return acc + remaining;
+        }, 0);
+
+        container.innerHTML = `
+            <div class="row g-2 mb-3">
+                <div class="col-sm-4"><div class="card bg-dark-lt"><div class="card-body p-2 text-center"><div class="subheader">CALLs Exercidas (últimas)</div><div class="h3 mb-0">${exercisedCalls.length}</div></div></div></div>
+                <div class="col-sm-4"><div class="card bg-dark-lt"><div class="card-body p-2 text-center"><div class="subheader">Resultado agregado</div><div class="h3 mb-0 ${totalPnl >= 0 ? 'text-green' : 'text-danger'}">${fmtC(totalPnl)}</div></div></div></div>
+                <div class="col-sm-4"><div class="card bg-dark-lt"><div class="card-body p-2 text-center"><div class="subheader">Prejuízo pendente de cobrir</div><div class="h3 mb-0 ${totalRemaining > 0 ? 'text-danger' : 'text-green'}">${fmtC(totalRemaining)}</div></div></div></div>
+            </div>
+            <div class="rt-exercised-list">${rows}</div>
+        `;
+    }
+
+    function calculateFinalResultModel(opsForPeriod, allOps) {
+        // Ciclo correto em Dual Investment:
+        // 1. PUT exercida  = compra do ativo ao strike da PUT
+        // 2. Coleta de prêmios de opções sobre o ativo em carteira
+        // 3. CALL exercida = venda do ativo ao strike da CALL
+        // Resultado do ciclo = (CALL strike − PUT strike) + prêmios coletados
+        const sortedPeriod = [...opsForPeriod]
+            .map(op => ({ op, eventDate: getOpVencimentoDate(op) || getOpDate(op) }))
+            .filter(item => !!item.eventDate)
+            .sort((a, b) => a.eventDate - b.eventDate);
+
+        const exercisedCalls = sortedPeriod.filter(item => isCallExercised(item.op));
+        const exercisedPuts  = sortedPeriod.filter(item => isPutExercised(item.op));
+
+        const periodTotal  = opsForPeriod.reduce((acc, op) => acc + getOpResultadoFinal(op), 0);
+        const historyTotal = allOps.reduce((acc, op) => acc + getOpResultadoFinal(op), 0);
+
+        if (!exercisedPuts.length) {
+            return {
+                hasCycle: false,
+                reason: 'Nenhuma PUT exercida identificada no período. Sem posição de compra para calcular o ciclo.',
+                periodTotal,
+                historyTotal
+            };
+        }
+
+        // Busca o par mais recente PUT→CALL, priorizando mesmo ativo
+        let lastPut  = null;
+        let lastCall = null;
+
+        for (let i = exercisedPuts.length - 1; i >= 0; i--) {
+            const candidatePut = exercisedPuts[i];
+            const asset = candidatePut.op.ativo;
+            const matchingCalls = exercisedCalls.filter(item =>
+                item.eventDate > candidatePut.eventDate &&
+                (!asset || item.op.ativo === asset)
+            );
+            if (matchingCalls.length) {
+                lastPut  = candidatePut;
+                lastCall = matchingCalls[matchingCalls.length - 1];
+                break;
+            }
+        }
+
+        // Fallback: PUT sem CALL correspondente → ciclo ainda aberto
+        if (!lastPut) {
+            lastPut = exercisedPuts[exercisedPuts.length - 1];
+        }
+
+        const putStrike  = parseFloat(lastPut.op.strike || 0)  || 0;
+        const callStrike = lastCall ? (parseFloat(lastCall.op.strike || 0) || 0) : 0;
+
+        // betweenOps: operações desde a PUT até a CALL (inclusive)
+        const betweenOps = sortedPeriod.filter(item => {
+            const isAfterOrAtPut = item.eventDate >= lastPut.eventDate;
+            if (!isAfterOrAtPut) return false;
+            if (!lastCall) return true;
+            return item.eventDate <= lastCall.eventDate;
+        });
+
+        const afterCallOps = lastCall
+            ? sortedPeriod.filter(item => item.eventDate > lastCall.eventDate)
+            : [];
+
+        const premiumBetween = betweenOps.reduce((acc, item) =>
+            acc + (parseFloat(item.op.premio_us) || 0), 0);
+
+        // swapResult = variação do ativo na conversão (pode ser negativo)
+        // diff       = resultado total do ciclo = swapResult + prêmios coletados
+        const swapResult = lastCall ? (callStrike - putStrike) : null;
+        const diff       = lastCall ? (swapResult + premiumBetween) : null;
+        const diffPct    = lastCall && putStrike !== 0 ? (diff / putStrike) * 100 : null;
+        const isLoss     = Number.isFinite(diff) ? diff < 0 : false;
+        const lossValue  = isLoss ? Math.abs(diff) : 0;
+
+        const premiumAfterCall = afterCallOps.reduce((acc, item) =>
+            acc + (parseFloat(item.op.premio_us) || 0), 0);
+        const recovered   = Math.max(0, premiumAfterCall);
+        const missing     = Math.max(0, lossValue - recovered);
+        const progressPct = lossValue > 0 ? Math.min(100, (recovered / lossValue) * 100) : 100;
+
+        return {
+            hasCycle: true,
+            lastPut,
+            lastCall,
+            betweenOps,
+            afterCallOps,
+            premiumBetween,
+            putStrike,
+            callStrike,
+            swapResult,
+            diff,
+            diffPct,
+            isLoss,
+            lossValue,
+            recovered,
+            missing,
+            progressPct,
+            periodTotal,
+            historyTotal
+        };
+    }
+
+    function renderFinalResultTab(opsForPeriod) {
+        const container = document.getElementById('rtFinalResultBody');
+        if (!container) return;
+
+        const allOps = getCryptoOps();
+        const model = calculateFinalResultModel(opsForPeriod, allOps);
+
+        const filterTag = document.getElementById('rtFinalFilterTag');
+        if (filterTag) {
+            filterTag.textContent = `Período: ${state.period}`;
+        }
+
+        if (!model.hasCycle) {
+            container.innerHTML = `
+                <div class="row g-3">
+                    <div class="col-12">
+                        <div class="rt-final-card">
+                            <div class="text-muted">${escapeHtml(model.reason || 'Sem dados para cálculo.')}</div>
+                            <div class="mt-3 d-flex gap-3 flex-wrap">
+                                <div><span class="rt-final-label">Resultado no período:</span> <span class="rt-final-value ${model.periodTotal >= 0 ? 'text-green' : 'text-danger'}">${fmtC(model.periodTotal)}</span></div>
+                                <div><span class="rt-final-label">Resultado histórico:</span> <span class="rt-final-value ${model.historyTotal >= 0 ? 'text-green' : 'text-danger'}">${fmtC(model.historyTotal)}</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="rt-final-card">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="rt-final-label">Prêmios coletados no período</div>
+                                <div class="small text-muted">
+                                    <span style="display:inline-block;width:10px;height:10px;background:#2fb344;border-radius:2px;"></span> Prêmio
+                                    <span style="display:inline-block;width:20px;height:2px;background:#f6c23e;vertical-align:middle;margin-left:6px;"></span> Acumulado
+                                </div>
+                            </div>
+                            <div style="position:relative;height:220px;">
+                                <canvas id="rtFinalResultChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            renderFinalResultChart(opsForPeriod, model);
+            return;
+        }
+
+        const lastPut  = model.lastPut;
+        const lastCall = model.lastCall;
+        const diffTone  = Number.isFinite(model.diff) && model.diff >= 0 ? 'text-green' : 'text-danger';
+        const swapTone  = Number.isFinite(model.swapResult) && model.swapResult >= 0 ? 'text-green' : 'text-danger';
+
+        const timelineRows = model.betweenOps.slice(0, 16).map(item => {
+            const op = item.op;
+            const premio = parseFloat(op.premio_us) || 0;
+            const isExCall = isCallExercised(op);
+            const isExPut  = isPutExercised(op);
+            const badge = isExCall
+                ? '<span class="badge bg-danger-lt text-danger ms-1" style="font-size:0.7rem;">CALL exercida</span>'
+                : (isExPut ? '<span class="badge bg-warning-lt text-warning ms-1" style="font-size:0.7rem;">PUT exercida</span>' : '');
+            return `
+                <div class="rt-final-timeline-item">
+                    <div class="meta">${item.eventDate.toLocaleDateString('pt-BR')}</div>
+                    <div>
+                        <div class="fw-semibold">${escapeHtml(op.ativo || 'N/A')} · ${escapeHtml(getOpType(op))}${badge}</div>
+                        <div class="meta">Strike ${Number.isFinite(parseFloat(op.strike)) ? fmtC(op.strike) : '-'} · Status ${escapeHtml(String(op.status || 'ABERTA'))}</div>
+                    </div>
+                    <div class="${premio >= 0 ? 'text-green' : 'text-danger'} fw-bold">${fmtC(premio)}</div>
+                </div>
+            `;
+        }).join('') || '<div class="text-muted">Sem operações no ciclo.</div>';
+
+        const putCardHtml = `
+            <div class="rt-final-card h-100">
+                <div class="rt-final-label">PUT exercida <span class="badge bg-red-lt text-red ms-1" style="font-size:0.7rem;">Compra</span></div>
+                <div class="rt-final-value text-danger">${fmtC(model.putStrike)}</div>
+                <div class="meta">${escapeHtml(lastPut.op.ativo || '-')} · ${lastPut.eventDate.toLocaleDateString('pt-BR')} · ID #${escapeHtml(lastPut.op.id || '-')}</div>
+            </div>`;
+
+        const callCardHtml = lastCall
+            ? `<div class="rt-final-card h-100">
+                    <div class="rt-final-label">CALL exercida <span class="badge bg-green-lt text-green ms-1" style="font-size:0.7rem;">Venda</span></div>
+                    <div class="rt-final-value text-green">${fmtC(model.callStrike)}</div>
+                    <div class="meta">${escapeHtml(lastCall.op.ativo || '-')} · ${lastCall.eventDate.toLocaleDateString('pt-BR')} · ID #${escapeHtml(lastCall.op.id || '-')}</div>
+               </div>`
+            : `<div class="rt-final-card h-100">
+                    <div class="rt-final-label">CALL exercida <span class="badge bg-warning-lt text-warning ms-1" style="font-size:0.7rem;">Aguardando</span></div>
+                    <div class="text-warning small mt-2">Ciclo aberto — PUT exercida mas CALL ainda não exercida.<br>Ativo em carteira aguardando saída.</div>
+               </div>`;
+
+        const recoveryHtml = model.isLoss
+            ? `
+                <div class="rt-final-card mt-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="rt-final-label">Recuperação após ciclo fechado</div>
+                        <span class="badge ${model.missing > 0 ? 'bg-danger' : 'bg-success'}">${model.missing > 0 ? 'Em recuperação' : 'Prejuízo coberto'}</span>
+                    </div>
+                    <div class="small text-muted mb-1">Prêmios coletados após CALL exercida: <span class="${model.recovered > 0 ? 'text-green' : 'text-muted'}">${fmtC(model.recovered)}</span></div>
+                    <div class="small text-muted mb-2">Falta cobrir: <span class="${model.missing > 0 ? 'text-danger' : 'text-green'}">${fmtC(model.missing)}</span></div>
+                    <div class="progress" style="height: 10px;">
+                        <div class="progress-bar ${model.progressPct >= 100 ? 'bg-success' : 'bg-warning'}" style="width:${model.progressPct.toFixed(2)}%"></div>
+                    </div>
+                    <div class="small text-muted mt-1">${model.progressPct.toFixed(2)}% do prejuízo coberto por novos prêmios</div>
+                </div>
+            `
+            : '';
+
+        const chartHtml = `
+            <div class="col-12">
+                <div class="rt-final-card">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="rt-final-label">Prêmios coletados no período</div>
+                        <div class="small text-muted">
+                            <span style="display:inline-block;width:10px;height:10px;background:#2fb344;border-radius:2px;"></span> Normal
+                            <span style="display:inline-block;width:10px;height:10px;background:#f59f00;border-radius:2px;margin-left:6px;"></span> PUT exercida
+                            <span style="display:inline-block;width:10px;height:10px;background:#dc3545;border-radius:2px;margin-left:6px;"></span> CALL exercida
+                            <span style="display:inline-block;width:20px;height:2px;background:#f6c23e;vertical-align:middle;margin-left:6px;"></span> Acumulado
+                        </div>
+                    </div>
+                    <div style="position:relative;height:230px;">
+                        <canvas id="rtFinalResultChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        container.innerHTML = `
+            <div class="row g-3">
+                <div class="col-lg-4">${putCardHtml}</div>
+                <div class="col-lg-4">
+                    <div class="rt-final-card h-100">
+                        <div class="rt-final-label">Prêmios coletados no ciclo</div>
+                        <div class="rt-final-value text-green">${fmtC(model.premiumBetween)}</div>
+                        <div class="meta">Operações no ciclo: ${model.betweenOps.length}</div>
+                    </div>
+                </div>
+                <div class="col-lg-4">${callCardHtml}</div>
+                <div class="col-12">
+                    <div class="rt-final-card">
+                        <div class="rt-final-label mb-2">Cálculo do ciclo${lastCall ? '' : ' <span class="badge bg-warning-lt text-warning ms-1" style="font-size:0.7rem;">Em aberto</span>'}</div>
+                        <div class="row g-2">
+                            <div class="col-6 col-sm-3">
+                                <div class="small text-muted">CALL strike (venda)</div>
+                                <div class="fw-semibold">${lastCall ? fmtC(model.callStrike) : '—'}</div>
+                            </div>
+                            <div class="col-6 col-sm-3">
+                                <div class="small text-muted">PUT strike (compra)</div>
+                                <div class="fw-semibold text-danger">− ${fmtC(model.putStrike)}</div>
+                            </div>
+                            <div class="col-6 col-sm-3">
+                                <div class="small text-muted">Variação do ativo</div>
+                                <div class="fw-semibold ${swapTone}">${Number.isFinite(model.swapResult) ? fmtC(model.swapResult) : '—'}</div>
+                            </div>
+                            <div class="col-6 col-sm-3">
+                                <div class="small text-muted">+ Prêmios do ciclo</div>
+                                <div class="fw-semibold text-green">+ ${fmtC(model.premiumBetween)}</div>
+                            </div>
+                        </div>
+                        <hr class="my-2" style="border-color:rgba(148,163,184,0.15);">
+                        <div class="d-flex align-items-center gap-4 flex-wrap">
+                            <div>
+                                <div class="small text-muted">Resultado do ciclo</div>
+                                <div class="fw-bold ${diffTone} fs-4">${Number.isFinite(model.diff) ? fmtC(model.diff) : '—'}</div>
+                            </div>
+                            <div>
+                                <div class="small text-muted">Variação %</div>
+                                <div class="fw-semibold ${diffTone}">${Number.isFinite(model.diffPct) ? `${model.diffPct.toFixed(2)}%` : '—'}</div>
+                            </div>
+                            <div>
+                                <div class="small text-muted">Prêmios no período</div>
+                                <div class="fw-semibold ${model.periodTotal >= 0 ? 'text-green' : 'text-danger'}">${fmtC(model.periodTotal)}</div>
+                            </div>
+                            <div>
+                                <div class="small text-muted">Histórico total</div>
+                                <div class="fw-semibold ${model.historyTotal >= 0 ? 'text-green' : 'text-danger'}">${fmtC(model.historyTotal)}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="rt-final-card">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="rt-final-label">Operações do ciclo (PUT exercida → CALL exercida)</div>
+                            <span class="badge bg-dark-lt">${model.betweenOps.length}</span>
+                        </div>
+                        <div class="rt-final-timeline">${timelineRows}</div>
+                    </div>
+                    ${recoveryHtml}
+                </div>
+                ${chartHtml}
+            </div>
+        `;
+
+        renderFinalResultChart(opsForPeriod, model);
+    }
+
+    function renderFinalResultChart(opsForPeriod, model) {
+        const canvas = document.getElementById('rtFinalResultChart');
+        if (!canvas || typeof Chart === 'undefined') return;
+
+        if (state.finalChart) {
+            state.finalChart.destroy();
+            state.finalChart = null;
+        }
+
+        const sorted = [...opsForPeriod]
+            .filter(op => getOpDate(op))
+            .sort((a, b) => getOpDate(a) - getOpDate(b));
+
+        if (!sorted.length) return;
+
+        const labels = sorted.map(op => {
+            const d = getOpDate(op);
+            const dateStr = d ? d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : '-';
+            return `${op.ativo || 'N/A'} ${getOpType(op)} ${dateStr}`;
+        });
+
+        const premios = sorted.map(op => parseFloat(op.premio_us) || 0);
+
+        let acc = 0;
+        const acumData = premios.map(v => { acc += v; return Number(acc.toFixed(2)); });
+
+        const barColors = sorted.map(op => {
+            if (isCallExercised(op)) return 'rgba(220,53,69,0.85)';
+            if (isPutExercised(op)) return 'rgba(245,159,0,0.85)';
+            return 'rgba(47,179,68,0.75)';
+        });
+        const borderColors = sorted.map(op => {
+            if (isCallExercised(op)) return '#dc3545';
+            if (isPutExercised(op)) return '#f59f00';
+            return '#2fb344';
+        });
+
+        const datasets = [
+            {
+                type: 'bar',
+                label: 'Prêmio (US$)',
+                data: premios,
+                backgroundColor: barColors,
+                borderColor: borderColors,
+                borderWidth: 1,
+                yAxisID: 'y',
+                order: 2
+            },
+            {
+                type: 'line',
+                label: 'Acumulado',
+                data: acumData,
+                borderColor: '#f6c23e',
+                backgroundColor: 'rgba(246,194,62,0.08)',
+                tension: 0.3,
+                fill: true,
+                borderWidth: 2,
+                pointRadius: 3,
+                pointBackgroundColor: '#f6c23e',
+                yAxisID: 'y',
+                order: 1
+            }
+        ];
+
+        // Linhas de referência de strike removidas: os strikes (ex: 74.000)
+        // são ordens de magnitude maiores que os prêmios (~$2-30) e distorciam
+        // completamente a escala do eixo Y. Os valores de strike são exibidos
+        // nos cards de resumo acima do gráfico.
+
+        state.finalChart = new Chart(canvas.getContext('2d'), {
+            data: { labels, datasets },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: { color: '#94a3b8', boxWidth: 12, font: { size: 11 } }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => `${ctx.dataset.label}: ${fmtC(ctx.parsed.y)}`
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: '#94a3b8', maxRotation: 40, font: { size: 10 } },
+                        grid: { color: 'rgba(148,163,184,0.08)' }
+                    },
+                    y: {
+                        ticks: {
+                            color: '#94a3b8',
+                            callback: v => fmtC(v)
+                        },
+                        grid: { color: 'rgba(148,163,184,0.12)' }
+                    }
+                }
+            }
+        });
+    }
+
     async function fetchIAInsights(summary, metrics, ops) {
         const container = document.getElementById('rtAiInsights');
         const statusEl = document.getElementById('rtAiStatus');
@@ -1052,6 +1941,9 @@ Resumo do período:
         renderRecords(ops);
         renderGoals(summary, metrics);
         renderHistory(ops);
+        renderCockpitBlend(ops);
+        renderExercisedCallsCoverage(ops);
+        renderFinalResultTab(ops);
         updateComparison(summary, metrics);
         try {
             if (refreshAI) {
@@ -1066,7 +1958,7 @@ Resumo do período:
             const statusEl = document.getElementById('rtRefreshStatus');
             if (statusEl) {
                 const now = new Date();
-                statusEl.textContent = `Atualizado ${now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+                statusEl.textContent = `Atualizado: ${now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
             }
         }
     }

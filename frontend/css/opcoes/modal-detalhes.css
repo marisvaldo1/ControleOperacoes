@@ -3,6 +3,27 @@
    Baseado em y.html com design moderno e responsivo
    ============================================ */
 
+/* ══════════════════════════════════════════════
+   modal-detalhe-opcoes.js v1.0.0 — Estilos adicionais
+   ══════════════════════════════════════════════ */
+
+/* Scroll do body do modal de opções */
+#modalDetalhesOpcoes .modal-body {
+    padding: 1.25rem;
+    max-height: 82vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* Anel pulsante para ações brasileiras (reutiliza base .mdc-pulse-ring do modal-detalhe-crypto.css) */
+.mdo-pulse-petr    { border-color: #47b96c; color: #47b96c; background: rgba(71, 185, 108, 0.10); }
+.mdo-pulse-vale    { border-color: #4da6ff; color: #4da6ff; background: rgba(77, 166, 255, 0.10); }
+.mdo-pulse-itub    { border-color: #f59f00; color: #f59f00; background: rgba(245, 159, 0, 0.10); }
+.mdo-pulse-bbas    { border-color: #38bdf8; color: #38bdf8; background: rgba(56, 189, 248, 0.10); }
+.mdo-pulse-abev    { border-color: #a3e635; color: #a3e635; background: rgba(163, 230, 53, 0.10); }
+.mdo-pulse-enrg    { border-color: #fbbf24; color: #fbbf24; background: rgba(251, 191, 36, 0.10); }
+.mdo-pulse-default { border-color: #6c7a96; color: #6c7a96; background: rgba(108, 122, 150, 0.10); }
+
 /* Modal Detalhes - Configurações gerais */
 #modalDetalhesOperacao .modal-dialog {
     max-width: 1200px !important;

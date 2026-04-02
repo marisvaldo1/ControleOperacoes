@@ -73,7 +73,8 @@
             const ativoNome = cfg.getAtivo(op);
             const dataRef = op.data_fechamento || op.data_operacao || op.vencimento || op.exercicio || '';
             const strike  = cfg.getStrike(op);
-            return '<div class="sm-op-card ' + cardCls + '">'
+            const opId = op.id || 0;
+            return '<div class="sm-op-card ' + cardCls + '" style="cursor:pointer" title="Ver detalhes" onclick="(function(){var m=document.getElementById(\'modalSaldoMedio\');if(m){var i=bootstrap.Modal.getInstance(m);if(i)i.hide();}setTimeout(function(){window.showDetalhes&&window.showDetalhes(' + opId + ');},350);})()" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){var m=document.getElementById(\'modalSaldoMedio\');if(m){var i=bootstrap.Modal.getInstance(m);if(i)i.hide();}setTimeout(function(){window.showDetalhes&&window.showDetalhes(' + opId + ');},350);}" tabindex="0" role="button">'
                 + '<div class="sm-op-card-top">'
                 + '<span class="sm-op-ativo">' + _esc(ativoNome) + '</span>'
                 + '<span class="badge ' + _statusBadge(op.status) + ' ms-1">' + _esc(status) + '</span>'
@@ -83,7 +84,7 @@
                 + (dataRef ? ' · ' + _esc(dataRef) : '') + '</div>'
                 + '<div class="sm-op-res ' + resCls + '">' + smFmt(res) + ' <small>(' + pct + ')</small></div>'
                 + '<div class="sm-op-prem text-muted">Prêmio: ' + smFmt(cfg.getUnitPremium(op)) + '</div>'
-                + '</div>';
+                + '</div>'
         },
     };
 
@@ -265,6 +266,12 @@
             .then(function (data) {
                 currentOps = Array.isArray(data) ? data : (data.data || []);
                 ensureApex(function () { render(applyFilter(currentOps, activeFilter)); });
+                // Atualiza timestamp do cabeçalho
+                const tsEl = document.getElementById('smLastUpdated');
+                if (tsEl) {
+                    const now = new Date();
+                    tsEl.textContent = 'Atualizado: ' + now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                }
             })
             .catch(function (err) {
                 console.error('[modal-saldo-medio]', err);
@@ -289,24 +296,29 @@
         const fechadas  = ops.filter(o => (o.status || '').toUpperCase() === 'FECHADA');
         const abertas   = ops.filter(o => (o.status || '').toUpperCase() === 'ABERTA');
         const vencidas  = ops.filter(o => (o.status || '').toUpperCase() === 'VENCIDA');
-        const ganhos    = fechadas.filter(o => cfg.getResultado(o) >= 0);
+        // ganhos: apenas fechadas com resultado estritamente positivo (> 0)
+        const ganhos    = fechadas.filter(o => cfg.getResultado(o) > 0);
         const perdas    = fechadas.filter(o => cfg.getResultado(o) < 0);
 
         const totalPremio    = ops.reduce(function (a, o) { return a + cfg.getMonetaryValue(o); }, 0);
         const totalResultado = ops.reduce(function (a, o) { return a + cfg.getResultado(o); }, 0);
         const totalSaldo     = ops.reduce(function (a, o) { return a + (parseFloat(o.saldo_abertura || o.abertura || 0)); }, 0);
-        const mediaSaldo    = ops.length ? totalSaldo / ops.length : 0;
+        const mediaSaldo     = ops.length ? totalSaldo / ops.length : 0;
+
+        // Usa o saldo configurado na corretora; fallback p/ média dos preços de abertura
+        const baseRetorno    = saldoCorretora > 0 ? saldoCorretora : mediaSaldo;
 
         // pop: só considera valores > 0 (sem dados nulos ou zerados)
         const popVals   = ops.filter(function (o) { return cfg.getPop(o) !== null; }).map(function (o) { return cfg.getPop(o); });
         const popMedio  = popVals.length ? popVals.reduce(function (a, b) { return a + b; }, 0) / popVals.length : 0;
+        // Win rate: op fechadas com resultado > 0 / total fechadas
         const winRate   = fechadas.length ? (ganhos.length / fechadas.length) * 100 : 0;
-        // retenção: resultado / prêmio_total (premio unit × qtd) × 100
+        // retenção: resultado real / prêmio total recebido × 100
         const retPremio = totalPremio ? (totalResultado / totalPremio) * 100 : 0;
-        // retorno sobre saldo médio da conta
-        const retSaldo  = mediaSaldo  ? (totalResultado / mediaSaldo) * 100 : 0;
+        // retorno sobre saldo real da corretora (ou média de abertura como fallback)
+        const retSaldo  = baseRetorno ? (totalResultado / baseRetorno) * 100 : 0;
 
-        const pctStr = mediaSaldo ? smPctFmt(retSaldo) : '';
+        const pctStr = baseRetorno ? smPctFmt(retSaldo) : ''
 
         /* ── Header ── */
         _setText('smAmount', smFmt(totalResultado));
@@ -444,6 +456,21 @@
         const el = document.getElementById('smOpStrip');
         if (!el) return;
         const saldoCorretora = getSaldoCorretora();
+
+        // Atualiza label com contagem e total do filtro atual
+        const lblEl = document.getElementById('smOpsLabel');
+        if (lblEl) {
+            const filterNames = { all: 'Todas', ABERTA: 'Abertas', FECHADA: 'Fechadas',
+                                   CALL: 'CALL', PUT: 'PUT' };
+            const name = filterNames[activeFilter] || activeFilter;
+            lblEl.textContent = ops.length + ' Operações' + (activeFilter !== 'all' ? ' (' + name + ')' : '');
+        }
+        const totalEl = document.getElementById('smOpsTotal');
+        if (totalEl) {
+            const total = ops.reduce(function(s, o) { return s + cfg.getResultado(o); }, 0);
+            totalEl.innerHTML = 'Total: <strong class="' + (total >= 0 ? 'text-success' : 'text-danger') + '">'
+                + smFmt(total) + '</strong>';
+        }
 
         if (!ops.length) {
             el.innerHTML = '<div class="text-muted ps-1">Nenhuma operação neste filtro.</div>';

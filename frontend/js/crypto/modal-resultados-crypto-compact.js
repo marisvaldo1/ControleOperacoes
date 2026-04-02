@@ -298,6 +298,7 @@
         const el = document.getElementById('dshChartLine');
         if (!el || typeof Chart === 'undefined') return;
 
+        // Agrupa prêmio por data de vencimento
         const dm = {};
         ops.forEach(op => {
             const d = fmtDate(op.data_vencimento || op.data_operacao || op.criado_em);
@@ -305,27 +306,78 @@
             dm[d] += parseFloat(op.premio_us) || 0;
         });
         const labs = Object.keys(dm).sort();
-        const data = labs.map(l => +dm[l].toFixed(2));
+        const daily = labs.map(l => +dm[l].toFixed(2));
+
+        // Calcula acumulado progressivo
+        let sum = 0;
+        const accumulated = daily.map(v => +(sum += v).toFixed(2));
 
         _charts.line = new Chart(el, {
-            type: 'line',
+            type: 'bar',
             data: {
                 labels: labs,
-                datasets: [{
-                    data, borderColor: '#e8a830',
-                    backgroundColor: 'rgba(232,168,48,.1)',
-                    borderWidth: 2.5,
-                    pointBackgroundColor: '#e8a830',
-                    pointRadius: 4, pointHoverRadius: 6,
-                    fill: true, tension: .32
-                }]
+                datasets: [
+                    {
+                        // Linha de acumulado (eixo esquerdo — valor maior)
+                        type: 'line',
+                        label: 'Acumulado',
+                        data: accumulated,
+                        borderColor: '#e8a830',
+                        backgroundColor: 'rgba(232,168,48,.12)',
+                        borderWidth: 2.5,
+                        pointBackgroundColor: '#e8a830',
+                        pointRadius: 4, pointHoverRadius: 6,
+                        fill: true, tension: .32,
+                        yAxisID: 'yAcc',
+                        order: 1,
+                    },
+                    {
+                        // Barras de prêmio diário (eixo direito — valor menor)
+                        type: 'bar',
+                        label: 'Prêmio do dia',
+                        data: daily,
+                        backgroundColor: 'rgba(77,166,255,0.45)',
+                        borderColor: 'rgba(77,166,255,0.75)',
+                        borderWidth: 1,
+                        borderRadius: 3,
+                        yAxisID: 'yDay',
+                        order: 2,
+                    }
+                ]
             },
             options: {
                 responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => '$' + c.raw.toFixed(2) } } },
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        align: 'end',
+                        labels: { color: '#6b82a0', font: { family: 'JetBrains Mono', size: 10 }, boxWidth: 10, padding: 12 }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => (ctx.dataset.label === 'Acumulado' ? 'Total: $' : 'Dia:   $') + ctx.raw.toFixed(2)
+                        }
+                    }
+                },
                 scales: {
-                    x: { grid: { display: false }, ticks: { color: '#6b82a0', font: { family: 'JetBrains Mono', size: 11 }, maxRotation: 0 } },
-                    y: { grid: { color: 'rgba(38,51,71,.8)' }, ticks: { color: '#6b82a0', font: { family: 'JetBrains Mono', size: 11 }, callback: v => '$' + v.toFixed(1) } }
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#6b82a0', font: { family: 'JetBrains Mono', size: 11 }, maxRotation: 0 }
+                    },
+                    yAcc: {
+                        type: 'linear',
+                        position: 'left',
+                        grid: { color: 'rgba(38,51,71,.8)' },
+                        ticks: { color: '#e8a830', font: { family: 'JetBrains Mono', size: 11 }, callback: v => '$' + v.toFixed(1) }
+                    },
+                    yDay: {
+                        type: 'linear',
+                        position: 'right',
+                        grid: { display: false },
+                        ticks: { color: 'rgba(77,166,255,0.7)', font: { family: 'JetBrains Mono', size: 10 }, callback: v => '$' + v.toFixed(1) }
+                    }
                 }
             }
         });
@@ -452,7 +504,7 @@
           <!-- Chart grande + Painel Resumo Analítico -->
           <div class="dsh-grid-main" style="display:grid;grid-template-columns:1fr 260px;gap:.6rem;margin-bottom:.55rem;">
             <div class="dsh-chart-card">
-              <div class="dsh-chart-title">Prêmio acumulado por data de exercício${assetLabel}</div>
+              <div class="dsh-chart-title">Resultado acumulado × prêmio diário${assetLabel}</div>
               <div style="position:relative;flex:1;min-height:110px;"><canvas id="dshChartLine"></canvas></div>
             </div>
             <div class="dsh-resumo">

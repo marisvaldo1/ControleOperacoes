@@ -224,6 +224,12 @@
             .then(data => {
                 currentOps = Array.isArray(data) ? data : [];
                 renderAll(applyFilter(currentOps, activeFilter));
+                // Atualiza timestamp do cabeçalho
+                const tsEl = document.getElementById('tocLastUpdated');
+                if (tsEl) {
+                    const now = new Date();
+                    tsEl.textContent = 'Atualizado: ' + now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                }
             })
             .catch(() => renderAll([]));
     }

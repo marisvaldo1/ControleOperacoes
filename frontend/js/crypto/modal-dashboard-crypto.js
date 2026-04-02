@@ -40,6 +40,7 @@
     /*  Estado                                                              */
     /* ------------------------------------------------------------------ */
     let chartComparacao = null;
+    let chartPatrimonio = null;
     let loaded          = false;
 
     /* ------------------------------------------------------------------ */
@@ -353,6 +354,75 @@
         modal.show();
     }
 
+    /* ------------------------------------------------------------------ */
+    /*  Render: Evolução do Patrimônio Acumulado                           */
+    /* ------------------------------------------------------------------ */
+    function renderPatrimonio(ops) {
+        const canvas = document.getElementById('dcPatrimonioChart');
+        if (!canvas || typeof Chart === 'undefined') return;
+        if (chartPatrimonio) { chartPatrimonio.destroy(); chartPatrimonio = null; }
+
+        const sorted = [...ops]
+            .filter(op => getOpDate(op))
+            .sort((a, b) => getOpDate(a) - getOpDate(b));
+
+        const labels = [];
+        const data   = [];
+        let acc      = 0;
+        sorted.forEach(op => {
+            const d = getOpDate(op);
+            if (!d) return;
+            acc += cfg.getResultValue(op);
+            labels.push(d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }));
+            data.push(parseFloat(acc.toFixed(2)));
+        });
+
+        if (!labels.length) return;
+
+        chartPatrimonio = new Chart(canvas.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [{
+                    label: 'Patrimônio Acumulado',
+                    data,
+                    borderColor: '#f6c23e',
+                    backgroundColor: 'rgba(246,194,62,0.15)',
+                    tension: 0.3,
+                    fill: true,
+                    borderWidth: 2,
+                    pointRadius: 2,
+                    pointHoverRadius: 5,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => fmtC(ctx.parsed.y)
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: '#94a3b8', maxRotation: 0, autoSkip: true, maxTicksLimit: 14 },
+                        grid: { color: 'rgba(148,163,184,0.12)' }
+                    },
+                    y: {
+                        ticks: { color: '#94a3b8', callback: v => fmtC(v) },
+                        grid: { color: 'rgba(148,163,184,0.12)' }
+                    }
+                }
+            }
+        });
+    }
+
+    /* ------------------------------------------------------------------ */
+    /*  Render: CALL vs PUT                                                 */
+    /* ------------------------------------------------------------------ */
     function renderComparacao(ops) {
         const canvas = document.getElementById('dcChartComparacao');
         if (!canvas || typeof Chart === 'undefined') return;
@@ -549,11 +619,19 @@
 
         renderMetrics(stats);
         renderHeatmap(ops, startDate, endDate);
+        renderPatrimonio(ops);
         renderComparacao(ops);
         renderWeekday(ops);
         renderTopAtivos(ops);
         renderConsistencia(ops);
         renderProbabilidades(ops, stats);
+
+        // Atualiza timestamp do cabeçalho
+        const tsEl = document.getElementById('dcLastUpdated');
+        if (tsEl) {
+            const now = new Date();
+            tsEl.textContent = 'Atualizado: ' + now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        }
     }
 
     /* ------------------------------------------------------------------ */
@@ -602,10 +680,13 @@
             if (btnFiltrar) btnFiltrar.addEventListener('click', renderAll);
 
             const btnAtualizar = document.getElementById('dcBtnAtualizar');
-            if (btnAtualizar) btnAtualizar.addEventListener('click', async () => {
-                btnAtualizar.disabled = true;
-                const originalHtml = btnAtualizar.innerHTML;
-                btnAtualizar.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Atualizando...';
+            const doAtualizar = async () => {
+                const btn = document.getElementById('dcBtnAtualizar');
+                const hdrBtn = document.getElementById('dcBtnHeaderAtualizar');
+                [btn, hdrBtn].forEach(b => { if (b) b.disabled = true; });
+                const originalHtml = btn ? btn.innerHTML : '';
+                if (btn) btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Atualizando...';
+                if (hdrBtn) hdrBtn.classList.add('mdh-spin');
                 try {
                     const res = await fetch(cfg.apiEndpoint);
                     if (res.ok) {
@@ -617,10 +698,14 @@
                 } catch (err) {
                     console.error('[ModalDashboardCrypto] Erro ao atualizar:', err);
                 } finally {
-                    btnAtualizar.disabled = false;
-                    btnAtualizar.innerHTML = originalHtml;
+                    [btn, hdrBtn].forEach(b => { if (b) b.disabled = false; });
+                    if (btn) btn.innerHTML = originalHtml;
+                    if (hdrBtn) hdrBtn.classList.remove('mdh-spin');
                 }
-            });
+            };
+            if (btnAtualizar) btnAtualizar.addEventListener('click', doAtualizar);
+            const btnHeaderAtualizar = document.getElementById('dcBtnHeaderAtualizar');
+            if (btnHeaderAtualizar) btnHeaderAtualizar.addEventListener('click', doAtualizar);
         }
 
         renderAll();

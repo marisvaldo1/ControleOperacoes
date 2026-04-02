@@ -690,7 +690,7 @@ async function populateTable(dt, data, showActions = true, updatePrices = false,
         }
         
         const rowNode = dt.row.add([
-            op.ativo_base ? `<span class="badge bg-azure text-azure-fg">${op.ativo_base}</span>` : '-',
+            op.ativo_base ? `<span class="badge bg-azure text-azure-fg" style="cursor:pointer" title="Ver detalhes" onclick="window.ModalDetalhesOpcoes&&window.ModalDetalhesOpcoes.show('${op.id}')">${op.ativo_base}</span>` : '-',
             op.ativo,
             `<span class="badge ${op.tipo === 'CALL' ? 'bg-green text-green-fg' : 'bg-red text-red-fg'}">${op.tipo}</span>`,
             priceCell,
@@ -796,7 +796,7 @@ async function populateTable(dt, data, showActions = true, updatePrices = false,
         const premioValue = premioAbs * qtdAbs;
         
         dt.row.add([
-            op.ativo_base ? `<span class="badge bg-azure text-azure-fg">${op.ativo_base}</span>` : '-',
+            op.ativo_base ? `<span class="badge bg-azure text-azure-fg" style="cursor:pointer" title="Ver detalhes" onclick="window.ModalDetalhesOpcoes&&window.ModalDetalhesOpcoes.show('${op.id}')">${op.ativo_base}</span>` : '-',
             op.ativo,
             `<span class="badge ${op.tipo === 'CALL' ? 'bg-green text-green-fg' : 'bg-red text-red-fg'}">${op.tipo}</span>`,
             precoAtual && !isNaN(parseFloatSafe(precoAtual)) ? `<span class="${parseFloatSafe(precoAtual) >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(parseFloatSafe(precoAtual))}</span>` : '-',

@@ -12,3 +12,184 @@
 .modal-resultado-total .rt-hero-total {
     color: #f6c23e;
 }
+
+.rt-dayops-modal {
+    background: #1d2939;
+    border: 1px solid #2d3748;
+}
+
+.rt-dayops-summary {
+    margin-bottom: 12px;
+}
+
+.rt-dayops-card {
+    background: rgba(15, 23, 42, 0.5);
+    border: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+.rt-dayops-card .subheader,
+.rt-dayops-card .small {
+    color: #94a3b8;
+}
+
+.rt-dayops-card .h2 {
+    color: #e2e8f0;
+}
+
+.rt-dayops-table {
+    color: #e2e8f0;
+}
+
+.rt-dayops-table thead th {
+    color: #94a3b8;
+    border-bottom-color: #2d3748;
+    white-space: nowrap;
+}
+
+.rt-dayops-table tbody td {
+    border-bottom-color: rgba(148, 163, 184, 0.12);
+    vertical-align: middle;
+}
+
+.rt-dayops-status {
+    white-space: nowrap;
+}
+
+.rt-dayops-table .btn-icon {
+    min-width: 32px;
+}
+
+.modal-resultado-total .rt-cockpit-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.modal-resultado-total .rt-cockpit-card {
+    background: rgba(15, 23, 42, 0.55);
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    border-left: 4px solid transparent;
+    border-radius: 10px;
+    padding: 12px;
+}
+
+.modal-resultado-total .rt-cockpit-card.safe {
+    border-left-color: #22c55e;
+}
+
+.modal-resultado-total .rt-cockpit-card.warn {
+    border-left-color: #f59e0b;
+}
+
+.modal-resultado-total .rt-cockpit-card.risk {
+    border-left-color: #ef4444;
+}
+
+.modal-resultado-total .rt-health-track {
+    height: 8px;
+    background: rgba(148, 163, 184, 0.15);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.modal-resultado-total .rt-health-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ef4444 0%, #f59e0b 50%, #22c55e 100%);
+}
+
+.modal-resultado-total .rt-timeline-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.modal-resultado-total .rt-timeline-row {
+    display: grid;
+    grid-template-columns: 150px 1fr 80px;
+    gap: 8px;
+    align-items: center;
+}
+
+.modal-resultado-total .rt-timeline-track {
+    height: 10px;
+    border-radius: 6px;
+    background: rgba(148, 163, 184, 0.14);
+    overflow: hidden;
+}
+
+.modal-resultado-total .rt-timeline-fill {
+    height: 100%;
+}
+
+.modal-resultado-total .rt-timeline-fill.safe {
+    background: #22c55e;
+}
+
+.modal-resultado-total .rt-timeline-fill.warn {
+    background: #f59e0b;
+}
+
+.modal-resultado-total .rt-timeline-fill.risk {
+    background: #ef4444;
+}
+
+.modal-resultado-total .rt-exercised-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.modal-resultado-total .rt-exercised-item {
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    border-radius: 10px;
+    padding: 10px;
+    background: rgba(15, 23, 42, 0.45);
+}
+
+.modal-resultado-total .rt-exercised-item .meta {
+    color: #94a3b8;
+    font-size: 0.78rem;
+}
+
+.modal-resultado-total .rt-exercised-item .value {
+    font-weight: 700;
+}
+
+.modal-resultado-total .rt-final-card {
+    background: rgba(15, 23, 42, 0.55);
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    border-radius: 10px;
+    padding: 12px;
+}
+
+.modal-resultado-total .rt-final-label {
+    color: #94a3b8;
+    font-size: 0.78rem;
+}
+
+.modal-resultado-total .rt-final-value {
+    font-size: 1.15rem;
+    font-weight: 700;
+}
+
+.modal-resultado-total .rt-final-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.modal-resultado-total .rt-final-timeline-item {
+    display: grid;
+    grid-template-columns: 130px 1fr auto;
+    gap: 8px;
+    align-items: center;
+    border: 1px solid rgba(148, 163, 184, 0.12);
+    border-radius: 8px;
+    padding: 8px;
+}
+
+.modal-resultado-total .rt-final-timeline-item .meta {
+    color: #94a3b8;
+    font-size: 0.75rem;
+}

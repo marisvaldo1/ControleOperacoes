@@ -1,0 +1,137 @@
+<!-- Modal: Análise Completa da Operação Crypto -->
+<div class="modal modal-blur fade" id="modalAnaliseCompleta" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header mdh-header">
+                <div class="d-flex align-items-center gap-2 flex-grow-1" style="min-width:0">
+                    <div class="mdh-info">
+                        <div class="mdh-asset" id="macTitle">—</div>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-2 flex-shrink-0 me-6">
+                    <span class="mdh-ts" id="macLastUpdated">Atualizado: --:--</span>
+                    <button type="button" class="mdh-refresh" id="macBtnRefresh" title="Atualizar cotação ao vivo">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
+                            fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                        </svg>
+                    </button>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body" style="padding:1rem">
+
+                <!-- ══ Skeleton inicial ══ -->
+                <div id="macBodySkeleton">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="mdc-skel mdc-skel-hero mb-2"></div>
+                            <div class="d-flex gap-2 mb-3">
+                                <div class="mdc-skel mdc-skel-card flex-fill"></div>
+                                <div class="mdc-skel mdc-skel-card flex-fill"></div>
+                                <div class="mdc-skel mdc-skel-card flex-fill"></div>
+                            </div>
+                            <div class="mdc-skel" style="height:175px;border-radius:8px"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mac-kpi-grid mb-3">
+                                <div class="mdc-skel mac-skel-kpi"></div>
+                                <div class="mdc-skel mac-skel-kpi"></div>
+                                <div class="mdc-skel mac-skel-kpi"></div>
+                                <div class="mdc-skel mac-skel-kpi"></div>
+                            </div>
+                            <div class="mdc-skel" style="height:42px;border-radius:8px;margin-bottom:6px"></div>
+                            <div class="mdc-skel" style="height:42px;border-radius:8px;margin-bottom:6px"></div>
+                            <div class="mdc-skel" style="height:42px;border-radius:8px"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ══ Conteúdo real ══ -->
+                <div id="macBodyContent" style="display:none">
+                    <div class="row g-3">
+
+                        <!-- ═══════════ COL ESQUERDA: Detalhes ═══════════ -->
+                        <div class="col-md-6" id="macDetalhesPanel">
+                            <!-- Preenchido dinamicamente por _renderDetalhesPanel() -->
+                        </div>
+
+                        <!-- ═══════════ COL DIREITA: Análise / KPIs ═══════════ -->
+                        <div class="col-md-6" id="macAnaliseCol">
+
+                            <!-- KPI Cards superiores -->
+                            <div class="mac-kpi-grid mb-3" id="macKpiRow">
+                                <div class="mac-kpi-card" id="macKpiPremioCard">
+                                    <div class="mac-kpi-label">Prêmio Est.</div>
+                                    <div class="mac-kpi-val" id="macSimPremio">—</div>
+                                </div>
+                                <div class="mac-kpi-card" id="macKpiRoiCard">
+                                    <div class="mac-kpi-label">ROI</div>
+                                    <div class="mac-kpi-val" id="macSimRoi">—</div>
+                                </div>
+                                <div class="mac-kpi-card" id="macKpiDistCard">
+                                    <div class="mac-kpi-label">Distância</div>
+                                    <div class="mac-kpi-val" id="macSimDist">—</div>
+                                </div>
+                                <div class="mac-kpi-card" id="macKpiTaeCard">
+                                    <div class="mac-kpi-label">TAE Anual</div>
+                                    <div class="mac-kpi-val" id="macSimTae">—</div>
+                                </div>
+                            </div>
+
+                            <!-- Seção: Previsão da Operação -->
+                            <div class="mac-section mb-2">
+                                <div class="mac-section-title">
+                                    🎯 Previsão da Operação
+                                    <span id="macSimPrevBadge" style="margin-left:6px"></span>
+                                </div>
+                                <div class="mac-section-body" id="macSimPrevBody">
+                                    <div class="sim-empty-state" style="min-height:60px">Calculando…</div>
+                                </div>
+                            </div>
+
+                            <!-- Seção: Preço Médio + Risco -->
+                            <div class="mac-section mb-2">
+                                <div class="mac-section-title" id="macSimPmCardTitle">📊 Preço Médio &amp; Risco</div>
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <div class="mac-inner-card">
+                                            <div class="mac-inner-title">📊 Preço Médio</div>
+                                            <div id="macSimPmBody">
+                                                <div class="sim-empty-state" style="min-height:50px">Calculando…</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="mac-inner-card">
+                                            <div class="mac-inner-title">⚠ Risco da Operação</div>
+                                            <div id="macSimNextOpBody">
+                                                <div class="sim-empty-state" style="min-height:50px">Calculando…</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Seção: Retorno ao Vencimento -->
+                            <div class="mac-section">
+                                <div class="mac-section-title">📈 Retorno ao Vencimento</div>
+                                <div id="macSimPnLEmpty" class="sim-empty-state"
+                                    style="display:none;min-height:60px">
+                                    Dados insuficientes para o gráfico
+                                </div>
+                                <div style="height:220px;position:relative">
+                                    <canvas id="macSimPnLCanvas"></canvas>
+                                </div>
+                            </div>
+
+                        </div><!-- /col direita -->
+                    </div><!-- /row -->
+                </div><!-- /macBodyContent -->
+            </div><!-- /modal-body -->
+
+        </div>
+    </div>
+</div>

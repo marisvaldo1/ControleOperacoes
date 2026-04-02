@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Conceito 7 — Timeline Waterfall: Preço Médio Crypto</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+:root{
+  --bg:#0d1117;--bg2:#161b22;--bg3:#21262d;
+  --amber:#f59f00;--blue:#4da6ff;--green:#3fb950;--red:#f85149;--purple:#bc8cff;
+  --tx:#e6edf3;--tx2:#8b949e;--mono:'JetBrains Mono','Courier New',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--tx);font-family:'Segoe UI',sans-serif;min-height:100vh;font-size:13px}
+.modal-header{background:var(--bg2);border-bottom:1px solid #30363d;padding:12px 20px;
+  display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:.95rem;font-weight:700}
+.ts{font-family:var(--mono);font-size:.72rem;color:var(--tx2)}
+.btn-refresh{background:none;border:1px solid #30363d;border-radius:6px;color:var(--tx2);cursor:pointer;padding:5px 8px;transition:.2s}
+.btn-refresh:hover{border-color:var(--amber);color:var(--amber)}
+.btn-close{background:none;border:none;cursor:pointer;color:var(--tx2);font-size:1.1rem;
+  width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:.2s}
+.btn-close:hover{background:#30363d;color:var(--tx)}
+.header-meta{display:flex;align-items:center;gap:10px}
+
+.body{padding:16px}
+.atabs{display:flex;gap:6px;margin-bottom:14px}
+.atab{padding:5px 14px;border-radius:6px;cursor:pointer;font-size:.78rem;font-weight:600;
+  border:1px solid #21262d;background:var(--bg2);color:var(--tx2);transition:.2s}
+.atab.a-btc{border-color:var(--amber);color:var(--amber);background:rgba(245,159,0,.06)}
+.atab.a-eth{border-color:var(--blue);color:var(--blue);background:rgba(77,166,255,.06)}
+
+/* Hero row */
+.hero-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px}
+.hero-card{background:var(--bg2);border:1px solid #21262d;border-radius:12px;padding:14px;text-align:center;position:relative;overflow:hidden}
+.hc-icon{font-size:1.1rem;margin-bottom:5px}
+.hc-lbl{font-size:.6rem;text-transform:uppercase;letter-spacing:.8px;color:var(--tx2);margin-bottom:5px}
+.hc-val{font-family:var(--mono);font-size:1.3rem;font-weight:700;margin-bottom:3px}
+.hc-sub{font-size:.65rem;color:var(--tx2)}
+.hc-glow{position:absolute;top:0;left:0;right:0;height:2px}
+
+/* Waterfall Chart */
+.waterfall-section{background:var(--bg2);border:1px solid #21262d;border-radius:12px;padding:14px;margin-bottom:14px}
+.ws-title{font-size:.68rem;text-transform:uppercase;letter-spacing:.8px;color:var(--tx2);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.ws-equation{display:inline-block;padding:2px 8px;border-radius:4px;background:rgba(245,159,0,.1);
+  border:1px solid rgba(245,159,0,.2);color:var(--amber);font-family:var(--mono);font-size:.68rem}
+
+/* Mini timeline */
+.timeline{overflow-x:auto;padding-bottom:6px;margin-bottom:12px}
+.tl-inner{display:flex;gap:4px;align-items:flex-end;min-width:max-content;padding:4px 2px}
+.tl-col{display:flex;flex-direction:column;align-items:center;gap:3px}
+.tl-bar{width:24px;border-radius:3px 3px 0 0;transition:height .4s;min-height:3px;position:relative;cursor:default}
+.tl-bar:hover{filter:brightness(1.3)}
+.tl-date{font-family:var(--mono);font-size:.52rem;color:var(--tx2);transform:rotate(-60deg);width:30px;text-align:center;margin-top:4px}
+.tl-prem{font-family:var(--mono);font-size:.55rem;color:var(--tx);text-align:center;white-space:nowrap;margin-top:2px}
+
+/* Waterfall bars (running total) */
+.wf-section{height:130px}
+.legend-row{display:flex;gap:14px;margin-top:8px}
+.leg{display:flex;align-items:center;gap:5px;font-size:.65rem;color:var(--tx2)}
+.leg-dot{width:8px;height:8px;border-radius:2px}
+
+/* PM equation display */
+.eq-box{background:var(--bg3);border-radius:8px;padding:10px 14px;margin-bottom:14px;
+  display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px}
+.eq-item{display:flex;flex-direction:column;align-items:center;gap:2px}
+.eq-num{font-family:var(--mono);font-size:1rem;font-weight:700}
+.eq-lbl{font-size:.58rem;color:var(--tx2);text-transform:uppercase}
+.eq-op{font-size:1.3rem;color:var(--tx2);align-self:center}
+.eq-result{background:rgba(245,159,0,.08);border:1px solid rgba(245,159,0,.2);border-radius:6px;padding:6px 14px;text-align:center}
+
+/* Strike Zones */
+.zones-row{display:flex;gap:8px;margin-bottom:14px}
+.zone-card{flex:1;border-radius:8px;padding:10px;text-align:center;border:1px solid transparent}
+.zone-card.danger{background:rgba(248,81,73,.06);border-color:rgba(248,81,73,.2)}
+.zone-card.warn{background:rgba(245,159,0,.06);border-color:rgba(245,159,0,.2)}
+.zone-card.safe{background:rgba(63,185,80,.06);border-color:rgba(63,185,80,.2)}
+.zc-em{font-size:.9rem;margin-bottom:4px}
+.zc-lbl{font-size:.58rem;text-transform:uppercase;letter-spacing:.7px;color:var(--tx2);margin-bottom:4px}
+.zc-range{font-family:var(--mono);font-size:.7rem;font-weight:600}
+.zone-card.danger .zc-range{color:var(--red)}
+.zone-card.warn .zc-range{color:var(--amber)}
+.zone-card.safe .zc-range{color:var(--green)}
+
+.chart-wrap{background:var(--bg2);border:1px solid #21262d;border-radius:12px;padding:14px}
+.cw-lbl{font-size:.68rem;text-transform:uppercase;letter-spacing:.8px;color:var(--tx2);margin-bottom:8px}
+</style>
+</head>
+<body>
+<div class="modal-header">
+  <div class="modal-title">📈 Timeline & Waterfall: Prêmios → Preço Médio</div>
+  <div class="header-meta">
+    <span class="ts" id="tsLabel">—</span>
+    <button class="btn-refresh">↻ Sync</button>
+    <button class="btn-close">✕</button>
+  </div>
+</div>
+
+<div class="body">
+  <div class="atabs">
+    <button class="atab a-btc" id="tBTC" onclick="setA('BTC',this)">₿ BTC</button>
+    <button class="atab" id="tETH" onclick="setA('ETH',this)">Ξ ETH</button>
+  </div>
+
+  <!-- Hero Cards -->
+  <div class="hero-row" id="heroRow"></div>
+
+  <!-- Equation -->
+  <div class="waterfall-section">
+    <div class="ws-title">
+      🧮 Fórmula Aplicada —
+      <span class="ws-equation">PM = Strike Exercida − Σ Prêmios</span>
+    </div>
+
+    <!-- Equation box -->
+    <div class="eq-box" id="eqBox"></div>
+
+    <!-- Mini per-date timeline -->
+    <div class="cw-lbl">Prêmios por Operação (barras horizontais)</div>
+    <div style="height:180px"><canvas id="wfChart"></canvas></div>
+  </div>
+
+  <!-- Zones -->
+  <div class="zones-row" id="zonesRow"></div>
+
+  <!-- Evolution Chart -->
+  <div class="chart-wrap">
+    <div class="cw-lbl">🚀 Acumulado de Prêmios + PM Line</div>
+    <div style="height:110px"><canvas id="evoChart"></canvas></div>
+  </div>
+</div>
+
+<script>
+const BTCOPS=[
+  {d:'13/01',p:1.88},{d:'15/01',p:2.95},{d:'20/01',p:2.75},{d:'28/01',p:0.32},
+  {d:'03/02',p:8.30},{d:'10/02',p:10.12},{d:'17/02',p:10.55},{d:'24/02',p:8.62},
+  {d:'03/03',p:5.20},{d:'10/03',p:1.405},{d:'17/03',p:1.58},{d:'24/03',p:2.728}];
+const ETHOPS=[
+  {d:'13/01',p:1.59},{d:'15/01',p:1.74},{d:'20/01',p:4.09},{d:'28/01',p:20.80},
+  {d:'03/02',p:23.84},{d:'10/02',p:17.00},{d:'17/02',p:7.00},{d:'24/02',p:8.12},
+  {d:'03/03',p:1.50},{d:'10/03',p:3.08},{d:'17/03',p:4.83},{d:'24/03',p:6.375}];
+
+const D={
+  BTC:{ac:'#f59f00',cot:71403.68,pm:73943.60,strikeEx:74000,premios:56.40,ops:12,winRate:91.7,tae:94.1,
+    evo:BTCOPS,accevo:[2.75,5.00,10.52,19.14,29.58,40.05,48.43,53.83,55.24,56.82,56.40]},
+  ETH:{ac:'#4da6ff',cot:2192.0,pm:2225.04,strikeEx:2325,premios:99.96,ops:15,winRate:93.3,tae:116.6,
+    evo:ETHOPS,accevo:[1.59,3.33,7.42,28.22,52.06,69.06,76.06,84.18,85.68,88.76,93.59]}
+};
+let cur='BTC',_cWF=null,_cEVO=null;
+const f=(v,d=2)=>v.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fu=v=>'$'+f(v);
+const fp=v=>(v>0?'+':'')+f(v,2)+'%';
+
+function setA(s,el){
+  cur=s;
+  document.getElementById('tBTC').className='atab'+(s==='BTC'?' a-btc':'');
+  document.getElementById('tETH').className='atab'+(s==='ETH'?' a-eth':'');
+  render(s);
+}
+
+function render(s){
+  const d=D[s];
+  const pct=(d.cot-d.pm)/d.pm*100;
+  const pc=pct>=0?'#3fb950':pct>-3?'#f59f00':'#f85149';
+  const pctLabel=pct>=0?`✅ +${f(pct,2)}%`:pct>-3?`⚠️ ${f(pct,2)}%`:`🔴 ${f(pct,2)}%`;
+
+  document.getElementById('heroRow').innerHTML=`
+    <div class="hero-card">
+      <div class="hc-glow" style="background:${d.ac}"></div>
+      <div class="hc-icon">🎯</div><div class="hc-lbl">Preço Médio</div>
+      <div class="hc-val" style="color:${d.ac}">${fu(d.pm)}</div>
+      <div class="hc-sub">${s} efetivo</div>
+    </div>
+    <div class="hero-card">
+      <div class="hc-glow" style="background:${pc}"></div>
+      <div class="hc-icon">📊</div><div class="hc-lbl">Cotação Atual</div>
+      <div class="hc-val" style="color:${pc}">${fu(d.cot)}</div>
+      <div class="hc-sub" style="color:${pc}">${pctLabel}</div>
+    </div>
+    <div class="hero-card">
+      <div class="hc-glow" style="background:var(--green)"></div>
+      <div class="hc-icon">💸</div><div class="hc-lbl">Prêmios Recebidos</div>
+      <div class="hc-val" style="color:var(--green)">${fu(d.premios)}</div>
+      <div class="hc-sub">${d.ops} operações</div>
+    </div>`;
+
+  document.getElementById('eqBox').innerHTML=`
+    <div class="eq-item"><div class="eq-num" style="color:var(--amber)">${fu(d.strikeEx)}</div><div class="eq-lbl">Strike Exercida</div></div>
+    <div class="eq-op">−</div>
+    <div class="eq-item"><div class="eq-num" style="color:var(--green)">${fu(d.premios)}</div><div class="eq-lbl">Prêmios Acum.</div></div>
+    <div class="eq-op">=</div>
+    <div class="eq-result"><div class="eq-num" style="color:${d.ac}">${fu(d.pm)}</div><div class="eq-lbl">Preço Médio</div></div>`;
+
+  const pm=d.pm;
+  document.getElementById('zonesRow').innerHTML=`
+    <div class="zone-card danger"><div class="zc-em">🔴</div><div class="zc-lbl">Zona Perigo</div><div class="zc-range">&lt; ${fu(pm*1.003)}</div></div>
+    <div class="zone-card warn"><div class="zc-em">🟡</div><div class="zc-lbl">Zona Alerta</div><div class="zc-range">${fu(pm*1.003)} – ${fu(pm*1.015)}</div></div>
+    <div class="zone-card safe"><div class="zc-em">🟢</div><div class="zc-lbl">Zona Segura</div><div class="zc-range">&gt; ${fu(pm*1.015)}</div></div>`;
+
+  buildWF(d);
+  buildEvo(d);
+}
+
+function buildWF(d){
+  if(_cWF){try{_cWF.destroy()}catch(e){}}
+  const ctx=document.getElementById('wfChart').getContext('2d');
+  const maxP=Math.max(...d.evo.map(o=>o.p));
+  _cWF=new Chart(ctx,{type:'bar',data:{
+    labels:d.evo.map(o=>o.d),
+    datasets:[{label:'Prêmio US$',data:d.evo.map(o=>o.p),
+      backgroundColor:d.evo.map(o=>o.p>=maxP*0.7?d.ac+'cc':d.ac+'66'),
+      borderColor:d.ac,borderWidth:1,borderRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'$'+c.raw.toFixed(3)}}},
+      scales:{x:{grid:{display:false},ticks:{color:'#8b949e',font:{size:10}}},
+        y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#8b949e',font:{size:9},callback:v=>'$'+v}}}}});
+}
+
+function buildEvo(d){
+  if(_cEVO){try{_cEVO.destroy()}catch(e){}}
+  const ctx=document.getElementById('evoChart').getContext('2d');
+  const n=d.accevo.length;
+  _cEVO=new Chart(ctx,{type:'line',data:{
+    labels:d.evo.slice(0,n).map(o=>o.d),
+    datasets:[
+      {label:'Acumulado',data:d.accevo,borderColor:d.ac,backgroundColor:d.ac+'1a',fill:true,tension:.4,borderWidth:2,pointRadius:2},
+      {label:'PM Target',data:Array(n).fill(d.premios),borderColor:'rgba(255,255,255,.25)',
+        borderDash:[4,4],borderWidth:1,pointRadius:0,fill:false}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{x:{display:false},y:{grid:{color:'rgba(255,255,255,.04)'},
+        ticks:{color:'#8b949e',font:{size:9},callback:v=>'$'+v.toFixed(0)}}}}});
+}
+
+document.getElementById('tsLabel').textContent='Atualizado: '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+render('BTC');
+</script>
+</body>
+</html>

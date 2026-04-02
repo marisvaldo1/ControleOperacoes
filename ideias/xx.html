@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ideias 5-8 – Preview</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&family=Exo+2:wght@400;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#080c14;color:#e2e8f0;font-family:'Inter',sans-serif;min-height:100vh;}
+/* TABS */
+.tabs{display:flex;gap:4px;padding:10px 16px;background:#0d1420;border-bottom:1px solid #1e2d45;position:sticky;top:0;z-index:200;}
+.tab{padding:7px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;color:#64748b;border:1px solid transparent;}
+.tab:hover{color:#94a3b8;background:rgba(255,255,255,.04);}
+.tab.active{background:#1e3a5f;color:#00d4ff;border-color:#1e4a7a;}
+.page{display:none;padding:14px;max-width:970px;margin:0 auto;}
+.page.active{display:block;}
+</style>
+
+<!-- ===== IDEIA 5: ESTILO MINIMALISTA CLEANO COM BIG NUMBERS ===== -->
+<style>
+/* IDEIA 5 */
+.i5{--a:#e879f9;--b:#06b6d4;--c:#22c55e;--d:#f59e0b;--e:#f43f5e;--bg:#050b12;--card:#0a1520;--bdr:#162032;--muted:#475569;--text:#e2e8f0;}
+.i5 .hdr5{display:flex;align-items:center;justify-content:space-between;padding:14px 0;margin-bottom:18px;border-bottom:1px solid #162032;}
+.i5 .logo5{font-family:'Exo 2',sans-serif;font-size:16px;font-weight:800;background:linear-gradient(90deg,#e879f9,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.i5 .hbr5{display:flex;gap:8px;}
+.i5 .hb5{font-size:11px;padding:5px 12px;border-radius:20px;border:1px solid #162032;background:transparent;color:#475569;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;}
+.i5 .hb5:hover{border-color:#06b6d4;color:#06b6d4;}
+
+/* METRIC ROW */
+.i5 .metric-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:18px;}
+.i5 .metric{border-radius:12px;padding:16px;position:relative;}
+.i5 .m1{background:linear-gradient(135deg,rgba(232,121,249,.1),rgba(6,182,212,.05));border:1px solid rgba(232,121,249,.2);}
+.i5 .m2{background:linear-gradient(135deg,rgba(34,197,94,.1),rgba(6,182,212,.05));border:1px solid rgba(34,197,94,.2);}
+.i5 .m3{background:linear-gradient(135deg,rgba(245,158,11,.1),rgba(239,68,68,.05));border:1px solid rgba(245,158,11,.2);}
+.i5 .m4{background:linear-gradient(135deg,rgba(6,182,212,.1),rgba(99,102,241,.05));border:1px solid rgba(6,182,212,.2);}
+.i5 .m5{background:linear-gradient(135deg,rgba(244,63,94,.1),rgba(245,158,11,.05));border:1px solid rgba(244,63,94,.2);}
+.i5 .m-emoji{font-size:20px;margin-bottom:6px;}
+.i5 .m-big{font-size:24px;font-weight:700;font-family:'Fira Code',monospace;line-height:1.1;}
+.i5 .m-label{font-size:10px;color:#475569;margin-top:3px;letter-spacing:.5px;}
+
+/* PM COMPARISON */
+.i5 .pm-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+.i5 .pm-card{background:#0a1520;border:1px solid #162032;border-radius:14px;padding:18px;position:relative;overflow:hidden;}
+.i5 .pm-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.i5 .pm-card.btc::before{background:linear-gradient(90deg,#f7931a,#ffd700);}
+.i5 .pm-card.eth::before{background:linear-gradient(90deg,#627eea,#c46be3);}
+.i5 .pm-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.i5 .pm-name{font-size:13px;font-weight:700;}
+.i5 .pm-pct{font-size:12px;font-weight:600;padding:3px 8px;border-radius:6px;}
+.i5 .pm-main{font-size:30px;font-weight:700;font-family:'Fira Code',monospace;margin-bottom:12px;}
+/* Visual stacked bar */
+.i5 .stack-bar{height:8px;border-radius:4px;overflow:hidden;background:#162032;margin:6px 0;display:flex;}
+.i5 .sb-fill{height:100%;border-radius:4px;transition:width 1.5s ease;}
+.i5 .stack-labels{display:flex;justify-content:space-between;font-size:10px;color:#475569;}
+/* Distance meter */
+.i5 .dist-meter{margin-top:12px;padding:10px;border-radius:8px;text-align:center;border:1px solid;}
+.i5 .dist-pct-big{font-size:22px;font-weight:700;font-family:'Fira Code',monospace;}
+
+/* DATA TABLE */
+.i5 .dt{width:100%;border-collapse:collapse;font-size:12px;}
+.i5 .dt th{color:#475569;font-size:10px;letter-spacing:1px;padding:6px 8px;border-bottom:1px solid #162032;text-align:left;}
+.i5 .dt td{padding:7px 8px;border-bottom:1px solid rgba(22,32,50,.8);}
+.i5 .dt tr:hover td{background:rgba(255,255,255,.02);}
+.i5 .tag5{font-size:9px;padding:2px 6px;border-radius:4px;font-weight:600;}
+.i5 .t-call{background:rgba(6,182,212,.15);color:#06b6d4;}
+.i5 .t-put{background:rgba(245,158,11,.15);color:#f59e0b;}
+.i5 .t-ex{background:rgba(244,63,94,.15);color:#f43f5e;}
+.i5 .t-ok{background:rgba(34,197,94,.15);color:#22c55e;}
+</style>
+
+<!-- ===== IDEIA 6: ESTILO DARK ORANGE ENERGY ===== -->
+<style>
+.i6{--or:#ff6b00;--or2:#ff9500;--bg:#0a0700;--card:#110e06;--bdr:#2a1f0a;--text:#fef3c7;--muted:#78716c;}
+.i6 .hdr6{display:flex;align-items:center;justify-content:space-between;padding:12px 0;margin-bottom:16px;border-bottom:2px solid #2a1f0a;}
+.i6 .logo6{font-family:'Exo 2',sans-serif;font-size:15px;font-weight:800;color:#ff6b00;text-shadow:0 0 20px rgba(255,107,0,.5);}
+.i6 .hb6{padding:5px 12px;border:1px solid #2a1f0a;background:transparent;color:#78716c;border-radius:4px;cursor:pointer;font-size:11px;transition:all .2s;}
+.i6 .hb6:hover{border-color:#ff6b00;color:#ff6b00;}
+.i6 .hbr6{display:flex;gap:6px;}
+
+/* CARDS */
+.i6 .top4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
+.i6 .c6{background:#110e06;border:1px solid #2a1f0a;border-radius:10px;padding:14px;border-left:3px solid #ff6b00;}
+.i6 .c6 .val6{font-size:22px;font-weight:700;color:#ff9500;font-family:'Fira Code',monospace;margin:6px 0 2px;}
+.i6 .c6 .lbl6{font-size:9px;color:#78716c;letter-spacing:2px;text-transform:uppercase;}
+.i6 .c6 .sub6{font-size:10px;color:#78716c;}
+.i6 .c6 .ico6{font-size:20px;margin-bottom:4px;}
+
+/* MAIN */
+.i6 .main6{display:grid;grid-template-columns:1.2fr 1fr;gap:12px;margin-bottom:12px;}
+.i6 .panel6{background:#110e06;border:1px solid #2a1f0a;border-radius:10px;padding:16px;}
+.i6 .pt6{font-size:10px;font-weight:700;letter-spacing:2px;color:#ff6b00;margin-bottom:14px;text-transform:uppercase;}
+
+/* PM ORANGE */
+.i6 .pm-o{padding:12px;border:1px solid #2a1f0a;border-radius:8px;margin-bottom:10px;background:rgba(255,107,0,.04);}
+.i6 .pm-o-name{color:#ff9500;font-size:12px;font-weight:700;margin-bottom:8px;}
+.i6 .pm-o-big{font-size:28px;font-weight:700;font-family:'Fira Code',monospace;color:#ff6b00;}
+.i6 .pm-o-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;}
+.i6 .pm-o-cell{background:rgba(0,0,0,.3);padding:6px;border-radius:4px;font-size:11px;}
+.i6 .pm-o-lbl{color:#78716c;font-size:9px;}
+.i6 .pm-o-val{font-weight:700;margin-top:1px;font-family:'Fira Code',monospace;}
+
+/* SAFETY O */
+.i6 .safe-o{padding:12px;border-radius:8px;border:2px solid;margin-bottom:8px;}
+.i6 .safe-o.ok{border-color:rgba(255,107,0,.4);background:rgba(255,107,0,.05);}
+.i6 .safe-o.warn{border-color:rgba(255,149,0,.4);background:rgba(255,149,0,.05);}
+.i6 .safe-o.bad{border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.05);}
+.i6 .safe-o-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.i6 .safe-o-asset{font-size:14px;font-weight:700;}
+.i6 .safe-o-pct{font-size:20px;font-weight:700;font-family:'Fira Code',monospace;text-align:right;}
+
+/* SEGMENTOS */
+.i6 .seg-bar{height:16px;border-radius:6px;overflow:hidden;background:#1a1408;display:flex;margin:8px 0;}
+.i6 .seg-fill{height:100%;transition:width 1.5s ease;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;}
+
+/* GRID 3 */
+.i6 .g3-6{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.i6 .stat-box6{background:#110e06;border:1px solid #2a1f0a;border-radius:10px;padding:14px;text-align:center;}
+.i6 .sb-ico{font-size:24px;margin-bottom:6px;}
+.i6 .sb-big{font-size:20px;font-weight:700;font-family:'Fira Code',monospace;}
+.i6 .sb-lbl{font-size:10px;color:#78716c;margin-top:3px;}
+</style>
+
+<!-- ===== IDEIA 7: ESTILO CRYPTO DASHBOARD PREMIUM AZUL ===== -->
+<style>
+.i7{--bg:#030d1a;--card:#060f1e;--bdr:#0c2240;--accent:#1d6fe8;--light:#60a5fa;--text:#dbeafe;--muted:#4b6cb7;--green:#34d399;--red:#f87171;--gold:#fbbf24;}
+.i7 .hdr7{display:flex;align-items:center;justify-content:space-between;padding:12px 0;margin-bottom:16px;border-bottom:1px solid #0c2240;}
+.i7 .logo7{font-family:'Exo 2',sans-serif;font-size:15px;font-weight:800;color:#60a5fa;letter-spacing:1px;}
+.i7 .hb7{padding:5px 12px;border:1px solid #0c2240;background:transparent;color:#4b6cb7;border-radius:6px;cursor:pointer;font-size:11px;}
+.i7 .hb7:hover{border-color:#1d6fe8;color:#60a5fa;}
+.i7 .hbr7{display:flex;gap:6px;}
+.i7 .livepill7{background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.25);color:#34d399;font-size:10px;padding:4px 10px;border-radius:20px;}
+
+.i7 .top-strip7{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
+.i7 .ts7{background:#060f1e;border:1px solid #0c2240;border-radius:10px;padding:14px;position:relative;overflow:hidden;}
+.i7 .ts7::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at top right,rgba(29,111,232,.08),transparent 60%);pointer-events:none;}
+.i7 .ts7-val{font-size:22px;font-weight:700;font-family:'Fira Code',monospace;margin:6px 0 2px;}
+.i7 .ts7-lbl{font-size:10px;color:#4b6cb7;letter-spacing:1px;text-transform:uppercase;}
+.i7 .ts7-sub{font-size:10px;color:#4b6cb7;margin-top:2px;}
+.i7 .ts7-ico{font-size:22px;position:absolute;right:12px;top:12px;opacity:.4;}
+
+.i7 .mid7{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;}
+.i7 .p7{background:#060f1e;border:1px solid #0c2240;border-radius:10px;padding:16px;}
+.i7 .pt7{font-size:10px;font-weight:700;letter-spacing:2px;color:#1d6fe8;margin-bottom:12px;text-transform:uppercase;display:flex;align-items:center;gap:6px;}
+
+/* PM 7 */
+.i7 .pm7{padding:10px;border:1px solid #0c2240;border-radius:8px;margin-bottom:8px;background:rgba(29,111,232,.04);}
+.i7 .pm7-name{font-size:11px;font-weight:700;color:#60a5fa;margin-bottom:6px;}
+.i7 .pm7-big{font-size:24px;font-weight:700;font-family:'Fira Code',monospace;}
+.i7 .pm7-row{display:flex;justify-content:space-between;font-size:11px;margin-top:3px;border-top:1px solid #0c2240;padding-top:3px;}
+
+/* RADAR VISUAL */
+.i7 .radar-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.i7 .rg-item{padding:8px;border-radius:6px;border:1px solid #0c2240;text-align:center;}
+.i7 .rg-val{font-size:16px;font-weight:700;font-family:'Fira Code',monospace;margin-top:2px;}
+.i7 .rg-lbl{font-size:9px;color:#4b6cb7;text-transform:uppercase;letter-spacing:1px;}
+
+/* ALERT 7 */
+.i7 .alert7{padding:12px 14px;border-radius:8px;border-left:4px solid;margin-bottom:8px;}
+.i7 .alert7.ok{border-color:#34d399;background:rgba(52,211,153,.06);}
+.i7 .alert7.warn{border-color:#fbbf24;background:rgba(251,191,36,.06);}
+.i7 .alert7.bad{border-color:#f87171;background:rgba(248,113,113,.06);}
+.i7 .alert7-top{display:flex;justify-content:space-between;align-items:center;}
+.i7 .alert7-title{font-size:13px;font-weight:600;}
+.i7 .alert7-pct{font-size:18px;font-weight:700;font-family:'Fira Code',monospace;}
+
+/* PROGRESS 7 */
+.i7 .prog7{margin-bottom:10px;}
+.i7 .prog7-hdr{display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;}
+.i7 .prog7-bar{height:4px;background:#0c2240;border-radius:2px;overflow:hidden;}
+.i7 .prog7-fill{height:100%;border-radius:2px;transition:width 1.5s ease;}
+
+/* CANDLE VISUAL */
+.i7 .candle-row{display:flex;gap:5px;align-items:flex-end;height:80px;padding-top:8px;}
+.i7 .candle{flex:1;display:flex;flex-direction:column;align-items:center;gap:0;}
+.i7 .candle-body{width:70%;min-height:4px;border-radius:2px;transition:height 1.5s ease;}
+.i7 .candle-wick{width:1px;background:#1d6fe8;}
+.i7 .candle-lbl{font-size:8px;color:#4b6cb7;margin-top:2px;}
+</style>
+
+<!-- ===== IDEIA 8: ESTILO CARD-ORIENTED COM EMOJIS E FRIENDLY ===== -->
+<style>
+.i8{--bg:#0c1117;--card:#131920;--bdr:#1e2936;--purple:#8b5cf6;--blue:#3b82f6;--green:#10b981;--orange:#f59e0b;--red:#ef4444;--pink:#ec4899;--text:#f8fafc;--muted:#6b7280;}
+.i8 .hdr8{display:flex;align-items:center;justify-content:space-between;padding:12px 0;margin-bottom:16px;border-bottom:1px solid #1e2936;}
+.i8 .logo8{font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;color:#f8fafc;}
+.i8 .hb8{padding:5px 12px;border:1px solid #1e2936;background:transparent;color:#6b7280;border-radius:8px;cursor:pointer;font-size:11px;font-family:'Nunito',sans-serif;transition:all .2s;}
+.i8 .hb8:hover{border-color:#8b5cf6;color:#8b5cf6;}
+.i8 .hbr8{display:flex;gap:6px;}
+
+/* BIG CARDS */
+.i8 .big4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
+.i8 .bc8{background:#131920;border:1px solid #1e2936;border-radius:16px;padding:16px;text-align:center;transition:transform .15s;}
+.i8 .bc8:hover{transform:translateY(-2px);}
+.i8 .bc8-emoji{font-size:32px;margin-bottom:8px;}
+.i8 .bc8-val{font-size:22px;font-weight:800;font-family:'Fira Code',monospace;margin-bottom:4px;}
+.i8 .bc8-label{font-size:11px;color:#6b7280;font-weight:600;}
+.i8 .bc8-sub{font-size:10px;color:#4b5563;margin-top:2px;}
+
+/* PM FRIENDLY */
+.i8 .pm8-wrap{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.i8 .pm8-card{background:#131920;border:1px solid #1e2936;border-radius:16px;padding:16px;}
+.i8 .pm8-top{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.i8 .pm8-avatar{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;}
+.i8 .pm8-title{font-size:13px;font-weight:700;}
+.i8 .pm8-sub{font-size:10px;color:#6b7280;}
+.i8 .pm8-big{font-size:28px;font-weight:800;font-family:'Fira Code',monospace;text-align:center;margin:10px 0;padding:12px;border-radius:10px;}
+.i8 .pm8-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.i8 .pm8-stat{padding:8px;border-radius:8px;border:1px solid #1e2936;text-align:center;}
+.i8 .pm8-stat-l{font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;}
+.i8 .pm8-stat-v{font-size:12px;font-weight:700;margin-top:2px;}
+
+/* SAFETY FRIENDLY */
+.i8 .safe8{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.i8 .s8{border-radius:16px;padding:16px;border:2px solid;}
+.i8 .s8.ok{background:rgba(16,185,129,.06);border-color:rgba(16,185,129,.2);}
+.i8 .s8.warn{background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.2);}
+.i8 .s8.bad{background:rgba(239,68,68,.06);border-color:rgba(239,68,68,.2);}
+.i8 .s8-emoji{font-size:32px;text-align:center;margin-bottom:8px;}
+.i8 .s8-asset{font-size:13px;font-weight:700;text-align:center;margin-bottom:8px;}
+.i8 .s8-pct{font-size:36px;font-weight:800;font-family:'Fira Code',monospace;text-align:center;margin-bottom:4px;}
+.i8 .s8-label{font-size:11px;text-align:center;color:#6b7280;}
+.i8 .s8-detail{font-size:10px;color:#6b7280;text-align:center;margin-top:6px;}
+
+/* PROGRESS FRIENDLY */
+.i8 .prg8{margin-bottom:10px;}
+.i8 .prg8-hdr{display:flex;justify-content:space-between;font-size:12px;font-weight:600;margin-bottom:5px;}
+.i8 .prg8-track{height:8px;background:#1e2936;border-radius:4px;overflow:hidden;}
+.i8 .prg8-fill{height:100%;border-radius:4px;transition:width 1.5s ease;}
+
+/* BOTTOM GRID */
+.i8 .bot8{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;}
+.i8 .b8{background:#131920;border:1px solid #1e2936;border-radius:16px;padding:16px;}
+.i8 .bt8{font-size:11px;font-weight:700;color:#6b7280;letter-spacing:.5px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+
+/* EMOJI TIMELINE */
+.i8 .etl{display:flex;flex-direction:column;gap:8px;}
+.i8 .etl-item{display:flex;align-items:center;gap:8px;font-size:11px;}
+.i8 .etl-ico{font-size:18px;flex-shrink:0;}
+.i8 .etl-body{flex:1;}
+.i8 .etl-main{font-weight:600;}
+.i8 .etl-sub{font-size:10px;color:#6b7280;}
+.i8 .etl-val{font-size:11px;font-weight:700;font-family:'Fira Code',monospace;}
+
+/* ACHIEVEMENT */
+.i8 .achv{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.i8 .ach{padding:8px;border-radius:8px;border:1px solid;display:flex;align-items:center;gap:6px;font-size:11px;}
+.i8 .ach.earn{border-color:rgba(251,191,36,.3);background:rgba(251,191,36,.05);}
+.i8 .ach.locked{border-color:#1e2936;opacity:.4;}
+.i8 .ach-ico{font-size:16px;}
+.i8 .ach-text{font-size:10px;font-weight:600;}
+</style>
+</head>
+<body>
+
+<div class="tabs">
+  <div class="tab active" onclick="showPage(0)">💠 Ideia 5 – Clean Minimal</div>
+  <div class="tab" onclick="showPage(1)">🔥 Ideia 6 – Dark Orange</div>
+  <div class="tab" onclick="showPage(2)">🌊 Ideia 7 – Crypto Blue</div>
+  <div class="tab" onclick="showPage(3)">💜 Ideia 8 – Friendly Cards</div>
+</div>
+
+<!-- ======================= IDEIA 5 ======================= -->
+<div class="page i5 active" id="p0">
+  <div class="hdr5">
+    <div class="logo5">◈ PORTFOLIO ANALYTICS</div>
+    <div class="hbr5">
+      <button class="hb5">📊 Resumo</button>
+      <button class="hb5">🔄 Sync</button>
+      <button class="hb5">✕</button>
+    </div>
+  </div>
+
+  <div class="metric-row">
+    <div class="metric m1">
+      <div class="m-emoji">💰</div>
+      <div class="m-big" style="color:#e879f9" id="m5_1">—</div>
+      <div class="m-label">Prêmios Totais USD</div>
+    </div>
+    <div class="metric m2">
+      <div class="m-emoji">🎯</div>
+      <div class="m-big" style="color:#22c55e" id="m5_2">—</div>
+      <div class="m-label">Win Rate</div>
+    </div>
+    <div class="metric m3">
+      <div class="m-emoji">📈</div>
+      <div class="m-big" style="color:#f59e0b" id="m5_3">—</div>
+      <div class="m-label">TAE Médio a.a.</div>
+    </div>
+    <div class="metric m4">
+      <div class="m-emoji">📦</div>
+      <div class="m-big" style="color:#06b6d4" id="m5_4">—</div>
+      <div class="m-label">Total Operações</div>
+    </div>
+    <div class="metric m5">
+      <div class="m-emoji">⚡</div>
+      <div class="m-big" style="color:#f43f5e" id="m5_5">—</div>
+      <div class="m-label">Exercidas</div>
+    </div>
+  </div>
+
+  <div class="pm-grid">
+    <div class="pm-card btc">
+      <div class="pm-header">
+        <div class="pm-name" style="color:#f7931a">₿ BTC/USDT</div>
+        <div class="pm-pct" id="pm5_btc_diff" style="background:rgba(34,197,94,.15);color:#22c55e">—</div>
+      </div>
+      <div class="pm-main" style="color:#f59e0b" id="pm5_btc">—</div>
+      <div style="font-size:11px;color:#475569;margin-bottom:8px;">Preço médio = Strike exercido − Prêmios acumulados</div>
+      <div class="stack-bar">
+        <div class="sb-fill" id="sb5_btc_prem" style="background:#22c55e;width:0%;"></div>
+        <div class="sb-fill" id="sb5_btc_pm" style="background:#f59e0b;width:0%;"></div>
+      </div>
+      <div class="stack-labels"><span style="color:#22c55e">Prêmios: <span id="pm5_btcP">—</span></span><span style="color:#f59e0b">PM: <span id="pm5_btcPM">—</span></span></div>
+      <div class="dist-meter" id="dm5_btc" style="margin-top:8px;">
+        <div style="font-size:9px;color:#475569;margin-bottom:4px;">COTAÇÃO ATUAL vs PREÇO MÉDIO</div>
+        <div class="dist-pct-big" id="dm5_btc_pct">—</div>
+        <div style="font-size:10px;color:#475569" id="dm5_btc_val">—</div>
+      </div>
+    </div>
+
+    <div class="pm-card eth">
+      <div class="pm-header">
+        <div class="pm-name" style="color:#627eea">⬡ ETH/USDT</div>
+        <div class="pm-pct" id="pm5_eth_diff" style="background:rgba(34,197,94,.15);color:#22c55e">—</div>
+      </div>
+      <div class="pm-main" style="color:#a78bfa" id="pm5_eth">—</div>
+      <div style="font-size:11px;color:#475569;margin-bottom:8px;">Preço médio = Strike exercido − Prêmios acumulados</div>
+      <div class="stack-bar">
+        <div class="sb-fill" id="sb5_eth_prem" style="background:#22c55e;width:0%;"></div>
+        <div class="sb-fill" id="sb5_eth_pm" style="background:#a78bfa;width:0%;"></div>
+      </div>
+      <div class="stack-labels"><span style="color:#22c55e">Prêmios: <span id="pm5_ethP">—</span></span><span style="color:#a78bfa">PM: <span id="pm5_ethPM">—</span></span></div>
+      <div class="dist-meter" id="dm5_eth" style="margin-top:8px;">
+        <div style="font-size:9px;color:#475569;margin-bottom:4px;">COTAÇÃO ATUAL vs PREÇO MÉDIO</div>
+        <div class="dist-pct-big" id="dm5_eth_pct">—</div>
+        <div style="font-size:10px;color:#475569" id="dm5_eth_val">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Segurança next op table -->
+  <div style="background:#0a1520;border:1px solid #162032;border-radius:14px;padding:16px;margin-bottom:14px;">
+    <div style="font-size:10px;font-weight:700;letter-spacing:2px;color:#475569;margin-bottom:12px;">🛡️ SEGURANÇA DA PRÓXIMA OPERAÇÃO</div>
+    <table class="dt">
+      <thead><tr><th>Ativo</th><th>Strike Atual</th><th>Preço Médio</th><th>Folga $</th><th>Folga %</th><th>Status</th></tr></thead>
+      <tbody id="safe5Table"></tbody>
+    </table>
+  </div>
+
+  <div style="background:#0a1520;border:1px solid #162032;border-radius:14px;padding:16px;">
+    <div style="font-size:10px;font-weight:700;letter-spacing:2px;color:#475569;margin-bottom:12px;">📋 OPERAÇÕES ABERTAS</div>
+    <table class="dt">
+      <thead><tr><th>Ativo</th><th>Tipo</th><th>Strike</th><th>Dist.</th><th>TAE</th><th>Prêmio</th><th>Res.</th><th>PM vs Strike</th></tr></thead>
+      <tbody id="op5Table"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ======================= IDEIA 6 ======================= -->
+<div class="page i6" id="p1">
+  <div class="hdr6">
+    <div class="logo6">⚡ DUAL INVESTMENT ANALYTICS</div>
+    <div class="hbr6">
+      <button class="hb6">🔄</button>
+      <button class="hb6">✕</button>
+    </div>
+  </div>
+  <div class="top4">
+    <div class="c6"><div class="ico6">💰</div><div class="lbl6">Prêmios Totais</div><div class="val6" id="v6_1">—</div><div class="sub6">USD acumulado</div></div>
+    <div class="c6"><div class="ico6">🎯</div><div class="lbl6">Win Rate</div><div class="val6" id="v6_2">—</div><div class="sub6">sem exercício</div></div>
+    <div class="c6"><div class="ico6">📈</div><div class="lbl6">TAE Médio</div><div class="val6" id="v6_3">—</div><div class="sub6">a.a.</div></div>
+    <div class="c6"><div class="ico6">📋</div><div class="lbl6">Operações</div><div class="val6" id="v6_4">—</div><div class="sub6">total período</div></div>
+  </div>
+  <div class="main6">
+    <div class="panel6">
+      <div class="pt6">💡 PREÇO MÉDIO POR ATIVO</div>
+      <div id="pm6_area"></div>
+    </div>
+    <div class="panel6">
+      <div class="pt6">🛡️ PRÓXIMA OPERAÇÃO</div>
+      <div id="safe6_area"></div>
+      <div style="margin-top:14px;">
+        <div class="pt6" style="margin-bottom:10px;">📊 TAE POR ATIVO</div>
+        <div id="tae6_area"></div>
+      </div>
+    </div>
+  </div>
+  <div class="g3-6">
+    <div class="stat-box6"><div class="sb-ico">₿</div><div class="sb-big" style="color:#f7931a" id="b6_btcP">—</div><div class="sb-lbl">Prêmios BTC</div></div>
+    <div class="stat-box6"><div class="sb-ico">⬡</div><div class="sb-big" style="color:#627eea" id="b6_ethP">—</div><div class="sb-lbl">Prêmios ETH</div></div>
+    <div class="stat-box6"><div class="sb-ico">🏆</div><div class="sb-big" style="color:#ff9500" id="b6_score">—</div><div class="sb-lbl">Score Portfólio /100</div></div>
+  </div>
+</div>
+
+<!-- ======================= IDEIA 7 ======================= -->
+<div class="page i7" id="p2">
+  <div class="hdr7">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div class="logo7">◈ CRYPTO PORTFOLIO</div>
+      <div class="livepill7">● LIVE</div>
+    </div>
+    <div class="hbr7">
+      <button class="hb7">07:11</button>
+      <button class="hb7">⟳</button>
+      <button class="hb7">✕</button>
+    </div>
+  </div>
+  <div class="top-strip7">
+    <div class="ts7"><div class="ts7-lbl">Prêmios Totais</div><div class="ts7-val" style="color:#60a5fa" id="t7_1">—</div><div class="ts7-sub">USD</div><div class="ts7-ico">💰</div></div>
+    <div class="ts7"><div class="ts7-lbl">Win Rate</div><div class="ts7-val" style="color:#34d399" id="t7_2">—</div><div class="ts7-sub">sem exercício</div><div class="ts7-ico">🎯</div></div>
+    <div class="ts7"><div class="ts7-lbl">TAE Geral</div><div class="ts7-val" style="color:#fbbf24" id="t7_3">—</div><div class="ts7-sub">a.a.</div><div class="ts7-ico">📈</div></div>
+    <div class="ts7"><div class="ts7-lbl">Exercidas</div><div class="ts7-val" style="color:#f87171" id="t7_4">—</div><div class="ts7-sub">de <span id="t7_tot">—</span> ops</div><div class="ts7-ico">⚡</div></div>
+  </div>
+  <div class="mid7">
+    <div class="p7">
+      <div class="pt7">💡 PREÇO MÉDIO</div>
+      <div id="pm7_area"></div>
+    </div>
+    <div class="p7">
+      <div class="pt7">🛡️ SEGURANÇA OP</div>
+      <div id="safe7_area"></div>
+      <div style="margin-top:12px;">
+        <div class="pt7" style="margin-bottom:8px;">📊 TAE</div>
+        <div id="tae7_area"></div>
+      </div>
+    </div>
+    <div class="p7">
+      <div class="pt7">📦 ESTATÍSTICAS</div>
+      <div class="radar-grid" id="radar7"></div>
+      <div style="margin-top:14px;">
+        <div class="pt7" style="margin-bottom:8px;">📅 RESULTADO/DIA</div>
+        <div class="candle-row" id="candle7"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================= IDEIA 8 ======================= -->
+<div class="page i8" id="p3">
+  <div class="hdr8">
+    <div class="logo8">🚀 Meu Portfólio Crypto</div>
+    <div class="hbr8">
+      <button class="hb8">🔄 Atualizar</button>
+      <button class="hb8">✕ Fechar</button>
+    </div>
+  </div>
+  <div class="big4">
+    <div class="bc8"><div class="bc8-emoji">💰</div><div class="bc8-val" style="color:#f59e0b" id="b8_1">—</div><div class="bc8-label">Prêmios Totais</div><div class="bc8-sub">acumulado USD</div></div>
+    <div class="bc8"><div class="bc8-emoji">🎯</div><div class="bc8-val" style="color:#10b981" id="b8_2">—</div><div class="bc8-label">Acertos</div><div class="bc8-sub">sem exercício</div></div>
+    <div class="bc8"><div class="bc8-emoji">📈</div><div class="bc8-val" style="color:#8b5cf6" id="b8_3">—</div><div class="bc8-label">TAE Médio</div><div class="bc8-sub">ao ano</div></div>
+    <div class="bc8"><div class="bc8-emoji">⚡</div><div class="bc8-val" style="color:#ef4444" id="b8_4">—</div><div class="bc8-label">Exercidas</div><div class="bc8-sub">ops exercidas</div></div>
+  </div>
+  <div class="pm8-wrap">
+    <div class="pm8-card">
+      <div class="pm8-top">
+        <div class="pm8-avatar" style="background:rgba(247,147,26,.15)">₿</div>
+        <div><div class="pm8-title">Bitcoin (BTC)</div><div class="pm8-sub">Preço Médio Efetivo</div></div>
+      </div>
+      <div class="pm8-big" style="color:#f59e0b;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2)" id="pm8_btc">—</div>
+      <div class="pm8-stats">
+        <div class="pm8-stat"><div class="pm8-stat-l">Strike Exercido</div><div class="pm8-stat-v" style="color:#ef4444" id="pm8_btc_s">—</div></div>
+        <div class="pm8-stat"><div class="pm8-stat-l">− Prêmios</div><div class="pm8-stat-v" style="color:#10b981" id="pm8_btc_p">—</div></div>
+        <div class="pm8-stat"><div class="pm8-stat-l">Cotação Atual</div><div class="pm8-stat-v" style="color:#3b82f6" id="pm8_btc_c">—</div></div>
+        <div class="pm8-stat"><div class="pm8-stat-l">vs Preço Médio</div><div class="pm8-stat-v" id="pm8_btc_d">—</div></div>
+      </div>
+    </div>
+    <div class="pm8-card">
+      <div class="pm8-top">
+        <div class="pm8-avatar" style="background:rgba(98,126,234,.15)">⬡</div>
+        <div><div class="pm8-title">Ethereum (ETH)</div><div class="pm8-sub">Preço Médio Efetivo</div></div>
+      </div>
+      <div class="pm8-big" style="color:#8b5cf6;background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.2)" id="pm8_eth">—</div>
+      <div class="pm8-stats">
+        <div class="pm8-stat"><div class="pm8-stat-l">Strike Exercido</div><div class="pm8-stat-v" style="color:#ef4444" id="pm8_eth_s">—</div></div>
+        <div class="pm8-stat"><div class="pm8-stat-l">− Prêmios</div><div class="pm8-stat-v" style="color:#10b981" id="pm8_eth_p">—</div></div>
+        <div class="pm8-stat"><div class="pm8-stat-l">Cotação Atual</div><div class="pm8-stat-v" style="color:#3b82f6" id="pm8_eth_c">—</div></div>
+        <div class="pm8-stat"><div class="pm8-stat-l">vs Preço Médio</div><div class="pm8-stat-v" id="pm8_eth_d">—</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="safe8" id="safe8_area"></div>
+  <div class="bot8">
+    <div class="b8">
+      <div class="bt8">⏱️ Atividade Recente</div>
+      <div class="etl" id="etl8"></div>
+    </div>
+    <div class="b8">
+      <div class="bt8">📊 Performance TAE</div>
+      <div id="tae8_area"></div>
+    </div>
+    <div class="b8">
+      <div class="bt8">🏅 Conquistas</div>
+      <div class="achv" id="achv8"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const DATA=[{"id":74,"ativo":"BTC","tipo":"PUT","cotacao_atual":72272.61,"abertura":70436.31,"tae":134.14,"strike":69500.0,"distancia":1.33,"prazo":1,"crypto":0.00708844,"premio_us":1.88,"resultado":0.37,"exercicio":"2026-03-13","exercicio_status":"NAO","data_operacao":"2026-03-12","status":"FECHADA"},{"id":84,"ativo":"ETH","tipo":"CALL","cotacao_atual":2067.88,"abertura":2069.58,"tae":39.76,"strike":2150.0,"distancia":3.89,"prazo":1,"crypto":0.8222,"premio_us":1.85,"resultado":0.11,"exercicio":"2026-03-13","exercicio_status":"NAO","data_operacao":"2026-03-12","status":"FECHADA"},{"id":95,"ativo":"BTC","tipo":"PUT","cotacao_atual":71177.90,"abertura":72267.52,"tae":69.72,"strike":71000.0,"distancia":1.75,"prazo":3,"crypto":0.0071,"premio_us":2.95,"resultado":0.57,"exercicio":"2026-03-16","exercicio_status":"NAO","data_operacao":"2026-03-13","status":"FECHADA"},{"id":96,"ativo":"ETH","tipo":"CALL","cotacao_atual":2104.66,"abertura":2199.48,"tae":30.21,"strike":2250.0,"distancia":6.16,"prazo":3,"crypto":0.823,"premio_us":4.33,"resultado":0.25,"exercicio":"2026-03-16","exercicio_status":"NAO","data_operacao":"2026-03-13","status":"FECHADA"},{"id":103,"ativo":"ETH","tipo":"CALL","cotacao_atual":2049.45,"abertura":2034.51,"tae":17.36,"strike":2325.0,"distancia":14.28,"prazo":2,"crypto":0.82,"premio_us":1.59,"resultado":0.10,"exercicio":"2026-03-06","exercicio_status":"NAO","data_operacao":"2026-03-04","status":"FECHADA"},{"id":104,"ativo":"ETH","tipo":"CALL","cotacao_atual":2019.92,"abertura":2009.71,"tae":38.6,"strike":2150.0,"distancia":6.98,"prazo":1,"crypto":0.82032800,"premio_us":1.74,"resultado":0.11,"exercicio":"2026-03-11","exercicio_status":"NAO","data_operacao":"2026-03-10","status":"FECHADA"},{"id":105,"ativo":"BTC","tipo":"PUT","cotacao_atual":70742.2,"abertura":69529.09,"tae":196.79,"strike":69000.0,"distancia":0.76,"prazo":1,"crypto":0.00720362,"premio_us":2.75,"resultado":0.54,"exercicio":"2026-03-12","exercicio_status":"NAO","data_operacao":"2026-03-11","status":"FECHADA"},{"id":106,"ativo":"ETH","tipo":"CALL","cotacao_atual":2066.7,"abertura":2020.87,"tae":49.24,"strike":2100.0,"distancia":3.92,"prazo":1,"crypto":0.8211,"premio_us":2.24,"resultado":0.13,"exercicio":"2026-03-12","exercicio_status":"NAO","data_operacao":"2026-03-11","status":"FECHADA"},{"id":125,"ativo":"BTC","tipo":"CALL","cotacao_atual":74321.94,"abertura":73455.24,"tae":178.06,"strike":74000.0,"distancia":0.74,"prazo":1,"crypto":0.00090000,"premio_us":0.32,"resultado":0.49,"exercicio":"2026-03-17","exercicio_status":"SIM","data_operacao":"2026-03-16","status":"FECHADA"},{"id":126,"ativo":"ETH","tipo":"PUT","cotacao_atual":2307.97,"abertura":2266.03,"tae":306.98,"strike":2250.0,"distancia":0.71,"prazo":1,"crypto":1.0507418,"premio_us":19.96,"resultado":0.84,"exercicio":"2026-03-17","exercicio_status":"NAO","data_operacao":"2026-03-16","status":"FECHADA"},{"id":137,"ativo":"BTC","tipo":"CALL","cotacao_atual":73664.01,"abertura":73445.24,"tae":108.25,"strike":75000.0,"distancia":2.10,"prazo":1,"crypto":0.0383,"premio_us":8.3,"resultado":0.3,"exercicio":"2026-03-17","exercicio_status":"NAO","data_operacao":"2026-03-16","status":"FECHADA"},{"id":138,"ativo":"ETH","tipo":"CALL","cotacao_atual":2329.62,"abertura":2266.03,"tae":184.66,"strike":2325.0,"distancia":2.60,"prazo":1,"crypto":0.00599504,"premio_us":0.07,"resultado":0.51,"exercicio":"2026-03-17","exercicio_status":"SIM","data_operacao":"2026-03-16","status":"FECHADA"},{"id":165,"ativo":"BTC","tipo":"CALL","cotacao_atual":74213.17,"abertura":74113.70,"tae":129.47,"strike":75000.0,"distancia":1.20,"prazo":1,"crypto":0.0385239,"premio_us":10.12,"resultado":0.35,"exercicio":"2026-03-18","exercicio_status":"NAO","data_operacao":"2026-03-17","status":"FECHADA"},{"id":166,"ativo":"ETH","tipo":"PUT","cotacao_atual":2326.39,"abertura":2330.94,"tae":347.33,"strike":2325.0,"distancia":0.25,"prazo":1,"crypto":1.06349322,"premio_us":23.54,"resultado":0.95,"exercicio":"2026-03-18","exercicio_status":"NAO","data_operacao":"2026-03-17","status":"FECHADA"},{"id":221,"ativo":"BTC","tipo":"CALL","cotacao_atual":72373.74,"abertura":74150.50,"tae":134.51,"strike":75000.0

@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Análise Temporal · 7 Variações</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Syne:wght@600;700;800&family=Orbitron:wght@500;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg:   #131c2b; --bg1: #19243a; --bg2: #1e2c42; --bg3: #232f45;
+  --bdr:  #263548; --bdr2:#2f4060;
+  --tx1:  #e4eefb; --tx2: #6080a8; --tx3: #344a68;
+  --grn:  #3dd68c; --grn-bg:#19382c; --grn-bdr:#2a5840;
+  --red:  #e05252; --red-bg:#2e1c1c; --red-bdr:#4a2c2c;
+  --amb:  #e8a830; --amb-bg:#2e2010; --amb-bdr:#4a3418;
+  --blu:  #4ab8d4; --blu-bg:#152230; --blu-bdr:#224050;
+  --pur:  #9b72d4; --yw:#d4c84a;
+  --mono:'JetBrains Mono',monospace;
+  --syne:'Syne',sans-serif;
+  --orb: 'Orbitron',sans-serif;
+  --dm:  'DM Sans',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:14px}
+body{background:#0d1520;color:var(--tx1);font-family:var(--dm);min-height:100vh;padding:1.2rem;display:flex;flex-direction:column;align-items:center;gap:2rem;}
+
+/* ══ SWITCHER ══ */
+.sw{display:flex;gap:.3rem;flex-wrap:wrap;background:var(--bg);border:1px solid var(--bdr);border-radius:28px;padding:.4rem .65rem;position:sticky;top:.6rem;z-index:600;box-shadow:0 4px 18px rgba(0,0,0,.55);}
+.sw span{font-family:var(--mono);font-size:.67rem;color:var(--tx2);align-self:center;padding-right:.2rem;}
+.swb{padding:.22rem .75rem;border-radius:18px;border:1px solid var(--bdr);background:transparent;color:var(--tx2);font-family:var(--mono);font-size:.63rem;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.swb:hover{color:var(--tx1);border-color:var(--bdr2);}
+.swb.on{background:var(--bg2);border-color:var(--amb);color:var(--amb);}
+
+/* ══ MODAL WRAPPER ══ */
+.panel{width:100%;max-width:1160px;background:var(--bg);border:1px solid var(--bdr);border-radius:12px;overflow:hidden;box-shadow:0 16px 55px rgba(0,0,0,.65);display:none;animation:fadeIn .3s ease;}
+.panel.on{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ══ SHARED HEADER ══ */
+.ph{background:var(--bg1);border-bottom:1px solid var(--bdr);padding:.55rem 1rem;display:flex;align-items:center;gap:.6rem;}
+.ph-icon{font-size:1rem;color:var(--amb);}
+.ph-title{font-family:var(--syne);font-size:.92rem;font-weight:700;flex:1;}
+.ph-ts{font-family:var(--mono);font-size:.66rem;color:var(--tx2);}
+.ph-btn{width:28px;height:28px;border-radius:6px;border:1px solid var(--bdr2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;font-size:.75rem;}
+.ph-ref{background:var(--bg2);color:var(--blu);}
+.ph-ref:hover{border-color:var(--blu);}
+.ph-ref.spin svg{animation:sp .7s linear infinite;}
+@keyframes sp{to{transform:rotate(360deg)}}
+.ph-cls{background:transparent;color:var(--tx2);}
+.ph-cls:hover{border-color:var(--red);color:var(--red);background:var(--red-bg);}
+
+/* ══ PERIOD BAR ══ */
+.pbar{padding:.42rem 1rem;border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:.22rem;flex-wrap:wrap;background:var(--bg);}
+.plbl{font-family:var(--mono);font-size:.62rem;color:var(--tx2);margin-right:.2rem;}
+.pp{padding:.18rem .52rem;border-radius:20px;font-family:var(--mono);font-size:.65rem;font-weight:500;cursor:pointer;border:1px solid var(--bdr);background:transparent;color:var(--tx2);transition:all .14s;white-space:nowrap;}
+.pp:hover{color:var(--tx1);border-color:var(--bdr2);}
+.pp.on{background:var(--amb-bg);border-color:var(--amb);color:var(--amb);}
+
+/* ══ BODY ══ */
+.pb{padding:.75rem 1rem .9rem;display:flex;flex-direction:column;gap:.55rem;}
+
+/* ══ CARDS ══ */
+.card{background:var(--bg1);border:1px solid var(--bdr);border-radius:10px;padding:.6rem .75rem;}
+.card-title{font-family:var(--mono);font-size:.6rem;font-weight:500;color:var(--tx2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.38rem;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;}
+.g5{display:grid;grid-template-columns:repeat(5,1fr);gap:.5rem;}
+.g23{display:grid;grid-template-columns:2fr 3fr;gap:.5rem;}
+.g32{display:grid;grid-template-columns:3fr 2fr;gap:.5rem;}
+
+/* ══ KPI STRIP ══ */
+.kstrip{background:var(--bg1);border:1px solid var(--bdr);border-radius:10px;overflow:hidden;}
+.kstrip-inner{display:grid;}
+.ki{padding:.6rem .7rem;border-right:1px solid var(--bdr);text-align:center;}
+.ki:last-child{border-right:none;}
+.ki-lbl{font-family:var(--mono);font-size:.57rem;font-weight:500;color:var(--tx2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.15rem;}
+.ki-val{font-family:var(--mono);font-size:1.1rem;font-weight:700;line-height:1;}
+.ki-sub{font-family:var(--mono);font-size:.58rem;color:var(--tx2);margin-top:.1rem;}
+
+/* ══ HERO STAT ══ */
+.hero-val{font-family:var(--orb);font-size:1.9rem;font-weight:700;line-height:1;margin-bottom:.12rem;}
+.hero-lbl{font-family:var(--mono);font-size:.62rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.35rem;}
+.hero-badges{display:flex;gap:.3rem;flex-wrap:wrap;}
+.hbdg{padding:.1rem .4rem;border-radius:5px;font-family:var(--mono);font-size:.6rem;font-weight:600;}
+
+/* ══ PROGRESS BAR ══ */
+.pbl{display:flex;flex-direction:column;gap:.28rem;}
+.pb-item{display:flex;flex-direction:column;gap:.1rem;}
+.pb-head{display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:.64rem;}
+.pb-k{color:var(--tx2);}
+.pb-v{font-weight:600;}
+.pb-track{height:7px;background:var(--bg3);border-radius:4px;overflow:hidden;}
+.pb-fill{height:100%;border-radius:4px;transition:width .7s ease;}
+
+/* ══ CHART WRAPPER ══ */
+.ch-wrap{position:relative;}
+
+/* ══ TABS (subpages) ══ */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--bdr);background:var(--bg1);}
+.tab{padding:.42rem .9rem;font-family:var(--mono);font-size:.66rem;font-weight:500;color:var(--tx2);cursor:pointer;border-bottom:2px solid transparent;transition:all .14s;white-space:nowrap;}
+.tab:hover{color:var(--tx1);}
+.tab.on{color:var(--tx1);border-bottom-color:var(--amb);}
+
+/* ══ TABLE ══ */
+.dt{width:100%;border-collapse:collapse;}
+.dt th{font-family:var(--mono);font-size:.57rem;font-weight:600;color:var(--tx2);text-transform:uppercase;letter-spacing:.08em;padding:.28rem .5rem;background:var(--bg3);border-bottom:1px solid var(--bdr);text-align:left;white-space:nowrap;}
+.dt td{padding:.32rem .5rem;font-family:var(--mono);font-size:.66rem;border-bottom:1px solid rgba(38,53,72,.5);white-space:nowrap;}
+.dt tr:last-child td{border-bottom:none;}
+.dt tr:hover td{background:rgba(74,184,212,.03);}
+
+/* ══ MISC ══ */
+.bdg{display:inline-block;padding:.07rem .35rem;border-radius:4px;font-family:var(--mono);font-size:.6rem;font-weight:600;}
+.bdg-g{background:var(--grn-bg);color:var(--grn);border:1px solid var(--grn-bdr);}
+.bdg-r{background:var(--red-bg);color:var(--red);border:1px solid var(--red-bdr);}
+.bdg-a{background:var(--amb-bg);color:var(--amb);border:1px solid var(--amb-bdr);}
+.bdg-b{background:var(--blu-bg);color:var(--blu);border:1px solid var(--blu-bdr);}
+.sep-v{width:1px;background:var(--bdr);flex-shrink:0;}
+.divider{height:1px;background:var(--bdr);margin:.1rem 0;}
+</style>
+</head>
+<body>
+
+<!-- SWITCHER -->
+<div class="sw">
+  <span>Variação:</span>
+  <button class="swb on" data-v="1">① Visão Executiva</button>
+  <button class="swb" data-v="2">② Análise de Risco</button>
+  <button class="swb" data-v="3">③ Calendário Visual</button>
+  <button class="swb" data-v="4">④ Performance Curve</button>
+  <button class="swb" data-v="5">⑤ Operações Abertas</button>
+  <button class="swb" data-v="6">⑥ Heatmap Mensal</button>
+  <button class="swb" data-v="7">⑦ Mission Control</button>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     PANEL 1 — VISÃO EXECUTIVA
+     Foco: resultado líquido + curva acumulada + win/loss detalhado
+══════════════════════════════════════════════ -->
+<div class="panel on" id="p1">
+  <div class="ph">
+    <span class="ph-icon">📅</span>
+    <span class="ph-title">Análise Temporal de Performance</span>
+    <span class="ph-ts" id="ts1">Atualizado: 10:36</span>
+    <button class="ph-btn ph-ref" id="rb1" onclick="doRef(1)">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M3 12a9 9 0 0 1 15.74-6.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.74 6.74L3 16"/><path d="M3 21v-5h5"/></svg>
+    </button>
+    <button class="ph-btn ph-cls">✕</button>
+  </div>
+  <div class="pbar" id="pb1">
+    <span class="plbl">Período</span>
+    <button class="pp" data-p="7">7 dias</button>
+    <button class="pp" data-p="30">30 dias</button>
+    <button class="pp on" data-p="60">60 dias</button>
+    <button class="pp" data-p="90">90 dias</button>
+    <button class="pp" data-p="mes">Mês Atual</button>
+    <button class="pp" data-p="12m">Últimos 12 Meses</button>
+    <button class="pp" data-p="ano">Ano Atual</button>
+    <button class="pp" data-p="past">Ano Passado</button>
+  </div>
+  <div class="pb" id="bd1"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     PANEL 2 — ANÁLISE DE RISCO
+     Foco: métricas de risco OTM/ITM, drawdown, exposição
+══════════════════════════════════════════════ -->
+<div class="panel" id="p2">
+  <div class="ph">
+    <span class="ph-icon">⚠️</span>
+    <span class="ph-title">Análise de Risco · Operações</span>
+    <span class="ph-ts" id="ts2">Atualizado: 10:36</span>
+    <button class="ph-btn ph-ref" id="rb2" onclick="doRef(2)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M3 12a9 9 0 0 1 15.74-6.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.74 6.74L3 16"/><path d="M3 21v-5h5"/></svg></button>
+    <button class="ph-btn ph-cls">✕</button>
+  </div>
+  <div class="pbar" id="pb2">
+    <span class="plbl">Período</span>
+    <button class="pp" data-p="7">7 dias</button>
+    <button class="pp" data-p="30">30 dias</button>
+    <button class="pp on" data-p="60">60 dias</button>
+    <button class="pp" data-p="90">90 dias</button>
+    <button class="pp" data-p="mes">Mês Atual</button>
+    <button class="pp" data-p="12m">Últimos 12 Meses</button>
+    <button class="pp" data-p="ano">Ano Atual</button>
+  </div>
+  <div class="pb" id="bd2"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     PANEL 3 — CALENDÁRIO VISUAL
+     Foco: grid de dias com resultado diário + heatmap
+══════════════════════════════════════════════ -->
+<div class="panel" id="p3">
+  <div class="ph">
+    <span class="ph-icon">🗓️</span>
+    <span class="ph-title">Calendário de Resultados</span>
+    <span class="ph-ts" id="ts3">Atualizado: 10:36</span>
+    <button class="ph-btn ph-ref" id="rb3" onclick="doRef(3)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M3 12a9 9 0 0 1 15.74-6.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.74 6.74L3 16"/><path d="M3 21v-5h5"/></svg></button>
+    <button class="ph-btn ph-cls">✕</button>
+  </div>
+  <div class="pb" id="bd3"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     PANEL 4 — PERFORMANCE CURVE
+     Foco: curva de capital + distribuição de resultados
+══════════════════════════════════════════════ -->
+<div class="panel" id="p4">
+  <div class="ph">
+    <span class="ph-icon">📈</span>
+    <span class="ph-title">Curva de Performance · Capital</span>
+    <span class="ph-ts" id="ts4">Atualizado: 10:36</span>
+    <button class="ph-btn ph-ref" id="rb4" onclick="doRef(4)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M3 12a9 9 0 0 1 15.74-6.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.74 6.74L3 16"/><path d="M3 21v-5h5"/></svg></button>
+    <button class="ph-btn ph-cls">✕</button>
+  </div>
+  <div class="pbar" id="pb4">
+    <span class="plbl">Período</span>
+    <button class="pp" data-p="7">7 dias</button>
+    <button class="pp" data-p="30">30 dias</button>
+    <button class="pp on" data-p="60">60 dias</button>
+    <button class="pp" data-p="90">90 dias</button>
+    <button class="pp" data-p="12m">Últimos 12 Meses</button>
+    <button class="pp" data-p="ano">Ano Atual</button>
+  </div>
+  <div class="pb" id="bd4"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     PANEL 5 — OPERAÇÕES ABERTAS
+     Foco: status em tempo real de ops abertas + gauge dist OTM
+══════════════════════════════════════════════ -->
+<div class="panel" id="p5">
+  <div class="ph">
+    <span class="ph-icon">🔍</span>
+    <span class="ph-title">Monitor · Operações Abertas</span>
+    <span class="ph-ts" id="ts5">Atualizado: 10:36</span>
+    <button class="ph-btn ph-ref" id="rb5" onclick="doRef(5)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M3 12a9 9 0 0 1 15.74-6.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.74 6.74L3 16"/><path d="M3 21v-5h5"/></svg></button>
+    <button class="ph-btn ph-cls">✕</button>
+  </div>
+  <div class="pb" id="bd5"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     PANEL 6 — HEATMAP MENSAL
+     Foco: mapa de calor por dia do mês + top dias
+══════════════════════════════════════════════ -->
+<div class="panel" id="p6">
+  <div class="ph">
+    <span class="ph-icon">🌡️</span>
+    <span class="ph-title">Heatmap · Performance Mensal</span>
+    <span class="ph-ts" id="ts6">Atualizado: 10:36</span>
+    <button class="ph-btn ph-ref" id="rb6" onclick="doRef(6)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M3 12a9 9 0 0 1 15.74-6.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.74 6.74L3 16"/><path d="M3 21v-5h5"/></svg></button>
+    <button class="ph-btn ph-cls">✕</button>
+  </div>
+  <div class="pb" id="bd6"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     PANEL 7 — MISSION CONTROL
+     Foco: painel tipo cockpit com todos os indicadores num relance
+══════════════════════════════════════════════ -->
+<div class="panel" id="p7">
+  <div class="ph">
+    <span class="ph-icon">🛰️</span>
+    <span class="ph-title">Mission Control · Visão Completa</span>
+    <span class="ph-ts" id="ts7">Atualizado: 10:36</span>
+    <button class="ph-btn ph-ref" id="rb7" onclick="doRef(7)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M3 12a9 9 0 0 1 15.74-6.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.74 6.74L3 16"/><path d="M3 21v-5h5"/></svg></button>
+    <button class="ph-btn ph-cls">✕</button>
+  </div>
+  <div class="pb" id="bd7"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+/* ══ DATA ══ */
+const DATA = {
+  totalGain: 162.74, totalLoss: 0, netResult: 162.74,
+  saldo: 5558.20, roi: 3.02, winRate: 93.94, ops: 33,
+  profitFactor: Infinity, wins: 31, losses: 2,
+  mediaDay: 10.17, diasUteis: 16, sequencia: 16, melhorDia: 33.00,
+  avgTae: 122.4, avgDist: 3.04,
+  abertas: [
+    {a:'BTC',t:'CALL',cot:70722,ab:70833,str:74000,dist:4.47,tae:18.5,prem:1.41,pz:1,cor:1,ex:'NÃO'},
+    {a:'ETH',t:'CALL',cot:2161, ab:2161, str:2325, dist:7.56,tae:17.3,prem:1.52,pz:1,cor:1,ex:'NÃO'},
+    {a:'BTC',t:'PUT', cot:68900,ab:70500,str:65000,dist:5.66,tae:156, prem:8.34,pz:2,cor:1,ex:'NÃO'},
+    {a:'ETH',t:'CALL',cot:2104, ab:2119, str:2250, dist:6.16,tae:30.2,prem:4.33,pz:3,cor:2,ex:'NÃO'},
+    {a:'BTC',t:'CALL',cot:74321,ab:73455,str:75000,dist:0.91,tae:178, prem:0.32,pz:1,cor:1,ex:'SIM'},
+    {a:'ETH',t:'CALL',cot:2329, ab:2266, str:2325, dist:0.19,tae:184, prem:0.07,pz:1,cor:1,ex:'SIM'},
+  ],
+  daily: [
+    {d:'04/03',v:1.2},{d:'06/03',v:3.5},{d:'10/03',v:2.1},{d:'11/03',v:4.8},{d:'12/03',v:3.2},
+    {d:'13/03',v:7.6},{d:'16/03',v:5.4},{d:'17/03',v:28.8},{d:'18/03',v:33.0},{d:'19/03',v:26.4},
+    {d:'20/03',v:18.9},{d:'21/03',v:12.3},{d:'24/03',v:9.1},{d:'25/03',v:8.7},{d:'26/03',v:6.5},{d:'27/03',v:11.2},
+  ],
+  monthly: {
+    'Jan': 88.40, 'Fev': 95.20, 'Mar': 162.74
+  }
+};
+
+const fmt  = n=>'US$ '+Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtK = n=>n>=1000?'US$ '+(n/1000).toFixed(1)+'K':fmt(n);
+const cD   = d=>d<2?'var(--red)':d<5?'var(--amb)':'var(--grn)';
+const cP   = n=>n>0?'var(--grn)':n<0?'var(--red)':'var(--tx2)';
+const asC  = a=>a==='BTC'?'var(--amb)':'var(--blu)';
+let charts = {};
+
+function sg(pct,col,val,lbl,sz=80){
+  pct=Math.max(0,Math.min(pct,1));
+  const r=sz*.42,cx=sz/2,cy=sz*.63,c=Math.PI*r,off=c*(1-pct);
+  return `<div style="text-align:center;">
+    <svg width="${sz}" height="${(sz*.67).toFixed(0)}" viewBox="0 0 ${sz} ${(sz*.67).toFixed(0)}" style="overflow:visible;display:block;margin:0 auto;">
+      <path d="M${(cx-r).toFixed(1)},${cy} A${r},${r} 0 0,1 ${(cx+r).toFixed(1)},${cy}" fill="none" stroke="#263548" stroke-width="6" stroke-linecap="round"/>
+      <path d="M${(cx-r).toFixed(1)},${cy} A${r},${r} 0 0,1 ${(cx+r).toFixed(1)},${cy}" fill="none" stroke="${col}" stroke-width="6" stroke-linecap="round"
+        stroke-dasharray="${c.toFixed(2)}" stroke-dashoffset="${off.toFixed(2)}"/>
+      <text x="${cx}" y="${(cy-2).toFixed(0)}" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="11" font-weight="700" fill="${col}">${val}</text>
+    </svg>
+    <div style="font-family:var(--mono);font-size:.56rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.07em;margin-top:.08rem;">${lbl}</div>
+  </div>`;
+}
+
+function destroyChart(id){if(charts[id]){try{charts[id].destroy();}catch(e){}delete charts[id];}}
+
+/* ══════════════════════════════════════════════
+   RENDER 1 — VISÃO EXECUTIVA
+══════════════════════════════════════════════ */
+function r1(){
+  const acc=DATA.daily.reduce((a,d,i)=>{ a.push((a[i-1]||0)+d.v); return a;},[]);
+  document.getElementById('bd1').innerHTML=`
+    <!-- Hero + KPIs -->
+    <div style="display:grid;grid-template-columns:auto 1fr;gap:.55rem;align-items:stretch;">
+      <div class="card" style="min-width:220px;">
+        <div class="hero-lbl">Resultado Total</div>
+        <div class="hero-val" style="color:var(--grn);">${fmt(DATA.totalGain)}</div>
+        <div class="hero-badges">
+          <span class="hbdg" style="background:var(--grn-bg);color:var(--grn);border:1px solid var(--grn-bdr);">📈 Sequência: ${DATA.sequencia}</span>
+          <span class="hbdg" style="background:var(--amb-bg);color:var(--amb);border:1px solid var(--amb-bdr);">⭐ Melhor: ${fmt(DATA.melhorDia)}</span>
+        </div>
+      </div>
+      <div class="kstrip">
+        <div class="kstrip-inner" style="grid-template-columns:repeat(5,1fr);">
+          <div class="ki"><div class="ki-lbl">Saldo Atual</div><div class="ki-val" style="color:var(--tx1);">${fmtK(DATA.saldo)}</div><div class="ki-sub">capital total</div></div>
+          <div class="ki"><div class="ki-lbl">ROI</div><div class="ki-val" style="color:var(--grn);">${DATA.roi}%</div><div class="ki-sub">retorno</div></div>
+          <div class="ki"><div class="ki-lbl">Operações</div><div class="ki-val" style="color:var(--blu);">${DATA.ops}</div><div class="ki-sub">${DATA.abertas.length} abertas</div></div>
+          <div class="ki"><div class="ki-lbl">Win Rate</div><div class="ki-val" style="color:var(--grn);">${DATA.winRate}%</div><div class="ki-sub">${DATA.wins}W · ${DATA.losses}L</div></div>
+          <div class="ki"><div class="ki-lbl">Profit Factor</div><div class="ki-val" style="color:var(--grn);">∞</div><div class="ki-sub">sem perdas</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Curva acumulada + Win/Loss -->
+    <div class="g23">
+      <div class="card">
+        <div class="card-title">📊 Resultado Acumulado</div>
+        <div style="position:relative;height:180px;"><canvas id="c1acc"></canvas></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:.5rem;">
+        <div class="card">
+          <div class="card-title">🏆 Distribuição Win/Loss</div>
+          <div style="display:flex;flex-direction:column;gap:.32rem;">
+            <div class="pb-item">
+              <div class="pb-head"><span class="pb-k">✅ Wins</span><span class="pb-v" style="color:var(--grn);">${DATA.wins}</span></div>
+              <div class="pb-track"><div class="pb-fill" style="width:${DATA.wins/DATA.ops*100}%;background:var(--grn);"></div></div>
+            </div>
+            <div class="pb-item">
+              <div class="pb-head"><span class="pb-k">❌ Losses</span><span class="pb-v" style="color:var(--red);">${DATA.losses}</span></div>
+              <div class="pb-track"><div class="pb-fill" style="width:${Math.max(DATA.losses/DATA.ops*100,2)}%;background:var(--red);"></div></div>
+            </div>
+            <div style="font-family:var(--mono);font-size:.6rem;color:var(--tx2);margin-top:.15rem;">${DATA.wins} wins vs ${DATA.losses} losses · Taxa de acerto: <span style="color:var(--grn);font-weight:700;">${DATA.winRate}%</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">💰 Resultados Financeiros</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.3rem;">
+            ${[['Total Gains',fmt(DATA.totalGain),'var(--grn)'],['Total Losses',fmt(DATA.totalLoss),'var(--red)'],['Resultado Líq.',fmt(DATA.netResult),'var(--grn)'],['Média/Dia',fmt(DATA.mediaDay),'var(--amb)']].map(r=>`
+              <div><div style="font-family:var(--mono);font-size:.56rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.06em;">${r[0]}</div>
+              <div style="font-family:var(--mono);font-size:.82rem;font-weight:700;color:${r[2]};">${r[1]}</div></div>`).join('')}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Indicadores-chave -->
+    <div class="card">
+      <div class="card-title">⚙️ Indicadores-chave</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.55rem .9rem;">
+        ${[
+          {k:'Acerto',v:DATA.winRate+'%',pct:DATA.winRate/100,c:'var(--grn)'},
+          {k:'Rentabilidade',v:DATA.roi+'%',pct:DATA.roi/10,c:'var(--blu)'},
+          {k:'Consistência',v:'100%',pct:1,c:'var(--amb)'},
+          {k:'Risco',v:'0.00',pct:0.02,c:'var(--red)'},
+        ].map(r=>`<div class="pb-item">
+          <div class="pb-head"><span class="pb-k">${r.k}</span><span class="pb-v" style="color:${r.c};">${r.v}</span></div>
+          <div class="pb-track"><div class="pb-fill" style="width:${r.pct*100}%;background:${r.c};"></div></div>
+        </div>`).join('')}
+      </div>
+    </div>
+
+    <!-- Daily bars -->
+    <div class="card">
+      <div class="card-title">📅 Resultado por dia de exercício</div>
+      <div style="position:relative;height:120px;"><canvas id="c1day"></canvas></div>
+    </div>`;
+
+  // charts
+  destroyChart('c1acc');
+  charts['c1acc']=new Chart(document.getElementById('c1acc'),{
+    type:'line',
+    data:{labels:DATA.daily.map(d=>d.d),datasets:[{data:acc,borderColor:'#3dd68c',backgroundColor:'rgba(61,214,140,.1)',borderWidth:2.5,pointBackgroundColor:'#3dd68c',pointRadius:3,fill:true,tension:.35}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#344a68',font:{size:10},maxRotation:0,autoSkip:true,maxTicksLimit:8}},y:{grid:{color:'rgba(38,53,72,.5)'},ticks:{color:'#344a68',font:{size:10},callback:v=>'$'+v.toFixed(0)}}}}
+  });
+  destroyChart('c1day');
+  charts['c1day']=new Chart(document.getElementById('c1day'),{
+    type:'bar',
+    data:{labels:DATA.daily.map(d=>d.d),datasets:[{data:DATA.daily.map(d=>d.v),backgroundColor:DATA.daily.map(d=>d.v>=0?'rgba(61,214,140,.7)':'rgba(224,82,82,.7)'),borderRadius:3,barThickness:14}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#344a68',font:{size:9},maxRotation:0,autoSkip:true,maxTicksLimit:10}},y:{grid:{color:'rgba(38,53,72,.5)'},ticks:{color:'#344a68',font:{size:10},callback:v=>'$'+v.toFixed(1)}}}}
+  });
+}
+
+/* ══════════════════════════════════════════════
+   RENDER 2 — ANÁLISE DE RISCO
+══════════════════════════════════════════════ */
+function r2(){
+  const riskOps=DATA.abertas.filter(o=>o.dist<3);
+  const safeOps=DATA.abertas.filter(o=>o.dist>=5);
+  const medOps =DATA.abertas.filter(o=>o.dist>=3&&o.dist<5);
+
+  document.getElementById('bd2').innerHTML=`
+    <!-- Semáforo de risco -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;">
+      ${[
+        {emoji:'🔴',lbl:'Alto Risco',sub:'Dist. OTM < 3%',n:riskOps.length,c:'var(--red)',bg:'var(--red-bg)',bdr:'var(--red-bdr)'},
+        {emoji:'🟡',lbl:'Atenção',sub:'Dist. 3–5%',n:medOps.length,c:'var(--amb)',bg:'var(--amb-bg)',bdr:'var(--amb-bdr)'},
+        {emoji:'🟢',lbl:'Seguro',sub:'Dist. OTM > 5%',n:safeOps.length,c:'var(--grn)',bg:'var(--grn-bg)',bdr:'var(--grn-bdr)'},
+      ].map(r=>`<div style="background:${r.bg};border:1px solid ${r.bdr};border-radius:10px;padding:.7rem .8rem;text-align:center;">
+        <div style="font-size:1.6rem;margin-bottom:.22rem;">${r.emoji}</div>
+        <div style="font-family:var(--mono);font-size:.65rem;font-weight:600;color:${r.c};text-transform:uppercase;letter-spacing:.07em;margin-bottom:.08rem;">${r.lbl}</div>
+        <div style="font-family:var(--orb);font-size:2rem;font-weight:700;color:${r.c};line-height:1;margin:.12rem 0;">${r.n}</div>
+        <div style="font-family:var(--mono);font-size:.6rem;color:${r.c};opacity:.7;">${r.sub}</div>
+      </div>`).join('')}
+    </div>
+
+    <!-- Gauge row -->
+    <div class="card">
+      <div class="card-title">⚡ Indicadores de Risco · Posições Abertas</div>
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:.2rem;">
+        ${DATA.abertas.map(op=>`<div style="text-align:center;padding:.3rem;">
+          ${sg(Math.min(op.dist/15,1),cD(op.dist),op.dist.toFixed(1)+'%',op.a+' '+op.t,68)}
+          <div style="font-family:var(--mono);font-size:.55rem;color:${cD(op.dist)};margin-top:.04rem;">${op.dist<2?'⚠️ Risco':op.dist<5?'👀 Atenção':'✅ OK'}</div>
+        </div>`).join('')}
+      </div>
+    </div>
+
+    <!-- Tabela de risco detalhada -->
+    <div class="card">
+      <div class="card-title">📋 Mapa de Exposição · Todas as posições abertas</div>
+      <table class="dt">
+        <thead><tr><th>Ativo</th><th>Tipo</th><th>Cotação</th><th>Strike</th><th>Dist. OTM</th><th>TAE</th><th>Prêmio</th><th>Prazo</th><th>Status</th><th>Score Risco</th></tr></thead>
+        <tbody>
+          ${DATA.abertas.map(op=>{
+            const score=Math.round((1-Math.min(op.dist/15,1))*100);
+            const scoreCol=score>=80?'var(--red)':score>=50?'var(--amb)':'var(--grn)';
+            const dias=Math.max(op.pz-op.cor,0);
+            return `<tr>
+              <td style="color:${asC(op.a)};font-weight:700;">${op.a}</td>
+              <td><span class="bdg ${op.t==='CALL'?'bdg-b':'bdg-g'}">${op.t}</span></td>
+              <td style="color:${asC(op.a)};">${op.a==='BTC'?'$'+(op.cot/1000).toFixed(1)+'K':'$'+op.cot.toFixed(0)}</td>
+              <td style="color:var(--amb);">${op.a==='BTC'?'$'+(op.str/1000).toFixed(0)+'K':'$'+op.str.toFixed(0)}</td>
+              <td style="color:${cD(op.dist)};font-weight:700;">${op.dist.toFixed(2)}%</td>
+              <td style="color:var(--grn);">${op.tae.toFixed(1)}%</td>
+              <td style="color:var(--amb);">$${op.prem.toFixed(2)}</td>
+              <td style="color:${dias===0?'var(--red)':dias===1?'var(--amb)':'var(--grn)'};">${dias}d rest.</td>
+              <td><span class="bdg ${op.ex==='SIM'?'bdg-r':'bdg-g'}">${op.ex==='SIM'?'ITM':'OTM'}</span></td>
+              <td>
+                <div style="display:flex;align-items:center;gap:.35rem;">
+                  <div style="flex:1;height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;min-width:60px;">
+                    <div style="height:100%;width:${score}%;background:${scoreCol};border-radius:3px;"></div>
+                  </div>
+                  <span style="font-family:var(--mono);font-size:.62rem;font-weight:600;color:${scoreCol};">${score}</span>
+                </div>
+              </td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Dispersão de distâncias OTM -->
+    <div class="g2">
+      <div class="card">
+        <div class="card-title">📉 Distribuição Dist. OTM</div>
+        <div style="position:relative;height:140px;"><canvas id="c2dist"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">🎯 TAE por operação</div>
+        <div style="position:relative;height:140px;"><canvas id="c2tae"></canvas></div>
+      </div>
+    </div>`;
+
+  destroyChart('c2dist');
+  charts['c2dist']=new Chart(document.getElementById('c2dist'),{
+    type:'bar',
+    data:{labels:DATA.abertas.map(o=>o.a+' '+o.t),datasets:[{data:DATA.abertas.map(o=>o.dist),backgroundColor:DATA.abertas.map(o=>cD(o.dist).replace('var(--','').replace(')','')!=='grn'?cD(o.dist).includes('red')?'rgba(224,82,82,.7)':'rgba(232,168,48,.7)':'rgba(61,214,140,.7)'),borderRadius:4,barThickness:18}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#344a68',font:{size:10}}},y:{grid:{color:'rgba(38,53,72,.5)'},ticks:{color:'#344a68',font:{size:10},callback:v=>v+'%'}}}}
+  });
+  destroyChart('c2tae');
+  charts['c2tae']=new Chart(document.getElementById('c2tae'),{
+    type:'bar',
+    data:{labels:DATA.abertas.map(o=>o.a+' '+o.t),datasets:[{data:DATA.abertas.map(o=>o.tae),backgroundColor:'rgba(61,214,140,.6)',borderRadius:4,barThickness:18}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#344a68',font:{size:10}}},y:{grid:{color:'rgba(38,53,72,.5)'},ticks:{color:'#344a68',font:{size:10},callback:v=>v+'%'}}}}
+  });
+}
+
+/* ══════════════════════════════════════════════
+   RENDER 3 — CALENDÁRIO VISUAL
+══════════════════════════════════════════════ */
+function r3(){
+  const dayMap={};
+  DATA.daily.forEach(d=>{const k=parseInt(d.d.split('/')[0]);dayMap[k]=d.v;});
+  const maxV=Math.max(...Object.values(dayMap));
+  const days=Array.from({length:31},(_,i)=>i+1);
+  const firstDow=6; // Sábado = 1 de Março
+
+  document.getElementById('bd3').innerHTML=`
+    <!-- Mini KPIs -->
+    <div class="kstrip"><div class="kstrip-inner" style="grid-template-columns:repeat(6,1fr);">
+      <div class="ki"><div class="ki-lbl">💰 Total</div><div class="ki-val" style="color:var(--grn);">${fmt(DATA.totalGain)}</div></div>
+      <div class="ki"><div class="ki-lbl">📅 Dias Úteis</div><div class="ki-val" style="color:var(--blu);">${DATA.diasUteis}</div></div>
+      <div class="ki"><div class="ki-lbl">📈 Média/Dia</div><div class="ki-val" style="color:var(--amb);">${fmt(DATA.mediaDay)}</div></div>
+      <div class="ki"><div class="ki-lbl">⭐ Melhor Dia</div><div class="ki-val" style="color:var(--grn);">${fmt(DATA.melhorDia)}</div></div>
+      <div class="ki"><div class="ki-lbl">🏆 Win Rate</div><div class="ki-val" style="color:var(--grn);">${DATA.winRate}%</div></div>
+      <div class="ki"><div class="ki-lbl">🔥 Sequência</div><div class="ki-val" style="color:var(--amb);">${DATA.sequencia}</div></div>
+    </div></div>
+
+    <!-- Calendário -->
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
+        <div class="card-title" style="margin:0;">🗓️ Março 2026</div>
+        <div style="display:flex;gap:.55rem;font-family:var(--mono);font-size:.6rem;">
+          <span style="display:flex;align-items:center;gap:.22rem;"><span style="width:10px;height:10px;border-radius:2px;background:var(--grn);display:inline-block;opacity:.8;"></span>Resultado positivo</span>
+          <span style="display:flex;align-items:center;gap:.22rem;"><span style="width:10px;height:10px;border-radius:2px;background:var(--bdr2);display:inline-block;"></span>Sem operação</span>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:.25rem;margin-bottom:.25rem;">
+        ${['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map(d=>`<div style="text-align:center;font-family:var(--mono);font-size:.58rem;color:var(--tx3);padding:.2rem 0;">${d}</div>`).join('')}
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:.25rem;">
+        ${Array(firstDow).fill('').map(()=>'<div></div>').join('')}
+        ${days.map(day=>{
+          const v=dayMap[day];
+          const hasV=v!==undefined;
+          const intensity=hasV?Math.min(v/maxV,1):0;
+          const bg=hasV?`rgba(61,214,140,${0.15+intensity*0.65})`:'var(--bg2)';
+          const border=hasV?`rgba(61,214,140,${0.3+intensity*0.4})`:'var(--bdr)';
+          const textCol=hasV?'var(--grn)':'var(--tx3)';
+          const valStr=hasV?'$'+v.toFixed(1):'';
+          return `<div style="background:${bg};border:1px solid ${border};border-radius:7px;padding:.32rem .2rem;text-align:center;cursor:default;" title="${hasV?'$'+v.toFixed(2):''}">
+            <div style="font-family:var(--mono);font-size:.65rem;font-weight:${hasV?'700':'400'};color:${textCol};">${day}</div>
+            ${hasV?`<div style="font-family:var(--mono);font-size:.52rem;color:var(--grn);margin-top:.04rem;">${valStr}</div>`:''}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+
+    <!-- Top dias -->
+    <div class="card">
+      <div class="card-title">🏅 Top 5 Melhores Dias</div>
+      <div style="display:flex;flex-direction:column;gap:.28rem;">
+        ${[...DATA.daily].sort((a,b)=>b.v-a.v).slice(0,5).map((d,i)=>`
+          <div class="pb-item">
+            <div class="pb-head">
+              <span class="pb-k">${['🥇','🥈','🥉','4️⃣','5️⃣'][i]} ${d.d}</span>
+              <span class="pb-v" style="color:var(--grn);">${fmt(d.v)}</span>
+            </div>
+            <div class="pb-track"><div class="pb-fill" style="width:${d.v/maxV*100}%;background:var(--grn);"></div></div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+/* ══════════════════════════════════════════════
+   RENDER 4 — PERFORMANCE CURVE
+══════════════════════════════════════════════ */
+function r4(){
+  const acc=DATA.daily.reduce((a,d,i)=>{a.push((a[i-1]||0)+d.v);return a;},[]);
+  const pctAcc=acc.map(v=>(v/DATA.saldo*100).toFixed(2));
+  const mdd=[]; let peak=0;
+  acc.forEach(v=>{if(v>peak)peak=v; mdd.push(peak>0?(v-peak)/peak*100:0);});
+
+  document.getElementById('bd4').innerHTML=`
+    <div class="kstrip"><div class="kstrip-inner" style="grid-template-columns:repeat(6,1fr);">
+      <div class="ki"><div class="ki-lbl">📈 Resultado</div><div class="ki-val" style="color:var(--grn);">${fmt(DATA.totalGain)}</div><div class="ki-sub">no período</div></div>
+      <div class="ki"><div class="ki-lbl">📊 ROI</div><div class="ki-val" style="color:var(--grn);">+${DATA.roi}%</div><div class="ki-sub">retorno</div></div>
+      <div class="ki"><div class="ki-lbl">🎯 Win Rate</div><div class="ki-val" style="color:var(--grn);">${DATA.winRate}%</div><div class="ki-sub">${DATA.wins}/${DATA.ops}</div></div>
+      <div class="ki"><div class="ki-lbl">📉 Max DD</div><div class="ki-val" style="color:var(--red);">0.00%</div><div class="ki-sub">drawdown</div></div>
+      <div class="ki"><div class="ki-lbl">⚡ Sharpe</div><div class="ki-val" style="color:var(--amb);">4.82</div><div class="ki-sub">estimado</div></div>
+      <div class="ki"><div class="ki-lbl">💎 P.Factor</div><div class="ki-val" style="color:var(--grn);">∞</div><div class="ki-sub">sem perdas</div></div>
+    </div></div>
+
+    <!-- Curva de capital -->
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.45rem;">
+        <div class="card-title" style="margin:0;">📈 Curva de Capital Acumulado</div>
+        <div style="display:flex;gap:.35rem;font-family:var(--mono);font-size:.6rem;color:var(--tx2);">
+          <span style="color:var(--grn);">● Acum.</span>
+          <span style="color:var(--blu);">● % ROI</span>
+        </div>
+      </div>
+      <div style="position:relative;height:200px;"><canvas id="c4curve"></canvas></div>
+    </div>
+
+    <!-- Distribuição + Histograma -->
+    <div class="g2">
+      <div class="card">
+        <div class="card-title">📊 Histograma de Resultados Diários</div>
+        <div style="position:relative;height:140px;"><canvas id="c4hist"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">🥧 Comparativo Mensal</div>
+        <div style="display:flex;gap:.5rem;align-items:center;height:140px;">
+          <div style="position:relative;flex:1;height:100%;"><canvas id="c4doughnut"></canvas></div>
+          <div style="display:flex;flex-direction:column;gap:.28rem;">
+            ${Object.entries(DATA.monthly).map(([m,v])=>`<div style="display:flex;align-items:center;gap:.35rem;">
+              <div style="width:8px;height:8px;border-radius:2px;background:${'#3dd68c'};opacity:${m==='Mar'?1:.6};"></div>
+              <span style="font-family:var(--mono);font-size:.63rem;color:var(--tx2);">${m}</span>
+              <span style="font-family:var(--mono);font-size:.65rem;font-weight:600;color:var(--grn);margin-left:auto;">${fmt(v)}</span>
+            </div>`).join('')}
+          </div>
+        </div>
+      </div>
+    </div>`;
+
+  destroyChart('c4curve');
+  charts['c4curve']=new Chart(document.getElementById('c4curve'),{
+    type:'line',
+    data:{labels:DATA.daily.map(d=>d.d),datasets:[
+      {data:acc,borderColor:'#3dd68c',backgroundColor:'rgba(61,214,140,.08)',borderWidth:2.5,pointRadius:3,pointBackgroundColor:'#3dd68c',fill:true,tension:.35,yAxisID:'y'},
+      {data:pctAcc,borderColor:'#4ab8d4',backgroundColor:'transparent',borderWidth:1.5,pointRadius:0,tension:.35,borderDash:[4,4],yAxisID:'y2'},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{
+      x:{grid:{display:false},ticks:{color:'#344a68',font:{size:9},maxRotation:0,autoSkip:true,maxTicksLimit:8}},
+      y:{grid:{color:'rgba(38,53,72,.4)'},ticks:{color:'#344a68',font:{size:9},callback:v=>'$'+v.toFixed(0)},position:'left'},
+      y2:{grid:{display:false},ticks:{color:'#344a68',font:{size:9},callback:v=>v+'%'},position:'right'}
+    }}
+  });
+  destroyChart('c4hist');
+  const bins=[-5,-2,0,2,5,10,15,20,30,40];
+  const hData=bins.map((b,i)=>DATA.daily.filter(d=>d.v>=(i?bins[i-1]:Number.NEGATIVE_INFINITY)&&d.v<b).length);
+  charts['c4hist']=new Chart(document.getElementById('c4hist'),{
+    type:'bar',
+    data:{labels:bins.map((b,i)=>(i?bins[i-1]+'-':'')+b),datasets:[{data:hData,backgroundColor:'rgba(74,184,212,.65)',borderRadius:3,barThickness:20}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#344a68',font:{size:9}}},y:{grid:{color:'rgba(38,53,72,.4)'},ticks:{color:'#344a68',font:{size:9}}}}}
+  });
+  destroyChart('c4doughnut');
+  charts['c4doughnut']=new Chart(document.getElementById('c4doughnut'),{
+    type:'doughnut',
+    data:{labels:Object.keys(DATA.monthly),datasets:[{data:Object.values(DATA.monthly),backgroundColor:['rgba(61,214,140,.4)','rgba(61,214,140,.6)','rgba(61,214,140,.9)'],borderWidth:0,hoverOffset:6}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{display:false}}}
+  });
+}
+
+/* ══════════════════════════════════════════════
+   RENDER 5 — OPERAÇÕES ABERTAS
+══════════════════════════════════════════════ */
+function r5(){
+  document.getElementById('bd5').innerHTML=`
+    <!-- sumário rápido -->
+    <div class="kstrip"><div class="kstrip-inner" style="grid-template-columns:repeat(5,1fr);">
+      <div class="ki"><div class="ki-lbl">📂 Abertas</div><div class="ki-val" style="color:var(--blu);">${DATA.abertas.length}</div></div>
+      <div class="ki"><div class="ki-lbl">💰 Prêmio Aberto</div><div class="ki-val" style="color:var(--amb);">${fmt(DATA.abertas.reduce((a,o)=>a+o.prem,0))}</div></div>
+      <div class="ki"><div class="ki-lbl">⚠️ Em Risco</div><div class="ki-val" style="color:var(--red);">${DATA.abertas.filter(o=>o.ex==='SIM').length} ITM</div></div>
+      <div class="ki"><div class="ki-lbl">📊 TAE Médio</div><div class="ki-val" style="color:var(--grn);">${(DATA.abertas.reduce((a,o)=>a+o.tae,0)/DATA.abertas.length).toFixed(1)}%</div></div>
+      <div class="ki"><div class="ki-lbl">🎯 Dist. Média</div><div class="ki-val" style="color:var(--amb);">${(DATA.abertas.reduce((a,o)=>a+o.dist,0)/DATA.abertas.length).toFixed(2)}%</div></div>
+    </div></div>
+
+    <!-- Cards individuais de operação -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;">
+      ${DATA.abertas.map(op=>{
+        const ac=asC(op.a);
+        const dias=Math.max(op.pz-op.cor,0);
+        const barW=Math.min(Math.round((op.cor/Math.max(op.pz,1))*100),100);
+        const dC=dias===0?'var(--red)':dias===1?'var(--amb)':'var(--grn)';
+        const pop=Math.max(0,Math.min(100,Math.round(40+op.dist*4)));
+        const popCol=pop>=70?'var(--grn)':pop>=50?'var(--amb)':'var(--red)';
+        const delta=op.cot-op.ab;
+        const dpct=((delta/op.ab)*100).toFixed(2);
+        return `<div style="background:${op.ex==='SIM'?'var(--red-bg)':'var(--grn-bg)'};border:1px solid ${op.ex==='SIM'?'var(--red-bdr)':'var(--grn-bdr)'};border-radius:10px;overflow:hidden;">
+          <div style="padding:.42rem .62rem;border-bottom:1px solid ${op.ex==='SIM'?'var(--red-bdr)':'var(--grn-bdr)'};display:flex;align-items:center;gap:.35rem;">
+            <span style="font-family:var(--mono);font-size:.82rem;font-weight:700;color:${ac};">${op.a}</span>
+            <span class="bdg ${op.t==='CALL'?'bdg-b':'bdg-g'}">${op.t}</span>
+            <span class="bdg ${op.ex==='SIM'?'bdg-r':'bdg-g'}">${op.ex==='SIM'?'ITM ⚠️':'OTM ✅'}</span>
+            <span style="font-family:var(--mono);font-size:.6rem;color:var(--tx2);margin-left:auto;">${op.pz}d</span>
+          </div>
+          <div style="padding:.48rem .62rem;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:.14rem .5rem;margin-bottom:.35rem;">
+              ${[['Cotação',op.a==='BTC'?'$'+(op.cot/1000).toFixed(1)+'K':'$'+op.cot.toFixed(0),ac],
+                 ['Strike',op.a==='BTC'?'$'+(op.str/1000).toFixed(0)+'K':'$'+op.str.toFixed(0),'var(--amb)'],
+                 ['Δ Ab→Cot',(delta>=0?'+':'')+dpct+'%',cP(delta)],
+                 ['Prêmio','$'+op.prem.toFixed(2),'var(--amb)'],
+              ].map(r=>`<div><div style="font-family:var(--mono);font-size:.54rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.06em;">${r[0]}</div>
+                <div style="font-family:var(--mono);font-size:.78rem;font-weight:700;color:${r[2]};">${r[1]}</div></div>`).join('')}
+            </div>
+            <!-- Dist OTM bar -->
+            <div style="margin-bottom:.3rem;">
+              <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:.6rem;margin-bottom:.1rem;">
+                <span style="color:var(--tx2);">Dist. OTM</span>
+                <span style="color:${cD(op.dist)};font-weight:600;">${op.dist.toFixed(2)}%</span>
+              </div>
+              <div style="height:5px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;">
+                <div style="height:100%;width:${Math.min(op.dist/15*100,100)}%;background:${cD(op.dist)};border-radius:3px;"></div>
+              </div>
+            </div>
+            <!-- PoP -->
+            <div style="margin-bottom:.3rem;">
+              <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:.6rem;margin-bottom:.1rem;">
+                <span style="color:var(--tx2);">Prob. Lucro</span>
+                <span style="color:${popCol};font-weight:600;">${pop}%</span>
+              </div>
+              <div style="height:5px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;">
+                <div style="height:100%;width:${pop}%;background:${popCol};border-radius:3px;"></div>
+              </div>
+            </div>
+            <!-- Prazo -->
+            <div>
+              <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:.6rem;margin-bottom:.1rem;">
+                <span style="color:var(--tx2);">Prazo ${op.pz}d</span>
+                <span style="color:${dC};font-weight:600;">${dias}d rest.</span>
+              </div>
+              <div style="height:5px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;">
+                <div style="height:100%;width:${barW}%;background:${dC};border-radius:3px;"></div>
+              </div>
+            </div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <!-- Chart: Prêmio por operação -->
+    <div class="card">
+      <div class="card-title">💰 Prêmio por Operação Aberta</div>
+      <div style="position:relative;height:110px;"><canvas id="c5prem"></canvas></div>
+    </div>`;
+
+  destroyChart('c5prem');
+  charts['c5prem']=new Chart(document.getElementById('c5prem'),{
+    type:'bar',
+    data:{labels:DATA.abertas.map(o=>o.a+' '+o.t),datasets:[{data:DATA.abertas.map(o=>o.prem),backgroundColor:DATA.abertas.map(o=>o.a==='BTC'?'rgba(232,168,48,.7)':'rgba(74,184,212,.7)'),borderRadius:4,barThickness:22}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#344a68',font:{size:10}}},y:{grid:{color:'rgba(38,53,72,.4)'},ticks:{color:'#344a68',font:{size:10},callback:v=>'$'+v.toFixed(1)}}}}
+  });
+}
+
+/* ══════════════════════════════════════════════
+   RENDER 6 — HEATMAP MENSAL
+══════════════════════════════════════════════ */
+function r6(){
+  const months=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const yearData=months.map((m,i)=>{
+    const base=[88.4,95.2,162.74,0,0,0,0,0,0,0,0,0];
+    return {m,v:base[i]||0};
+  });
+  const weekData=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map((w,i)=>({w,v:[12.4,18.8,22.4,14.2,19.1,33.0,8.5][i]||0}));
+
+  document.getElementById('bd6').innerHTML=`
+    <div class="kstrip"><div class="kstrip-inner" style="grid-template-columns:repeat(4,1fr);">
+      <div class="ki"><div class="ki-lbl">🗓️ Melhor Mês</div><div class="ki-val" style="color:var(--grn);">Mar ${fmt(DATA.monthly['Mar'])}</div></div>
+      <div class="ki"><div class="ki-lbl">📅 Melhor Dia</div><div class="ki-val" style="color:var(--grn);">${fmt(DATA.melhorDia)}</div></div>
+      <div class="ki"><div class="ki-lbl">📆 Melhor DdS</div><div class="ki-val" style="color:var(--amb);">Sex ${fmt(33)}</div></div>
+      <div class="ki"><div class="ki-lbl">🔥 Total 2026</div><div class="ki-val" style="color:var(--grn);">${fmt(Object.values(DATA.monthly).reduce((a,v)=>a+v,0))}</div></div>
+    </div></div>
+
+    <!-- Heatmap mensal 12M -->
+    <div class="card">
+      <div class="card-title">🌡️ Mapa de Calor · Resultado Mensal 2026</div>
+      <div style="display:grid;grid-template-columns:repeat(12,1fr);gap:.3rem;margin-bottom:.3rem;">
+        ${yearData.map(md=>{
+          const pct=md.v/200;
+          const bg=md.v>0?`rgba(61,214,140,${0.1+pct*0.8})`:'var(--bg3)';
+          const bdr=md.v>0?`rgba(61,214,140,${0.25+pct*.6})`:'var(--bdr)';
+          const col=md.v>0?'var(--grn)':'var(--tx3)';
+          return `<div style="background:${bg};border:1px solid ${bdr};border-radius:7px;padding:.35rem .28rem;text-align:center;">
+            <div style="font-family:var(--mono);font-size:.6rem;font-weight:600;color:${col};">${md.m}</div>
+            <div style="font-family:var(--mono);font-size:.58rem;color:${col};margin-top:.1rem;">${md.v>0?'$'+md.v.toFixed(0):'—'}</div>
+          </div>`;
+        }).join('')}
+      </div>
+      <div style="display:flex;justify-content:flex-end;align-items:center;gap:.5rem;font-family:var(--mono);font-size:.58rem;color:var(--tx2);">
+        <span>Menos</span>
+        ${[.15,.3,.5,.7,.9].map(o=>`<span style="width:12px;height:12px;background:rgba(61,214,140,${o});border-radius:3px;display:inline-block;"></span>`).join('')}
+        <span>Mais</span>
+      </div>
+    </div>
+
+    <!-- Melhor dia da semana -->
+    <div class="g2">
+      <div class="card">
+        <div class="card-title">📅 Resultado por Dia da Semana</div>
+        <div style="position:relative;height:150px;"><canvas id="c6dow"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">🎯 Concentração de Resultados</div>
+        <div style="display:flex;flex-direction:column;gap:.28rem;">
+          ${weekData.sort((a,b)=>b.v-a.v).map((d,i)=>`<div class="pb-item">
+            <div class="pb-head"><span class="pb-k">${['🥇','🥈','🥉','4️⃣','5️⃣','6️⃣','7️⃣'][i]} ${d.w}</span><span class="pb-v" style="color:var(--grn);">$${d.v.toFixed(2)}</span></div>
+            <div class="pb-track"><div class="pb-fill" style="width:${d.v/33*100}%;background:var(--grn);opacity:${.4+.6*(d.v/33)};"></div></div>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+
+  destroyChart('c6dow');
+  charts['c6dow']=new Chart(document.getElementById('c6dow'),{
+    type:'bar',
+    data:{labels:weekData.map(d=>d.w),datasets:[{data:weekData.map(d=>d.v),backgroundColor:weekData.map(d=>`rgba(61,214,140,${0.3+d.v/33*.7})`),borderRadius:5,barThickness:28}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#344a68',font:{size:10}}},y:{grid:{color:'rgba(38,53,72,.4)'},ticks:{color:'#344a68',font:{size:10},callback:v=>'$'+v.toFixed(0)}}}}
+  });
+}
+
+/* ══════════════════════════════════════════════
+   RENDER 7 — MISSION CONTROL
+══════════════════════════════════════════════ */
+function r7(){
+  const acc=DATA.daily.reduce((a,d,i)=>{a.push((a[i-1]||0)+d.v);return a;},[]);
+
+  document.getElementById('bd7').innerHTML=`
+    <!-- Mega KPI row -->
+    <div style="background:var(--bg1);border:1px solid var(--bdr);border-radius:10px;padding:.65rem .85rem;display:flex;align-items:center;gap:.7rem;margin-bottom:.55rem;">
+      <div>
+        <div style="font-family:var(--mono);font-size:.58rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.07em;">Resultado Total</div>
+        <div style="font-family:var(--orb);font-size:2rem;font-weight:700;color:var(--grn);line-height:1;">${fmt(DATA.totalGain)}</div>
+        <div style="display:flex;gap:.28rem;margin-top:.25rem;">
+          <span class="bdg bdg-g">🔥 Seq: ${DATA.sequencia}</span>
+          <span class="bdg bdg-a">⭐ Melhor: ${fmt(DATA.melhorDia)}</span>
+          <span class="bdg bdg-b">📅 ${DATA.diasUteis} dias úteis</span>
+        </div>
+      </div>
+      <div style="width:1px;height:60px;background:var(--bdr);flex-shrink:0;"></div>
+      ${[{l:'Win Rate',v:DATA.winRate+'%',c:'var(--grn)'},{l:'ROI',v:'+'+DATA.roi+'%',c:'var(--grn)'},{l:'Ops',v:DATA.ops,c:'var(--blu)'},{l:'P.Factor',v:'∞',c:'var(--grn)'},{l:'Média/Dia',v:fmt(DATA.mediaDay),c:'var(--amb)'},{l:'Saldo',v:fmtK(DATA.saldo),c:'var(--tx1)'}].map(k=>`
+        <div style="text-align:center;flex:1;">
+          <div style="font-family:var(--mono);font-size:.56rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.12rem;">${k.l}</div>
+          <div style="font-family:var(--mono);font-size:1.05rem;font-weight:700;color:${k.c};">${k.v}</div>
+        </div>`).join('')}
+    </div>
+
+    <!-- 3-column layout -->
+    <div style="display:grid;grid-template-columns:1fr 1.4fr 1fr;gap:.5rem;align-items:start;">
+      <!-- Col 1: gauges + risco -->
+      <div style="display:flex;flex-direction:column;gap:.5rem;">
+        <div class="card">
+          <div class="card-title">⚡ Dist. OTM por Operação</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.1rem;">
+            ${DATA.abertas.slice(0,4).map(op=>`
+              <div style="text-align:center;padding:.28rem .1rem;">
+                ${sg(Math.min(op.dist/15,1),cD(op.dist),op.dist.toFixed(1)+'%',op.a,62)}
+                <div style="font-family:var(--mono);font-size:.52rem;color:var(--tx2);">${op.t} · ${op.ex==='SIM'?'⚠️':'✅'}</div>
+              </div>`).join('')}
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">📋 Indicadores-chave</div>
+          ${[
+            {k:'Acerto',v:DATA.winRate+'%',pct:DATA.winRate/100,c:'var(--grn)'},
+            {k:'Rentabilidade',v:DATA.roi+'%',pct:DATA.roi/10,c:'var(--blu)'},
+            {k:'Consistência',v:'100%',pct:1,c:'var(--amb)'},
+          ].map(r=>`<div class="pb-item" style="margin-bottom:.22rem;">
+            <div class="pb-head"><span class="pb-k">${r.k}</span><span class="pb-v" style="color:${r.c};">${r.v}</span></div>
+            <div class="pb-track"><div class="pb-fill" style="width:${r.pct*100}%;background:${r.c};"></div></div>
+          </div>`).join('')}
+        </div>
+      </div>
+
+      <!-- Col 2: curva grande -->
+      <div style="display:flex;flex-direction:column;gap:.5rem;">
+        <div class="card">
+          <div class="card-title">📈 Curva de Resultado Acumulado</div>
+          <div style="position:relative;height:185px;"><canvas id="c7curve"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">📊 Resultado por Dia</div>
+          <div style="position:relative;height:100px;"><canvas id="c7day"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Col 3: win/loss + meses + abertas -->
+      <div style="display:flex;flex-direction:column;gap:.5rem;">
+        <div class="card">
+          <div class="card-title">🏆 Distribuição Win/Loss</div>
+          <div style="display:flex;align-items:center;gap:.5rem;height:90px;">
+            <div style="position:relative;flex:1;height:100%;"><canvas id="c7wl"></canvas></div>
+            <div style="font-family:var(--mono);font-size:.65rem;">
+              <div style="margin-bottom:.22rem;"><span style="color:var(--grn);font-weight:700;">${DATA.wins}</span> <span style="color:var(--tx2);">Wins</span></div>
+              <div><span style="color:var(--red);font-weight:700;">${DATA.losses}</span> <span style="color:var(--tx2);">Losses</span></div>
+              <div style="margin-top:.28rem;color:var(--amb);font-weight:700;">${DATA.winRate}%</div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">🗓️ Evolução Mensal 2026</div>
+          <div style="position:relative;height:95px;"><canvas id="c7mon"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">⚠️ Status Posições Abertas</div>
+          ${DATA.abertas.slice(0,4).map(op=>`
+            <div style="display:flex;align-items:center;gap:.32rem;padding:.2rem 0;border-bottom:1px solid var(
+A resposta do Claude não pôde ser totalmente gerada
+
+Você está sem mensagens gratuitas até 15:00

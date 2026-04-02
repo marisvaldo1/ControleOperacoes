@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Conceito 2 — Neo-Brutalist: Preço Médio Crypto</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+:root {
+  --bg: #0a0a0a; --bg2: #111; --bg3: #1a1a1a;
+  --amber: #FFB800; --blue: #00BFFF; --green: #00FF88; --red: #FF3355; --purple: #CC88FF;
+  --tx: #FFFFFF; --tx2: #888; --mono: 'JetBrains Mono','Courier New',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--tx);font-family:'Segoe UI',sans-serif;min-height:100vh}
+
+.modal-header{background:var(--bg2);border-bottom:3px solid var(--amber);padding:12px 20px;
+  display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:.95rem;font-weight:900;color:var(--tx);text-transform:uppercase;letter-spacing:1px}
+.header-meta{display:flex;align-items:center;gap:12px}
+.ts{font-family:var(--mono);font-size:.72rem;color:var(--tx2)}
+.btn-refresh{background:none;border:2px solid var(--amber);border-radius:0;color:var(--amber);cursor:pointer;padding:4px 10px;font-size:.72rem;font-weight:700;text-transform:uppercase;transition:.15s}
+.btn-refresh:hover{background:var(--amber);color:var(--bg)}
+.btn-close{background:none;border:2px solid #333;color:var(--tx2);cursor:pointer;width:28px;height:28px;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:.15s}
+.btn-close:hover{border-color:var(--red);color:var(--red)}
+
+.body{padding:16px;background:var(--bg)}
+
+/* Asset Switch */
+.asset-switch{display:flex;gap:0;margin-bottom:16px;border:2px solid #333}
+.as-btn{flex:1;padding:8px 0;text-align:center;font-weight:900;font-size:.85rem;text-transform:uppercase;cursor:pointer;border:none;background:transparent;color:#555;letter-spacing:1px;transition:.15s}
+.as-btn.a-btc{background:var(--amber);color:#000}
+.as-btn.a-eth{background:var(--blue);color:#000}
+
+/* Big Number Cards */
+.big-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin-bottom:3px}
+.big-card{background:var(--bg2);padding:16px;border-left:4px solid transparent}
+.big-card.bc-amber{border-color:var(--amber)}
+.big-card.bc-blue{border-color:var(--blue)}
+.big-card.bc-green{border-color:var(--green)}
+.big-card.bc-red{border-color:var(--red)}
+.bc-lbl{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#555;margin-bottom:4px}
+.bc-val{font-family:var(--mono);font-size:1.6rem;font-weight:900;line-height:1}
+.bc-sub{font-size:.68rem;color:#555;margin-top:6px}
+
+/* PM Banner */
+.pm-banner{background:var(--bg2);padding:20px;margin-bottom:3px;border-left:6px solid var(--amber);
+  display:flex;align-items:center;justify-content:space-between;gap:16px}
+.pm-b-left{}
+.pm-b-top{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#555;margin-bottom:4px}
+.pm-b-val{font-family:var(--mono);font-size:2.4rem;font-weight:900}
+.pm-b-eq{font-size:.75rem;color:#555;margin-top:4px;font-family:var(--mono)}
+.pm-b-right{text-align:right}
+.pm-delta{font-family:var(--mono);font-size:2rem;font-weight:900}
+.pm-delta-lbl{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#555;margin-top:4px}
+
+/* Warning Bar */
+.warning-bar{padding:12px 16px;margin-bottom:3px;display:flex;align-items:center;gap:10px;font-weight:700;font-size:.82rem}
+.warning-bar.risk{background:rgba(255,51,85,.1);border-left:4px solid var(--red);color:var(--red)}
+.warning-bar.caution{background:rgba(255,184,0,.08);border-left:4px solid var(--amber);color:var(--amber)}
+.warning-bar.ok{background:rgba(0,255,136,.08);border-left:4px solid var(--green);color:var(--green)}
+
+/* Strike Grid */
+.strike-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin-bottom:3px}
+.strike-cell{background:var(--bg2);padding:12px 14px}
+.sc-lbl{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#555;margin-bottom:2px}
+.sc-emoji{font-size:1.3rem;margin-bottom:4px}
+.sc-range{font-family:var(--mono);font-size:.8rem;font-weight:700}
+.sc-risk{font-size:.65rem;font-weight:700;text-transform:uppercase;margin-top:2px}
+.sc-danger .sc-range,.sc-danger .sc-risk{color:var(--red)}
+.sc-warn .sc-range,.sc-warn .sc-risk{color:var(--amber)}
+.sc-safe .sc-range,.sc-safe .sc-risk{color:var(--green)}
+
+/* Chart */
+.chart-section{background:var(--bg2);padding:14px;margin-bottom:3px}
+.chart-lbl{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#555;margin-bottom:10px}
+
+/* Progress Section */
+.progress-section{background:var(--bg2);padding:14px}
+.prog-title{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#555;margin-bottom:10px}
+.prog-row{margin-bottom:10px}
+.prog-meta{display:flex;justify-content:space-between;margin-bottom:4px}
+.prog-name{font-size:.75rem;font-weight:700;text-transform:uppercase}
+.prog-val{font-family:var(--mono);font-size:.75rem;font-weight:700}
+.pbar{height:6px;background:#1a1a1a;border:1px solid #222}
+.pbar-fill{height:100%;transition:width .6s}
+</style>
+</head>
+<body>
+<div class="modal-header">
+  <div class="modal-title">⚡ Preço Médio · Segurança Crypto</div>
+  <div class="header-meta">
+    <span class="ts" id="tsLabel">—</span>
+    <button class="btn-refresh">↻ SYNC</button>
+    <button class="btn-close" onclick="history.back()">✕</button>
+  </div>
+</div>
+
+<div class="body">
+  <div class="asset-switch">
+    <button class="as-btn a-btc" id="btnBTC" onclick="setAsset('BTC')">₿ BITCOIN</button>
+    <button class="as-btn" id="btnETH" onclick="setAsset('ETH')">Ξ ETHEREUM</button>
+  </div>
+
+  <!-- Warning bar -->
+  <div id="warningBar" class="warning-bar risk"></div>
+
+  <!-- PM Banner -->
+  <div class="pm-banner" id="pmBanner"></div>
+
+  <!-- Big Numbers -->
+  <div class="big-grid" id="bigGrid"></div>
+
+  <!-- Strike Zones -->
+  <div class="strike-grid" id="strikeGrid"></div>
+
+  <!-- 2-col: Chart + Progress -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-top:0">
+    <div class="chart-section">
+      <div class="chart-lbl">▶ Prêmios Acumulados</div>
+      <div style="height:130px"><canvas id="cht"></canvas></div>
+    </div>
+    <div class="progress-section">
+      <div class="prog-title">▶ Métricas</div>
+      <div id="progContent"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const DATA = {
+  BTC: { icon:'₿', ac:'#FFB800', cotacao:71403.68, pm:73943.60, strike:73500, premios:56.40, strikeEx:74000, ops:12, winRate:91.7, tae:94.1,
+    history:[[0,0],[1,2.75],[2,5.00],[3,10.52],[5,19.14],[7,29.58],[8,40.05],[9,48.43],[10,53.83],[11,55.24],[12,56.82],[13,56.40]] },
+  ETH: { icon:'Ξ', ac:'#00BFFF', cotacao:2192.0, pm:2225.04, strike:2275, premios:99.96, strikeEx:2325, ops:15, winRate:93.3, tae:116.6,
+    history:[[0,0],[1,1.59],[3,3.33],[5,7.42],[8,28.22],[9,52.06],[10,69.06],[11,76.06],[12,84.18],[14,85.68],[15,88.76],[16,93.59]] }
+};
+let cur = 'BTC', _chart = null;
+
+function f(v,d=2){return v.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d})}
+function fu(v){return '$'+f(v)}
+function fp(v){return (v>0?'+':'')+f(v)+'%'}
+
+function setAsset(s){
+  cur=s;
+  document.getElementById('btnBTC').className='as-btn'+(s==='BTC'?' a-btc':'');
+  document.getElementById('btnETH').className='as-btn'+(s==='ETH'?' a-eth':'');
+  render(s);
+}
+
+function render(s){
+  const d=DATA[s];
+  const pct=(d.cotacao-d.pm)/d.pm*100;
+  const pctColor=pct>=0?'#00FF88':pct>-3?'#FFB800':'#FF3355';
+  const warnClass=pct>=0?'ok':pct>-3?'caution':'risk';
+  const warnMsg=pct>=0?`✅ SEGURO — Cotação acima do PM por ${fp(pct)}`
+    :pct>-3?`⚠️ ATENÇÃO — Cotação dentro de ${fp(Math.abs(pct))} do PM. Escolha strike cuidadosamente.`
+    :`🔴 ALERTA — Cotação ${fp(pct)} abaixo do PM. Risco de operação no prejuízo!`;
+
+  document.getElementById('warningBar').className=`warning-bar ${warnClass}`;
+  document.getElementById('warningBar').textContent=warnMsg;
+
+  document.getElementById('pmBanner').innerHTML=`
+    <div class="pm-b-left">
+      <div class="pm-b-top">Preço Médio Efetivo ${s}</div>
+      <div class="pm-b-val" style="color:${d.ac}">${fu(d.pm)}</div>
+      <div class="pm-b-eq" style="color:'#555'">${fu(d.strikeEx)} (strike) − ${fu(d.premios)} (prêmios) = ${fu(d.pm)}</div>
+    </div>
+    <div class="pm-b-right">
+      <div class="pm-delta" style="color:${pctColor}">${fp(pct)}</div>
+      <div class="pm-delta-lbl">Cotação vs PM</div>
+    </div>`;
+
+  document.getElementById('bigGrid').innerHTML=`
+    <div class="big-card bc-amber">
+      <div class="bc-lbl">Strike Exercida</div>
+      <div class="bc-val" style="color:#FFB800">${fu(d.strikeEx)}</div>
+      <div class="bc-sub">Última CALL exercida</div>
+    </div>
+    <div class="big-card bc-blue">
+      <div class="bc-lbl">Cotação Atual</div>
+      <div class="bc-val" style="color:${d.ac}">${fu(d.cotacao)}</div>
+      <div class="bc-sub" style="color:${pctColor}">${fp(pct)} vs PM</div>
+    </div>
+    <div class="big-card bc-green">
+      <div class="bc-lbl">Prêmios Acum.</div>
+      <div class="bc-val" style="color:#00FF88">${fu(d.premios)}</div>
+      <div class="bc-sub">${d.ops} operações</div>
+    </div>`;
+
+  const pm=d.pm;
+  document.getElementById('strikeGrid').innerHTML=`
+    <div class="strike-cell sc-danger">
+      <div class="sc-emoji">🔴</div>
+      <div class="sc-lbl">Zona de Perigo</div>
+      <div class="sc-range">abaixo de ${fu(pm)}</div>
+      <div class="sc-risk">NÃO OPERAR</div>
+    </div>
+    <div class="strike-cell sc-warn">
+      <div class="sc-emoji">🟡</div>
+      <div class="sc-lbl">Zona de Atenção</div>
+      <div class="sc-range">${fu(pm)} – ${fu(pm*1.02)}</div>
+      <div class="sc-risk">MARGEM MÍNIMA</div>
+    </div>
+    <div class="strike-cell sc-safe">
+      <div class="sc-emoji">🟢</div>
+      <div class="sc-lbl">Zona Segura</div>
+      <div class="sc-range">acima de ${fu(pm*1.02)}</div>
+      <div class="sc-risk">OPERAÇÃO OK ✓</div>
+    </div>`;
+
+  document.getElementById('progContent').innerHTML=[
+    {l:'Win Rate',v:d.winRate+'%',w:d.winRate,c:'#00FF88'},
+    {l:'TAE Médio',v:d.tae+'%',w:Math.min(d.tae/200*100,100),c:'#CC88FF'},
+    {l:'Dist. PM/Cot',v:fp(pct),w:Math.min(Math.abs(pct)/10*100,100),c:pctColor},
+  ].map(m=>`<div class="prog-row">
+    <div class="prog-meta">
+      <span class="prog-name" style="color:${m.c}">${m.l}</span>
+      <span class="prog-val" style="color:${m.c}">${m.v}</span>
+    </div>
+    <div class="pbar"><div class="pbar-fill" style="width:${m.w}%;background:${m.c}"></div></div>
+  </div>`).join('');
+
+  buildChart(d);
+}
+
+function buildChart(d){
+  if(_chart){try{_chart.destroy()}catch(e){}}
+  const ctx=document.getElementById('cht').getContext('2d');
+  const labs=d.history.map(r=>'D'+r[0]);
+  const vals=d.history.map(r=>r[1]);
+  _chart=new Chart(ctx,{type:'line',data:{labels:labs,datasets:[{data:vals,borderColor:d.ac,
+    backgroundColor:d.ac+'20',fill:true,tension:.35,borderWidth:2,pointRadius:2}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'$'+c.raw.toFixed(2)}}},
+      scales:{x:{display:false},y:{grid:{color:'#1a1a1a'},ticks:{color:'#555',font:{size:9},callback:v=>'$'+v}}}}});
+}
+
+document.getElementById('tsLabel').textContent='Atualizado: '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+render('BTC');
+</script>
+</body>
+</html>

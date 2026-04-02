@@ -4,7 +4,17 @@
         <div class="modal-content saldo-dashboard">
             <div class="modal-header mp-header">
                 <h5 class="modal-title">🔥 Dashboard Avançado de Performance · Crypto</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                    <span class="mdh-ts" id="dcLastUpdated">Atualizado: --:--</span>
+                    <button type="button" class="mdh-refresh" id="dcBtnHeaderAtualizar" title="Atualizar dados">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
+                            fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                        </svg>
+                    </button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
             </div>
             <div class="modal-body">
 
@@ -107,6 +117,18 @@
                             <span><span class="heatmap-day heatmap-neutral saldo-legend-box"></span> Sem Operação</span>
                             <span><span class="heatmap-day heatmap-loss-low saldo-legend-box"></span> Perda Baixa</span>
                             <span><span class="heatmap-day heatmap-loss-med saldo-legend-box"></span> Perda Média</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Evolução do Patrimônio Acumulado -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3 class="card-title">📈 Evolução do Patrimônio Acumulado</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container" style="position:relative;height:280px">
+                            <canvas id="dcPatrimonioChart"></canvas>
                         </div>
                     </div>
                 </div>
