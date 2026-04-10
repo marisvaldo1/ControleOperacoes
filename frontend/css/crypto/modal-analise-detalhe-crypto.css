@@ -132,8 +132,12 @@
 /* ── Card Retorno ao Vencimento ──────────────────────────── */
 .mac-ret-card {
     --mac-ret-accent: #4da6ff;
-    background: linear-gradient(165deg, rgba(255,255,255,.03) 0%, rgba(255,255,255,.015) 100%);
-    border: 1px solid rgba(255,255,255,.09);
+    --mac-ret-prob-bg: rgba(255,255,255,.03);
+    --mac-ret-prob-border: rgba(255,255,255,.09);
+    background:
+        linear-gradient(165deg, var(--mac-ret-prob-bg) 0%, rgba(255,255,255,.015) 100%),
+        radial-gradient(circle at 85% 12%, var(--mac-ret-prob-bg) 0%, transparent 42%);
+    border: 1px solid var(--mac-ret-prob-border);
     border-radius: 10px;
     padding: 10px;
 }

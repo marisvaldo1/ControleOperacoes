@@ -190,13 +190,19 @@
 
 /* Op card */
 #modalResultadosCryptoCompact .dsh-op-card {
-  background: var(--dsh-card2); border: 1px solid var(--dsh-bdr);
+  --dsh-ex-bg: var(--dsh-card2);
+  --dsh-ex-border: var(--dsh-bdr);
+  --dsh-ex-accent: var(--dsh-bdr-hi);
+  background: var(--dsh-ex-bg); border: 1px solid var(--dsh-ex-border);
   border-radius: var(--dsh-rad); padding: .52rem .6rem;
   margin-bottom: .3rem; transition: border-color .15s;
 }
 #modalResultadosCryptoCompact .dsh-op-card:hover { border-color: var(--dsh-bdr-hi); }
-#modalResultadosCryptoCompact .dsh-op-card.itm { border-left: 2px solid var(--dsh-red); }
-#modalResultadosCryptoCompact .dsh-op-card.otm { border-left: 2px solid var(--dsh-green); }
+#modalResultadosCryptoCompact .dsh-op-card.itm,
+#modalResultadosCryptoCompact .dsh-op-card.otm { border-left: 2px solid var(--dsh-ex-accent); }
+#modalResultadosCryptoCompact .dsh-op-card.tone-risk { box-shadow: inset 0 0 0 1px rgba(232,93,74,.12); }
+#modalResultadosCryptoCompact .dsh-op-card.tone-safe { box-shadow: inset 0 0 0 1px rgba(71,185,108,.12); }
+#modalResultadosCryptoCompact .dsh-op-card.tone-neutral { box-shadow: inset 0 0 0 1px rgba(245,159,0,.14); }
 #modalResultadosCryptoCompact .dsh-oc-head { display: flex; align-items: center; gap: .35rem; margin-bottom: .3rem; }
 #modalResultadosCryptoCompact .dsh-oc-asset { font-family: var(--dsh-mono); font-size: .84rem; font-weight: 700; }
 #modalResultadosCryptoCompact .dsh-oc-date  { font-family: var(--dsh-mono); font-size: .70rem; color: var(--dsh-tx2); margin-left: auto; }
@@ -274,10 +280,17 @@
   display: grid; grid-template-columns: repeat(4, 1fr); gap: .25rem;
 }
 #modalResultadosCryptoCompact .dsh-cf-item {
+  --dsh-ex-bg: var(--dsh-card2);
+  --dsh-ex-border: var(--dsh-bdr);
+  --dsh-ex-accent: var(--dsh-bdr-hi);
   display: flex; align-items: center; gap: .28rem;
-  padding: .22rem .38rem; background: var(--dsh-card2);
-  border-radius: 6px; border: 1px solid var(--dsh-bdr); opacity: .5;
+  padding: .22rem .38rem; background: var(--dsh-ex-bg);
+  border-radius: 6px; border: 1px solid var(--dsh-ex-border); opacity: .85;
+  border-left-width: 2px; border-left-color: var(--dsh-ex-accent);
 }
+#modalResultadosCryptoCompact .dsh-cf-item.tone-risk { box-shadow: inset 0 0 0 1px rgba(232,93,74,.10); }
+#modalResultadosCryptoCompact .dsh-cf-item.tone-safe { box-shadow: inset 0 0 0 1px rgba(71,185,108,.10); }
+#modalResultadosCryptoCompact .dsh-cf-item.tone-neutral { box-shadow: inset 0 0 0 1px rgba(245,159,0,.12); }
 #modalResultadosCryptoCompact .dsh-cf-asset { font-family: var(--dsh-mono); font-size: .74rem; font-weight: 700; }
 #modalResultadosCryptoCompact .dsh-cf-val   { font-family: var(--dsh-mono); font-size: .72rem; color: var(--dsh-tx2); margin-left: auto; }
 

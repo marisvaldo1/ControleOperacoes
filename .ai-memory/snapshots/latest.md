@@ -1,6 +1,6 @@
 # AI PROJECT SNAPSHOT
 > Cole todo este arquivo na IA para retomar o projeto sem perder contexto.
-> Gerado em: 2026-04-10 14:43:09 | Branch: master
+> Gerado em: 2026-04-10 15:40:38 | Branch: master
 
 ---
 
@@ -12,14 +12,60 @@
 ---
 
 ## GIT — últimos 5 commits
+4401226 2026-04-10 Ajustes de layout
 ffbe5de 2026-04-06 Ajustes de layout
 1be511c 2026-04-02 Ajustes nos servicos do cliente
 3716e53 2026-03-24 Tela de resultados
 3aa8644 2026-03-20 Tela de resultados
-edbb352 2026-03-19 Tela de resultados
 
 ## Arquivos alterados no último commit
+.ai-memory/05-STATE.md
+.ai-memory/08-CHANGELOG.md
+.ai-memory/09-PROMPTS.md
+.ai-memory/prompts_log.txt
+.ai-memory/snapshots/latest.md
 backend/data/controle_operacoes.db
+backend/models/__pycache__/__init__.cpython-313.pyc
+backend/models/__pycache__/crypto_exercise.cpython-313.pyc
+backend/models/crypto_exercise.py
+backend/routes/__pycache__/crypto.cpython-313.pyc
+backend/routes/crypto.py
+backend/tests/__pycache__/conftest.cpython-313-pytest-8.3.4.pyc
+backend/tests/__pycache__/conftest.cpython-313-pytest-8.3.4.pyc.52116
+backend/tests/__pycache__/conftest.cpython-313-pytest-9.0.2.pyc
+backend/tests/__pycache__/test_ai_providers.cpython-313-pytest-9.0.2.pyc
+backend/tests/__pycache__/test_api_agenda.cpython-313-pytest-9.0.2.pyc
+backend/tests/__pycache__/test_api_analyze.cpython-313-pytest-9.0.2.pyc
+backend/tests/__pycache__/test_api_atendimento.cpython-313-pytest-9.0.2.pyc
+backend/tests/__pycache__/test_api_auth.cpython-313-pytest-9.0.2.pyc
+backend/tests/__pycache__/test_api_config.cpython-313-pytest-9.0.2.pyc
+backend/tests/__pycache__/test_api_crypto.cpython-313-pytest-9.0.2.pyc
+backend/tests/__pycache__/test_api_financeiro.cpython-313-pytest-9.0.2.pyc
+backend/tests/__pycache__/test_api_opcoes.cpython-313-pytest-9.0.2.pyc
+backend/tests/__pycache__/test_api_pacientes.cpython-313-pytest-9.0.2.pyc
+backend/tests/__pycache__/test_api_relatorios.cpython-313-pytest-9.0.2.pyc
+backend/tests/test_api_crypto.py
+frontend/css/crypto/modal-analise-detalhe-crypto.css
+frontend/html/crypto.html
+frontend/html/modal-analise-detalhe-crypto.html
+frontend/js/core/crypto-exercise.js
+frontend/js/crypto.js
+frontend/js/crypto/crypto.js
+frontend/js/crypto/modal-analise-detalhe-crypto.js
+frontend/js/crypto/modal-detalhe-crypto.js
+frontend/js/crypto/modal-detalhe-operacao-crypto.js
+frontend/js/crypto/modal-resultado-total-crypto.js
+frontend/js/crypto/modal-resultados-crypto-compact.js
+frontend/js/opcoes/modal-detalhe-opcoes.js
+ideias/Claude1.html
+ideias/resumo-investimento-7-ideias.html
+ideias/strike_vs_cotacao_7_ideias.html
+ideias/t1.html
+start.bat
+start_hidden.ps1
+start_silent.vbs
+tests/results/playwright_results.json
+tests/results/pytest_results.json
 
 ---
 
@@ -166,10 +212,11 @@ ControleOperacoes/
 ## ESTADO ATUAL (auto)
 # STATE (auto)
 
-Última atualização: 2026-04-10 14:43:07
+Última atualização: 2026-04-10 15:40:36
 Branch: master
 
 ## Commits recentes (últimos 10)
+  4401226 | 2026-04-10 | â€œMarisvaldoâ€ | Ajustes de layout
   ffbe5de | 2026-04-06 | â€œMarisvaldoâ€ | Ajustes de layout
   1be511c | 2026-04-02 | â€œMarisvaldoâ€ | Ajustes nos servicos do cliente
   3716e53 | 2026-03-24 | â€œMarisvaldoâ€ | Tela de resultados
@@ -179,30 +226,29 @@ Branch: master
   c9934aa | 2026-03-13 | â€œMarisvaldoâ€ | Tela de cryptos
   c8f34d5 | 2026-03-05 | â€œMarisvaldoâ€ | Tela de testes
   6482359 | 2026-02-23 | â€œMarisvaldoâ€ | Janela de totais finais
-  308a0b6 | 2026-02-23 | â€œMarisvaldoâ€ | Janela de totais finais
 
 ## Working tree
-  M .ai-memory/05-STATE.md
-   M .ai-memory/08-CHANGELOG.md
-   M .ai-memory/09-PROMPTS.md
-   M .ai-memory/prompts_log.txt
-   M .ai-memory/snapshots/latest.md
-   M backend/data/controle_operacoes.db
-   M backend/routes/__pycache__/crypto.cpython-313.pyc
-   M backend/routes/crypto.py
-   M backend/tests/test_api_crypto.py
+  M backend/data/controle_operacoes.db
+   M frontend/components/modals/crypto/modal-resultados-crypto-compact.html
    M frontend/css/crypto/modal-analise-detalhe-crypto.css
-   M frontend/html/crypto.html
-   M frontend/html/modal-analise-detalhe-crypto.html
-   M frontend/js/crypto.js
-   M frontend/js/crypto/crypto.js
+   M frontend/js/core/crypto-exercise.js
    M frontend/js/crypto/modal-analise-detalhe-crypto.js
-   M frontend/js/crypto/modal-detalhe-crypto.js
-   M frontend/js/crypto/modal-detalhe-operacao-crypto.js
-   M frontend/js/crypto/modal-resultado-total-crypto.js
-   M f
+   M frontend/js/crypto/modal-dashboard-crypto.js
+   M frontend/js/crypto/modal-resultados-crypto-compact.js
+   M frontend/js/crypto/modal-saldo-medio-crypto.js
+   M tests/results/playwright_results.json
+   M tests/results/pytest_results.json
+  ?? backend/tests/__pycache__/
 
-... [truncado — 1217 chars omitidos]
+## Arquivos mais tocados (últimos 20 commits)
+- .ai-memory/00-ENTRYPOINT.md
+- .ai-memory/01-CONTEXT.md
+- .ai-memory/02-ARCHITECTURE.md
+- .ai-memory/03-TECH-STACK.md
+- .ai-memory/04-RULES.md
+- .ai-memory/05-
+
+... [truncado — 740 chars omitidos]
 
 ---
 

@@ -29,20 +29,54 @@
     /* ─────────────────────────────
        Formatadores
     ───────────────────────────── */
-    const fmtUsd = v => {
-        if (v == null || isNaN(Number(v))) return '—';
-        const n = Number(v);
-        const s = Math.abs(n).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
-        return (n < 0 ? '-' : '') + '$' + s;
-    };
+    const fmtUsd = v => window.CryptoExerciseStatus?.formatUsd
+        ? window.CryptoExerciseStatus.formatUsd(v)
+        : (v == null || isNaN(Number(v)))
+            ? '—'
+            : ((Number(v) < 0 ? '-' : '')
+                + 'US$ '
+                + Math.abs(Number(v)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
     // fmtK agora aponta para fmtUsd — mostra valor completo
     const fmtK = v => fmtUsd(v);
     const pp   = v => (Number(v) >= 0 ? '+' : '') + Number(v).toFixed(2) + '%';
-    const fmtDate = s => {
-        if (!s) return '—';
-        try { return new Date(s.split('T')[0]+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}); }
-        catch { return s; }
-    };
+    const fmtDate = s => window.CryptoExerciseStatus?.formatDayMonth
+        ? window.CryptoExerciseStatus.formatDayMonth(s)
+        : (s ? new Date(String(s).split('T')[0] + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : '—');
+
+    function getOpDate(op) {
+        if (window.CryptoExerciseStatus?.getOperationDate) {
+            return window.CryptoExerciseStatus.getOperationDate(op);
+        }
+        const raw = op?.data_vencimento || op?.exercicio || op?.data_operacao || op?.criado_em || op?.created_at || null;
+        if (!raw) return null;
+        const date = new Date(String(raw).slice(0, 10) + 'T12:00:00');
+        return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    function getExerciseTone(op) {
+        const displayStatus = window.CryptoExerciseStatus?.resolveDisplayStatus
+            ? window.CryptoExerciseStatus.resolveDisplayStatus(op)
+            : 'NAO';
+
+        if (window.CryptoExerciseStatus?.getToneFromDisplayStatus) {
+            return window.CryptoExerciseStatus.getToneFromDisplayStatus(displayStatus);
+        }
+
+        if (displayStatus === 'SIM') {
+            return {
+                level: 'risk',
+                accent: '#e85d4a',
+                border: 'rgba(232,93,74,0.55)',
+                bg: 'linear-gradient(155deg, rgba(232,93,74,0.20), rgba(33,26,30,0.94))',
+            };
+        }
+        return {
+            level: 'safe',
+            accent: '#47b96c',
+            border: 'rgba(71,185,108,0.50)',
+            bg: 'linear-gradient(155deg, rgba(71,185,108,0.18), rgba(24,35,30,0.94))',
+        };
+    }
 
     const colDist  = d => d < 2 ? 'var(--dsh-red)' : d < 5 ? 'var(--dsh-amber)' : 'var(--dsh-green)';
     const colDelta = d => d >= 0 ? 'var(--dsh-green)' : 'var(--dsh-red)';
@@ -194,6 +228,7 @@
         const exData   = fmtDate(op.data_vencimento || op.data_operacao || op.criado_em);
         const exStr    = (window.CryptoExerciseStatus?.resolveDisplayStatus(op) || 'NAO').toUpperCase();
         const isItm    = exStr === 'SIM';
+        const tone     = getExerciseTone(op);
 
         const dias  = Math.max(prazo - corridos, 0);
         const bw    = prazo > 0 ? Math.min(Math.round((corridos/prazo)*100), 100) : 0;
@@ -202,7 +237,7 @@
         const delta = abertura > 0 && cotacao > 0 ? cotacao - abertura : 0;
         const dPct  = delta !== 0 && abertura > 0 ? (delta/abertura)*100 : 0;
 
-        return `<div class="dsh-op-card ${isItm ? 'itm' : 'otm'}">
+                return `<div class="dsh-op-card ${isItm ? 'itm' : 'otm'} tone-${tone.level}" style="--dsh-ex-bg:${tone.bg};--dsh-ex-border:${tone.border};--dsh-ex-accent:${tone.accent};">
           <div class="dsh-oc-head">
             <span class="dsh-oc-asset" style="color:${ac};">${asset}</span>
             ${typeBadge(tipo, isOpen)}
@@ -269,12 +304,15 @@
     ───────────────────────────── */
     function closedFoot(closed) {
         if (!closed.length) return '';
-        const gridHtml = closed.map(op => `<div class="dsh-cf-item">
+        const gridHtml = closed.map(op => {
+            const tone = getExerciseTone(op);
+            return `<div class="dsh-cf-item tone-${tone.level}" style="--dsh-ex-bg:${tone.bg};--dsh-ex-border:${tone.border};--dsh-ex-accent:${tone.accent};">
               <span class="dsh-cf-asset" style="color:${assetColor(getAsset(op.ativo))};">${getAsset(op.ativo)}</span>
               ${typeBadge(op.tipo, false)}
               <span style="font-family:var(--dsh-mono);font-size:.72rem;color:var(--dsh-tx2);">${fmtDate(op.data_vencimento||op.data_operacao||op.criado_em)}</span>
               <span class="dsh-cf-val">${fmtUsd(op.premio_us)}</span>
-            </div>`).join('');
+            </div>`;
+        }).join('');
         return `<div class="dsh-closed" style="margin-top:.55rem;">
           <button class="dsh-closed-toggle" type="button"
             data-bs-toggle="collapse" data-bs-target="#dshClosedBody"
@@ -298,15 +336,23 @@
         const el = document.getElementById('dshChartLine');
         if (!el || typeof Chart === 'undefined') return;
 
-        // Agrupa prêmio por data de vencimento
-        const dm = {};
+        // Agrupa prêmio por dia usando chave ISO para manter ordem cronológica real entre meses.
+        const dm = new Map();
         ops.forEach(op => {
-            const d = fmtDate(op.data_vencimento || op.data_operacao || op.criado_em);
-            if (!dm[d]) dm[d] = 0;
-            dm[d] += parseFloat(op.premio_us) || 0;
+            const date = getOpDate(op);
+            if (!date) return;
+            const key = [
+                date.getFullYear(),
+                String(date.getMonth() + 1).padStart(2, '0'),
+                String(date.getDate()).padStart(2, '0')
+            ].join('-');
+            const current = dm.get(key) || { total: 0, label: fmtDate(date) };
+            current.total += parseFloat(op.premio_us) || 0;
+            dm.set(key, current);
         });
-        const labs = Object.keys(dm).sort();
-        const daily = labs.map(l => +dm[l].toFixed(2));
+        const ordered = [...dm.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+        const labs = ordered.map(([, entry]) => entry.label);
+        const daily = ordered.map(([, entry]) => +entry.total.toFixed(2));
 
         // Calcula acumulado progressivo
         let sum = 0;
@@ -357,7 +403,7 @@
                     },
                     tooltip: {
                         callbacks: {
-                            label: ctx => (ctx.dataset.label === 'Acumulado' ? 'Total: $' : 'Dia:   $') + ctx.raw.toFixed(2)
+                            label: ctx => (ctx.dataset.label === 'Acumulado' ? 'Total: US$ ' : 'Dia: US$ ') + ctx.raw.toFixed(2)
                         }
                     }
                 },
@@ -370,13 +416,13 @@
                         type: 'linear',
                         position: 'left',
                         grid: { color: 'rgba(38,51,71,.8)' },
-                        ticks: { color: '#e8a830', font: { family: 'JetBrains Mono', size: 11 }, callback: v => '$' + v.toFixed(1) }
+                        ticks: { color: '#e8a830', font: { family: 'JetBrains Mono', size: 11 }, callback: v => 'US$ ' + v.toFixed(1) }
                     },
                     yDay: {
                         type: 'linear',
                         position: 'right',
                         grid: { display: false },
-                        ticks: { color: 'rgba(77,166,255,0.7)', font: { family: 'JetBrains Mono', size: 10 }, callback: v => '$' + v.toFixed(1) }
+                        ticks: { color: 'rgba(77,166,255,0.7)', font: { family: 'JetBrains Mono', size: 10 }, callback: v => 'US$ ' + v.toFixed(1) }
                     }
                 }
             }

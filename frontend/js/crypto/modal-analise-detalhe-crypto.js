@@ -206,6 +206,26 @@
         };
     }
 
+    function getProbabilityTone(probExercicio) {
+        const p = Number.isFinite(probExercicio) ? probExercicio : 50;
+        if (p >= 65) {
+            return {
+                bg: 'rgba(248,81,73,0.14)',
+                border: 'rgba(248,81,73,0.34)'
+            };
+        }
+        if (p >= 45) {
+            return {
+                bg: 'rgba(245,159,0,0.12)',
+                border: 'rgba(245,159,0,0.32)'
+            };
+        }
+        return {
+            bg: 'rgba(63,185,80,0.10)',
+            border: 'rgba(63,185,80,0.28)'
+        };
+    }
+
     // ─── Helper: aplica cor contextual no mac-kpi-card ───────────────────────
     function _setKpiCard(cardId, valEl, text, color) {
         const card = document.getElementById(cardId);
@@ -506,6 +526,8 @@
         }
 
         const dist = data.favorDist;
+        const probExercicio = calcPOP(data.tipo, data.cotacao, data.strike);
+        const probTone = getProbabilityTone(probExercicio);
         const signedDist = (dist >= 0 ? '+' : '') + dist.toFixed(2) + '%';
         const diffAbs = (data.diffAbs >= 0 ? '+' : '-') + fmtUsd(Math.abs(data.diffAbs));
         const diffPctStrike = (data.diffPctStrike >= 0 ? '+' : '') + data.diffPctStrike.toFixed(2) + '%';
@@ -522,7 +544,7 @@
         }).join('');
 
         body.innerHTML = `
-            <div class="mac-ret-card" style="--mac-ret-accent:${data.zone.accent}">
+            <div class="mac-ret-card" style="--mac-ret-accent:${data.zone.accent};--mac-ret-prob-bg:${probTone.bg};--mac-ret-prob-border:${probTone.border}">
                 <div class="mac-ret-top">
                     <div>
                         <div class="mac-ret-ticker">${data.ativo}</div>
@@ -792,11 +814,7 @@ ${op.observacoes ? `<div class="mdc-info-row" style="flex-direction:column;align
     }
 
     // ─── Wire botão refresh ───────────────────────────────────────────────────
-    let _wireRefreshDone = false;
     function _wireRefresh(op) {
-        if (_wireRefreshDone) return;
-        _wireRefreshDone = false; // reset para cada op
-
         const btn = document.getElementById('macBtnRefresh');
         if (!btn) return;
 
@@ -810,34 +828,9 @@ ${op.observacoes ? `<div class="mdc-info-row" style="flex-direction:column;align
             const tsEl = document.getElementById('macLastUpdated');
             if (tsEl) tsEl.textContent = 'Atualizando...';
 
-            const cotEl   = document.getElementById('macCardCotacao');
-            const gaugeEl = document.getElementById('macGaugeArea');
-            const probEl  = document.getElementById('macProbLucro');
-            const skel    = '<span class="mdc-skel d-inline-block" style="width:70%;height:1em;border-radius:4px"></span>';
-            if (cotEl)   cotEl.innerHTML   = skel;
-            if (gaugeEl) gaugeEl.innerHTML = '<div class="mdc-skel" style="height:130px;border-radius:8px"></div>';
-            if (probEl)  probEl.innerHTML  = skel;
-
             try {
-                const cotacao = await _fetchLivePrice(op);
-                _updateTs();
-
-                const dist    = op._liveDist !== undefined ? op._liveDist : op.distancia;
-                const distNum = parseFloat(dist) || 0;
-                const probLucro = op.pop != null ? op.pop + '%'
-                    : Math.min(95, Math.max(5, 50 + distNum * 3)).toFixed(0) + '% <small style="opacity:.6">(estimado)</small>';
-
-                if (cotEl)   cotEl.innerHTML   = fmtUsd(cotacao);
-                if (gaugeEl) gaugeEl.innerHTML = buildGaugeSVG(dist, (op.tipo||'PUT').toUpperCase());
-                if (probEl)  probEl.innerHTML  =
-                    `<span class="mdc-info-label">📐 Prob. Lucro</span>
-                     <span class="mdc-info-value" style="color:${distNum>=5?'#47b96c':distNum>=2?'#4da6ff':'#f59f00'}">${probLucro}</span>`;
-
-                // Atualiza painel direito também
-                _renderKPIs(op, cotacao);
-                _renderNextOpCard(op, cotacao);
-                _renderPmCard(op, cotacao);
-                _renderPnLChart(op, cotacao);
+                // Re-render completo com skeleton para garantir atualização de todos os componentes.
+                await _renderAll(op);
             } catch(e) {
                 console.error('[macRefresh]', e);
                 _updateTs();

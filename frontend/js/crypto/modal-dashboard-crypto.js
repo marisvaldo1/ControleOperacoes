@@ -47,13 +47,14 @@
     /*  Utilitários                                                         */
     /* ------------------------------------------------------------------ */
     function fmtC(value) {
-        if (cfg.currency === 'USD') {
-            const v = parseFloat(value) || 0;
-            return '$' + v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        const v = parseFloat(value) || 0;
+        if (window.CryptoExerciseStatus?.formatUsd) {
+            return window.CryptoExerciseStatus.formatUsd(v);
         }
-        return typeof formatCurrency === 'function'
-            ? formatCurrency(value, 'BRL')
-            : String(value);
+        return (v < 0 ? '-' : '') + 'US$ ' + Math.abs(v).toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        });
     }
 
     function parseDateLocal(str) {

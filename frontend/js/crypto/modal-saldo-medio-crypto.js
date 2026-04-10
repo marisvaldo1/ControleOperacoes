@@ -105,19 +105,15 @@
     /* Formatadores                                                         */
     /* ------------------------------------------------------------------ */
     function smFmt(v) {
-        if (cfg.currency === 'USD') {
-            return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(v);
+        if (window.CryptoExerciseStatus?.formatUsd) {
+            return window.CryptoExerciseStatus.formatUsd(v);
         }
-        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(v);
     }
 
     function smFmtK(v) {
         const n = Math.abs(v);
-        if (cfg.currency === 'USD') {
-            if (n >= 1000) return (v < 0 ? '-' : '') + '$' + (n / 1000).toFixed(1) + 'k';
-            return smFmt(v);
-        }
-        if (n >= 1000) return (v < 0 ? '-' : '') + 'R$' + (n / 1000).toFixed(1) + 'k';
+        if (n >= 1000) return (v < 0 ? '-' : '') + 'US$ ' + (n / 1000).toFixed(1) + 'k';
         return smFmt(v);
     }
 
