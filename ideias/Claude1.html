@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Operações DI · 7 Variações</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Syne:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg:    #111928;
+  --bg1:   #182030;
+  --bg2:   #1c2840;
+  --bg3:   #212e48;
+  --bdr:   #253044;
+  --bdr2:  #2e3e58;
+  --tx1:   #e2eeff;
+  --tx2:   #5a789a;
+  --tx3:   #2e4060;
+  /* P1 — Risco */
+  --p1:    #e05252;
+  --p1-bg: #2c1414;
+  --p1-bdr:#5a2020;
+  /* P2 — Atenção */
+  --p2:    #e8a830;
+  --p2-bg: #2a1e08;
+  --p2-bdr:#583808;
+  /* P3 — OK */
+  --p3:    #3dd68c;
+  --p3-bg: #0e2a1c;
+  --p3-bdr:#1e5030;
+  /* accents */
+  --grn:   #3dd68c;
+  --red:   #e05252;
+  --amb:   #e8a830;
+  --blu:   #4ab8d4;
+  --pur:   #9b72d4;
+  --mono:  'JetBrains Mono', monospace;
+  --ui:    'Inter', sans-serif;
+  --syne:  'Syne', sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; }
+body {
+  background: #0c1422;
+  color: var(--tx1);
+  font-family: var(--ui);
+  min-height: 100vh;
+  padding: 1.4rem;
+  display: flex; flex-direction: column; align-items: center; gap: 2.4rem;
+}
+
+/* ══ SWITCHER ══ */
+.sw {
+  display: flex; gap: .3rem; flex-wrap: wrap;
+  background: var(--bg); border: 1px solid var(--bdr);
+  border-radius: 28px; padding: .4rem .65rem;
+  position: sticky; top: .6rem; z-index: 600;
+  box-shadow: 0 4px 20px rgba(0,0,0,.6);
+}
+.sw span { font-family: var(--mono); font-size: .66rem; color: var(--tx2); align-self: center; padding-right: .2rem; }
+.swb {
+  padding: .22rem .78rem; border-radius: 18px;
+  border: 1px solid var(--bdr); background: transparent;
+  color: var(--tx2); font-family: var(--mono); font-size: .63rem; font-weight: 500;
+  cursor: pointer; transition: all .15s; white-space: nowrap;
+}
+.swb:hover { color: var(--tx1); border-color: var(--bdr2); }
+.swb.on { background: var(--bg2); border-color: var(--amb); color: var(--amb); }
+
+/* ══ SECTION WRAPPER ══ */
+.section {
+  width: 100%; max-width: 1200px;
+  display: none; flex-direction: column; gap: .55rem;
+}
+.section.on { display: flex; animation: fadeIn .25s ease; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+
+/* ══ SECTION HEADER ══ */
+.sec-hdr {
+  display: flex; align-items: center; gap: .55rem;
+  padding: .5rem .8rem;
+  background: var(--bg1); border: 1px solid var(--bdr);
+  border-radius: 10px;
+}
+.sec-icon { font-size: 1rem; }
+.sec-title { font-family: var(--syne); font-size: .92rem; font-weight: 700; flex: 1; }
+.sec-sub { font-family: var(--mono); font-size: .62rem; color: var(--tx2); }
+.sec-badges { display: flex; gap: .28rem; margin-left: auto; align-items: center; }
+.sbdg {
+  padding: .1rem .42rem; border-radius: 20px;
+  font-family: var(--mono); font-size: .61rem; font-weight: 600;
+}
+.sbdg-1 { background: var(--p1-bg); color: var(--p1); border: 1px solid var(--p1-bdr); }
+.sbdg-2 { background: var(--p2-bg); color: var(--p2); border: 1px solid var(--p2-bdr); }
+.sbdg-3 { background: var(--p3-bg); color: var(--p3); border: 1px solid var(--p3-bdr); }
+
+/* ══ GRID ══ */
+.grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: .65rem; }
+@media(max-width:900px){ .grid{grid-template-columns:repeat(2,1fr);} }
+
+/* ══ PRIORITY DOT ══ */
+.pdot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  animation: pls 2s infinite;
+}
+@keyframes pls { 0%,100%{opacity:1} 50%{opacity:.3} }
+.pdot.p1 { background: var(--p1); box-shadow: 0 0 0 3px rgba(224,82,82,.18); }
+.pdot.p2 { background: var(--p2); box-shadow: 0 0 0 3px rgba(232,168,48,.18); animation: none; }
+.pdot.p3 { background: var(--p3); box-shadow: 0 0 0 3px rgba(61,214,140,.18); animation: none; }
+
+/* ══ PRIORITY TAG ══ */
+.ptag {
+  display: inline-flex; align-items: center; gap: .3rem;
+  padding: .1rem .4rem; border-radius: 20px;
+  font-family: var(--mono); font-size: .62rem; font-weight: 600;
+}
+.ptag.p1 { background: var(--p1-bg); color: var(--p1); border: 1px solid var(--p1-bdr); }
+.ptag.p2 { background: var(--p2-bg); color: var(--p2); border: 1px solid var(--p2-bdr); }
+.ptag.p3 { background: var(--p3-bg); color: var(--p3); border: 1px solid var(--p3-bdr); }
+
+/* ══ PROGRESS BAR ══ */
+.pbar { height: 5px; background: rgba(255,255,255,.06); border-radius: 3px; overflow: hidden; margin-top: .18rem; }
+.pfill { height: 100%; border-radius: 3px; transition: width .6s ease; }
+.pbar-lg { height: 8px; }
+.pbar-sm { height: 3px; }
+
+/* ══ ROW DATA ══ */
+.dr { display: flex; justify-content: space-between; align-items: center; font-size: .7rem; padding: .12rem 0; }
+.dk { color: var(--tx2); font-family: var(--mono); }
+.dv { font-family: var(--mono); font-weight: 600; }
+
+/* ══ DIVIDER ══ */
+.div { height: 1px; background: rgba(255,255,255,.06); margin: .22rem 0; }
+
+/* ══ MICRO GAUGE SVG ══ */
+.gauge-wrap { text-align: center; }
+</style>
+</head>
+<body>
+
+<!-- SWITCHER -->
+<div class="sw">
+  <span>Variação:</span>
+  <button class="swb on" data-v="1">① Fiel à Imagem</button>
+  <button class="swb" data-v="2">② Com Gauge OTM</button>
+  <button class="swb" data-v="3">③ Ticker Terminal</button>
+  <button class="swb" data-v="4">④ Score Card</button>
+  <button class="swb" data-v="5">⑤ Heat Strip</button>
+  <button class="swb" data-v="6">⑥ Payoff Mini</button>
+  <button class="swb" data-v="7">⑦ Mission Card</button>
+</div>
+
+<!-- SECTIONS 1–7 will be injected here -->
+<div class="section on" id="s1"></div>
+<div class="section" id="s2"></div>
+<div class="section" id="s3"></div>
+<div class="section" id="s4"></div>
+<div class="section" id="s5"></div>
+<div class="section" id="s6"></div>
+<div class="section" id="s7"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+/* ════════════ DATA ════════════ */
+const OPS = [
+  { id:'033', a:'ETH', t:'CALL', cot:3145,  ab:3280,  str:3200,  dist:-1.7, tae:184, prem:88.20, premP:3.2, pz:1, cor:1, ex:'SIM', p:1 },
+  { id:'031', a:'BTC', t:'CALL', cot:83800, ab:82500, str:85000, dist:1.4,  tae:129, prem:215.00,premP:2.8, pz:4, cor:1, ex:'NÃO',p:1 },
+  { id:'028', a:'BTC', t:'CALL', cot:83800, ab:79800, str:88000, dist:5.0,  tae:156, prem:97.60, premP:1.8, pz:5, cor:1, ex:'NÃO',p:2 },
+  { id:'027', a:'BNB', t:'CALL', cot:472,   ab:406,   str:550,   dist:16.5, tae:67,  prem:54.00, premP:2.0, pz:12,cor:1, ex:'NÃO',p:3 },
+];
+
+const fmt  = n=>'US$ '+Number(n).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtN = n=>n>=1000?(n/1000).toFixed(1)+'K':n.toString();
+const pp   = (n,decimals=1)=>(n>=0?'+':'')+n.toFixed(decimals)+'%';
+const cD   = d=>d<0?'var(--red)':d<3?'var(--red)':d<7?'var(--amb)':'var(--grn)';
+const pCol = p=>p===1?'var(--p1)':p===2?'var(--p2)':'var(--p3)';
+const pCls = p=>p===1?'p1':p===2?'p2':'p3';
+const pLbl = p=>p===1?'P1 — Risco':p===2?'P2 — Atenção':'P3 — OK';
+const pEmoji=p=>p===1?'🔴':p===2?'🟡':'🟢';
+const asC  = a=>a==='BTC'?'var(--amb)':a==='ETH'?'var(--blu)':'var(--pur)';
+const asE  = a=>a==='BTC'?'₿':a==='ETH'?'Ξ':'⬡';
+
+function dias(op){ return Math.max(op.pz - op.cor, 0); }
+function barW(op){ return Math.min(Math.round((op.cor/Math.max(op.pz,1))*100),100); }
+function pop(op) { return Math.max(0,Math.min(100,Math.round(40+op.dist*3.5))); }
+
+/* semi-gauge svg */
+function sg(pct,col,val,lbl,sz=72){
+  pct=Math.max(0,Math.min(pct,1));
+  const r=sz*.42,cx=sz/2,cy=sz*.63,c=Math.PI*r,off=c*(1-pct);
+  return `<div class="gauge-wrap">
+    <svg width="${sz}" height="${(sz*.67).toFixed(0)}" viewBox="0 0 ${sz} ${(sz*.67).toFixed(0)}" style="overflow:visible;display:block;margin:0 auto;">
+      <path d="M${(cx-r).toFixed(1)},${cy} A${r},${r} 0 0,1 ${(cx+r).toFixed(1)},${cy}"
+        fill="none" stroke="rgba(255,255,255,.07)" stroke-width="5.5" stroke-linecap="round"/>
+      <path d="M${(cx-r).toFixed(1)},${cy} A${r},${r} 0 0,1 ${(cx+r).toFixed(1)},${cy}"
+        fill="none" stroke="${col}" stroke-width="5.5" stroke-linecap="round"
+        stroke-dasharray="${c.toFixed(2)}" stroke-dashoffset="${off.toFixed(2)}"/>
+      <text x="${cx}" y="${(cy-2).toFixed(0)}" text-anchor="middle"
+        font-family="JetBrains Mono,monospace" font-size="11" font-weight="700" fill="${col}">${val}</text>
+    </svg>
+    <div style="font-family:var(--mono);font-size:.54rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.06em;">${lbl}</div>
+  </div>`;
+}
+
+/* mini spark line */
+function spark(id,vals,col){
+  setTimeout(()=>{
+    const el=document.getElementById(id); if(!el)return;
+    const k='ck_'+id; if(window[k]){try{window[k].destroy();}catch(e){}}
+    window[k]=new Chart(el,{
+      type:'line',
+      data:{labels:vals.map((_,i)=>i),datasets:[{data:vals,borderColor:col,backgroundColor:col.replace(')',',0.12)').replace('var(','rgba(').replace('--grn','61,214,140').replace('--red','224,82,82').replace('--amb','232,168,48').replace('--blu','74,184,212'),borderWidth:1.8,pointRadius:0,fill:true,tension:.4}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{enabled:false}},scales:{x:{display:false},y:{display:false}}}
+    });
+  },0);
+  return `<canvas id="${id}" style="position:absolute;inset:0;"></canvas>`;
+}
+
+/* ════════════════════════════════════════════════
+   VARIAÇÃO 1 — FIEL À IMAGEM + melhorias sutis
+   Cards idênticos ao padrão da imagem, com
+   progress bar de prazo e mini dist. bar adicionais
+════════════════════════════════════════════════ */
+function buildV1(){
+  const sec=document.getElementById('s1');
+  sec.innerHTML=`
+    <div class="sec-hdr">
+      <span class="sec-icon">⚡</span>
+      <span class="sec-title">Operações · Dual Investment</span>
+      <span class="sec-sub">Ativos ranqueados por urgência, não por ordem alfabética</span>
+      <div class="sec-badges">
+        <span class="sbdg sbdg-1">2 Em Risco</span>
+        <span class="sbdg sbdg-2">1 Atenção</span>
+        <span class="sbdg sbdg-3">1 Tranquilo</span>
+      </div>
+    </div>
+    <div style="font-family:var(--mono);font-size:.63rem;color:var(--tx2);padding:.1rem .2rem;">
+      Substitui a visualização de cards em lista por um grid ordenado por prioridade. P1 = risco hoje · P2 = atenção em breve · P3 = tranquilo.
+    </div>
+    <div class="grid">
+      ${OPS.map(op=>{
+        const d=dias(op), bw=barW(op), pc=pop(op);
+        const dcol=cD(op.dist);
+        const acol=asC(op.a);
+        const distPct=Math.min(Math.abs(op.dist)/20*100,100);
+        const distCol=op.dist<0?'var(--red)':op.dist<3?'var(--red)':op.dist<7?'var(--amb)':'var(--grn)';
+        const daysCol=d===0?'var(--red)':d<=2?'var(--amb)':'var(--grn)';
+        return `
+        <div style="background:var(--bg1);border:2px solid ${pCol(op.p)};border-radius:12px;overflow:hidden;transition:transform .15s,box-shadow .15s;"
+             onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 28px rgba(0,0,0,.4)'"
+             onmouseout="this.style.transform='';this.style.boxShadow=''">
+          <!-- Topo colorido -->
+          <div style="padding:.45rem .65rem;border-bottom:1px solid ${pCol(op.p)}33;background:${op.p===1?'rgba(224,82,82,.07)':op.p===2?'rgba(232,168,48,.07)':'rgba(61,214,140,.07)'};display:flex;align-items:center;gap:.4rem;">
+            <span style="font-family:'Syne',sans-serif;font-size:.88rem;font-weight:800;color:${acol};">${op.a} · DI #${op.id}</span>
+            <span class="ptag ${pCls(op.p)}" style="margin-left:auto;">
+              <span class="pdot ${pCls(op.p)}"></span>${pLbl(op.p)}
+            </span>
+          </div>
+          <!-- Subtítulo -->
+          <div style="padding:.28rem .65rem;font-family:var(--mono);font-size:.6rem;color:var(--tx2);border-bottom:1px solid rgba(255,255,255,.04);">
+            Dual Investment · ${op.t}
+          </div>
+          <!-- Dados -->
+          <div style="padding:.38rem .65rem;display:flex;flex-direction:column;gap:.04rem;">
+            <div class="dr">
+              <span class="dk">Vencimento</span>
+              <span class="dv" style="color:${daysCol};">${d===0?'Amanhã':d===1?'1 dia':d+' dias'}</span>
+            </div>
+            <div class="pbar"><div class="pfill" style="width:${bw}%;background:${daysCol};"></div></div>
+
+            <div class="dr" style="margin-top:.1rem;">
+              <span class="dk">Strike</span>
+              <span class="dv" style="color:var(--tx1);">${fmt(op.str)}</span>
+            </div>
+            <div class="dr">
+              <span class="dk">Preço atual</span>
+              <span class="dv" style="color:${acol};">${fmt(op.cot)} <span style="color:${op.dist<0?'var(--red)':'var(--grn)'};">(${pp(((op.cot-op.ab)/op.ab)*100)})</span></span>
+            </div>
+            <div class="dr">
+              <span class="dk">Prêmio</span>
+              <span class="dv" style="color:var(--amb);">${fmt(op.prem)} (${op.premP}%)</span>
+            </div>
+            <div class="div"></div>
+            <div class="dr">
+              <span class="dk">Distância strike</span>
+              <span class="dv" style="color:${distCol};font-size:.82rem;font-weight:700;">${pp(op.dist)}</span>
+            </div>
+            <!-- Dist bar -->
+            <div class="pbar pbar-lg">
+              <div class="pfill" style="width:${distPct}%;background:${distCol};border-radius:3px;"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:.54rem;color:var(--tx3);margin-top:.06rem;">
+              <span>ITM</span><span>Strike</span><span>OTM Seguro</span>
+            </div>
+          </div>
+          <!-- PoP footer -->
+          <div style="padding:.35rem .65rem;background:rgba(0,0,0,.15);border-top:1px solid rgba(255,255,255,.04);display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-family:var(--mono);font-size:.6rem;color:var(--tx2);">Prob. Lucro</span>
+            <div style="flex:1;margin:0 .5rem;height:4px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden;">
+              <div style="height:100%;width:${pc}%;background:${pc>=70?'var(--grn)':pc>=50?'var(--amb)':'var(--red)'};border-radius:2px;"></div>
+            </div>
+            <span style="font-family:var(--mono);font-size:.68rem;font-weight:700;color:${pc>=70?'var(--grn)':pc>=50?'var(--amb)':'var(--red)'};">${pc}%</span>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+/* ════════════════════════════════════════════════
+   VARIAÇÃO 2 — COM GAUGE OTM
+   3 gauges por card: Dist OTM · TAE · PoP
+   + dados em lista compacta abaixo
+════════════════════════════════════════════════ */
+function buildV2(){
+  const sec=document.getElementById('s2');
+  sec.innerHTML=`
+    <div class="sec-hdr">
+      <span class="sec-icon">🎯</span>
+      <span class="sec-title">Monitor de Distância OTM · Dual Investment</span>
+      <span class="sec-sub">Gauges de risco em tempo real por operação</span>
+      <div class="sec-badges">
+        ${OPS.map(op=>`<span class="sbdg sbdg-${op.p}">${pEmoji(op.p)} ${op.a}#${op.id}</span>`).join('')}
+      </div>
+    </div>
+    <div class="grid">
+      ${OPS.map(op=>{
+        const d=dias(op), pc=pop(op);
+        const distPct=Math.min(Math.abs(op.dist)/20,1);
+        const distCol=cD(op.dist);
+        const acol=asC(op.a);
+        const daysCol=d===0?'var(--red)':d<=2?'var(--amb)':'var(--grn)';
+        return `
+        <div style="background:var(--bg1);border:1px solid ${pCol(op.p)}44;border-top:3px solid ${pCol(op.p)};border-radius:0 0 12px 12px;overflow:hidden;">
+          <!-- Header -->
+          <div style="padding:.42rem .65rem;display:flex;align-items:center;gap:.38rem;border-bottom:1px solid rgba(255,255,255,.05);">
+            <span style="font-size:1.1rem;">${asE(op.a)}</span>
+            <span style="font-family:'Syne',sans-serif;font-size:.88rem;font-weight:800;color:${acol};">${op.a} #${op.id}</span>
+            <span class="ptag ${pCls(op.p)}" style="margin-left:auto;font-size:.6rem;">${pLbl(op.p)}</span>
+          </div>
+          <!-- 3 Gauges -->
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;padding:.5rem .35rem .38rem;border-bottom:1px solid rgba(255,255,255,.05);">
+            ${sg(distPct, distCol, Math.abs(op.dist).toFixed(1)+'%', 'Dist. OTM', 68)}
+            ${sg(Math.min(op.tae/300,1), 'var(--grn)', op.tae.toFixed(0)+'%', 'TAE', 68)}
+            ${sg(pc/100, pc>=70?'var(--grn)':pc>=50?'var(--amb)':'var(--red)', pc+'%', 'PoP', 68)}
+          </div>
+          <!-- Data rows -->
+          <div style="padding:.35rem .65rem;display:flex;flex-direction:column;gap:.06rem;">
+            <div class="dr"><span class="dk">💰 Prêmio</span><span class="dv" style="color:var(--amb);">${fmt(op.prem)}</span></div>
+            <div class="dr"><span class="dk">🎯 Strike</span><span class="dv">${fmt(op.str)}</span></div>
+            <div class="dr"><span class="dk">📊 Cotação</span><span class="dv" style="color:${acol};">${fmt(op.cot)}</span></div>
+          </div>
+          <!-- Days footer -->
+          <div style="padding:.3rem .65rem .42rem;border-top:1px solid rgba(255,255,255,.04);">
+            <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:.6rem;margin-bottom:.12rem;">
+              <span style="color:var(--tx2);">⏱ Vencimento</span>
+              <span style="color:${daysCol};font-weight:700;">${d===0?'🚨 Amanhã':d+'d restantes'}</span>
+            </div>
+            <div class="pbar pbar-lg"><div class="pfill" style="width:${barW(op)}%;background:${daysCol};"></div></div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+/* ════════════════════════════════════════════════
+   VARIAÇÃO 3 — TICKER TERMINAL
+   Estilo terminal de trading — fundo escuro intenso,
+   fonte mono grande para cotação, indicadores inline
+════════════════════════════════════════════════ */
+function buildV3(){
+  const sec=document.getElementById('s3');
+  sec.innerHTML=`
+    <div class="sec-hdr">
+      <span class="sec-icon">🖥️</span>
+      <span class="sec-title">Terminal · Posições Abertas</span>
+      <span class="sec-sub">Estilo trading desk — leitura ultra-rápida</span>
+    </div>
+    <div class="grid">
+      ${OPS.map(op=>{
+        const d=dias(op), pc=pop(op);
+        const acol=asC(op.a);
+        const distCol=cD(op.dist);
+        const daysCol=d===0?'var(--red)':d<=2?'var(--amb)':'var(--grn)';
+        const bw=barW(op);
+        const cotVsAb=((op.cot-op.ab)/op.ab)*100;
+        return `
+        <div style="background:#07111e;border:1px solid ${pCol(op.p)}55;border-radius:10px;overflow:hidden;font-family:var(--mono);">
+          <!-- Ticker header -->
+          <div style="padding:.42rem .6rem;background:#0a1626;border-bottom:1px solid ${pCol(op.p)}40;display:flex;align-items:center;gap:.35rem;">
+            <span style="font-size:.65rem;color:var(--tx2);">DI</span>
+            <span style="font-size:.88rem;font-weight:700;color:${acol};letter-spacing:.06em;">${op.a}/USD</span>
+            <span style="width:6px;height:6px;border-radius:50%;background:${pCol(op.p)};margin-left:.1rem;animation:${op.p===1?'pls 1.5s infinite':'none'};"></span>
+            <span style="font-size:.6rem;color:${pCol(op.p)};margin-left:auto;">#${op.id} · ${pLbl(op.p)}</span>
+          </div>
+          <!-- Big cotacao -->
+          <div style="padding:.52rem .6rem .35rem;border-bottom:1px solid rgba(255,255,255,.05);">
+            <div style="font-size:.56rem;color:var(--tx2);margin-bottom:.08rem;">COTAÇÃO ATUAL</div>
+            <div style="font-size:1.32rem;font-weight:700;color:${acol};letter-spacing:-.01em;line-height:1;">${fmt(op.cot)}</div>
+            <div style="font-size:.68rem;margin-top:.1rem;">
+              <span style="color:var(--tx2);">vs abertura </span>
+              <span style="color:${cotVsAb>=0?'var(--grn)':'var(--red)'};">${pp(cotVsAb)}</span>
+            </div>
+          </div>
+          <!-- Grid de dados 2×2 -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid rgba(255,255,255,.05);">
+            ${[
+              ['STRIKE',fmt(op.str),'var(--amb)'],
+              ['DISTÂNCIA',pp(op.dist),distCol],
+              ['PRÊMIO',fmt(op.prem),'var(--amb)'],
+              ['TAE',op.tae.toFixed(0)+'%','var(--grn)'],
+            ].map((r,i)=>`<div style="padding:.38rem .6rem;${i%2===0?'border-right:1px solid rgba(255,255,255,.05)':''}${i<2?'border-bottom:1px solid rgba(255,255,255,.05)':''};">
+              <div style="font-size:.52rem;color:var(--tx2);margin-bottom:.06rem;">${r[0]}</div>
+              <div style="font-size:.8rem;font-weight:700;color:${r[2]};">${r[1]}</div>
+            </div>`).join('')}
+          </div>
+          <!-- Dist. OTM bar animada -->
+          <div style="padding:.35rem .6rem;border-bottom:1px solid rgba(255,255,255,.04);">
+            <div style="display:flex;justify-content:space-between;font-size:.58rem;color:var(--tx2);margin-bottom:.12rem;">
+              <span>Dist. OTM</span><span style="color:${distCol};font-weight:700;">${pp(op.dist)}</span>
+            </div>
+            <div style="height:6px;background:rgba(255,255,255,.05);border-radius:3px;overflow:hidden;">
+              <div style="height:100%;width:${Math.min(Math.abs(op.dist)/20*100,100)}%;background:${distCol};border-radius:3px;"></div>
+            </div>
+          </div>
+          <!-- Footer: prazo + PoP -->
+          <div style="padding:.32rem .6rem;display:flex;align-items:center;justify-content:space-between;background:#050e1a;">
+            <span style="font-size:.6rem;color:${daysCol};font-weight:700;">${d===0?'⚠️ Amanhã':'⏱ '+d+'d'}</span>
+            <div style="height:3px;width:60px;background:rgba(255,255,255,.05);border-radius:2px;overflow:hidden;">
+              <div style="height:100%;width:${bw}%;background:${daysCol};"></div>
+            </div>
+            <span style="font-size:.62rem;color:${pc>=70?'var(--grn)':pc>=50?'var(--amb)':'var(--red)'};font-weight:700;">PoP ${pc}%</span>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+/* ════════════════════════════════════════════════
+   VARIAÇÃO 4 — SCORE CARD
+   Cada card tem um score 0–100 em canvas gauge
+   + 4 barras dimensionais de métricas
+════════════════════════════════════════════════ */
+function buildV4(){
+  const sec=document.getElementById('s4');
+  sec.innerHTML=`
+    <div class="sec-hdr">
+      <span class="sec-icon">🏆</span>
+      <span class="sec-title">Score de Operações · Análise Multidimensional</span>
+      <span class="sec-sub">Score calculado por dist. OTM · TAE · PoP · prazo restante</span>
+    </div>
+    <div class="grid">
+      ${OPS.map((op,idx)=>{
+        const d=dias(op), pc=pop(op);
+        const acol=asC(op.a);
+        const distScore=Math.min(Math.abs(op.dist)/15*100,100);
+        const taeScore=Math.min(op.tae/250*100,100);
+        const popScore=pc;
+        const prazoScore=Math.min(d/12*100,100);
+        const total=Math.round((distScore*.35+taeScore*.25+popScore*.25+prazoScore*.15));
+        const scoreCol=total>=70?'var(--grn)':total>=45?'var(--amb)':'var(--red)';
+        const scoreLbl=total>=70?'Excelente 🏆':total>=55?'Boa 👍':total>=40?'Atenção ⚠️':'Risco 🚨';
+        const cid='cv4_'+idx;
+        return `
+        <div style="background:var(--bg1);border:1px solid var(--bdr);border-radius:12px;overflow:hidden;border-top:3px solid ${pCol(op.p)};">
+          <!-- Header -->
+          <div style="padding:.42rem .65rem;border-bottom:1px solid rgba(255,255,255,.05);display:flex;align-items:center;gap:.38rem;background:${op.p===1?'var(--p1-bg)':op.p===2?'var(--p2-bg)':'var(--p3-bg)'};">
+            <span style="font-family:'Syne',sans-serif;font-size:.86rem;font-weight:800;color:${acol};">${op.a} #${op.id}</span>
+            <span class="ptag ${pCls(op.p)}" style="margin-left:auto;">${pEmoji(op.p)} ${pLbl(op.p)}</span>
+          </div>
+          <!-- Score circle + info -->
+          <div style="padding:.52rem .65rem;display:flex;gap:.55rem;align-items:center;border-bottom:1px solid rgba(255,255,255,.05);">
+            <canvas id="${cid}" width="80" height="80" style="flex-shrink:0;"></canvas>
+            <div style="flex:1;">
+              <div style="font-family:'Syne',sans-serif;font-size:.86rem;font-weight:700;color:${scoreCol};">${scoreLbl}</div>
+              <div style="font-family:var(--mono);font-size:.62rem;color:var(--tx2);margin-top:.1rem;">Cotação: <span style="color:${acol};">${fmt(op.cot)}</span></div>
+              <div style="font-family:var(--mono);font-size:.62rem;color:var(--tx2);">Strike: <span style="color:var(--amb);">${fmt(op.str)}</span></div>
+              <div style="font-family:var(--mono);font-size:.62rem;color:var(--tx2);">Prêmio: <span style="color:var(--amb);">${fmt(op.prem)}</span></div>
+            </div>
+          </div>
+          <!-- 4 dimensões -->
+          <div style="padding:.42rem .65rem;display:flex;flex-direction:column;gap:.28rem;">
+            ${[
+              {l:'Dist. OTM',v:distScore,txt:pp(op.dist),c:cD(op.dist)},
+              {l:'TAE',v:taeScore,txt:op.tae.toFixed(0)+'%',c:'var(--grn)'},
+              {l:'Prob. Lucro',v:popScore,txt:pc+'%',c:pc>=70?'var(--grn)':pc>=50?'var(--amb)':'var(--red)'},
+              {l:'Prazo',v:prazoScore,txt:d+'d rest.',c:d===0?'var(--red)':d<=2?'var(--amb)':'var(--grn)'},
+            ].map(r=>`<div>
+              <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:.62rem;margin-bottom:.1rem;">
+                <span style="color:var(--tx2);">${r.l}</span>
+                <span style="color:${r.c};font-weight:600;">${r.txt}</span>
+              </div>
+              <div class="pbar"><div class="pfill" style="width:${r.v}%;background:${r.c};"></div></div>
+            </div>`).join('')}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+
+  // draw score canvases
+  OPS.forEach((op,i)=>{
+    const d=dias(op), pc=pop(op);
+    const distScore=Math.min(Math.abs(op.dist)/15*100,100);
+    const taeScore=Math.min(op.tae/250*100,100);
+    const total=Math.round((distScore*.35+taeScore*.25+pc*.25+Math.min(d/12*100,100)*.15));
+    const scoreCol=total>=70?'#3dd68c':total>=45?'#e8a830':'#e05252';
+    const cv=document.getElementById('cv4_'+i);
+    if(!cv)return;
+    const ctx=cv.getContext('2d');
+    ctx.clearRect(0,0,80,80);
+    const cx=40,cy=40,r=32;
+    ctx.beginPath();ctx.arc(cx,cy,r,-Math.PI*.75,Math.PI*.75);ctx.strokeStyle='rgba(255,255,255,.07)';ctx.lineWidth=6;ctx.lineCap='round';ctx.stroke();
+    const end=-Math.PI*.75+(total/100)*(Math.PI*1.5);
+    ctx.beginPath();ctx.arc(cx,cy,r,-Math.PI*.75,end);ctx.strokeStyle=scoreCol;ctx.lineWidth=6;ctx.lineCap='round';ctx.stroke();
+    ctx.fillStyle=scoreCol;ctx.font='bold 15px Orbitron,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(total,cx,cy-2);
+    ctx.fillStyle='#5a789a';ctx.font='8px JetBrains Mono,monospace';ctx.fillText('SCORE',cx,cy+11);
+  });
+}
+
+/* ════════════════════════════════════════════════
+   VARIAÇÃO 5 — HEAT STRIP
+   Cada card é uma faixa horizontal com um mini
+   sparkline e intensidade de cor pela distância
+════════════════════════════════════════════════ */
+function buildV5(){
+  const sec=document.getElementById('s5');
+  // build list layout instead of grid
+  sec.innerHTML=`
+    <div class="sec-hdr">
+      <span class="sec-icon">🌡️</span>
+      <span class="sec-title">Heat Strip · Posições por Temperatura de Risco</span>
+      <span class="sec-sub">Cor indica proximidade ao strike — quanto mais vermelho, maior urgência</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:.45rem;">
+      ${OPS.map(op=>{
+        const d=dias(op), pc=pop(op), bw=barW(op);
+        const acol=asC(op.a);
+        const distCol=cD(op.dist);
+        const daysCol=d===0?'var(--red)':d<=2?'var(--amb)':'var(--grn)';
+        const cotVsAb=((op.cot-op.ab)/op.ab)*100;
+        // generate fake sparkline data
+        const base=op.cot;
+        const sparkVals=Array.from({length:12},(_,i)=>base*(1+(Math.random()-.5)*.02));
+        sparkVals[sparkVals.length-1]=op.cot;
+        const spId='sp5_'+op.id;
+        return `
+        <div style="background:var(--bg1);border:1px solid ${pCol(op.p)}44;border-left:4px solid ${pCol(op.p)};border-radius:0 10px 10px 0;overflow:hidden;display:grid;grid-template-columns:auto 1fr auto auto auto;align-items:center;gap:.65rem;padding:.5rem .75rem;transition:background .15s;" onmouseover="this.style.background='var(--bg2)'" onmouseout="this.style.background='var(--bg1)'">
+          <!-- Priority + asset -->
+          <div style="display:flex;flex-direction:column;align-items:center;gap:.2rem;min-width:70px;">
+            <span style="font-family:'Syne',sans-serif;font-size:.92rem;font-weight:800;color:${acol};">${op.a}</span>
+            <span class="ptag ${pCls(op.p)}">${pEmoji(op.p)} ${pLbl(op.p)}</span>
+            <span style="font-family:var(--mono);font-size:.56rem;color:var(--tx2);">DI #${op.id} · ${op.t}</span>
+          </div>
+          <!-- Main metrics -->
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;">
+            ${[
+              {l:'Cotação',v:fmt(op.cot),c:acol},
+              {l:'Strike',v:fmt(op.str),c:'var(--amb)'},
+              {l:'Prêmio',v:fmt(op.prem)+' ('+op.premP+'%)',c:'var(--amb)'},
+              {l:'Distância',v:pp(op.dist),c:distCol},
+            ].map(r=>`<div>
+              <div style="font-family:var(--mono);font-size:.56rem;color:var(--tx2);margin-bottom:.1rem;">${r.l}</div>
+              <div style="font-family:var(--mono);font-size:.76rem;font-weight:700;color:${r.c};">${r.v}</div>
+            </div>`).join('')}
+          </div>
+          <!-- Sparkline -->
+          <div style="position:relative;width:100px;height:44px;flex-shrink:0;">${spark(spId,sparkVals,distCol)}</div>
+          <!-- Dist gauge -->
+          <div style="flex-shrink:0;">
+            ${sg(Math.min(Math.abs(op.dist)/20,1),distCol,Math.abs(op.dist).toFixed(1)+'%','OTM',72)}
+          </div>
+          <!-- Right: prazo + PoP -->
+          <div style="min-width:82px;display:flex;flex-direction:column;gap:.2rem;flex-shrink:0;">
+            <div style="text-align:right;font-family:var(--mono);font-size:.62rem;color:${daysCol};font-weight:700;">${d===0?'⚠️ Amanhã':'⏱ '+d+'d rest.'}</div>
+            <div class="pbar pbar-sm"><div class="pfill" style="width:${bw}%;background:${daysCol};"></div></div>
+            <div style="text-align:right;font-family:var(--mono);font-size:.6rem;color:var(--tx2);">PoP <span style="color:${pc>=70?'var(--grn)':pc>=50?'var(--amb)':'var(--red)'};font-weight:700;">${pc}%</span></div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+/* ════════════════════════════════════════════════
+   VARIAÇÃO 6 — PAYOFF MINI
+   Cada card tem um mini gráfico Chart.js de payoff
+   mostrando a curva de lucro/perda da opção
+════════════════════════════════════════════════ */
+let chartInst={};
+function buildV6(){
+  const sec=document.getElementById('s6');
+  sec.innerHTML=`
+    <div class="sec-hdr">
+      <span class="sec-icon">📊</span>
+      <span class="sec-title">Diagrama de Payoff · Dual Investment</span>
+      <span class="sec-sub">Curva de resultado para cada posição aberta</span>
+    </div>
+    <div class="grid">
+      ${OPS.map((op,idx)=>{
+        const d=dias(op), pc=pop(op);
+        const acol=asC(op.a);
+        const distCol=cD(op.dist);
+        const daysCol=d===0?'var(--red)':d<=2?'var(--amb)':'var(--grn)';
+        const cid='cv6_'+idx;
+        return `
+        <div style="background:var(--bg1);border:1px solid var(--bdr);border-radius:12px;overflow:hidden;border-top:3px solid ${pCol(op.p)};">
+          <!-- Header -->
+          <div style="padding:.4rem .65rem;border-bottom:1px solid rgba(255,255,255,.05);display:flex;align-items:center;gap:.4rem;">
+            <span style="font-family:'Syne',sans-serif;font-size:.88rem;font-weight:800;color:${acol};">${op.a} #${op.id}</span>
+            <span class="ptag ${pCls(op.p)}" style="margin-left:auto;">${pEmoji(op.p)} ${pLbl(op.p)}</span>
+          </div>
+          <!-- Payoff chart -->
+          <div style="padding:.45rem .65rem;border-bottom:1px solid rgba(255,255,255,.05);">
+            <div style="font-family:var(--mono);font-size:.56rem;color:var(--tx2);margin-bottom:.3rem;">DIAGRAMA DE PAYOFF · ${op.t}</div>
+            <div style="position:relative;height:90px;"><canvas id="${cid}"></canvas></div>
+            <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:.55rem;color:var(--tx2);margin-top:.18rem;">
+              <span>Perda máx.</span>
+              <span>Strike: ${fmt(op.str)}</span>
+              <span>Ganho: ${fmt(op.prem)}</span>
+            </div>
+          </div>
+          <!-- Dados -->
+          <div style="padding:.35rem .65rem;display:flex;flex-direction:column;gap:.06rem;">
+            <div class="dr"><span class="dk">📍 Cotação</span><span class="dv" style="color:${acol};">${fmt(op.cot)}</span></div>
+            <div class="dr"><span class="dk">↔ Distância</span><span class="dv" style="color:${distCol};">${pp(op.dist)}</span></div>
+            <div class="dr"><span class="dk">💰 Prêmio</span><span class="dv" style="color:var(--amb);">${fmt(op.prem)} (${op.premP}%)</span></div>
+          </div>
+          <!-- Footer -->
+          <div style="padding:.3rem .65rem .42rem;border-top:1px solid rgba(255,255,255,.04);">
+            <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:.6rem;margin-bottom:.1rem;">
+              <span style="color:var(--tx2);">Prazo</span>
+              <span style="color:${daysCol};">${d===0?'🚨 Amanhã':d+'d restantes'}</span>
+            </div>
+            <div class="pbar"><div class="pfill" style="width:${barW(op)}%;background:${daysCol};"></div></div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+
+  // build payoff charts
+  OPS.forEach((op,i)=>{
+    const id='cv6_'+i;
+    const k='ck6_'+i;
+    if(chartInst[k]){try{chartInst[k].destroy();}catch(e){}}
+    const el=document.getElementById(id); if(!el)return;
+    const range=op.a==='BTC'?12000:op.a==='ETH'?600:80;
+    const base=op.str;
+    const pts=Array.from({length:30},(_,j)=>{
+      const price=base-range+(j/29)*range*2;
+      let profit;
+      if(op.t==='CALL') profit=price>op.str?-(price-op.str)+op.prem:op.prem;
+      else profit=price<op.str?-(op.str-price)+op.prem:op.prem;
+      return profit;
+    });
+    const labels=Array.from({length:30},(_,j)=>{
+      const price=base-range+(j/29)*range*2;
+      return price>=1000?(price/1000).toFixed(0)+'K':price.toFixed(0);
+    });
+    chartInst[k]=new Chart(el,{
+      type:'bar',
+      data:{labels,datasets:[{
+        data:pts,
+        backgroundColor:pts.map(v=>v>=0?'rgba(61,214,140,.7)':'rgba(224,82,82,.65)'),
+        borderRadius:1, barThickness:'flex'
+      }]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{enabled:false}},
+        scales:{x:{display:false},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#2e4060',font:{size:8},callback:v=>v>=0?'+$'+v.toFixed(0):'-$'+Math.abs(v).toFixed(0)}}}}
+    });
+  });
+}
+
+/* ════════════════════════════════════════════════
+   VARIAÇÃO 7 — MISSION CARD
+   Visual cockpit: cada card tem um "painel de controle"
+   com indicadores de status por ícone, gauge central
+   e sequência de dados em 2 colunas densas
+════════════════════════════════════════════════ */
+function buildV7(){
+  const sec=document.getElementById('s7');
+  sec.innerHTML=`
+    <div class="sec-hdr">
+      <span class="sec-icon">🛰️</span>
+      <span class="sec-title">Mission Control · Status das Posições</span>
+      <span class="sec-sub">Visão de cockpit — todos os indicadores num relance</span>
+    </div>
+    <div class="grid">
+      ${OPS.map((op,idx)=>{
+        const d=dias(op), pc=pop(op), bw=barW(op);
+        const acol=asC(op.a);
+        const distCol=cD(op.dist);
+        const daysCol=d===0?'var(--red)':d<=2?'var(--amb)':'var(--grn)';
+        const cotVsAb=((op.cot-op.ab)/op.ab)*100;
+        const statusIcons=[
+          {i: op.dist>=0?'✅':'🚨', l:'Strike',  ok:op.dist>=0},
+          {i: d>2?'✅':d>0?'⚠️':'🚨', l:'Prazo',  ok:d>2},
+          {i: pc>=60?'✅':'⚠️', l:'PoP', ok:pc>=60},
+          {i: op.ex==='SIM'?'🚨':'✅', l:'Status', ok:op.ex!=='SIM'},
+        ];
+        return `
+        <div style="background:var(--bg1);border:1px solid ${pCol(op.p)}55;border-radius:12px;overflow:hidden;">
+          <!-- Header cockpit -->
+          <div style="padding:.42rem .65rem;background:${op.p===1?'rgba(224,82,82,.1)':op.p===2?'rgba(232,168,48,.1)':'rgba(61,214,140,.08)'};border-bottom:2px solid ${pCol(op.p)}44;display:flex;align-items:center;gap:.4rem;">
+            <span style="font-size:1.15rem;">${asE(op.a)}</span>
+            <div>
+              <div style="font-family:'Syne',sans-serif;font-size:.88rem;font-weight:800;color:${acol};line-height:1;">${op.a} · DI #${op.id}</div>
+              <div style="font-family:var(--mono);font-size:.57rem;color:var(--tx2);">Dual Investment · ${op.t}</div>
+            </div>
+            <span class="ptag ${pCls(op.p)}" style="margin-left:auto;">${pLbl(op.p)}</span>
+          </div>
+
+          <!-- Status icons row -->
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid rgba(255,255,255,.05);">
+            ${statusIcons.map(si=>`<div style="padding:.3rem .3rem;text-align:center;${si!==statusIcons[statusIcons.length-1]?'border-right:1px solid rgba(255,255,255,.05)':''}">
+              <div style="font-size:1rem;">${si.i}</div>
+              <div style="font-family:var(--mono);font-size:.52rem;color:${si.ok?'var(--grn)':'var(--red)'};margin-top:.04rem;">${si.l}</div>
+            </div>`).join('')}
+          </div>
+
+          <!-- Central cotação + gauge -->
+          <div style="padding:.45rem .65rem;border-bottom:1px solid rgba(255,255,255,.05);display:flex;gap:.5rem;align-items:center;">
+            <div style="flex:1;">
+              <div style="font-family:var(--mono);font-size:.56rem;color:var(--tx2);">COTAÇÃO ATUAL</div>
+              <div style="font-family:var(--mono);font-size:1.22rem;font-weight:700;color:${acol};line-height:1.1;">${fmt(op.cot)}</div>
+              <div style="font-family:var(--mono);font-size:.62rem;margin-top:.06rem;">
+                <span style="color:var(--tx2);">vs ab. </span>
+                <span style="color:${cotVsAb>=0?'var(--grn)':'var(--red)'};">${pp(cotVsAb)}</span>
+              </div>
+            </div>
+            ${sg(Math.min(Math.abs(op.dist)/20,1), distCol, Math.abs(op.dist).toFixed(1)+'%', 'Dist. OTM', 72)}
+          </div>
+
+          <!-- 2-col data grid -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;padding:.35rem .65rem;gap:.1rem .5rem;border-bottom:1px solid rgba(255,255,255,.04);">
+            ${[
+              {k:'Strike',v:fmt(op.str),c:'var(--amb)'},
+              {k:'Prêmio',v:fmt(op.prem),c:'var(--amb)'},
+              {k:'TAE/ano',v:op.tae.toFixed(0)+'%',c:'var(--grn)'},
+              {k:'% Prêmio',v:op.premP+'%',c:'var(--grn)'},
+            ].map(r=>`<div class="dr"><span class="dk">${r.k}</span><span class="dv" style="color:${r.c};">${r.v}</span></div>`).join('')}
+          </div>
+
+          <!-- Prob bar + prazo -->
+          <div style="padding:.35rem .65rem .45rem;display:flex;flex-direction:column;gap:.22rem;">
+            <div>
+              <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:.6rem;margin-bottom:.1rem;">
+                <span style="color:var(--tx2);">🎯 Prob. Lucro</span>
+                <span style="color:${pc>=70?'var(--grn)':pc>=50?'var(--amb)':'var(--red)'};font-weight:700;">${pc}%</span>
+              </div>
+              <div class="pbar pbar-lg"><div class="pfill" style="width:${pc}%;background:${pc>=70?'var(--grn)':pc>=50?'var(--amb)':'var(--red)'};"></div></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:.6rem;margin-bottom:.1rem;">
+                <span style="color:var(--tx2);">⏱ Prazo restante</span>
+                <span style="color:${daysCol};font-weight:700;">${d===0?'Amanhã':d+'d de '+op.pz+'d'}</span>
+              </div>
+              <div class="pbar pbar-lg"><div class="pfill" style="width:${bw}%;background:${daysCol};"></div></div>
+            </div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+/* ════════════════════ INIT ════════════════════ */
+function buildAll(){
+  buildV1(); buildV2(); buildV3(); buildV4();
+  buildV5(); buildV6(); buildV7();
+}
+
+/* switcher */
+document.querySelectorAll('.swb').forEach(b=>{
+  b.addEventListener('click',function(){
+    document.querySelectorAll('.swb').forEach(x=>x.classList.remove('on'));
+    document.querySelectorAll('.section').forEach(x=>x.classList.remove('on'));
+    this.classList.add('on');
+    document.getElementById('s'+this.dataset.v).classList.add('on');
+    window.scrollTo({top:document.querySelector('.sw').offsetTop-16,behavior:'smooth'});
+  });
+});
+
+buildAll();
+</script>
+</body>
+</html>

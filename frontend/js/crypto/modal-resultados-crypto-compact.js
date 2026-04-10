@@ -143,12 +143,12 @@
         const dPct     = abertura > 0 ? (delta / abertura) * 100 : 0;
         const dCol     = colDelta(delta);
         const exData   = fmtDate(op.data_vencimento || op.data_operacao || op.criado_em);
-        const exStr    = (op.exercicio_status || (op.exercido === true || op.exercido === 'SIM' ? 'SIM' : 'NÃO')).toUpperCase();
+        const exStr    = (window.CryptoExerciseStatus?.resolveDisplayStatus(op) || 'NAO').toUpperCase();
 
         const open   = allOps.filter(o => (o.status||'').toUpperCase() === 'ABERTA');
         const closed = allOps.filter(o => (o.status||'').toUpperCase() !== 'ABERTA');
         const tp     = allOps.reduce((a,o) => a + (parseFloat(o.premio_us)||0), 0);
-        const exQty  = allOps.filter(o => (o.exercicio_status||'').toUpperCase() === 'SIM' || o.exercido === true || o.exercido === 'SIM').length;
+        const exQty  = allOps.filter(o => window.CryptoExerciseStatus?.resolveDisplayStatus(o) === 'SIM').length;
 
         const cells = [
             { p: Math.min(cotacao  / am, 1),        c: ac,                    v: fmtUsd(cotacao),                       l: 'Cotação Atual',  s: asset },
@@ -192,7 +192,7 @@
         const corridos = parseInt(op.dias)             || 0;
         const tipo     = (op.tipo||'').toUpperCase();
         const exData   = fmtDate(op.data_vencimento || op.data_operacao || op.criado_em);
-        const exStr    = (op.exercicio_status || (op.exercido === true || op.exercido === 'SIM' ? 'SIM' : 'NÃO')).toUpperCase();
+        const exStr    = (window.CryptoExerciseStatus?.resolveDisplayStatus(op) || 'NAO').toUpperCase();
         const isItm    = exStr === 'SIM';
 
         const dias  = Math.max(prazo - corridos, 0);
@@ -476,7 +476,7 @@
         const avgD = ops.length ? ops.reduce((a,o) => a+(parseFloat(o.distancia)||0),0) / ops.length : 0;
         const avgT = ops.length ? ops.reduce((a,o) => a+(parseFloat(o.tae)||0),0) / ops.length : 0;
         const best = open.length ? Math.max(...open.map(o => parseFloat(o.resultado)||0)) : 0;
-        const exQty = ops.filter(o => (o.exercicio_status||'').toUpperCase() === 'SIM' || o.exercido === true || o.exercido === 'SIM').length;
+        const exQty = ops.filter(o => window.CryptoExerciseStatus?.resolveDisplayStatus(o) === 'SIM').length;
 
         const resumoRows = [
             { l: 'Prêmio Total',     v: fmtUsd(tp),                     c: 'var(--dsh-amber)' },

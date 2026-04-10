@@ -494,19 +494,17 @@ function getOpEventDate(op) {
     return Number.isNaN(dt.getTime()) ? null : dt;
 }
 
+function getDisplayExerciseStatus(op) {
+    if (window.CryptoExerciseStatus?.resolveDisplayStatus) {
+        return window.CryptoExerciseStatus.resolveDisplayStatus(op);
+    }
+    return 'NAO';
+}
+
 function isTypeExercised(op, type) {
     const opType = String(op?.tipo || '').toUpperCase();
     if (opType !== type) return false;
-    const exStatus = String(op?.exercicio_status || '').toUpperCase();
-    const status = String(op?.status || '').toUpperCase();
-    if (exStatus === 'SIM' || status === 'EXERCIDA') return true;
-
-    const strike = parseFloat(op?.strike || 0);
-    const current = parseFloat(op?.cotacao_atual || 0);
-    if (!strike || !current) return false;
-    if (type === 'CALL') return current >= strike;
-    if (type === 'PUT') return current <= strike;
-    return false;
+    return getDisplayExerciseStatus(op) === 'SIM';
 }
 
 function computeRecoverySnapshot(opsSource) {
@@ -597,16 +595,14 @@ function populateTable(dt, data, options) {
             ? ((parseFloat(op.premio_us) / parseFloat(op.abertura)) * 100).toFixed(2) + "%"
             : "-";
         const tipoBadge   = op.tipo === "CALL" ? "<span class=\"badge crypto-badge-call\">CALL</span>" : "<span class=\"badge crypto-badge-put\">PUT</span>";
-        // Calcula exercício: usa campo do banco; se ausente, deriva de tipo/cotacao/strike
-        let exStatus = op.exercicio_status;
-        if (!exStatus && op.tipo && op.cotacao_atual && op.strike) {
-            const _cot = parseFloat(op.cotacao_atual);
-            const _str = parseFloat(op.strike);
-            if (_cot > 0 && _str > 0) {
-                exStatus = op.tipo === "CALL" ? (_cot >= _str ? "SIM" : "NAO") : (_cot <= _str ? "SIM" : "NAO");
-            }
-        }
-        const exBadge = exStatus === "SIM" ? "<span class=\"badge bg-warning text-dark\">SIM</span>" : "<span class=\"badge bg-secondary text-white\">NÃO</span>";
+        const exBadge = window.CryptoExerciseStatus?.renderBadgeHtml
+            ? window.CryptoExerciseStatus.renderBadgeHtml(op, {
+                openPositive: 'bg-warning text-dark',
+                openNegative: 'bg-success text-white',
+                closedPositive: 'bg-warning text-dark',
+                closedNegative: 'bg-secondary text-white'
+            })
+            : "<span class=\"badge bg-secondary text-white\">NÃO</span>";
         const status      = op.status || "ABERTA";
         const statusBadge = status === "ABERTA"
             ? "<span class=\"badge bg-success text-white\">ABERTA</span>"
@@ -1393,7 +1389,7 @@ function simRenderPmCard(par, cotacaoInput) {
     }
 
     // Encontra última CALL exercida (strike exercida = PM base)
-    const callsExercidas = ops.filter(o => (o.tipo||'').toUpperCase() === 'CALL' && (o.exercicio_status||'').toUpperCase() === 'SIM');
+    const callsExercidas = ops.filter(o => isTypeExercised(o, 'CALL'));
     const strikeExercida = callsExercidas.length
         ? Math.max(...callsExercidas.map(o => parseFloat(o.strike||0)))
         : parseFloat(ops.reduce((max, o) => parseFloat(o.strike||0) > parseFloat(max.strike||0) ? o : max, ops[0])?.strike || 0);

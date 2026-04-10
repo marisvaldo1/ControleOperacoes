@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Card de Opções — Final</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: #0a0d14;
+  color: #f1f5f9;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 24px 80px;
+}
+
+/* ---- CONTROLS ---- */
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 48px;
+}
+.ctrl-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ctrl-group label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #64748b;
+}
+.ctrl-group input,
+.ctrl-group select {
+  background: #1a2233;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  color: #f1f5f9;
+  padding: 7px 12px;
+  font-size: 0.85rem;
+  font-family: 'JetBrains Mono', monospace;
+  width: 130px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.ctrl-group input:focus,
+.ctrl-group select:focus { border-color: rgba(255,255,255,0.3); }
+
+/* ======================== */
+/*  THE CARD                */
+/* ======================== */
+.card {
+  width: 100%;
+  max-width: 420px;
+  border-radius: 20px;
+  border: 1px solid transparent;
+  overflow: hidden;
+  position: relative;
+  transition: border-color 0.5s, box-shadow 0.5s;
+}
+
+/* Ambient glow layer */
+.card-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transition: background 0.6s;
+  z-index: 0;
+}
+
+/* All content sits above the glow */
+.card-inner {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---- TOP ROW ---- */
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 20px 22px 0;
+}
+.card-top-left {}
+.card-ticker {
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+.card-type {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #64748b;
+  margin-top: 4px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.card-status-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid transparent;
+  font-size: 0.72rem;
+  font-weight: 700;
+  transition: all 0.4s;
+  letter-spacing: 0.3px;
+}
+.card-status-led {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  animation: blink 2s infinite;
+  transition: background 0.4s;
+  flex-shrink: 0;
+}
+@keyframes blink {
+  0%,100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+
+/* ---- SEGMENTS ---- */
+.card-segments-wrap {
+  padding: 20px 22px 4px;
+}
+.card-segments {
+  display: flex;
+  gap: 5px;
+}
+.seg {
+  flex: 1;
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.07);
+  transition: background 0.35s, box-shadow 0.35s;
+}
+.seg-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.6rem;
+  color: #334155;
+  margin-top: 6px;
+  padding: 0 2px;
+}
+
+/* ---- BIG PCT ---- */
+.card-pct-block {
+  text-align: center;
+  padding: 24px 22px 16px;
+}
+.card-pct-num {
+  font-size: 3.6rem;
+  font-weight: 900;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: -4px;
+  line-height: 1;
+  transition: color 0.5s;
+}
+.card-pct-label {
+  font-size: 0.72rem;
+  color: #64748b;
+  margin-top: 6px;
+  letter-spacing: 0.3px;
+}
+
+/* ---- DIVIDER ---- */
+.divider {
+  height: 1px;
+  background: rgba(255,255,255,0.06);
+  margin: 0 22px;
+}
+
+/* ---- DATA TABLE ---- */
+.card-table {
+  padding: 14px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+}
+.card-row-lbl {
+  color: #64748b;
+  font-weight: 400;
+}
+.card-row-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  color: #e2e8f0;
+  font-size: 0.82rem;
+}
+.card-row-val.highlight {
+  transition: color 0.4s;
+}
+
+/* ---- RISK FOOTER ---- */
+.card-risk {
+  margin: 0 22px 22px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.4s;
+}
+.risk-bars {
+  display: flex;
+  gap: 3px;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+.risk-bar {
+  width: 5px;
+  border-radius: 2px;
+  transition: background 0.4s;
+}
+.risk-text-block {}
+.risk-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  transition: color 0.4s;
+  line-height: 1;
+}
+.risk-desc {
+  font-size: 0.65rem;
+  color: #64748b;
+  margin-top: 3px;
+}
+</style>
+</head>
+<body>
+
+<!-- Controls -->
+<div class="controls">
+  <div class="ctrl-group">
+    <label>Tipo</label>
+    <select id="ctrl-type">
+      <option value="call">CALL</option>
+      <option value="put">PUT</option>
+    </select>
+  </div>
+  <div class="ctrl-group">
+    <label>Strike</label>
+    <input type="number" id="ctrl-strike" value="50.00" step="0.5"/>
+  </div>
+  <div class="ctrl-group">
+    <label>Cotação Atual</label>
+    <input type="number" id="ctrl-price" value="53.50" step="0.5"/>
+  </div>
+  <div class="ctrl-group">
+    <label>Ticker</label>
+    <input type="text" id="ctrl-ticker" value="PETR4" maxlength="8"/>
+  </div>
+</div>
+
+<!-- CARD -->
+<div class="card" id="card">
+  <div class="card-glow" id="card-glow"></div>
+  <div class="card-inner">
+
+    <!-- Top row: ticker + status -->
+    <div class="card-top">
+      <div class="card-top-left">
+        <div class="card-ticker" id="card-ticker">PETR4</div>
+        <div class="card-type" id="card-type">CALL</div>
+      </div>
+      <div class="card-status-pill" id="card-pill">
+        <div class="card-status-led" id="card-led"></div>
+        <span id="card-pill-text">—</span>
+      </div>
+    </div>
+
+    <!-- Segments -->
+    <div class="card-segments-wrap">
+      <div class="card-segments">
+        <div class="seg" id="seg-0"></div>
+        <div class="seg" id="seg-1"></div>
+        <div class="seg" id="seg-2"></div>
+        <div class="seg" id="seg-3"></div>
+        <div class="seg" id="seg-4"></div>
+        <div class="seg" id="seg-5"></div>
+        <div class="seg" id="seg-6"></div>
+        <div class="seg" id="seg-7"></div>
+        <div class="seg" id="seg-8"></div>
+      </div>
+      <div class="seg-labels">
+        <span id="seg-lbl-left">Em exercício</span>
+        <span>± 5% Strike</span>
+        <span id="seg-lbl-right">Sem exercício</span>
+      </div>
+    </div>
+
+    <!-- Big % -->
+    <div class="card-pct-block">
+      <div class="card-pct-num" id="card-pct">—</div>
+      <div class="card-pct-label">Distância do strike</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Data table -->
+    <div class="card-table">
+      <div class="card-row">
+        <span class="card-row-lbl">Strike</span>
+        <span class="card-row-val" id="val-strike">—</span>
+      </div>
+      <div class="card-row">
+        <span class="card-row-lbl">Cotação atual</span>
+        <span class="card-row-val" id="val-price">—</span>
+      </div>
+      <div class="card-row">
+        <span class="card-row-lbl">Diferença</span>
+        <span class="card-row-val highlight" id="val-diff">—</span>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Risk footer -->
+    <div class="card-risk" id="card-risk">
+      <div class="risk-bars">
+        <div class="risk-bar" id="rb0" style="height:7px"></div>
+        <div class="risk-bar" id="rb1" style="height:10px"></div>
+        <div class="risk-bar" id="rb2" style="height:14px"></div>
+        <div class="risk-bar" id="rb3" style="height:18px"></div>
+        <div class="risk-bar" id="rb4" style="height:22px"></div>
+      </div>
+      <div class="risk-text-block">
+        <div class="risk-title" id="risk-title">—</div>
+        <div class="risk-desc" id="risk-desc">—</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const fmtR = v => 'R$ ' + v.toFixed(2).replace('.', ',');
+const fmtP = v => (v >= 0 ? '+' : '') + v.toFixed(2) + '%';
+const fmtD = v => (v >= 0 ? '+' : '-') + 'R$ ' + Math.abs(v).toFixed(2).replace('.', ',');
+
+function getStatus(type, strike, price) {
+  const dist = ((price - strike) / strike) * 100;
+  if (Math.abs(dist) <= 5) return 'near';
+  if (type === 'call') return price < strike ? 'in' : 'out';
+  return price > strike ? 'in' : 'out';
+}
+
+const COLORS = {
+  in:   { main: '#ef4444', mid: 'rgba(239,68,68,0.15)', soft: 'rgba(239,68,68,0.06)', border: 'rgba(239,68,68,0.28)', glow: 'rgba(239,68,68,0.08)' },
+  near: { main: '#f59e0b', mid: 'rgba(245,158,11,0.15)', soft: 'rgba(245,158,11,0.06)', border: 'rgba(245,158,11,0.28)', glow: 'rgba(245,158,11,0.07)' },
+  out:  { main: '#22c55e', mid: 'rgba(34,197,94,0.12)',  soft: 'rgba(34,197,94,0.05)',  border: 'rgba(34,197,94,0.25)',  glow: 'rgba(34,197,94,0.06)'  },
+};
+
+const LABELS = {
+  in:   { pill: 'Em Exercício',  risk: 'Alto Risco',      riskDesc: (p) => `${p}% de distância — exercício iminente` },
+  near: { pill: 'Perto do Strike', risk: 'Risco Moderado', riskDesc: (p) => `${p}% de distância — próximo ao strike` },
+  out:  { pill: 'Sem Exercício', risk: 'Baixo Risco',     riskDesc: (p) => `${p}% de distância do strike` },
+};
+
+const SEGS = 9;
+
+function update() {
+  const type   = $('ctrl-type').value;
+  const strike = parseFloat($('ctrl-strike').value) || 50;
+  const price  = parseFloat($('ctrl-price').value)  || 53.5;
+  const ticker = $('ctrl-ticker').value || 'PETR4';
+
+  const distPct = ((price - strike) / strike) * 100;
+  const distAbs = price - strike;
+  const status  = getStatus(type, strike, price);
+  const C       = COLORS[status];
+  const L       = LABELS[status];
+  const absPct  = Math.abs(distPct).toFixed(1);
+
+  // Range: ±35% around strike for segment mapping
+  const rangeHalf = strike * 0.35;
+  const minV      = strike - rangeHalf;
+  const maxV      = strike + rangeHalf;
+  const pricePos  = Math.max(0.01, Math.min(0.99, (price - minV) / (maxV - minV)));
+  const activeSeg = Math.min(SEGS - 1, Math.max(0, Math.round(pricePos * (SEGS - 1))));
+
+  // Segment color scheme
+  // CALL: left=exercise(red), mid=near(yellow), right=out(green)
+  // PUT:  left=out(green),    mid=near(yellow), right=exercise(red)
+  const exColor  = type === 'call' ? '#ef4444' : '#22c55e';
+  const outColor = type === 'call' ? '#22c55e' : '#ef4444';
+  // Map seg index to color
+  const segColorFn = (i) => {
+    const t = i / (SEGS - 1); // 0..1
+    if (t < 0.35)       return exColor;
+    if (t <= 0.65)      return '#f59e0b';
+    return outColor;
+  };
+
+  for (let i = 0; i < SEGS; i++) {
+    const el = $(`seg-${i}`);
+    if (i <= activeSeg) {
+      const c = segColorFn(i);
+      el.style.background = c;
+      el.style.boxShadow  = `0 0 6px ${c}55`;
+    } else {
+      el.style.background = 'rgba(255,255,255,0.07)';
+      el.style.boxShadow  = 'none';
+    }
+  }
+
+  // Segment labels
+  $('seg-lbl-left').textContent  = type === 'call' ? 'Em exercício ↙' : 'Sem exercício ↙';
+  $('seg-lbl-right').textContent = type === 'call' ? '↗ Sem exercício' : '↗ Em exercício';
+
+  // Card ambient glow + border
+  $('card').style.borderColor   = C.border;
+  $('card').style.boxShadow     = `0 0 40px ${C.glow}`;
+  $('card-glow').style.background =
+    `radial-gradient(ellipse at 20% 0%, ${C.glow} 0%, transparent 65%),` +
+    `radial-gradient(ellipse at 80% 100%, ${C.glow} 0%, transparent 65%),` +
+    `#111827`;
+
+  // Status pill
+  $('card-pill').style.background  = C.mid;
+  $('card-pill').style.borderColor = C.border;
+  $('card-pill').style.color       = C.main;
+  $('card-led').style.background   = C.main;
+  $('card-pill-text').textContent  = L.pill;
+
+  // Ticker + type
+  $('card-ticker').textContent = ticker;
+  $('card-type').textContent   = type.toUpperCase();
+
+  // Big %
+  $('card-pct').textContent  = fmtP(distPct);
+  $('card-pct').style.color  = C.main;
+
+  // Table
+  $('val-strike').textContent = fmtR(strike);
+  $('val-price').textContent  = fmtR(price);
+  $('val-diff').textContent   = fmtD(distAbs);
+  $('val-diff').style.color   = C.main;
+
+  // Risk footer
+  const riskLevel = status === 'in' ? 5 : status === 'near' ? 3 : 1;
+  for (let i = 0; i < 5; i++) {
+    $(`rb${i}`).style.background = i < riskLevel ? C.main : 'rgba(255,255,255,0.1)';
+  }
+  $('card-risk').style.background  = C.soft;
+  $('card-risk').style.borderColor = C.border;
+  $('risk-title').textContent = L.risk;
+  $('risk-title').style.color = C.main;
+  $('risk-desc').textContent  = L.riskDesc(absPct);
+}
+
+update();
+['ctrl-type', 'ctrl-strike', 'ctrl-price', 'ctrl-ticker'].forEach(id => {
+  $(id).addEventListener('input', update);
+});
+</script>
+</body>
+</html>

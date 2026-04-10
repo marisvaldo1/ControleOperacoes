@@ -24,6 +24,10 @@ from datetime     import datetime
 import db
 import requests
 import urllib3
+from models.crypto_exercise import (
+    calculate_crypto_exercicio_status,
+    serialize_crypto_operation,
+)
 
 # Suprime warnings de SSL em ambiente local (Laragon/Windows sem certificado raiz)
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -235,7 +239,7 @@ def get_crypto():
             'SELECT * FROM operacoes_crypto ORDER BY data_operacao DESC'
         ).fetchall()  # noqa: E501
     conn.close()
-    return jsonify([dict(o) for o in ops])
+    return jsonify([serialize_crypto_operation(o) for o in ops])
 
 
 # ─── Buscar por ID ────────────────────────────────────────────────────────────
@@ -245,7 +249,7 @@ def get_crypto_item(id):
     op   = conn.execute('SELECT * FROM operacoes_crypto WHERE id=?', (id,)).fetchone()
     conn.close()
     if op:
-        return jsonify(dict(op))
+        return jsonify(serialize_crypto_operation(op))
     return jsonify({'error': 'Operação não encontrada'}), 404
 
 
@@ -328,19 +332,8 @@ def update_crypto(id):
 
 
 def _calc_exercicio_status(tipo, cotacao_atual, strike):
-    """Calcula se uma operação foi exercida com base em tipo, cotação e strike."""
-    try:
-        cot = float(cotacao_atual or 0)
-        str_ = float(strike or 0)
-        if cot <= 0 or str_ <= 0:
-            return 'NAO'
-        if (tipo or '').upper() == 'CALL':
-            return 'SIM' if cot >= str_ else 'NAO'
-        elif (tipo or '').upper() == 'PUT':
-            return 'SIM' if cot <= str_ else 'NAO'
-    except Exception:
-        pass
-    return 'NAO'
+    """Calcula exercício com a regra unificada do módulo crypto."""
+    return calculate_crypto_exercicio_status(tipo, cotacao_atual, strike)
 
 
 # ─── Fechar manualmente ───────────────────────────────────────────────────────

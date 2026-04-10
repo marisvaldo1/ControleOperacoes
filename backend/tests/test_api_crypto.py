@@ -41,6 +41,25 @@ class TestListarCrypto:
         assert data[0]['ativo'] == 'BTC'
         assert data[0]['tipo'] == 'PUT'
 
+    def test_listar_aberta_calcula_exercicio_pela_cotacao_atual(self, client, mock_db):
+        aberta = {
+            **CRYPTO_FAKE,
+            'tipo': 'PUT',
+            'status': 'ABERTA',
+            'cotacao_atual': 72430.63,
+            'strike': 72000.0,
+            'exercicio_status': 'NAO',
+        }
+        mock_db.execute.return_value.fetchall.return_value = [aberta]
+
+        resp = client.get('/api/crypto')
+
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data[0]['exercicio_status_atual'] == 'SIM'
+        assert data[0]['exercicio_status_exibicao'] == 'SIM'
+        assert data[0]['exercicio_status'] == 'SIM'
+
     def test_listar_multiplas_operacoes(self, client, mock_db):
         segunda = {**CRYPTO_FAKE, 'id': 2, 'ativo': 'ETH'}
         mock_db.execute.return_value.fetchall.return_value = [CRYPTO_FAKE, segunda]
@@ -72,6 +91,24 @@ class TestBuscarCrypto:
         data = resp.get_json()
         for campo in ('ativo', 'tipo', 'cotacao_atual', 'strike', 'premio_us', 'resultado'):
             assert campo in data, f"Campo ausente: {campo}"
+
+    def test_buscar_fechada_preserva_exercicio_status_persistido(self, client, mock_db):
+        fechada = {
+            **CRYPTO_FAKE,
+            'status': 'FECHADA',
+            'tipo': 'CALL',
+            'cotacao_atual': 75000.0,
+            'strike': 74000.0,
+            'exercicio_status': 'NAO',
+        }
+        mock_db.execute.return_value.fetchone.return_value = fechada
+
+        resp = client.get('/api/crypto/1')
+
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data['exercicio_status_persistido'] == 'NAO'
+        assert data['exercicio_status'] == 'NAO'
 
 
 class TestCriarCrypto:
@@ -151,3 +188,17 @@ class TestFecharCrypto:
         mock_db.execute.return_value.fetchone.return_value = {'id': 1, 'status': 'ABERTA', 'tipo': 'CALL', 'cotacao_atual': 75000.0, 'strike': 74000.0}
         client.patch('/api/crypto/1/fechar')
         mock_db.commit.assert_called()
+
+    def test_fechar_put_acima_strike_marca_exercicio_sim(self, client, mock_db):
+        mock_db.execute.return_value.fetchone.return_value = {
+            'id': 1,
+            'status': 'ABERTA',
+            'tipo': 'PUT',
+            'cotacao_atual': 72430.63,
+            'strike': 72000.0,
+        }
+
+        resp = client.patch('/api/crypto/1/fechar')
+
+        assert resp.status_code == 200
+        assert resp.get_json()['exercicio_status'] == 'SIM'

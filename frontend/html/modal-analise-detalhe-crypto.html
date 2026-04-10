@@ -81,19 +81,16 @@
                                 </div>
                             </div>
 
-                            <!-- Seção: Previsão da Operação -->
+                            <!-- Seção: Retorno ao Vencimento -->
                             <div class="mac-section mb-2">
-                                <div class="mac-section-title">
-                                    🎯 Previsão da Operação
-                                    <span id="macSimPrevBadge" style="margin-left:6px"></span>
-                                </div>
-                                <div class="mac-section-body" id="macSimPrevBody">
+                                <div class="mac-section-title">📈 Resultado Atual</div>
+                                <div class="mac-section-body" id="macSimRetBody">
                                     <div class="sim-empty-state" style="min-height:60px">Calculando…</div>
                                 </div>
                             </div>
 
                             <!-- Seção: Preço Médio + Risco -->
-                            <div class="mac-section mb-2">
+                            <div class="mac-section mac-section-grow">
                                 <div class="mac-section-title" id="macSimPmCardTitle">📊 Preço Médio &amp; Risco</div>
                                 <div class="row g-2">
                                     <div class="col-6">
@@ -112,18 +109,6 @@
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
-
-                            <!-- Seção: Retorno ao Vencimento -->
-                            <div class="mac-section">
-                                <div class="mac-section-title">📈 Retorno ao Vencimento</div>
-                                <div id="macSimPnLEmpty" class="sim-empty-state"
-                                    style="display:none;min-height:60px">
-                                    Dados insuficientes para o gráfico
-                                </div>
-                                <div style="height:220px;position:relative">
-                                    <canvas id="macSimPnLCanvas"></canvas>
                                 </div>
                             </div>
 

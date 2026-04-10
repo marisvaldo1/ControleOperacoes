@@ -261,18 +261,17 @@
         return 'CRYPTO';
     }
 
-    function isPutExercised(op) {
-        if (getOpType(op) !== 'PUT') return false;
-        const status = String(op.status || '').toUpperCase();
-        const exStatus = String(op.exercicio_status || '').toUpperCase();
-        if (exStatus === 'SIM') return true;
-        if (status === 'EXERCIDA') return true;
-        if (!isOpenOperation(op)) {
-            const current = parseFloat(op.cotacao_atual ?? NaN);
-            const strike = parseFloat(op.strike ?? NaN);
-            if (Number.isFinite(current) && Number.isFinite(strike)) return current <= strike;
+    function getDisplayExerciseStatus(op) {
+        if (window.CryptoExerciseStatus?.resolveDisplayStatus) {
+            return window.CryptoExerciseStatus.resolveDisplayStatus(op);
         }
-        return false;
+        return 'NAO';
+    }
+
+    function isPutExercised(op) {
+        return window.CryptoExerciseStatus?.isExercised
+            ? window.CryptoExerciseStatus.isExercised(op, 'PUT')
+            : (getOpType(op) === 'PUT' && getDisplayExerciseStatus(op) === 'SIM');
     }
 
     function getDaysToExpiry(op) {
@@ -320,17 +319,9 @@
     }
 
     function isCallExercised(op) {
-        if (getOpType(op) !== 'CALL') return false;
-        const status = String(op.status || '').toUpperCase();
-        const exStatus = String(op.exercicio_status || '').toUpperCase();
-        if (exStatus === 'SIM') return true;
-        if (status === 'EXERCIDA') return true;
-        if (!isOpenOperation(op)) {
-            const current = parseFloat(op.cotacao_atual ?? NaN);
-            const strike = parseFloat(op.strike ?? NaN);
-            if (Number.isFinite(current) && Number.isFinite(strike)) return current >= strike;
-        }
-        return false;
+        return window.CryptoExerciseStatus?.isExercised
+            ? window.CryptoExerciseStatus.isExercised(op, 'CALL')
+            : (getOpType(op) === 'CALL' && getDisplayExerciseStatus(op) === 'SIM');
     }
 
     function formatDurationDays(days) {

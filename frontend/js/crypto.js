@@ -163,7 +163,14 @@ function populateTable(dt, data) {
             ? ((parseFloat(op.premio_us) / parseFloat(op.abertura)) * 100).toFixed(2) + "%"
             : "-";
         const tipoBadge   = op.tipo === "CALL" ? "<span class=\"badge crypto-badge-high\">HIGH</span>" : "<span class=\"badge crypto-badge-low\">LOW</span>";
-        const exBadge     = op.exercicio_status === "SIM" ? "<span class=\"badge bg-warning text-dark\">SIM</span>" : "<span class=\"badge bg-secondary\">NAO</span>";
+        const exBadge     = window.CryptoExerciseStatus?.renderBadgeHtml
+            ? window.CryptoExerciseStatus.renderBadgeHtml(op, {
+                openPositive: 'bg-warning text-dark',
+                openNegative: 'bg-success text-white',
+                closedPositive: 'bg-warning text-dark',
+                closedNegative: 'bg-secondary'
+            })
+            : (op.exercicio_status === "SIM" ? "<span class=\"badge bg-warning text-dark\">SIM</span>" : "<span class=\"badge bg-secondary\">NAO</span>");
         const status      = op.status || "ABERTA";
         const statusBadge = status === "ABERTA" ? "<span class=\"badge bg-success\">ABERTA</span>" : status === "FECHADA" ? "<span class=\"badge bg-secondary\">FECHADA</span>" : "<span class=\"badge bg-danger\">VENCIDA</span>";
         const resultado   = parseFloat(op.resultado) || 0;

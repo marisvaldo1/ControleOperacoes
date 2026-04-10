@@ -130,7 +130,14 @@
             </div>
             <div class="col-4">
                 <div class="text-muted small">Exercício</div>
-                <div class="fw-bold">${op.exercicio_status === 'SIM' ? "<span class='badge bg-warning text-dark'>SIM</span>" : "<span class='badge bg-secondary'>NÃO</span>"}</div>
+                <div class="fw-bold">${window.CryptoExerciseStatus?.renderBadgeHtml
+                    ? window.CryptoExerciseStatus.renderBadgeHtml(op, {
+                        openPositive: 'bg-warning text-dark',
+                        openNegative: 'bg-success text-white',
+                        closedPositive: 'bg-warning text-dark',
+                        closedNegative: 'bg-secondary'
+                    })
+                    : "<span class='badge bg-secondary'>NÃO</span>"}</div>
             </div>
             ${op.observacoes ? `<div class="col-12"><div class="text-muted small">Observações</div><div class="text-secondary">${op.observacoes}</div></div>` : ''}
         </div>`;

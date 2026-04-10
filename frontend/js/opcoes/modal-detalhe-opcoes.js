@@ -327,9 +327,12 @@
 </div>`;
 
         // Badge de exercício
-        const exercidoBadge = op.status === 'EXERCIDA'
-            ? "<span class='badge bg-warning text-dark' style='font-size:0.7rem'>✅ SIM</span>"
-            : "<span class='badge bg-secondary' style='font-size:0.7rem'>❌ NÃO</span>";
+        const spotForExercise = parseFloat(op.preco_atual || op.preco_ativo_base || op.strike || 0);
+        const strikeForExercise = parseFloat(op.strike || 0);
+        const exercidoBadge = (() => {
+          const html = gerarBadgeExercicio(calcularExercicio(op.tipo, spotForExercise, strikeForExercise), op.status || 'ABERTA');
+          return html.replace('badge ', "badge ").replace('>', " style='font-size:0.7rem'>");
+        })();
 
         // Probabilidade de lucro
         const probLucro = op.pop != null ? op.pop + '%'

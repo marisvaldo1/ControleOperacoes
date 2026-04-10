@@ -15,10 +15,14 @@
     border: 1px solid rgba(255, 255, 255, 0.09);
     border-left: 3px solid rgba(255, 255, 255, 0.15);
     border-radius: 8px;
-    padding: 10px 12px 9px;
+    padding: 12px 12px 10px;
     transition: border-left-color 0.25s, background 0.25s;
     position: relative;
     overflow: hidden;
+    min-height: 112px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .mac-kpi-card::after {
@@ -40,7 +44,7 @@
 }
 
 .mac-kpi-val {
-    font-size: 1.25rem;
+    font-size: 1.38rem;
     font-weight: 700;
     font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
     line-height: 1.1;
@@ -76,6 +80,31 @@
     padding: 10px 12px;
 }
 
+#macAnaliseCol {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    height: 100%;
+}
+
+.mac-section-grow {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.mac-section-grow .row {
+    flex: 1;
+}
+
+#macBodyContent > .row {
+    align-items: stretch;
+}
+
+#macDetalhesPanel {
+    height: 100%;
+}
+
 /* inner cards (PM + Risco) */
 .mac-inner-card {
     background: rgba(255,255,255,.025);
@@ -98,4 +127,208 @@
 .mac-skel-kpi {
     height: 62px;
     border-radius: 8px;
+}
+
+/* ── Card Retorno ao Vencimento ──────────────────────────── */
+.mac-ret-card {
+    --mac-ret-accent: #4da6ff;
+    background: linear-gradient(165deg, rgba(255,255,255,.03) 0%, rgba(255,255,255,.015) 100%);
+    border: 1px solid rgba(255,255,255,.09);
+    border-radius: 10px;
+    padding: 10px;
+}
+
+.mac-ret-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.mac-ret-ticker {
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: .02em;
+    color: rgba(255,255,255,.95);
+    line-height: 1.1;
+}
+
+.mac-ret-sub {
+    font-size: .66rem;
+    color: rgba(255,255,255,.5);
+    margin-top: 2px;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+
+.mac-ret-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--mac-ret-accent);
+    background: rgba(255,255,255,.06);
+    color: var(--mac-ret-accent);
+    font-size: .63rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.mac-ret-led {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--mac-ret-accent);
+    box-shadow: 0 0 8px var(--mac-ret-accent);
+}
+
+.mac-ret-segments {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 5px;
+    margin-bottom: 10px;
+}
+
+.mac-ret-seg {
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.08);
+}
+
+.mac-ret-seg.active {
+    background: var(--mac-ret-accent);
+    box-shadow: 0 0 10px var(--mac-ret-accent);
+}
+
+.mac-ret-pct-block {
+    text-align: center;
+    margin-bottom: 8px;
+}
+
+.mac-ret-pct {
+    font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+    font-size: 2.2rem;
+    font-weight: 800;
+    letter-spacing: -.03em;
+    color: var(--mac-ret-accent);
+    line-height: 1;
+}
+
+.mac-ret-pct-lbl {
+    margin-top: 3px;
+    font-size: .64rem;
+    color: rgba(255,255,255,.5);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+
+.mac-ret-divider {
+    height: 1px;
+    background: rgba(255,255,255,.07);
+    margin: 6px 0 8px;
+}
+
+.mac-ret-risk {
+    border-radius: 8px;
+    border: 1px solid var(--mac-ret-accent);
+    background: rgba(255,255,255,.05);
+    padding: 8px 10px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.mac-ret-metrics-lines {
+    margin-bottom: 10px;
+    border-top: 1px solid rgba(255,255,255,.06);
+    border-bottom: 1px solid rgba(255,255,255,.06);
+    padding: 8px 0;
+}
+
+.mac-ret-metric-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: .73rem;
+    padding: 2px 0;
+}
+
+.mac-ret-metric-line span {
+    color: rgba(255,255,255,.62);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.mac-ret-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.mac-ret-dot-cot { background: #4da6ff; }
+.mac-ret-dot-strike { background: #f59f00; }
+.mac-ret-dot-premio { background: #3fb950; }
+.mac-ret-dot-diff { background: #a5b4fc; }
+
+.mac-ret-metric-cot { color: #4da6ff; }
+.mac-ret-metric-strike { color: #f59f00; }
+.mac-ret-metric-premio { color: #3fb950; }
+.mac-ret-metric-diff { color: #a5b4fc; }
+
+.mac-ret-risk-bars {
+    display: flex;
+    align-items: end;
+    gap: 3px;
+}
+
+.mac-ret-risk-bar {
+    width: 4px;
+    border-radius: 2px;
+    background: rgba(255,255,255,.16);
+}
+
+.mac-ret-risk-bar:nth-child(1) { height: 9px; }
+.mac-ret-risk-bar:nth-child(2) { height: 12px; }
+.mac-ret-risk-bar:nth-child(3) { height: 15px; }
+.mac-ret-risk-bar:nth-child(4) { height: 18px; }
+
+.mac-ret-risk-bar.active {
+    background: var(--mac-ret-accent);
+}
+
+.mac-ret-risk-title {
+    color: var(--mac-ret-accent);
+    font-size: .72rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.mac-ret-risk-desc {
+    margin-top: 3px;
+    color: rgba(255,255,255,.6);
+    font-size: .64rem;
+    line-height: 1.35;
+}
+
+@media (max-width: 768px) {
+    .mac-kpi-card {
+        min-height: 86px;
+    }
+
+    .mac-kpi-val {
+        font-size: 1.12rem;
+    }
+
+    .mac-ret-pct {
+        font-size: 1.9rem;
+    }
+
+    .mac-ret-pill {
+        font-size: .6rem;
+        padding: 3px 8px;
+    }
 }

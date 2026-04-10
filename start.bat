@@ -1,23 +1,26 @@
 @echo off
+setlocal EnableExtensions
+cd /d "%~dp0"
+
+if /I "%~1"=="--silent" (
+    powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0start_hidden.ps1"
+    exit /b %errorlevel%
+)
+
+call :resolve_python
+if errorlevel 1 exit /b 1
+
 cls
 echo ========================================
 echo  Sistema de Controle de Investimentos
 echo ========================================
 echo.
-
-REM Verificar se Python está instalado
-python --version >nul 2>&1
-if %errorlevel% neq 0 (
-    echo ERRO: Python não encontrado!
-    echo Por favor, instale o Python 3.x
-    pause
-    exit /b 1
-)
-
 echo [1/2] Instalando dependencias...
-cd backend
-pip install -r requirements.txt -q
-if %errorlevel% neq 0 (
+
+pushd "%~dp0backend"
+"%PYTHON%" -m pip install -r requirements.txt -q
+if errorlevel 1 (
+    popd
     echo ERRO ao instalar dependencias!
     pause
     exit /b 1
@@ -29,14 +32,15 @@ echo.
 echo Acessar: http://localhost:8888/html/opcoes.html
 echo.
 
-REM Iniciar script que abre navegador com delay (em background)
-start /MIN cmd /c "timeout /t 3 /nobreak >nul & start http://localhost:8888/html/opcoes.html & exit"
+start "" /MIN powershell -NoProfile -WindowStyle Hidden -Command "Start-Sleep -Seconds 3; Start-Process 'http://localhost:8888/html/opcoes.html'"
 
 echo ========================================
 echo  SERVIDOR RODANDO (CTRL+C para parar)
 echo ========================================
 echo.
-python server.py
+"%PYTHON%" server.py
+set SERVER_EXIT=%errorlevel%
+popd
 
 echo.
 echo ========================================
@@ -45,3 +49,20 @@ echo ========================================
 echo.
 
 call stop.bat
+exit /b %SERVER_EXIT%
+
+:resolve_python
+if exist "%~dp0.venv\Scripts\python.exe" (
+    set "PYTHON=%~dp0.venv\Scripts\python.exe"
+    goto :eof
+)
+
+for /f "delims=" %%P in ('where python 2^>nul') do (
+    set "PYTHON=%%P"
+    goto :eof
+)
+
+echo ERRO: Python nao encontrado!
+echo Por favor, instale o Python 3.x ou crie a pasta .venv.
+pause
+exit /b 1

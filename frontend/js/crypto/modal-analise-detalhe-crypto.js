@@ -7,7 +7,7 @@
  *  - Card Previsão / POP com arco SVG
  *  - Card Preço Médio do portfólio
  *  - Card Risco da Operação
- *  - Gráfico "Retorno ao Vencimento" (Curva P&L)
+ *  - Card "Retorno ao Vencimento" (dinâmico por ativo)
  *
  * Usa: window.cryptoOperacoes, buildGaugeSVG (de modal-detalhe-crypto.js via IIFE)
  * Expõe: window.ModalAnalise = { open }
@@ -20,7 +20,6 @@
     const TEMPLATE_PATH = 'modal-analise-detalhe-crypto.html';
 
     let _loadPromise      = null;
-    let _macPnLChart      = null;
     let _macCountdownTimer = null;
 
     // ─── Formatadores ────────────────────────────────────────────────────────
@@ -141,6 +140,70 @@
             ? (cotacao - strike) / strike * 100
             : (strike - cotacao) / cotacao * 100;
         return Math.max(5, Math.min(95, 50 + dist * 2.5));
+    }
+
+    function calcRetornoVencimentoData(op, cotacao) {
+        const strike = parseFloat(op.strike) || 0;
+        const price  = parseFloat(cotacao) || 0;
+        const premio = parseFloat(op.premio_us) || 0;
+        const tipo   = (op.tipo || 'PUT').toUpperCase();
+        const ativo  = ((op.ativo || 'CRYPTO').toUpperCase()).replace('USDT', '').replace('/', '');
+
+        if (!strike || !price) return null;
+
+        const favorDist = tipo === 'CALL'
+            ? ((price - strike) / strike) * 100
+            : ((strike - price) / price) * 100;
+
+        const diffAbs = price - strike;
+        const diffPctStrike = ((price - strike) / strike) * 100;
+
+        let zone;
+        if (favorDist < 0) {
+            zone = {
+                level: 0,
+                accent: '#e85d4a',
+                pill: 'Fora da Zona',
+                riskTitle: 'Risco Elevado',
+                riskDesc: 'Cotação em zona desfavorável para exercício.'
+            };
+        } else if (favorDist < 2) {
+            zone = {
+                level: 1,
+                accent: '#f59f00',
+                pill: 'Margem Curta',
+                riskTitle: 'Atenção',
+                riskDesc: 'Próximo ao strike. Pequeno movimento pode inverter cenário.'
+            };
+        } else if (favorDist < 5) {
+            zone = {
+                level: 2,
+                accent: '#4da6ff',
+                pill: 'Monitorar',
+                riskTitle: 'Moderado',
+                riskDesc: 'Há folga, mas ainda exige acompanhamento.'
+            };
+        } else {
+            zone = {
+                level: 3,
+                accent: '#47b96c',
+                pill: 'Confortável',
+                riskTitle: 'Segurança',
+                riskDesc: 'Distância saudável em relação ao strike.'
+            };
+        }
+
+        return {
+            ativo: ativo || 'CRYPTO',
+            tipo,
+            strike,
+            cotacao: price,
+            premio,
+            favorDist,
+            diffAbs,
+            diffPctStrike,
+            zone
+        };
     }
 
     // ─── Helper: aplica cor contextual no mac-kpi-card ───────────────────────
@@ -346,7 +409,9 @@
             return;
         }
 
-        const callsExercidas = ops.filter(o => (o.tipo||'').toUpperCase() === 'CALL' && (o.exercicio_status||'').toUpperCase() === 'SIM');
+        const callsExercidas = ops.filter(o => window.CryptoExerciseStatus?.isExercised
+            ? window.CryptoExerciseStatus.isExercised(o, 'CALL')
+            : false);
         const strikeExercida = callsExercidas.length
             ? Math.max(...callsExercidas.map(o => parseFloat(o.strike||0)))
             : parseFloat(ops.reduce((max, o) => parseFloat(o.strike||0) > parseFloat(max.strike||0) ? o : max, ops[0])?.strike || 0);
@@ -429,178 +494,83 @@
         `;
     }
 
-    // ─── Gráfico Retorno ao Vencimento ────────────────────────────────────────
+    // ─── Card Retorno ao Vencimento ──────────────────────────────────────────
     function _renderPnLChart(op, cotacao) {
-        const empty = document.getElementById('macSimPnLEmpty');
-        if (empty) empty.style.display = 'none';
+        const body = document.getElementById('macSimRetBody');
+        if (!body) return;
 
-        if (_macPnLChart) { try { _macPnLChart.destroy(); } catch(e) {} _macPnLChart = null; }
-
-        const valor  = parseFloat(op.abertura) || 0;
-        const tae    = parseFloat(op.tae) || 0;
-        const prazo  = parseFloat(op.prazo) || 30;
-        const strike = parseFloat(op.strike) || 0;
-        const tipo   = (op.tipo || 'PUT').toUpperCase();
-
-        if (!valor || !tae || !strike) {
-            if (empty) empty.style.display = '';
+        const data = calcRetornoVencimentoData(op, cotacao);
+        if (!data) {
+            body.innerHTML = '<div class="sim-empty-state" style="min-height:60px">Dados insuficientes para análise de retorno</div>';
             return;
         }
 
-        const premioEstimado = valor * (tae / 100) * (prazo / 365);
-        const qty = valor / strike;
-        const priceMin = strike * 0.88;
-        const priceMax = strike * 1.12;
-        const N = 100;
+        const dist = data.favorDist;
+        const signedDist = (dist >= 0 ? '+' : '') + dist.toFixed(2) + '%';
+        const diffAbs = (data.diffAbs >= 0 ? '+' : '-') + fmtUsd(Math.abs(data.diffAbs));
+        const diffPctStrike = (data.diffPctStrike >= 0 ? '+' : '') + data.diffPctStrike.toFixed(2) + '%';
+        const premioFmt = data.premio > 0 ? '+' + fmtUsd(data.premio) : '—';
 
-        const prices  = [];
-        const pnlVals = [];
-        for (let i = 0; i <= N; i++) {
-            const p = priceMin + (priceMax - priceMin) * i / N;
-            prices.push(p);
-            const pnl = tipo === 'CALL'
-                ? premioEstimado + (p >= strike ? (p - strike) * qty : 0)
-                : (p >= strike ? premioEstimado : premioEstimado - (strike - p) * qty);
-            pnlVals.push(pnl);
-        }
+        const segHtml = [0, 1, 2, 3].map(function (idx) {
+            const active = idx <= data.zone.level;
+            return `<span class="mac-ret-seg ${active ? 'active' : ''}"></span>`;
+        }).join('');
 
-        const breakEvenPrice = tipo === 'PUT' ? strike - (premioEstimado / qty) : null;
+        const barsHtml = [1, 2, 3, 4].map(function (idx) {
+            const active = idx <= (data.zone.level + 1);
+            return `<span class="mac-ret-risk-bar ${active ? 'active' : ''}"></span>`;
+        }).join('');
 
-        const getClosestIdx = (arr, val) => {
-            let minD = Infinity, idx = 0;
-            arr.forEach((v, i) => { const d = Math.abs(v - val); if (d < minD) { minD = d; idx = i; } });
-            return idx;
-        };
+        body.innerHTML = `
+            <div class="mac-ret-card" style="--mac-ret-accent:${data.zone.accent}">
+                <div class="mac-ret-top">
+                    <div>
+                        <div class="mac-ret-ticker">${data.ativo}</div>
+                        <div class="mac-ret-sub">${data.tipo} · Resultado atual</div>
+                    </div>
+                    <div class="mac-ret-pill">
+                        <span class="mac-ret-led"></span>
+                        ${data.zone.pill}
+                    </div>
+                </div>
 
-        const canvas = document.getElementById('macSimPnLCanvas');
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
+                <div class="mac-ret-segments">${segHtml}</div>
 
-        _macPnLChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: prices.map(p => p.toFixed(0)),
-                datasets: [{
-                    label: 'P&L (US$)',
-                    data: pnlVals,
-                    fill: tipo === 'CALL'
-                        ? { target: { value: 0 }, above: 'rgba(63,185,80,.15)' }
-                        : { target: { value: 0 }, above: 'rgba(63,185,80,.18)', below: 'rgba(248,81,73,.18)' },
-                    segment: tipo === 'CALL'
-                        ? { borderColor: () => '#3fb950' }
-                        : { borderColor: ctx2 => ctx2.p1.parsed.y >= 0 ? '#3fb950' : '#f85149' },
-                    tension: 0,
-                    borderWidth: 2.5,
-                    pointRadius: 0,
-                    pointHoverRadius: 4,
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                animation: { duration: 300 },
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            title: c => `Preço: $${parseFloat(c[0].label).toLocaleString('en-US',{minimumFractionDigits:0})}`,
-                            label: c => {
-                                const p = parseFloat(c.label);
-                                const zone = tipo === 'CALL'
-                                    ? (p < strike ? 'Recebe USDT' : 'Recebe BTC')
-                                    : (p >= strike ? 'Recebe USDT' : 'Recebe BTC');
-                                return `${zone} | Retorno: ${c.raw >= 0 ? '+' : ''}$${c.raw.toFixed(2)}`;
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    x: { grid: { color: 'rgba(255,255,255,.04)' },
-                         ticks: { color: '#8b949e', font: { size: 9 }, maxTicksLimit: 9,
-                                   callback: (_, idx) => { const p = prices[idx]; if (!p) return ''; return p >= 1000 ? '$' + (p/1000).toFixed(0) + 'k' : '$' + p.toFixed(0); } } },
-                    y: { grid: { color: 'rgba(255,255,255,.05)' },
-                         ticks: { color: '#8b949e', font: { size: 9 }, callback: v => (v >= 0 ? '+' : '') + '$' + Math.abs(v).toFixed(0) } }
-                }
-            },
-            plugins: [{
-                id: 'macOverlay',
-                afterDraw: chart => {
-                    const c2 = chart.ctx;
-                    const xs = chart.scales.x;
-                    const ys = chart.scales.y;
-                    const ca = chart.chartArea;
-                    c2.save();
+                <div class="mac-ret-pct-block">
+                    <div class="mac-ret-pct">${signedDist}</div>
+                    <div class="mac-ret-pct-lbl">Distância Favorável para Exercício</div>
+                </div>
 
-                    // Linha zero
-                    const y0 = ys.getPixelForValue(0);
-                    c2.strokeStyle = 'rgba(255,255,255,.18)';
-                    c2.lineWidth = 1;
-                    c2.setLineDash([4,4]);
-                    c2.beginPath(); c2.moveTo(ca.left, y0); c2.lineTo(ca.right, y0); c2.stroke();
-                    c2.setLineDash([]);
+                <div class="mac-ret-divider"></div>
 
-                    const drawVLine = (val, color, label, labelY) => {
-                        const idx = getClosestIdx(prices, val);
-                        const xP  = xs.getPixelForValue(idx);
-                        c2.strokeStyle = color;
-                        c2.lineWidth = 1.5;
-                        c2.setLineDash([5,3]);
-                        c2.beginPath(); c2.moveTo(xP, ca.top); c2.lineTo(xP, ca.bottom); c2.stroke();
-                        c2.setLineDash([]);
-                        c2.fillStyle = color;
-                        c2.font = 'bold 9px monospace';
-                        c2.textAlign = 'center';
-                        c2.fillText(label, xP, labelY);
-                    };
+                <div class="mac-ret-metrics-lines">
+                    <div class="mac-ret-metric-line">
+                        <span><i class="mac-ret-dot mac-ret-dot-cot"></i>Cotação Atual</span>
+                        <strong class="mac-ret-metric-cot">${fmtUsd(data.cotacao)}</strong>
+                    </div>
+                    <div class="mac-ret-metric-line">
+                        <span><i class="mac-ret-dot mac-ret-dot-strike"></i>Strike</span>
+                        <strong class="mac-ret-metric-strike">${fmtUsd(data.strike)}</strong>
+                    </div>
+                    <div class="mac-ret-metric-line">
+                        <span><i class="mac-ret-dot mac-ret-dot-diff"></i>Diferença vs Strike</span>
+                        <strong class="mac-ret-metric-diff">${diffPctStrike}</strong>
+                    </div>
+                    <div class="mac-ret-metric-line">
+                        <span><i class="mac-ret-dot mac-ret-dot-premio"></i>Prêmio</span>
+                        <strong class="mac-ret-metric-premio">${premioFmt}</strong>
+                    </div>
+                </div>
 
-                    drawVLine(strike, '#f59f00',
-                        `Strike $${strike >= 1000 ? (strike/1000).toFixed(0)+'k' : strike.toFixed(0)}`,
-                        ca.top + 11);
-
-                    if (breakEvenPrice !== null) {
-                        drawVLine(breakEvenPrice, 'rgba(255,255,255,.5)', 'B/E', ca.top + 22);
-                    }
-
-                    if (tipo === 'CALL') {
-                        const strikeIdx = getClosestIdx(prices, strike);
-                        const xStrike = xs.getPixelForValue(strikeIdx);
-                        c2.save();
-                        c2.font = '8px monospace';
-                        c2.textAlign = 'center';
-                        c2.fillStyle = 'rgba(63,185,80,.55)';
-                        if (xStrike - ca.left > 60) c2.fillText('Recebe USDT', (ca.left + xStrike) / 2, ca.bottom - 6);
-                        if (ca.right - xStrike > 60) c2.fillText('Recebe BTC', (ca.right + xStrike) / 2, ca.bottom - 6);
-                        c2.restore();
-                    }
-
-                    // Cotação atual
-                    if (cotacao) {
-                        const idx = getClosestIdx(prices, cotacao);
-                        const xC  = xs.getPixelForValue(idx);
-                        const pnlAtCot = pnlVals[idx] !== undefined ? pnlVals[idx] : 0;
-                        const yC  = ys.getPixelForValue(pnlAtCot);
-                        c2.strokeStyle = 'rgba(77,166,255,.7)';
-                        c2.lineWidth = 1.5;
-                        c2.setLineDash([5,3]);
-                        c2.beginPath(); c2.moveTo(xC, ca.top); c2.lineTo(xC, ca.bottom); c2.stroke();
-                        c2.setLineDash([]);
-                        c2.fillStyle = '#4da6ff';
-                        c2.beginPath(); c2.arc(xC, yC, 4, 0, Math.PI * 2); c2.fill();
-                        const lbl = (pnlAtCot >= 0 ? '+$' : '-$') + Math.abs(pnlAtCot).toFixed(2);
-                        c2.fillStyle = '#4da6ff';
-                        c2.font = 'bold 9px monospace';
-                        c2.textAlign = 'center';
-                        const labelY = yC > ca.top + 20 ? yC - 8 : yC + 16;
-                        c2.fillText(lbl, xC, labelY);
-                        c2.fillStyle = 'rgba(77,166,255,.6)';
-                        c2.font = '8px monospace';
-                        c2.fillText('Atual', xC, ca.bottom - 2);
-                    }
-
-                    c2.restore();
-                }
-            }]
-        });
+                <div class="mac-ret-risk">
+                    <div class="mac-ret-risk-bars">${barsHtml}</div>
+                    <div>
+                        <div class="mac-ret-risk-title">${data.zone.riskTitle}</div>
+                        <div class="mac-ret-risk-desc">${data.zone.riskDesc}</div>
+                    </div>
+                </div>
+            </div>
+        `;
     }
 
     // ─── Painel esquerdo: conteúdo de Detalhes ────────────────────────────────
@@ -807,7 +777,6 @@ ${op.observacoes ? `<div class="mdc-info-row" style="flex-direction:column;align
 
         _renderDetalhesPanel(op, cotacao);
         _renderKPIs(op, cotacao);
-        _renderPrevisao(op, cotacao);
         _renderPmCard(op, cotacao);
         _renderNextOpCard(op, cotacao);
         _renderPnLChart(op, cotacao);
@@ -866,7 +835,6 @@ ${op.observacoes ? `<div class="mdc-info-row" style="flex-direction:column;align
 
                 // Atualiza painel direito também
                 _renderKPIs(op, cotacao);
-                _renderPrevisao(op, cotacao);
                 _renderNextOpCard(op, cotacao);
                 _renderPmCard(op, cotacao);
                 _renderPnLChart(op, cotacao);
@@ -916,7 +884,6 @@ ${op.observacoes ? `<div class="mdc-info-row" style="flex-direction:column;align
         const modalEl = document.getElementById(MODAL_ID);
         modalEl.addEventListener('hidden.bs.modal', function () {
             if (_macCountdownTimer) { clearInterval(_macCountdownTimer); _macCountdownTimer = null; }
-            if (_macPnLChart) { try { _macPnLChart.destroy(); } catch(e){} _macPnLChart = null; }
         }, { once: true });
 
         new bootstrap.Modal(modalEl).show();

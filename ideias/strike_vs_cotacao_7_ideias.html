@@ -1,0 +1,508 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans,'Inter',sans-serif)}
+.outer{display:flex;flex-direction:column;gap:24px;padding:16px 0}
+.row{display:grid;gap:12px}
+.row-2{grid-template-columns:1fr 1fr}
+.row-4{grid-template-columns:1fr 1fr 1fr 1fr}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;padding:14px 16px}
+.tag{display:inline-block;font-size:11px;font-weight:500;padding:2px 8px;border-radius:4px;margin-bottom:10px}
+.lbl{font-size:12px;color:var(--color-text-secondary);margin-bottom:2px}
+.val{font-size:22px;font-weight:500}
+.micro{font-size:12px;color:var(--color-text-secondary)}
+.ctrl{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.btn{padding:5px 12px;border-radius:6px;border:0.5px solid var(--color-border-secondary);background:transparent;cursor:pointer;font-size:12px;color:var(--color-text-primary)}
+.btn.active{background:var(--color-background-tertiary);border-color:var(--color-border-primary)}
+</style>
+
+<h2 class="sr-only">7 representações visuais de strike vs cotação com zonas de cor por risco</h2>
+
+<div class="outer">
+
+<div class="ctrl">
+  <button class="btn active" onclick="setType('CALL',this)">CALL</button>
+  <button class="btn" onclick="setType('PUT',this)">PUT</button>
+  <span style="font-size:13px;color:var(--color-text-secondary);align-self:center;margin-left:4px">Arraste o slider para mover a cotação →</span>
+  <input type="range" id="cotSlider" min="-30" max="30" value="2" step="0.5" style="flex:1;min-width:120px">
+  <span id="sliderVal" style="font-size:13px;font-weight:500;min-width:60px;align-self:center">+2.0%</span>
+</div>
+
+<div id="statusBar" style="padding:10px 16px;border-radius:8px;display:flex;align-items:center;gap:12px;font-size:14px;font-weight:500;transition:background .3s">
+  <span id="statusIcon" style="font-size:18px">●</span>
+  <span id="statusText">carregando...</span>
+  <span id="statusDist" style="margin-left:auto;font-size:13px"></span>
+</div>
+
+<div class="row row-2">
+
+<!-- 1: RÉGUA DE DISTÂNCIA -->
+<div class="card" id="card1">
+  <span class="tag" id="tag1">① Régua de distância</span>
+  <div style="position:relative;height:54px;margin:8px 0">
+    <div id="ruler-track" style="position:absolute;top:50%;height:10px;width:100%;transform:translateY(-50%);border-radius:5px;overflow:hidden">
+      <div id="ruler-r" style="position:absolute;left:0;height:100%"></div>
+      <div id="ruler-y" style="position:absolute;height:100%"></div>
+      <div id="ruler-g" style="position:absolute;right:0;height:100%"></div>
+    </div>
+    <div id="ruler-strike" style="position:absolute;top:8px;width:2px;background:var(--color-border-primary)"></div>
+    <div id="ruler-cot" style="position:absolute;top:6px;width:4px;border-radius:2px"></div>
+    <div id="ruler-strike-lbl" style="position:absolute;bottom:0;font-size:11px;color:var(--color-text-secondary);transform:translateX(-50%)">Strike</div>
+    <div id="ruler-cot-lbl" style="position:absolute;bottom:0;font-size:11px;font-weight:500;transform:translateX(-50%)"></div>
+  </div>
+  <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--color-text-tertiary)">
+    <span id="rl-left"></span><span id="rl-right"></span>
+  </div>
+</div>
+
+<!-- 2: TERMÔMETRO VERTICAL -->
+<div class="card" id="card2">
+  <span class="tag" id="tag2">② Termômetro</span>
+  <div style="display:flex;gap:16px;align-items:flex-end">
+    <div style="position:relative;width:32px;height:120px;background:var(--color-background-tertiary);border-radius:16px;overflow:hidden">
+      <div id="therm-fill" style="position:absolute;bottom:0;width:100%;border-radius:16px;transition:height .4s,background .4s"></div>
+      <div id="therm-strike-line" style="position:absolute;width:100%;height:2px;background:var(--color-border-primary)"></div>
+    </div>
+    <div style="flex:1">
+      <div class="lbl">Cotação</div>
+      <div class="val" id="th-cot" style="font-size:18px"></div>
+      <div style="margin:8px 0;height:0.5px;background:var(--color-border-tertiary)"></div>
+      <div class="lbl">Strike</div>
+      <div style="font-size:15px;font-weight:500;color:var(--color-text-secondary)" id="th-str"></div>
+      <div style="margin-top:6px"><span class="micro" id="th-dist"></span></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="row row-2">
+
+<!-- 3: SEMICÍRCULO GAUGE -->
+<div class="card" id="card3">
+  <span class="tag" id="tag3">③ Gauge semicircular</span>
+  <div style="display:flex;justify-content:center">
+    <div style="position:relative;width:160px;height:88px">
+      <canvas id="gaugeCanvas" width="160" height="88" role="img" aria-label="Gauge de distância ao strike">gauge</canvas>
+      <div style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);text-align:center">
+        <div id="g-dist" style="font-size:20px;font-weight:500;line-height:1"></div>
+        <div class="micro" id="g-lbl">distância ao strike</div>
+      </div>
+    </div>
+  </div>
+  <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:var(--color-text-tertiary)">
+    <span id="g-left-lbl"></span><span id="g-right-lbl"></span>
+  </div>
+</div>
+
+<!-- 4: BARRA DIVIDIDA COM MARCADORES -->
+<div class="card" id="card4">
+  <span class="tag" id="tag4">④ Barra posicional</span>
+  <div style="position:relative;height:80px">
+    <div id="pos-bg" style="position:absolute;inset:0;border-radius:8px;overflow:hidden">
+      <div id="pos-r" style="position:absolute;left:0;top:0;bottom:0;opacity:.18"></div>
+      <div id="pos-y-l" style="position:absolute;top:0;bottom:0;opacity:.22"></div>
+      <div id="pos-g" style="position:absolute;top:0;bottom:0;opacity:.18"></div>
+      <div id="pos-y-r" style="position:absolute;top:0;bottom:0;opacity:.22"></div>
+    </div>
+    <div style="position:absolute;inset:0;display:flex;align-items:center;padding:0 8px">
+      <div id="pos-bar" style="width:100%;height:6px;background:var(--color-background-tertiary);border-radius:3px;position:relative">
+        <div id="pos-fill" style="height:100%;border-radius:3px;transition:width .4s,background .4s"></div>
+        <div id="pos-strike-pin" style="position:absolute;top:-8px;width:2px;background:var(--color-text-secondary);height:22px;transform:translateX(-50%)"></div>
+        <div id="pos-cot-pin" style="position:absolute;top:-10px;width:12px;height:12px;border-radius:50%;border:2px solid white;transform:translateX(-50%);transition:left .4s,background .4s"></div>
+      </div>
+    </div>
+    <div id="pos-strike-lbl" style="position:absolute;bottom:6px;font-size:11px;color:var(--color-text-secondary);transform:translateX(-50%)"></div>
+    <div id="pos-cot-lbl" style="position:absolute;top:6px;font-size:11px;font-weight:500;transform:translateX(-50%);white-space:nowrap;transition:left .4s"></div>
+  </div>
+  <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--color-text-tertiary);margin-top:4px" id="pos-foot"></div>
+</div>
+
+</div>
+
+<div class="row row-2">
+
+<!-- 5: CÍRCULO DE STATUS COM ANEL -->
+<div class="card" id="card5">
+  <span class="tag" id="tag5">⑤ Anel de status</span>
+  <div style="display:flex;align-items:center;gap:20px">
+    <canvas id="ringCanvas" width="100" height="100" role="img" aria-label="Anel de status da operação">status</canvas>
+    <div style="flex:1">
+      <div style="font-size:13px;font-weight:500;margin-bottom:4px" id="ring-status"></div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <div><span class="micro">Cotação</span><br><span style="font-size:14px;font-weight:500" id="ring-cot"></span></div>
+        <div><span class="micro">Strike</span><br><span style="font-size:14px;font-weight:500;color:var(--color-text-secondary)" id="ring-str"></span></div>
+        <div><span class="micro">Distância</span><br><span style="font-size:14px;font-weight:500" id="ring-dist"></span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 6: SEMÁFORO + PROGRESSO -->
+<div class="card" id="card6">
+  <span class="tag" id="tag6">⑥ Semáforo + progresso</span>
+  <div style="display:flex;gap:14px;align-items:center">
+    <div style="display:flex;flex-direction:column;gap:6px;align-items:center">
+      <div id="s-red" style="width:22px;height:22px;border-radius:50%;transition:opacity .3s"></div>
+      <div id="s-yel" style="width:22px;height:22px;border-radius:50%;transition:opacity .3s"></div>
+      <div id="s-grn" style="width:22px;height:22px;border-radius:50%;transition:opacity .3s"></div>
+    </div>
+    <div style="flex:1">
+      <div id="sem-status" style="font-size:13px;font-weight:500;margin-bottom:8px"></div>
+      <div class="micro" style="margin-bottom:4px">Cotação vs strike</div>
+      <div style="height:8px;background:var(--color-background-tertiary);border-radius:4px;overflow:hidden;position:relative">
+        <div id="sem-bar" style="height:100%;border-radius:4px;transition:width .4s,background .4s"></div>
+        <div id="sem-strike-mark" style="position:absolute;top:0;bottom:0;width:2px;background:var(--color-border-primary)"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:3px;font-size:11px;color:var(--color-text-tertiary)">
+        <span id="sem-l"></span><span id="sem-r"></span>
+      </div>
+      <div style="margin-top:8px;font-size:13px;font-weight:500" id="sem-pct"></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- 7: LINHA DE PREÇO (chart.js) -->
+<div class="card" id="card7">
+  <span class="tag" id="tag7">⑦ Linha de preço com zonas</span>
+  <div style="position:relative;height:110px">
+    <canvas id="lineChart" role="img" aria-label="Gráfico de linha com zonas de risco em relação ao strike">cotação vs strike</canvas>
+  </div>
+  <div style="display:flex;gap:16px;justify-content:center;margin-top:6px;font-size:11px;color:var(--color-text-secondary)">
+    <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#E24B4A;display:inline-block"></span>exercício</span>
+    <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#BA7517;display:inline-block"></span>atenção ±5%</span>
+    <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#3B6D11;display:inline-block"></span>seguro</span>
+    <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:3px;border-radius:1px;background:#888780;display:inline-block"></span>strike</span>
+    <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:3px;border-radius:1px;background:#185FA5;display:inline-block"></span>cotação atual</span>
+  </div>
+</div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+var opType='CALL';
+var distPct=2;
+var STRIKE=2225;
+var lineChartInst=null;
+
+function setType(t,btn){
+  opType=t;
+  document.querySelectorAll('.ctrl .btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  update();
+}
+
+document.getElementById('cotSlider').addEventListener('input',function(){
+  distPct=parseFloat(this.value);
+  document.getElementById('sliderVal').textContent=(distPct>=0?'+':'')+distPct.toFixed(1)+'%';
+  update();
+});
+
+function getZone(){
+  if(opType==='CALL'){
+    if(distPct<-5) return 'red';
+    if(distPct<=-0||distPct<=5) return (distPct>=-5&&distPct<=5)?'yellow':'green';
+    return 'green';
+  } else {
+    if(distPct>5) return 'red';
+    if(distPct>=-5&&distPct<=5) return 'yellow';
+    return 'green';
+  }
+}
+
+function getZoneExact(){
+  var d=distPct;
+  if(opType==='CALL'){
+    if(d<-5) return 'red';
+    if(d>=-5&&d<=5) return 'yellow';
+    return 'green';
+  } else {
+    if(d>5) return 'red';
+    if(d>=-5&&d<=5) return 'yellow';
+    return 'green';
+  }
+}
+
+function zoneColors(z){
+  if(z==='red')   return {bg:'#FCEBEB',border:'#E24B4A',text:'#791F1F',hex:'#E24B4A',light:'rgba(226,75,74,0.12)'};
+  if(z==='yellow')return {bg:'#FAEEDA',border:'#BA7517',text:'#633806',hex:'#BA7517',light:'rgba(186,117,23,0.12)'};
+  return              {bg:'#EAF3DE',border:'#3B6D11',text:'#27500A',hex:'#3B6D11',light:'rgba(99,153,34,0.12)'};
+}
+
+function zoneLabel(z){
+  if(z==='red')    return opType==='CALL'?'Em exercício — abaixo do strike':'Em exercício — acima do strike';
+  if(z==='yellow') return 'Zona de atenção — próximo ao strike (±5%)';
+  return opType==='CALL'?'Seguro — acima do strike':'Seguro — abaixo do strike';
+}
+
+function update(){
+  var z=getZoneExact();
+  var c=zoneColors(z);
+  var cot=STRIKE*(1+distPct/100);
+  var cotFmt='$'+cot.toFixed(2);
+  var strFmt='$'+STRIKE.toFixed(2);
+  var distLabel=(distPct>=0?'+':'')+distPct.toFixed(2)+'%';
+  var lbl=zoneLabel(z);
+
+  updateStatusBar(z,c,lbl,distLabel);
+  updateRuler(z,c,cot,cotFmt,strFmt,distLabel);
+  updateTherm(z,c,cot,cotFmt,strFmt,distLabel);
+  updateGauge(z,c,distLabel);
+  updatePosBar(z,c,cot,cotFmt,strFmt,distLabel);
+  updateRing(z,c,cotFmt,strFmt,distLabel,lbl);
+  updateSemaforo(z,c,cot,cotFmt,distLabel,lbl);
+  updateLineChart(z,c);
+  updateCardBg(z,c);
+}
+
+function updateStatusBar(z,c,lbl,distLabel){
+  var bar=document.getElementById('statusBar');
+  bar.style.background=c.light;
+  bar.style.border='0.5px solid '+c.border;
+  document.getElementById('statusIcon').style.color=c.hex;
+  document.getElementById('statusText').style.color=c.text;
+  document.getElementById('statusText').textContent=opType+' — '+lbl;
+  var d=document.getElementById('statusDist');
+  d.style.color=c.hex;
+  d.textContent='Distância: '+distLabel;
+}
+
+function updateCardBg(z,c){
+  ['card1','card2','card3','card4','card5','card6','card7'].forEach(function(id){
+    document.getElementById(id).style.borderColor=c.border;
+  });
+  ['tag1','tag2','tag3','tag4','tag5','tag6','tag7'].forEach(function(id){
+    var el=document.getElementById(id);
+    el.style.background=c.light;
+    el.style.color=c.text;
+    el.style.border='0.5px solid '+c.border;
+  });
+}
+
+function pctToPos(pct,min,max){return Math.max(0,Math.min(100,(pct-min)/(max-min)*100));}
+
+function updateRuler(z,c,cot,cotFmt,strFmt,distLabel){
+  var W=120;
+  var minP=-25,maxP=25;
+  var cotPos=pctToPos(distPct,minP,maxP);
+  var strPos=pctToPos(0,minP,maxP);
+  var r5=pctToPos(-5,minP,maxP),g5=pctToPos(5,minP,maxP);
+
+  if(opType==='CALL'){
+    document.getElementById('ruler-r').style.cssText='left:0;width:'+r5+'%;background:#E24B4A;height:100%';
+    document.getElementById('ruler-y').style.cssText='left:'+r5+'%;width:'+(g5-r5)+'%;background:#BA7517;height:100%';
+    document.getElementById('ruler-g').style.cssText='left:'+g5+'%;width:'+(100-g5)+'%;background:#3B6D11;height:100%';
+  } else {
+    document.getElementById('ruler-g').style.cssText='left:0;width:'+r5+'%;background:#3B6D11;height:100%';
+    document.getElementById('ruler-y').style.cssText='left:'+r5+'%;width:'+(g5-r5)+'%;background:#BA7517;height:100%';
+    document.getElementById('ruler-r').style.cssText='left:'+g5+'%;width:'+(100-g5)+'%;background:#E24B4A;height:100%';
+  }
+
+  var sp=document.getElementById('ruler-strike');
+  sp.style.cssText='position:absolute;top:8px;width:2px;height:38px;background:var(--color-border-primary);left:'+strPos+'%;transform:translateX(-50%)';
+  document.getElementById('ruler-strike-lbl').style.left=strPos+'%';
+
+  var cp=document.getElementById('ruler-cot');
+  cp.style.cssText='position:absolute;top:6px;width:4px;height:42px;border-radius:2px;background:'+c.hex+';left:'+cotPos+'%;transform:translateX(-50%);transition:left .3s';
+  var cl=document.getElementById('ruler-cot-lbl');
+  cl.style.cssText='position:absolute;bottom:0;font-size:11px;font-weight:500;transform:translateX(-50%);color:'+c.hex+';left:'+cotPos+'%;white-space:nowrap;transition:left .3s';
+  cl.textContent=cotFmt;
+
+  document.getElementById('rl-left').textContent=strFmt;
+  document.getElementById('rl-right').textContent='Distância: '+distLabel;
+}
+
+function updateTherm(z,c,cot,cotFmt,strFmt,distLabel){
+  var minV=STRIKE*0.75,maxV=STRIKE*1.25;
+  var cotH=pctToPos(cot,minV,maxV);
+  var strH=pctToPos(STRIKE,minV,maxV);
+
+  var tf=document.getElementById('therm-fill');
+  tf.style.height=cotH+'%';
+  tf.style.background=c.hex;
+
+  var sl=document.getElementById('therm-strike-line');
+  sl.style.bottom=strH+'%';
+
+  document.getElementById('th-cot').textContent=cotFmt;
+  document.getElementById('th-cot').style.color=c.hex;
+  document.getElementById('th-str').textContent=strFmt;
+  document.getElementById('th-dist').textContent='Distância: '+distLabel;
+}
+
+function updateGauge(z,c,distLabel){
+  var canvas=document.getElementById('gaugeCanvas');
+  var ctx=canvas.getContext('2d');
+  var W=160,H=88,cx=80,cy=80,r=64,sw=10;
+  ctx.clearRect(0,0,W,H);
+
+  var segments=[
+    {a:Math.PI,    b:Math.PI*(1+1/3),color:opType==='CALL'?'#E24B4A':'#3B6D11'},
+    {a:Math.PI*(1+1/3),b:Math.PI*(1+2/3),color:'#BA7517'},
+    {a:Math.PI*(1+2/3),b:Math.PI*2,color:opType==='CALL'?'#3B6D11':'#E24B4A'},
+  ];
+  segments.forEach(function(seg){
+    ctx.beginPath();ctx.arc(cx,cy,r,seg.a,seg.b);
+    ctx.strokeStyle=seg.color;ctx.lineWidth=sw;ctx.lineCap='butt';ctx.stroke();
+  });
+
+  var pct=Math.max(-25,Math.min(25,distPct))/25;
+  if(opType==='PUT') pct=-pct;
+  var needleAngle=Math.PI+(pct+1)/2*Math.PI;
+  var nx=cx+Math.cos(needleAngle)*(r-5);
+  var ny=cy+Math.sin(needleAngle)*(r-5);
+  ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(nx,ny);
+  ctx.strokeStyle=c.hex;ctx.lineWidth=2;ctx.lineCap='round';ctx.stroke();
+  ctx.beginPath();ctx.arc(cx,cy,5,0,Math.PI*2);ctx.fillStyle=c.hex;ctx.fill();
+
+  document.getElementById('g-dist').textContent=distLabel;
+  document.getElementById('g-dist').style.color=c.hex;
+  document.getElementById('g-left-lbl').textContent=opType==='CALL'?'exercício':'seguro';
+  document.getElementById('g-right-lbl').textContent=opType==='CALL'?'seguro':'exercício';
+}
+
+function updatePosBar(z,c,cot,cotFmt,strFmt,distLabel){
+  var minP=-25,maxP=25;
+  var cotPos=pctToPos(distPct,minP,maxP);
+  var strPos=pctToPos(0,minP,maxP);
+  var y5=pctToPos(-5,minP,maxP);
+  var y5r=pctToPos(5,minP,maxP);
+
+  if(opType==='CALL'){
+    document.getElementById('pos-r').style.cssText='position:absolute;left:0;top:0;bottom:0;width:'+y5+'%;background:#E24B4A';
+    document.getElementById('pos-y-l').style.cssText='position:absolute;left:'+y5+'%;top:0;bottom:0;width:'+(y5r-y5)+'%;background:#BA7517';
+    document.getElementById('pos-g').style.cssText='position:absolute;left:'+y5r+'%;top:0;bottom:0;width:'+(100-y5r)+'%;background:#3B6D11';
+    document.getElementById('pos-y-r').style.cssText='display:none';
+  } else {
+    document.getElementById('pos-g').style.cssText='position:absolute;left:0;top:0;bottom:0;width:'+y5+'%;background:#3B6D11';
+    document.getElementById('pos-y-l').style.cssText='position:absolute;left:'+y5+'%;top:0;bottom:0;width:'+(y5r-y5)+'%;background:#BA7517';
+    document.getElementById('pos-r').style.cssText='position:absolute;left:'+y5r+'%;top:0;bottom:0;width:'+(100-y5r)+'%;background:#E24B4A';
+    document.getElementById('pos-y-r').style.cssText='display:none';
+  }
+
+  document.getElementById('pos-fill').style.width=cotPos+'%';
+  document.getElementById('pos-fill').style.background=c.hex;
+  document.getElementById('pos-strike-pin').style.left=strPos+'%';
+  var cp2=document.getElementById('pos-cot-pin');
+  cp2.style.left=cotPos+'%';
+  cp2.style.background=c.hex;
+
+  var sl=document.getElementById('pos-strike-lbl');
+  sl.style.left=strPos+'%';
+  sl.textContent='Strike '+strFmt;
+
+  var cl=document.getElementById('pos-cot-lbl');
+  cl.style.left=cotPos+'%';
+  cl.style.color=c.hex;
+  cl.textContent='Cot. '+cotFmt;
+
+  document.getElementById('pos-foot').innerHTML='<span style="color:var(--color-text-tertiary)">'+distLabel+' do strike</span><span style="color:'+c.hex+'">'+z.toUpperCase()+'</span>';
+}
+
+function updateRing(z,c,cotFmt,strFmt,distLabel,lbl){
+  var canvas=document.getElementById('ringCanvas');
+  var ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,100,100);
+  ctx.beginPath();ctx.arc(50,50,38,0,Math.PI*2);ctx.strokeStyle='rgba(128,128,128,.15)';ctx.lineWidth=10;ctx.stroke();
+  var pct=Math.abs(distPct)/25;
+  pct=Math.min(pct,1);
+  ctx.beginPath();ctx.arc(50,50,38,-Math.PI/2,-Math.PI/2+pct*Math.PI*2);
+  ctx.strokeStyle=c.hex;ctx.lineWidth=10;ctx.lineCap='round';ctx.stroke();
+  ctx.fillStyle=c.hex;ctx.font='bold 14px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(distLabel,50,50);
+
+  document.getElementById('ring-status').textContent=lbl;
+  document.getElementById('ring-status').style.color=c.hex;
+  document.getElementById('ring-cot').textContent=cotFmt;
+  document.getElementById('ring-cot').style.color=c.hex;
+  document.getElementById('ring-str').textContent=strFmt;
+  document.getElementById('ring-dist').textContent=distLabel;
+  document.getElementById('ring-dist').style.color=c.hex;
+}
+
+function updateSemaforo(z,c,cot,cotFmt,distLabel,lbl){
+  document.getElementById('s-red').style.cssText='width:22px;height:22px;border-radius:50%;background:#E24B4A;opacity:'+(z==='red'?1:.18);
+  document.getElementById('s-yel').style.cssText='width:22px;height:22px;border-radius:50%;background:#BA7517;opacity:'+(z==='yellow'?1:.18);
+  document.getElementById('s-grn').style.cssText='width:22px;height:22px;border-radius:50%;background:#3B6D11;opacity:'+(z==='green'?1:.18);
+
+  document.getElementById('sem-status').textContent=lbl;
+  document.getElementById('sem-status').style.color=c.hex;
+
+  var minP=-25,maxP=25;
+  var cotPos=pctToPos(distPct,minP,maxP);
+  var strPos=pctToPos(0,minP,maxP);
+
+  document.getElementById('sem-bar').style.width=cotPos+'%';
+  document.getElementById('sem-bar').style.background=c.hex;
+  document.getElementById('sem-strike-mark').style.left=strPos+'%';
+  document.getElementById('sem-l').textContent=opType==='CALL'?'Exercício':'Seguro';
+  document.getElementById('sem-r').textContent=opType==='CALL'?'Seguro':'Exercício';
+  document.getElementById('sem-pct').innerHTML='Distância do strike: <span style="color:'+c.hex+'">'+distLabel+'</span>';
+}
+
+function updateLineChart(z,c){
+  var pts=[];
+  for(var i=-25;i<=25;i+=1){
+    var isRed=opType==='CALL'?i<-5:i>5;
+    var isYellow=Math.abs(i)<=5;
+    pts.push({x:i,y:STRIKE*(1+i/100)});
+  }
+  var labels=pts.map(function(p){return p.x===0?'Strike':(p.x%10===0?(p.x>0?'+':'')+p.x+'%':'')});
+  var data=pts.map(function(p){return p.y;});
+
+  var bgColors=pts.map(function(p){
+    if(opType==='CALL') return p.x<-5?'rgba(226,75,74,0.25)':Math.abs(p.x)<=5?'rgba(186,117,23,0.22)':'rgba(59,109,17,0.2)';
+    return p.x>5?'rgba(226,75,74,0.25)':Math.abs(p.x)<=5?'rgba(186,117,23,0.22)':'rgba(59,109,17,0.2)';
+  });
+
+  var currentX=distPct;
+
+  if(lineChartInst){lineChartInst.destroy();}
+  var canvas=document.getElementById('lineChart');
+  lineChartInst=new Chart(canvas,{
+    type:'line',
+    data:{
+      labels:labels,
+      datasets:[
+        {data:data,borderColor:'#888780',borderWidth:1,pointRadius:0,fill:false,tension:0,borderDash:[4,2]},
+        {data:pts.map(function(p){return p.x===Math.round(currentX*2)/2?STRIKE*(1+p.x/100):null;}),
+         borderColor:c.hex,backgroundColor:c.hex,borderWidth:0,pointRadius:6,pointStyle:'circle',fill:false},
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{enabled:false},
+        annotation:{annotations:{
+          line1:{type:'line',xMin:25,xMax:25,yMin:STRIKE,yMax:STRIKE,borderColor:'#888780',borderWidth:1,borderDash:[4,2]}
+        }}
+      },
+      scales:{
+        x:{grid:{color:'rgba(128,128,128,.08)'},ticks:{color:'#888780',font:{size:11},maxRotation:0},
+           afterBuildTicks:function(axis){axis.ticks=axis.ticks.filter(function(t){return t.label!=='';});}},
+        y:{display:false}
+      },
+      backgroundColor:bgColors
+    }
+  });
+
+  var ctx=canvas.getContext('2d');
+  var meta=lineChartInst.getDatasetMeta(0);
+  if(meta&&meta.data&&meta.data.length){
+    var chartArea=lineChartInst.chartArea;
+    if(chartArea){
+      var segW=(chartArea.right-chartArea.left)/50;
+      pts.forEach(function(p,i){
+        var col=opType==='CALL'?
+          (p.x<-5?'rgba(226,75,74,0.2)':Math.abs(p.x)<=5?'rgba(186,117,23,0.18)':'rgba(59,109,17,0.16)'):
+          (p.x>5?'rgba(226,75,74,0.2)':Math.abs(p.x)<=5?'rgba(186,117,23,0.18)':'rgba(59,109,17,0.16)');
+        ctx.fillStyle=col;
+        ctx.fillRect(chartArea.left+i*segW,chartArea.top,segW+1,chartArea.bottom-chartArea.top);
+      });
+    }
+  }
+}
+
+document.getElementById('sliderVal').textContent='+2.0%';
+update();
+</script>

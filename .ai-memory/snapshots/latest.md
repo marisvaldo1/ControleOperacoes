@@ -1,6 +1,6 @@
 # AI PROJECT SNAPSHOT
 > Cole todo este arquivo na IA para retomar o projeto sem perder contexto.
-> Gerado em: 2026-04-01 16:07:57 | Branch: master
+> Gerado em: 2026-04-10 14:43:09 | Branch: master
 
 ---
 
@@ -12,46 +12,14 @@
 ---
 
 ## GIT — últimos 5 commits
+ffbe5de 2026-04-06 Ajustes de layout
+1be511c 2026-04-02 Ajustes nos servicos do cliente
 3716e53 2026-03-24 Tela de resultados
 3aa8644 2026-03-20 Tela de resultados
 edbb352 2026-03-19 Tela de resultados
-fd1a31d 2026-03-13 Tela de cryptos
-c9934aa 2026-03-13 Tela de cryptos
 
 ## Arquivos alterados no último commit
-.tmp/playwright-report/index.html
-.tmp/test-results/.last-run.json
 backend/data/controle_operacoes.db
-backend/routes/__pycache__/crypto.cpython-313.pyc
-backend/routes/crypto.py
-frontend/css/crypto/crypto.css
-frontend/css/crypto/modal-detalhe-crypto.css
-frontend/css/crypto/modal-detalhe-operacao-crypto.css
-frontend/html/crypto.html
-frontend/html/modal-detalhe-crypto.html
-frontend/js/crypto/crypto.js
-frontend/js/crypto/modal-detalhe-crypto-old.js
-frontend/js/crypto/modal-detalhe-crypto.js
-frontend/js/crypto/modal-detalhe-operacao-crypto.js
-frontend/tests/pages/crypto.spec.js
-ideias/MiniMax/id1.html
-ideias/MiniMax/id2.html
-ideias/MiniMax/ideia1-dashboard-executivo.html
-ideias/MiniMax/ideia2-terminal-quantitativo.html
-ideias/MiniMax/ideia3-bento-grid.html
-ideias/MiniMax/ideia4-pro-trader.html
-ideias/MiniMax/ideia5-neo-brutalist.html
-ideias/MiniMax/ideia6-glass-ui.html
-ideias/MiniMax/ideia7-cyberhud.html
-ideias/MiniMax/ideia8-classic-finance.html
-ideias/MiniMax/q1.html
-ideias/MiniMax/q2.html
-ideias/MiniMax/q3.html
-ideias/MiniMax/q4.html
-ideias/claude3-v2.html
-ideias/claude3.html
-tests/results/playwright_results.json
-tests/results/pytest_results.json
 
 ---
 
@@ -198,10 +166,12 @@ ControleOperacoes/
 ## ESTADO ATUAL (auto)
 # STATE (auto)
 
-Última atualização: 2026-04-01 16:07:55
+Última atualização: 2026-04-10 14:43:07
 Branch: master
 
 ## Commits recentes (últimos 10)
+  ffbe5de | 2026-04-06 | â€œMarisvaldoâ€ | Ajustes de layout
+  1be511c | 2026-04-02 | â€œMarisvaldoâ€ | Ajustes nos servicos do cliente
   3716e53 | 2026-03-24 | â€œMarisvaldoâ€ | Tela de resultados
   3aa8644 | 2026-03-20 | â€œMarisvaldoâ€ | Tela de resultados
   edbb352 | 2026-03-19 | â€œMarisvaldoâ€ | Tela de resultados
@@ -210,8 +180,6 @@ Branch: master
   c8f34d5 | 2026-03-05 | â€œMarisvaldoâ€ | Tela de testes
   6482359 | 2026-02-23 | â€œMarisvaldoâ€ | Janela de totais finais
   308a0b6 | 2026-02-23 | â€œMarisvaldoâ€ | Janela de totais finais
-  0d01e39 | 2026-02-18 | â€œMarisvaldoâ€ | Janela de totais finais
-  8dd62bc | 2026-02-13 | â€œMarisvaldoâ€ | Janela de totais finais
 
 ## Working tree
   M .ai-memory/05-STATE.md
@@ -219,22 +187,22 @@ Branch: master
    M .ai-memory/09-PROMPTS.md
    M .ai-memory/prompts_log.txt
    M .ai-memory/snapshots/latest.md
-   D .tmp/playwright-report/index.html
-   D .tmp/test-results/.last-run.json
    M backend/data/controle_operacoes.db
-   M frontend/components/modals/crypto/modal-dashboard-crypto.html
-   M frontend/components/modals/opcoes/modal-resultado-total.html
-   M frontend/css/crypto.css
-   M frontend/css/crypto/modal-resultado-total-crypto.css
-   M frontend/css/opcoes.css
-   M frontend/css/opcoes/modal-detalhes.css
-   M frontend/css/opcoes/modal-resultado-total.css
-   M frontend/css/opcoes/opcoes.css
-   M frontend/css/shared/modal-analise.css
-   M frontend/css/shared/style.css
-   M frontend/cs
+   M backend/routes/__pycache__/crypto.cpython-313.pyc
+   M backend/routes/crypto.py
+   M backend/tests/test_api_crypto.py
+   M frontend/css/crypto/modal-analise-detalhe-crypto.css
+   M frontend/html/crypto.html
+   M frontend/html/modal-analise-detalhe-crypto.html
+   M frontend/js/crypto.js
+   M frontend/js/crypto/crypto.js
+   M frontend/js/crypto/modal-analise-detalhe-crypto.js
+   M frontend/js/crypto/modal-detalhe-crypto.js
+   M frontend/js/crypto/modal-detalhe-operacao-crypto.js
+   M frontend/js/crypto/modal-resultado-total-crypto.js
+   M f
 
-... [truncado — 1213 chars omitidos]
+... [truncado — 1217 chars omitidos]
 
 ---
 
@@ -279,28 +247,32 @@ Branch: master
 ---
 
 ## ÚLTIMOS PROMPTS ENVIADOS
+[2026-04-10 14:36:14]  fonte: clipboard
+Bedrock
+
+[2026-04-08 15:10:06]  fonte: clipboard
+//+------------------------------------------------------------------+
+//|                                                   Hedge_IA.mq5   |
+//|  Replica operacional baseada em parametros/logs do BS Hedge IA   |
+//+------------------------------------------------------------------+
+#property strict
+#property version   "4.11"
+#property copyright "Hedge_IA"
+
+#include <Trade\Trade.mqh>
+#include <Tra...
+
+[2026-04-01 16:08:22]  fonte: clipboard
+Esse filtro da imagem nÃ£o estÃ¡ sendo aplicado nessa tela.
+
+Preciso de uma tela que analise minha posiÃ§Ã£o atual pra ser colocada em uma nova aba nessa tela da imagem. aba Resultado Final
+O que aconteceu foi que fui exercido em call a 74.000 (btc) e fui fazendo venda de put porÃ©m fui exercido a 68,500. Portanto um prejuÃ­zo. Preciso de uma tela que mostre a execuÃ§Ã£o da Ãºltima call, as operaÃ...
+
 [2026-04-01 09:56:44]  fonte: clipboard
 10037396267
 
 [2026-03-31 11:28:20]  fonte: clipboard
 https://sei.correios.com.br/sei/controlador.php?acao=procedimento_trabalhar&acao_origem=procedimento_gerar&acao_retorno=procedimento_escolher_tipo&id_procedimento=70129174&atualizar_arvore=1&infra_sistema=100000100&infra_unidade_atual=439410&infra_hash=9a73d05b47d666fe32c75c5c621edb62550b1b592ead4c2dacb4dcd9228445dd#ID-70129174
-
-[2026-03-31 11:19:08]  fonte: clipboard
-GERENTE CORPORATIVO
-
-[2026-03-16 14:19:43]  fonte: clipboard
-Em opcÃ£o, cliquei no botÃ£o fechar operaÃ§Ã£o. Veja a imagem. E agora a operaÃ§Ã£o PETRO424W2 estÃ¡ mostrando que foi exercida e nÃ£o foi. Veja o cÃ¡lculo para apurar o exercÃ­cio. Note que o valor fechado oi menor que o strike. Portando a venda de put nÃ£o foi exercida. Verifique esse cÃ¡lculo e ajuste o resultado na tela.
-
-
-Na tela de cypto, preciso corrigir essa tela da imagem 1
-Nessa mesma te...
-
-[2026-03-16 14:19:11]  fonte: clipboard
-Em opcÃ£o, cliquei no botÃ£o fechar operaÃ§Ã£o. Veja a imagem. E agora a operaÃ§Ã£o PETRO424W2 estÃ¡ mostrando que foi exercida e nÃ£o foi. Veja o cÃ¡lculo para apurar o exercÃ­cio. Note que o valor fechado oi menor que o strike. Portando a venda de put nÃ£o foi exercida. Verifique esse cÃ¡lculo e ajuste o resultado na tela.
-
-
-Na tela de cypto, preciso corrigir essa tela da imagem 1
-Nessa mesma te...
 
 ---
 

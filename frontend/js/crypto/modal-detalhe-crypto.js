@@ -326,9 +326,14 @@
         const resultadoFmt   = op.resultado != null
             ? ((parseFloat(op.resultado) >= 0 ? '+' : '') + parseFloat(op.resultado).toFixed(2) + '%')
             : null;
-        const exercidoBadge = op.exercicio_status === 'SIM'
-            ? "<span class='badge bg-warning text-dark' style='font-size:0.7rem'>✅ SIM</span>"
-            : "<span class='badge bg-secondary' style='font-size:0.7rem'>❌ NÃO</span>";
+        const exercidoBadge = window.CryptoExerciseStatus?.renderBadgeHtml
+          ? window.CryptoExerciseStatus.renderBadgeHtml(op, {
+            openPositive: 'bg-warning text-dark',
+            openNegative: 'bg-success text-white',
+            closedPositive: 'bg-warning text-dark',
+            closedNegative: 'bg-secondary'
+          }).replace('badge ', "badge ").replace('>', " style='font-size:0.7rem'>")
+          : "<span class='badge bg-secondary' style='font-size:0.7rem'>❌ NÃO</span>";
         const probLucro = op.pop != null ? op.pop + '%'
             : (dist !== null && dist !== undefined
                 ? Math.min(95, Math.max(5, 50 + parseFloat(dist) * 3)).toFixed(0) + '% <small style="opacity:.6">(estimado)</small>'
