@@ -24,7 +24,11 @@
 
     // ─── Formatadores ────────────────────────────────────────────────────────
     function fmtUsd(v) {
-        return 'US$\u00a0' + (parseFloat(v) || 0).toLocaleString('pt-BR', {
+        if (window.CryptoExerciseStatus?.formatUsd) {
+            return window.CryptoExerciseStatus.formatUsd(v);
+        }
+        const n = parseFloat(v) || 0;
+        return 'US$ ' + n.toLocaleString('en-US', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
         });
@@ -206,23 +210,106 @@
         };
     }
 
-    function getProbabilityTone(probExercicio) {
-        const p = Number.isFinite(probExercicio) ? probExercicio : 50;
-        if (p >= 65) {
+    function resolveExerciseDisplayStatus(op, cotacao) {
+        const opView = Object.assign({}, op, {
+            cotacao_atual: Number.isFinite(cotacao) ? cotacao : op?.cotacao_atual,
+        });
+        if (window.CryptoExerciseStatus?.resolveDisplayStatus) {
+            return window.CryptoExerciseStatus.resolveDisplayStatus(opView);
+        }
+
+        const tipo = String(op?.tipo || '').toUpperCase();
+        const strike = parseFloat(op?.strike);
+        const current = parseFloat(opView.cotacao_atual);
+        if (!Number.isFinite(strike) || !Number.isFinite(current) || strike <= 0 || current <= 0) {
+            return 'NAO';
+        }
+        if (tipo === 'CALL') return current <= strike ? 'SIM' : 'NAO';
+        if (tipo === 'PUT') return current >= strike ? 'SIM' : 'NAO';
+        return 'NAO';
+    }
+
+    function getResultCardState(op, favorDist, cotacao) {
+        const status = String(op?.status || 'ABERTA').trim().toUpperCase();
+        const isClosed = status === 'FECHADA' || status === 'EXERCIDA' || status === 'ENCERRADA';
+        const displayStatus = resolveExerciseDisplayStatus(op, cotacao);
+        const nearBoundary = Number.isFinite(favorDist) ? Math.abs(favorDist) < 2 : false;
+
+        if (isClosed) {
+            if (displayStatus === 'SIM') {
+                return {
+                    isClosed,
+                    displayStatus,
+                    toneLevel: 'risk',
+                    accent: '#e85d4a',
+                    probBg: 'rgba(232,93,74,0.14)',
+                    probBorder: 'rgba(232,93,74,0.38)',
+                    pill: 'Fechada · Exercida',
+                    subLabel: 'Resultado consolidado',
+                    metricLabel: 'Resultado Final de Exercício',
+                    riskTitle: 'Exercício Confirmado',
+                    riskDesc: 'Operação encerrada com exercício. Resultado já consolidado.',
+                };
+            }
             return {
-                bg: 'rgba(248,81,73,0.14)',
-                border: 'rgba(248,81,73,0.34)'
+                isClosed,
+                displayStatus,
+                toneLevel: 'safe',
+                accent: '#47b96c',
+                probBg: 'rgba(71,185,108,0.12)',
+                probBorder: 'rgba(71,185,108,0.32)',
+                pill: 'Fechada · Não Exercida',
+                subLabel: 'Resultado consolidado',
+                metricLabel: 'Resultado Final de Exercício',
+                riskTitle: 'Sem Exercício',
+                riskDesc: 'Operação encerrada sem exercício. Retorno consolidado em prêmio.',
             };
         }
-        if (p >= 45) {
+
+        if (displayStatus === 'SIM') {
             return {
-                bg: 'rgba(245,159,0,0.12)',
-                border: 'rgba(245,159,0,0.32)'
+                isClosed,
+                displayStatus,
+                toneLevel: 'risk',
+                accent: '#e85d4a',
+                probBg: 'rgba(232,93,74,0.14)',
+                probBorder: 'rgba(232,93,74,0.36)',
+                pill: 'Exercício Provável',
+                subLabel: 'Em andamento',
+                metricLabel: 'Distância Favorável para Exercício',
+                riskTitle: 'Atenção',
+                riskDesc: 'Operação em zona favorável ao exercício no momento.',
             };
         }
+
+        if (nearBoundary) {
+            return {
+                isClosed,
+                displayStatus,
+                toneLevel: 'neutral',
+                accent: '#f59f00',
+                probBg: 'rgba(245,159,0,0.12)',
+                probBorder: 'rgba(245,159,0,0.32)',
+                pill: 'Margem Curta',
+                subLabel: 'Em andamento',
+                metricLabel: 'Distância para Exercício',
+                riskTitle: 'Atenção',
+                riskDesc: 'Próximo ao strike. Pequeno movimento pode inverter cenário.',
+            };
+        }
+
         return {
-            bg: 'rgba(63,185,80,0.10)',
-            border: 'rgba(63,185,80,0.28)'
+            isClosed,
+            displayStatus,
+            toneLevel: 'safe',
+            accent: '#47b96c',
+            probBg: 'rgba(71,185,108,0.10)',
+            probBorder: 'rgba(71,185,108,0.30)',
+            pill: 'Sem Exercício Provável',
+            subLabel: 'Em andamento',
+            metricLabel: 'Distância para Exercício',
+            riskTitle: 'Segurança',
+            riskDesc: 'Distância saudável em relação ao strike para evitar exercício.',
         };
     }
 
@@ -526,41 +613,44 @@
         }
 
         const dist = data.favorDist;
-        const probExercicio = calcPOP(data.tipo, data.cotacao, data.strike);
-        const probTone = getProbabilityTone(probExercicio);
+        const cardState = getResultCardState(op, dist, cotacao);
         const signedDist = (dist >= 0 ? '+' : '') + dist.toFixed(2) + '%';
         const diffAbs = (data.diffAbs >= 0 ? '+' : '-') + fmtUsd(Math.abs(data.diffAbs));
         const diffPctStrike = (data.diffPctStrike >= 0 ? '+' : '') + data.diffPctStrike.toFixed(2) + '%';
         const premioFmt = data.premio > 0 ? '+' + fmtUsd(data.premio) : '—';
 
         const segHtml = [0, 1, 2, 3].map(function (idx) {
-            const active = idx <= data.zone.level;
+            const active = idx <= (cardState.toneLevel === 'risk' ? 3 : cardState.toneLevel === 'neutral' ? 2 : 1);
             return `<span class="mac-ret-seg ${active ? 'active' : ''}"></span>`;
         }).join('');
 
         const barsHtml = [1, 2, 3, 4].map(function (idx) {
-            const active = idx <= (data.zone.level + 1);
+            const active = idx <= (cardState.toneLevel === 'risk' ? 4 : cardState.toneLevel === 'neutral' ? 3 : 2);
             return `<span class="mac-ret-risk-bar ${active ? 'active' : ''}"></span>`;
         }).join('');
 
         body.innerHTML = `
-            <div class="mac-ret-card" style="--mac-ret-accent:${data.zone.accent};--mac-ret-prob-bg:${probTone.bg};--mac-ret-prob-border:${probTone.border}">
+            <div class="mac-ret-card ${cardState.isClosed ? 'mac-ret-card-closed' : 'mac-ret-card-open'} mac-ret-tone-${cardState.toneLevel}" style="--mac-ret-accent:${cardState.accent};--mac-ret-prob-bg:${cardState.probBg};--mac-ret-prob-border:${cardState.probBorder}">
                 <div class="mac-ret-top">
                     <div>
                         <div class="mac-ret-ticker">${data.ativo}</div>
-                        <div class="mac-ret-sub">${data.tipo} · Resultado atual</div>
+                        <div class="mac-ret-sub">${data.tipo} · ${cardState.subLabel}</div>
                     </div>
                     <div class="mac-ret-pill">
                         <span class="mac-ret-led"></span>
-                        ${data.zone.pill}
+                        ${cardState.pill}
                     </div>
+                </div>
+
+                <div class="mac-ret-mode ${cardState.isClosed ? 'is-closed' : 'is-open'}">
+                    ${cardState.isClosed ? 'Operação encerrada: leitura de resultado final' : 'Operação em andamento: leitura de cenário atual'}
                 </div>
 
                 <div class="mac-ret-segments">${segHtml}</div>
 
                 <div class="mac-ret-pct-block">
                     <div class="mac-ret-pct">${signedDist}</div>
-                    <div class="mac-ret-pct-lbl">Distância Favorável para Exercício</div>
+                    <div class="mac-ret-pct-lbl">${cardState.metricLabel}</div>
                 </div>
 
                 <div class="mac-ret-divider"></div>
@@ -587,8 +677,8 @@
                 <div class="mac-ret-risk">
                     <div class="mac-ret-risk-bars">${barsHtml}</div>
                     <div>
-                        <div class="mac-ret-risk-title">${data.zone.riskTitle}</div>
-                        <div class="mac-ret-risk-desc">${data.zone.riskDesc}</div>
+                        <div class="mac-ret-risk-title">${cardState.riskTitle}</div>
+                        <div class="mac-ret-risk-desc">${cardState.riskDesc}</div>
                     </div>
                 </div>
             </div>
@@ -616,7 +706,6 @@
         const ativo    = (op.ativo || 'BTC').toUpperCase();
         const tipo     = (op.tipo || 'PUT').toUpperCase();
         const risk     = getRisk(distNum);
-
         const timePct       = calcTimePct(op.data_operacao, op.exercicio) || 0;
         const vcEnd         = getVencEnd(op.exercicio);
         const msLeft        = vcEnd ? Math.max(0, vcEnd - Date.now()) : 0;

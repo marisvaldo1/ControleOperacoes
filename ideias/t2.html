@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>7 Ideias - Visualização Strike</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f1729;
+            color: #fff;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .controls {
+            background: #1a2332;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .control-group label {
+            font-size: 0.9rem;
+            color: #9ca3af;
+        }
+
+        .control-group input,
+        .control-group select {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #374151;
+            background: #0f1729;
+            color: #fff;
+            font-size: 1rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+        }
+
+        .card {
+            background: #1a2332;
+            border-radius: 16px;
+            padding: 25px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            color: #60a5fa;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .card-content {
+            min-height: 280px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Ideia 1: Termômetro Vertical */
+        .thermometer {
+            width: 80px;
+            height: 250px;
+            background: linear-gradient(to top, var(--bg-color) 0%, var(--bg-color) 100%);
+            border-radius: 40px;
+            position: relative;
+            border: 3px solid #374151;
+            overflow: hidden;
+        }
+
+        .thermometer-fill {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            transition: height 0.5s ease;
+            border-radius: 40px 40px 0 0;
+        }
+
+        .thermometer-marker {
+            position: absolute;
+            right: -60px;
+            width: 150px;
+            text-align: left;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .thermometer-marker.current {
+            color: #fbbf24;
+        }
+
+        .thermometer-marker.strike {
+            color: #60a5fa;
+        }
+
+        /* Ideia 2: Barra Horizontal com Marcadores */
+        .horizontal-bar {
+            width: 100%;
+            position: relative;
+        }
+
+        .bar-track {
+            height: 40px;
+            background: linear-gradient(to right, 
+                #ef4444 0%, 
+                #fbbf24 45%, 
+                #fbbf24 55%, 
+                #10b981 100%);
+            border-radius: 20px;
+            position: relative;
+            border: 2px solid #374151;
+        }
+
+        .bar-marker {
+            position: absolute;
+            top: -40px;
+            transform: translateX(-50%);
+            text-align: center;
+        }
+
+        .bar-indicator {
+            width: 4px;
+            height: 60px;
+            background: #fff;
+            position: absolute;
+            top: -10px;
+            transform: translateX(-50%);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        .bar-label {
+            font-size: 0.8rem;
+            white-space: nowrap;
+            font-weight: 600;
+        }
+
+        /* Ideia 3: Gauge Semicircular */
+        .gauge {
+            width: 200px;
+            height: 120px;
+            position: relative;
+        }
+
+        .gauge-svg {
+            transform: rotate(-90deg);
+        }
+
+        .gauge-info {
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .gauge-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #fbbf24;
+        }
+
+        /* Ideia 4: Target/Alvo Concêntrico */
+        .target {
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .target-ring {
+            position: absolute;
+            border-radius: 50%;
+            border: 3px solid;
+        }
+
+        .target-ring.outer {
+            width: 220px;
+            height: 220px;
+            border-color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .target-ring.middle {
+            width: 150px;
+            height: 150px;
+            border-color: #fbbf24;
+            background: rgba(251, 191, 36, 0.1);
+        }
+
+        .target-ring.inner {
+            width: 80px;
+            height: 80px;
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .target-center {
+            width: 30px;
+            height: 30px;
+            background: #60a5fa;
+            border-radius: 50%;
+            z-index: 10;
+            box-shadow: 0 0 20px rgba(96, 165, 250, 0.6);
+        }
+
+        .target-pointer {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: #fbbf24;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            z-index: 15;
+            box-shadow: 0 0 10px rgba(251, 191, 36, 0.8);
+        }
+
+        /* Ideia 5: Régua com Slider */
+        .ruler {
+            width: 100%;
+            position: relative;
+            padding: 20px 0;
+        }
+
+        .ruler-track {
+            height: 60px;
+            background: linear-gradient(to right, #ef4444 0%, #fbbf24 50%, #10b981 100%);
+            border-radius: 8px;
+            position: relative;
+            border: 2px solid #374151;
+        }
+
+        .ruler-ticks {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 10px;
+        }
+
+        .ruler-tick {
+            width: 2px;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .ruler-slider {
+            position: absolute;
+            width: 50px;
+            height: 80px;
+            background: #1a2332;
+            border: 3px solid #fbbf24;
+            border-radius: 8px;
+            top: -10px;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+
+        .ruler-strike-marker {
+            position: absolute;
+            width: 4px;
+            height: 80px;
+            background: #60a5fa;
+            top: -10px;
+            transform: translateX(-50%);
+            box-shadow: 0 0 10px rgba(96, 165, 250, 0.5);
+        }
+
+        /* Ideia 6: Barra de Distância com Gradiente */
+        .distance-bar {
+            width: 100%;
+        }
+
+        .distance-container {
+            background: #0f1729;
+            border-radius: 12px;
+            padding: 20px;
+            border: 2px solid #374151;
+        }
+
+        .distance-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .distance-value {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .distance-track {
+            height: 30px;
+            background: #1a2332;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .distance-fill {
+            height: 100%;
+            background: linear-gradient(to right, #ef4444, #fbbf24, #10b981);
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        /* Ideia 7: Cards com Status Visual */
+        .status-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            width: 100%;
+        }
+
+        .status-card {
+            background: #0f1729;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #374151;
+            text-align: center;
+        }
+
+        .status-card-label {
+            font-size: 0.8rem;
+            color: #9ca3af;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-card-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .status-indicator {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: linear-gradient(to right, #ef4444, #fbbf24, #10b981);
+            position: relative;
+        }
+
+        .status-dot {
+            width: 16px;
+            height: 16px;
+            background: #fff;
+            border-radius: 50%;
+            position: absolute;
+            top: -4px;
+            transform: translateX(-50%);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        .info-text {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: #9ca3af;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>7 Ideias para Visualização Strike vs Cotação</h1>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label>Tipo:</label>
+                <select id="type">
+                    <option value="PUT">PUT</option>
+                    <option value="CALL">CALL</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>Strike:</label>
+                <input type="number" id="strike" value="2225" step="0.01">
+            </div>
+            <div class="control-group">
+                <label>Cotação Atual:</label>
+                <input type="number" id="current" value="2227.21" step="0.01">
+            </div>
+            <div class="control-group">
+                <label>Ação:</label>
+                <button onclick="updateAll()" style="padding: 8px 20px; background: #667eea; border: none; color: white; border-radius: 6px; cursor: pointer; font-weight: 600;">Atualizar Todas</button>
+            </div>
+        </div>
+
+        <div class="grid">
+            <!-- Ideia 1: Termômetro Vertical -->
+            <div class="card" id="card1">
+                <div class="card-title">1. Termômetro Vertical</div>
+                <div class="card-content">
+                    <div class="thermometer" id="thermometer">
+                        <div class="thermometer-fill" id="thermo-fill"></div>
+                        <div class="thermometer-marker current" id="thermo-current">● Atual</div>
+                        <div class="thermometer-marker strike" id="thermo-strike">◆ Strike</div>
+                    </div>
+                </div>
+                <div class="info-text" id="info1"></div>
+            </div>
+
+            <!-- Ideia 2: Barra Horizontal com Marcadores -->
+            <div class="card" id="card2">
+                <div class="card-title">2. Barra Horizontal com Zonas</div>
+                <div class="card-content">
+                    <div class="horizontal-bar">
+                        <div class="bar-marker" id="bar-current-marker">
+                            <div class="bar-label">Atual</div>
+                            <div class="bar-indicator"></div>
+                        </div>
+                        <div class="bar-marker" id="bar-strike-marker" style="color: #60a5fa;">
+                            <div class="bar-label">Strike</div>
+                            <div class="bar-indicator" style="background: #60a5fa;"></div>
+                        </div>
+                        <div class="bar-track"></div>
+                    </div>
+                </div>
+                <div class="info-text" id="info2"></div>
+            </div>
+
+            <!-- Ideia 3: Gauge Semicircular -->
+            <div class="card" id="card3">
+                <div class="card-title">3. Gauge Semicircular</div>
+                <div class="card-content">
+                    <div class="gauge">
+                        <svg class="gauge-svg" width="200" height="120" id="gauge-svg">
+                            <path id="gauge-bg" d="M 20 100 A 80 80 0 0 1 180 100" 
+                                  fill="none" stroke="#374151" stroke-width="20" stroke-linecap="round"/>
+                            <path id="gauge-fill" d="M 20 100 A 80 80 0 0 1 180 100" 
+                                  fill="none" stroke="#10b981" stroke-width="20" stroke-linecap="round"
+                                  stroke-dasharray="251.2" stroke-dashoffset="251.2"/>
+                        </svg>
+                        <div class="gauge-info">
+                            <div class="gauge-value" id="gauge-value">0%</div>
+                            <div style="font-size: 0.85rem; color: #9ca3af;">Distância</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="info-text" id="info3"></div>
+            </div>
+
+            <!-- Ideia 4: Target/Alvo Concêntrico -->
+            <div class="card" id="card4">
+                <div class="card-title">4. Target Concêntrico</div>
+                <div class="card-content">
+                    <div class="target">
+                        <div class="target-ring outer"></div>
+                        <div class="target-ring middle"></div>
+                        <div class="target-ring inner"></div>
+                        <div class="target-center" title="Strike"></div>
+                        <div class="target-pointer" id="target-pointer"></div>
+                    </div>
+                </div>
+                <div class="info-text" id="info4"></div>
+            </div>
+
+            <!-- Ideia 5: Régua com Slider -->
+            <div class="card" id="card5">
+                <div class="card-title">5. Régua de Preços</div>
+                <div class="card-content">
+                    <div class="ruler">
+                        <div class="ruler-track">
+                            <div class="ruler-ticks">
+                                <div class="ruler-tick"></div>
+                                <div class="ruler-tick"></div>
+                                <div class="ruler-tick"></div>
+                                <div class="ruler-tick"></div>
+                                <div class="ruler-tick"></div>
+                            </div>
+                        </div>
+                        <div class="ruler-strike-marker" id="ruler-strike"></div>
+                        <div class="ruler-slider" id="ruler-slider">
+                            <div style="font-size: 0.7rem; color: #9ca3af;">ATUAL</div>
+                            <div id="ruler-value" style="font-size: 1rem; font-weight: 700;">$0</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="info-text" id="info5"></div>
+            </div>
+
+            <!-- Ideia 6: Barra de Distância com Gradiente -->
+            <div class="card" id="card6">
+                <div class="card-title">6. Barra de Distância Percentual</div>
+                <div class="card-content">
+                    <div class="distance-bar">
+                        <div class="distance-container">
+                            <div class="distance-header">
+                                <div>
+                                    <div style="font-size: 0.8rem; color: #9ca3af;">DISTÂNCIA DO STRIKE</div>
+                                    <div class="distance-value" id="distance-value">0%</div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 0.8rem; color: #9ca3af;">STATUS</div>
+                                    <div style="font-size: 1.2rem; font-weight: 600;" id="distance-status">-</div>
+                                </div>
+                            </div>
+                            <div class="distance-track">
+                                <div class="distance-fill" id="distance-fill"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="info-text" id="info6"></div>
+            </div>
+
+            <!-- Ideia 7: Cards com Status Visual -->
+            <div class="card" id="card7">
+                <div class="card-title">7. Cards de Status</div>
+                <div class="card-content">
+                    <div class="status-cards">
+                        <div class="status-card">
+                            <div class="status-card-label">Strike</div>
+                            <div class="status-card-value" id="status-strike">$0</div>
+                            <div class="status-indicator">
+                                <div class="status-dot" style="left: 50%;"></div>
+                            </div>
+                        </div>
+                        <div class="status-card">
+                            <div class="status-card-label">Cotação Atual</div>
+                            <div class="status-card-value" id="status-current">$0</div>
+                            <div class="status-indicator">
+                                <div class="status-dot" id="status-dot"></div>
+                            </div>
+                        </div>
+                        <div class="status-card" style="grid-column: 1 / -1;">
+                            <div class="status-card-label">Distância</div>
+                            <div class="status-card-value" id="status-distance">0%</div>
+                            <div style="font-size: 0.9rem; font-weight: 600; margin-top: 5px;" id="status-text">-</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="info-text" id="info7"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function getBackgroundColor(type, current, strike) {
+            const diff = ((current - strike) / strike) * 100;
+            
+            if (type === 'CALL') {
+                if (current < strike) return '#ef4444'; // Vermelho - Em exercício
+                if (Math.abs(diff) <= 5) return '#fbbf24'; // Amarelo - Perto do strike
+                return '#10b981'; // Verde - Sem exercício
+            } else { // PUT
+                if (current > strike) return '#ef4444'; // Vermelho - Em exercício
+                if (Math.abs(diff) <= 5) return '#fbbf24'; // Amarelo - Perto do strike
+                return '#10b981'; // Verde - Sem exercício
+            }
+        }
+
+        function getStatusText(type, current, strike) {
+            const diff = ((current - strike) / strike) * 100;
+            
+            if (type === 'CALL') {
+                if (current < strike) return 'EM EXERCÍCIO';
+                if (Math.abs(diff) <= 5) return 'ZONA DE ATENÇÃO';
+                return 'SEM EXERCÍCIO';
+            } else { // PUT
+                if (current > strike) return 'EM EXERCÍCIO';
+                if (Math.abs(diff) <= 5) return 'ZONA DE ATENÇÃO';
+                return 'SEM EXERCÍCIO';
+            }
+        }
+
+        function updateAll() {
+            const type = document.getElementById('type').value;
+            const strike = parseFloat(document.getElementById('strike').value);
+            const current = parseFloat(document.getElementById('current').value);
+            
+            const bgColor = getBackgroundColor(type, current, strike);
+            const distance = ((current - strike) / strike) * 100;
+            const statusText = getStatusText(type, current, strike);
+            
+            // Atualizar todos os cards com a cor de fundo
+            for (let i = 1; i <= 7; i++) {
+                const card = document.getElementById(`card${i}`);
+                card.style.background = bgColor;
+                card.style.transition = 'background 0.5s ease';
+            }
+
+            // Ideia 1: Termômetro
+            updateThermometer(strike, current, distance);
+            document.getElementById('info1').textContent = `${statusText} | Distância: ${distance.toFixed(2)}%`;
+
+            // Ideia 2: Barra Horizontal
+            updateHorizontalBar(strike, current, distance);
+            document.getElementById('info2').textContent = `${statusText} | Distância: ${distance.toFixed(2)}%`;
+
+            // Ideia 3: Gauge
+            updateGauge(distance, statusText);
+            document.getElementById('info3').textContent = `Strike: $${strike.toFixed(2)} | Atual: $${current.toFixed(2)}`;
+
+            // Ideia 4: Target
+            updateTarget(distance);
+            document.getElementById('info4').textContent = `${statusText} | Distância: ${distance.toFixed(2)}%`;
+
+            // Ideia 5: Régua
+            updateRuler(strike, current, distance);
+            document.getElementById('info5').textContent = `${statusText}`;
+
+            // Ideia 6: Barra de Distância
+            updateDistanceBar(distance, statusText);
+            document.getElementById('info6').textContent = `Strike: $${strike.toFixed(2)} | Atual: $${current.toFixed(2)}`;
+
+            // Ideia 7: Cards
+            updateStatusCards(strike, current, distance, statusText);
+            document.getElementById('info7').textContent = `${statusText}`;
+        }
+
+        function updateThermometer(strike, current, distance) {
+            const min = Math.min(strike, current) * 0.95;
+            const max = Math.max(strike, current) * 1.05;
+            const range = max - min;
+            
+            const currentPercent = ((current - min) / range) * 100;
+            const strikePercent = ((strike - min) / range) * 100;
+            
+            document.getElementById('thermo-fill').style.height = currentPercent + '%';
+            document.getElementById('thermo-current').style.bottom = currentPercent + '%';
+            document.getElementById('thermo-current').textContent = `● $${current.toFixed(2)}`;
+            document.getElementById('thermo-strike').style.bottom = strikePercent + '%';
+            document.getElementById('thermo-strike').textContent = `◆ $${strike.toFixed(2)}`;
+        }
+
+        function updateHorizontalBar(strike, current, distance) {
+            // Calcular posição relativa (0-100%) baseado em +/- 10% do strike
+            const range = strike * 0.2; // 20% range total (10% cada lado)
+            const diff = current - strike;
+            const position = 50 + (diff / range) * 100;
+            const clampedPosition = Math.max(0, Math.min(100, position));
+            
+            document.getElementById('bar-current-marker').style.left = clampedPosition + '%';
+            document.getElementById('bar-strike-marker').style.left = '50%';
+        }
+
+        function updateGauge(distance, statusText) {
+            // Gauge de -10% a +10%
+            const clampedDistance = Math.max(-10, Math.min(10, distance));
+            const rotation = ((clampedDistance + 10) / 20) * 180;
+            const circumference = 251.2;
+            const offset = circumference - (rotation / 180) * circumference;
+            
+            const gaugeFill = document.getElementById('gauge-fill');
+            gaugeFill.style.strokeDashoffset = offset;
+            
+            // Mudar cor baseado na distância
+            if (Math.abs(distance) <= 5) {
+                gaugeFill.style.stroke = '#fbbf24';
+            } else if (distance < 0) {
+                gaugeFill.style.stroke = '#ef4444';
+            } else {
+                gaugeFill.style.stroke = '#10b981';
+            }
+            
+            document.getElementById('gauge-value').textContent = distance.toFixed(2) + '%';
+        }
+
+        function updateTarget(distance) {
+            // Posicionar o pointer baseado na distância
+            const maxDistance = 15; // 15% max
+            const clampedDistance = Math.max(-maxDistance, Math.min(maxDistance, distance));
+            const radius = (Math.abs(clampedDistance) / maxDistance) * 100; // 0 a 100px
+            
+            const angle = distance < 0 ? 225 : 45; // Esquerda ou direita
+            const rad = (angle * Math.PI) / 180;
+            const x = 110 + radius * Math.cos(rad);
+            const y = 110 + radius * Math.sin(rad);
+            
+            const pointer = document.getElementById('target-pointer');
+            pointer.style.left = x + 'px';
+            pointer.style.top = y + 'px';
+        }
+
+        function updateRuler(strike, current, distance) {
+            const range = strike * 0.2;
+            const diff = current - strike;
+            const position = 50 + (diff / range) * 100;
+            const clampedPosition = Math.max(10, Math.min(90, position));
+            
+            document.getElementById('ruler-slider').style.left = clampedPosition + '%';
+            document.getElementById('ruler-strike').style.left = '50%';
+            document.getElementById('ruler-value').textContent = `$${current.toFixed(2)}`;
+        }
+
+        function updateDistanceBar(distance, statusText) {
+            const absDistance = Math.abs(distance);
+            const clampedDistance = Math.min(absDistance, 10);
+            const width = (clampedDistance / 10) * 100;
+            
+            const fill = document.getElementById('distance-fill');
+            fill.style.width = width + '%';
+            
+            document.getElementById('distance-value').textContent = distance.toFixed(2) + '%';
+            document.getElementById('distance-status').textContent = statusText;
+        }
+
+        function updateStatusCards(strike, current, distance, statusText) {
+            document.getElementById('status-strike').textContent = '$' + strike.toFixed(2);
+            document.getElementById('status-current').textContent = '$' + current.toFixed(2);
+            document.getElementById('status-distance').textContent = distance.toFixed(2) + '%';
+            document.getElementById('status-text').textContent = statusText;
+            
+            // Posicionar o dot baseado na distância
+            const range = strike * 0.2;
+            const diff = current - strike;
+            const position = 50 + (diff / range) * 100;
+            const clampedPosition = Math.max(0, Math.min(100, position));
+            
+            document.getElementById('status-dot').style.left = clampedPosition + '%';
+        }
+
+        // Inicializar
+        updateAll();
+    </script>
+</body>
+</html>

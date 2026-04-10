@@ -142,6 +142,109 @@
     padding: 10px;
 }
 
+.mac-ret-card-open {
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.03);
+}
+
+.mac-ret-card-closed {
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.09), 0 0 0 1px rgba(255,255,255,.05);
+}
+
+.mac-ret-tone-risk .mac-ret-pct {
+    text-shadow: 0 0 18px rgba(232,93,74,.28);
+}
+
+.mac-ret-tone-safe .mac-ret-pct {
+    text-shadow: 0 0 18px rgba(71,185,108,.24);
+}
+
+.mac-ret-tone-neutral .mac-ret-pct {
+    text-shadow: 0 0 16px rgba(245,159,0,.22);
+}
+
+.mac-ret-mode {
+    margin-bottom: 8px;
+    padding: 5px 9px;
+    border-radius: 6px;
+    font-size: .64rem;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    border: 1px dashed rgba(255,255,255,.2);
+    color: rgba(255,255,255,.72);
+}
+
+.mac-ret-mode.is-open {
+    background: rgba(77,166,255,.08);
+    border-color: rgba(77,166,255,.35);
+}
+
+.mac-ret-mode.is-closed {
+    background: rgba(255,255,255,.1);
+    border-color: rgba(255,255,255,.35);
+    color: rgba(255,255,255,.84);
+}
+
+.mac-status-banner {
+    margin: 8px 0 12px;
+    border-radius: 8px;
+    padding: 9px 10px;
+    border: 1px solid rgba(255,255,255,.16);
+    background: rgba(255,255,255,.04);
+}
+
+.mac-status-banner-title {
+    font-size: .74rem;
+    font-weight: 700;
+    letter-spacing: .02em;
+    color: rgba(255,255,255,.9);
+}
+
+.mac-status-banner-sub {
+    margin-top: 2px;
+    font-size: .64rem;
+    color: rgba(255,255,255,.62);
+}
+
+.mac-status-banner-chip {
+    margin-top: 7px;
+    display: inline-flex;
+    align-items: center;
+    font-size: .62rem;
+    font-weight: 700;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    border-radius: 999px;
+    padding: 3px 8px;
+    border: 1px solid currentColor;
+}
+
+.mac-status-banner.is-open {
+    border-style: dashed;
+}
+
+.mac-status-banner.is-closed {
+    border-style: solid;
+    background: rgba(255,255,255,.07);
+}
+
+.mac-status-banner.status-exercida {
+    border-color: rgba(232,93,74,.45);
+}
+
+.mac-status-banner.status-exercida .mac-status-banner-chip {
+    color: #e85d4a;
+    background: rgba(232,93,74,.15);
+}
+
+.mac-status-banner.status-nao-exercida {
+    border-color: rgba(71,185,108,.45);
+}
+
+.mac-status-banner.status-nao-exercida .mac-status-banner-chip {
+    color: #47b96c;
+    background: rgba(71,185,108,.14);
+}
+
 .mac-ret-top {
     display: flex;
     justify-content: space-between;
@@ -334,5 +437,9 @@
     .mac-ret-pill {
         font-size: .6rem;
         padding: 3px 8px;
+    }
+
+    .mac-ret-mode {
+        font-size: .58rem;
     }
 }
