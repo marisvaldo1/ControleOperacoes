@@ -1,0 +1,705 @@
+/* modal-resultado-total-crypto-v2.css v2.0.0
+   Estilos para o novo Modal Resultado Total Crypto (Design Claude v1)
+*/
+
+:root {
+  --bg:  #080e1b;
+  --s1:  #0f1923;
+  --s2:  #162238;
+  --s3:  #1e2d48;
+  --s4:  #253a58;
+  --bdr:  rgba(77, 166, 255, 0.07);
+  --bdr2: rgba(77, 166, 255, 0.14);
+  --tx1: #d8e8ff;
+  --tx2: #6a8ab0;
+  --tx3: #304560;
+  --grn: #47b96c;
+  --grn-bg: rgba(71, 185, 108, 0.1);
+  --grn-bdr: rgba(71, 185, 108, 0.26);
+  --red: #f85149;
+  --red-bg: rgba(248, 81, 73, 0.1);
+  --red-bdr: rgba(248, 81, 73, 0.26);
+  --amb: #f59e0b;
+  --amb-bg: rgba(245, 158, 11, 0.1);
+  --amb-bdr: rgba(245, 158, 11, 0.26);
+  --blu: #4da6ff;
+  --blu-bg: rgba(77, 166, 255, 0.1);
+  --blu-bdr: rgba(77, 166, 255, 0.26);
+  --pur: #a78bfa;
+  --pur-bg: rgba(167, 139, 250, 0.1);
+  --pur-bdr: rgba(167, 139, 250, 0.26);
+  --org: #f97316;
+  --org-bg: rgba(249, 115, 22, 0.1);
+  --org-bdr: rgba(249, 115, 22, 0.26);
+  --cya: #22d3ee;
+  --cya-bg: rgba(34, 211, 238, 0.1);
+  --cya-bdr: rgba(34, 211, 238, 0.26);
+  --btc: #f59e0b;
+  --eth: #22d3ee;
+  --mono: 'JetBrains Mono', monospace;
+  --syne: 'Syne', sans-serif;
+  --dm: 'DM Sans', sans-serif;
+}
+
+#modalResultadoTotalCrypto {
+  font-family: var(--dm) !important;
+  background: transparent;
+  color: var(--tx1);
+  font-size: 13px;
+}
+
+#modalResultadoTotalCrypto .modal-content {
+  background: var(--s1);
+  border: 1px solid var(--bdr2);
+  border-radius: 12px;
+  height: 80vh;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 32px 96px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(77, 166, 255, 0.06);
+}
+
+#modalResultadoTotalCrypto .modal-header {
+  padding: 3px 3px;
+  border-bottom: 1px solid var(--bdr);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+  background: var(--s1);
+}
+
+#modalResultadoTotalCrypto .modal-title {
+  font-family: var(--syne);
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--tx1);
+}
+
+#modalResultadoTotalCrypto .modal-header-right {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+#modalResultadoTotalCrypto .mh-time {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--tx2);
+  white-space: nowrap;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--bdr);
+  background: var(--s2);
+}
+
+#modalResultadoTotalCrypto .mh-refresh-btn {
+  background: transparent;
+  border: 1px solid var(--bdr);
+  color: var(--tx2);
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.15s;
+}
+
+#modalResultadoTotalCrypto .mh-refresh-btn:hover {
+  color: var(--tx1);
+  border-color: var(--bdr2);
+  background: var(--s2);
+}
+
+#modalResultadoTotalCrypto .btn-close-white {
+  opacity: 0.7;
+  filter: invert(1) grayscale(100%);
+  transition: opacity 0.15s;
+  /* Sobrescreve margin-left:auto do Bootstrap para evitar sobreposição */
+  margin: 0;
+  position: static;
+  flex-shrink: 0;
+}
+
+#modalResultadoTotalCrypto .btn-close-white:hover {
+  opacity: 1;
+}
+
+/* ─ Topbar (Filtros) ─ */
+#modalResultadoTotalCrypto .topbar {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+  padding: 9px 18px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--bdr);
+  flex-shrink: 0;
+  overflow-x: auto;
+}
+
+#modalResultadoTotalCrypto .topbar::-webkit-scrollbar {
+  height: 3px;
+}
+
+#modalResultadoTotalCrypto .topbar::-webkit-scrollbar-thumb {
+  background: var(--s4);
+  border-radius: 2px;
+}
+
+#modalResultadoTotalCrypto .tb-lbl {
+  font-size: 0.66rem;
+  color: var(--tx2);
+  font-family: var(--mono);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+#modalResultadoTotalCrypto .tb-sep {
+  width: 1px;
+  height: 16px;
+  background: var(--bdr2);
+  flex-shrink: 0;
+  margin: 0 4px;
+}
+
+#modalResultadoTotalCrypto .chip {
+  padding: 0.2rem 0.58rem;
+  border-radius: 6px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--bdr);
+  background: transparent;
+  color: var(--tx2);
+  transition: all 0.12s;
+  white-space: nowrap;
+  font-family: var(--dm);
+}
+
+#modalResultadoTotalCrypto .chip:hover {
+  color: var(--tx1);
+  border-color: var(--bdr2);
+  background: var(--s2);
+}
+
+#modalResultadoTotalCrypto .chip.on {
+  background: var(--blu-bg);
+  border-color: var(--blu);
+  color: var(--tx1);
+}
+
+/* ─ Main Layout ─ */
+#modalResultadoTotalCrypto .modal-body {
+  flex: 1;
+  overflow: hidden;
+  padding: 0;
+}
+
+#modalResultadoTotalCrypto .main-layout {
+  display: grid;
+  grid-template-columns: 4fr 3fr;
+  min-height: 600px;
+  height: 100%;
+}
+
+#modalResultadoTotalCrypto .col-left {
+  border-right: 1px solid var(--bdr);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+#modalResultadoTotalCrypto .col-left::-webkit-scrollbar {
+  width: 3px;
+}
+
+#modalResultadoTotalCrypto .col-left::-webkit-scrollbar-thumb {
+  background: var(--s4);
+  border-radius: 2px;
+}
+
+#modalResultadoTotalCrypto .col-right {
+  overflow-y: auto;
+  background: var(--bg);
+}
+
+#modalResultadoTotalCrypto .col-right::-webkit-scrollbar {
+  width: 3px;
+}
+
+#modalResultadoTotalCrypto .col-right::-webkit-scrollbar-thumb {
+  background: var(--s4);
+  border-radius: 2px;
+}
+
+/* ─ Ciclo (Accordion) ─ */
+#modalResultadoTotalCrypto .ciclo {
+  border-bottom: 1px solid var(--bdr);
+}
+
+#modalResultadoTotalCrypto .ciclo-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 16px;
+  cursor: pointer;
+  background: var(--s1);
+  transition: background 0.14s;
+  user-select: none;
+}
+
+#modalResultadoTotalCrypto .ciclo-head:hover,
+#modalResultadoTotalCrypto .ciclo-head.open {
+  background: var(--s2);
+}
+
+#modalResultadoTotalCrypto .ch-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+#modalResultadoTotalCrypto .ch-date {
+  font-family: var(--syne);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+#modalResultadoTotalCrypto .ch-dow {
+  font-size: 0.7rem;
+  color: var(--tx2);
+}
+
+#modalResultadoTotalCrypto .badge {
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 1px 8px;
+  border-radius: 12px;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+#modalResultadoTotalCrypto .badge.ex {
+  background: var(--org-bg);
+  color: var(--org);
+  border-color: var(--org-bdr);
+}
+
+#modalResultadoTotalCrypto .badge.ab {
+  background: var(--grn-bg);
+  color: var(--grn);
+  border-color: var(--grn-bdr);
+}
+
+#modalResultadoTotalCrypto .badge.ops {
+  background: var(--s3);
+  color: var(--tx2);
+  border-color: var(--bdr);
+}
+
+#modalResultadoTotalCrypto .ch-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#modalResultadoTotalCrypto .ch-total {
+  font-family: var(--mono);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+#modalResultadoTotalCrypto .ch-arr {
+  font-size: 0.68rem;
+  color: var(--tx2);
+  transition: transform 0.2s;
+}
+
+#modalResultadoTotalCrypto .ciclo-head.open .ch-arr {
+  transform: rotate(180deg);
+}
+
+#modalResultadoTotalCrypto .ciclo-body {
+  display: none;
+  border-top: 1px solid var(--bdr);
+}
+
+#modalResultadoTotalCrypto .ciclo-body.open {
+  display: block;
+}
+
+/* ─ Op Row ─ */
+#modalResultadoTotalCrypto .op-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px 9px 28px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  transition: background 0.12s;
+}
+
+#modalResultadoTotalCrypto .op-row:hover {
+  background: var(--s2);
+}
+
+#modalResultadoTotalCrypto .op-row.ex {
+  border-left: 3px solid var(--org);
+  padding-left: 25px;
+}
+
+#modalResultadoTotalCrypto .op-row:last-of-type {
+  border-bottom: none;
+}
+
+#modalResultadoTotalCrypto .or-a {
+  font-family: var(--syne);
+  font-size: 0.82rem;
+  font-weight: 700;
+  min-width: 32px;
+}
+
+#modalResultadoTotalCrypto .or-a.btc {
+  color: var(--btc);
+}
+
+#modalResultadoTotalCrypto .or-a.eth {
+  color: var(--eth);
+}
+
+#modalResultadoTotalCrypto .or-t {
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  border: 1px solid transparent;
+}
+
+#modalResultadoTotalCrypto .or-t.call {
+  background: var(--blu-bg);
+  color: var(--blu);
+  border-color: var(--blu-bdr);
+}
+
+#modalResultadoTotalCrypto .or-t.put {
+  background: var(--pur-bg);
+  color: var(--pur);
+  border-color: var(--pur-bdr);
+}
+
+#modalResultadoTotalCrypto .or-t.exbdg {
+  background: var(--org-bg);
+  color: var(--org);
+  border-color: var(--org-bdr);
+}
+
+#modalResultadoTotalCrypto .or-st {
+  font-size: 0.6rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+#modalResultadoTotalCrypto .or-st.st-fe {
+  background: var(--s3);
+  color: var(--tx2);
+  border-color: var(--bdr2);
+}
+
+#modalResultadoTotalCrypto .or-st.st-ab {
+  background: var(--grn-bg);
+  color: var(--grn);
+  border-color: var(--grn-bdr);
+}
+
+#modalResultadoTotalCrypto .or-st.st-ex {
+  background: var(--org-bg);
+  color: var(--org);
+  border-color: var(--org-bdr);
+}
+
+#modalResultadoTotalCrypto .or-str {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--tx2);
+  flex: 1;
+}
+
+#modalResultadoTotalCrypto .or-val {
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  font-weight: 700;
+  min-width: 78px;
+  text-align: right;
+}
+
+#modalResultadoTotalCrypto .or-pct {
+  font-size: 0.62rem;
+  color: var(--tx2);
+  min-width: 44px;
+  text-align: right;
+}
+
+/* ─ Right Panel ─ */
+#modalResultadoTotalCrypto .rp {
+  padding: 14px;
+}
+
+#modalResultadoTotalCrypto .rp-card {
+  background: var(--s1);
+  border: 1px solid var(--bdr);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+#modalResultadoTotalCrypto .rp-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 13px;
+  background: var(--s2);
+  border-bottom: 1px solid var(--bdr);
+  cursor: pointer;
+  transition: background 0.13s;
+  user-select: none;
+}
+
+#modalResultadoTotalCrypto .rp-head:hover {
+  background: var(--s3);
+}
+
+#modalResultadoTotalCrypto .rp-head-title {
+  font-family: var(--syne);
+  font-size: 0.78rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+#modalResultadoTotalCrypto .rp-arr {
+  font-size: 0.65rem;
+  color: var(--tx2);
+  transition: transform 0.2s;
+}
+
+#modalResultadoTotalCrypto .rp-head.open .rp-arr {
+  transform: rotate(180deg);
+}
+
+#modalResultadoTotalCrypto .rp-body {
+  padding: 12px 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+#modalResultadoTotalCrypto .rp-body.hide {
+  display: none;
+}
+
+#modalResultadoTotalCrypto .rp-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  font-size: 0.7rem;
+}
+
+#modalResultadoTotalCrypto .rp-row:last-child {
+  border-bottom: none;
+}
+
+#modalResultadoTotalCrypto .rp-row-k {
+  color: var(--tx2);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+#modalResultadoTotalCrypto .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+#modalResultadoTotalCrypto .rp-row-v {
+  font-family: var(--mono);
+  font-weight: 600;
+}
+
+#modalResultadoTotalCrypto .kpi-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 12px 13px;
+  border-bottom: 1px solid var(--bdr);
+}
+
+#modalResultadoTotalCrypto .kpi-i {
+  background: var(--s2);
+  border-radius: 8px;
+  padding: 9px 11px;
+}
+
+#modalResultadoTotalCrypto .kpi-v {
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+#modalResultadoTotalCrypto .kpi-loading {
+  display: inline-block;
+  color: var(--tx3);
+  animation: kpi-pulse 0.9s ease-in-out infinite alternate;
+  letter-spacing: 2px;
+}
+
+@keyframes kpi-pulse {
+  from { opacity: 0.3; }
+  to   { opacity: 1;   }
+}
+
+#modalResultadoTotalCrypto .kpi-l {
+  font-size: 0.56rem;
+  color: var(--tx2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 3px;
+}
+
+#modalResultadoTotalCrypto .pos {
+  color: var(--grn);
+}
+
+#modalResultadoTotalCrypto .neg {
+  color: var(--red);
+}
+
+#modalResultadoTotalCrypto .neu {
+  color: var(--amb);
+}
+
+/* Responsivo */
+@media (max-width: 992px) {
+  #modalResultadoTotalCrypto .main-layout {
+    grid-template-columns: 1fr;
+  }
+  
+  #modalResultadoTotalCrypto .col-left {
+    border-right: none;
+    border-bottom: 1px solid var(--bdr);
+  }
+  
+  #modalResultadoTotalCrypto .col-right {
+    max-height: 40vh;
+  }
+}
+
+/*  Animacoes  */
+@keyframes rt-fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+@keyframes rt-spin   { to { transform: rotate(360deg); } }
+
+/*  Classes extras Claude8  */
+#modalResultadoTotalCrypto .mh-refresh-btn.loading{animation:rt-spin .8s linear infinite;pointer-events:none;opacity:.7}
+
+/* chips coloridos */
+#modalResultadoTotalCrypto .chip.btc{background:var(--amb-bg);border-color:var(--amb-bdr);color:var(--amb)}
+#modalResultadoTotalCrypto .chip.eth{background:var(--cya-bg);border-color:var(--cya-bdr);color:var(--cya)}
+#modalResultadoTotalCrypto .chip.todos{background:var(--blu-bg);border-color:var(--blu-bdr);color:var(--blu)}
+#modalResultadoTotalCrypto .tipo-sel{background:var(--s2);border:1px solid var(--bdr2);color:var(--tx1);font-family:var(--mono);font-size:.66rem;padding:4px 9px;border-radius:6px;cursor:pointer}
+
+/* ciclo-body fadeIn */
+#modalResultadoTotalCrypto .ciclo-body.open{display:block;animation:rt-fadeIn .2s ease}
+
+/* ch-meta, badges standalone, rec bar */
+#modalResultadoTotalCrypto .ch-meta{font-size:.65rem;color:var(--tx2)}
+#modalResultadoTotalCrypto .bex,.badge.bex{background:var(--org-bg);color:var(--org);border-color:var(--org-bdr)}
+#modalResultadoTotalCrypto .bab,.badge.bab{background:var(--grn-bg);color:var(--grn);border-color:var(--grn-bdr)}
+#modalResultadoTotalCrypto .bops,.badge.bops{background:var(--s3);color:var(--tx2);border-color:var(--bdr)}
+#modalResultadoTotalCrypto .ch-rec{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+#modalResultadoTotalCrypto .ch-rec-pct{font-size:.62rem;color:var(--tx2);white-space:nowrap}
+#modalResultadoTotalCrypto .ch-rec-bar{width:80px;height:4px;background:var(--s3);border-radius:2px;overflow:hidden}
+#modalResultadoTotalCrypto .ch-rec-fill{height:100%;border-radius:2px;background:var(--amb)}
+
+/* or-bar (progress na op row) */
+#modalResultadoTotalCrypto .or-t.exbdg{background:var(--org-bg);color:var(--org);border-color:var(--org-bdr)}
+#modalResultadoTotalCrypto .or-bar{width:90px;height:5px;background:var(--s3);border-radius:3px;overflow:hidden;flex-shrink:0}
+#modalResultadoTotalCrypto .or-bf{height:100%;border-radius:3px}
+
+/* cfoot (rodape do ciclo) */
+#modalResultadoTotalCrypto .cfoot{padding:10px 16px 10px 28px;background:rgba(0,0,0,.12);border-top:1px solid var(--bdr)}
+#modalResultadoTotalCrypto .cfoot-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:.68rem}
+#modalResultadoTotalCrypto .cfi{color:var(--tx2)}
+#modalResultadoTotalCrypto .cfi-v{font-family:var(--mono);font-weight:600;color:var(--tx1)}
+#modalResultadoTotalCrypto .cfi-g{color:var(--grn)}
+#modalResultadoTotalCrypto .cfi-a{color:var(--amb)}
+#modalResultadoTotalCrypto .cf-sep{color:var(--tx3)}
+#modalResultadoTotalCrypto .cfoot-contrib{display:flex;flex-direction:column;gap:4px;padding-top:7px;margin-top:6px;border-top:1px solid var(--bdr)}
+#modalResultadoTotalCrypto .cfc-row{display:flex;justify-content:space-between;align-items:center;font-size:.68rem}
+#modalResultadoTotalCrypto .cfc-lbl{color:var(--tx2)}
+#modalResultadoTotalCrypto .cfc-val{font-family:var(--mono);font-weight:700}
+#modalResultadoTotalCrypto .cfc-bar{height:5px;background:var(--s3);border-radius:3px;overflow:hidden;margin-top:4px}
+#modalResultadoTotalCrypto .cfc-fill{height:100%;border-radius:3px;background:var(--grn)}
+
+/* kpi-grid */
+#modalResultadoTotalCrypto .kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:12px 13px;border-bottom:1px solid var(--bdr)}
+#modalResultadoTotalCrypto .kpi-i{background:var(--s2);border-radius:8px;padding:9px 11px}
+
+/* mini-chart */
+#modalResultadoTotalCrypto .mini-chart-wrap{padding:10px 13px;border-bottom:1px solid var(--bdr)}
+#modalResultadoTotalCrypto .mct{font-size:.6rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+#modalResultadoTotalCrypto .ch-wrap{position:relative;height:88px}
+
+/* progress bars */
+#modalResultadoTotalCrypto .prog-section{padding:12px 13px;border-bottom:1px solid var(--bdr)}
+#modalResultadoTotalCrypto .prog-title{font-size:.6rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px}
+#modalResultadoTotalCrypto .prog-item{margin-bottom:8px}
+#modalResultadoTotalCrypto .prog-item:last-child{margin-bottom:0}
+#modalResultadoTotalCrypto .prog-hd{display:flex;justify-content:space-between;font-size:.66rem;margin-bottom:3px}
+#modalResultadoTotalCrypto .prog-lbl{color:var(--tx2)}
+#modalResultadoTotalCrypto .prog-val{font-family:var(--mono);font-weight:600}
+#modalResultadoTotalCrypto .prog-track{height:6px;background:var(--s3);border-radius:3px;overflow:hidden}
+#modalResultadoTotalCrypto .prog-fill{height:100%;border-radius:3px}
+
+/* rp-badge, rp-row.hl, dot */
+#modalResultadoTotalCrypto .rp-badge{font-size:.58rem;font-weight:700;padding:2px 8px;border-radius:10px}
+#modalResultadoTotalCrypto .rb-luc{background:var(--grn-bg);color:var(--grn);border:1px solid var(--grn-bdr)}
+#modalResultadoTotalCrypto .rp-row.hl{padding:8px 0}
+#modalResultadoTotalCrypto .rp-row.hl .rp-row-k{color:var(--tx1);font-weight:600;font-size:.72rem}
+#modalResultadoTotalCrypto .rp-row.hl .rp-row-v{font-size:.8rem}
+#modalResultadoTotalCrypto .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+
+/* cm-box (custo medio) */
+#modalResultadoTotalCrypto .cm-box{background:var(--s3);border:1px solid var(--bdr);border-radius:8px;padding:9px 11px;margin:6px 0}
+#modalResultadoTotalCrypto .cm-box-title{font-size:.6rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
+#modalResultadoTotalCrypto .cm-val{font-family:var(--mono);font-size:.9rem;font-weight:700;line-height:1}
+#modalResultadoTotalCrypto .cm-sub{font-size:.62rem;margin-top:3px}
+
+/* strike items */
+#modalResultadoTotalCrypto .strike-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:var(--s2);border:1px solid var(--bdr);margin-bottom:6px;transition:border-color .13s}
+#modalResultadoTotalCrypto .strike-item:hover{border-color:var(--bdr2)}
+#modalResultadoTotalCrypto .sa{font-family:var(--syne);font-size:.76rem;font-weight:700;min-width:28px}
+#modalResultadoTotalCrypto .si{flex:1}
+#modalResultadoTotalCrypto .si-v{font-family:var(--mono);font-size:.76rem;font-weight:700}
+#modalResultadoTotalCrypto .si-l{font-size:.6rem;color:var(--tx2);margin-top:1px}
+#modalResultadoTotalCrypto .sl{text-align:right}
+#modalResultadoTotalCrypto .sl-v{font-family:var(--mono);font-size:.76rem;font-weight:700;color:var(--grn)}
+#modalResultadoTotalCrypto .sl-l{font-size:.58rem;color:var(--tx2)}
+
+/* heat bar */
+#modalResultadoTotalCrypto .heat-bar{height:20px;border-radius:6px;position:relative;overflow:hidden;margin:5px 0}
+#modalResultadoTotalCrypto .heat-bg{position:absolute;inset:0;background:linear-gradient(90deg,var(--red) 0%,var(--amb) 45%,var(--grn) 100%);opacity:.18}
+#modalResultadoTotalCrypto .heat-cursor{position:absolute;top:50%;transform:translate(-50%,-50%);width:16px;height:16px;border-radius:50%;border:2px solid var(--bg)}

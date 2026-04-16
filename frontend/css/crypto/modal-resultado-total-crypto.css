@@ -193,3 +193,220 @@
     color: #94a3b8;
     font-size: 0.75rem;
 }
+
+/* Calendário compacto estilo claude5 */
+.modal-resultado-total #rtTabCalendar .rt-cal-shell {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 305px;
+    gap: 10px;
+    align-items: stretch;
+}
+
+.modal-resultado-total #rtTabCalendar .rt-cal-left-card .card-body,
+.modal-resultado-total #rtTabCalendar .rt-cal-right-card .card-body {
+    padding: 10px 12px;
+}
+
+.modal-resultado-total #rtTabCalendar .rt-cal-weekdays,
+.modal-resultado-total #rtTabCalendar .rt-cal-grid {
+    gap: 4px;
+}
+
+.modal-resultado-total #rtTabCalendar .rt-day {
+    min-height: 58px;
+    padding: 6px;
+    gap: 4px;
+}
+
+.modal-resultado-total #rtTabCalendar .rt-day.selected {
+    box-shadow: 0 0 0 2px rgba(246, 194, 62, 0.85);
+    border-color: rgba(246, 194, 62, 0.95);
+}
+
+.modal-resultado-total #rtTabCalendar .rt-calendar-legend {
+    margin-top: 2px;
+    gap: 10px;
+}
+
+.modal-resultado-total #rtTabCalendar .rt-legend.rt-loss {
+    background: rgba(214, 57, 57, 0.2);
+    border: 1px solid rgba(214, 57, 57, 0.45);
+}
+
+.modal-resultado-total #rtCalendarRightPanel {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.modal-resultado-total .rt-rp-section {
+    background: rgba(15, 23, 42, 0.55);
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    border-radius: 10px;
+    padding: 9px 10px;
+}
+
+.modal-resultado-total .rt-rp-title {
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #94a3b8;
+    margin-bottom: 6px;
+    font-weight: 700;
+}
+
+.modal-resultado-total .rt-rp-day {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 7px 9px;
+    border-radius: 8px;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    margin-bottom: 8px;
+}
+
+.modal-resultado-total .rt-rp-day.is-positive {
+    background: rgba(47, 179, 68, 0.14);
+    border-color: rgba(47, 179, 68, 0.34);
+}
+
+.modal-resultado-total .rt-rp-day.is-negative {
+    background: rgba(214, 57, 57, 0.14);
+    border-color: rgba(214, 57, 57, 0.34);
+}
+
+.modal-resultado-total .rt-rp-day-label {
+    font-size: 0.68rem;
+    color: #cbd5e1;
+    text-transform: capitalize;
+}
+
+.modal-resultado-total .rt-rp-day-value {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #e2e8f0;
+}
+
+.modal-resultado-total .rt-rp-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.modal-resultado-total .rt-rp-stat {
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    border-radius: 8px;
+    padding: 8px 6px;
+    text-align: center;
+}
+
+.modal-resultado-total .rt-rp-stat-val {
+    font-size: 0.92rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.modal-resultado-total .rt-rp-stat-lbl {
+    font-size: 0.56rem;
+    margin-top: 3px;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.modal-resultado-total .rt-rp-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.modal-resultado-total .rt-rp-bar-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.63rem;
+    color: #cbd5e1;
+}
+
+.modal-resultado-total .rt-rp-bar-track {
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(148, 163, 184, 0.16);
+    overflow: hidden;
+}
+
+.modal-resultado-total .rt-rp-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+}
+
+.modal-resultado-total .rt-rp-bar-fill.is-positive {
+    background: #22c55e;
+}
+
+.modal-resultado-total .rt-rp-bar-fill.is-negative {
+    background: #ef4444;
+}
+
+.modal-resultado-total .rt-rp-rank-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.modal-resultado-total .rt-rp-rank-item {
+    display: grid;
+    grid-template-columns: 18px 1fr auto;
+    gap: 8px;
+    align-items: center;
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.modal-resultado-total .rt-rp-rank-item:last-child {
+    border-bottom: none;
+}
+
+.modal-resultado-total .rt-rp-rank-pos {
+    font-size: 0.62rem;
+    color: #94a3b8;
+    font-weight: 700;
+}
+
+.modal-resultado-total .rt-rp-rank-main {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.modal-resultado-total .rt-rp-rank-date {
+    font-size: 0.64rem;
+    color: #cbd5e1;
+}
+
+.modal-resultado-total .rt-rp-rank-track {
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(148, 163, 184, 0.16);
+    overflow: hidden;
+}
+
+.modal-resultado-total .rt-rp-rank-fill {
+    height: 100%;
+    background: #22c55e;
+}
+
+.modal-resultado-total .rt-rp-rank-value {
+    font-size: 0.66rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+@media (max-width: 1200px) {
+    .modal-resultado-total #rtTabCalendar .rt-cal-shell {
+        grid-template-columns: 1fr;
+    }
+}

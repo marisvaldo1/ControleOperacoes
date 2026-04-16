@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ideias — Aba Resultado Final v2</title>
+  <style>
+    /* ── Reset / base ─────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0d1117;
+      --bg2: #161b22;
+      --bg3: #1e2530;
+      --bg4: #252d3a;
+      --border: rgba(255,255,255,.09);
+      --border2: rgba(255,255,255,.14);
+      --txt: #e2e8f0;
+      --muted: #8b949e;
+      --grn: #22c55e;
+      --grn2: rgba(34,197,94,.12);
+      --red: #ef4444;
+      --red2: rgba(239,68,68,.12);
+      --amb: #f59e0b;
+      --amb2: rgba(245,158,11,.12);
+      --cya: #06b6d4;
+      --cya2: rgba(6,182,212,.12);
+      --pur: #a78bfa;
+      --pur2: rgba(167,139,250,.12);
+      --blu: #3b82f6;
+      --ora: #f97316;
+      --radius: 10px;
+      --radius-sm: 6px;
+    }
+    body { background: var(--bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.5; }
+    .page { max-width: 1400px; margin: 0 auto; padding: 24px 16px 80px; }
+    h1 { font-size: 1.4rem; font-weight: 700; color: var(--txt); margin-bottom: 6px; }
+    .subtitle { color: var(--muted); font-size: .85rem; margin-bottom: 32px; }
+    .section { margin-bottom: 56px; }
+    .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--border2); }
+    .section-tag { background: var(--blu); color: #fff; font-size: .65rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; letter-spacing: .5px; text-transform: uppercase; }
+    .section-title { font-size: 1.05rem; font-weight: 700; }
+    .section-desc { font-size: .78rem; color: var(--muted); margin-bottom: 14px; line-height: 1.6; }
+    .pros-cons { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+    .pros, .cons, .extra { flex: 1; min-width: 180px; background: var(--bg3); border-radius: var(--radius-sm); padding: 10px 12px; font-size: .75rem; }
+    .pros { border-left: 3px solid var(--grn); }
+    .cons { border-left: 3px solid var(--red); }
+    .extra { border-left: 3px solid var(--blu); }
+    .pros li::before { content: '✓ '; color: var(--grn); }
+    .cons li::before { content: '✗ '; color: var(--red); }
+    .extra li::before { content: '→ '; color: var(--blu); }
+    .pros li, .cons li, .extra li { margin-bottom: 4px; list-style: none; }
+    .pros strong, .cons strong, .extra strong { display: block; margin-bottom: 6px; color: var(--txt); font-size: .72rem; text-transform: uppercase; letter-spacing: .4px; }
+
+    /* ── Layout helpers ────────────────────────────────────────────────── */
+    .demo { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; }
+    .col-8 { flex: 0 0 calc(65% - 6px); min-width: 260px; }
+    .col-4 { flex: 0 0 calc(35% - 6px); min-width: 220px; }
+    .col-12 { flex: 0 0 100%; }
+    .col-4-3 { flex: 0 0 calc(33.33% - 8px); min-width: 140px; }
+
+    /* ── Card base ─────────────────────────────────────────────────────── */
+    .card { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 10px; }
+    .card-sm { padding: 9px 11px; }
+    .card-title { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); margin-bottom: 8px; }
+    .card-val { font-family: monospace; font-size: 1.1rem; font-weight: 700; }
+    .card-sub { font-size: .68rem; color: var(--muted); margin-top: 3px; }
+    .text-grn { color: var(--grn); }
+    .text-red { color: var(--red); }
+    .text-amb { color: var(--amb); }
+    .text-cya { color: var(--cya); }
+    .text-pur { color: var(--pur); }
+    .text-muted { color: var(--muted); }
+    .badge { display: inline-flex; align-items: center; font-size: .6rem; font-weight: 700; padding: 2px 7px; border-radius: 10px; }
+    .badge-grn { background: var(--grn2); color: var(--grn); border: 1px solid rgba(34,197,94,.3); }
+    .badge-red { background: var(--red2); color: var(--red); border: 1px solid rgba(239,68,68,.3); }
+    .badge-amb { background: var(--amb2); color: var(--amb); border: 1px solid rgba(245,158,11,.3); }
+    .badge-cya { background: var(--cya2); color: var(--cya); border: 1px solid rgba(6,182,212,.3); }
+    .badge-pur { background: var(--pur2); color: var(--pur); border: 1px solid rgba(167,139,250,.3); }
+    .badge-ora { background: rgba(249,115,22,.12); color: var(--ora); border: 1px solid rgba(249,115,22,.3); }
+    .fw-bold { font-weight: 700; }
+    .flex-between { display: flex; justify-content: space-between; align-items: center; }
+    .flex-gap { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    hr.dim { border: none; border-top: 1px solid var(--border); margin: 10px 0; }
+
+    /* ── Accordion shared ──────────────────────────────────────────────── */
+    .acc-wrap { margin-bottom: 8px; }
+    .acc-head { display: flex; align-items: center; gap: 8px; padding: 10px 13px; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; user-select: none; transition: background .15s; }
+    .acc-head:hover { background: var(--bg4); }
+    .acc-head.open { border-radius: var(--radius-sm) var(--radius-sm) 0 0; border-bottom-color: transparent; }
+    .acc-arrow { margin-left: auto; font-size: .7rem; color: var(--muted); transition: transform .2s; }
+    .acc-head.open .acc-arrow { transform: rotate(180deg); }
+    .acc-body { background: var(--bg3); border: 1px solid var(--border); border-top: none; border-radius: 0 0 var(--radius-sm) var(--radius-sm); padding: 12px 13px; display: none; }
+    .acc-body.open { display: block; }
+
+    /* ── Op row shared ─────────────────────────────────────────────────── */
+    .op-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,.04); font-size: .75rem; flex-wrap: wrap; }
+    .op-row:last-child { border-bottom: none; }
+    .op-asset { font-weight: 700; font-size: .72rem; min-width: 30px; }
+    .op-tipo { font-size: .62rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
+    .op-tipo.call { background: rgba(249,115,22,.15); color: var(--ora); }
+    .op-tipo.put  { background: rgba(167,139,250,.15); color: var(--pur); }
+    .op-strike { font-family: monospace; font-weight: 600; flex: 1; color: var(--txt); }
+    .op-premio { font-family: monospace; font-weight: 700; margin-left: auto; }
+    .op-status { font-size: .6rem; color: var(--muted); }
+    .op-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .dot-grn { background: var(--grn); }
+    .dot-amb { background: var(--amb); }
+    .dot-red { background: var(--red); }
+    .dot-cya { background: var(--cya); }
+
+    /* ── Cycle inline fields ───────────────────────────────────────────── */
+    .cycle-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .cycle-item { background: var(--bg4); border-radius: var(--radius-sm); padding: 7px 9px; }
+    .cycle-lbl { font-size: .58rem; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }
+    .cycle-val { font-family: monospace; font-weight: 700; font-size: .82rem; margin-top: 2px; }
+    .progress-bar-wrap { height: 5px; background: var(--bg4); border-radius: 3px; overflow: hidden; margin-top: 4px; }
+    .progress-fill { height: 100%; border-radius: 3px; }
+
+    /* ── Mini stat row ─────────────────────────────────────────────────── */
+    .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid var(--border); font-size: .72rem; }
+    .stat-row:last-child { border-bottom: none; }
+    .stat-lbl { color: var(--muted); }
+    .stat-val { font-family: monospace; font-weight: 600; }
+
+    /* ── Filter bar ────────────────────────────────────────────────────── */
+    .filter-bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; padding: 8px 12px; background: var(--bg3); border-radius: var(--radius-sm); border: 1px solid var(--border); }
+    .filter-label { font-size: .65rem; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }
+    .filter-btn { font-size: .68rem; font-weight: 600; padding: 4px 10px; border-radius: 5px; border: 1px solid var(--border); background: var(--bg4); color: var(--muted); cursor: pointer; transition: all .15s; }
+    .filter-btn.active, .filter-btn:hover { background: var(--blu); color: #fff; border-color: var(--blu); }
+    .filter-select { font-size: .68rem; padding: 4px 8px; border-radius: 5px; border: 1px solid var(--border); background: var(--bg4); color: var(--txt); cursor: pointer; }
+    .filter-sep { width: 1px; height: 20px; background: var(--border); }
+
+    /* ── Timeline dot connector ────────────────────────────────────────── */
+    .tl-wrap { position: relative; padding-left: 20px; }
+    .tl-wrap::before { content: ''; position: absolute; left: 7px; top: 0; bottom: 0; width: 1px; background: var(--border); }
+    .tl-item { position: relative; padding: 0 0 12px 16px; }
+    .tl-dot { position: absolute; left: -16px; top: 4px; width: 9px; height: 9px; border-radius: 50%; border: 2px solid var(--bg2); }
+    .tl-date { font-size: .62rem; color: var(--muted); margin-bottom: 3px; }
+    .tl-content { background: var(--bg4); border-radius: var(--radius-sm); padding: 6px 9px; font-size: .73rem; }
+
+    /* ── Nav tabs mini ─────────────────────────────────────────────────── */
+    .tab-nav { display: flex; gap: 2px; background: var(--bg3); border-radius: var(--radius-sm); padding: 3px; margin-bottom: 12px; border: 1px solid var(--border); }
+    .tab-btn { flex: 1; text-align: center; font-size: .68rem; font-weight: 600; padding: 6px; border-radius: 5px; border: none; background: none; color: var(--muted); cursor: pointer; transition: all .15s; }
+    .tab-btn.active { background: var(--bg4); color: var(--txt); }
+
+    /* ── Notice box ────────────────────────────────────────────────────── */
+    .notice { font-size: .75rem; color: var(--muted); background: rgba(59,130,246,.07); border: 1px solid rgba(59,130,246,.2); border-radius: var(--radius-sm); padding: 8px 12px; margin-top: 8px; line-height: 1.6; }
+    .notice strong { color: var(--blu); }
+
+    /* ── AI chat textarea fix ──────────────────────────────────────────── */
+    .ai-chat-area { width: 100%; background: var(--bg); color: var(--txt); border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 8px 10px; font-size: .8rem; resize: vertical; min-height: 64px; pointer-events: auto; cursor: text; }
+    .ai-chat-area:focus { outline: none; border-color: var(--blu); }
+    .ai-resp { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; font-size: .8rem; line-height: 1.7; max-height: 320px; overflow-y: auto; }
+    .ai-resp h2 { font-size: .88rem; font-weight: 700; margin: 10px 0 4px; }
+    .ai-resp h3 { font-size: .8rem; font-weight: 700; margin: 8px 0 3px; color: var(--amb); }
+    .ai-resp table { width: 100%; border-collapse: collapse; font-size: .72rem; margin: 8px 0; }
+    .ai-resp th { background: var(--bg4); color: var(--muted); font-weight: 600; padding: 4px 7px; text-align: left; border: 1px solid var(--border); }
+    .ai-resp td { padding: 4px 7px; border: 1px solid var(--border); }
+    .ai-resp code { background: var(--bg4); padding: 1px 5px; border-radius: 3px; font-size: .78rem; color: var(--cya); }
+    .ai-model-tag { font-size: .6rem; color: var(--muted); text-align: right; margin-top: 4px; }
+
+    /* ── Payoff table special ──────────────────────────────────────────── */
+    .payoff-table { width: 100%; border-collapse: collapse; font-size: .72rem; }
+    .payoff-table th { background: var(--bg4); color: var(--muted); font-weight: 700; padding: 5px 8px; text-align: center; border: 1px solid var(--border); font-size: .65rem; text-transform: uppercase; letter-spacing: .3px; }
+    .payoff-table td { padding: 5px 8px; border: 1px solid var(--border); text-align: center; font-family: monospace; font-size: .73rem; }
+    .payoff-table .row-header { text-align: left; color: var(--muted); font-size: .68rem; }
+    .payoff-table .pos { color: var(--grn); font-weight: 700; }
+    .payoff-table .neg { color: var(--red); font-weight: 700; }
+    .payoff-table .neu { color: var(--muted); }
+
+    /* ── Sticky side panel ─────────────────────────────────────────────── */
+    .sticky-side { position: sticky; top: 12px; }
+
+    /* ── Responsive ────────────────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .col-8, .col-4 { flex: 0 0 100%; }
+      .col-4-3 { flex: 0 0 calc(50% - 6px); }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <h1>💡 Ideias — Aba Resultado Final</h1>
+  <p class="subtitle">Protótipos para seleção. Todos os problemas apontados estão resolvidos em cada variação.</p>
+
+  <!-- ════════════════════════════════════════════════════════════════════════
+       IDEIA 1 — Accordion por data-ciclo, painel direito com accordions
+       ════════════════════════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-tag">Ideia 1</span>
+      <span class="section-title">Accordion por Ciclo · Painel lateral colapsável</span>
+    </div>
+    <p class="section-desc">
+      Operações agrupadas por <strong>ciclo</strong> (PUT exercida → CALL exercida ou aberta). Cada accordion mostra o header com
+      data do ciclo, ativo, prêmio total e status. O painel direito tem Resumo, Ciclo BTC e Ciclo ETH em accordions separados.
+      Filtro de moeda por botão + período. Input de chat da IA completamente desbloqueado (elemento nativo).
+    </p>
+    <div class="pros-cons">
+      <div class="pros"><strong>Pontos positivos</strong><li>Ciclos agrupados visualmente</li><li>Fácil de expandir/colapsar</li><li>Hierarquia clara</li></div>
+      <div class="cons"><strong>Atenção</strong><li>Requer lógica de agrupamento</li><li>Pode gerar muitos accordions</li></div>
+      <div class="extra"><strong>Melhorias adicionais</strong><li>Barra de progresso no header do ciclo</li><li>Badge de resultado (+/-) no header</li></div>
+    </div>
+
+    <div class="demo">
+      <!-- Filter bar -->
+      <div class="filter-bar">
+        <span class="filter-label">Período:</span>
+        <button class="filter-btn">7d</button>
+        <button class="filter-btn active">60d</button>
+        <button class="filter-btn">90d</button>
+        <button class="filter-btn">Ano</button>
+        <div class="filter-sep"></div>
+        <span class="filter-label">Moeda:</span>
+        <button class="filter-btn active" onclick="setAssetFilter(this,'ALL')">Todos</button>
+        <button class="filter-btn" onclick="setAssetFilter(this,'BTC')">₿ BTC</button>
+        <button class="filter-btn" onclick="setAssetFilter(this,'ETH')">Ξ ETH</button>
+        <div class="filter-sep"></div>
+        <span class="filter-label">Tipo:</span>
+        <select class="filter-select">
+          <option>Todos</option>
+          <option>Apenas CALL</option>
+          <option>Apenas PUT</option>
+          <option>Exercidas</option>
+          <option>Abertas</option>
+        </select>
+      </div>
+
+      <div class="row">
+        <!-- Col esquerda: accordion de ciclos -->
+        <div class="col-8">
+
+          <!-- Ciclo 1 — BTC+ETH exercidos -->
+          <div class="acc-wrap">
+            <div class="acc-head open" onclick="toggleAcc(this)">
+              <div class="op-dot dot-red"></div>
+              <div style="flex:1">
+                <div style="font-weight:700;font-size:.78rem">Ciclo 08/04/2026 <span class="badge badge-amb" style="margin-left:6px">2 exerc.</span></div>
+                <div style="font-size:.62rem;color:var(--muted)">BTC + ETH · 4 operações</div>
+              </div>
+              <div style="text-align:right;margin-right:10px">
+                <div style="font-family:monospace;font-weight:700;color:var(--grn);font-size:.82rem">+US$ 55,58</div>
+                <div style="font-size:.6rem;color:var(--muted)">prêmios do ciclo</div>
+              </div>
+              <div style="width:80px;margin-right:10px">
+                <div style="font-size:.58rem;color:var(--muted);margin-bottom:2px">Recuperação 72%</div>
+                <div class="progress-bar-wrap"><div class="progress-fill" style="width:72%;background:var(--amb)"></div></div>
+              </div>
+              <span class="acc-arrow">▼</span>
+            </div>
+            <div class="acc-body open">
+              <div class="op-row">
+                <div class="op-dot dot-amb"></div>
+                <span class="op-asset text-amb">BTC</span>
+                <span class="op-tipo call">CALL</span>
+                <span class="op-strike">Strike $71.5K</span>
+                <span class="badge badge-grn" style="font-size:.58rem">Fechada</span>
+                <span class="op-premio text-grn">+US$ 14,26</span>
+              </div>
+              <div class="op-row">
+                <div class="op-dot dot-cya"></div>
+                <span class="op-asset text-cya">ETH</span>
+                <span class="op-tipo call">CALL</span>
+                <span class="op-strike">Strike $2.225</span>
+                <span class="badge badge-grn">Fechada</span>
+                <span class="op-premio text-grn">+US$ 13,53</span>
+              </div>
+              <div class="op-row">
+                <div class="op-dot dot-red"></div>
+                <span class="op-asset text-amb">BTC</span>
+                <span class="op-tipo put">PUT</span>
+                <span class="op-strike">Strike $71.5K</span>
+                <span class="badge badge-amb">Exercida</span>
+                <span class="op-premio text-grn">+US$ 14,26</span>
+              </div>
+              <div class="op-row">
+                <div class="op-dot dot-red"></div>
+                <span class="op-asset text-cya">ETH</span>
+                <span class="op-tipo put">PUT</span>
+                <span class="op-strike">Strike $2.225</span>
+                <span class="badge badge-amb">Exercida</span>
+                <span class="op-premio text-grn">+US$ 13,53</span>
+              </div>
+              <!-- Calc do ciclo inline -->
+              <hr class="dim">
+              <div style="display:flex;gap:16px;font-size:.72rem;flex-wrap:wrap">
+                <div><span class="text-muted">PUT strike:</span> <span class="text-pur fw-bold">$2.225</span></div>
+                <div><span class="text-muted">CALL strike:</span> <span class="text-ora fw-bold">$2.225</span></div>
+                <div><span class="text-muted">Prêmios:</span> <span class="text-grn fw-bold">+$55,58</span></div>
+                <div><span class="text-muted">Custo médio:</span> <span class="text-cya fw-bold">$2.117,31</span></div>
+                <div><span class="text-muted">Desconto:</span> <span class="text-grn fw-bold">-4,84%</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ciclo 2 -->
+          <div class="acc-wrap">
+            <div class="acc-head" onclick="toggleAcc(this)">
+              <div class="op-dot dot-grn"></div>
+              <div style="flex:1">
+                <div style="font-weight:700;font-size:.78rem">Ciclo 13/04/2026 <span class="badge badge-amb" style="margin-left:6px">2 exerc.</span></div>
+                <div style="font-size:.62rem;color:var(--muted)">BTC + ETH · 2 operações</div>
+              </div>
+              <div style="text-align:right;margin-right:10px">
+                <div style="font-family:monospace;font-weight:700;color:var(--grn);font-size:.82rem">+US$ 48,55</div>
+                <div style="font-size:.6rem;color:var(--muted)">prêmios do ciclo</div>
+              </div>
+              <span class="acc-arrow">▼</span>
+            </div>
+            <div class="acc-body">
+              <div class="op-row">
+                <div class="op-dot dot-amb"></div>
+                <span class="op-asset text-amb">BTC</span>
+                <span class="op-tipo call">CALL</span>
+                <span class="op-strike">Strike $74K</span>
+                <span class="badge badge-amb">Exercida</span>
+                <span class="op-premio text-grn">+US$ 24,10</span>
+              </div>
+              <div class="op-row">
+                <div class="op-dot dot-cya"></div>
+                <span class="op-asset text-cya">ETH</span>
+                <span class="op-tipo call">CALL</span>
+                <span class="op-strike">Strike $2.300</span>
+                <span class="badge badge-amb">Exercida</span>
+                <span class="op-premio text-grn">+US$ 24,45</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ciclo 3 — Aberto -->
+          <div class="acc-wrap">
+            <div class="acc-head" onclick="toggleAcc(this)">
+              <div class="op-dot dot-grn" style="animation:pulse 1.5s infinite"></div>
+              <div style="flex:1">
+                <div style="font-weight:700;font-size:.78rem">Ciclo 15/04/2026 <span class="badge badge-cya" style="margin-left:6px">2 abertas</span></div>
+                <div style="font-size:.62rem;color:var(--muted)">BTC + ETH · Venc. 22/04</div>
+              </div>
+              <div style="text-align:right;margin-right:10px">
+                <div style="font-family:monospace;font-weight:700;color:var(--grn);font-size:.82rem">+US$ —</div>
+                <div style="font-size:.6rem;color:var(--muted)">aguardando vencimento</div>
+              </div>
+              <span class="acc-arrow">▼</span>
+            </div>
+            <div class="acc-body">
+              <div class="op-row">
+                <div class="op-dot dot-grn" style="animation:pulse 1.5s infinite"></div>
+                <span class="op-asset text-amb">BTC</span>
+                <span class="op-tipo call">CALL</span>
+                <span class="op-strike">Strike $76K · venc 22/04</span>
+                <span class="badge badge-cya">Aberta</span>
+                <span class="op-premio text-grn">+US$ 17,70</span>
+              </div>
+              <div class="op-row">
+                <div class="op-dot dot-grn" style="animation:pulse 1.5s infinite"></div>
+                <span class="op-asset text-cya">ETH</span>
+                <span class="op-tipo call">CALL</span>
+                <span class="op-strike">Strike $2.350 · venc 22/04</span>
+                <span class="badge badge-cya">Aberta</span>
+                <span class="op-premio text-grn">+US$ 17,70</span>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /col-8 -->
+
+        <!-- Col direita: painel em accordions -->
+        <div class="col-4">
+          <div style="position:sticky;top:8px">
+
+            <!-- Resumo accordion -->
+            <div class="acc-wrap">
+              <div class="acc-head open" onclick="toggleAcc(this)">
+                <span style="font-size:.8rem;font-weight:700">📊 Resumo do Período</span>
+                <span class="acc-arrow">▼</span>
+              </div>
+              <div class="acc-body open">
+                <div class="cycle-grid">
+                  <div class="cycle-item"><div class="cycle-lbl">Total Prêmios</div><div class="cycle-val text-grn">$159,83</div></div>
+                  <div class="cycle-item"><div class="cycle-lbl">Win Rate</div><div class="cycle-val text-grn">100%</div></div>
+                  <div class="cycle-item"><div class="cycle-lbl">Exercidas</div><div class="cycle-val text-amb">4</div></div>
+                  <div class="cycle-item"><div class="cycle-lbl">ROI Est.</div><div class="cycle-val text-grn">+2,4%</div></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Ciclo BTC accordion -->
+            <div class="acc-wrap">
+              <div class="acc-head" onclick="toggleAcc(this)">
+                <span style="color:var(--amb);font-size:.78rem;font-weight:700">₿ Análise Ciclo BTC</span>
+                <span class="badge badge-grn" style="margin-left:auto;margin-right:8px">LUCRATIVO</span>
+                <span class="acc-arrow">▼</span>
+              </div>
+              <div class="acc-body">
+                <div class="stat-row"><span class="stat-lbl">PUT compra</span><span class="stat-val text-pur">$71.500</span></div>
+                <div class="stat-row"><span class="stat-lbl">CALL venda</span><span class="stat-val text-ora">$71.500</span></div>
+                <div class="stat-row"><span class="stat-lbl">Var. do ativo</span><span class="stat-val text-muted">$0</span></div>
+                <div class="stat-row"><span class="stat-lbl">Prêmios ciclo</span><span class="stat-val text-grn">+$107,69</span></div>
+                <div class="stat-row"><span class="stat-lbl fw-bold">Custo médio</span><span class="stat-val text-amb fw-bold">$71.392,31</span></div>
+                <div class="stat-row"><span class="stat-lbl">Desconto</span><span class="stat-val text-grn">-4,84%</span></div>
+                <hr class="dim">
+                <div style="font-size:.65rem;color:var(--muted);margin-bottom:6px">Próxima Operação</div>
+                <div class="stat-row"><span class="stat-lbl">Strike CALL</span><span class="stat-val text-amb">$76.000</span></div>
+                <div class="stat-row"><span class="stat-lbl">Lucro se exercida</span><span class="stat-val text-grn">+$4.607,69</span></div>
+              </div>
+            </div>
+
+            <!-- Ciclo ETH accordion -->
+            <div class="acc-wrap">
+              <div class="acc-head" onclick="toggleAcc(this)">
+                <span style="color:var(--cya);font-size:.78rem;font-weight:700">Ξ Análise Ciclo ETH</span>
+                <span class="badge badge-grn" style="margin-left:auto;margin-right:8px">LUCRATIVO</span>
+                <span class="acc-arrow">▼</span>
+              </div>
+              <div class="acc-body">
+                <div class="stat-row"><span class="stat-lbl">PUT compra</span><span class="stat-val text-pur">$2.225</span></div>
+                <div class="stat-row"><span class="stat-lbl">CALL venda</span><span class="stat-val text-ora">$2.225</span></div>
+                <div class="stat-row"><span class="stat-lbl">Var. do ativo</span><span class="stat-val text-muted">$0</span></div>
+                <div class="stat-row"><span class="stat-lbl">Prêmios ciclo</span><span class="stat-val text-grn">+$107,69</span></div>
+                <div class="stat-row"><span class="stat-lbl fw-bold">Custo médio</span><span class="stat-val text-cya fw-bold">$2.117,31</span></div>
+                <div class="stat-row"><span class="stat-lbl">Desconto</span><span class="stat-val text-grn">-4,84%</span></div>
+                <hr class="dim">
+                <div style="font-size:.65rem;color:var(--muted);margin-bottom:6px">Próxima Operação</div>
+                <div class="stat-row"><span class="stat-lbl">Strike CALL</span><span class="stat-val text-cya">$2.350</span></div>
+                <div class="stat-row"><span class="stat-lbl">Lucro se exercida</span><span class="stat-val text-grn">+$232,69</span></div>
+              </div>
+            </div>
+
+            <!-- Strikes sugeridos accordion -->
+            <div class="acc-wrap">
+              <div class="acc-head" onclick="toggleAcc(this)">
+                <span style="color:var(--grn);font-size:.78rem;font-weight:700">💡 Strikes Sugeridos</span>
+                <span class="acc-arrow">▼</span>
+              </div>
+              <div class="acc-body">
+                <div class="stat-row"><span class="stat-lbl">₿ BTC CALL</span><span class="stat-val text-grn">$76.000</span></div>
+                <div class="stat-row"><span class="stat-lbl">Ξ ETH CALL</span><span class="stat-val text-grn">$2.350</span></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div><!-- /row -->
+
+      <!-- Fix textarea da IA -->
+      <div class="notice">
+        <strong>Fix: Input IA desbloqueado</strong> — O problema do Swal bloqueando o textarea é resolvido adicionando
+        <code>didOpen: (popup) => { popup.querySelector('#cryptoIaFollowup').removeAttribute('disabled'); popup.querySelector('#cryptoIaFollowup').focus(); }</code>
+        no <code>Swal.fire()</code>. Alternativamente, substituir o Swal por um modal Bootstrap nativo garante 100% de interatividade.
+      </div>
+    </div><!-- /demo -->
+  </div><!-- /section 1 -->
+
+
+  <!-- ════════════════════════════════════════════════════════════════════════
+       IDEIA 2 — Timeline vertical + painel lateral em tabs
+       ════════════════════════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-tag">Ideia 2</span>
+      <span class="section-title">Timeline Vertical · Painel lateral com tabs BTC / ETH</span>
+    </div>
+    <p class="section-desc">
+      Coluna esquerda: timeline cronológica com dot colorido por tipo de operação. Accordion por data de ciclo.
+      Coluna direita: tabs BTC / ETH com análise de ciclo completa + Resumo geral na parte de baixo.
+      Gráfico removido. Filtro de moeda funcional.
+    </p>
+    <div class="pros-cons">
+      <div class="pros"><strong>Pontos positivos</strong><li>Timeline dá senso de tempo</li><li>Tabs BTC/ETH deixam limpo</li><li>Fácil comparar ativos</li></div>
+      <div class="cons"><strong>Atenção</strong><li>Painel direito mais alto</li><li>Tabs podem confundir em mobile</li></div>
+      <div class="extra"><strong>Melhorias</strong><li>Dot colorido por ativo</li><li>Indicador de quantidade de dias aberto</li></div>
+    </div>
+
+    <div class="demo">
+      <div class="filter-bar">
+        <span class="filter-label">Moeda:</span>
+        <button class="filter-btn active">Todos</button>
+        <button class="filter-btn">₿ BTC</button>
+        <button class="filter-btn">Ξ ETH</button>
+        <div class="filter-sep"></div>
+        <span class="filter-label">Tipo:</span>
+        <button class="filter-btn active">Todos</button>
+        <button class="filter-btn">Abertas</button>
+        <button class="filter-btn">Exercidas</button>
+      </div>
+
+      <div class="row">
+        <div class="col-8">
+
+          <div class="tl-wrap">
+
+            <!-- Ciclo 1 -->
+            <div class="tl-item">
+              <div class="tl-dot" style="background:var(--grn)"></div>
+              <div class="tl-date">15/04/2026 · Aberta</div>
+              <div class="tl-content">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                  <div style="font-weight:700;font-size:.8rem">Ciclo Atual <span class="badge badge-cya">2 abertas</span></div>
+                  <span style="font-family:monospace;color:var(--grn);font-weight:700">em andamento</span>
+                </div>
+                <div class="op-row">
+                  <div class="op-dot dot-amb"></div>
+                  <span class="op-asset text-amb">BTC</span><span class="op-tipo call">CALL</span>
+                  <span class="op-strike">$76K · venc 22/04</span>
+                  <span class="badge badge-cya">Aberta</span>
+                  <span class="op-premio text-grn">+$17,70</span>
+                </div>
+                <div class="op-row">
+                  <div class="op-dot dot-cya"></div>
+                  <span class="op-asset text-cya">ETH</span><span class="op-tipo call">CALL</span>
+                  <span class="op-strike">$2.350 · venc 22/04</span>
+                  <span class="badge badge-cya">Aberta</span>
+                  <span class="op-premio text-grn">+$17,70</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Ciclo 2 -->
+            <div class="tl-item">
+              <div class="tl-dot" style="background:var(--amb)"></div>
+              <div class="tl-date">13/04/2026 · 2 exercidas</div>
+              <div class="tl-content">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                  <div style="font-weight:700;font-size:.8rem">Ciclo Fechado <span class="badge badge-amb">2 exerc.</span></div>
+                  <span style="font-family:monospace;color:var(--grn);font-weight:700">+$48,55</span>
+                </div>
+                <div class="op-row">
+                  <div class="op-dot dot-amb"></div>
+                  <span class="op-asset text-amb">BTC</span><span class="op-tipo call">CALL</span>
+                  <span class="op-strike">$74K</span>
+                  <span class="badge badge-amb">Exercida</span>
+                  <span class="op-premio text-grn">+$24,10</span>
+                </div>
+                <div class="op-row">
+                  <div class="op-dot dot-cya"></div>
+                  <span class="op-asset text-cya">ETH</span><span class="op-tipo call">CALL</span>
+                  <span class="op-strike">$2.300</span>
+                  <span class="badge badge-amb">Exercida</span>
+                  <span class="op-premio text-grn">+$24,45</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Ciclo 3 -->
+            <div class="tl-item">
+              <div class="tl-dot" style="background:var(--red)"></div>
+              <div class="tl-date">08/04/2026 · 2 PUT exercidas</div>
+              <div class="tl-content">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                  <div style="font-weight:700;font-size:.8rem">Ciclo com PUT <span class="badge badge-red">2 exerc.</span></div>
+                  <span style="font-family:monospace;color:var(--grn);font-weight:700">+$55,58</span>
+                </div>
+                <div class="op-row">
+                  <span class="op-asset text-amb">BTC</span><span class="op-tipo call">CALL</span><span class="op-strike">$71.5K</span><span class="badge badge-grn">Fechada</span><span class="op-premio text-grn">+$14,26</span>
+                </div>
+                <div class="op-row">
+                  <span class="op-asset text-cya">ETH</span><span class="op-tipo call">CALL</span><span class="op-strike">$2.225</span><span class="badge badge-grn">Fechada</span><span class="op-premio text-grn">+$13,53</span>
+                </div>
+                <div class="op-row">
+                  <span class="op-asset text-amb">BTC</span><span class="op-tipo put">PUT</span><span class="op-strike">$71.5K</span><span class="badge badge-red">Exercida</span><span class="op-premio text-grn">+$14,26</span>
+                </div>
+                <div class="op-row">
+                  <span class="op-asset text-cya">ETH</span><span class="op-tipo put">PUT</span><span class="op-strike">$2.225</span><span class="badge badge-red">Exercida</span><span class="op-premio text-grn">+$13,53</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Lado direito: tabs BTC/ETH -->
+        <div class="col-4">
+          <div style="position:sticky;top:8px">
+            <div class="tab-nav">
+              <button class="tab-btn active" onclick="switchTab(this,'t2-btc','t2-eth')">₿ BTC</button>
+              <button class="tab-btn" onclick="switchTab(this,'t2-eth','t2-btc')">Ξ ETH</button>
+              <button class="tab-btn" onclick="switchTab(this,'t2-res','t2-btc,t2-eth')">Resumo</button>
+            </div>
+
+            <div id="t2-btc">
+              <div class="card card-sm"><div class="card-title">Análise Ciclo BTC</div>
+                <div class="stat-row"><span class="stat-lbl">PUT compra</span><span class="stat-val text-pur">$71.500</span></div>
+                <div class="stat-row"><span class="stat-lbl">CALL venda</span><span class="stat-val text-ora">$71.500</span></div>
+                <div class="stat-row"><span class="stat-lbl">Prêmios ciclo</span><span class="stat-val text-grn">+$107,69</span></div>
+                <div class="stat-row"><span class="stat-lbl">Custo médio</span><span class="stat-val text-amb">$71.392</span></div>
+                <div class="stat-row"><span class="stat-lbl">Desconto</span><span class="stat-val text-grn">-4,84%</span></div>
+              </div>
+              <div class="card card-sm"><div class="card-title">Próxima Op BTC</div>
+                <div class="stat-row"><span class="stat-lbl">Strike CALL</span><span class="stat-val text-amb">$76.000</span></div>
+                <div class="stat-row"><span class="stat-lbl">Prêmio est.</span><span class="stat-val text-grn">+$17,70</span></div>
+                <div class="stat-row"><span class="stat-lbl">Lucro se exercida</span><span class="stat-val text-grn">+$4.607</span></div>
+              </div>
+            </div>
+
+            <div id="t2-eth" style="display:none">
+              <div class="card card-sm"><div class="card-title">Análise Ciclo ETH</div>
+                <div class="stat-row"><span class="stat-lbl">PUT compra</span><span class="stat-val text-pur">$2.225</span></div>
+                <div class="stat-row"><span class="stat-lbl">CALL venda</span><span class="stat-val text-ora">$2.225</span></div>
+                <div class="stat-row"><span class="stat-lbl">Prêmios ciclo</span><span class="stat-val text-grn">+$107,69</span></div>
+                <div class="stat-row"><span class="stat-lbl">Custo médio</span><span class="stat-val text-cya">$2.117</span></div>
+                <div class="stat-row"><span class="stat-lbl">Desconto</span><span class="stat-val text-grn">-4,84%</span></div>
+              </div>
+              <div class="card card-sm"><div class="card-title">Próxima Op ETH</div>
+                <div class="stat-row"><span class="stat-lbl">Strike CALL</span><span class="stat-val text-cya">$2.350</span></div>
+                <div class="stat-row"><span class="stat-lbl">Prêmio est.</span><span class="stat-val text-grn">+$17,70</span></div>
+                <div class="stat-row"><span class="stat-lbl">Lucro se exercida</span><span class="stat-val text-grn">+$232,69</span></div>
+              </div>
+            </div>
+
+            <div id="t2-res" style="display:none">
+              <div class="card card-sm">
+                <div class="card-title">Resumo do Período</div>
+                <div class="cycle-grid">
+                  <div class="cycle-item"><div class="cycle-lbl">Total Prêmios</div><div class="cycle-val text-grn">$159,83</div></div>
+                  <div class="cycle-item"><div class="cycle-lbl">Win Rate</div><div class="cycle-val text-grn">100%</div></div>
+                  <div class="cycle-item"><div class="cycle-lbl">Exercidas</div><div class="cycle-val text-amb">4</div></div>
+                  <div class="cycle-item"><div class="cycle-lbl">Ciclos</div><div class="cycle-val">3</div></div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /demo -->
+  </div><!-- /section 2 -->
+
+
+  <!-- ════════════════════════════════════════════════════════════════════════
+       IDEIA 3 — Tudo em accordions (sem colunas), painel direito como rows
+       ════════════════════════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-tag">Ideia 3</span>
+      <span class="section-title">Layout Coluna Única · Tudo em Accordion</span>
+    </div>
+    <p class="section-desc">
+      Layout 100% em coluna única com accordions aninhados. Ideal para modais menores ou mobile.
+      Seções: Filtros → Resumo → Ciclo BTC → Ciclo ETH → Strikes → Operações por data.
+      Cada operação é uma linha dentro do accordion da data.
+    </p>
+    <div class="pros-cons">
+      <div class="pros"><strong>Pontos positivos</strong><li>100% responsivo</li><li>Sem gráfico, foco nos dados</li><li>Menos scroll horizontal</li></div>
+      <div class="cons"><strong>Atenção</strong><li>Muito scroll vertical</li><li>Perde visibilidade geral</li></div>
+      <div class="extra"><strong>Melhorias</strong><li>Sticky filter bar no topo</li><li>Mini-KPIs fixos acima dos accordions</li></div>
+    </div>
+
+    <div class="demo" style="max-width:600px">
+
+      <!-- Mini KPIs fixos no topo -->
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+        <div class="card card-sm" style="flex:1;min-width:100px;margin:0">
+          <div class="card-title">Total</div>
+          <div class="card-val text-grn" style="font-size:.9rem">$159,83</div>
+        </div>
+        <div class="card card-sm" style="flex:1;min-width:100px;margin:0">
+          <div class="card-title">Win Rate</div>
+          <div class="card-val text-grn" style="font-size:.9rem">100%</div>
+        </div>
+        <div class="card card-sm" style="flex:1;min-width:100px;margin:0">
+          <div class="card-title">Exercidas</div>
+          <div class="card-val text-amb" style="font-size:.9rem">4 ops</div>
+        </div>
+        <div class="card card-sm" style="flex:1;min-width:100px;margin:0">
+          <div class="card-title">Ciclos</div>
+          <div class="card-val" style="font-size:.9rem">3</div>
+        </div>
+      </div>
+
+      <!-- Ciclos BTC -->
+      <div class="acc-wrap">
+        <div class="acc-head" onclick="toggleAcc(this)">
+          <span style="color:var(--amb);font-weight:700;font-size:.78rem">₿ Ciclo BTC</span>
+          <span class="badge badge-grn" style="margin-left:8px">Lucrativo</span>
+          <span class="acc-arrow">▼</span>
+        </div>
+        <div class="acc-body">
+          <div class="stat-row"><span class="stat-lbl">PUT compra</span><span class="stat-val text-pur">$71.500</span></div>
+          <div class="stat-row"><span class="stat-lbl">Custo médio</span><span class="stat-val text-amb">$71.392</span></div>
+          <div class="stat-row"><span class="stat-lbl">Desconto</span><span class="stat-val text-grn">-4,84%</span></div>
+          <div class="stat-row"><span class="stat-lbl">Próx. Strike</span><span class="stat-val text-grn">$76.000</span></div>
+        </div>
+      </div>
+
+      <!-- Ciclos ETH -->
+      <div class="acc-wrap">
+        <div class="acc-head" onclick="toggleAcc(this)">
+          <span style="color:var(--cya);font-weight:700;font-size:.78rem">Ξ Ciclo ETH</span>
+          <span class="badge badge-grn" style="margin-left:8px">Lucrativo</span>
+          <span class="acc-arrow">▼</span>
+        </div>
+        <div class="acc-body">
+          <div class="stat-row"><span class="stat-lbl">PUT compra</span><span class="stat-val text-pur">$2.225</span></div>
+          <div class="stat-row"><span class="stat-lbl">Custo médio</span><span class="stat-val text-cya">$2.117</span></div>
+          <div class="stat-row"><span class="stat-lbl">Desconto</span><span class="stat-val text-grn">-4,84%</span></div>
+          <div class="stat-row"><span class="stat-lbl">Próx. Strike</span><span class="stat-val text-grn">$2.350</span></div>
+        </div>
+      </div>
+
+      <!-- Operações: data 08/04 -->
+      <div class="acc-wrap">
+        <div class="acc-head open" onclick="toggleAcc(this)">
+          <div class="op-dot dot-red"></div>
+          <div style="flex:1;font-size:.78rem;font-weight:700">08/04/2026 <span class="badge badge-amb" style="margin-left:6px">2 exerc.</span> <span style="color:var(--muted);font-weight:400">4 ops</span></div>
+          <span style="font-family:monospace;font-weight:700;color:var(--grn);font-size:.8rem">+$55,58</span>
+          <span class="acc-arrow" style="margin-left:8px">▼</span>
+        </div>
+        <div class="acc-body open">
+          <div class="op-row"><span class="op-asset text-amb">BTC</span><span class="op-tipo call">CALL</span><span class="op-strike">$71.5K</span><span class="badge badge-grn" style="margin-left:auto">Fechada</span><span class="op-premio text-grn">+$14,26</span></div>
+          <div class="op-row"><span class="op-asset text-cya">ETH</span><span class="op-tipo call">CALL</span><span class="op-strike">$2.225</span><span class="badge badge-grn" style="margin-left:auto">Fechada</span><span class="op-premio text-grn">+$13,53</span></div>
+          <div class="op-row"><span class="op-asset text-amb">BTC</span><span class="op-tipo put">PUT</span><span class="op-strike">$71.5K</span><span class="badge badge-red" style="margin-left:auto">Exercida</span><span class="op-premio text-grn">+$14,26</span></div>
+          <div class="op-row"><span class="op-asset text-cya">ETH</span><span class="op-tipo put">PUT</span><span class="op-strike">$2.225</span><span class="badge badge-red" style="margin-left:auto">Exercida</span><span class="op-premio text-grn">+$13,53</span></div>
+        </div>
+      </div>
+
+      <!-- Operações: data 13/04 -->
+      <div class="acc-wrap">
+        <div class="acc-head" onclick="toggleAcc(this)">
+          <div class="op-dot dot-amb"></div>
+          <div style="flex:1;font-size:.78rem;font-weight:700">13/04/2026 <span class="badge badge-amb" style="margin-left:6px">2 exerc.</span> <span style="color:var(--muted);font-weight:400">2 ops</span></div>
+          <span style="font-family:monospace;font-weight:700;color:var(--grn);font-size:.8rem">+$48,55</span>
+          <span class="acc-arrow" style="margin-left:8px">▼</span>
+        </div>
+        <div class="acc-body">
+          <div class="op-row"><span class="op-asset text-amb">BTC</span><span class="op-tipo call">CALL</span><span class="op-strike">$74K</span><span class="badge badge-amb" style="margin-left:auto">Exercida</span><span class="op-premio text-grn">+$24,10</span></div>
+          <div class="op-row"><span class="op-asset text-cya">ETH</span><span class="op-tipo call">CALL</span><span class="op-strike">$2.300</span><span class="badge badge-amb" style="margin-left:auto">Exercida</span><span class="op-premio text-grn">+$24,45</span></div>
+        </div>
+      </div>
+
+    </div><!-- /demo -->
+  </div><!-- /section 3 -->
+
+
+  <!-- ════════════════════════════════════════════════════════════════════════
+       IDEIA 4 — Cálculo do ciclo + tabela de payoff expandida (SUGESTÃO EXTRA)
+       ════════════════════════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-tag">Ideia 4 ✨ Extra</span>
+      <span class="section-title">Card de Cálculo do Ciclo expandido com Tabela de Payoff</span>
+    </div>
+    <p class="section-desc">
+      O card de cálculo do ciclo ganha uma <strong>tabela de payoff</strong> mostrando o resultado em 3 cenários de mercado.
+      Inclui também indicador de "ponto de equilíbrio" (break-even). Pode ser combinado com qualquer das ideias acima.
+      Ideal para compor a coluna direita ou dentro do accordion do ciclo.
+    </p>
+
+    <div class="demo" style="max-width:700px">
+      <!-- Card de cálculo do ciclo (mantido) -->
+      <div class="acc-wrap">
+        <div class="acc-head open" onclick="toggleAcc(this)">
+          <span style="font-weight:700;font-size:.78rem">🔄 Cálculo do Ciclo ETH</span>
+          <span class="badge badge-amb" style="margin-left:8px">Em aberto</span>
+          <span class="acc-arrow">▼</span>
+        </div>
+        <div class="acc-body open">
+          <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:.73rem;margin-bottom:10px">
+            <div><span class="text-muted">CALL strike:</span> <span class="text-ora fw-bold">$2.225</span></div>
+            <div><span class="text-muted">PUT strike:</span> <span class="text-pur fw-bold">− $2.225</span></div>
+            <div><span class="text-muted">Prêmios:</span> <span class="text-grn fw-bold">+ $107,69</span></div>
+            <div><span class="text-muted">Resultado:</span> <span class="text-grn fw-bold">$107,69</span></div>
+          </div>
+          <hr class="dim">
+          <!-- Tabela de payoff -->
+          <div style="font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Análise de Payoff — 3 Cenários</div>
+          <table class="payoff-table">
+            <thead>
+              <tr>
+                <th class="row-header">Cenário</th>
+                <th>Preço ETH</th>
+                <th>Resultado CALL</th>
+                <th>Prêmios</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="row-header">📉 Queda -10%</td>
+                <td class="neu">$2.002</td>
+                <td class="pos">+$0 (não exercida)</td>
+                <td class="pos">+$107,69</td>
+                <td class="pos">+$107,69</td>
+              </tr>
+              <tr style="background:rgba(255,255,255,.03)">
+                <td class="row-header">➡️ Lateral ±2%</td>
+                <td class="neu">~$2.225</td>
+                <td class="neu">+$0 / −$0</td>
+                <td class="pos">+$107,69</td>
+                <td class="pos">+$107,69</td>
+              </tr>
+              <tr>
+                <td class="row-header">📈 Alta +10%</td>
+                <td class="pos">$2.447</td>
+                <td class="neg">−$222 (exercida)</td>
+                <td class="pos">+$107,69</td>
+                <td class="neg">−$114,31</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="notice" style="margin-top:10px">
+            <strong>Break-even:</strong> ETH precisa subir acima de <strong>$2.332,69</strong> para o ciclo ficar negativo ($2.225 + $107,69 de prêmios).
+            Probabilidade de exercício estimada: <strong style="color:var(--amb)">~18%</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /section 4 -->
+
+
+  <!-- ════════════════════════════════════════════════════════════════════════
+       IDEIA 5 — Modal IA nativo Bootstrap (fix do input bloqueado)
+       ════════════════════════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-tag">Ideia 5 — Fix IA</span>
+      <span class="section-title">Resultado IA em Modal Bootstrap nativo</span>
+    </div>
+    <p class="section-desc">
+      Substitui o <code>Swal.fire()</code> da análise IA por um modal Bootstrap customizado.
+      Resolve definitivamente o problema do input bloqueado, permite renderizar gráficos Chart.js dentro do modal,
+      e facilita interação com a IA em chat multi-turno. O modal fica fixo no lado direito da tela (drawer style).
+    </p>
+    <div class="pros-cons">
+      <div class="pros"><strong>Pontos positivos</strong><li>Input 100% funcional</li><li>Gráficos renderizados normalmente</li><li>Chat multi-turno real</li><li>Sem depender do Swal</li></div>
+      <div class="cons"><strong>Atenção</strong><li>Mais código de setup</li><li>Precisa criar HTML do modal</li></div>
+      <div class="extra"><strong>Melhorias</strong><li>Copiar resposta com 1 clique</li><li>Exportar análise como PDF</li><li>Salvar histórico de análises</li></div>
+    </div>
+
+    <!-- Preview do modal IA -->
+    <div class="demo" style="max-width:760px">
+      <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);overflow:hidden">
+        <!-- Header -->
+        <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--bg3)">
+          <span style="font-size:1.1rem">🧠</span>
+          <div style="flex:1">
+            <div style="font-weight:700;font-size:.9rem">Análise IA — Dual Investment Crypto</div>
+            <div style="font-size:.65rem;color:var(--muted)">Gemini Pro · 15/04/2026 14:32</div>
+          </div>
+          <button style="background:none;border:1px solid var(--border);color:var(--muted);border-radius:5px;padding:4px 10px;font-size:.7rem;cursor:pointer">📋 Copiar</button>
+          <button style="background:none;border:1px solid var(--border);color:var(--muted);border-radius:5px;padding:4px 8px;font-size:.7rem;cursor:pointer">✕</button>
+        </div>
+        <!-- Resposta da IA (scrollável) -->
+        <div class="ai-resp" style="border-radius:0;border:none;max-height:280px">
+          <h2>📊 Diagnóstico do Estado Atual</h2>
+          <p>Ciclo ETH em aberto com custo médio <strong style="color:var(--cya)">$2.117,31</strong> após <strong>$107,69</strong> em prêmios coletados.
+          A estratégia apresenta desconto de <strong style="color:var(--grn)">4,84%</strong> sobre o preço de compra.</p>
+          <h3>🎯 Strikes Sugeridos</h3>
+          <table class="payoff-table">
+            <thead><tr><th>Ativo</th><th>Tipo</th><th>Strike</th><th>Prêmio Est.</th><th>TAE Est.</th></tr></thead>
+            <tbody>
+              <tr><td><strong style="color:var(--amb)">BTC</strong></td><td>CALL</td><td class="pos">$76.000</td><td class="pos">$17,70</td><td class="pos">~52%</td></tr>
+              <tr><td><strong style="color:var(--cya)">ETH</strong></td><td>CALL</td><td class="pos">$2.350</td><td class="pos">$17,70</td><td class="pos">~48%</td></tr>
+            </tbody>
+          </table>
+          <h3>⚠️ Pontos de Atenção</h3>
+          <p>Probabilidade de exercício estimada em <strong style="color:var(--amb)">~18%</strong> com base na volatilidade implícita atual.
+          Recomendo manter <code>strike ≥ custo médio + 5%</code> para proteger o retorno acumulado.</p>
+        </div>
+        <!-- Chat textarea completamente interativo -->
+        <div style="padding:12px 16px;border-top:1px solid var(--border);background:var(--bg3)">
+          <div style="font-size:.65rem;color:var(--muted);margin-bottom:6px">💬 Pergunte algo adicional:</div>
+          <textarea class="ai-chat-area" placeholder="Ex: Qual seria o strike ideal se ETH cair 15%? Gere cenários em ASCII...">
+          </textarea>
+          <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px">
+            <button style="background:var(--bg4);border:1px solid var(--border);color:var(--muted);border-radius:5px;padding:6px 14px;font-size:.72rem;cursor:pointer">Fechar</button>
+            <button style="background:var(--blu);border:none;color:#fff;border-radius:5px;padding:6px 14px;font-size:.72rem;font-weight:700;cursor:pointer">Enviar →</button>
+          </div>
+          <div class="ai-model-tag">Modelo: gemini-1.5-pro-latest</div>
+        </div>
+      </div>
+      <div class="notice" style="margin-top:10px">
+        <strong>Implementação:</strong> criar <code>div#cryptoIaModal</code> fora do Swal, usar <code>bootstrap.Modal</code> para mostrar/esconder.
+        O <code>textarea</code> nativo dentro do modal Bootstrap funciona 100% sem nenhum bloqueio de foco.
+        Gráficos Chart.js renderizam normalmente pois o elemento está no DOM real.
+      </div>
+    </div>
+  </div><!-- /section 5 -->
+
+</div><!-- /page -->
+
+<script>
+  // Accordion toggle
+  function toggleAcc(head) {
+    head.classList.toggle('open');
+    const body = head.nextElementSibling;
+    if (body) body.classList.toggle('open');
+  }
+
+  // Filter asset button
+  function setAssetFilter(btn, asset) {
+    btn.closest('.filter-bar').querySelectorAll('.filter-btn').forEach(b => {
+      if (['ALL','BTC','ETH'].some(a => b.getAttribute('onclick') && b.getAttribute('onclick').includes(a))) {
+        b.classList.remove('active');
+      }
+    });
+    btn.classList.add('active');
+  }
+
+  // Tab switch (ideia 2)
+  function switchTab(btn, showId, hideIds) {
+    btn.closest('.tab-nav').querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    hideIds.split(',').forEach(id => {
+      const el = document.getElementById(id.trim());
+      if (el) el.style.display = 'none';
+    });
+    const show = document.getElementById(showId);
+    if (show) show.style.display = 'block';
+  }
+
+  // Pulse animation for open ops
+  const style = document.createElement('style');
+  style.textContent = '@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }';
+  document.head.appendChild(style);
+</script>
+</body>
+</html>

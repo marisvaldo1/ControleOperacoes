@@ -91,7 +91,7 @@ document.addEventListener('libsLoaded', function() {
                 <input type="number" step="0.01" class="form-control" id="configSaldoAcoes" placeholder="0.00">
             </div>
             <div class="mb-3">
-                <label class="form-label">Saldo em Crypto (R$)</label>
+                <label class="form-label">Saldo em Crypto (USD)</label>
                 <input type="number" step="0.01" class="form-control" id="configSaldoCrypto" placeholder="0.00">
             </div>
             <hr class="my-4">

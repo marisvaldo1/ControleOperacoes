@@ -60,6 +60,7 @@ def init_db():
         'status':          "TEXT DEFAULT 'ABERTA'",
         'observacoes':     "TEXT",
         'is_test_data':    'INTEGER DEFAULT 0',
+        'corretora':       "TEXT DEFAULT 'BINANCE'",
     })
 
     # ─── Tabela: operacoes_opcoes ────────────────────────────────────────

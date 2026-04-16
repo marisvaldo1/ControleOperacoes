@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ideia 17 - Hub de Operacoes e Exercicios</title>
+  <style>
+    :root {
+      --bg: #08101e;
+      --panel: #0f1b2f;
+      --panel-soft: #13243d;
+      --line: #22395c;
+      --text: #deebff;
+      --muted: #8fa9cb;
+      --accent: #ffbf2d;
+      --ok: #2fc66c;
+      --warn: #f6a91b;
+      --bad: #ef5350;
+      --info: #45a5ff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      background: radial-gradient(1200px 700px at 20% -10%, #17335b 0%, var(--bg) 48%), var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .wrap {
+      max-width: 1400px;
+      margin: 0 auto;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: linear-gradient(180deg, #0f2038 0%, #0b1627 100%);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+      overflow: hidden;
+    }
+
+    .top {
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      display: grid;
+      gap: 10px;
+      background: linear-gradient(180deg, rgba(255, 191, 45, 0.07), transparent 65%);
+    }
+
+    .title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .title small {
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .filters {
+      display: grid;
+      gap: 8px;
+    }
+
+    .active-coins {
+      color: var(--muted);
+      font-size: 0.76rem;
+      padding: 0 2px;
+    }
+
+    .quick-stats {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 2px;
+    }
+
+    .q-chip {
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      padding: 6px 10px;
+      font-size: 0.72rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--muted);
+      background: #13243d;
+      font-weight: 700;
+    }
+
+    .q-chip b { color: var(--text); margin-left: 4px; }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .chips .lbl {
+      color: var(--muted);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-right: 6px;
+    }
+
+    .chip {
+      border: 1px solid var(--line);
+      background: #11213a;
+      color: var(--muted);
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.2s ease;
+    }
+
+    .chip.active {
+      color: #0a1628;
+      background: var(--accent);
+      border-color: var(--accent);
+      font-weight: 700;
+    }
+
+    .content {
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(150px, 1fr));
+      gap: 10px;
+    }
+
+    .kpi {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--panel);
+      padding: 10px;
+    }
+
+    .kpi .k {
+      color: var(--muted);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+    }
+
+    .kpi .v {
+      font-size: 1.2rem;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .formula {
+      border: 1px dashed #365783;
+      border-radius: 10px;
+      background: rgba(18, 39, 64, 0.65);
+      padding: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      font-size: 0.82rem;
+    }
+
+    .token {
+      padding: 4px 8px;
+      border-radius: 7px;
+      border: 1px solid var(--line);
+      background: #12243e;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .token b { color: var(--text); }
+
+    .concept-switch {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .view-btn {
+      border: 1px solid var(--line);
+      background: #12213a;
+      color: var(--muted);
+      padding: 7px 10px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      cursor: pointer;
+    }
+
+    .view-btn.active {
+      background: #1c3d66;
+      border-color: #3f6fa5;
+      color: #d8e9ff;
+      font-weight: 700;
+    }
+
+    .views > section {
+      display: none;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--panel);
+      padding: 12px;
+    }
+
+    .views > section.active { display: block; }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .block-title {
+      font-size: 0.8rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 8px;
+    }
+
+    .bar {
+      margin-bottom: 8px;
+    }
+
+    .bar .line {
+      height: 8px;
+      background: #1a3152;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid #2b4670;
+    }
+
+    .bar .fill {
+      height: 100%;
+      border-radius: 999px;
+    }
+
+    .bar .meta {
+      margin-top: 3px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.74rem;
+      color: var(--muted);
+    }
+
+    .timeline {
+      width: 100%;
+      height: 210px;
+      border-radius: 10px;
+      border: 1px solid #234166;
+      background: linear-gradient(180deg, #122643, #0f1b2f);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .timeline svg { width: 100%; height: 100%; display: block; }
+
+    .assets {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    .matrix-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .matrix-card {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #11213a;
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .matrix-card h4 {
+      margin: 0;
+      font-size: 0.8rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .matrix-card .n {
+      font-size: 1.4rem;
+      font-weight: 800;
+    }
+
+    .funnel {
+      display: grid;
+      gap: 10px;
+    }
+
+    .funnel-step {
+      border: 1px solid #244368;
+      border-radius: 10px;
+      padding: 8px 10px;
+      background: #11233c;
+    }
+
+    .funnel-step .h {
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 0.76rem;
+      margin-bottom: 5px;
+    }
+
+    .funnel-step .w {
+      height: 10px;
+      background: #1b3354;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid #2d4a72;
+    }
+
+    .funnel-step .w > span {
+      display: block;
+      height: 100%;
+      border-radius: 999px;
+    }
+
+    .asset {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #11213a;
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .donut {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      margin: 0 auto;
+      display: grid;
+      place-items: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #dff0ff;
+      position: relative;
+    }
+
+    .donut::after {
+      content: "";
+      position: absolute;
+      width: 46px;
+      height: 46px;
+      background: #11213a;
+      border-radius: 50%;
+    }
+
+    .donut span { position: relative; z-index: 1; }
+
+    .sim {
+      display: grid;
+      gap: 10px;
+    }
+
+    .sim .row {
+      display: grid;
+      grid-template-columns: 160px 1fr;
+      gap: 10px;
+      align-items: center;
+      font-size: 0.8rem;
+    }
+
+    input[type="range"] { width: 100%; }
+
+    .sim-res {
+      border: 1px solid var(--line);
+      background: #102038;
+      border-radius: 10px;
+      padding: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.86rem;
+    }
+
+    .table-wrap {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      overflow: auto;
+      background: var(--panel);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1100px;
+    }
+
+    th, td {
+      padding: 9px 10px;
+      border-bottom: 1px solid #1d3558;
+      font-size: 0.78rem;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      background: #10213a;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    .badge {
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      border: 1px solid transparent;
+    }
+
+    .b-call { background: rgba(69,165,255,.18); color: #d7ecff; border-color: rgba(69,165,255,.45); }
+    .b-put { background: rgba(255,191,45,.18); color: #fff1c6; border-color: rgba(255,191,45,.45); }
+    .b-aberta { background: rgba(47,198,108,.20); color: #e2ffe8; border-color: rgba(47,198,108,.45); }
+    .b-fechada { background: rgba(143,169,203,.20); color: #e3eeff; border-color: rgba(143,169,203,.45); }
+    .b-sim { background: rgba(255,191,45,.22); color: #fff1c6; border-color: rgba(255,191,45,.45); }
+    .b-nao { background: rgba(120,141,170,.22); color: #e3eeff; border-color: rgba(120,141,170,.45); }
+
+    .pos { color: var(--ok); font-weight: 700; }
+    .neg { color: var(--bad); font-weight: 700; }
+    .neu { color: #d3deee; font-weight: 700; }
+
+    @media (max-width: 1120px) {
+      .kpis { grid-template-columns: repeat(2, 1fr); }
+      .grid-2 { grid-template-columns: 1fr; }
+      .assets { grid-template-columns: repeat(2, 1fr); }
+      .matrix-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div class="title">Hub de Operacoes, Exercicios e Custo Medio <small>Ideia 17 - Abril/2026</small></div>
+      <div class="filters">
+        <div class="chips" id="chipsTipo"><span class="lbl">Tipo</span></div>
+        <div class="chips" id="chipsStatus"><span class="lbl">Status</span></div>
+        <div class="chips" id="chipsPeriodo"><span class="lbl">Periodo</span></div>
+        <div class="chips" id="chipsMoedas"><span class="lbl">Moedas</span></div>
+        <div class="active-coins" id="activeCoins"></div>
+        <div class="quick-stats" id="quickStats"></div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="kpis">
+        <div class="kpi"><div class="k">Operacoes</div><div class="v" id="kOps">0</div></div>
+        <div class="kpi"><div class="k">Operacoes Exercidas</div><div class="v" id="kEx">0</div></div>
+        <div class="kpi"><div class="k">Ultimo Valor de Exercicio</div><div class="v" id="kUlt">$0.00</div></div>
+        <div class="kpi"><div class="k">Premios Pos-Exercicio</div><div class="v" id="kPrem">$0.00</div></div>
+        <div class="kpi"><div class="k">Custo Medio Atual</div><div class="v" id="kCusto">$0.00</div></div>
+      </div>
+
+      <div class="formula" id="formulaBox"></div>
+
+      <div class="concept-switch" id="viewSwitch"></div>
+
+      <div class="views">
+        <section id="view-resumo" class="active">
+          <div class="grid-2">
+            <div>
+              <div class="block-title">Distribuicao de Operacoes</div>
+              <div id="barsResumo"></div>
+            </div>
+            <div>
+              <div class="block-title">Indicadores Rapidos</div>
+              <div id="insightsResumo"></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="view-timeline">
+          <div class="block-title">Curva Acumulada de Premios (Filtro Atual)</div>
+          <div class="timeline" id="timeline"></div>
+        </section>
+
+        <section id="view-ativos">
+          <div class="block-title">Mapa por Ativo (Exercicio + Premio + Custo)</div>
+          <div class="assets" id="assetsGrid"></div>
+        </section>
+
+        <section id="view-simulacao">
+          <div class="sim">
+            <div class="block-title">Simulacao: Resultado caso exercido agora</div>
+            <div class="row"><label for="simStrike">Strike Simulado</label><input id="simStrike" type="range" min="65000" max="76000" step="100" value="72000" /></div>
+            <div class="row"><label for="simCot">Cotacao Atual (BTC)</label><input id="simCot" type="range" min="65000" max="76000" step="100" value="72347" /></div>
+            <div class="sim-res">
+              <span>Resultado Simulado (CALL)</span>
+              <strong id="simResultado" class="neu">$0.00</strong>
+            </div>
+            <div class="sim-res">
+              <span>Custo Medio Projetado</span>
+              <strong id="simCustoProj" class="neu">$0.00</strong>
+            </div>
+          </div>
+        </section>
+
+        <section id="view-matriz">
+          <div class="block-title">Matriz: Tipo x Status</div>
+          <div class="matrix-grid" id="matrixGrid"></div>
+        </section>
+
+        <section id="view-funil">
+          <div class="block-title">Funil Operacional</div>
+          <div class="funnel" id="funnelBox"></div>
+        </section>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Ativo</th><th>Tipo</th><th>Cotacao</th><th>Strike</th><th>Premio</th><th>Status</th><th>Exercicio</th><th>Vencimento</th><th>Distancia</th>
+            </tr>
+          </thead>
+          <tbody id="tbOps"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const dados = [
+      { ativo: "BTC", tipo: "CALL", cotacao: 72347.01, strike: 72000, premio: 3.90, status: "ABERTA", exercicio: "SIM", vencimento: "2026-04-14", dataOperacao: "2026-04-13", distancia: 1.71 },
+      { ativo: "ETH", tipo: "CALL", cotacao: 2230.68, strike: 2225, premio: 8.80, status: "ABERTA", exercicio: "SIM", vencimento: "2026-04-14", dataOperacao: "2026-04-13", distancia: 1.75 },
+      { ativo: "BTC", tipo: "CALL", cotacao: 71771.18, strike: 72000, premio: 26.18, status: "FECHADA", exercicio: "SIM", vencimento: "2026-04-13", dataOperacao: "2026-04-12", distancia: 0.32 },
+      { ativo: "ETH", tipo: "CALL", cotacao: 2193.20, strike: 2225, premio: 22.37, status: "FECHADA", exercicio: "SIM", vencimento: "2026-04-13", dataOperacao: "2026-04-12", distancia: 1.45 },
+      { ativo: "BTC", tipo: "CALL", cotacao: 71369.59, strike: 71500, premio: 9.23, status: "FECHADA", exercicio: "NAO", vencimento: "2026-04-10", dataOperacao: "2026-04-09", distancia: 0.18 },
+      { ativo: "ETH", tipo: "CALL", cotacao: 2192.74, strike: 2225, premio: 9.43, status: "FECHADA", exercicio: "NAO", vencimento: "2026-04-10", dataOperacao: "2026-04-09", distancia: 1.47 },
+      { ativo: "BTC", tipo: "PUT", cotacao: 71004.00, strike: 71500, premio: 14.26, status: "FECHADA", exercicio: "SIM", vencimento: "2026-04-09", dataOperacao: "2026-04-08", distancia: 0.08 },
+      { ativo: "ETH", tipo: "PUT", cotacao: 2181.00, strike: 2225, premio: 13.53, status: "FECHADA", exercicio: "SIM", vencimento: "2026-04-09", dataOperacao: "2026-04-08", distancia: 0.92 },
+      { ativo: "BTC", tipo: "CALL", cotacao: 71658.00, strike: 69500, premio: 5.62, status: "FECHADA", exercicio: "SIM", vencimento: "2026-04-08", dataOperacao: "2026-04-07", distancia: -3.01 },
+      { ativo: "ETH", tipo: "CALL", cotacao: 2250.00, strike: 2150, premio: 0.17, status: "FECHADA", exercicio: "SIM", vencimento: "2026-04-08", dataOperacao: "2026-04-07", distancia: -4.43 },
+      { ativo: "ETH", tipo: "CALL", cotacao: 2250.00, strike: 2150, premio: 0.33, status: "FECHADA", exercicio: "SIM", vencimento: "2026-04-08", dataOperacao: "2026-04-06", distancia: 0.33 },
+      { ativo: "BTC", tipo: "PUT", cotacao: 68857.00, strike: 69000, premio: 9.44, status: "FECHADA", exercicio: "SIM", vencimento: "2026-04-07", dataOperacao: "2026-04-06", distancia: 1.01 },
+      { ativo: "ETH", tipo: "CALL", cotacao: 2140.04, strike: 2175, premio: 13.22, status: "FECHADA", exercicio: "NAO", vencimento: "2026-04-07", dataOperacao: "2026-04-06", distancia: 1.06 },
+      { ativo: "BTC", tipo: "CALL", cotacao: 69061.00, strike: 68500, premio: 1.20, status: "FECHADA", exercicio: "SIM", vencimento: "2026-04-06", dataOperacao: "2026-04-05", distancia: -0.81 },
+      { ativo: "ETH", tipo: "CALL", cotacao: 2134.00, strike: 2150, premio: 15.21, status: "FECHADA", exercicio: "NAO", vencimento: "2026-04-06", dataOperacao: "2026-04-05", distancia: -4.43 },
+      { ativo: "BTC", tipo: "CALL", cotacao: 66421.55, strike: 68000, premio: 2.94, status: "FECHADA", exercicio: "NAO", vencimento: "2026-04-03", dataOperacao: "2026-04-02", distancia: 2.27 },
+      { ativo: "ETH", tipo: "CALL", cotacao: 2037.92, strike: 2125, premio: 2.93, status: "FECHADA", exercicio: "NAO", vencimento: "2026-04-03", dataOperacao: "2026-04-02", distancia: 4.28 },
+      { ativo: "BTC", tipo: "PUT", cotacao: 68642.16, strike: 68000, premio: 11.86, status: "FECHADA", exercicio: "SIM", vencimento: "2026-04-02", dataOperacao: "2026-04-01", distancia: -0.94 },
+      { ativo: "ETH", tipo: "PUT", cotacao: 2134.21, strike: 2125, premio: 18.70, status: "FECHADA", exercicio: "SIM", vencimento: "2026-04-02", dataOperacao: "2026-04-01", distancia: -0.43 }
+    ];
+
+    const state = {
+      tipo: "ALL",
+      status: "ALL",
+      periodo: "MES",
+      moedas: new Set(["BTC", "ETH"]),
+      view: "resumo"
+    };
+
+    const views = [
+      { id: "resumo", label: "Conceito A - Painel Executivo" },
+      { id: "timeline", label: "Conceito B - Timeline" },
+      { id: "ativos", label: "Conceito C - Mapa de Ativos" },
+      { id: "simulacao", label: "Conceito D - Simulacao" },
+      { id: "matriz", label: "Conceito E - Matriz Tipo x Status" },
+      { id: "funil", label: "Conceito F - Funil" }
+    ];
+
+    const moedasDisponiveis = [...new Set(dados.map(d => d.ativo))];
+
+    function money(v) {
+      return "$" + (v || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function daysFromToday(dateStr) {
+      const now = new Date("2026-04-13T12:00:00");
+      const d = new Date(dateStr + "T12:00:00");
+      return Math.floor((now - d) / 86400000);
+    }
+
+    function inPeriodo(item, periodo) {
+      const diff = daysFromToday(item.dataOperacao);
+      if (periodo === "HOJE") return diff === 0;
+      if (periodo === "7D") return diff <= 7;
+      if (periodo === "MES") return diff <= 31;
+      if (periodo === "30D") return diff <= 30;
+      if (periodo === "ANO") return diff <= 365;
+      return true;
+    }
+
+    function filtered() {
+      return dados.filter(d => {
+        const okTipo = state.tipo === "ALL" || d.tipo === state.tipo;
+        const okStatus = state.status === "ALL" || d.status === state.status;
+        const okPeriodo = inPeriodo(d, state.periodo);
+        const okMoeda = state.moedas.has(d.ativo);
+        return okTipo && okStatus && okPeriodo && okMoeda;
+      });
+    }
+
+    function buildChips() {
+      mkChips("chipsTipo", ["ALL", "CALL", "PUT"], "tipo");
+      mkChips("chipsStatus", ["ALL", "ABERTA", "FECHADA"], "status");
+      mkChips("chipsPeriodo", ["HOJE", "7D", "MES", "30D", "ANO"], "periodo");
+      mkMoedaChips();
+
+      const switchWrap = document.getElementById("viewSwitch");
+      switchWrap.innerHTML = "";
+      views.forEach(v => {
+        const b = document.createElement("button");
+        b.className = "view-btn" + (state.view === v.id ? " active" : "");
+        b.textContent = v.label;
+        b.onclick = () => { state.view = v.id; renderViews(); };
+        switchWrap.appendChild(b);
+      });
+
+      const coinsLabel = document.getElementById("activeCoins");
+      coinsLabel.textContent = "Moedas selecionadas: " + [...state.moedas].join(", ");
+    }
+
+    function mkChips(id, values, key) {
+      const wrap = document.getElementById(id);
+      wrap.querySelectorAll(".chip").forEach(x => x.remove());
+      values.forEach(v => {
+        const c = document.createElement("button");
+        c.className = "chip" + (state[key] === v ? " active" : "");
+        c.textContent = v;
+        c.onclick = () => { state[key] = v; render(); };
+        wrap.appendChild(c);
+      });
+    }
+
+    function mkMoedaChips() {
+      const wrap = document.getElementById("chipsMoedas");
+      wrap.querySelectorAll(".chip").forEach(x => x.remove());
+
+      const allChip = document.createElement("button");
+      allChip.className = "chip" + (state.moedas.size === moedasDisponiveis.length ? " active" : "");
+      allChip.textContent = "TODAS";
+      allChip.onclick = () => {
+        state.moedas = new Set(moedasDisponiveis);
+        render();
+      };
+      wrap.appendChild(allChip);
+
+      moedasDisponiveis.forEach(moeda => {
+        const c = document.createElement("button");
+        c.className = "chip" + (state.moedas.has(moeda) ? " active" : "");
+        c.textContent = moeda;
+        c.onclick = () => {
+          if (state.moedas.has(moeda)) {
+            if (state.moedas.size > 1) state.moedas.delete(moeda);
+          } else {
+            state.moedas.add(moeda);
+          }
+          render();
+        };
+        wrap.appendChild(c);
+      });
+    }
+
+    function calcMetrics(items) {
+      const exercidas = items.filter(i => i.exercicio === "SIM");
+      const abertas = items.filter(i => i.status === "ABERTA");
+      const lastEx = [...exercidas].sort((a, b) => (a.vencimento < b.vencimento ? 1 : -1))[0] || null;
+      const ultimoValor = lastEx ? lastEx.strike : 0;
+      const premiosPosEx = lastEx
+        ? items.filter(i => i.dataOperacao > lastEx.dataOperacao).reduce((s, i) => s + i.premio, 0)
+        : 0;
+
+      const resultIfEx = abertas.reduce((acc, i) => {
+        const delta = i.tipo === "CALL" ? (i.strike - i.cotacao) : (i.cotacao - i.strike);
+        return acc + delta;
+      }, 0);
+
+      const custoMedioAtual = ultimoValor + premiosPosEx + resultIfEx;
+
+      return {
+        totalOps: items.length,
+        exercidas: exercidas.length,
+        ultimoValor,
+        premiosPosEx,
+        resultIfEx,
+        custoMedioAtual,
+        abertas: abertas.length,
+        fechadas: items.filter(i => i.status === "FECHADA").length,
+        calls: items.filter(i => i.tipo === "CALL").length,
+        puts: items.filter(i => i.tipo === "PUT").length
+      };
+    }
+
+    function renderKpis(items, m) {
+      document.getElementById("kOps").textContent = m.totalOps;
+      document.getElementById("kEx").textContent = m.exercidas;
+      document.getElementById("kUlt").textContent = money(m.ultimoValor);
+      document.getElementById("kPrem").textContent = money(m.premiosPosEx);
+
+      const custoEl = document.getElementById("kCusto");
+      custoEl.textContent = money(m.custoMedioAtual);
+      custoEl.className = "v " + (m.custoMedioAtual > 0 ? "pos" : m.custoMedioAtual < 0 ? "neg" : "neu");
+
+      const formula = document.getElementById("formulaBox");
+      formula.innerHTML = `
+        <span class="token"><b>Custo Medio Atual</b></span>
+        <span class="token">Ult. Exercicio: <b>${money(m.ultimoValor)}</b></span>
+        <span class="token">+ Premios Pos-Exercicio: <b>${money(m.premiosPosEx)}</b></span>
+        <span class="token">+ Resultado se Exercido: <b class="${m.resultIfEx > 0 ? "pos" : m.resultIfEx < 0 ? "neg" : "neu"}">${money(m.resultIfEx)}</b></span>
+        <span class="token">= <b class="${m.custoMedioAtual > 0 ? "pos" : m.custoMedioAtual < 0 ? "neg" : "neu"}">${money(m.custoMedioAtual)}</b></span>
+      `;
+
+      const quick = document.getElementById("quickStats");
+      quick.innerHTML = `
+        <span class="q-chip">Total <b>${m.totalOps}</b></span>
+        <span class="q-chip">Abertas <b>${m.abertas}</b></span>
+        <span class="q-chip">Fechadas <b>${m.fechadas}</b></span>
+        <span class="q-chip">Premio <b>${money(items.reduce((s, i) => s + i.premio, 0))}</b></span>
+      `;
+
+      renderResumo(items, m);
+      renderTimeline(items);
+      renderAtivos(items);
+      renderSimulacao(m);
+      renderMatriz(items);
+      renderFunil(m, items);
+    }
+
+    function renderResumo(items, m) {
+      const bars = document.getElementById("barsResumo");
+      const safePct = m.totalOps ? (m.exercidas / m.totalOps) * 100 : 0;
+      bars.innerHTML = [
+        { lbl: "CALL", val: m.calls, pct: m.totalOps ? (m.calls / m.totalOps) * 100 : 0, color: "var(--info)" },
+        { lbl: "PUT", val: m.puts, pct: m.totalOps ? (m.puts / m.totalOps) * 100 : 0, color: "var(--accent)" },
+        { lbl: "ABERTAS", val: m.abertas, pct: m.totalOps ? (m.abertas / m.totalOps) * 100 : 0, color: "var(--ok)" },
+        { lbl: "EXERCIDAS", val: m.exercidas, pct: safePct, color: "var(--warn)" }
+      ].map(x => `
+        <div class="bar">
+          <div class="line"><div class="fill" style="width:${x.pct.toFixed(1)}%;background:${x.color}"></div></div>
+          <div class="meta"><span>${x.lbl}</span><span>${x.val} (${x.pct.toFixed(1)}%)</span></div>
+        </div>
+      `).join("");
+
+      const insights = document.getElementById("insightsResumo");
+      const avgPremio = items.length ? items.reduce((s, i) => s + i.premio, 0) / items.length : 0;
+      const moedasTxt = [...state.moedas].join(", ");
+      insights.innerHTML = `
+        <div class="sim-res"><span>Moedas em Analise</span><strong>${moedasTxt}</strong></div>
+        <div class="sim-res"><span>Premio Medio por Operacao</span><strong>${money(avgPremio)}</strong></div>
+        <div class="sim-res"><span>Resultado se Exercido (abertas)</span><strong class="${m.resultIfEx > 0 ? "pos" : m.resultIfEx < 0 ? "neg" : "neu"}">${money(m.resultIfEx)}</strong></div>
+        <div class="sim-res"><span>Taxa de Exercicio</span><strong>${m.totalOps ? ((m.exercidas / m.totalOps) * 100).toFixed(1) : "0.0"}%</strong></div>
+      `;
+    }
+
+    function renderMatriz(items) {
+      const host = document.getElementById("matrixGrid");
+      const groups = [
+        { tipo: "CALL", status: "ABERTA", color: "var(--info)" },
+        { tipo: "CALL", status: "FECHADA", color: "var(--ok)" },
+        { tipo: "PUT", status: "ABERTA", color: "var(--warn)" },
+        { tipo: "PUT", status: "FECHADA", color: "var(--accent)" }
+      ];
+
+      host.innerHTML = groups.map(g => {
+        const list = items.filter(i => i.tipo === g.tipo && i.status === g.status);
+        const premio = list.reduce((s, i) => s + i.premio, 0);
+        return `
+          <div class="matrix-card">
+            <h4>${g.tipo} • ${g.status}</h4>
+            <div class="n" style="color:${g.color}">${list.length}</div>
+            <div style="font-size:0.74rem;color:var(--muted)">Prêmios: <b style="color:var(--text)">${money(premio)}</b></div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderFunil(m, items) {
+      const host = document.getElementById("funnelBox");
+      const total = Math.max(m.totalOps, 1);
+      const exercidas = items.filter(i => i.exercicio === "SIM").length;
+      const posEx = m.premiosPosEx;
+      const taxa = m.totalOps ? (m.exercidas / m.totalOps) * 100 : 0;
+
+      const steps = [
+        { lbl: "Operações Filtradas", val: m.totalOps, pct: 100, color: "#4ea0ff" },
+        { lbl: "Operações Fechadas", val: m.fechadas, pct: (m.fechadas / total) * 100, color: "#2fc66c" },
+        { lbl: "Operações Exercidas", val: exercidas, pct: (exercidas / total) * 100, color: "#ffbf2d" },
+        { lbl: "Taxa de Exercício", val: `${taxa.toFixed(1)}%`, pct: taxa, color: "#f6a91b" },
+        { lbl: "Prêmio Pós-Exercício", val: money(posEx), pct: Math.min(100, Math.abs(posEx) / 12), color: "#9dd0ff" }
+      ];
+
+      host.innerHTML = steps.map(s => `
+        <div class="funnel-step">
+          <div class="h"><span>${s.lbl}</span><strong>${s.val}</strong></div>
+          <div class="w"><span style="width:${Math.max(2, s.pct).toFixed(1)}%;background:${s.color}"></span></div>
+        </div>
+      `).join("");
+    }
+
+    function renderTimeline(items) {
+      const host = document.getElementById("timeline");
+      if (!items.length) {
+        host.innerHTML = "<div style='padding:20px;color:var(--muted)'>Sem dados no filtro atual.</div>";
+        return;
+      }
+
+      const sorted = [...items].sort((a, b) => a.dataOperacao.localeCompare(b.dataOperacao));
+      let acc = 0;
+      const points = sorted.map((d, idx) => {
+        acc += d.premio;
+        return { x: idx, y: acc };
+      });
+
+      const maxY = Math.max(...points.map(p => p.y), 1);
+      const minY = Math.min(...points.map(p => p.y), 0);
+      const width = 900;
+      const height = 210;
+      const pad = 24;
+      const spanY = Math.max(maxY - minY, 1);
+
+      const coords = points.map(p => {
+        const x = pad + (p.x / Math.max(points.length - 1, 1)) * (width - pad * 2);
+        const y = height - pad - ((p.y - minY) / spanY) * (height - pad * 2);
+        return { x, y, v: p.y };
+      });
+
+      const poly = coords.map(c => `${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(" ");
+      const dots = coords.map(c => `<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="2.8" fill="#ffbf2d" />`).join("");
+
+      host.innerHTML = `
+        <svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
+          <line x1="${pad}" y1="${height - pad}" x2="${width - pad}" y2="${height - pad}" stroke="#365781" stroke-width="1" />
+          <line x1="${pad}" y1="${pad}" x2="${pad}" y2="${height - pad}" stroke="#365781" stroke-width="1" />
+          <polyline points="${poly}" fill="none" stroke="#ffbf2d" stroke-width="2.5" />
+          ${dots}
+        </svg>
+      `;
+    }
+
+    function renderAtivos(items) {
+      const byAsset = items.reduce((acc, it) => {
+        if (!acc[it.ativo]) acc[it.ativo] = [];
+        acc[it.ativo].push(it);
+        return acc;
+      }, {});
+
+      const host = document.getElementById("assetsGrid");
+      host.innerHTML = Object.entries(byAsset).map(([ativo, ops]) => {
+        const exercidas = ops.filter(o => o.exercicio === "SIM").length;
+        const pct = ops.length ? (exercidas / ops.length) * 100 : 0;
+        const premio = ops.reduce((s, o) => s + o.premio, 0);
+        const ult = [...ops].sort((a, b) => (a.vencimento < b.vencimento ? 1 : -1))[0];
+        const custo = (ult?.strike || 0) + premio;
+
+        return `
+          <div class="asset">
+            <div style="display:flex;justify-content:space-between;align-items:center"><strong>${ativo}</strong><span class="badge b-${ops[0].tipo.toLowerCase()}">${ops[0].tipo}</span></div>
+            <div class="donut" style="background:conic-gradient(var(--accent) ${pct.toFixed(1)}%, #1f3556 0)"><span>${pct.toFixed(0)}%</span></div>
+            <div style="font-size:0.74rem;color:var(--muted)">Exercidas: <b style="color:var(--text)">${exercidas}/${ops.length}</b></div>
+            <div style="font-size:0.74rem;color:var(--muted)">Premios: <b style="color:var(--ok)">${money(premio)}</b></div>
+            <div style="font-size:0.74rem;color:var(--muted)">Custo Base: <b style="color:var(--text)">${money(custo)}</b></div>
+          </div>
+        `;
+      }).join("") || "<div style='color:var(--muted)'>Sem ativos no filtro atual.</div>";
+    }
+
+    function renderSimulacao(m) {
+      const strike = Number(document.getElementById("simStrike").value);
+      const cot = Number(document.getElementById("simCot").value);
+      const result = strike - cot;
+
+      const resultEl = document.getElementById("simResultado");
+      resultEl.textContent = money(result);
+      resultEl.className = result > 0 ? "pos" : result < 0 ? "neg" : "neu";
+
+      const proj = m.ultimoValor + m.premiosPosEx + result;
+      const projEl = document.getElementById("simCustoProj");
+      projEl.textContent = money(proj);
+      projEl.className = proj > 0 ? "pos" : proj < 0 ? "neg" : "neu";
+    }
+
+    function renderTable(items) {
+      const tb = document.getElementById("tbOps");
+      tb.innerHTML = items.map(i => {
+        const distCls = i.distancia > 0 ? "pos" : i.distancia < 0 ? "neg" : "neu";
+        return `
+          <tr>
+            <td><span class="badge" style="background:#ffbf2d;color:#1b2435">${i.ativo}</span></td>
+            <td><span class="badge b-${i.tipo.toLowerCase()}">${i.tipo}</span></td>
+            <td>${money(i.cotacao)}</td>
+            <td>${money(i.strike)}</td>
+            <td class="pos">${money(i.premio)}</td>
+            <td><span class="badge b-${i.status.toLowerCase()}">${i.status}</span></td>
+            <td><span class="badge b-${i.exercicio.toLowerCase()}">${i.exercicio}</span></td>
+            <td>${i.vencimento.split("-").reverse().join("/")}</td>
+            <td class="${distCls}">${i.distancia.toFixed(2)}%</td>
+          </tr>
+        `;
+      }).join("") || `<tr><td colspan="9" style="text-align:center;color:var(--muted)">Sem operacoes para o filtro selecionado.</td></tr>`;
+    }
+
+    function renderViews() {
+      document.querySelectorAll(".view-btn").forEach((b, i) => {
+        b.classList.toggle("active", views[i].id === state.view);
+      });
+      document.querySelectorAll(".views > section").forEach(s => s.classList.remove("active"));
+      document.getElementById("view-" + state.view).classList.add("active");
+    }
+
+    function render() {
+      buildChips();
+      const items = filtered();
+      const m = calcMetrics(items);
+      renderKpis(items, m);
+      renderTable(items);
+      renderViews();
+      renderSimulacao(m);
+    }
+
+    document.getElementById("simStrike").addEventListener("input", () => {
+      renderSimulacao(calcMetrics(filtered()));
+    });
+    document.getElementById("simCot").addEventListener("input", () => {
+      renderSimulacao(calcMetrics(filtered()));
+    });
+
+    render();
+  </script>
+</body>
+</html>

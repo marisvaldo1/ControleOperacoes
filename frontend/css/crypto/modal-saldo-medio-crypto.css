@@ -31,3 +31,151 @@
     background-color: var(--tblr-warning, #f59f00);
     color: #000;
 }
+
+/* === Filtros estilo Resultados === */
+#modalSaldoMedio .sm-map-filter-bar {
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    border-radius: 10px;
+    margin-bottom: 0.8rem;
+}
+
+#modalSaldoMedio .rmc-pill-fe.active {
+    border-color: #94a3b8;
+    color: #cbd5e1;
+}
+
+#modalSaldoMedio .sm-coin-pill.active {
+    border-color: #f59f00;
+    color: #fbbf24;
+}
+
+/* === KPIs === */
+#modalSaldoMedio .sm-map-kpis {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(120px, 1fr));
+    gap: 0.6rem;
+    margin-bottom: 0.85rem;
+}
+
+#modalSaldoMedio .sm-map-kpi {
+    background: rgba(15, 23, 42, 0.75);
+    border: 1px solid rgba(148, 163, 184, 0.15);
+    border-radius: 8px;
+    padding: 0.5rem 0.65rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+#modalSaldoMedio .sm-map-kpi span {
+    color: #94a3b8;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+#modalSaldoMedio .sm-map-kpi strong {
+    color: #f8fafc;
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+/* === Mapa de Ativos === */
+#modalSaldoMedio .sm-asset-map-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+}
+
+#modalSaldoMedio .sm-asset-card {
+    background: linear-gradient(145deg, rgba(15, 23, 42, 0.85), rgba(17, 24, 39, 0.75));
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    border-radius: 10px;
+    padding: 0.65rem;
+}
+
+#modalSaldoMedio .sm-asset-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.45rem;
+}
+
+#modalSaldoMedio .sm-asset-name {
+    color: #f8fafc;
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+#modalSaldoMedio .sm-asset-count {
+    color: #94a3b8;
+    font-size: 0.72rem;
+}
+
+#modalSaldoMedio .sm-asset-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.45rem;
+    margin-bottom: 0.5rem;
+}
+
+#modalSaldoMedio .sm-asset-metrics span {
+    display: block;
+    color: #94a3b8;
+    font-size: 0.66rem;
+}
+
+#modalSaldoMedio .sm-asset-metrics strong {
+    color: #e2e8f0;
+    font-size: 0.82rem;
+}
+
+#modalSaldoMedio .sm-asset-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+#modalSaldoMedio .sm-asset-bar {
+    display: grid;
+    grid-template-columns: 80px 1fr 45px;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.68rem;
+    color: #94a3b8;
+}
+
+#modalSaldoMedio .sm-asset-bar div {
+    height: 6px;
+    border-radius: 99px;
+    background: rgba(148, 163, 184, 0.2);
+    overflow: hidden;
+}
+
+#modalSaldoMedio .sm-asset-bar i {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #10b981, #34d399);
+}
+
+#modalSaldoMedio .sm-asset-bar-gold i {
+    background: linear-gradient(90deg, #f59f00, #fbbf24);
+}
+
+#modalSaldoMedio .sm-asset-bar strong {
+    text-align: right;
+    color: #cbd5e1;
+    font-size: 0.68rem;
+}
+
+@media (max-width: 992px) {
+    #modalSaldoMedio .sm-map-kpis {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #modalSaldoMedio .sm-asset-map-grid {
+        grid-template-columns: 1fr;
+    }
+}

@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Options Flow · Crypto Dashboard</title>
+  <!-- Fonts & Chart.js -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #05070c;
+      font-family: 'Inter', sans-serif;
+      color: #eef5ff;
+      line-height: 1.4;
+      padding: 28px 32px;
+    }
+
+    /* design system – refined, dark & vibrant */
+    :root {
+      --bg-deep: #020408;
+      --card-bg: rgba(12, 18, 28, 0.86);
+      --card-border: rgba(48, 70, 100, 0.35);
+      --glow-green: rgba(34, 197, 94, 0.2);
+      --glow-amber: rgba(245, 158, 11, 0.2);
+      --primary-green: #22c55e;
+      --primary-amber: #f59e0b;
+      --primary-cyan: #06b6d4;
+      --primary-purple: #a855f7;
+      --primary-red: #ef4444;
+      --text-dim: #8da0bc;
+      --text-muted: #4f617c;
+      --border-light: rgba(71, 95, 125, 0.25);
+    }
+
+    .dashboard {
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    /* header subtle */
+    .dash-header {
+      margin-bottom: 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .title-area h1 {
+      font-size: 1.55rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #fff, #7ab3c8);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      letter-spacing: -0.3px;
+      font-family: 'Space Grotesk', monospace;
+    }
+    .title-area p {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      margin-top: 5px;
+      letter-spacing: 0.3px;
+    }
+    .badge-date {
+      background: rgba(34, 197, 94, 0.12);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      border-radius: 60px;
+      padding: 6px 16px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      font-family: 'JetBrains Mono', monospace;
+      backdrop-filter: blur(2px);
+    }
+
+    /* card style */
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(2px);
+      border: 1px solid var(--card-border);
+      border-radius: 28px;
+      padding: 1.35rem 1.5rem;
+      transition: all 0.2s ease;
+      box-shadow: 0 12px 28px -12px rgba(0, 0, 0, 0.5);
+    }
+    .card:hover {
+      border-color: rgba(34, 197, 94, 0.45);
+      box-shadow: 0 18px 32px -12px rgba(34, 197, 94, 0.08);
+    }
+
+    .card-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-dim);
+      margin-bottom: 1.2rem;
+      border-left: 3px solid var(--primary-green);
+      padding-left: 12px;
+    }
+    .card-title span {
+      font-size: 1rem;
+    }
+
+    /* grid system */
+    .grid-2col {
+      display: grid;
+      grid-template-columns: 1.4fr 0.9fr;
+      gap: 22px;
+      margin-bottom: 28px;
+    }
+    .grid-3col {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 22px;
+      margin-bottom: 28px;
+    }
+    .flex-between {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* chart container */
+    .chart-container {
+      width: 100%;
+      height: 260px;
+      position: relative;
+    }
+
+    /* fluxo do ciclo (horizontal flow) */
+    .cycle-flow {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px 4px;
+      margin-bottom: 20px;
+    }
+    .flow-node {
+      background: rgba(20, 30, 45, 0.7);
+      border-radius: 24px;
+      padding: 8px 12px;
+      text-align: center;
+      min-width: 70px;
+      flex: 1;
+      border: 1px solid rgba(72, 100, 130, 0.4);
+      transition: 0.1s;
+    }
+    .flow-node strong {
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      display: block;
+      font-weight: 500;
+    }
+    .flow-node .value {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      font-size: 0.85rem;
+      margin-top: 5px;
+    }
+    .cycle-arrow {
+      font-size: 1.2rem;
+      color: var(--primary-amber);
+      font-weight: 800;
+      padding: 0 2px;
+    }
+    .premium-badge {
+      background: rgba(34, 197, 94, 0.15);
+      border-radius: 20px;
+      padding: 2px 8px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--primary-green);
+    }
+
+    /* lista de prêmios por ciclo */
+    .premium-list {
+      margin-top: 8px;
+    }
+    .premium-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .premium-row:last-child {
+      border-bottom: none;
+    }
+    .cycle-name {
+      font-weight: 500;
+      font-size: 0.8rem;
+    }
+    .premium-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      color: var(--primary-green);
+    }
+    .open-badge {
+      background: rgba(245, 158, 11, 0.2);
+      color: var(--primary-amber);
+      border-radius: 14px;
+      padding: 2px 8px;
+      font-size: 0.65rem;
+    }
+
+    /* posições abertas */
+    .position-item {
+      background: rgba(10, 16, 24, 0.7);
+      border-radius: 20px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+      border-left: 3px solid;
+      transition: 0.1s;
+    }
+    .pos-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-bottom: 8px;
+    }
+    .asset {
+      font-weight: 800;
+      font-size: 1rem;
+      font-family: 'Space Grotesk', monospace;
+    }
+    .asset.btc { color: var(--primary-amber); }
+    .asset.eth { color: var(--primary-cyan); }
+    .option-type {
+      background: rgba(59, 130, 246, 0.2);
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 0.65rem;
+      font-weight: 600;
+    }
+    .exer-warning {
+      background: rgba(249, 115, 22, 0.2);
+      color: #f97316;
+      border-radius: 16px;
+      padding: 2px 8px;
+      font-size: 0.6rem;
+      font-weight: 600;
+    }
+    .pos-details {
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 6px;
+    }
+    .premium-usd {
+      color: var(--primary-green);
+      font-weight: 700;
+      font-family: monospace;
+    }
+
+    /* heat bar distance */
+    .distance-section {
+      margin-top: 18px;
+    }
+    .heat-item {
+      margin-bottom: 16px;
+    }
+    .heat-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.7rem;
+      margin-bottom: 5px;
+    }
+    .heat-track {
+      height: 8px;
+      background: #1a2538;
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+    }
+    .heat-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 12px;
+      background: linear-gradient(90deg, #ef4444, #f59e0b 40%, #22c55e);
+    }
+    .marker {
+      position: relative;
+      top: -12px;
+      width: 12px;
+      height: 12px;
+      background: white;
+      border-radius: 50%;
+      border: 2px solid #0f172a;
+      transform: translateX(-50%);
+      box-shadow: 0 0 0 2px #f59e0b;
+    }
+
+    /* projection cards */
+    .projection-row {
+      background: rgba(34, 197, 94, 0.05);
+      border-radius: 18px;
+      padding: 12px;
+      margin-bottom: 12px;
+      border: 1px solid rgba(34, 197, 94, 0.2);
+    }
+    .profit-banner {
+      background: linear-gradient(135deg, rgba(34,197,94,0.12), rgba(245,158,11,0.05));
+      border-radius: 18px;
+      padding: 12px;
+      margin-top: 12px;
+      text-align: center;
+      border: 1px solid rgba(34,197,94,0.4);
+    }
+    .kpi-summary {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+    .kpi-badge {
+      flex: 1;
+      background: rgba(20, 30, 45, 0.6);
+      border-radius: 18px;
+      padding: 10px;
+      text-align: center;
+    }
+    .kpi-number {
+      font-size: 1.35rem;
+      font-weight: 800;
+      font-family: monospace;
+    }
+
+    hr {
+      border-color: var(--border-light);
+      margin: 12px 0;
+    }
+
+    /* responsiveness */
+    @media (max-width: 1000px) {
+      body { padding: 18px; }
+      .grid-2col, .grid-3col { grid-template-columns: 1fr; gap: 18px; }
+      .cycle-flow { flex-wrap: wrap; }
+    }
+    .text-success { color: var(--primary-green); }
+    .text-warning { color: var(--primary-amber); }
+    .text-mono { font-family: 'JetBrains Mono', monospace; }
+    .small-icon { font-size: 1rem; vertical-align: middle; }
+  </style>
+</head>
+<body>
+<div class="dashboard">
+  <div class="dash-header">
+    <div class="title-area">
+      <h1>⚡ OPTIONS VAULT · PREMIUM TRACKER</h1>
+      <p>Estratégia estruturada PUT → CALL · Ciclos de venda coberta</p>
+    </div>
+    <div class="badge-date">
+      📍 Abril 2026 · Ciclo ativo
+    </div>
+  </div>
+
+  <!-- GRÁFICO PRINCIPAL: EVOLUÇÃO DE PRÊMIOS ACUMULADOS -->
+  <div class="card" style="margin-bottom: 28px;">
+    <div class="card-title">
+      <span>📈</span> EVOLUÇÃO DE PRÊMIOS ACUMULADOS — 2026
+    </div>
+    <div style="display: flex; gap: 24px; margin-bottom: 12px; flex-wrap: wrap;">
+      <div style="display: flex; align-items: center; gap: 6px;"><span style="display: inline-block; width: 14px; height: 14px; background: #22c55e; border-radius: 4px;"></span><span style="font-size: 0.7rem;">Prêmio mensal</span></div>
+      <div style="display: flex; align-items: center; gap: 6px;"><span style="display: inline-block; width: 2px; height: 14px; background: #f59e0b; border-radius: 2px;"></span><span style="font-size: 0.7rem;">Acumulado (US$)</span></div>
+    </div>
+    <div class="chart-container">
+      <canvas id="premiumChart" width="800" height="300" style="width:100%; height:100%"></canvas>
+    </div>
+  </div>
+
+  <!-- SEÇÃO: FLUXO DO CICLO + PRÊMIOS POR CICLO (esquerda/direita combinadas) -->
+  <div class="grid-2col">
+    <!-- FLUXO DO CICLO — PUT → CALL -->
+    <div class="card">
+      <div class="card-title">
+        <span>🔄</span> FLUXO DO CICLO — PUT → CALL
+      </div>
+      <div class="cycle-flow">
+        <div class="flow-node"><strong>⚡ PUT Compra</strong><div class="value">$71.500</div></div>
+        <div class="cycle-arrow">→</div>
+        <div class="flow-node"><strong>📆 Exercício</strong><div class="value">08/04</div></div>
+        <div class="cycle-arrow">→</div>
+        <div class="flow-node"><strong>🎯 Prêmio 1</strong><div class="value text-success">+$14,26</div></div>
+        <div class="cycle-arrow">→</div>
+        <div class="flow-node"><strong>🎯 Prêmio 2</strong><div class="value text-success">+$9,23</div></div>
+        <div class="cycle-arrow">→</div>
+        <div class="flow-node"><strong>🎯 Prêmio 3</strong><div class="value text-success">+$26,18</div></div>
+        <div class="cycle-arrow">→</div>
+        <div class="flow-node"><strong>💰 Custo médio</strong><div class="value">$71.392</div></div>
+      </div>
+      <hr>
+      <div class="card-title" style="margin-top: 0px;"><span>🏆</span> PRÊMIOS POR CICLO</div>
+      <div class="premium-list">
+        <div class="premium-row">
+          <span class="cycle-name">📀 Ciclo 08/04 - BTC+ETH</span>
+          <span class="premium-value">+$ 49,82</span>
+        </div>
+        <div class="premium-row">
+          <span class="cycle-name">📀 Ciclo 13/04 - BTC+ETH</span>
+          <span class="premium-value">+$ 43,55</span>
+        </div>
+        <div class="premium-row">
+          <span class="cycle-name">⏳ Ciclo 15/04 - Em aberto</span>
+          <span class="open-badge">aguardando roll</span>
+        </div>
+      </div>
+      <div class="flex-between" style="margin-top: 12px;">
+        <span style="font-size: 0.7rem;">Prêmios acumulados ciclo atual</span>
+        <span class="text-success text-mono" style="font-weight: 800;">+$ 107,69</span>
+      </div>
+    </div>
+
+    <!-- POSIÇÕES ABERTAS AGORA + DISTÂNCIA AO STRIKE -->
+    <div class="card">
+      <div class="card-title">
+        <span>🔍</span> POSIÇÕES ABERTAS AGORA
+      </div>
+      <!-- BTC position -->
+      <div class="position-item" style="border-left-color: #f59e0b;">
+        <div class="pos-header">
+          <div><span class="asset btc">₿ BTC</span> <span class="option-type">CALL</span></div>
+          <div><span class="exer-warning">⚠️ Poss. Exercício</span></div>
+        </div>
+        <div class="flex-between"><span class="text-dim">Strike: $74.500</span><span>Cot.: $75.061</span></div>
+        <div class="pos-details">
+          <span>📏 Distância: <span class="text-warning">0.52%</span></span>
+          <span class="premium-usd">+US$ 11,26</span>
+        </div>
+      </div>
+      <!-- ETH position -->
+      <div class="position-item" style="border-left-color: #06b6d4;">
+        <div class="pos-header">
+          <div><span class="asset eth">Ξ ETH</span> <span class="option-type">CALL</span></div>
+          <div><span class="exer-warning" style="background:rgba(6,182,212,0.2); color:#06b6d4;">Seguro</span></div>
+        </div>
+        <div class="flex-between"><span class="text-dim">Strike: $2.400</span><span>Cot.: $2.376</span></div>
+        <div class="pos-details">
+          <span>📏 Distância: <span class="text-success">3.24%</span></span>
+          <span class="premium-usd">+US$ 4,66</span>
+        </div>
+      </div>
+
+      <!-- DISTÂNCIA AO STRIKE heat visual -->
+      <div class="distance-section">
+        <div class="card-title" style="margin-bottom: 12px;"><span>📊</span> DISTÂNCIA AO STRIKE</div>
+        <div class="heat-item">
+          <div class="heat-label">
+            <span>₿ BTC · 0.52%</span>
+            <span style="color: #f59e0b;">Zona de atenção</span>
+          </div>
+          <div class="heat-track" style="background: #0e1727;">
+            <div class="heat-fill" style="width: 18%; background: linear-gradient(90deg, #ef4444, #f59e0b 40%, #22c55e);"></div>
+          </div>
+          <div style="position: relative; height: 6px;"><div class="marker" style="position: absolute; left: 18%; top: -4px; background: #f59e0b;"></div></div>
+          <div class="flex-between" style="font-size: 0.6rem; margin-top: 4px;"><span>ITM</span><span>OTM seguro</span></div>
+        </div>
+        <div class="heat-item">
+          <div class="heat-label">
+            <span>Ξ ETH · 3.24%</span>
+            <span style="color: #22c55e;">Seguro</span>
+          </div>
+          <div class="heat-track">
+            <div class="heat-fill" style="width: 55%; background: linear-gradient(90deg, #ef4444, #f59e0b 40%, #22c55e);"></div>
+          </div>
+          <div style="position: relative; height: 6px;"><div class="marker" style="position: absolute; left: 55%; top: -4px; background: #22c55e;"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TERCEIRA LINHA: PROJEÇÃO PRÓXIMAS OPS + RESUMO RÁPIDO -->
+  <div class="grid-2col" style="margin-bottom: 0;">
+    <!-- PROJEÇÃO PRÓXIMAS OPS -->
+    <div class="card">
+      <div class="card-title">
+        <span>🎯</span> PROJEÇÃO PRÓXIMAS OPS
+      </div>
+      <div class="projection-row">
+        <div class="flex-between">
+          <span><strong class="asset btc">₿ BTC</strong> CALL sugerida</span>
+          <span class="text-warning text-mono">US$ 76.000</span>
+        </div>
+        <div style="font-size: 0.7rem; margin-top: 6px;">+1.8% acima cotação atual · prêmio estimado <strong class="text-success">+$22,50</strong></div>
+      </div>
+      <div class="projection-row">
+        <div class="flex-between">
+          <span><strong class="asset eth">Ξ ETH</strong> CALL sugerida</span>
+          <span class="text-warning text-mono">US$ 2.450</span>
+        </div>
+        <div style="font-size: 0.7rem; margin-top: 6px;">+3.1% acima cotação · prêmio estimado <strong class="text-success">+$9,80</strong></div>
+      </div>
+      <div class="profit-banner">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+          <span style="font-size: 0.7rem;">💎 Lucro projetado SE EXERCIDAS (BTC)</span>
+          <span class="text-success text-mono" style="font-weight: 800; font-size: 1rem;">+US$ 4.607,69</span>
+        </div>
+        <div style="font-size: 0.65rem; color: #8da0bc;">strike $76K vs custo médio $71.392 → upside capturado</div>
+      </div>
+      <div class="flex-between" style="margin-top: 12px;">
+        <span class="text-dim">Theta diário (est.)</span>
+        <span class="text-success">+US$ 15,92</span>
+      </div>
+    </div>
+
+    <!-- RESUMO RÁPIDO + MÉTRICAS -->
+    <div class="card">
+      <div class="card-title">
+        <span>📋</span> RESUMO RÁPIDO
+      </div>
+      <div class="kpi-summary">
+        <div class="kpi-badge">
+          <div class="kpi-number text-success">95.65%</div>
+          <div style="font-size: 0.65rem;">Taxa de acerto</div>
+          <div class="heat-track" style="height: 4px; margin-top: 6px;"><div style="width: 95.65%; height: 4px; background: #22c55e; border-radius: 4px;"></div></div>
+        </div>
+        <div class="kpi-badge">
+          <div class="kpi-number" style="color: #f59e0b;">82.6%</div>
+          <div style="font-size: 0.65rem;">Opções sem exercício</div>
+          <div class="heat-track" style="height: 4px; margin-top: 6px;"><div style="width: 82.6%; height: 4px; background: #f59e0b; border-radius: 4px;"></div></div>
+        </div>
+        <div class="kpi-badge">
+          <div class="kpi-number" style="color: #06b6d4;">100%</div>
+          <div style="font-size: 0.65rem;">Consistência</div>
+          <div class="heat-track" style="height: 4px; margin-top: 6px;"><div style="width: 100%; height: 4px; background: #06b6d4; border-radius: 4px;"></div></div>
+        </div>
+      </div>
+      <hr>
+      <div class="flex-between" style="margin-top: 4px;">
+        <span>🏦 ROI acumulado 2026</span>
+        <span class="text-success text-mono">+3.89%</span>
+      </div>
+      <div class="flex-between">
+        <span>💸 Prêmios brutos no mês</span>
+        <span class="text-success text-mono">US$ 242,86</span>
+      </div>
+      <div class="flex-between">
+        <span>⚙️ Custo médio efetivo (BTC)</span>
+        <span class="text-warning text-mono">$71.392</span>
+      </div>
+      <div class="flex-between" style="margin-top: 12px; background: rgba(34,197,94,0.05); padding: 8px; border-radius: 18px;">
+        <span>📈 Preço alvo sugerido</span>
+        <span class="text-success">$76.000 (CALL)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- extra footer com pequenos detalhes de desempenho -->
+  <div style="margin-top: 28px; text-align: center; font-size: 0.7rem; color: #3b4e6b; border-top: 1px solid rgba(71,95,125,0.2); padding-top: 20px; display: flex; justify-content: space-between; flex-wrap: wrap;">
+    <span>🔄 Estratégia: venda de PUT → rolagem para CALL · gestão ativa de prêmios</span>
+    <span>📊 Dados simulados com base no ciclo real de Abril/2026</span>
+  </div>
+</div>
+
+<script>
+  (function() {
+    // Dados EVOLUÇÃO DE PRÊMIOS ACUMULADOS (Mensal + Acumulado)
+    const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    const monthlyPremiums = [38.2, 44.7, 52.3, 67.5, 71.2, 84.9, 91.5, 103.2, 110.8, 126.4, 134.5, 148.2];
+    // Acumulado progressivo:
+    let cumulative = [];
+    let sum = 0;
+    monthlyPremiums.forEach(val => { sum += val; cumulative.push(parseFloat(sum.toFixed(1))); });
+    
+    const ctx = document.getElementById('premiumChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: months,
+        datasets: [
+          {
+            label: 'Prêmio mensal (US$)',
+            data: monthlyPremiums,
+            type: 'bar',
+            backgroundColor: 'rgba(34, 197, 94, 0.65)',
+            borderRadius: 8,
+            barPercentage: 0.65,
+            categoryPercentage: 0.8,
+            yAxisID: 'y',
+            order: 2
+          },
+          {
+            label: 'Acumulado (US$)',
+            data: cumulative,
+            type: 'line',
+            borderColor: '#f59e0b',
+            backgroundColor: 'rgba(245, 158, 11, 0.05)',
+            borderWidth: 3,
+            pointRadius: 4,
+            pointBackgroundColor: '#f59e0b',
+            pointBorderColor: '#00000030',
+            tension: 0.3,
+            fill: true,
+            yAxisID: 'y1',
+            order: 1
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          tooltip: { mode: 'index', intersect: false, backgroundColor: '#0a0f1c', titleColor: '#eef5ff', bodyColor: '#b9c7dd' },
+          legend: { display: false }
+        },
+        scales: {
+          x: { 
+            grid: { display: false, drawBorder: true }, 
+            ticks: { color: '#8da0bc', font: { size: 10, weight: '500' } }
+          },
+          y: {
+            position: 'left',
+            title: { display: true, text: 'Prêmio mensal (US$)', color: '#8da0bc', font: { size: 9 } },
+            grid: { color: 'rgba(71,95,125,0.2)' },
+            ticks: { color: '#b9c7dd', callback: (val) => '$' + val }
+          },
+          y1: {
+            position: 'right',
+            title: { display: true, text: 'Acumulado (US$)', color: '#f59e0b', font: { size: 9 } },
+            grid: { drawOnChartArea: false },
+            ticks: { color: '#f59e0b', callback: (val) => '$' + val }
+          }
+        },
+        elements: { point: { hoverRadius: 6 } }
+      }
+    });
+  })();
+</script>
+
+<!-- pequenos detalhes interativos: tooltips custom via CSS não precisa, mas garantimos a consistência -->
+<script>
+  // Adiciona micro-interações e animação sutil nos cards
+  const cards = document.querySelectorAll('.card');
+  cards.forEach(card => {
+    card.addEventListener('mouseenter', () => {
+      card.style.transform = 'translateY(-2px)';
+      card.style.transition = 'transform 0.2s ease, border-color 0.2s';
+    });
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = 'translateY(0px)';
+    });
+  });
+  // Atualização dinâmica de tooltip dos marcadores de heat (efeito visual apenas)
+  const heatMarkers = document.querySelectorAll('.marker');
+  heatMarkers.forEach(m => {
+    m.setAttribute('title', 'Distância atual até o strike');
+  });
+  // força o tooltip nativo
+  const premiumRows = document.querySelectorAll('.premium-row');
+  premiumRows.forEach(row => {
+    if(row.innerText.includes('08/04')) row.setAttribute('title', 'Prêmios: PUT + CALL coletados');
+    if(row.innerText.includes('13/04')) row.setAttribute('title', 'Ciclo de rolagem com +43.55 US$');
+  });
+  // Adiciona contador animado nos KPI's? leveza
+  const animateNumbers = () => {
+    const kpiNumbers = document.querySelectorAll('.kpi-number');
+    kpiNumbers.forEach(el => {
+      const final = parseFloat(el.innerText);
+      if(!isNaN(final) && el.innerText.includes('%')) {
+        let current = 0;
+        const step = final / 30;
+        const interval = setInterval(() => {
+          current += step;
+          if(current >= final) { el.innerText = final + '%'; clearInterval(interval);}
+          else { el.innerText = current.toFixed(1) + '%'; }
+        }, 20);
+      } else if (!isNaN(final) && el.innerText.includes('$')) {
+        // não aplicar para não conflitar, mas mantém
+      }
+    });
+  };
+  setTimeout(animateNumbers, 200);
+</script>
+</body>
+</html>

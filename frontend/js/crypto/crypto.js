@@ -30,6 +30,125 @@ function setInvestidoMode(mode) {
     if (input) input.placeholder = mode === 'usd' ? 'Ex: 5000' : 'Ex: 0.1';
     if (input) input.step        = mode === 'usd' ? '0.01' : '0.00000001';
 }
+function setupCryptoDynamicEventListeners() {
+    // Tabela mensal - cliques para abrir modal
+    document.querySelectorAll('.show-crypto-month-ops-row').forEach(row => {
+        if (!row.dataset.listenerBound) {
+            row.addEventListener('click', function(e) {
+                const year = this.getAttribute('data-year');
+                const month = this.getAttribute('data-month');
+                if (typeof showCryptoMonthOps === 'function') {
+                    showCryptoMonthOps(year, month);
+                }
+            });
+            row.dataset.listenerBound = 'true';
+        }
+    });
+
+    document.querySelectorAll('.show-crypto-month-ops-td').forEach(td => {
+        if (!td.dataset.listenerBound) {
+            td.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const year = this.getAttribute('data-year');
+                const month = this.getAttribute('data-month');
+                if (typeof showCryptoMonthOps === 'function') {
+                    showCryptoMonthOps(year, month);
+                }
+            });
+            td.dataset.listenerBound = 'true';
+        }
+    });
+
+    // Botão usar produto DI
+    document.querySelectorAll('.usar-produto-di-btn').forEach(btn => {
+        if (!btn.dataset.listenerBound) {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const underlying = this.getAttribute('data-underlying');
+                const optionType = this.getAttribute('data-option-type');
+                const strike = parseFloat(this.getAttribute('data-strike'));
+                const tae = parseFloat(this.getAttribute('data-tae'));
+                const duration = parseFloat(this.getAttribute('data-duration'));
+                const venc = this.getAttribute('data-venc');
+                if (typeof usarProdutoDI === 'function') {
+                    usarProdutoDI(underlying, optionType, strike, tae, duration, venc);
+                }
+            });
+            btn.dataset.listenerBound = 'true';
+        }
+    });
+
+    // Link de retry no estado vazio do DI
+    document.querySelectorAll('.di-retry-link').forEach(link => {
+        if (!link.dataset.listenerBound) {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (typeof buscarProdutosDI === 'function') {
+                    buscarProdutosDI();
+                }
+            });
+            link.dataset.listenerBound = 'true';
+        }
+    });
+
+    // Ações da tabela de operações
+    document.querySelectorAll('.op-analise-link').forEach(el => {
+        if (!el.dataset.listenerBound) {
+            el.addEventListener('click', function(e) {
+                e.preventDefault();
+                const opId = this.getAttribute('data-op-id');
+                if (window.ModalAnaliseCrypto && typeof window.ModalAnaliseCrypto.open === 'function') {
+                    window.ModalAnaliseCrypto.open(opId);
+                }
+            });
+            el.dataset.listenerBound = 'true';
+        }
+    });
+
+    document.querySelectorAll('.crypto-detalhes-btn').forEach(btn => {
+        if (!btn.dataset.listenerBound) {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const opId = this.getAttribute('data-op-id');
+                if (typeof showDetalhes === 'function') showDetalhes(opId);
+            });
+            btn.dataset.listenerBound = 'true';
+        }
+    });
+
+    document.querySelectorAll('.crypto-fechar-btn').forEach(btn => {
+        if (!btn.dataset.listenerBound) {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const opId = this.getAttribute('data-op-id');
+                if (typeof fecharOperacao === 'function') fecharOperacao(opId);
+            });
+            btn.dataset.listenerBound = 'true';
+        }
+    });
+
+    document.querySelectorAll('.crypto-edit-btn').forEach(btn => {
+        if (!btn.dataset.listenerBound) {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const opId = parseInt(this.getAttribute('data-op-id'), 10);
+                if (typeof editOperacao === 'function') editOperacao(opId);
+            });
+            btn.dataset.listenerBound = 'true';
+        }
+    });
+
+    document.querySelectorAll('.crypto-delete-btn').forEach(btn => {
+        if (!btn.dataset.listenerBound) {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const opId = parseInt(this.getAttribute('data-op-id'), 10);
+                if (typeof deleteOperacao === 'function') deleteOperacao(opId);
+            });
+            btn.dataset.listenerBound = 'true';
+        }
+    });
+}
 
 function _initCrypto() {
     initDataTables();
@@ -63,20 +182,72 @@ function setupEventListeners() {
     document.getElementById("btnCalcularSim")?.addEventListener("click", calcularSimulador);
     document.getElementById("btnAplicarSim")?.addEventListener("click", aplicarSimulacao);
     document.getElementById("btnSimCotacaoLive")?.addEventListener("click", buscarCotacaoSimLive);
-    // Atualiza cotação automaticamente ao trocar o par
-    document.getElementById("simPar")?.addEventListener("change", buscarCotacaoSimLive);
+    document.getElementById("btnSimHeaderRefresh")?.addEventListener("click", buscarCotacaoSimLive);
+    document.getElementById("btnSimConverterValor")?.addEventListener("click", converterSimValor);
+
+    // Atualiza cotação automaticamente ao trocar o par e recalcula painel
+    document.getElementById("simPar")?.addEventListener("change", function() { buscarCotacaoSimLive(); onSimInput(); });
+    document.getElementById("simTipo")?.addEventListener("change", onSimInput);
+
+    // Campos de entrada do simulador
+    ["simValor", "simStrike", "simTae", "simPrazo", "simCotacao"].forEach(id => {
+        document.getElementById(id)?.addEventListener("input", onSimInput);
+    });
+    document.getElementById("simValor")?.addEventListener("blur", simAutoFetchCotacao);
+
+    // Toggles do simulador e formulário
+    document.getElementById("simModoUsd")?.addEventListener("click", () => setSimModo('usd'));
+    document.getElementById("simModoCrypto")?.addEventListener("click", () => setSimModo('crypto'));
+    document.getElementById("btnInvestidoUsd")?.addEventListener("click", () => setInvestidoMode('usd'));
+    document.getElementById("btnInvestidoCrypto")?.addEventListener("click", () => setInvestidoMode('crypto'));
+
+    // Botões de atualização do TradingView
+    document.getElementById("btnReloadTradingViewCryptoTop")?.addEventListener("click", () => {
+        if (globalThis.CryptoTechnicalAnalysis && globalThis.CryptoTechnicalAnalysis.reloadChart) {
+            globalThis.CryptoTechnicalAnalysis.reloadChart();
+        }
+    });
+    document.getElementById("btnReloadTradingViewCrypto")?.addEventListener("click", () => {
+        if (globalThis.CryptoTechnicalAnalysis && globalThis.CryptoTechnicalAnalysis.reloadChart) {
+            globalThis.CryptoTechnicalAnalysis.reloadChart();
+        }
+    });
+
     // Botão refresh da navbar
     document.getElementById("btnRefresh")?.addEventListener("click", refreshQuotes);
     if (window.ModalAnalise) {
-        window.ModalAnalise.configure({
-            apiEndpoint: "/api/crypto",
-            containerSelector: "#modalAnaliseCryptoContainer",
-            modalId: "modalAnalise"
-        });
+        if (typeof window.ModalAnalise.configure === "function") {
+            window.ModalAnalise.configure({
+                apiEndpoint: "/api/crypto",
+                containerSelector: "#modalAnaliseCryptoContainer",
+                modalId: "modalAnalise"
+            });
+        }
     }
-    document.getElementById("btnAnaliseCrypto")?.addEventListener("click", () => {
-        if (window.ModalAnalise) window.ModalAnalise.open();
-        else iziToast.warning({ title: "Aviso", message: "Modal de analise nao carregado." });
+    document.getElementById("btnAnaliseCrypto")?.addEventListener("click", async () => {
+        if (!window.ModalAnalise) {
+            iziToast.warning({ title: "Aviso", message: "Modal de analise nao carregado." });
+            return;
+        }
+
+        // Usa a primeira operação disponível; se ainda não carregou, tenta carregar.
+        let ops = window.cryptoOperacoes || [];
+        if (!ops.length) {
+            try {
+                await loadOperacoes(1);
+                ops = window.cryptoOperacoes || [];
+            } catch (_) {
+                // segue para aviso abaixo
+            }
+        }
+
+        const firstOp = ops[0];
+        if (!firstOp) {
+            iziToast.warning({ title: "Aviso", message: "Nenhuma operação disponível." });
+            return;
+        }
+
+        window.ModalAnalise.open(firstOp.id);
     });
 
     // ── Cálculos automáticos no formulário de nova/editar operação ──────────
@@ -336,7 +507,7 @@ function setupFilterButtons() {
 
 function applyStatusFilterMesAtual() {
     if (!tableMesAtual) return;
-    const statusCol = tableMesAtual.column(14);
+    const statusCol = tableMesAtual.column(15);
 
     if (currentFilterCrypto === "all") {
         statusCol.search("", false, false).draw();
@@ -363,10 +534,10 @@ function initDataTables() {
         responsive: false,
         scrollX: true,
         autoWidth: false,
-        order: [[10, "desc"]],
+        order: [[11, "desc"]],
         columnDefs: [
-            { targets: 15, orderable: false },
-            { targets: [0,1,13,14,15], width: "auto" }
+            { targets: 16, orderable: false },
+            { targets: [0,1,2,14,15,16], width: "auto" }
         ]
     };
     tableMesAtual  = $('#tableMesAtual').DataTable(dtConfig);
@@ -388,6 +559,7 @@ async function loadOperacoes(attempt) {
         if (!res.ok) throw new Error("HTTP " + res.status);
         allOperacoes = await res.json();
         window.cryptoOperacoes = allOperacoes;
+        document.dispatchEvent(new CustomEvent('cryptoDataUpdated'));
         updateUI();
         refreshCryptoCotacoes();
         updateCryptoMarketStatus();
@@ -461,6 +633,9 @@ function updateUI() {
     renderChartAnual(anoData, currentYear);
     // Reaplica filtro de status ativo após recarregar a tabela
     applyStatusFilterMesAtual();
+
+        // Setup event listeners para elementos dinâmicos
+        setupCryptoDynamicEventListeners();
 }
 
 function fmtUsd(v) {
@@ -611,8 +786,15 @@ function populateTable(dt, data, options) {
                 : "<span class=\"badge bg-danger text-white\">" + status + "</span>";
         const resultado   = parseFloat(op.resultado) || 0;
         const resHtml     = op.resultado != null ? "<span class=\"" + (resultado >= 0 ? "text-success" : "text-danger") + "\">" + resultado.toFixed(2) + "%</span>" : "-";
+        const corretoraBadge = (() => {
+            const c = (op.corretora || 'BINANCE').toUpperCase();
+            if (c === 'BINANCE') return '<span class="badge bg-warning text-dark" title="Binance">BNC</span>';
+            if (c === 'BYBIT')   return '<span class="badge bg-info text-white" title="Bybit">BB</span>';
+            return `<span class="badge bg-secondary text-white">${c}</span>`;
+        })();
         dt.row.add([
-            "<span class=\"badge bg-warning text-dark\" style=\"cursor:pointer\" title=\"Análise completa\" onclick=\"if(window.ModalAnaliseCrypto)window.ModalAnaliseCrypto.open(" + op.id + ")\">" + (op.ativo || "-") + "</span>",
+            corretoraBadge,
+            "<span class=\"badge bg-warning text-dark op-analise-link\" style=\"cursor:pointer\" title=\"Análise completa\" data-op-id=\"" + op.id + "\">" + (op.ativo || "-") + "</span>",
             tipoBadge,
             op.cotacao_atual ? fmtUsd(op.cotacao_atual) : "-",
             op.abertura      ? fmtUsd(op.abertura)      : "-",
@@ -626,10 +808,10 @@ function populateTable(dt, data, options) {
             op.crypto        ? parseFloat(op.crypto).toFixed(6) : "-",
             exBadge, statusBadge,
             "<div class=\"btn-list flex-nowrap\">" +
-            "<button class=\"btn btn-sm btn-info btn-icon\" onclick=\"showDetalhes(" + op.id + ")\" title=\"Detalhes\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M12 16v-4\"/><path d=\"M12 8h.01\"/></svg></button>" +
-            (status === "ABERTA" ? "<button class=\"btn btn-sm btn-warning btn-icon\" onclick=\"fecharOperacao(" + op.id + ")\" title=\"Fechar Operação\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M18 6 6 18\"/><path d=\"m6 6 12 12\"/></svg></button>" : "") +
-            (status === "ABERTA" ? "<button class=\"btn btn-sm btn-primary btn-icon\" onclick=\"editOperacao(" + op.id + ")\" title=\"Editar\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7\"/><path d=\"M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z\"/></svg></button>" : "") +
-            "<button class=\"btn btn-sm btn-danger btn-icon\" onclick=\"deleteOperacao(" + op.id + ")\" title=\"Excluir\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"3 6 5 6 21 6\"/><path d=\"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2\"/><line x1=\"10\" y1=\"11\" x2=\"10\" y2=\"17\"/><line x1=\"14\" y1=\"11\" x2=\"14\" y2=\"17\"/></svg></button>" +
+            "<button class=\"btn btn-sm btn-info btn-icon crypto-detalhes-btn\" data-op-id=\"" + op.id + "\" title=\"Detalhes\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M12 16v-4\"/><path d=\"M12 8h.01\"/></svg></button>" +
+            (status === "ABERTA" ? "<button class=\"btn btn-sm btn-warning btn-icon crypto-fechar-btn\" data-op-id=\"" + op.id + "\" title=\"Fechar Operação\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M18 6 6 18\"/><path d=\"m6 6 12 12\"/></svg></button>" : "") +
+            (status === "ABERTA" ? "<button class=\"btn btn-sm btn-primary btn-icon crypto-edit-btn\" data-op-id=\"" + op.id + "\" title=\"Editar\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7\"/><path d=\"M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z\"/></svg></button>" : "") +
+            "<button class=\"btn btn-sm btn-danger btn-icon crypto-delete-btn\" data-op-id=\"" + op.id + "\" title=\"Excluir\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"3 6 5 6 21 6\"/><path d=\"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2\"/><line x1=\"10\" y1=\"11\" x2=\"10\" y2=\"17\"/><line x1=\"14\" y1=\"11\" x2=\"14\" y2=\"17\"/></svg></button>" +
             "</div>"
         ]);
     });
@@ -662,9 +844,9 @@ function registerHistoricoQuickFilter() {
     $.fn.dataTable.ext.search.push(function (settings, data) {
         if (settings?.nTable?.id !== "tableHistorico") return true;
 
-        const tipo = normalizeTableCell(data[1]);
-        const vencimento = parseDateFromTableCell(data[10]);
-        const status = normalizeTableCell(data[14]);
+        const tipo = normalizeTableCell(data[2]);
+        const vencimento = parseDateFromTableCell(data[11]);
+        const status = normalizeTableCell(data[15]);
 
         if (historicoQuickFilter.tipo !== "all" && tipo !== historicoQuickFilter.tipo) {
             return false;
@@ -800,20 +982,24 @@ function renderChartAnual(data, year) {
             const rentabilidade = saldoCrypto > 0 ? (premio / saldoCrypto * 100) : 0;
             const rentAbs    = Math.min(100, Math.abs(rentabilidade));
             const rentBarCls = rentabilidade >= 5 ? "bg-green" : rentabilidade >= 2 ? "bg-blue" : rentabilidade >= 0 ? "bg-yellow" : "bg-red";
+            const exercidas    = ops.filter(o => (o.exercicio_status || '').toUpperCase() === 'SIM').length;
+            const naoExercidas = ops.filter(o => (o.status || '').toUpperCase() === 'FECHADA' && (o.exercicio_status || '').toUpperCase() !== 'SIM').length;
             cumulative      += premio;
             totalOps        += ops.length;
             totalPremios    += premio;
             totalResultado  += resultado;
             totalWins       += wins;
 
-            rows += `<tr class="cursor-pointer" onclick="showCryptoMonthOps(${year}, '${month}')" style="cursor:pointer" title="Clique para ver detalhes">
+            rows += `<tr class="cursor-pointer show-crypto-month-ops-row" data-year="${year}" data-month="${month}" style="cursor:pointer" title="Clique para ver detalhes">
                 <td>${getMonthName(month).split("-")[0]}</td>
                 <td class="text-end">${ops.length}</td>
                 <td class="text-end ${premio >= 0 ? "text-success" : "text-danger"}">${fmtUsd(premio)}</td>
                 <td class="text-end ${resultado >= 0 ? "text-success" : "text-danger"}">${resultado.toFixed(2)}%</td>
                 <td class="text-end">${taxaAcerto.toFixed(0)}%</td>
                 <td class="text-end ${cumulative >= 0 ? "text-success" : "text-danger"}">${fmtUsd(cumulative)}</td>
-                <td onclick="showCryptoMonthOps(${year}, '${month}'); event.stopPropagation();" style="cursor:pointer">
+                <td class="text-end">${exercidas > 0 ? `<span class="badge bg-warning text-dark">${exercidas}</span>` : '<span class="text-muted">-</span>'}</td>
+                <td class="text-end">${naoExercidas > 0 ? naoExercidas : '<span class="text-muted">-</span>'}</td>
+                <td style="cursor:pointer" class="show-crypto-month-ops-td" data-year="${year}" data-month="${month}">
                     <div class="d-flex align-items-center">
                         <div class="progress progress-sm flex-grow-1 me-2" style="pointer-events:none">
                             <div class="progress-bar ${rentBarCls}" style="width:${rentAbs.toFixed(0)}%"></div>
@@ -835,9 +1021,12 @@ function renderChartAnual(data, year) {
               <thead><tr>
                 <th>Mês</th><th class="text-end">Ops</th><th class="text-end">Prêmio</th>
                 <th class="text-end">Resultado</th><th class="text-end">Acerto</th>
-                <th class="text-end">Acumulado</th><th>Rentabilidade</th>
+                <th class="text-end">Acumulado</th>
+                <th class="text-end" title="Operações exercidas">Exercidas</th>
+                <th class="text-end" title="Operações não exercidas">Não Exerc.</th>
+                <th>Rentabilidade</th>
               </tr></thead>
-              <tbody>${rows || '<tr><td colspan="7" class="text-muted text-center py-3">Nenhuma operação encerrada neste ano.</td></tr>'}</tbody>
+              <tbody>${rows || '<tr><td colspan="9" class="text-muted text-center py-3">Nenhuma operação encerrada neste ano.</td></tr>'}</tbody>
             </table>
           </div>
         </div>`;
@@ -869,21 +1058,32 @@ function renderChartAnual(data, year) {
                 const tipoBadge  = op.tipo === "CALL"
                     ? "<span class='badge crypto-badge-call'>CALL</span>"
                     : "<span class='badge crypto-badge-put'>PUT</span>";
+                const corretoraTag = (() => {
+                    const c = (op.corretora || 'BINANCE').toUpperCase();
+                    if (c === 'BINANCE') return '<span class="badge bg-warning text-dark">BNC</span>';
+                    if (c === 'BYBIT')   return '<span class="badge bg-info text-white">BB</span>';
+                    return `<span class="badge bg-secondary text-white">${c}</span>`;
+                })();
                 const statusBadge = (op.status || "ABERTA") === "ABERTA"
                     ? `<span class="badge bg-success text-white">${op.status || "ABERTA"}</span>`
                     : `<span class="badge bg-azure text-white">${op.status || "FECHADA"}</span>`;
+                const isExercida = (op.exercicio_status || '').toUpperCase() === 'SIM';
+                const exercBadge = isExercida
+                    ? '<span class="badge bg-warning text-dark">SIM</span>'
+                    : '<span class="badge bg-secondary text-white">N\u00c3O</span>';
                 opRows += `<tr>
                     <td>${op.data_operacao || "-"}</td>
-                    <td><strong style="cursor:pointer;color:#4299e1" onclick="if(window.ModalAnaliseCrypto)window.ModalAnaliseCrypto.open(${op.id})" title="Análise completa">${op.ativo || "-"}</strong></td>
+                        <td><strong style="cursor:pointer;color:#4299e1" data-analise-id="${op.id}" class="op-ativo-link" title="Análise completa">${op.ativo || "-"}</strong> ${corretoraTag}</td>
                     <td>${tipoBadge}</td>
                     <td>${op.strike ? fmtUsd(op.strike) : "-"}</td>
                     <td>${op.exercicio || "-"}</td>
                     <td class="${premio >= 0 ? "text-success" : "text-danger"}">${fmtUsd(premio)}</td>
                     <td class="${result >= 0 ? "text-success" : "text-danger"}">${result.toFixed(2)}%</td>
                     <td>${statusBadge}</td>
+                    <td>${exercBadge}</td>
                     <td>
                       <div class="btn-list flex-nowrap">
-                        <button class="btn btn-sm btn-info btn-icon" onclick="showDetalhes(${op.id})" title="Detalhes">
+                                                <button class="btn btn-sm btn-info btn-icon detalhes-btn" data-detalhe-id="${op.id}" title="Detalhes">
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
                         </button>
                       </div>
@@ -908,7 +1108,7 @@ function renderChartAnual(data, year) {
         <table class="table table-vcenter table-hover table-sm card-table mb-0">
           <thead><tr>
             <th>Abertura</th><th>Ativo</th><th>Tipo</th><th>Strike</th>
-            <th>Exercício</th><th>Prêmio</th><th>Resultado</th><th>Status</th><th></th>
+            <th>Exercício</th><th>Prêmio</th><th>Resultado</th><th>Status</th><th>Exerc.</th><th></th>
           </tr></thead>
           <tbody>${opRows}</tbody>
         </table>
@@ -926,7 +1126,28 @@ function renderChartAnual(data, year) {
                  </div>
                </div>`
             : "";
+        
+                // Adicionar listeners para links de análise
+                tabelaCont.querySelectorAll('.op-ativo-link').forEach(link => {
+                        link.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                const opId = this.getAttribute('data-analise-id');
+                                if (window.ModalAnaliseCrypto) {
+                                        window.ModalAnaliseCrypto.open(opId);
+                                }
+                        });
+                });
     }
+                    // Adicionar listeners para botões de detalhes
+                    tabelaCont.querySelectorAll('.detalhes-btn').forEach(btn => {
+                        btn.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            const opId = this.getAttribute('data-detalhe-id');
+                            if (typeof showDetalhes === 'function') {
+                                showDetalhes(opId);
+                            }
+                        });
+                    });
 
     // ─── Evolução do Resultado (linha acumulada) ─────────────────────────────
     const extraCont = document.getElementById("anualExtraCharts");
@@ -1059,6 +1280,8 @@ function editOperacao(id) {
     document.getElementById("inputResultado").value          = op.resultado || "";
     document.getElementById("inputExercicioStatus").value    = op.exercicio_status || "NAO";
     document.getElementById("inputObservacoes").value        = op.observacoes || "";
+    const corrEl = document.getElementById("inputCorretora");
+    if (corrEl) corrEl.value = op.corretora || 'BINANCE';
     new bootstrap.Modal(document.getElementById("modalOperacao")).show();
 }
 
@@ -1095,7 +1318,8 @@ async function saveOperacao() {
         exercicio:        document.getElementById("inputExercicio").value                || null,
         dias:             parseInt(document.getElementById("inputDias").value)           || null,
         exercicio_status: document.getElementById("inputExercicioStatus").value,
-        observacoes:      document.getElementById("inputObservacoes").value              || null
+        observacoes:      document.getElementById("inputObservacoes").value              || null,
+        corretora:        (document.getElementById("inputCorretora")?.value || 'BINANCE')
     };
     try {
         const url = id ? API_BASE + "/api/crypto/" + id : API_BASE + "/api/crypto";
@@ -1225,7 +1449,7 @@ async function buscarProdutosDI() {
             empty.innerHTML = `<div class='py-3 text-center'>
                 <div class='text-muted'>Nenhum produto disponível no momento.</div>
                 ${errMsg}${hint}
-                <div class='mt-2'><a href='#' onclick='buscarProdutosDI()'>Tentar novamente</a></div>
+                <div class='mt-2'><a href='#' class='di-retry-link'>Tentar novamente</a></div>
             </div>`;
             empty.style.display = "";
             table.style.display = "none";
@@ -1251,7 +1475,7 @@ async function buscarProdutosDI() {
                 <td>${prazo}d</td>
                 <td>${venc}</td>
                 <td>
-                    <button class="btn btn-sm btn-outline-primary" onclick="usarProdutoDI('${underlying}','${p.optionType}',${p.strikePrice},${parseFloat(p.annualInterestRate || 0) * 100},${p.duration || 7},'${venc}')">
+                    <button class="btn btn-sm btn-outline-primary usar-produto-di-btn" data-underlying="${underlying}" data-option-type="${p.optionType}" data-strike="${p.strikePrice}" data-tae="${parseFloat(p.annualInterestRate || 0) * 100}" data-duration="${p.duration || 7}" data-venc="${venc}">
                         Usar
                     </button>
                 </td>
@@ -1390,8 +1614,15 @@ function simRenderPmCard(par, cotacaoInput) {
 
     // Encontra última CALL exercida (strike exercida = PM base)
     const callsExercidas = ops.filter(o => isTypeExercised(o, 'CALL'));
-    const strikeExercida = callsExercidas.length
-        ? Math.max(...callsExercidas.map(o => parseFloat(o.strike||0)))
+    const ultimoExercicio = callsExercidas.length
+        ? [...callsExercidas].sort((a, b) => {
+            const aTime = window.CryptoExerciseStatus?.getOperationDate?.(a)?.getTime?.() || 0;
+            const bTime = window.CryptoExerciseStatus?.getOperationDate?.(b)?.getTime?.() || 0;
+            return bTime - aTime;
+        })[0]
+        : null;
+    const strikeExercida = ultimoExercicio
+        ? parseFloat(ultimoExercicio.strike || 0)
         : parseFloat(ops.reduce((max, o) => parseFloat(o.strike||0) > parseFloat(max.strike||0) ? o : max, ops[0])?.strike || 0);
 
     // Soma todos os prêmios do ativo
@@ -1399,20 +1630,33 @@ function simRenderPmCard(par, cotacaoInput) {
     const pm = strikeExercida - totalPremios;
     const cotacao = cotacaoInput || parseFloat(ops.find(o => parseFloat(o.cotacao_atual||0) > 0)?.cotacao_atual || 0);
     const pctVsPm = cotacao && pm ? ((cotacao - pm) / pm) * 100 : null;
+    const strikeAtual = parseFloat(document.getElementById('inputStrike')?.value || ops[0]?.strike || 0) || 0;
+    const resultadoExercicio = strikeAtual && strikeExercida ? (strikeAtual - strikeExercida) : null;
 
     const acCor = par === 'BTC' ? '#f59f00' : par === 'ETH' ? '#4da6ff' : '#3fb950';
     const icone = par === 'BTC' ? '₿' : par === 'ETH' ? 'Ξ' : '◎';
     const pctColor = pctVsPm === null ? '' : pctVsPm >= 0 ? 'color:#3fb950' : pctVsPm > -3 ? 'color:#f59f00' : 'color:#f85149';
     const pctSign  = pctVsPm === null ? '?' : (pctVsPm >= 0 ? '+' : '') + pctVsPm.toFixed(2) + '%';
+    const resultadoColor = resultadoExercicio === null
+        ? ''
+        : resultadoExercicio > 0
+            ? 'color:#3fb950'
+            : resultadoExercicio < 0
+                ? 'color:#f85149'
+                : 'color:#c9d1d9';
+    const resultadoSign = resultadoExercicio === null
+        ? '—'
+        : (resultadoExercicio > 0 ? '+' : '') + '$' + resultadoExercicio.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
     if (title) title.textContent = `${icone} PREÇO MÉDIO ${par}`;
 
     body.innerHTML = `
         <div class="sim-pm-val" style="color:${acCor}">$${pm.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
-        <div class="sim-pm-row"><span class="sim-pm-key">● Strike Exercido</span><span class="sim-pm-v" style="color:var(--tblr-warning)">$${strikeExercida.toLocaleString('en-US',{minimumFractionDigits:2})}</span></div>
+        <div class="sim-pm-row"><span class="sim-pm-key">● Último Exercício</span><span class="sim-pm-v" style="color:var(--tblr-warning)">$${strikeExercida.toLocaleString('en-US',{minimumFractionDigits:2})}</span></div>
         <div class="sim-pm-row"><span class="sim-pm-key">− Prêmios</span><span class="sim-pm-v" style="color:#3fb950">−$${totalPremios.toLocaleString('en-US',{minimumFractionDigits:2})}</span></div>
         ${cotacao ? `<div class="sim-pm-row"><span class="sim-pm-key">● Cotação</span><span class="sim-pm-v" style="${pctColor}">$${cotacao.toLocaleString('en-US',{minimumFractionDigits:2})}</span></div>` : ''}
         ${pctVsPm !== null ? `<div class="sim-pm-row"><span class="sim-pm-key">● vs PM</span><span class="sim-pm-v" style="${pctColor}">${pctSign}</span></div>` : ''}
+        ${resultadoExercicio !== null ? `<div class="sim-pm-row"><span class="sim-pm-key">● Resultado</span><span class="sim-pm-v" style="${resultadoColor}">${resultadoSign}</span></div>` : ''}
     `;
 }
 
@@ -1965,6 +2209,7 @@ async function refreshQuotes() {
         const res = await fetch(API_BASE + "/api/crypto");
         allOperacoes = await res.json();
         window.cryptoOperacoes = allOperacoes;
+        document.dispatchEvent(new CustomEvent('cryptoDataUpdated'));
         // 3. Busca cotações ao vivo somente para ops ABERTAS
         await refreshCryptoCotacoes();
         updateUI();

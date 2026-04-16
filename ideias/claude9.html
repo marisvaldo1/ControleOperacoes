@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Controle de Operações · Crypto</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+/* ═══════════════════════════════════════════════
+   DESIGN SYSTEM — fiel à tela original
+═══════════════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:   #0d1117;
+  --s1:   #161c28;
+  --s2:   #1c2438;
+  --s3:   #222d42;
+  --s4:   #28364e;
+  --bdr:  rgba(255,255,255,.07);
+  --bdr2: rgba(255,255,255,.13);
+  --tx1:  #e6eeff;
+  --tx2:  #7890b0;
+  --tx3:  #3a4f6a;
+  --grn:  #22c55e; --grn-bg: rgba(34,197,94,.11);  --grn-bdr: rgba(34,197,94,.28);
+  --red:  #ef4444; --red-bg: rgba(239,68,68,.11);   --red-bdr: rgba(239,68,68,.28);
+  --amb:  #f59e0b; --amb-bg: rgba(245,158,11,.11);  --amb-bdr: rgba(245,158,11,.28);
+  --blu:  #3b82f6; --blu-bg: rgba(59,130,246,.11);  --blu-bdr: rgba(59,130,246,.28);
+  --pur:  #a855f7; --pur-bg: rgba(168,85,247,.11);  --pur-bdr: rgba(168,85,247,.28);
+  --org:  #f97316; --org-bg: rgba(249,115,22,.11);  --org-bdr: rgba(249,115,22,.28);
+  --cya:  #06b6d4; --cya-bg: rgba(6,182,212,.11);   --cya-bdr: rgba(6,182,212,.28);
+  --btc:  #f59e0b;
+  --eth:  #06b6d4;
+  --mono: 'JetBrains Mono', monospace;
+  --syne: 'Syne', sans-serif;
+  --dm:   'DM Sans', sans-serif;
+}
+
+html,body{
+  min-height:100vh;
+  font-family:var(--dm);
+  background:var(--bg);
+  color:var(--tx1);
+  font-size:13px;
+}
+
+/* ══ LAYOUT SHELL ══ */
+.page{ display:flex; flex-direction:column; min-height:100vh; }
+
+/* ══ NAV TABS (topo) ══ */
+.nav{
+  display:flex; align-items:center; gap:0;
+  background:var(--s1); border-bottom:1px solid var(--bdr2);
+  padding:0 24px;
+}
+.nav-tab{
+  padding:14px 22px; font-size:.82rem; font-weight:500;
+  color:var(--tx2); cursor:pointer;
+  border-bottom:2px solid transparent;
+  transition:all .14s; white-space:nowrap;
+  border-top:none; border-left:none; border-right:none;
+  background:transparent;
+}
+.nav-tab:hover{ color:var(--tx1); }
+.nav-tab.on{ color:var(--tx1); border-bottom-color:var(--grn); font-weight:600; }
+
+/* ══ CONTENT AREA ══ */
+.content{ padding:24px; flex:1; }
+
+/* ══ MONTH HEADER (fiel à imagem) ══ */
+.month-header{ display:flex; align-items:flex-start; gap:0; margin-bottom:20px; }
+.month-title-block{ flex:1; }
+.month-title{
+  font-family:var(--syne); font-size:1rem; font-weight:700;
+  display:flex; align-items:center; gap:8px; margin-bottom:10px;
+}
+.month-badge{
+  font-size:.65rem; font-weight:700; padding:2px 9px;
+  border-radius:5px; background:var(--blu-bg);
+  color:var(--blu); border:1px solid var(--blu-bdr);
+}
+.kpi-row{ display:flex; gap:60px; flex-wrap:wrap; }
+.kpi-item{ display:flex; flex-direction:column; gap:3px; }
+.kpi-lbl{ font-size:.68rem; color:var(--tx2); }
+.kpi-val{
+  font-family:var(--dm); font-size:.88rem; font-weight:600;
+}
+
+/* ══ VISÃO GERAL SWITCHER ══ */
+.vg-switcher{
+  display:flex; gap:5px; flex-wrap:wrap;
+  background:var(--s2); border:1px solid var(--bdr2);
+  border-radius:28px; padding:4px 8px;
+  margin-bottom:20px; width:fit-content;
+}
+.vg-btn{
+  padding:.2rem .72rem; border-radius:18px;
+  border:1px solid transparent; background:transparent;
+  color:var(--tx2); font-family:var(--mono);
+  font-size:.61rem; font-weight:500; cursor:pointer;
+  transition:all .14s; white-space:nowrap;
+}
+.vg-btn:hover{ color:var(--tx1); border-color:var(--bdr2); }
+.vg-btn.on{ background:var(--grn-bg); border-color:var(--grn); color:var(--grn); }
+
+/* ══ DASHBOARD IDEAS (painéis swipeáveis) ══ */
+.vg-panel{ display:none; animation:fadeIn .28s ease; }
+.vg-panel.on{ display:block; }
+@keyframes fadeIn{ from{opacity:0;transform:translateY(7px)} to{opacity:1;transform:none} }
+
+/* ══ GRID SYSTEM ══ */
+.g2{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.g3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; }
+.g4{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+.g23{ display:grid; grid-template-columns:2fr 3fr; gap:14px; }
+.g32{ display:grid; grid-template-columns:3fr 2fr; gap:14px; }
+.g12{ display:grid; grid-template-columns:1fr 2fr; gap:14px; }
+.g21{ display:grid; grid-template-columns:2fr 1fr; gap:14px; }
+.g-row{ display:flex; gap:14px; align-items:stretch; }
+.g-row > *{ flex:1; }
+
+/* ══ CARDS ══ */
+.card{
+  background:var(--s1); border:1px solid var(--bdr);
+  border-radius:12px; padding:16px 18px;
+  display:flex; flex-direction:column;
+}
+.card-sm{ padding:12px 14px; }
+.card-title{
+  font-size:.62rem; font-weight:600; color:var(--tx2);
+  text-transform:uppercase; letter-spacing:.8px;
+  margin-bottom:12px; display:flex; align-items:center; gap:6px;
+}
+.card-title-icon{ font-size:.9rem; }
+.ch-wrap{ position:relative; }
+
+/* ══ DATA ROWS ══ */
+.dr{ display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid rgba(255,255,255,.04); font-size:.72rem; }
+.dr:last-child{ border-bottom:none; }
+.dr-k{ color:var(--tx2); display:flex; align-items:center; gap:6px; }
+.dr-dot{ width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.dr-v{ font-family:var(--mono); font-weight:600; }
+
+/* ══ PROGRESS ══ */
+.prow{ display:flex; flex-direction:column; gap:3px; margin-bottom:9px; }
+.prow:last-child{ margin-bottom:0; }
+.phd{ display:flex; justify-content:space-between; font-size:.66rem; }
+.pl{ color:var(--tx2); }
+.pv{ font-family:var(--mono); font-weight:600; }
+.pt{ height:6px; background:var(--s3); border-radius:3px; overflow:hidden; }
+.pf{ height:100%; border-radius:3px; transition:width .7s cubic-bezier(.4,0,.2,1); }
+.pt-lg{ height:10px; }
+.pt-sm{ height:4px; }
+
+/* ══ STAT ITEMS ══ */
+.si{ background:var(--s2); border-radius:10px; padding:14px 16px; }
+.si-v{ font-family:var(--mono); font-size:1.1rem; font-weight:700; line-height:1; }
+.si-l{ font-size:.58rem; color:var(--tx2); text-transform:uppercase; letter-spacing:.5px; margin-top:4px; }
+.si-sub{ font-size:.65rem; margin-top:3px; }
+
+/* ══ OP STATUS CARD ══ */
+.op-status-row{
+  display:flex; align-items:center; gap:8px;
+  padding:9px 12px; border-radius:8px;
+  background:var(--s2); border:1px solid var(--bdr);
+  margin-bottom:6px; transition:border-color .14s;
+}
+.op-status-row:hover{ border-color:var(--bdr2); }
+.op-asset{ font-family:var(--syne); font-size:.8rem; font-weight:700; min-width:30px; }
+.op-badge{ font-size:.6rem; font-weight:700; padding:2px 8px; border-radius:4px; white-space:nowrap; flex-shrink:0; }
+.ob-call{ background:var(--blu-bg); color:var(--blu); border:1px solid var(--blu-bdr); }
+.ob-put{ background:var(--pur-bg); color:var(--pur); border:1px solid var(--pur-bdr); }
+.ob-pex{ background:var(--org-bg); color:var(--org); border:1px solid var(--org-bdr); }
+.op-info{ flex:1; font-family:var(--mono); font-size:.68rem; color:var(--tx2); }
+.op-prem{ font-family:var(--mono); font-size:.78rem; font-weight:700; }
+
+/* ══ HEAT SPECTRUM ══ */
+.heat-bar{
+  height:24px; border-radius:8px; position:relative; overflow:hidden;
+}
+.heat-bg{ position:absolute; inset:0; opacity:.2; }
+.heat-cursor{
+  position:absolute; top:50%; transform:translate(-50%,-50%);
+  width:22px; height:22px; border-radius:50%;
+  border:3px solid var(--bg); transition:left .5s cubic-bezier(.4,0,.2,1);
+}
+.heat-label-l{ position:absolute; left:8px; top:50%; transform:translateY(-50%); font-size:.6rem; color:rgba(255,255,255,.4); }
+.heat-label-r{ position:absolute; right:8px; top:50%; transform:translateY(-50%); font-size:.6rem; color:rgba(255,255,255,.4); }
+
+/* ══ CYCLE FLOW ══ */
+.cycle-flow{
+  display:flex; align-items:center; gap:0;
+  padding:12px; background:var(--s2); border-radius:10px;
+  border:1px solid var(--bdr); overflow-x:auto;
+}
+.cf-node{
+  display:flex; flex-direction:column; align-items:center; gap:4px;
+  min-width:70px; text-align:center; flex-shrink:0;
+}
+.cf-circle{
+  width:40px; height:40px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:.65rem; font-weight:700; border:2px solid transparent;
+  transition:all .2s;
+}
+.cf-lbl{ font-size:.58rem; color:var(--tx2); }
+.cf-val{ font-family:var(--mono); font-size:.64rem; font-weight:600; }
+.cf-arrow{
+  font-size:1rem; color:var(--tx3); flex-shrink:0; margin:0 -4px;
+  align-self:center; padding-bottom:20px;
+}
+
+/* ══ TIMELINE DOTS ══ */
+.timeline-item{
+  display:flex; align-items:flex-start; gap:10px;
+  padding:8px 0; border-bottom:1px solid rgba(255,255,255,.04);
+}
+.timeline-item:last-child{ border-bottom:none; }
+.tl-dot-wrap{ display:flex; flex-direction:column; align-items:center; flex-shrink:0; }
+.tl-dot{ width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+.tl-line{ width:1px; flex:1; min-height:16px; background:var(--bdr2); margin:2px 0; }
+.tl-content{ flex:1; }
+.tl-date{ font-size:.65rem; color:var(--tx2); font-family:var(--mono); }
+.tl-title{ font-size:.74rem; font-weight:600; margin-top:2px; }
+.tl-sub{ font-size:.64rem; color:var(--tx2); margin-top:2px; }
+.tl-badge{ font-size:.58rem; font-weight:700; padding:1px 7px; border-radius:10px; }
+.tl-val{ font-family:var(--mono); font-size:.78rem; font-weight:700; text-align:right; }
+
+/* ══ ANOMALY ALERTS ══ */
+.alert-item{
+  display:flex; align-items:flex-start; gap:8px;
+  padding:10px 12px; border-radius:8px;
+  margin-bottom:7px;
+}
+.alert-item:last-child{ margin-bottom:0; }
+.ai-icon{ font-size:1rem; flex-shrink:0; }
+.ai-title{ font-size:.72rem; font-weight:600; }
+.ai-sub{ font-size:.63rem; color:var(--tx2); margin-top:2px; }
+
+/* ══ SCORE RING ══ */
+.score-wrap{
+  display:flex; flex-direction:column; align-items:center;
+  padding:16px 0; position:relative;
+}
+.score-ring-lbl{ font-size:.62rem; color:var(--tx2); margin-top:8px; }
+
+/* ══ FORECAST TABLE ══ */
+.fc-row{
+  display:flex; align-items:center; gap:8px;
+  padding:8px 12px; border-radius:7px;
+  background:var(--s2); border:1px solid var(--bdr);
+  margin-bottom:6px;
+}
+.fc-row:last-child{ margin-bottom:0; }
+.fc-a{ font-family:var(--syne); font-size:.8rem; font-weight:700; min-width:32px; }
+.fc-info{ flex:1; }
+.fc-info-v{ font-family:var(--mono); font-size:.75rem; font-weight:700; }
+.fc-info-l{ font-size:.6rem; color:var(--tx2); margin-top:1px; }
+.fc-result{ text-align:right; }
+.fc-result-v{ font-family:var(--mono); font-size:.78rem; font-weight:700; }
+.fc-result-l{ font-size:.58rem; color:var(--tx2); }
+
+/* ══ HELPERS ══ */
+.pos{ color:var(--grn); }
+.neg{ color:var(--red); }
+.neu{ color:var(--amb); }
+.mb8{ margin-bottom:8px; }
+.mb12{ margin-bottom:12px; }
+.mb16{ margin-bottom:16px; }
+.mt8{ margin-top:8px; }
+.flex-center{ display:flex; align-items:center; justify-content:center; }
+.gap4{ gap:4px; }
+.gap8{ gap:8px; }
+
+/* ══ DATATABLE (abas Histórico, Anual, Config) ══ */
+.dt-placeholder{
+  background:var(--s1); border:1px solid var(--bdr); border-radius:10px;
+  padding:16px; margin-top:16px;
+}
+.dt-head{
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:14px;
+}
+.dt-title{ font-family:var(--syne); font-size:.9rem; font-weight:700; }
+.dt-filters{ display:flex; gap:5px; }
+.dt-filter{
+  font-size:.65rem; font-weight:600; padding:3px 10px;
+  border-radius:5px; cursor:pointer; border:1px solid var(--bdr);
+  background:transparent; color:var(--tx2); transition:all .12s;
+}
+.dt-filter.on{ background:var(--grn-bg); border-color:var(--grn); color:var(--grn); }
+.dt-filter.fe{ background:var(--s3); border-color:var(--bdr2); color:var(--tx2); }
+.dt-filter.ab{ background:var(--blu-bg); border-color:var(--blu-bdr); color:var(--blu); }
+.dt-pg{ font-size:.63rem; color:var(--tx2); }
+table{ width:100%; border-collapse:collapse; font-size:.7rem; }
+thead th{
+  text-align:left; padding:7px 8px; font-size:.6rem;
+  font-weight:600; color:var(--tx2); text-transform:uppercase;
+  letter-spacing:.5px; background:var(--s2);
+  border-bottom:1px solid var(--bdr); cursor:pointer;
+}
+thead th:hover{ color:var(--tx1); }
+tbody td{ padding:9px 8px; border-bottom:1px solid rgba(255,255,255,.04); }
+tbody tr:hover td{ background:rgba(255,255,255,.02); }
+tbody tr:last-child td{ border-bottom:none; }
+.td-btc{ font-size:.74rem; font-weight:700; padding:2px 8px; border-radius:4px; background:var(--amb-bg); color:var(--btc); border:1px solid var(--amb-bdr); }
+.td-eth{ font-size:.74rem; font-weight:700; padding:2px 8px; border-radius:4px; background:var(--cya-bg); color:var(--eth); border:1px solid var(--cya-bdr); }
+.td-call{ font-size:.65rem; font-weight:600; color:var(--blu); background:var(--blu-bg); border:1px solid var(--blu-bdr); padding:2px 7px; border-radius:4px; }
+.td-put{ font-size:.65rem; font-weight:600; color:var(--pur); background:var(--pur-bg); border:1px solid var(--pur-bdr); padding:2px 7px; border-radius:4px; }
+.td-aberta{ background:var(--grn-bg); color:var(--grn); border:1px solid var(--grn-bdr); font-size:.62rem; font-weight:600; padding:2px 8px; border-radius:4px; white-space:nowrap; }
+.td-pex{ background:var(--org-bg); color:var(--org); border:1px solid var(--org-bdr); font-size:.62rem; font-weight:600; padding:2px 8px; border-radius:4px; white-space:nowrap; }
+.td-mono{ font-family:var(--mono); }
+.tbl-actions{ display:flex; gap:4px; }
+.act-btn{
+  width:26px; height:26px; border-radius:5px;
+  border:1px solid var(--bdr2); background:transparent;
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
+  font-size:.75rem; color:var(--tx2); transition:all .13s;
+}
+.act-btn:hover{ border-color:var(--bdr2); color:var(--tx1); }
+.act-btn.blue:hover{ border-color:var(--blu); color:var(--blu); }
+.act-btn.red:hover{ border-color:var(--red); color:var(--red); }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ══ NAV TABS (fiel à imagem) ══ -->
+  <nav class="nav">
+    <button class="nav-tab on" onclick="switchNav('visao',this)">Visão Geral</button>
+    <button class="nav-tab" onclick="switchNav('mes',this)">Mês Atual</button>
+    <button class="nav-tab" onclick="switchNav('historico',this)">Histórico</button>
+    <button class="nav-tab" onclick="switchNav('anual',this)">Anual</button>
+    <button class="nav-tab" onclick="switchNav('config',this)">Configurações</button>
+  </nav>
+
+  <!-- ══ CONTENT ══ -->
+  <div class="content">
+
+    <!-- ════════════════════════════════
+         ABA: VISÃO GERAL (NOVA)
+    ════════════════════════════════ -->
+    <div id="tab-visao" class="nav-content">
+
+      <!-- Cabeçalho do mês (preservado) -->
+      <div class="month-header">
+        <div class="month-title-block">
+          <div class="month-title">
+            Abril-26
+            <span class="month-badge">Mês Atual</span>
+          </div>
+          <div class="kpi-row">
+            <div class="kpi-item"><span class="kpi-lbl">Total Operações</span><span class="kpi-val">23</span></div>
+            <div class="kpi-item"><span class="kpi-lbl">Premio Mes (US$)</span><span class="kpi-val pos">US$ 242,86</span></div>
+            <div class="kpi-item"><span class="kpi-lbl">Resultado Médio</span><span class="kpi-val pos">0.27%</span></div>
+            <div class="kpi-item"><span class="kpi-lbl">Operações Abertas</span><span class="kpi-val" style="color:var(--blu)">2</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SUB-SWITCHER DAS IDEAS ── -->
+      <div class="vg-switcher">
+        <span style="font-size:.62rem;color:var(--tx2);align-self:center;padding-right:4px;font-family:var(--mono)">Ideia:</span>
+        <button class="vg-btn on" onclick="switchVG('vg1',this)">① Executivo</button>
+        <button class="vg-btn" onclick="switchVG('vg2',this)">② Ciclos + Radar</button>
+        <button class="vg-btn" onclick="switchVG('vg3',this)">③ Performance</button>
+        <button class="vg-btn" onclick="switchVG('vg4',this)">④ Risk Monitor</button>
+        <button class="vg-btn" onclick="switchVG('vg5',this)">⑤ Timeline Visual</button>
+        <button class="vg-btn" onclick="switchVG('vg6',this)">⑥ Cockpit Total</button>
+      </div>
+
+      <!-- ══════════════════════════════════════
+           IDEIA 1 — EXECUTIVO
+           Curva acumulada + KPIs + Posições abertas + Donut
+      ══════════════════════════════════════ -->
+      <div id="vg1" class="vg-panel on">
+        <!-- ROW 1: 4 stat cards -->
+        <div class="g4 mb16">
+          <div class="si">
+            <div class="si-v pos">US$ 242,86</div>
+            <div class="si-l">Prêmios no Mês</div>
+            <div class="si-sub pos" style="font-size:.65rem">▲ +18% vs mês ant.</div>
+          </div>
+          <div class="si">
+            <div class="si-v" style="color:var(--blu)">3.89%</div>
+            <div class="si-l">ROI Acumulado 2026</div>
+            <div class="si-sub" style="font-size:.65rem;color:var(--tx2)">sobre capital inicial</div>
+          </div>
+          <div class="si">
+            <div class="si-v" style="color:var(--grn)">95.65%</div>
+            <div class="si-l">Win Rate</div>
+            <div class="si-sub" style="font-size:.65rem;color:var(--tx2)">22 de 23 ops lucrativas</div>
+          </div>
+          <div class="si">
+            <div class="si-v" style="color:var(--org)">1</div>
+            <div class="si-l">Em Risco (ITM)</div>
+            <div class="si-sub" style="font-size:.65rem;color:var(--org)">BTC 0.52% do strike</div>
+          </div>
+        </div>
+
+        <!-- ROW 2: Curva + Posições abertas -->
+        <div class="g32 mb16">
+          <div class="card">
+            <div class="card-title"><span class="card-title-icon">📈</span>Evolução de Prêmios Acumulados — 2026</div>
+            <div style="display:flex;gap:10px;margin-bottom:10px;font-size:.62rem;color:var(--tx2)">
+              <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#22c55e;display:inline-block"></span>Prêmio mensal</span>
+              <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:3px;background:#f59e0b;display:inline-block"></span>Acumulado</span>
+            </div>
+            <div class="ch-wrap" style="height:200px"><canvas id="c1-curva"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-title"><span class="card-title-icon">🔍</span>Posições Abertas Agora</div>
+            <div class="mb12">
+              <!-- BTC -->
+              <div class="op-status-row" style="border-left:3px solid var(--org)">
+                <span class="op-asset" style="color:var(--btc)">BTC</span>
+                <span class="op-badge ob-call">CALL</span>
+                <span class="op-badge ob-pex">Poss. Exercício</span>
+                <div class="op-info">Strike $74.500 · Cot. $75.061</div>
+                <div class="op-info" style="text-align:right">Dist. <span style="color:var(--org)">0.52%</span></div>
+                <span class="op-prem pos">+US$ 11,26</span>
+              </div>
+              <!-- ETH -->
+              <div class="op-status-row" style="border-left:3px solid var(--grn)">
+                <span class="op-asset" style="color:var(--eth)">ETH</span>
+                <span class="op-badge ob-call">CALL</span>
+                <div class="op-info">Strike $2.400 · Cot. $2.376</div>
+                <div class="op-info" style="text-align:right">Dist. <span style="color:var(--grn)">3.24%</span></div>
+                <span class="op-prem pos">+US$ 4,66</span>
+              </div>
+            </div>
+            <!-- Dist heat bars -->
+            <div class="card-title mt8">Distância ao Strike</div>
+            <div class="mb8">
+              <div style="font-size:.65rem;color:var(--tx2);margin-bottom:4px">₿ BTC · 0.52% · <span style="color:var(--org)">Zona de atenção</span></div>
+              <div class="heat-bar">
+                <div class="heat-bg" style="background:linear-gradient(90deg,#ef4444,#f59e0b 40%,#22c55e 100%)"></div>
+                <div class="heat-cursor" style="left:18%;background:var(--org)"></div>
+                <div class="heat-label-l">ITM</div>
+                <div class="heat-label-r">OTM Seguro</div>
+              </div>
+            </div>
+            <div>
+              <div style="font-size:.65rem;color:var(--tx2);margin-bottom:4px">Ξ ETH · 3.24% · <span style="color:var(--grn)">Seguro</span></div>
+              <div class="heat-bar">
+                <div class="heat-bg" style="background:linear-gradient(90deg,#ef4444,#f59e0b 40%,#22c55e 100%)"></div>
+                <div class="heat-cursor" style="left:55%;background:var(--grn)"></div>
+                <div class="heat-label-l">ITM</div>
+                <div class="heat-label-r">OTM Seguro</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ROW 3: Distribuição + Meses + Ciclo resumo -->
+        <div class="g3">
+          <div class="card">
+            <div class="card-title"><span class="card-title-icon">🥧</span>Mix de Operações</div>
+            <div style="display:flex;gap:12px;align-items:center">
+              <div class="ch-wrap" style="height:130px;flex:1"><canvas id="c1-donut"></canvas></div>
+              <div style="display:flex;flex-direction:column;gap:7px;font-size:.66rem">
+                <span style="display:flex;align-items:center;gap:6px"><span style="width:9px;height:9px;border-radius:50%;background:var(--blu);display:inline-block"></span>CALL <strong style="font-family:var(--mono);margin-left:auto">18</strong></span>
+                <span style="display:flex;align-items:center;gap:6px"><span style="width:9px;height:9px;border-radius:50%;background:var(--pur);display:inline-block"></span>PUT <strong style="font-family:var(--mono);margin-left:auto">5</strong></span>
+                <span style="display:flex;align-items:center;gap:6px"><span style="width:9px;height:9px;border-radius:50%;background:var(--org);display:inline-block"></span>Exercidas <strong style="font-family:var(--mono);margin-left:auto;color:var(--org)">4</strong></span>
+                <span style="display:flex;align-items:center;gap:6px"><span style="width:9px;height:9px;border-radius:50%;background:var(--grn);display:inline-block"></span>Abertas <strong style="font-family:var(--mono);margin-left:auto;color:var(--grn)">2</strong></span>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title"><span class="card-title-icon">📅</span>Evolução Mensal 2026</div>
+            <div class="ch-wrap" style="height:130px"><canvas id="c1-mensal"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-title"><span class="card-title-icon">⚖️</span>Custo Médio Atual</div>
+            <div class="dr"><span class="dr-k"><span class="dr-dot" style="background:var(--btc)"></span>BTC/USDT</span><span class="dr-v" style="color:var(--btc)">US$ 71.392,31</span></div>
+            <div class="dr"><span class="dr-k"><span class="dr-dot" style="background:var(--tx3)"></span>PUT Strike</span><span class="dr-v neu">US$ 71.500,00</span></div>
+            <div class="dr"><span class="dr-k"><span class="dr-dot" style="background:var(--grn)"></span>Prêmios coletados</span><span class="dr-v pos">−US$ 107,69</span></div>
+            <div class="dr" style="border-top:1px solid var(--bdr2);margin-top:3px;padding-top:7px"><span class="dr-k" style="color:var(--tx1);font-weight:600">Desconto obtido</span><span class="dr-v pos">−4.84%</span></div>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--bdr)">
+              <div class="dr"><span class="dr-k"><span class="dr-dot" style="background:var(--eth)"></span>ETH/USDT</span><span class="dr-v" style="color:var(--eth)">US$ 2.117,31</span></div>
+              <div class="dr"><span class="dr-k" style="color:var(--tx1);font-weight:600">Desconto obtido</span><span class="dr-v pos">−4.84%</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════
+           IDEIA 2 — CICLOS + RADAR
+           Fluxo de ciclos + radar de métricas
+      ══════════════════════════════════════ -->
+      <div id="vg2" class="vg-panel">
+        <div class="g2 mb16">
+          <!-- Fluxo de ciclo visual -->
+          <div class="card">
+            <div class="card-title"><span class="card-title-icon">🔄</span>Fluxo do Ciclo — PUT → CALL</div>
+            <div class="cycle-flow mb12">
+              <div class="cf-node">
+                <div class="cf-circle" style="background:var(--pur-bg);border-color:var(--pur);color:var(--pur)">PUT</div>
+                <div class="cf-lbl">Compra</div>
+                <div class="cf-val" style="color:var(--pur)">$71.500</div>
+              </div>
+              <div class="cf-arrow">→</div>
+              <div class="cf-node">
+                <div class="cf-circle" style="background:var(--org-bg);border-color:var(--org);color:var(--org)">EX</div>
+                <div class="cf-lbl">Exercida</div>
+                <div class="cf-val" style="color:var(--org)">08/04</div>
+              </div>
+              <div class="cf-arrow">→</div>
+              <div class="cf-node">
+                <div class="cf-circle" style="background:var(--grn-bg);border-color:var(--grn);color:var(--grn)">P1</div>
+                <div class="cf-lbl">Prêmio 1</div>
+                <div class="cf-val pos">+$14,26</div>
+              </div>
+              <div class="cf-arrow">→</div>
+              <div class="cf-node">
+                <div class="cf-circle" style="background:var(--grn-bg);border-color:var(--grn);color:var(--grn)">P2</div>
+                <div class="cf-lbl">Prêmio 2</div>
+                <div class="cf-val pos">+$9,23</div>
+              </div>
+              <div class="cf-arrow">→</div>
+              <div class="cf-node">
+                <div class="cf-circle" style="background:var(--grn-bg);border-color:var(--grn);color:var(--grn)">P3</div>
+                <div class="cf-lbl">Prêmio 3</div>
+                <div class="cf-val pos">+$26,18</div>
+              </div>
+              <div class="cf-arrow">→</div>
+              <div class="cf-node">
+                <div class="cf-circle" style="background:var(--amb-bg);border-color:var(--amb);color:var(--amb);font-size:.55rem">CM</div>
+                <div class="cf-lbl">Custo Médio</div>
+                <div class="cf-val" style="color:var(--amb)">$71.392</div>
+              </div>
+            </div>
+            <!-- barras prêmio por ciclo -->
+            <div class="card-title mt8">Prêmios por ciclo</div>
+            <div class="prow">
+              <div class="phd"><span class="pl">Ciclo 08/04 · BTC+ETH</span><span class="pv pos">+US$ 55,58</span></div>
+              <div class="pt pt-lg"><div class="pf" style="width:53%;background:var(--grn)"></div></div>
+            </div>
+            <div class="prow">
+              <div class="phd"><span class="pl">Ciclo 13/04 · BTC+ETH</span><span class="pv pos">+US$ 48,55</span></div>
+              <div class="pt pt-lg"><div class="pf" style="width:46%;background:var(--blu)"></div></div>
+            </div>
+            <div class="prow">
+              <div class="phd"><span class="pl">Ciclo 15/04 · Em aberto</span><span class="pv" style="color:var(--tx2)">aguardando</span></div>
+              <div class="pt pt-lg"><div class="pf" style="width:0%;background:var(--tx3)"></div></div>
+            </div>
+          </div>
+
+          <!-- Radar -->
+          <div class="card">
+            <div class="card-title"><span class="card-title-icon">🕸️</span>Radar de Performance Multidimensional</div>
+            <div class="ch-wrap" style="height:240px"><canvas id="c2-radar"></canvas></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:10px;font-size:.62rem">
+              <div style="text-align:center;background:var(--s2);border-radius:7px;padding:7px 5px">
+                <div style="font-family:var(--mono);font-weight:700;color:var(--grn)">95.65%</div>
+                <div style="color:var(--tx2)">Acerto</div>
+              </div>
+              <div style="text-align:center;background:var(--s2);border-radius:7px;padding:7px 5px">
+                <div style="font-family:var(--mono);font-weight:700;color:var(--amb)">3.89%</div>
+                <div style="color:var(--tx2)">ROI</div>
+              </div>
+              <div style="text-align:center;background:var(--s2);border-radius:7px;padding:7px 5px">
+                <div style="font-family:var(--mono);font-weight:700;color:var(--blu)">∞</div>
+                <div style="color:var(--tx2)">P.Factor</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ROW 2: Análise por ativo -->
+        <div class="g2">
+          <div class="card">
+            <div class="card-title"><span class="card-title-icon">₿</span>Análise BTC</div>
+            <div class="ch-wrap" style="height:150px"><canvas id="c2-btc"></canvas></div>
+            <div class="dr mt8"><span class="dr-k">TAE médio</span><span class="dr-v pos">132.71%</span></div>
+            <div class="dr"><span class="dr-k">Prêmio médio/op</span><span class="dr-v" style="color:var(--btc)">US$ 15,43</span></div>
+            <div class="dr"><span class="dr-k">Ops exercidas</span><span class="dr-v" style="color:var(--org)">3 de 12</span></div>
+          </div>
+          <div class="card">
+            <div class="card-title"><span class="card-title-icon">Ξ</span>Análise ETH</div>
+            <div class="ch-wrap" style="height:150px"><canvas id="c2-eth"></canvas></div>
+            <div class="dr mt8"><span class="dr-k">TAE médio</span><span class="dr-v pos">55.82%</span></div>
+            <div class="dr"><span class="dr-k">Prêmio médio/op</span><span class="dr-v" style="color:var(--eth)">US$ 9,18</span></div>
+            <div class="dr"><span class="dr-k">Ops exercidas</span><span class="dr-v" style="color:var(--org)">1 de 11</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════
+           IDEIA 3 — PERFORMANCE CURVES
+           Curva de capital + histograma + scatter
+      ══════════════════════════════════════ -->
+      <div id="vg3" class="vg-panel">
+        <!-- ROW 1: curva grande -->
+        <div class="card mb16">
+          <div class="card-title"><span class="card-title-icon">💰</span>Curva de Capital — Prêmios Acumulados 2026</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+            <div style="display:flex;gap:12px;font-size:.64rem;color:var(--tx2)">
+              <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:3px;background:var(--grn);display:inline-block;border-radius:1px"></span>BTC prêmios</span>
+              <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:3px;background:var(--eth);display:inline-block;border-radius:1px"></span>ETH prêmios</span>
+              <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:3px;background:var(--amb);display:inline-block;border-radius:1px;border-top:2px dashed var(--amb);height:0"></span>Total acum.</span>
+            </div>
+            <div style="font-family:var(--mono);font-size:.78rem;font-weight:700;color:var(--grn)">+US$ 346,41 no período</div>
+          </div>
+          <div class="ch-wrap" style="height:220px"><canvas id="c3-main"></canvas></div>
+        </div>
+
+        <div class="g3">
+          <!-- Histograma de prêmios -->
+          <div class="card">
+            <div class="card-title"><span class="card-title-icon">📊</span>Distribuição de Prêmios por Faixa</div>
+            <div class="ch-wrap" style="height:150px"><canvas id="c3-hist"></canvas></div>
+            <div style="font-size:.62rem;color:var(--tx2);margin-top:8px;text-align:center">
+              68% das ops entre US$ 5–20
+            </div>
+          </div>
+          <!-- TAE scatter -->
+          <div class="card">
+            <div class="card-title"><span class="card-title-icon">⚡</span>TAE% por Operação</div>
+            <div class="ch-wrap" style="height:150px"><canvas id="c3-tae"></canvas></div>
+            <div style="font-size:.62rem;color:var(--tx2);margin-top:8px;text-align:center">
+              Média: 94.27% ao ano
+            </div>
+          </div>
+          <!-- Resultado por dia da semana -->
+          <div class="card">
+            <div class="card-title"><span class="card-title-icon">📆</span>Prêmio por Dia da Semana</div>
+            <div class="ch-wrap" style="height:150px"><canvas id="c3-dow"></canvas></div>
+            <div style="font-size:.62rem;color:var(--tx2);margin-top:8px;text-align:center">
+              Terça = melhor dia histórico
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════
+           IDEIA 4 — RISK MONITOR
+           Score de risco + alertas + semáforos
+      ══════════════════════════════════════ -->
+      <div id="vg4" class="vg-panel">
+        <div class="g4 mb16">
+          <!-- Score geral -->
+          <div class="card flex-center" style="flex-direction:column">
+            <div class="card-title" style="justify-content:center">Score de Risco</div>
+            <div class="score-wrap">
+              <canvas id="c4-score" width="140" height="140"></canvas>
+              <div class="score-ring-lbl">Portfólio atual</div>
+            </div>
+          </div>
+          <!-- Alertas -->
+          <div class="card" style="grid-column:span 2">
+            <div class="card-title"><span class="card-title-icon">🚨</span>Alertas de Risco</div>
+            <div class="alert-item" style="background:var(--org-bg);border:1px solid var(--org-bdr);border-radius:8px">
+              <div class="ai-icon">⚠️</div>
+              <div>
+                <div class="ai-title" style="color:var(--org)">BTC CALL — Possível Exercício</div>
+                <div class="ai-sub">Cotação US$ 75.061 vs Strike US$ 74.500 · Distância: +0.52% · Vence em 1 dia</div>
+              </div>
+              <div style="margin-left:auto;font-family:var(--mono);font-size:.8rem;font-weight:700;color:var(--org)">0.52%</div>
+            </div>
+            <div class="alert-item" style="background:var(--grn-bg);border:1px solid var(--grn-bdr);border-radius:8px;margin-top:7px">
+              <div class="ai-icon">✅</div>
+              <div>
+                <div class="ai-title" style="color:var(--grn)">ETH CALL — Seguro</div>
+                <div class="ai-sub">Cotação US$ 2.376 vs Strike US$ 2.400 · Distância: +3.24% · Margem confortável</div>
+              </div>
+              <div style="margin-left:auto;font-family:var(--mono);font-size:.8rem;font-weight:700;color:var(--grn)">3.24%</div>
+            </div>
+          </div>
+          <!-- Semáforo risco -->
+          <div class="card flex-center" style="flex-direction:column;gap:12px">
+            <div class="card-title" style="justify-content:center">Status Geral</div>
+            <div style="display:flex;flex-direction:column;gap:8px;align-items:center">
+              <div style="width:28px;height:28px;border-radius:50%;background:var(--red);opacity:.2"></div>
+              <div style="width:28px;height:28px;border-radius:50%;background:var(--amb);box-shadow:0 0 14px var(--amb)"></div>
+              <div style="width:28px;height:28px;border-radius:50%;background:var(--grn);opacity:.2"></div>
+            </div>
+            <div style="font-size:.74rem;font-weight:600;color:var(--amb)">ATENÇÃO</div>
+          </div>
+        </div>
+
+        <div class="g3">
+          <!-- Gauge BTC -->
+          <div class="card">
+            <div class="card-title"><span class="card-title-icon">₿</span>Gauge Distância BTC</div>
+            <div class="ch-wrap flex-center" style="height:140px"><canvas id="c4-btc-gauge" width="200" height="130"></canvas></div>
+            <div class="prow mt8">
+              <div class="phd"><span class="pl">Probabilidade de Lucro (PoP)</span><span class="pv" style="color:var(--org)">49%</span></div>
+              <div class="pt pt-lg"><div class="pf" style="width:49%;background:linear-gradient(90deg,var(--org),var(--amb))"></div></div>
+            </div>
+          </div>
+          <!-- Gauge ETH -->
+          <div class="card">
+            <div class="card-title"><span class="card-title-icon">Ξ</span>Gauge Distância ETH</div>
+            <div class="ch-wrap flex-center" style="height:140px"><canvas id="c4-eth-gauge" width="200" height="130"></canvas></div>
+            <div class="prow mt8">
+              <div class="phd"><span class="pl">Probabilidade de Lucro (PoP)</span><span class="pv pos">72%</span></div>
+              <div class="pt pt-lg"><div class="pf" style="width:72%;background:var(--grn)"></div></div>
+            </div>
+          </div>
+          <!-- Concentração de risco -->
+          <div class="card">
+            <div class="card-title"><span class="card-title-icon">📉</span>Concentração de Risco</div>
+            <div class="prow">
+              <div class="phd"><span class="pl">BTC · US$ 3.070,55 exposição</span><span class="pv" style="color:var(--btc)">66%</span></div>
+              <div class="pt pt-lg"><div class="pf" style="width:66%;background:var(--btc)"></div></div>
+            </div>
+            <div class="prow">
+              <div class="phd"><span class="pl">ETH · US$ 3.131,68 exposição</span><span class="pv" style="color:var(--eth)">34%</span></div>
+              <div class="pt pt-lg"><div class="pf" style="width:34%;background:var(--eth)"></div></div>
+            </div>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--bdr)">
+              <div class="dr"><span class="dr-k">VaR estimado (1d, 95%)</span><span class="dr-v" style="color:var(--red)">−US$ 186,40</span></div>
+              <div class="dr"><span class="dr-k">Delta total</span><span class="dr-v" style="color:var(--amb)">+0.047</span></div>
+              <div class="dr"><span class="dr-k">Theta diário</span><span class="dr-v pos">+US$ 15,92</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════
+           IDEIA 5 — TIMELINE VISUAL
+           Linha do tempo das operações do mês
+      ══════════════════════════════════════ -->
+      <div id="vg5" class="vg-panel">
+        <div class="g21">
+          <!-- Timeline principal -->
+          <div class="card">
+            <div class="card-title"><span class="card-title-icon">⏱️</span>Timeline de Operações — Abril 2026</div>
+            <div id="timeline-container" style="position:relative;padding-left:20px">
+              <!-- linha vertical -->
+              <div style="position:absolute;left:8px;top:0;bottom:0;width:1.5px;background:linear-gradient(to bottom,var(--grn),var(--org),transparent);opacity:.35;border-radius:1px"></div>
+            </div>
+          </div>
+
+          <!-- Painel direito: resumo + projeção -->
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div class="card">
+              <div class="card-title"><span class="card-title-icon">🔮</span>Projeção Próximas Ops</div>
+              <div class="fc-row">
+                <span class="fc-a" style="color:var(--btc)">₿</span>
+                <div class="fc-info">
+                  <div class="fc-info-v" style="color:var(--amb)">US$ 76.000</div>
+                  <div class="fc-info-l">CALL sugerida · +1.8% acima cot.</div>
+                </div>
+                <div class="fc-result">
+                  <div class="fc-result-v pos">+US$ 22,50</div>
+                  <div class="fc-result-l">prêm. estimado</div>
+                </div>
+              </div>
+              <div class="fc-row">
+                <span class="fc-a" style="color:var(--eth)">Ξ</span>
+                <div class="fc-info">
+                  <div class="fc-info-v" style="color:var(--amb)">US$ 2.450</div>
+                  <div class="fc-info-l">CALL sugerida · +3.1% acima cot.</div>
+                </div>
+                <div class="fc-result">
+                  <div class="fc-result-v pos">+US$ 9,80</div>
+                  <div class="fc-result-l">prêm. estimado</div>
+                </div>
+              </div>
+              <div style="margin-top:10px;padding:9px;background:var(--grn-bg);border:1px solid var(--grn-bdr);border-radius:7px">
+                <div style="font-size:.65rem;color:var(--grn);font-weight:600">💡 Lucro projetado se exercidas</div>
+                <div style="display:flex;justify-content:space-between;margin-top:4px">
+                  <span style="font-size:.63rem;color:var(--tx2)">BTC: strike $76K vs custo médio $71.392</span>
+                  <span style="font-family:var(--mono);font-weight:700;color:var(--grn)">+US$ 4.607,69</span>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-title"><span class="card-title-icon">📊</span>Resumo Rápido</div>
+              <div class="prow">
+                <div class="phd"><span class="pl">Taxa de acerto</span><span class="pv pos">95.65%</span></div>
+                <div class="pt pt-lg"><div class="pf" style="width:95.65%;background:var(--grn)"></div></div>
+              </div>
+              <div class="prow">
+                <div class="phd"><span class="pl">Ops sem exercício</span><span class="pv" style="color:var(--blu)">82.6%</span></div>
+                <div class="pt pt-lg"><div class="pf" style="width:82.6%;background:var(--blu)"></div></div>
+              </div>
+              <div class="prow">
+                <div class="phd"><span class="pl">Consistência</span><span class="pv" style="color:var(--amb)">100%</span></div>
+                <div class="pt pt-lg"><div class="pf" style="width:100%;background:var(--amb)"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════
+           IDEIA 6 — COCKPIT TOTAL
+           Tudo num único painel integrado
+      ══════════════════════════════════════ -->
+      <div id="vg6" class="vg-panel">
+        <!-- Hero row com chart grande integrado -->
+        <div class="g32 mb16">
+          <div class="card">
+            <div class="card-title"><span class="card-title-icon">📈</span>Curva de Capital + Prêmios</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+              <div style="display:flex;gap:10px;font-size:.62rem;color:var(--tx2)">
+                <span style="display:flex;align-items:center;gap:4px"><span style="width:9px;height:9px;border-radius:2px;background:#22c55e;display:inline-block"></span>Normal</span>
+                <span style="display:flex;align-items:center;gap:4px"><span style="width:9px;height:9px;border-radius:2px;background:#f97316;display:inline-block"></span>Exercida</span>
+                <span style="display:flex;align-items:center;gap:4px"><span style="width:3px;height:9px;background:var(--amb);display:inline-block;border-radius:1px"></span>Acumulado</span>
+              </div>
+              <span style="font-family:var(--mono);font-weight:700;font-size:.82rem;color:var(--grn)">+US$ 346,41 total</span>
+            </div>
+            <div class="ch-wrap" style="height:190px"><canvas id="c6-main"></canvas></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <!-- Score ring + KPIs -->
+            <div class="card card-sm" style="flex:1">
+              <div class="card-title">Score Geral</div>
+              <div style="display:flex;align-items:center;gap:12px">
+                <canvas id="c6-mini-score" width="80" height="80" style="flex-shrink:0"></canvas>
+                <div style="flex:1">
+                  <div style="font-family:var(--mono);font-size:1.5rem;font-weight:700;color:var(--grn);line-height:1">88</div>
+                  <div style="font-size:.62rem;color:var(--tx2);margin-top:2px">Excelente portfólio</div>
+                  <div style="margin-top:8px;display:flex;flex-direction:column;gap:4px">
+                    <div class="prow" style="margin:0"><div class="phd"><span class="pl">Win Rate</span><span class="pv pos">95.65%</span></div><div class="pt" style="height:4px"><div class="pf" style="width:95%;background:var(--grn)"></div></div></div>
+                    <div class="prow" style="margin:0"><div class="phd"><span class="pl">Consistência</span><span class="pv" style="color:var(--amb)">100%</span></div><div class="pt" style="height:4px"><div class="pf" style="width:100%;background:var(--amb)"></div></div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="card card-sm" style="flex:1">
+              <div class="card-title">Prêmios por ativo</div>
+              <div class="ch-wrap" style="height:90px"><canvas id="c6-donut-small"></canvas></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ROW 2: 5 col metrics -->
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px">
+          <div class="si card-sm"><div class="si-v pos">US$ 242,86</div><div class="si-l">Prêmios Mês</div></div>
+          <div class="si card-sm"><div class="si-v" style="color:var(--blu)">3.89%</div><div class="si-l">ROI 2026</div></div>
+          <div class="si card-sm"><div class="si-v pos">95.65%</div><div class="si-l">Win Rate</div></div>
+          <div class="si card-sm"><div class="si-v" style="color:var(--org)">4</div><div class="si-l">Exercidas</div></div>
+          <div class="si card-sm"><div class="si-v" style="color:var(--cya)">US$ 71.392</div><div class="si-l">Custo Médio BTC</div></div>
+        </div>
+
+        <!-- ROW 3: Posições + mensal + ciclos -->
+        <div class="g3">
+          <div class="card">
+            <div class="card-title"><span class="card-title-icon">🔍</span>Posições Abertas</div>
+            <div class="op-status-row" style="border-left:3px solid var(--org)">
+              <span class="op-asset" style="color:var(--btc)">BTC</span>
+              <span class="op-badge ob-call">CALL</span>
+              <span class="op-badge ob-pex">⚠️ Poss. Ex.</span>
+              <div class="op-info">$74.500 · cot $75.061</div>
+              <span class="op-prem pos">+US$ 11,26</span>
+            </div>
+            <div class="op-status-row" style="border-left:3px solid var(--grn)">
+              <span class="op-asset" style="color:var(--eth)">ETH</span>
+              <span class="op-badge ob-call">CALL</span>
+              <div class="op-info">$2.400 · cot $2.376</div>
+              <span class="op-prem pos">+US$ 4,66</span>
+            </div>
+            <div style="margin-top:10px">
+              <div style="font-size:.62rem;color:var(--tx2);margin-bottom:5px">Posição no espectro de risco</div>
+              <div class="heat-bar">
+                <div class="heat-bg" style="background:linear-gradient(90deg,#ef4444,#f59e0b 40%,#22c55e)"></div>
+                <div class="heat-cursor" style="left:18%;background:var(--org)" title="BTC"></div>
+                <div class="heat-cursor" style="left:55%;background:var(--grn)" title="ETH"></div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title"><span class="card-title-icon">📅</span>Histórico Mensal</div>
+            <div class="ch-wrap" style="height:160px"><canvas id="c6-mensal"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-title"><span class="card-title-icon">🔄</span>Ciclo Atual — BTC</div>
+            <div class="dr"><span class="dr-k"><span class="dr-dot" style="background:var(--pur)"></span>PUT Strike</span><span class="dr-v neu">US$ 71.500</span></div>
+            <div class="dr"><span class="dr-k"><span class="dr-dot" style="background:var(--grn)"></span>Prêmios coletados</span><span class="dr-v pos">+US$ 107,69</span></div>
+            <div class="dr"><span class="dr-k"><span class="dr-dot" style="background:var(--btc)"></span>Custo Médio Real</span><span class="dr-v" style="color:var(--btc)">US$ 71.392</span></div>
+            <div class="dr" style="font-weight:600;border-top:1px solid var(--bdr2);margin-top:3px;padding-top:7px"><span class="dr-k" style="color:var(--tx1)">Próxima CALL</span><span class="dr-v neu">US$ 76.000</span></div>
+            <div style="background:var(--grn-bg);border:1px solid var(--grn-bdr);border-radius:7px;padding:8px 10px;margin-top:8px">
+              <div style="font-size:.62rem;color:var(--grn);font-weight:600">Lucro se exercida</div>
+              <div style="font-family:var(--mono);font-size:.88rem;font-weight:700;color:var(--grn);margin-top:2px">+US$ 4.607,69</div>
+              <div style="font-size:.6rem;color:var(--tx2)">strike $76K − custo médio $71.392</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /tab-visao -->
+
+    <!-- ════════════════════════════════
+         ABA: MÊS ATUAL (original)
+    ════════════════════════════════ -->
+    <div id="tab-mes" class="nav-content" style="display:none">
+      <div class="month-header">
+        <div class="month-title-block">
+          <div class="month-title">Abril-26 <span class="month-badge">Mês Atual</span></div>
+          <div class="kpi-row">
+            <div class="kpi-item"><span class="kpi-lbl">Total Operações</span><span class="kpi-val">23</span></div>
+            <div class="kpi-item"><span class="kpi-lbl">Premio Mes (US$)</span><span class="kpi-val pos">US$ 242,86</span></div>
+            <div class="kpi-item"><span class="kpi-lbl">Resultado Médio</span><span class="kpi-val pos">0.27%</span></div>
+            <div class="kpi-item"><span class="kpi-lbl">Operações Abertas</span><span class="kpi-val" style="color:var(--blu)">2</span></div>
+          </div>
+        </div>
+      </div>
+      <!-- Datatable original preservado -->
+      <div class="dt-placeholder">
+        <div class="dt-head">
+          <div class="dt-title">Operações — Abril-26</div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="dt-filters">
+              <button class="dt-filter fe">Todas</button>
+              <button class="dt-filter on">Abertas</button>
+              <button class="dt-filter fe">Fechadas</button>
+            </div>
+            <input type="text" placeholder="Buscar registros" style="background:var(--s2);border:1px solid var(--bdr2);border-radius:7px;color:var(--tx1);padding:5px 12px;font-size:.72rem;outline:none;width:160px"/>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:.72rem;color:var(--tx2)">
+          <span>Exibir</span>
+          <select style="background:var(--s2);border:1px solid var(--bdr2);color:var(--tx1);padding:4px 8px;border-radius:5px;font-size:.72rem">
+            <option>10</option><option>25</option><option>50</option>
+          </select>
+          <span>resultados por página</span>
+        </div>
+        <table>
+          <thead><tr>
+            <th>ATIVO ↕</th><th>TIPO ↕</th><th>COTAÇÃO ATUAL</th><th>ABERTURA</th>
+            <th>TAE %</th><th>STRIKE</th><th>DISTÂNCIA</th><th>PRÊMIO US$</th>
+            <th>%</th><th>RESULTADO</th><th>VENCIMENTO ↕</th><th>PRAZO</th>
+            <th>CRYPTO</th><th>EXERCÍCIO</th><th>STATUS</th><th>AÇÕES</th>
+          </tr></thead>
+          <tbody>
+            <tr>
+              <td><span class="td-btc">BTC</span></td>
+              <td><span class="td-call">CALL</span></td>
+              <td class="td-mono">US$ 75.061,55</td>
+              <td class="td-mono">US$ 74.116,62</td>
+              <td class="td-mono pos">132.71%</td>
+              <td class="td-mono">US$ 74.500,00</td>
+              <td class="td-mono" style="color:var(--org)">0.52%</td>
+              <td class="td-mono pos">US$ 11,26</td>
+              <td class="td-mono">0.02%</td>
+              <td class="td-mono pos">0.18%</td>
+              <td class="td-mono">16/04/2026</td>
+              <td class="td-mono">1d</td>
+              <td class="td-mono">0.041800</td>
+              <td><span class="td-pex">Possível Exercício</span></td>
+              <td><span class="td-aberta">ABERTA</span></td>
+              <td><div class="tbl-actions"><button class="act-btn blue">🔍</button><button class="act-btn">✏️</button><button class="act-btn red">🗑</button></div></td>
+            </tr>
+            <tr>
+              <td><span class="td-eth">ETH</span></td>
+              <td><span class="td-call">CALL</span></td>
+              <td class="td-mono">US$ 2.376,16</td>
+              <td class="td-mono">US$ 2.324,66</td>
+              <td class="td-mono pos">55.82%</td>
+              <td class="td-mono">US$ 2.400,00</td>
+              <td class="td-mono pos">3.24%</td>
+              <td class="td-mono pos">US$ 4,66</td>
+              <td class="td-mono">0.20%</td>
+              <td class="td-mono pos">0.07%</td>
+              <td class="td-mono">16/04/2026</td>
+              <td class="td-mono">1d</td>
+              <td class="td-mono">1.310699</td>
+              <td><span class="td-pex">Possível Exercício</span></td>
+              <td><span class="td-aberta">ABERTA</span></td>
+              <td><div class="tbl-actions"><button class="act-btn blue">🔍</button><button class="act-btn">✏️</button><button class="act-btn red">🗑</button></div></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="dt-pg" style="margin-top:12px;text-align:left">Mostrando 1 até 2 de 2 registros (Filtrados de 23 registros)</div>
+      </div>
+    </div>
+
+    <!-- Outras abas simplificadas -->
+    <div id="tab-historico" class="nav-content" style="display:none">
+      <div style="padding:40px;text-align:center;color:var(--tx2);font-size:.88rem">Histórico de operações — conteúdo original preservado aqui</div>
+    </div>
+    <div id="tab-anual" class="nav-content" style="display:none">
+      <div style="padding:40px;text-align:center;color:var(--tx2);font-size:.88rem">Análise Anual — conteúdo original preservado aqui</div>
+    </div>
+    <div id="tab-config" class="nav-content" style="display:none">
+      <div style="padding:40px;text-align:center;color:var(--tx2);font-size:.88rem">Configurações — conteúdo original preservado aqui</div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /page -->
+
+<script>
+/* ═══════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════ */
+function switchNav(tab, btn){
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.nav-content').forEach(t=>t.style.display='none');
+  btn.classList.add('on');
+  document.getElementById('tab-'+tab).style.display='block';
+}
+function switchVG(id, btn){
+  document.querySelectorAll('.vg-btn').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('.vg-panel').forEach(p=>p.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById(id).classList.add('on');
+  // re-render charts for that panel
+  setTimeout(()=>renderChartsForPanel(id), 50);
+}
+
+/* ═══════════════════════════════════
+   CHART REGISTRY
+═══════════════════════════════════ */
+const CHARTS = {};
+function dc(id){
+  if(CHARTS[id]){try{CHARTS[id].destroy()}catch(e){} delete CHARTS[id];
+  }
+}
+
+/* ═══════════════════════════════════
+   DATA
+═══════════════════════════════════ */
+const MONTHLY = {
+  labels:['Jan','Fev','Mar','Abr'],
+  btc:  [48.20, 62.80, 78.40, 40.44],
+  eth:  [31.50, 44.20, 52.10, 27.06],
+  total:[79.70, 107.00, 130.50, 67.50],
+};
+
+const ACC_DATA = {
+  labels:['Jan','Fev','Mar','Abr'],
+  vals:  [79.70, 186.70, 317.20, 384.70],
+};
+
+/* ═══════════════════════════════════
+   CHART BUILDERS
+═══════════════════════════════════ */
+
+/* ── V1: Curva acumulada ── */
+function buildC1Curva(){
+  dc('c1-curva');
+  const el=document.getElementById('c1-curva');if(!el)return;
+  CHARTS['c1-curva']=new Chart(el,{
+    type:'bar',
+    data:{
+      labels:MONTHLY.labels,
+      datasets:[
+        {type:'bar',label:'BTC',data:MONTHLY.btc,backgroundColor:'rgba(245,158,11,.55)',borderRadius:4,barThickness:18,order:2},
+        {type:'bar',label:'ETH',data:MONTHLY.eth,backgroundColor:'rgba(6,182,212,.55)',borderRadius:4,barThickness:18,order:2},
+        {type:'line',label:'Acumulado',data:ACC_DATA.vals,borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,.07)',borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#f59e0b',fill:true,tension:.38,yAxisID:'y2',order:1}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}},
+      scales:{
+        x:{grid:{display:false},ticks:{color:'#3a4f6a',font:{size:10}},stacked:true},
+        y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#3a4f6a',font:{size:10},callback:v=>'$'+v.toFixed(0)},stacked:true},
+        y2:{position:'right',grid:{display:false},ticks:{color:'#f59e0b',font:{size:10},callback:v=>'$'+v.toFixed(0)}}
+      }
+    }
+  });
+}
+function buildC1Donut(){
+  dc('c1-donut');
+  const el=document.getElementById('c1-donut');if(!el)return;
+  CHARTS['c1-donut']=new Chart(el,{
+    type:'doughnut',
+    data:{labels:['CALL','PUT','Exercidas','Abertas'],
+      datasets:[{data:[18,5,4,2],backgroundColor:['rgba(59,130,246,.8)','rgba(168,85,247,.8)','rgba(249,115,22,.8)','rgba(34,197,94,.8)'],borderWidth:0,hoverOffset:6}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'70%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.label+': '+c.raw}}}}
+  });
+}
+function buildC1Mensal(){
+  dc('c1-mensal');
+  const el=document.getElementById('c1-mensal');if(!el)return;
+  CHARTS['c1-mensal']=new Chart(el,{
+    type:'bar',
+    data:{labels:MONTHLY.labels,
+      datasets:[{data:MONTHLY.total,backgroundColor:MONTHLY.total.map((_,i)=>i<3?'rgba(34,197,94,.5)':'rgba(245,158,11,.7)'),borderRadius:6,barThickness:32}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{grid:{display:false},ticks:{color:'#3a4f6a',font:{size:10}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#3a4f6a',font:{size:10},callback:v=>'$'+v.toFixed(0)}}}}
+  });
+}
+
+/* ── V2: Radar ── */
+function buildC2Radar(){
+  dc('c2-radar');
+  const el=document.getElementById('c2-radar');if(!el)return;
+  CHARTS['c2-radar']=new Chart(el,{
+    type:'radar',
+    data:{
+      labels:['Acerto','ROI','Consistência','Segurança','Eficiência','P.Factor'],
+      datasets:[
+        {label:'Portfólio Atual',data:[95,78,100,72,85,99],borderColor:'#22c55e',backgroundColor:'rgba(34,197,94,.12)',borderWidth:2,pointRadius:4,pointBackgroundColor:'#22c55e'},
+        {label:'Benchmark',data:[70,60,80,80,70,75],borderColor:'rgba(90,120,180,.5)',backgroundColor:'rgba(59,130,246,.06)',borderWidth:1.5,pointRadius:3,borderDash:[4,3]}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{r:{grid:{color:'rgba(255,255,255,.07)'},pointLabels:{color:'#7890b0',font:{size:11}},ticks:{display:false},angleLines:{color:'rgba(255,255,255,.07)'}}}
+    }
+  });
+}
+function buildC2Btc(){
+  dc('c2-btc');
+  const el=document.getElementById('c2-btc');if(!el)return;
+  CHARTS['c2-btc']=new Chart(el,{
+    type:'line',
+    data:{labels:['Jan','Fev','Mar','Abr'],
+      datasets:[{data:[48.20,62.80,78.40,40.44],borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,.1)',borderWidth:2.5,pointRadius:4,pointBackgroundColor:'#f59e0b',fill:true,tension:.4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{display:false},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#3a4f6a',font:{size:9},callback:v=>'$'+v.toFixed(0)}}}}
+  });
+}
+function buildC2Eth(){
+  dc('c2-eth');
+  const el=document.getElementById('c2-eth');if(!el)return;
+  CHARTS['c2-eth']=new Chart(el,{
+    type:'line',
+    data:{labels:['Jan','Fev','Mar','Abr'],
+      datasets:[{data:[31.50,44.20,52.10,27.06],borderColor:'#06b6d4',backgroundColor:'rgba(6,182,212,.1)',borderWidth:2.5,pointRadius:4,pointBackgroundColor:'#06b6d4',fill:true,tension:.4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{display:false},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#3a4f6a',font:{size:9},callback:v=>'$'+v.toFixed(0)}}}}
+  });
+}
+
+/* ── V3: Performance ── */
+function buildC3Main(){
+  dc('c3-main');
+  const el=document.getElementById('c3-main');if(!el)return;
+  const allOps=[14.26,13.53,14.26,13.53,9.23,8.47,9.23,8.47,26.18,22.37,3.90,8.80,11.26,4.66];
+  const labels=allOps.map((_,i)=>'Op '+(i+1));
+  let acc=0;const accD=allOps.map(v=>{acc+=v;return parseFloat(acc.toFixed(2));});
+  const colors=allOps.map((_,i)=>[2,3,8,9,10,11].includes(i)?'rgba(249,115,22,.7)':'rgba(34,197,94,.65)');
+  CHARTS['c3-main']=new Chart(el,{
+    type:'bar',
+    data:{labels,datasets:[
+      {type:'bar',data:allOps,backgroundColor:colors,borderRadius:3,barThickness:14,order:2},
+      {type:'line',data:accD,borderColor:'#f59e0b',borderDash:[5,3],backgroundColor:'rgba(245,158,11,.08)',borderWidth:2.5,pointRadius:3,pointBackgroundColor:'#f59e0b',fill:true,tension:.3,order:1}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.type==='line'?'Acumulado: $'+c.raw:'Prêmio: $'+c.raw}}},
+      scales:{x:{grid:{display:false},ticks:{color:'#3a4f6a',font:{size:9},maxRotation:0,autoSkip:true,maxTicksLimit:7}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#3a4f6a',font:{size:9},callback:v=>'$'+v.toFixed(0)}}}}
+  });
+}
+function buildC3Hist(){
+  dc('c3-hist');
+  const el=document.getElementById('c3-hist');if(!el)return;
+  CHARTS['c3-hist']=new Chart(el,{
+    type:'bar',
+    data:{labels:['$0–5','$5–10','$10–15','$15–20','$20–25','$25+'],
+      datasets:[{data:[1,6,5,4,2,2],backgroundColor:'rgba(59,130,246,.65)',borderRadius:5,barThickness:22}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{grid:{display:false},ticks:{color:'#3a4f6a',font:{size:10}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#3a4f6a',font:{size:10}}}}}
+  });
+}
+function buildC3Tae(){
+  dc('c3-tae');
+  const el=document.getElementById('c3-tae');if(!el)return;
+  const taeData=[132.71,55.82,132.71,55.82,132.71,55.82,132.71,55.82,100.5,84.3,132.71,55.82,132.71,55.82];
+  CHARTS['c3-tae']=new Chart(el,{
+    type:'line',
+    data:{labels:taeData.map((_,i)=>i+1),
+      datasets:[{data:taeData,borderColor:'#22c55e',backgroundColor:'rgba(34,197,94,.1)',borderWidth:2,pointRadius:3,pointBackgroundColor:'#22c55e',fill:true,tension:.2}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{display:false},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#3a4f6a',font:{size:9},callback:v=>v+'%'}}}}
+  });
+}
+function buildC3Dow(){
+  dc('c3-dow');
+  const el=document.getElementById('c3-dow');if(!el)return;
+  CHARTS['c3-dow']=new Chart(el,{
+    type:'bar',
+    data:{labels:['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'],
+      datasets:[{data:[0,32.4,48.7,41.2,38.9,55.1,0],backgroundColor:data=>data.dataIndex===5?'rgba(34,197,94,.8)':'rgba(59,130,246,.5)',borderRadius:5,barThickness:22}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{grid:{display:false},ticks:{color:'#3a4f6a',font:{size:10}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#3a4f6a',font:{size:9},callback:v=>'$'+v.toFixed(0)}}}}
+  });
+}
+
+/* ── V4: Gauges canvas ── */
+function drawGauge(canvasId, pct, col, label){
+  const cv=document.getElementById(canvasId);if(!cv)return;
+  cv.width=200;cv.height=130;
+  const ctx=cv.getContext('2d');
+  ctx.clearRect(0,0,200,130);
+  const cx=100,cy=100,r=72;
+  // zones
+  const zones=[
+    {s:Math.PI,    e:Math.PI*1.33,c:'rgba(239,68,68,.5)'},
+    {s:Math.PI*1.33,e:Math.PI*1.67,c:'rgba(245,158,11,.5)'},
+    {s:Math.PI*1.67,e:Math.PI*2,  c:'rgba(34,197,94,.5)'},
+  ];
+  zones.forEach(z=>{
+    ctx.beginPath();ctx.arc(cx,cy,r,z.s,z.e);
+    ctx.strokeStyle=z.c;ctx.lineWidth=12;ctx.lineCap='butt';ctx.stroke();
+  });
+  // needle
+  const angle=Math.PI+(pct/100)*Math.PI;
+  const nx=cx+Math.cos(angle)*(r-6),ny=cy+Math.sin(angle)*(r-6);
+  ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(nx,ny);
+  ctx.strokeStyle=col;ctx.lineWidth=3;ctx.lineCap='round';ctx.stroke();
+  ctx.beginPath();ctx.arc(cx,cy,7,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();
+  // labels
+  ctx.fillStyle='#3a4f6a';ctx.font='10px JetBrains Mono';ctx.textAlign='left';ctx.fillText('ITM',14,cy+4);
+  ctx.textAlign='right';ctx.fillText('OTM',186,cy+4);
+  // center val
+  ctx.fillStyle=col;ctx.font='bold 14px JetBrains Mono';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(label,cx,cy-22);
+}
+function drawScoreRing(canvasId, score, col, size){
+  const cv=document.getElementById(canvasId);if(!cv)return;
+  cv.width=size;cv.height=size;
+  const ctx=cv.getContext('2d');
+  const cx=size/2,cy=size/2,r=size*0.38,sw=size*0.09;
+  ctx.clearRect(0,0,size,size);
+  ctx.beginPath();ctx.arc(cx,cy,r,-Math.PI*.75,Math.PI*.75);
+  ctx.strokeStyle='rgba(255,255,255,.07)';ctx.lineWidth=sw;ctx.lineCap='round';ctx.stroke();
+  const end=-Math.PI*.75+(score/100)*Math.PI*1.5;
+  ctx.beginPath();ctx.arc(cx,cy,r,-Math.PI*.75,end);
+  ctx.strokeStyle=col;ctx.lineWidth=sw;ctx.lineCap='round';ctx.stroke();
+  ctx.fillStyle=col;ctx.font=`bold ${size*0.16}px JetBrains Mono,monospace`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(score,cx,cy-size*0.04);
+  ctx.fillStyle='#7890b0';ctx.font=`${size*0.085}px DM Sans,sans-serif`;ctx.fillText('SCORE',cx,cy+size*0.1);
+}
+
+/* ── V5: Timeline ── */
+function buildTimeline(){
+  const cont=document.getElementById('timeline-container');if(!cont)return;
+  const ops=[
+    {date:'01/04',asset:'BTC',type:'CALL',strike:'$74.000',prem:'+$12.40',isEx:false,status:'Fechada'},
+    {date:'02/04',asset:'ETH',type:'CALL',strike:'$2.350',prem:'+$6.20',isEx:false,status:'Fechada'},
+    {date:'05/04',asset:'BTC',type:'CALL',strike:'$74.500',prem:'+$11.80',isEx:false,status:'Fechada'},
+    {date:'08/04',asset:'BTC',type:'PUT',strike:'$71.500',prem:'+$14.26',isEx:true,status:'Exercida'},
+    {date:'08/04',asset:'ETH',type:'PUT',strike:'$2.225',prem:'+$13.53',isEx:true,status:'Exercida'},
+    {date:'09/04',asset:'BTC',type:'CALL',strike:'$71.500',prem:'+$9.23',isEx:false,status:'Fechada'},
+    {date:'10/04',asset:'BTC',type:'CALL',strike:'$71.500',prem:'+$9.23',isEx:false,status:'Fechada'},
+    {date:'13/04',asset:'BTC',type:'CALL',strike:'$72.000',prem:'+$26.18',isEx:true,status:'Exercida'},
+    {date:'14/04',asset:'BTC',type:'CALL',strike:'$72.000',prem:'+$3.90',isEx:true,status:'Exercida'},
+    {date:'15/04',asset:'BTC',type:'CALL',strike:'$73.500',prem:'—',isEx:false,status:'Aberta'},
+    {date:'15/04',asset:'ETH',type:'CALL',strike:'$2.400',prem:'—',isEx:false,status:'Aberta'},
+  ];
+  let html='';
+  ops.forEach((op,i)=>{
+    const dotCol=op.status==='Aberta'?'#22c55e':op.isEx?'#f97316':'#3b82f6';
+    const premCol=op.prem!=='—'?'#22c55e':'#7890b0';
+    const assetCol=op.asset==='BTC'?'#f59e0b':'#06b6d4';
+    const typeCls=op.type==='CALL'?'ob-call':'ob-put';
+    html+=`<div class="timeline-item">
+      <div class="tl-dot-wrap">
+        <div class="tl-dot" style="background:${dotCol};${i===ops.length-1?'':''}border:2px solid var(--bg)"></div>
+        ${i<ops.length-1?`<div class="tl-line"></div>`:''}
+      </div>
+      <div class="tl-content">
+        <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+          <span class="tl-date">${op.date}</span>
+          <span style="font-family:var(--syne);font-size:.76rem;font-weight:700;color:${assetCol}">${op.asset}</span>
+          <span class="op-badge ${typeCls}">${op.type}</span>
+          ${op.isEx?`<span class="op-badge ob-pex">exercida</span>`:''}
+          ${op.status==='Aberta'?`<span style="font-size:.6rem;font-weight:700;padding:2px 8px;border-radius:4px;background:var(--grn-bg);color:var(--grn);border:1px solid var(--grn-bdr)">Aberta</span>`:''}
+        </div>
+        <div style="font-size:.67rem;color:var(--tx2);margin-top:2px">Strike ${op.strike}</div>
+      </div>
+      <div style="font-family:var(--mono);font-size:.78rem;font-weight:700;color:${premCol};flex-shrink:0;padding-left:8px">${op.prem}</div>
+    </div>`;
+  });
+  cont.innerHTML='<div style="position:absolute;left:8px;top:0;bottom:0;width:1.5px;background:linear-gradient(to bottom,rgba(34,197,94,.4),rgba(249,115,22,.3),transparent);border-radius:1px"></div>'+html;
+}
+
+/* ── V6: charts ── */
+function buildC6Main(){
+  dc('c6-main');
+  const el=document.getElementById('c6-main');if(!el)return;
+  const allOps=[14.26,13.53,14.26,13.53,9.23,8.47,9.23,8.47,26.18,22.37,3.90,8.80,11.26,4.66];
+  const labels=allOps.map((_,i)=>'Op '+(i+1));
+  let acc=0;const accD=allOps.map(v=>{acc+=v;return parseFloat(acc.toFixed(2));});
+  const colors=allOps.map((_,i)=>[2,3,8,9,10,11].includes(i)?'rgba(249,115,22,.7)':'rgba(34,197,94,.65)');
+  CHARTS['c6-main']=new Chart(el,{
+    type:'bar',
+    data:{labels,datasets:[
+      {type:'bar',data:allOps,backgroundColor:colors,borderRadius:3,barThickness:16,order:2},
+      {type:'line',data:accD,borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,.07)',borderWidth:2.5,pointRadius:4,pointBackgroundColor:'#f59e0b',fill:true,tension:.35,order:1}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{grid:{display:false},ticks:{color:'#3a4f6a',font:{size:9},maxRotation:0,autoSkip:true,maxTicksLimit:8}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#3a4f6a',font:{size:9},callback:v=>'$'+v.toFixed(0)}}}}
+  });
+}
+function buildC6Mensal(){
+  dc('c6-mensal');
+  const el=document.getElementById('c6-mensal');if(!el)return;
+  CHARTS['c6-mensal']=new Chart(el,{
+    type:'bar',
+    data:{labels:MONTHLY.labels,
+      datasets:[
+        {label:'BTC',data:MONTHLY.btc,backgroundColor:'rgba(245,158,11,.6)',borderRadius:4,barThickness:18},
+        {label:'ETH',data:MONTHLY.eth,backgroundColor:'rgba(6,182,212,.6)',borderRadius:4,barThickness:18}
+      ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{grid:{display:false},ticks:{color:'#3a4f6a',font:{size:10}},stacked:true},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#3a4f6a',font:{size:9},callback:v=>'$'+v.toFixed(0)},stacked:true}}}
+  });
+}
+function buildC6DonutSmall(){
+  dc('c6-donut-small');
+  const el=document.getElementById('c6-donut-small');if(!el)return;
+  CHARTS['c6-donut-small']=new Chart(el,{
+    type:'doughnut',
+    data:{labels:['BTC','ETH'],
+      datasets:[{data:[40.44,27.06],backgroundColor:['rgba(245,158,11,.8)','rgba(6,182,212,.8)'],borderWidth:0,hoverOffset:4}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'72%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'$'+c.raw}}}}
+  });
+}
+
+/* ═══════════════════════════════════
+   RENDER PER PANEL
+═══════════════════════════════════ */
+function renderChartsForPanel(id){
+  if(id==='vg1'){buildC1Curva();buildC1Donut();buildC1Mensal();}
+  if(id==='vg2'){buildC2Radar();buildC2Btc();buildC2Eth();}
+  if(id==='vg3'){buildC3Main();buildC3Hist();buildC3Tae();buildC3Dow();}
+  if(id==='vg4'){
+    drawGauge('c4-btc-gauge',18,'#f97316','0.52%');
+    drawGauge('c4-eth-gauge',55,'#22c55e','3.24%');
+    drawScoreRing('c4-score',76,'#f59e0b',140);
+  }
+  if(id==='vg5'){buildTimeline();}
+  if(id==='vg6'){buildC6Main();buildC6Mensal();buildC6DonutSmall();drawScoreRing('c6-mini-score',88,'#22c55e',80);}
+}
+
+/* ═══════════════════════════════════
+   INIT
+═══════════════════════════════════ */
+window.addEventListener('load',()=>{
+  renderChartsForPanel('vg1');
+  buildTimeline();
+});
+</script>
+</body>
+</html>

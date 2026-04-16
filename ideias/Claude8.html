@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Análise de Performance · Crypto</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d1117;--s1:#161c28;--s2:#1c2438;--s3:#222d42;--s4:#28364e;
+  --bdr:rgba(255,255,255,.07);--bdr2:rgba(255,255,255,.12);
+  --tx1:#e6eeff;--tx2:#7890b0;--tx3:#3a4f6a;
+  --grn:#22c55e;--grn-bg:rgba(34,197,94,.10);--grn-bdr:rgba(34,197,94,.26);
+  --red:#ef4444;--red-bg:rgba(239,68,68,.10);--red-bdr:rgba(239,68,68,.26);
+  --amb:#f59e0b;--amb-bg:rgba(245,158,11,.10);--amb-bdr:rgba(245,158,11,.26);
+  --blu:#3b82f6;--blu-bg:rgba(59,130,246,.10);--blu-bdr:rgba(59,130,246,.26);
+  --pur:#a855f7;--pur-bg:rgba(168,85,247,.10);--pur-bdr:rgba(168,85,247,.26);
+  --org:#f97316;--org-bg:rgba(249,115,22,.10);--org-bdr:rgba(249,115,22,.26);
+  --cya:#06b6d4;--cya-bg:rgba(6,182,212,.10);--cya-bdr:rgba(6,182,212,.26);
+  --btc:#f59e0b;--eth:#06b6d4;
+  --mono:'JetBrains Mono',monospace;--syne:'Syne',sans-serif;--dm:'DM Sans',sans-serif;
+}
+html,body{height:100%;font-family:var(--dm);background:#080d14;color:var(--tx1);font-size:13px}
+body{display:flex;flex-direction:column;align-items:center;padding:14px;gap:14px}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes expand{from{opacity:0;max-height:0}to{opacity:1;max-height:2400px}}
+
+/* SWITCHER */
+.sw{display:flex;gap:5px;flex-wrap:wrap;background:var(--s1);border:1px solid var(--bdr2);border-radius:32px;padding:5px 10px;position:sticky;top:8px;z-index:999;box-shadow:0 4px 32px rgba(0,0,0,.7)}
+.swl{font-size:.6rem;color:var(--tx2);align-self:center;padding-right:2px;font-family:var(--mono)}
+.swb{padding:.22rem .72rem;border-radius:20px;border:1px solid var(--bdr);background:transparent;color:var(--tx2);font-family:var(--mono);font-size:.62rem;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap}
+.swb:hover{color:var(--tx1);border-color:var(--bdr2)}
+.swb.on{background:var(--grn-bg);border-color:var(--grn);color:var(--grn)}
+
+/* MODAL */
+.modal{width:100%;max-width:1160px;background:var(--s1);border:1px solid var(--bdr2);border-radius:14px;overflow:hidden;display:none;animation:fadeIn .28s ease}
+.modal.on{display:block}
+
+/* TOPBAR (filtros — fiel à imagem 2) */
+.topbar{display:flex;align-items:center;gap:5px;flex-wrap:wrap;padding:9px 18px;background:var(--bg);border-bottom:1px solid var(--bdr)}
+.tb-lbl{font-size:.66rem;color:var(--tx2);font-family:var(--mono);letter-spacing:.5px;text-transform:uppercase}
+.tb-sep{width:1px;height:16px;background:var(--bdr2);flex-shrink:0;margin:0 4px}
+.chip{padding:.2rem .58rem;border-radius:6px;font-size:.68rem;font-weight:600;cursor:pointer;border:1px solid var(--bdr);background:transparent;color:var(--tx2);transition:all .12s;white-space:nowrap;font-family:var(--dm)}
+.chip:hover{color:var(--tx1);border-color:var(--bdr2)}
+.chip.on{background:var(--blu-bg);border-color:var(--blu);color:var(--tx1)}
+.chip.btc{background:var(--amb-bg);border-color:var(--amb-bdr);color:var(--amb)}
+.chip.eth{background:var(--cya-bg);border-color:var(--cya-bdr);color:var(--cya)}
+.chip.todos{background:var(--blu-bg);border-color:var(--blu-bdr);color:var(--blu)}
+.tipo-sel{background:var(--s2);border:1px solid var(--bdr2);color:var(--tx1);font-family:var(--mono);font-size:.66rem;padding:4px 9px;border-radius:6px;cursor:pointer}
+
+/* LAYOUT */
+.main-layout{display:grid;grid-template-columns:1fr 330px}
+.col-left{border-right:1px solid var(--bdr);overflow-y:auto;max-height:calc(100vh - 165px)}
+.col-left::-webkit-scrollbar{width:3px}
+.col-left::-webkit-scrollbar-thumb{background:var(--s4);border-radius:2px}
+.col-right{overflow-y:auto;max-height:calc(100vh - 165px);background:var(--bg)}
+.col-right::-webkit-scrollbar{width:3px}
+.col-right::-webkit-scrollbar-thumb{background:var(--s4);border-radius:2px}
+
+/* CICLO ACCORDION */
+.ciclo{border-bottom:1px solid var(--bdr)}
+.ciclo-head{display:flex;align-items:center;gap:8px;padding:11px 16px;cursor:pointer;background:var(--s1);transition:background .14s;user-select:none}
+.ciclo-head:hover,.ciclo-head.open{background:var(--s2)}
+.ch-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.ch-date{font-family:var(--syne);font-size:.82rem;font-weight:700}
+.ch-dow{font-size:.7rem;color:var(--tx2)}
+.ch-meta{font-size:.65rem;color:var(--tx2)}
+.badge{font-size:.6rem;font-weight:700;padding:1px 8px;border-radius:12px;white-space:nowrap}
+.bex{background:var(--org-bg);color:var(--org);border:1px solid var(--org-bdr)}
+.bab{background:var(--grn-bg);color:var(--grn);border:1px solid var(--grn-bdr)}
+.bops{background:var(--s3);color:var(--tx2);border:1px solid var(--bdr)}
+.ch-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.ch-total{font-family:var(--mono);font-size:.88rem;font-weight:700}
+.ch-rec{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.ch-rec-pct{font-size:.62rem;color:var(--tx2)}
+.ch-rec-bar{width:80px;height:4px;background:var(--s3);border-radius:2px;overflow:hidden}
+.ch-rec-fill{height:100%;border-radius:2px;background:var(--amb)}
+.ch-arr{font-size:.68rem;color:var(--tx2);transition:transform .2s}
+.ciclo-head.open .ch-arr{transform:rotate(180deg)}
+.ciclo-body{display:none;border-top:1px solid var(--bdr)}
+.ciclo-body.open{display:block;animation:fadeIn .2s ease}
+
+/* OP ROW */
+.op-row{display:flex;align-items:center;gap:8px;padding:9px 16px 9px 28px;border-bottom:1px solid rgba(255,255,255,.04);transition:background .12s}
+.op-row:hover{background:var(--s2)}
+.op-row.ex{border-left:3px solid var(--org);padding-left:25px}
+.op-row:last-of-type{border-bottom:none}
+.or-a{font-family:var(--syne);font-size:.82rem;font-weight:700;min-width:32px}
+.or-a.btc{color:var(--btc)}
+.or-a.eth{color:var(--eth)}
+.or-t{font-size:.6rem;font-weight:700;padding:2px 7px;border-radius:4px;white-space:nowrap;flex-shrink:0}
+.or-t.call{background:var(--blu-bg);color:var(--blu);border:1px solid var(--blu-bdr)}
+.or-t.put{background:var(--pur-bg);color:var(--pur);border:1px solid var(--pur-bdr)}
+.or-t.exbdg{background:var(--org-bg);color:var(--org);border:1px solid var(--org-bdr)}
+.or-str{font-family:var(--mono);font-size:.72rem;color:var(--tx2);flex:1}
+.or-bar{width:90px;height:5px;background:var(--s3);border-radius:3px;overflow:hidden;flex-shrink:0}
+.or-bf{height:100%;border-radius:3px}
+.or-st{font-size:.6rem;font-weight:600;padding:2px 8px;border-radius:4px;flex-shrink:0;white-space:nowrap}
+.st-fe{background:var(--s3);color:var(--tx2);border:1px solid var(--bdr2)}
+.st-ab{background:var(--grn-bg);color:var(--grn);border:1px solid var(--grn-bdr)}
+.st-ex{background:var(--org-bg);color:var(--org);border:1px solid var(--org-bdr)}
+.or-val{font-family:var(--mono);font-size:.82rem;font-weight:700;min-width:78px;text-align:right}
+.or-pct{font-size:.62rem;color:var(--tx2);min-width:44px;text-align:right}
+
+/* CICLO FOOTER */
+.cfoot{padding:10px 16px 10px 28px;background:rgba(0,0,0,.12);border-top:1px solid var(--bdr)}
+.cfoot-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:.68rem}
+.cfi{color:var(--tx2)}
+.cfi-v{font-family:var(--mono);font-weight:600;color:var(--tx1)}
+.cfi-g{color:var(--grn)}
+.cfi-a{color:var(--amb)}
+.cf-sep{color:var(--tx3)}
+.cfoot-contrib{display:flex;flex-direction:column;gap:4px;padding-top:7px;margin-top:6px;border-top:1px solid var(--bdr)}
+.cfc-row{display:flex;justify-content:space-between;align-items:center;font-size:.68rem}
+.cfc-lbl{color:var(--tx2)}
+.cfc-val{font-family:var(--mono);font-weight:700}
+.cfc-bar{height:5px;background:var(--s3);border-radius:3px;overflow:hidden;margin-top:4px}
+.cfc-fill{height:100%;border-radius:3px;background:var(--grn)}
+
+/* CICLO SUMMARY GRID */
+.csum{display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--bdr);background:rgba(0,0,0,.1)}
+.cs-item{padding:9px 12px;border-right:1px solid var(--bdr);text-align:center}
+.cs-item:last-child{border-right:none}
+.cs-v{font-family:var(--mono);font-size:.78rem;font-weight:700;line-height:1}
+.cs-l{font-size:.56rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.4px;margin-top:3px}
+
+/* OP DETAIL EXPANDED */
+.op-detail{display:none;padding:6px 16px 8px 28px;background:rgba(0,0,0,.15);border-bottom:1px solid rgba(255,255,255,.04)}
+.op-detail.show{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;animation:fadeIn .18s ease}
+.od-i{background:var(--s3);border-radius:6px;padding:6px 8px}
+.od-v{font-family:var(--mono);font-size:.72rem;font-weight:700}
+.od-l{font-size:.55rem;color:var(--tx2);text-transform:uppercase;margin-top:2px}
+
+/* RIGHT PANEL */
+.rp{padding:14px}
+.rp-card{background:var(--s1);border:1px solid var(--bdr);border-radius:10px;overflow:hidden;margin-bottom:10px}
+.rp-head{display:flex;align-items:center;justify-content:space-between;padding:10px 13px;background:var(--s2);border-bottom:1px solid var(--bdr);cursor:pointer;transition:background .13s;user-select:none}
+.rp-head:hover{background:var(--s3)}
+.rp-head-title{font-family:var(--syne);font-size:.78rem;font-weight:700;display:flex;align-items:center;gap:7px}
+.rp-badge{font-size:.58rem;font-weight:700;padding:2px 8px;border-radius:10px}
+.rb-luc{background:var(--grn-bg);color:var(--grn);border:1px solid var(--grn-bdr)}
+.rp-arr{font-size:.65rem;color:var(--tx2);transition:transform .2s}
+.rp-head.open .rp-arr{transform:rotate(180deg)}
+.rp-body{padding:12px 13px;display:flex;flex-direction:column;gap:0}
+.rp-body.hide{display:none}
+.rp-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.7rem}
+.rp-row:last-child{border-bottom:none}
+.rp-row-k{color:var(--tx2);display:flex;align-items:center;gap:5px}
+.dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.rp-row-v{font-family:var(--mono);font-weight:600}
+.rp-row.hl{padding:8px 0}
+.rp-row.hl .rp-row-k{color:var(--tx1);font-weight:600;font-size:.72rem}
+.rp-row.hl .rp-row-v{font-size:.8rem}
+
+/* KPI MINI GRID */
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:12px 13px;border-bottom:1px solid var(--bdr)}
+.kpi-i{background:var(--s2);border-radius:8px;padding:9px 11px}
+.kpi-v{font-family:var(--mono);font-size:.9rem;font-weight:700;line-height:1}
+.kpi-l{font-size:.56rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;margin-top:3px}
+
+/* MINI CHART */
+.mini-chart-wrap{padding:10px 13px;border-bottom:1px solid var(--bdr)}
+.mct{font-size:.6rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.ch-wrap{position:relative;height:88px}
+
+/* PROGRESS */
+.prog-section{padding:12px 13px;border-bottom:1px solid var(--bdr)}
+.prog-title{font-size:.6rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px}
+.prog-item{margin-bottom:8px}
+.prog-item:last-child{margin-bottom:0}
+.prog-hd{display:flex;justify-content:space-between;font-size:.66rem;margin-bottom:3px}
+.prog-lbl{color:var(--tx2)}
+.prog-val{font-family:var(--mono);font-weight:600}
+.prog-track{height:6px;background:var(--s3);border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;border-radius:3px}
+
+/* HEAT BAR */
+.heat-bar{height:20px;border-radius:6px;position:relative;overflow:hidden;margin:5px 0}
+.heat-bg{position:absolute;inset:0;background:linear-gradient(90deg,var(--red) 0%,var(--amb) 45%,var(--grn) 100%);opacity:.18}
+.heat-cursor{position:absolute;top:50%;transform:translate(-50%,-50%);width:18px;height:18px;border-radius:50%;border:2px solid var(--bg)}
+
+/* CUSTO MEDIO BOX */
+.cm-box{background:var(--s3);border:1px solid var(--bdr);border-radius:8px;padding:9px 11px;margin:6px 0}
+.cm-box-title{font-size:.6rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
+.cm-val{font-family:var(--mono);font-size:.9rem;font-weight:700;line-height:1}
+.cm-sub{font-size:.62rem;margin-top:3px}
+
+/* STRIKE ITEM */
+.strike-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:var(--s2);border:1px solid var(--bdr);margin-bottom:6px;transition:border-color .13s}
+.strike-item:hover{border-color:var(--bdr2)}
+.sa{font-family:var(--syne);font-size:.76rem;font-weight:700;min-width:28px}
+.si{flex:1}
+.si-v{font-family:var(--mono);font-size:.76rem;font-weight:700}
+.si-l{font-size:.6rem;color:var(--tx2);margin-top:1px}
+.sl{text-align:right}
+.sl-v{font-family:var(--mono);font-size:.76rem;font-weight:700;color:var(--grn)}
+.sl-l{font-size:.58rem;color:var(--tx2)}
+
+/* EXTRAS */
+.pos{color:var(--grn)}
+.neg{color:var(--red)}
+.neu{color:var(--amb)}
+.itag{display:inline-flex;align-items:center;gap:4px;font-size:.62rem;padding:2px 7px;border-radius:4px;background:var(--s3);color:var(--tx2);border:1px solid var(--bdr);white-space:nowrap}
+
+/* STREAK */
+.streak-wrap{display:flex;align-items:center;gap:3px;flex-wrap:wrap}
+.sd{width:24px;height:24px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.56rem;font-weight:700;cursor:default}
+
+/* BREAKDOWN BAR */
+.bdown-bar{display:flex;height:10px;border-radius:5px;overflow:hidden;gap:1px}
+.bseg{transition:flex .5s}
+
+/* V6 SCORE RING */
+.score-ring{width:38px;height:38px;flex-shrink:0}
+</style>
+</head>
+<body>
+
+<div class="sw">
+  <span class="swl">Variação:</span>
+  <button class="swb on" data-v="1">① Atual + Melhorado</button>
+  <button class="swb" data-v="2">② Métricas por Op</button>
+  <button class="swb" data-v="3">③ Timeline Conectado</button>
+  <button class="swb" data-v="4">④ Score + Recuperação</button>
+  <button class="swb" data-v="5">⑤ Capital Breakdown</button>
+  <button class="swb" data-v="6">⑥ Cockpit Executivo</button>
+</div>
+
+<div class="modal on" id="m1"></div>
+<div class="modal" id="m2"></div>
+<div class="modal" id="m3"></div>
+<div class="modal" id="m4"></div>
+<div class="modal" id="m5"></div>
+<div class="modal" id="m6"></div>
+
+<script>
+/* ════ DADOS ════ */
+const CICLOS=[
+  {id:'0804',date:'08/04/2026',dow:'Terça',dot:'orange',exercidas:2,ops:4,total:55.58,rec:72,desconto:-4.84,
+   putStrike:71500,callStrike:71500,premCiclo:107.69,cmBTC:71392.31,cmETH:2117.31,status:'fechado',venc:null,
+   ops_list:[
+    {asset:'BTC',type:'CALL',strike:71500,status:'fechada',ex:false,prem:14.26,pct:0.020,bw:75,bc:'#22c55e'},
+    {asset:'ETH',type:'CALL',strike:2225, status:'fechada',ex:false,prem:13.53,pct:0.608,bw:72,bc:'#22c55e'},
+    {asset:'BTC',type:'PUT', strike:71500,status:'fechada',ex:true, prem:14.26,pct:0.020,bw:52,bc:'#f97316'},
+    {asset:'ETH',type:'PUT', strike:2225, status:'fechada',ex:true, prem:13.53,pct:0.608,bw:48,bc:'#f97316'},
+  ]},
+  {id:'1304',date:'13/04/2026',dow:'Segunda',dot:'orange',exercidas:2,ops:2,total:48.55,rec:58,desconto:-2.21,
+   putStrike:72000,callStrike:72000,premCiclo:48.55,cmBTC:71856.73,cmETH:2211.47,status:'fechado',venc:null,
+   ops_list:[
+    {asset:'BTC',type:'CALL',strike:72000,status:'exercida',ex:true, prem:26.18,pct:0.036,bw:68,bc:'#f97316'},
+    {asset:'ETH',type:'CALL',strike:2225, status:'exercida',ex:true, prem:22.37,pct:1.005,bw:62,bc:'#f97316'},
+  ]},
+  {id:'1504',date:'15/04/2026',dow:'Quarta',dot:'green',exercidas:0,ops:2,total:0,rec:0,desconto:0,
+   putStrike:null,callStrike:73500,premCiclo:0,cmBTC:null,cmETH:null,status:'aberto',venc:'22/04',
+   ops_list:[
+    {asset:'BTC',type:'CALL',strike:73500,status:'aberta',ex:false,prem:0,pct:0,bw:0,bc:'#22c55e'},
+    {asset:'ETH',type:'CALL',strike:2275, status:'aberta',ex:false,prem:0,pct:0,bw:0,bc:'#22c55e'},
+  ]},
+];
+
+const ANALISE={
+  BTC:{putC:71500,callV:71500,varAtivo:0,premCiclo:107.69,cm:71392.31,desc:-4.84,
+       proxOp:'CALL',strikeCall:76000,lucroEx:4607.69,lucroExPct:6.45,status:'LUCRATIVO',premEst:22.50,cot:74500},
+  ETH:{putC:2225, callV:2225, varAtivo:0,premCiclo:107.69,cm:2117.31,  desc:-4.84,
+       proxOp:'CALL',strikeCall:2350, lucroEx:232.69, lucroExPct:10.45,status:'LUCRATIVO',premEst:9.80, cot:2245},
+};
+const PER={total:104.13,roi:1.67,ops:8,ex:4,wr:75,btcP:40.44,ethP:27.06,cap:6234.37};
+const SUGS=[
+  {asset:'BTC',tipo:'CALL',strike:76000,premEst:22.50,lucroEx:4607.69,motivo:'+1.8% acima cotação'},
+  {asset:'ETH',tipo:'CALL',strike:2350, premEst:9.80, lucroEx:232.69, motivo:'+4.7% acima cotação'},
+];
+
+const fmt=n=>'US$ '+Math.abs(n).toFixed(2).replace('.',',');
+const fmtK=n=>n>=1000?'US$ '+(n/1000).toFixed(1)+'K':'US$ '+n.toFixed(2).replace('.',',');
+const fmtP=n=>(n>=0?'+':'')+n.toFixed(2)+'%';
+const fmtS=n=>(n>=0?'+':'-')+' US$ '+Math.abs(n).toFixed(2).replace('.',',');
+const acC=a=>a==='BTC'?'var(--btc)':'var(--eth)';
+const acCls=a=>a==='BTC'?'btc':'eth';
+const acI=a=>a==='BTC'?'₿':'Ξ';
+let CHARTS={};
+function dc(id){if(CHARTS[id]){try{CHARTS[id].destroy()}catch(e){} delete CHARTS[id]}}
+
+function tog(h,b){
+  const he=document.getElementById(h),bo=document.getElementById(b);
+  if(!he||!bo)return;
+  bo.classList.toggle('open');he.classList.toggle('open');
+}
+
+/* TOPBAR */
+function topbar(){
+  return`<div class="topbar">
+    <span class="tb-lbl">Período:</span>
+    <button class="chip">7d</button><button class="chip on">60d</button>
+    <button class="chip">90d</button><button class="chip">Ano</button>
+    <div class="tb-sep"></div>
+    <span class="tb-lbl">Moeda:</span>
+    <button class="chip todos">Todos</button>
+    <button class="chip btc">₿ BTC</button>
+    <button class="chip eth">Ξ ETH</button>
+    <div class="tb-sep"></div>
+    <span class="tb-lbl">Tipo:</span>
+    <select class="tipo-sel"><option>Todos</option><option>CALL</option><option>PUT</option></select>
+  </div>`;
+}
+
+/* OP ROW */
+function opRow(op,mode){
+  const isEx=op.ex;
+  const stk=op.asset==='BTC'?'$'+(op.strike/1000).toFixed(1)+'K':'$'+op.strike.toLocaleString('pt-BR');
+  const stCls=op.status==='fechada'?'st-fe':op.status==='aberta'?'st-ab':'st-ex';
+  const stTxt=op.status==='fechada'?'Fechada':op.status==='aberta'?'Aberta':'Exercida';
+  const hasP=op.prem>0;
+
+  let detail='';
+  if(mode===2 && hasP){
+    const cy=ANALISE[op.asset];
+    const pctS=((op.prem/op.strike)*100).toFixed(3);
+    detail=`<div class="op-detail show">
+      <div class="od-i"><div class="od-v pos">+${fmt(op.prem)}</div><div class="od-l">Prêmio</div></div>
+      <div class="od-i"><div class="od-v" style="color:var(--cya)">${pctS}%</div><div class="od-l">% Strike</div></div>
+      <div class="od-i"><div class="od-v" style="color:${acC(op.asset)}">${fmtK(cy.cm)}</div><div class="od-l">Custo Médio</div></div>
+      <div class="od-i"><div class="od-v" style="color:${isEx?'var(--org)':'var(--grn)'}">${isEx?'⚠️ Exerc.':'✅ OK'}</div><div class="od-l">Status</div></div>
+    </div>`;
+  }
+
+  return`<div class="op-row${isEx?' ex':''}">
+    <span class="or-a ${acCls(op.asset)}">${op.asset}</span>
+    <span class="or-t ${op.type.toLowerCase()}">${op.type}</span>
+    ${isEx?`<span class="or-t exbdg">exercida</span>`:''}
+    <span class="or-str">${op.type} Strike ${stk}</span>
+    <div class="or-bar"><div class="or-bf" style="width:${op.bw}%;background:${op.bc}"></div></div>
+    <span class="or-st ${stCls}">${stTxt}</span>
+    <span class="or-val" style="color:${hasP?'var(--grn)':'var(--tx2)'}">${hasP?'+'+fmt(op.prem):'—'}</span>
+    <span class="or-pct">${op.pct?op.pct.toFixed(3)+'%':''}</span>
+  </div>${detail}`;
+}
+
+/* CICLO FOOTER */
+function cicloFoot(c){
+  const hasDat=c.status==='fechado'&&c.total>0;
+  if(!hasDat){
+    return`<div class="cfoot"><div class="cfoot-row"><span class="itag">⏳ Aguardando vencimento ${c.venc||''}</span></div></div>`;
+  }
+  return`<div class="cfoot">
+    <div class="cfoot-row">
+      ${c.putStrike?`<span class="cfi">PUT strike: <span class="cfi-v cfi-a">$${c.putStrike.toLocaleString('pt-BR')}</span></span><span class="cf-sep">·</span>`:''}
+      <span class="cfi">CALL strike: <span class="cfi-v cfi-a">$${c.callStrike.toLocaleString('pt-BR')}</span></span>
+      <span class="cf-sep">·</span>
+      <span class="cfi">Prêmios: <span class="cfi-v cfi-g">+${fmt(c.total)}</span></span>
+      ${c.cmETH?`<span class="cf-sep">·</span><span class="cfi">Custo médio: <span class="cfi-v">${fmt(c.cmETH)}</span></span>
+      <span class="cf-sep">·</span><span class="cfi">Desconto: <span class="cfi-v pos">${c.desconto.toFixed(2)}%</span></span>`:''}
+    </div>
+    <div class="cfoot-contrib">
+      <div class="cfc-row"><span class="cfc-lbl">Contribuição ao capital</span>
+        <span class="cfc-val pos">+${fmt(c.total)} · ${(c.total/PER.cap*100).toFixed(3)}%</span>
+      </div>
+      <div class="cfc-bar"><div class="cfc-fill" style="width:${Math.min(c.total/PER.cap*100*50,100)}%"></div></div>
+    </div>
+  </div>`;
+}
+
+/* PAINEL DIREITO */
+function rPanel(variant){
+  let o=`<div class="rp">`;
+
+  /* ── Resumo ── */
+  o+=`<div class="rp-card">
+    <div class="rp-head open" id="rph-res${variant}" onclick="tog('rph-res${variant}','rpb-res${variant}')">
+      <span class="rp-head-title">📊 Resumo do Período</span>
+      <span class="rp-arr">▼</span>
+    </div>
+    <div class="kpi-grid" id="rpb-res${variant}">
+      <div class="kpi-i"><div class="kpi-v pos">+${fmt(PER.total)}</div><div class="kpi-l">Total Prêmios</div></div>
+      <div class="kpi-i"><div class="kpi-v pos">${fmtP(PER.roi)}</div><div class="kpi-l">ROI s/ Capital</div></div>
+      <div class="kpi-i"><div class="kpi-v" style="color:var(--org)">${PER.ex}</div><div class="kpi-l">Exercidas</div></div>
+      <div class="kpi-i"><div class="kpi-v pos">${PER.wr}%</div><div class="kpi-l">Win Rate</div></div>
+    </div>
+    <div class="mini-chart-wrap">
+      <div class="mct"><span style="width:8px;height:8px;border-radius:50%;background:var(--grn);display:inline-block"></span>Prêmios acumulados</div>
+      <div class="ch-wrap"><canvas id="rpa-ch${variant}"></canvas></div>
+    </div>
+    <div class="prog-section">
+      <div class="prog-title">Distribuição por ativo</div>
+      <div class="prog-item">
+        <div class="prog-hd"><span class="prog-lbl">${acI('BTC')} BTC · ${fmt(PER.btcP)}</span><span class="prog-val" style="color:var(--btc)">${(PER.btcP/PER.total*100).toFixed(0)}%</span></div>
+        <div class="prog-track"><div class="prog-fill" style="width:${PER.btcP/PER.total*100}%;background:var(--btc)"></div></div>
+      </div>
+      <div class="prog-item">
+        <div class="prog-hd"><span class="prog-lbl">${acI('ETH')} ETH · ${fmt(PER.ethP)}</span><span class="prog-val" style="color:var(--eth)">${(PER.ethP/PER.total*100).toFixed(0)}%</span></div>
+        <div class="prog-track"><div class="prog-fill" style="width:${PER.ethP/PER.total*100}%;background:var(--eth)"></div></div>
+      </div>
+    </div>
+  </div>`;
+
+  /* ── Análise por ativo ── */
+  ['BTC','ETH'].forEach(asset=>{
+    const a=ANALISE[asset];
+    const ac=acC(asset);
+    const dist=((a.cot-a.strikeCall)/a.strikeCall*100);
+    o+=`<div class="rp-card">
+      <div class="rp-head" id="rph-${asset}${variant}" onclick="tog('rph-${asset}${variant}','rpb-${asset}${variant}')">
+        <span class="rp-head-title" style="color:${ac}">${acI(asset)} Análise Ciclo ${asset}</span>
+        <div style="display:flex;align-items:center;gap:5px">
+          <span class="rp-badge rb-luc">${a.status}</span>
+          <span class="rp-arr" style="margin:0">▼</span>
+        </div>
+      </div>
+      <div class="rp-body hide" id="rpb-${asset}${variant}">
+        <div class="rp-row"><span class="rp-row-k"><span class="dot" style="background:var(--pur)"></span>PUT compra</span><span class="rp-row-v">${fmtK(a.putC)}</span></div>
+        <div class="rp-row"><span class="rp-row-k"><span class="dot" style="background:var(--org)"></span>CALL venda</span><span class="rp-row-v">${fmtK(a.callV)}</span></div>
+        <div class="rp-row"><span class="rp-row-k"><span class="dot" style="background:var(--tx3)"></span>Var. do ativo</span><span class="rp-row-v">$0</span></div>
+        <div class="rp-row"><span class="rp-row-k"><span class="dot" style="background:var(--grn)"></span>Prêmios ciclo</span><span class="rp-row-v pos">+${fmt(a.premCiclo)}</span></div>
+
+        <div class="cm-box">
+          <div class="cm-box-title">🧮 Custo Médio Real — como funciona</div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px">
+            <span style="font-size:.68rem;color:var(--tx2)">PUT exercida (comprou ${asset})</span>
+            <span style="font-family:var(--mono);font-size:.72rem;color:var(--pur)">${fmtK(a.putC)}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px">
+            <span style="font-size:.68rem;color:var(--tx2)">− Prêmios coletados total</span>
+            <span style="font-family:var(--mono);font-size:.72rem;color:var(--grn)">−${fmt(a.premCiclo)}</span>
+          </div>
+          <div style="height:1px;background:var(--bdr2);margin-bottom:5px"></div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline">
+            <span style="font-size:.7rem;font-weight:600;color:var(--tx1)">= Custo Médio Real</span>
+            <span class="cm-val" style="color:${ac}">${fmtK(a.cm)}</span>
+          </div>
+          <div class="cm-sub pos">Desconto de ${Math.abs(a.desc).toFixed(2)}% obtido via prêmios 🎯</div>
+          <div class="prog-track" style="margin-top:6px;height:4px">
+            <div class="prog-fill" style="width:${Math.min(a.premCiclo/a.putC*100*20,100)}%;background:var(--grn)"></div>
+          </div>
+        </div>
+
+        <div class="rp-row" style="border-top:1px solid var(--bdr);margin-top:2px;padding-top:8px">
+          <span class="rp-row-k">Strike CALL próxima</span>
+          <span class="rp-row-v neu">${fmtK(a.strikeCall)}</span>
+        </div>
+        <div class="rp-row hl">
+          <span class="rp-row-k">💰 Lucro se exercida</span>
+          <span class="rp-row-v pos">+${fmt(a.lucroEx)} (${fmtP(a.lucroExPct)})</span>
+        </div>
+
+        <div style="margin:4px 0">
+          <div style="display:flex;justify-content:space-between;font-size:.62rem;color:var(--tx2);margin-bottom:3px">
+            <span>Cotação vs strike sugerido</span>
+            <span style="color:${dist>=0?'var(--grn)':'var(--red)'}">${fmtP(dist)}</span>
+          </div>
+          <div class="heat-bar">
+            <div class="heat-bg"></div>
+            <div class="heat-cursor" style="left:${Math.max(5,Math.min(93,50+dist*2.5))}%;background:${dist>=0?'var(--grn)':'var(--red)'}"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:.58rem;color:var(--tx3);margin-top:3px">
+            <span>Exercício provável</span><span style="color:var(--tx2)">Cotação: ${fmtK(a.cot)}</span><span>Seguro</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  });
+
+  /* ── Strikes sugeridos ── */
+  o+=`<div class="rp-card">
+    <div class="rp-head" id="rph-str${variant}" onclick="tog('rph-str${variant}','rpb-str${variant}')">
+      <span class="rp-head-title">💡 Strikes Sugeridos</span>
+      <span class="rp-arr">▼</span>
+    </div>
+    <div class="rp-body hide" id="rpb-str${variant}" style="padding:11px 13px">
+      ${SUGS.map(s=>`<div class="strike-item">
+        <span class="sa" style="color:${acC(s.asset)}">${acI(s.asset)} ${s.asset}</span>
+        <span style="font-size:.58rem;font-weight:700;padding:2px 6px;border-radius:3px;background:var(--blu-bg);color:var(--blu);border:1px solid var(--blu-bdr)">${s.tipo}</span>
+        <div class="si">
+          <div class="si-v" style="color:var(--amb)">${fmtK(s.strike)}</div>
+          <div class="si-l">${s.motivo} · prêm. est. ${fmt(s.premEst)}</div>
+        </div>
+        <div class="sl">
+          <div class="sl-v">+${fmt(s.lucroEx)}</div>
+          <div class="sl-l">se exercida</div>
+        </div>
+      </div>`).join('')}
+    </div>
+  </div>`;
+
+  o+=`</div>`;
+  return o;
+}
+
+/* ════ CICLO BLOCK UNIVERSAL ════ */
+function cicloBlock(c,i,variant,extraHead='',extraBody=''){
+  const hid=`ch-${variant}-${c.id}`;
+  const bid=`cb-${variant}-${c.id}`;
+  const isOpen=i===0;
+  const dotCol=c.dot==='green'?'var(--grn)':c.dot==='orange'?'var(--org)':'var(--tx3)';
+  const glow=c.dot==='green'?`;box-shadow:0 0 5px var(--grn)`:'';
+  const totalH=c.total>0?`<span class="pos">+${fmt(c.total)}</span>`:`<span style="color:var(--tx2)">+US$ —</span>`;
+
+  return`<div class="ciclo">
+    <div class="ciclo-head${isOpen?' open':''}" id="${hid}" onclick="tog('${hid}','${bid}')">
+      ${extraHead||`<span class="ch-dot" style="background:${dotCol}${glow}"></span>`}
+      <span class="ch-date">Ciclo ${c.date}</span>
+      <span class="ch-dow">${c.dow}</span>
+      <div style="display:flex;gap:4px;margin-left:4px">
+        ${c.exercidas>0?`<span class="badge bex">${c.exercidas} exerc.</span>`:''}
+        ${c.status==='aberto'?`<span class="badge bab">${c.ops} abertas</span>`:`<span class="badge bops">${c.ops} ops</span>`}
+      </div>
+      <span class="ch-meta" style="margin-left:4px">${c.status==='aberto'?`BTC + ETH · Venc. ${c.venc}`:'BTC + ETH'}</span>
+      <div class="ch-right">
+        ${c.total>0?`<div class="ch-rec">
+          <span class="ch-rec-pct">Recuperação ${c.rec}%</span>
+          <div class="ch-rec-bar"><div class="ch-rec-fill" style="width:${c.rec}%"></div></div>
+          <span style="font-size:.58rem;color:var(--tx2)">prêmios do ciclo</span>
+        </div>`:c.status==='aberto'?`<span style="font-size:.64rem;color:var(--tx2)">aguardando vencimento</span>`:''}
+        <span class="ch-total">${totalH}</span>
+        <span class="ch-arr">▼</span>
+      </div>
+    </div>
+    <div class="ciclo-body${isOpen?' open':''}" id="${bid}">
+      ${c.ops_list.map(op=>opRow(op,variant)).join('')}
+      ${extraBody}
+      ${cicloFoot(c)}
+    </div>
+  </div>`;
+}
+
+/* ═══ V1: Atual + Melhorado ═══ */
+function bv1(){
+  const el=document.getElementById('m1');
+  let h=topbar()+`<div class="main-layout"><div class="col-left">`;
+  CICLOS.forEach((c,i)=>{ h+=cicloBlock(c,i,1); });
+  h+=`</div><div class="col-right">${rPanel(1)}</div></div>`;
+  el.innerHTML=h;
+  setTimeout(()=>buildAccChart('rpa-ch1'),30);
+}
+
+/* ═══ V2: Métricas por op ═══ */
+function bv2(){
+  const el=document.getElementById('m2');
+  let h=topbar()+`<div class="main-layout"><div class="col-left">`;
+  CICLOS.forEach((c,i)=>{
+    const csum=c.total>0?`<div class="csum">
+      <div class="cs-item"><div class="cs-v neu">${c.putStrike?'$'+c.putStrike.toLocaleString('pt-BR'):'—'}</div><div class="cs-l">PUT Strike</div></div>
+      <div class="cs-item"><div class="cs-v neu">${'$'+c.callStrike.toLocaleString('pt-BR')}</div><div class="cs-l">CALL Strike</div></div>
+      <div class="cs-item"><div class="cs-v pos">+${fmt(c.total)}</div><div class="cs-l">Prêmios</div></div>
+      <div class="cs-item"><div class="cs-v" style="color:var(--cya)">${c.cmETH?fmt(c.cmETH):'—'}</div><div class="cs-l">Custo Médio</div></div>
+      <div class="cs-item"><div class="cs-v pos">${c.desconto.toFixed(2)}%</div><div class="cs-l">Desconto</div></div>
+    </div>`:'';
+    h+=cicloBlock(c,i,2,'',csum);
+  });
+  h+=`</div><div class="col-right">${rPanel(2)}</div></div>`;
+  el.innerHTML=h;
+  setTimeout(()=>buildAccChart('rpa-ch2'),30);
+}
+
+/* ═══ V3: Timeline conectado ═══ */
+function bv3(){
+  const el=document.getElementById('m3');
+  let h=topbar()+`<div class="main-layout"><div class="col-left" style="position:relative">`;
+  CICLOS.forEach((c,i)=>{
+    const dotCol=c.dot==='green'?'#22c55e':c.dot==='orange'?'#f97316':'#3a4f6a';
+    const bigDot=`<div style="position:relative;width:16px;height:16px;flex-shrink:0">
+      ${i<CICLOS.length-1?`<div style="position:absolute;left:7px;top:16px;width:2px;height:calc(100% + 999px);background:linear-gradient(to bottom,${dotCol}44,transparent);z-index:0"></div>`:''}
+      <div style="width:14px;height:14px;border-radius:50%;background:${dotCol};border:3px solid var(--bg);z-index:1;${c.dot==='green'?'box-shadow:0 0 7px #22c55e':''}"></div>
+    </div>`;
+    h+=`<div style="position:relative">${cicloBlock(c,i,3,bigDot)}</div>`;
+  });
+  h+=`</div><div class="col-right">${rPanel(3)}</div></div>`;
+  el.innerHTML=h;
+  setTimeout(()=>buildAccChart('rpa-ch3'),30);
+}
+
+/* ═══ V4: Score + Recuperação ═══ */
+function bv4(){
+  const el=document.getElementById('m4');
+  /* streak bar topo */
+  let stk=`<div style="padding:9px 18px;border-bottom:1px solid var(--bdr);background:var(--bg);display:flex;align-items:center;gap:8px">
+    <span style="font-size:.63rem;color:var(--tx2);font-family:var(--mono)">Histórico:</span>
+    <div class="streak-wrap">
+      ${CICLOS.map(c=>{const isAb=c.status==='aberto',isEx=c.exercidas>0;
+        return`<div class="sd" style="background:${isAb?'var(--s3)':isEx?'var(--org-bg)':'var(--grn-bg)'};color:${isAb?'var(--tx2)':isEx?'var(--org)':'var(--grn)'};border:1px solid ${isAb?'var(--bdr)':isEx?'var(--org-bdr)':'var(--grn-bdr)'}" title="${c.date}">${c.date.substr(0,5)}</div>`;
+      }).join('')}
+    </div>
+    <span style="margin-left:auto;font-size:.65rem;color:var(--grn);font-family:var(--mono)">3 ciclos · +${fmt(CICLOS.reduce((a,c)=>a+c.total,0))} total</span>
+  </div>`;
+
+  let h=topbar()+stk+`<div class="main-layout"><div class="col-left">`;
+  CICLOS.forEach((c,i)=>{
+    const score=c.status==='aberto'?50:c.exercidas>0?65:90;
+    const scoreCol=c.status==='aberto'?'#7890b0':c.exercidas>0?'#f97316':'#22c55e';
+    const ringId=`score-ring-v4-${c.id}`;
+    const ringEl=`<canvas class="score-ring" id="${ringId}"></canvas>`;
+    h+=cicloBlock(c,i,4,ringEl);
+  });
+  h+=`</div><div class="col-right">${rPanel(4)}</div></div>`;
+  el.innerHTML=h;
+  /* draw rings */
+  CICLOS.forEach(c=>{
+    const cv=document.getElementById(`score-ring-v4-${c.id}`);
+    if(!cv)return;
+    cv.width=38;cv.height=38;
+    const ctx=cv.getContext('2d');
+    const score=c.status==='aberto'?50:c.exercidas>0?65:90;
+    const col=c.status==='aberto'?'#7890b0':c.exercidas>0?'#f97316':'#22c55e';
+    ctx.beginPath();ctx.arc(19,19,14,-Math.PI/2,Math.PI*2-Math.PI/2);
+    ctx.strokeStyle='rgba(255,255,255,.08)';ctx.lineWidth=4;ctx.stroke();
+    ctx.beginPath();ctx.arc(19,19,14,-Math.PI/2,-Math.PI/2+Math.PI*2*(score/100));
+    ctx.strokeStyle=col;ctx.lineWidth=4;ctx.lineCap='round';ctx.stroke();
+    ctx.fillStyle=col;ctx.font='bold 9px JetBrains Mono,monospace';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(score,19,19);
+  });
+  setTimeout(()=>buildAccChart('rpa-ch4'),30);
+}
+
+/* ═══ V5: Capital Breakdown ═══ */
+function bv5(){
+  const el=document.getElementById('m5');
+  const totAll=CICLOS.reduce((a,c)=>a+c.total,0);
+  const capPct=(totAll/PER.cap*100);
+  let capBar=`<div style="padding:12px 18px;border-bottom:1px solid var(--bdr);background:rgba(0,0,0,.15);display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
+    <div>
+      <div style="font-size:.6rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px">Capital gerenciado</div>
+      <div style="font-family:var(--mono);font-size:1.35rem;font-weight:700;color:var(--amb)">${fmt(PER.cap)}</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:5px">
+        <span style="font-size:.65rem;color:var(--tx2)">Prêmios gerados:</span>
+        <span style="font-family:var(--mono);font-weight:700;color:var(--grn)">+${fmt(totAll)}</span>
+        <span style="font-size:.62rem;color:var(--grn)">(${capPct.toFixed(2)}%)</span>
+      </div>
+    </div>
+    <div style="text-align:right;min-width:180px">
+      <div style="font-size:.6rem;color:var(--tx2);margin-bottom:4px">Breakdown por ciclo</div>
+      <div class="bdown-bar">
+        ${CICLOS.filter(c=>c.total>0).map((c,i)=>{const cols=['#22c55e','#3b82f6','#a855f7'];return`<div class="bseg" style="flex:${c.total/totAll*100};background:${cols[i]}" title="${c.date}: +${fmt(c.total)}"></div>`;}).join('')}
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px;flex-wrap:wrap">
+        ${CICLOS.filter(c=>c.total>0).map((c,i)=>{const cols=['#22c55e','#3b82f6','#a855f7'];return`<span style="font-size:.58rem;display:flex;align-items:center;gap:3px"><span style="width:7px;height:7px;border-radius:50%;background:${cols[i]};display:inline-block"></span>${c.date.substr(0,5)} +${fmt(c.total)}</span>`;}).join('')}
+      </div>
+    </div>
+  </div>`;
+
+  let h=topbar()+capBar+`<div class="main-layout"><div class="col-left">`;
+  CICLOS.forEach((c,i)=>{
+    const pctCap=(c.total/PER.cap*100);
+    const subLine=c.total>0?`<div style="display:flex;align-items:center;gap:6px;margin-top:3px">
+      <div style="width:90px;height:3px;background:var(--s3);border-radius:2px;overflow:hidden">
+        <div style="height:100%;width:${Math.min(pctCap*40,100)}%;background:var(--grn);border-radius:2px"></div>
+      </div>
+      <span style="font-size:.6rem;color:var(--grn)">${pctCap.toFixed(3)}% do capital</span>
+    </div>`:'';
+
+    const dotCol=c.dot==='green'?'var(--grn)':c.dot==='orange'?'var(--org)':'var(--tx3)';
+    const dotHtml=`<div><span class="ch-dot" style="background:${dotCol};${c.dot==='green'?'box-shadow:0 0 5px var(--grn)':''}"></span></div>`;
+
+    /* Custom head override */
+    const hid=`ch-v5-${c.id}`;
+    const bid=`cb-v5-${c.id}`;
+    const isOpen=i===0;
+    h+=`<div class="ciclo">
+      <div class="ciclo-head${isOpen?' open':''}" id="${hid}" onclick="tog('${hid}','${bid}')">
+        <span class="ch-dot" style="background:${dotCol}${c.dot==='green'?';box-shadow:0 0 5px var(--grn)':''}"></span>
+        <div>
+          <div style="display:flex;align-items:center;gap:7px">
+            <span class="ch-date">Ciclo ${c.date}</span>
+            <span class="ch-dow">${c.dow}</span>
+            <div style="display:flex;gap:4px">
+              ${c.exercidas>0?`<span class="badge bex">${c.exercidas} exerc.</span>`:''}
+              ${c.status==='aberto'?`<span class="badge bab">${c.ops} abertas</span>`:`<span class="badge bops">${c.ops} ops</span>`}
+            </div>
+          </div>
+          ${subLine}
+        </div>
+        <div class="ch-right">
+          <span class="ch-total">${c.total>0?`<span class="pos">+${fmt(c.total)}</span>`:`<span style="color:var(--tx2)">aguardando</span>`}</span>
+          <span class="ch-arr">▼</span>
+        </div>
+      </div>
+      <div class="ciclo-body${isOpen?' open':''}" id="${bid}">
+        ${c.ops_list.map(op=>opRow(op,5)).join('')}
+        ${cicloFoot(c)}
+      </div>
+    </div>`;
+  });
+  h+=`</div><div class="col-right">${rPanel(5)}</div></div>`;
+  el.innerHTML=h;
+  setTimeout(()=>buildAccChart('rpa-ch5'),30);
+}
+
+/* ═══ V6: Cockpit Executivo ═══ */
+function bv6(){
+  const el=document.getElementById('m6');
+  const heroChart=`<div style="display:grid;grid-template-columns:1fr auto;border-bottom:1px solid var(--bdr);background:rgba(0,0,0,.1)">
+    <div style="padding:11px 18px;border-right:1px solid var(--bdr)">
+      <div style="font-size:.6rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px;display:flex;align-items:center;gap:6px">
+        <span style="width:7px;height:7px;border-radius:50%;background:var(--grn);display:inline-block"></span>
+        Evolução de prêmios acumulados
+      </div>
+      <div style="height:68px;position:relative"><canvas id="v6-hero"></canvas></div>
+    </div>
+    <div style="padding:11px 14px;display:grid;grid-template-columns:1fr 1fr;gap:7px;min-width:215px;align-content:start">
+      <div style="background:var(--s2);border-radius:8px;padding:9px 11px">
+        <div style="font-family:var(--mono);font-size:.9rem;font-weight:700;color:var(--grn)">+${fmt(CICLOS.reduce((a,c)=>a+c.total,0))}</div>
+        <div style="font-size:.55rem;color:var(--tx2);text-transform:uppercase;margin-top:2px">Total Prêmios</div>
+      </div>
+      <div style="background:var(--s2);border-radius:8px;padding:9px 11px">
+        <div style="font-family:var(--mono);font-size:.9rem;font-weight:700;color:var(--amb)">${fmtP(PER.roi)}</div>
+        <div style="font-size:.55rem;color:var(--tx2);text-transform:uppercase;margin-top:2px">ROI Capital</div>
+      </div>
+      <div style="background:var(--s2);border-radius:8px;padding:9px 11px">
+        <div style="font-family:var(--mono);font-size:.9rem;font-weight:700;color:var(--org)">${PER.ex}</div>
+        <div style="font-size:.55rem;color:var(--tx2);text-transform:uppercase;margin-top:2px">Exercidas</div>
+      </div>
+      <div style="background:var(--s2);border-radius:8px;padding:9px 11px">
+        <div style="font-family:var(--mono);font-size:.9rem;font-weight:700;color:var(--grn)">${PER.wr}%</div>
+        <div style="font-size:.55rem;color:var(--tx2);text-transform:uppercase;margin-top:2px">Win Rate</div>
+      </div>
+    </div>
+  </div>`;
+
+  let h=topbar()+heroChart+`<div class="main-layout"><div class="col-left">`;
+  CICLOS.forEach((c,i)=>{ h+=cicloBlock(c,i,6); });
+  h+=`</div><div class="col-right">${rPanel(6)}</div></div>`;
+  el.innerHTML=h;
+  setTimeout(()=>{
+    buildHeroChart('v6-hero');
+    buildAccChart('rpa-ch6');
+  },30);
+}
+
+/* ════ CHART BUILDERS ════ */
+function buildAccChart(id){
+  dc(id);const el=document.getElementById(id);if(!el)return;
+  const d=[0,14.26,27.79,27.79,55.58,55.58,76.21,104.13];
+  const l=['Início','BTC CALL','ETH CALL','BTC PUT','ETH PUT','Ciclo 2','Ciclo 3','Total'];
+  CHARTS[id]=new Chart(el,{type:'line',data:{labels:l,datasets:[{data:d,borderColor:'#22c55e',backgroundColor:'rgba(34,197,94,.08)',borderWidth:2,pointRadius:3,pointBackgroundColor:'#22c55e',fill:true,tension:.4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'US$ '+c.raw.toFixed(2)}}},scales:{x:{display:false},y:{display:false}}}});
+}
+function buildHeroChart(id){
+  dc(id);const el=document.getElementById(id);if(!el)return;
+  const d=[0,14.26,27.79,27.79,55.58,55.58,76.21,104.13];
+  CHARTS[id]=new Chart(el,{type:'line',data:{labels:d.map((_,i)=>i),datasets:[{data:d,borderColor:'#22c55e',backgroundColor:(ctx)=>{const g=ctx.chart.ctx.createLinearGradient(0,0,0,68);g.addColorStop(0,'rgba(34,197,94,.18)');g.addColorStop(1,'rgba(34,197,94,0)');return g;},borderWidth:2.5,pointRadius:4,pointBackgroundColor:'#22c55e',fill:true,tension:.38}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'US$ '+c.raw.toFixed(2)}}},scales:{x:{display:false},y:{display:false}}}});
+}
+
+/* ════ RENDER ════ */
+function renderAll(){bv1();bv2();bv3();bv4();bv5();bv6();}
+
+document.querySelectorAll('.swb').forEach(b=>{
+  b.addEventListener('click',function(){
+    document.querySelectorAll('.swb').forEach(x=>x.classList.remove('on'));
+    document.querySelectorAll('.modal').forEach(x=>x.classList.remove('on'));
+    this.classList.add('on');
+    document.getElementById('m'+this.dataset.v).classList.add('on');
+    window.scrollTo({top:0,behavior:'smooth'});
+  });
+});
+renderAll();
+</script>
+</body>
+</html>

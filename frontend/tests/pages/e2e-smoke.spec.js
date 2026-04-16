@@ -64,19 +64,19 @@ test.describe("[E2E] Página de Opções", () => {
         await shot(page, "e2e-opcoes-tabela-visivel");
     });
 
-    test("[E2E-Opcoes] todos os assets CSS carregam sem 404", async ({ page }) => {
+    test("[E2E-Opcoes] todos os assets (CSS, JS, HTML, fonts) carregam sem 404", async ({ page }) => {
         const failed = [];
-        page.on("response", r => { if (r.url().includes("/css/") && r.status() === 404) failed.push(r.url()); });
+        // Captura QUALQUER recurso com 404, exceto bem-known e extensões externas
+        page.on("response", r => {
+            const url = r.url();
+            const is404 = r.status() === 404;
+            const isInternal = url.includes("localhost");
+            const isWellKnown = url.includes(".well-known");
+            if (is404 && isInternal && !isWellKnown) failed.push(`[${r.status()}] ${url}`);
+        });
         await page.reload({ waitUntil: "networkidle" });
         await shot(page, "e2e-opcoes-assets-ok");
-        expect(failed, `CSS com 404: ${failed.join(", ")}`).toHaveLength(0);
-    });
-
-    test("[E2E-Opcoes] todos os assets JS carregam sem 404", async ({ page }) => {
-        const failed = [];
-        page.on("response", r => { if (r.url().includes("/js/") && r.status() === 404) failed.push(r.url()); });
-        await page.reload({ waitUntil: "networkidle" });
-        expect(failed, `JS com 404: ${failed.join(", ")}`).toHaveLength(0);
+        expect(failed, `Recursos com 404:\n${failed.join("\n")}`).toHaveLength(0);
     });
 });
 
@@ -107,23 +107,49 @@ test.describe("[E2E] Página de Crypto", () => {
     });
 
     test("[E2E-Crypto] container principal de operações está visível", async ({ page }) => {
+        // A aba ativa padrão é "Visão Geral" (#vgContainer); nas outras abas
+        // existe .table-responsive mas ela fica hidden. Verificar qualquer
+        // elemento visível que seja estrutura principal da página.
         const container = page.locator(
-            "#tableOperacoes, table, .table-responsive, #crypto-list, #mainContainer"
+            "#vgContainer, #tableOperacoes, #crypto-list, #mainContainer"
         ).first();
         await expect(container).toBeVisible({ timeout: 5000 });
         await shot(page, "e2e-crypto-tabela-visivel");
     });
 
-    test("[E2E-Crypto] todos os assets carregam sem 404", async ({ page }) => {
+    test("[E2E-Crypto] todos os assets (CSS, JS, HTML, fonts) carregam sem 404", async ({ page }) => {
         const failed = [];
+        // Captura QUALQUER recurso com 404, exceto bem-known e extensões externas
         page.on("response", r => {
-            if ((r.url().includes("/css/") || r.url().includes("/js/")) && r.status() === 404) {
-                failed.push(r.url());
-            }
+            const url = r.url();
+            const is404 = r.status() === 404;
+            const isInternal = url.includes("localhost");
+            const isWellKnown = url.includes(".well-known");
+            if (is404 && isInternal && !isWellKnown) failed.push(`[${r.status()}] ${url}`);
         });
         await page.reload({ waitUntil: "networkidle" });
         await shot(page, "e2e-crypto-assets-ok");
-        expect(failed, `Assets com 404: ${failed.join(", ")}`).toHaveLength(0);
+        expect(failed, `Recursos com 404:\n${failed.join("\n")}`).toHaveLength(0);
+    });
+
+    test("[E2E-Crypto] card Resultado Médio abre modal sem 404", async ({ page }) => {
+        const failed = [];
+        page.on("response", r => {
+            const url = r.url();
+            if (r.status() === 404 && url.includes("localhost") && !url.includes(".well-known")) {
+                failed.push(`[404] ${url}`);
+            }
+        });
+        await page.goto("/html/crypto.html", { waitUntil: "networkidle" });
+
+        // Clica no card que abre o modal de Resultado Médio
+        const card = page.locator("#cardResultadoMedioCryptoCard");
+        if (await card.isVisible()) {
+            await card.click();
+            await page.waitForTimeout(2000); // aguarda fetch do template
+        }
+
+        expect(failed, `404s ao abrir modal Resultado Médio:\n${failed.join("\n")}`).toHaveLength(0);
     });
 });
 

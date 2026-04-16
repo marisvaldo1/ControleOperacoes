@@ -1,3 +1,146 @@
+<style>
+/* ── Resultado Final — Filter bar ─────────────────────────────────────── */
+#modalResultadoTotal .rt-fp-bar {
+    padding: .38rem 1rem; border-bottom: 1px solid rgba(255,255,255,.08);
+    display: flex; align-items: center; gap: .22rem; flex-wrap: wrap;
+    background: #0d1117;
+}
+#modalResultadoTotal .rt-fp {
+    padding: .18rem .48rem; border-radius: 20px;
+    font-family: monospace; font-size: .67rem; font-weight: 500;
+    cursor: pointer; border: 1px solid rgba(255,255,255,.12);
+    background: transparent; color: #6b82a0; transition: all .15s; white-space: nowrap;
+}
+#modalResultadoTotal .rt-fp:hover { color: #e8f0f8; border-color: rgba(255,255,255,.25); }
+#modalResultadoTotal .rt-fp.ap  { background: rgba(59,130,246,.15); border-color: #3b82f6;  color: #3b82f6; }
+#modalResultadoTotal .rt-fp.aa  { background: rgba(61,214,140,.12); border-color: #3dd68c;  color: #3dd68c; }
+#modalResultadoTotal .rt-fp.af  { background: rgba(232,85,85,.12);  border-color: #e85555;  color: #e85555; }
+#modalResultadoTotal .rt-fp.ac  { background: rgba(77,184,212,.12); border-color: #4db8d4;  color: #4db8d4; }
+#modalResultadoTotal .rt-fp.apu { background: rgba(155,114,212,.12);border-color: #9b72d4;  color: #9b72d4; }
+#modalResultadoTotal .rt-fp-sep { width: 1px; height: 15px; background: rgba(255,255,255,.12); flex-shrink: 0; margin: 0 .1rem; }
+/* ── Op row ──────────────────────────────────────────────────────────── */
+#modalResultadoTotal .rt-fa-op-row-bar {
+    padding: .3rem 1rem; border-bottom: 1px solid rgba(255,255,255,.08);
+    background: #1a2436; display: flex; align-items: center; gap: .22rem;
+    overflow-x: auto; scrollbar-width: none; min-height: 38px;
+}
+#modalResultadoTotal .rt-fa-op-row-bar::-webkit-scrollbar { display: none; }
+#modalResultadoTotal .rt-fa-op-tab {
+    flex-shrink: 0; padding: .22rem .52rem; border-radius: 6px;
+    border: 1px solid rgba(255,255,255,.12); background: #0d1117;
+    cursor: pointer; transition: all .15s; text-align: center; min-width: 50px;
+}
+#modalResultadoTotal .rt-fa-op-tab:hover { border-color: rgba(255,255,255,.25); }
+#modalResultadoTotal .rt-fa-op-tab.sel { border-color: #e8a830; background: rgba(232,168,48,.1); }
+#modalResultadoTotal .rt-fa-op-tab.sel .rt-fa-ot-a { color: #e8a830; }
+#modalResultadoTotal .rt-fa-ot-t { font-family: monospace; font-size: .58rem; font-weight: 600; color: #6b82a0; }
+#modalResultadoTotal .rt-fa-ot-a { font-family: monospace; font-size: .66rem; font-weight: 700; color: #e8f0f8; }
+#modalResultadoTotal .rt-fa-ot-d { font-family: monospace; font-size: .52rem; color: #6b82a0; }
+#modalResultadoTotal .rt-fa-closed-sel {
+    background: #1e2a3d; border: 1px solid rgba(255,255,255,.12); border-radius: 6px;
+    color: #6b82a0; font-family: monospace; font-size: .66rem;
+    padding: .22rem .46rem; cursor: pointer; outline: none; min-width: 130px;
+}
+#modalResultadoTotal .rt-fa-closed-sel:hover { border-color: rgba(255,255,255,.25); color: #e8f0f8; }
+#modalResultadoTotal .rt-fa-op-sum { margin-left: auto; flex-shrink: 0; display: flex; gap: .25rem; align-items: center; }
+#modalResultadoTotal .rt-fa-tag {
+    padding: .2rem .48rem; border-radius: 8px;
+    font-family: monospace; font-size: .68rem; font-weight: 600; white-space: nowrap;
+}
+#modalResultadoTotal .rt-fa-tag.b { background: rgba(30,42,61,1);    color: #4db8d4;  border: 1px solid rgba(77,184,212,.3); }
+#modalResultadoTotal .rt-fa-tag.g { background: rgba(26,48,40,1);    color: #3dd68c;  border: 1px solid rgba(61,214,140,.3); }
+#modalResultadoTotal .rt-fa-tag.r { background: rgba(30,30,40,1);    color: #6b82a0;  border: 1px solid rgba(255,255,255,.1); }
+#modalResultadoTotal .rt-fa-tag.a { background: rgba(45,32,16,1);    color: #e8a830;  border: 1px solid rgba(232,168,48,.3); }
+/* ── Accordion body wrapper ──────────────────────────────────────────── */
+#modalResultadoTotal .rt-fa-body {
+    padding: .75rem 1rem; overflow-y: auto;
+    max-height: calc(90vh - 220px);
+}
+/* ── Accordion entries ───────────────────────────────────────────────── */
+#modalResultadoTotal .rt-fa-acc-wrap { margin-bottom: 7px; }
+#modalResultadoTotal .rt-fa-acc-head {
+    display: flex; align-items: center; gap: 7px; padding: 9px 12px;
+    background: #1a2436; border: 1px solid rgba(255,255,255,.1);
+    border-radius: 8px; cursor: pointer; user-select: none; transition: background .15s;
+}
+#modalResultadoTotal .rt-fa-acc-head:hover { background: #1e2a3d; }
+#modalResultadoTotal .rt-fa-acc-head.open { border-radius: 8px 8px 0 0; border-bottom-color: transparent; }
+#modalResultadoTotal .rt-fa-acc-arrow { margin-left: auto; font-size: .65rem; color: #6b82a0; transition: transform .2s; flex-shrink: 0; }
+#modalResultadoTotal .rt-fa-acc-head.open .rt-fa-acc-arrow { transform: rotate(180deg); }
+#modalResultadoTotal .rt-fa-acc-body { display: none; background: #1a2436; border: 1px solid rgba(255,255,255,.1); border-top: none; border-radius: 0 0 8px 8px; padding: 10px 12px; }
+#modalResultadoTotal .rt-fa-acc-body.open { display: block; }
+#modalResultadoTotal .rt-fa-acc-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+#modalResultadoTotal .rt-fa-acc-dot.dot-ok   { background: #3dd68c; }
+#modalResultadoTotal .rt-fa-acc-dot.dot-warn { background: #e8a830; }
+#modalResultadoTotal .rt-fa-acc-info { display: flex; align-items: center; gap: 7px; flex: 1; flex-wrap: wrap; }
+#modalResultadoTotal .rt-fa-acc-date { font-family: monospace; font-size: .76rem; font-weight: 700; color: #e8f0f8; }
+#modalResultadoTotal .rt-fa-acc-day  { font-family: monospace; font-size: .62rem; color: #6b82a0; }
+#modalResultadoTotal .rt-fa-badge { display: inline-flex; align-items: center; padding: .1rem .4rem; border-radius: 8px; font-family: monospace; font-size: .58rem; font-weight: 700; }
+#modalResultadoTotal .rt-fa-badge.ok   { background: rgba(61,214,140,.1);  color: #3dd68c;  border: 1px solid rgba(61,214,140,.25); }
+#modalResultadoTotal .rt-fa-badge.warn { background: rgba(232,168,48,.12); color: #e8a830;  border: 1px solid rgba(232,168,48,.3); }
+#modalResultadoTotal .rt-fa-badge.ops  { background: rgba(255,255,255,.05);color: #6b82a0;  border: 1px solid rgba(255,255,255,.1); }
+#modalResultadoTotal .rt-fa-badge.exrc { background: rgba(232,168,48,.12); color: #e8a830;  border: 1px solid rgba(232,168,48,.3); }
+#modalResultadoTotal .rt-fa-acc-total { font-family: monospace; font-size: .78rem; font-weight: 700; margin-right: 6px; }
+#modalResultadoTotal .rt-fa-acc-total.pos { color: #3dd68c; }
+#modalResultadoTotal .rt-fa-acc-total.neg { color: #e85555; }
+/* ── Op rows inside accordion ────────────────────────────────────────── */
+#modalResultadoTotal .rt-fa-op-row { display: flex; align-items: center; gap: 6px; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,.04); font-size: .73rem; flex-wrap: wrap; }
+#modalResultadoTotal .rt-fa-op-row:last-of-type { border-bottom: none; }
+#modalResultadoTotal .rt-fa-asset { font-family: monospace; font-weight: 700; font-size: .7rem; min-width: 26px; }
+#modalResultadoTotal .rt-fa-tipo  { font-size: .6rem; font-weight: 700; padding: 1px 6px; border-radius: 4px; }
+#modalResultadoTotal .rt-fa-tipo.call { background: rgba(77,184,212,.12);  color: #4db8d4; }
+#modalResultadoTotal .rt-fa-tipo.put  { background: rgba(155,114,212,.12); color: #9b72d4; }
+#modalResultadoTotal .rt-fa-exrc-pill { font-size: .56rem; font-weight: 700; padding: 1px 6px; border-radius: 8px; background: rgba(232,168,48,.15); color: #e8a830; border: 1px solid rgba(232,168,48,.3); }
+#modalResultadoTotal .rt-fa-strike { font-family: monospace; font-weight: 600; flex: 1; color: #e8f0f8; font-size: .7rem; }
+#modalResultadoTotal .rt-fa-op-status { font-size: .6rem; font-weight: 600; padding: 1px 6px; border-radius: 6px; }
+#modalResultadoTotal .rt-fa-op-status.aberta   { background: rgba(77,184,212,.1);  color: #4db8d4; border: 1px solid rgba(77,184,212,.3); }
+#modalResultadoTotal .rt-fa-op-status.fechada  { background: rgba(61,214,140,.1);  color: #3dd68c; border: 1px solid rgba(61,214,140,.25); }
+#modalResultadoTotal .rt-fa-op-status.exercida { background: rgba(232,168,48,.12); color: #e8a830; border: 1px solid rgba(232,168,48,.3); }
+#modalResultadoTotal .rt-fa-premio { font-family: monospace; font-weight: 700; font-size: .72rem; margin-left: auto; }
+#modalResultadoTotal .rt-fa-premio.pos { color: #3dd68c; }
+#modalResultadoTotal .rt-fa-premio.neg { color: #e85555; }
+/* ── Day footer ──────────────────────────────────────────────────────── */
+#modalResultadoTotal .rt-fa-day-footer {
+    display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+    padding: 7px 0 0; border-top: 1px solid rgba(255,255,255,.07);
+    margin-top: 5px; font-size: .7rem; font-family: monospace;
+}
+#modalResultadoTotal .rt-fa-footer-val { color: #3dd68c; font-weight: 600; }
+#modalResultadoTotal .rt-fa-footer-warn { color: #e8a830; font-weight: 600; }
+/* ── Side panel accordions ───────────────────────────────────────────── */
+#modalResultadoTotal .rt-fa-side-acc { margin-bottom: 7px; }
+#modalResultadoTotal .rt-fa-side-head {
+    display: flex; align-items: center; gap: 6px; padding: 9px 12px;
+    background: #1a2436; border: 1px solid rgba(255,255,255,.1);
+    border-radius: 8px; cursor: pointer; user-select: none; transition: background .15s;
+}
+#modalResultadoTotal .rt-fa-side-head:hover { background: #1e2a3d; }
+#modalResultadoTotal .rt-fa-side-head.open { border-radius: 8px 8px 0 0; border-bottom-color: transparent; }
+#modalResultadoTotal .rt-fa-side-head.open .rt-fa-acc-arrow { transform: rotate(180deg); }
+#modalResultadoTotal .rt-fa-side-body { display: none; background: #1a2436; border: 1px solid rgba(255,255,255,.1); border-top: none; border-radius: 0 0 8px 8px; padding: 10px 12px; }
+#modalResultadoTotal .rt-fa-side-body.open { display: block; }
+/* ── Stats inside side panel ─────────────────────────────────────────── */
+#modalResultadoTotal .rt-fa-stat-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,.04); font-size: .7rem; }
+#modalResultadoTotal .rt-fa-stat-row:last-child { border-bottom: none; }
+#modalResultadoTotal .rt-fa-stat-lbl { color: #6b82a0; font-family: monospace; }
+#modalResultadoTotal .rt-fa-stat-val { font-family: monospace; font-weight: 600; }
+#modalResultadoTotal .rt-fa-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+#modalResultadoTotal .rt-fa-g2-item { background: rgba(255,255,255,.03); border-radius: 6px; padding: 7px 9px; }
+#modalResultadoTotal .rt-fa-g2-val { font-family: monospace; font-size: .82rem; font-weight: 700; line-height: 1; }
+#modalResultadoTotal .rt-fa-g2-lbl { font-size: .56rem; color: #6b82a0; text-transform: uppercase; letter-spacing: .4px; margin-top: 3px; }
+/* ── IA Modal markdown styles ─────────────────────────────────────────── */
+#cryptoIaModal .crypto-ia-md h2 { font-size: .92rem; font-weight: 700; margin: 12px 0 5px; color: #e8f0f8; }
+#cryptoIaModal .crypto-ia-md h3 { font-size: .82rem; font-weight: 700; margin: 10px 0 4px; color: #e8a830; }
+#cryptoIaModal .crypto-ia-md table { width: 100%; border-collapse: collapse; font-size: .75rem; margin: 8px 0; }
+#cryptoIaModal .crypto-ia-md th { background: #1e2a3d; color: #6b82a0; font-weight: 600; padding: 5px 8px; border: 1px solid rgba(255,255,255,.1); text-align: left; }
+#cryptoIaModal .crypto-ia-md td { padding: 5px 8px; border: 1px solid rgba(255,255,255,.07); }
+#cryptoIaModal .crypto-ia-md code { background: #1e2a3d; padding: 1px 5px; border-radius: 3px; font-size: .78rem; color: #4db8d4; }
+#cryptoIaModal .crypto-ia-md ul, #cryptoIaModal .crypto-ia-md ol { padding-left: 18px; margin: 6px 0; }
+#cryptoIaModal .crypto-ia-md li { margin-bottom: 4px; font-size: .82rem; }
+#cryptoIaModal .crypto-ia-md p { margin: 0 0 8px; font-size: .85rem; line-height: 1.65; }
+#cryptoIaModal .crypto-ia-md strong { color: #e8f0f8; }
+</style>
+
 <div class="modal modal-blur fade" id="modalResultadoTotal" tabindex="-1">
     <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content modal-resultado-total">
@@ -15,6 +158,7 @@
                     Análise Temporal de Performance
                 </h5>
                 <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                    <button type="button" class="mdh-refresh" id="rtCryptoIAButton" title="Análise IA do histórico">🧠</button>
                     <span class="mdh-ts" id="rtRefreshStatus">Atualizado: --:--</span>
                     <button type="button" class="mdh-refresh" id="rtRefreshButton" title="Atualizar">
                         <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
@@ -89,17 +233,7 @@
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <ul class="nav nav-tabs-custom" role="tablist">
                                 <li class="nav-item">
-                                    <a class="nav-link active" data-bs-toggle="tab" href="#rtTabOverview" role="tab">
-                                        <i class="ti ti-layout-dashboard"></i>Visão Geral
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" data-bs-toggle="tab" href="#rtTabCharts" role="tab">
-                                        <i class="ti ti-chart-line"></i>Gráficos
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" data-bs-toggle="tab" href="#rtTabCalendar" role="tab">
+                                    <a class="nav-link active" data-bs-toggle="tab" href="#rtTabCalendar" role="tab">
                                         <i class="ti ti-calendar"></i>Calendário
                                     </a>
                                 </li>
@@ -115,37 +249,6 @@
 
                 <div class="rt-modal-scroll">
                     <div class="tab-content px-4 pb-4">
-                        <div class="tab-pane active" id="rtTabOverview">
-
-                            <div class="row g-3 mt-1">
-                                <div class="col-12">
-                                    <div class="card">
-                                        <div class="card-header d-flex justify-content-between align-items-center">
-                                            <h4 class="card-title mb-0">
-                                                <i class="ti ti-radar text-warning me-2"></i>Cockpit Operacional
-                                            </h4>
-                                            <span class="badge bg-dark-lt" id="rtCockpitLastUpdate">Atualizando...</span>
-                                        </div>
-                                        <div class="card-body" id="rtCockpitBlendBody">
-                                            <div class="text-muted">Carregando saúde operacional, criticidade e timeline...</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-12">
-                                    <div class="card">
-                                        <div class="card-header">
-                                            <h4 class="card-title mb-0">
-                                                <i class="ti ti-report-money text-danger me-2"></i>CALLs Exercidas e Cobertura
-                                            </h4>
-                                        </div>
-                                        <div class="card-body" id="rtExercisedCallsBody">
-                                            <div class="text-muted">Calculando lucro/prejuízo e cobertura das últimas CALLs exercidas...</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
                         <div class="tab-pane" id="rtTabMetrics">
                             <div class="row g-4">
                                 <div class="col-lg-4">
@@ -322,68 +425,6 @@
                             </div>
                         </div>
 
-                        <div class="tab-pane" id="rtTabCharts">
-                            <div class="row g-4">
-                                <div class="col-12">
-                                    <div class="card">
-                                        <div class="card-header">
-                                            <h4 class="card-title">
-                                                <i class="ti ti-chart-line me-2 text-primary"></i>Evolução do Patrimônio
-                                            </h4>
-                                        </div>
-                                        <div class="card-body">
-                                            <div class="rt-chart-container">
-                                                <canvas id="rtSaldoChart"></canvas>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="card">
-                                        <div class="card-header">
-                                            <h4 class="card-title">
-                                                <i class="ti ti-chart-donut me-2 text-primary"></i>Distribuição Win/Loss
-                                            </h4>
-                                        </div>
-                                        <div class="card-body">
-                                            <div class="rt-mini-distribution">
-                                                <div class="d-flex justify-content-between mb-1">
-                                                    <span>Wins</span>
-                                                    <span id="rtChartWinRate">0%</span>
-                                                </div>
-                                                <div class="progress mb-3">
-                                                    <div class="progress-bar bg-green" id="rtChartWinBar"></div>
-                                                </div>
-                                                <div class="d-flex justify-content-between mb-1">
-                                                    <span>Losses</span>
-                                                    <span id="rtChartLossRate">0%</span>
-                                                </div>
-                                                <div class="progress">
-                                                    <div class="progress-bar bg-red" id="rtChartLossBar"></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="card">
-                                        <div class="card-header">
-                                            <h4 class="card-title">
-                                                <i class="ti ti-clock me-2 text-primary"></i>Performance por Dia
-                                            </h4>
-                                        </div>
-                                        <div class="card-body">
-                                            <div class="rt-weekday-list" id="rtWeekdayList"></div>
-                                            <div class="rt-best-day">
-                                                <div class="text-muted small">Melhor Dia</div>
-                                                <div class="h3 text-green" id="rtBestDay">-</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
                         <div class="tab-pane" id="rtTabAnalysis">
                             <div class="row g-4">
                                 <div class="col-lg-6">
@@ -404,7 +445,7 @@
                             </div>
                         </div>
 
-                        <div class="tab-pane" id="rtTabCalendar">
+                        <div class="tab-pane active" id="rtTabCalendar">
                             <div class="row g-4">
                                 <div class="col-lg-8">
                                     <div class="card">
@@ -461,20 +502,26 @@
                         </div>
 
                         <div class="tab-pane" id="rtTabFinalResult">
-                            <div class="row g-3 mt-1">
-                                <div class="col-12">
-                                    <div class="card">
-                                        <div class="card-header d-flex justify-content-between align-items-center">
-                                            <h4 class="card-title mb-0">
-                                                <i class="ti ti-target-arrow text-warning me-2"></i>Ciclo de Reentrada (CALL exercida → PUT exercida)
-                                            </h4>
-                                            <span class="badge bg-dark-lt" id="rtFinalFilterTag">Período: 60d</span>
-                                        </div>
-                                        <div class="card-body" id="rtFinalResultBody">
-                                            <div class="text-muted">Calculando ciclo final e recuperação...</div>
-                                        </div>
-                                    </div>
-                                </div>
+                            <!-- Filter bar -->
+                            <div class="rt-fp-bar" id="rtFinalFbar">
+                                <button class="rt-fp ap" data-fp="all">Todos</button>
+                                <button class="rt-fp" data-fp="today">Hoje</button>
+                                <button class="rt-fp" data-fp="7d">7d</button>
+                                <button class="rt-fp" data-fp="15d">15d</button>
+                                <button class="rt-fp" data-fp="mes">Mês</button>
+                                <button class="rt-fp" data-fp="30d">30d</button>
+                                <button class="rt-fp" data-fp="ano">Ano</button>
+                                <div class="rt-fp-sep"></div>
+                                <button class="rt-fp" data-fs="aberta">Abertas</button>
+                                <button class="rt-fp" data-fs="fechada">Fechadas</button>
+                                <button class="rt-fp" data-ft="CALL">CALL</button>
+                                <button class="rt-fp" data-ft="PUT">PUT</button>
+                            </div>
+                            <!-- Op row (open ops tabs + closed select + totals) -->
+                            <div class="rt-fa-op-row-bar" id="rtFinalOpRow"><!-- JS --></div>
+                            <!-- Accordion body -->
+                            <div class="rt-fa-body" id="rtFinalResultBody">
+                                <div class="text-muted p-3">Calculando...</div>
                             </div>
                         </div>
 
@@ -537,6 +584,43 @@
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- IA Analysis Modal (Bootstrap nativo — sem Swal) -->
+<div class="modal modal-blur fade" id="cryptoIaModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:860px">
+        <div class="modal-content" style="background:#141b28;border:1px solid rgba(255,255,255,.12);color:#e8f0f8;overflow:hidden;border-radius:12px">
+            <!-- Header -->
+            <div style="background:#1a2436;border-bottom:1px solid rgba(255,255,255,.1);padding:.6rem 1rem;display:flex;align-items:center;gap:10px">
+                <span style="font-size:1.1rem">🧠</span>
+                <div style="flex:1">
+                    <div id="cryptoIaTitle" style="font-weight:700;font-size:.92rem">Análise IA — Dual Investment Crypto</div>
+                    <div id="cryptoIaSubtitle" style="font-size:.65rem;color:#6b82a0">—</div>
+                </div>
+                <button type="button" id="cryptoIaCopyBtn" style="background:none;border:1px solid rgba(255,255,255,.15);color:#6b82a0;border-radius:5px;padding:4px 10px;font-size:.7rem;cursor:pointer;margin-right:4px">📋 Copiar</button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <!-- Loading -->
+            <div id="cryptoIaLoading" style="padding:36px;text-align:center;display:none">
+                <div class="spinner-border text-primary" role="status" style="width:2.5rem;height:2.5rem"></div>
+                <div id="cryptoIaLoadingText" style="margin-top:14px;color:#6b82a0;font-size:.84rem">Consultando agente de IA...</div>
+            </div>
+            <!-- Response body -->
+            <div id="cryptoIaRespBody" style="padding:.85rem 1rem;max-height:60vh;overflow-y:auto;font-size:.86rem;line-height:1.65;display:none"></div>
+            <!-- Chat footer -->
+            <div id="cryptoIaFooter" style="padding:.7rem 1rem;border-top:1px solid rgba(255,255,255,.1);background:#1a2436;display:none">
+                <div style="font-size:.65rem;color:#6b82a0;margin-bottom:6px">💬 Pergunte algo adicional:</div>
+                <textarea id="cryptoIaFollowup"
+                    style="width:100%;background:#0d1117;color:#e8f0f8;border:1px solid rgba(255,255,255,.18);border-radius:8px;padding:9px 11px;font-size:.82rem;min-height:72px;resize:vertical;box-sizing:border-box;outline:none;display:block"
+                    placeholder="Ex: Qual seria o strike ideal se BTC cair 15%? Gere gráfico de payoff em ASCII..."></textarea>
+                <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px;align-items:center">
+                    <div id="cryptoIaModelTag" style="font-size:.6rem;color:#475569;margin-right:auto"></div>
+                    <button type="button" data-bs-dismiss="modal" style="background:#263347;border:1px solid rgba(255,255,255,.12);color:#6b82a0;border-radius:6px;padding:5px 14px;font-size:.75rem;cursor:pointer">Fechar</button>
+                    <button type="button" id="cryptoIaSendBtn" style="background:#3b82f6;border:none;color:#fff;border-radius:6px;padding:5px 14px;font-size:.75rem;font-weight:700;cursor:pointer">Enviar →</button>
                 </div>
             </div>
         </div>

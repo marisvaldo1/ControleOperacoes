@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Análise Temporal · 7 Variações</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Syne:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0c1118;--s1:#141b26;--s2:#1a2235;--s3:#202a3e;--s4:#263248;
+  --bdr:rgba(255,255,255,.07);--bdr2:rgba(255,255,255,.13);
+  --tx1:#e8f0fa;--tx2:#7a95b8;--tx3:#344560;
+  --grn:#22c55e;--grn-bg:rgba(34,197,94,.11);--grn-bdr:rgba(34,197,94,.28);
+  --red:#ef4444;--red-bg:rgba(239,68,68,.11);--red-bdr:rgba(239,68,68,.28);
+  --amb:#f59e0b;--amb-bg:rgba(245,158,11,.11);--amb-bdr:rgba(245,158,11,.28);
+  --blu:#3b82f6;--blu-bg:rgba(59,130,246,.11);--blu-bdr:rgba(59,130,246,.28);
+  --pur:#a855f7;--pur-bg:rgba(168,85,247,.11);--pur-bdr:rgba(168,85,247,.28);
+  --org:#f97316;--org-bg:rgba(249,115,22,.11);--org-bdr:rgba(249,115,22,.28);
+  --cya:#06b6d4;--cya-bg:rgba(6,182,212,.11);--cya-bdr:rgba(6,182,212,.28);
+  --mono:'JetBrains Mono',monospace;--syne:'Syne',sans-serif;--ui:'Inter',sans-serif;
+}
+html,body{height:100%;font-family:var(--ui);background:#060b12;color:var(--tx1);font-size:13px}
+body{display:flex;flex-direction:column;align-items:center;padding:14px;gap:12px;overflow-x:hidden}
+@keyframes fadeIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+@keyframes expandDown{from{opacity:0;max-height:0}to{opacity:1;max-height:2000px}}
+
+.sw{display:flex;gap:5px;flex-wrap:wrap;background:var(--s1);border:1px solid var(--bdr2);border-radius:30px;padding:5px 10px;position:sticky;top:8px;z-index:900;box-shadow:0 4px 28px rgba(0,0,0,.7)}
+.swl{font-size:.62rem;color:var(--tx2);align-self:center;padding-right:3px}
+.swb{padding:.22rem .7rem;border-radius:18px;border:1px solid var(--bdr);background:transparent;color:var(--tx2);font-family:var(--mono);font-size:.61rem;font-weight:500;cursor:pointer;transition:all .14s;white-space:nowrap}
+.swb:hover{color:var(--tx1);border-color:var(--bdr2)}
+.swb.on{background:var(--amb-bg);border-color:var(--amb);color:var(--amb)}
+.modal{width:100%;max-width:1060px;background:var(--s1);border:1px solid var(--bdr2);border-radius:14px;overflow:hidden;display:none;animation:fadeIn .25s ease}
+.modal.on{display:block}
+.mh{display:flex;align-items:center;gap:8px;padding:11px 18px;background:var(--bg);border-bottom:1px solid var(--bdr)}
+.mh-title{font-family:var(--syne);font-size:.9rem;font-weight:700;flex:1}
+.mh-ts{font-family:var(--mono);font-size:.63rem;color:var(--tx2)}
+.mh-btn{width:26px;height:26px;border-radius:6px;border:1px solid var(--bdr2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.72rem;color:var(--tx2);background:var(--s2);transition:all .14s}
+.mh-btn:hover{border-color:var(--amb);color:var(--amb)}
+.pb{display:flex;align-items:center;gap:5px;flex-wrap:wrap;padding:8px 18px;border-bottom:1px solid var(--bdr)}
+.pbl{font-size:.63rem;color:var(--tx2);margin-right:3px}
+.pp{padding:.2rem .6rem;border-radius:20px;font-size:.68rem;font-weight:500;cursor:pointer;border:1px solid transparent;background:transparent;color:var(--tx2);transition:all .12s;white-space:nowrap}
+.pp:hover{color:var(--tx1);border-color:var(--bdr2)}
+.pp.on{background:var(--amb-bg);border-color:var(--amb);color:var(--amb);font-weight:700}
+.fb{display:flex;align-items:center;gap:5px;flex-wrap:wrap;padding:7px 18px;border-bottom:1px solid var(--bdr);background:var(--bg)}
+.fbl{font-size:.61rem;color:var(--tx2)}
+.fp{padding:.17rem .52rem;border-radius:5px;font-size:.65rem;font-weight:600;cursor:pointer;border:1px solid var(--bdr);background:transparent;color:var(--tx2);transition:all .12s;white-space:nowrap;text-transform:uppercase;letter-spacing:.3px}
+.fp:hover{color:var(--tx1);border-color:var(--bdr2)}
+.fp.fc-all{background:var(--s3);border-color:var(--bdr2);color:var(--tx1)}
+.fp.fc-call{background:var(--blu-bg);border-color:var(--blu-bdr);color:var(--blu)}
+.fp.fc-put{background:var(--pur-bg);border-color:var(--pur-bdr);color:var(--pur)}
+.fp.fc-ab{background:var(--grn-bg);border-color:var(--grn-bdr);color:var(--grn)}
+.fp.fc-fe{background:var(--s3);border-color:var(--bdr2);color:var(--tx2)}
+.fp.fc-ex{background:var(--org-bg);border-color:var(--org-bdr);color:var(--org)}
+.fp.fc-btc{background:var(--amb-bg);border-color:var(--amb-bdr);color:var(--amb)}
+.fp.fc-eth{background:var(--cya-bg);border-color:var(--cya-bdr);color:var(--cya)}
+.fsep{width:1px;height:15px;background:var(--bdr2);flex-shrink:0;margin:0 2px}
+.hero{display:flex;align-items:stretch;border-bottom:1px solid var(--bdr)}
+.hero-main{padding:12px 18px;min-width:175px;border-right:1px solid var(--bdr)}
+.hero-lbl{font-size:.6rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px}
+.hero-val{font-family:var(--mono);font-size:1.6rem;font-weight:700;color:var(--amb);line-height:1}
+.hero-kpis{display:flex;flex:1;flex-wrap:wrap}
+.hk{padding:10px 14px;border-right:1px solid var(--bdr);min-width:88px;flex:1}
+.hk:last-child{border-right:none}
+.hk-l{font-size:.6rem;color:var(--tx2);margin-bottom:3px}
+.hk-v{font-family:var(--mono);font-size:.84rem;font-weight:700}
+.body{display:grid;overflow:hidden}
+.body.tc{grid-template-columns:1fr 318px}
+.col-m{overflow-y:auto;max-height:calc(100vh - 295px);padding:12px 16px}
+.col-m::-webkit-scrollbar{width:4px}
+.col-m::-webkit-scrollbar-thumb{background:var(--s4);border-radius:2px}
+.col-s{border-left:1px solid var(--bdr);overflow-y:auto;max-height:calc(100vh - 295px);padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.col-s::-webkit-scrollbar{width:3px}
+.col-s::-webkit-scrollbar-thumb{background:var(--s4);border-radius:2px}
+
+/* ACCORDION */
+.ad{margin-bottom:6px}
+.ah{display:flex;align-items:center;gap:10px;padding:9px 13px;border-radius:9px;background:var(--s2);border:1px solid var(--bdr);cursor:pointer;transition:all .15s;user-select:none}
+.ah:hover{background:var(--s3);border-color:var(--bdr2)}
+.ah.open{border-color:var(--bdr2);border-radius:9px 9px 0 0;background:var(--s3)}
+.adot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.adate{font-family:var(--mono);font-size:.72rem;font-weight:600}
+.adow{font-size:.65rem;color:var(--tx2)}
+.ameta{display:flex;gap:5px;margin-left:4px;flex-wrap:wrap}
+.atag{font-size:.57rem;font-weight:600;padding:1px 7px;border-radius:10px}
+.atot{font-family:var(--mono);font-size:.78rem;font-weight:700;margin-left:auto}
+.aarr{font-size:.68rem;color:var(--tx2);transition:transform .2s;flex-shrink:0}
+.ah.open .aarr{transform:rotate(180deg)}
+.ab{display:none;padding:8px 10px 10px;background:var(--s2);border:1px solid var(--bdr2);border-top:none;border-radius:0 0 9px 9px}
+.ab.open{display:block;animation:expandDown .2s ease}
+
+/* OP ROW */
+.op{display:flex;align-items:center;gap:8px;padding:8px 11px;border-radius:7px;background:var(--s3);border:1px solid var(--bdr);margin-bottom:5px;transition:all .13s}
+.op:last-child{margin-bottom:0}
+.op:hover{background:var(--s4);border-color:var(--bdr2)}
+.op.ex{border-left:3px solid var(--org);background:linear-gradient(90deg,rgba(249,115,22,.06),transparent)}
+.op-a{font-size:.72rem;font-weight:700;min-width:30px}
+.ot{font-size:.6rem;font-weight:700;padding:2px 7px;border-radius:4px;white-space:nowrap;flex-shrink:0}
+.ot-call{background:var(--blu-bg);color:var(--blu);border:1px solid var(--blu-bdr)}
+.ot-put{background:var(--pur-bg);color:var(--pur);border:1px solid var(--pur-bdr)}
+.op-ex{font-size:.57rem;font-weight:700;padding:1px 5px;border-radius:3px;background:var(--org-bg);color:var(--org);border:1px solid var(--org-bdr);flex-shrink:0}
+.op-str{font-family:var(--mono);font-size:.68rem;color:var(--tx2);flex:1}
+.op-st{font-size:.59rem;padding:1px 6px;border-radius:3px;font-weight:600;white-space:nowrap;flex-shrink:0}
+.os-ab{background:var(--grn-bg);color:var(--grn);border:1px solid var(--grn-bdr)}
+.os-fe{background:var(--s4);color:var(--tx2);border:1px solid var(--bdr)}
+.op-v{font-family:var(--mono);font-size:.74rem;font-weight:700;min-width:68px;text-align:right;flex-shrink:0}
+
+.card{background:var(--s2);border:1px solid var(--bdr);border-radius:10px;padding:11px 13px}
+.ct{font-size:.62rem;font-weight:600;color:var(--tx2);text-transform:uppercase;letter-spacing:.7px;margin-bottom:9px;display:flex;align-items:center;gap:6px}
+.sg2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.sg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.si{background:var(--s3);border-radius:8px;padding:8px 10px}
+.si-v{font-family:var(--mono);font-size:.86rem;font-weight:700;line-height:1}
+.si-l{font-size:.56rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.4px;margin-top:3px}
+.dr{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.7rem}
+.dr:last-child{border-bottom:none}
+.dr-k{color:var(--tx2);display:flex;align-items:center;gap:5px}
+.dr-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.dr-v{font-family:var(--mono);font-weight:600}
+.prow{display:flex;flex-direction:column;gap:3px;margin-bottom:7px}
+.prow:last-child{margin-bottom:0}
+.phd{display:flex;justify-content:space-between;font-size:.63rem}
+.pl{color:var(--tx2)}
+.pv{font-family:var(--mono);font-weight:600}
+.pt{height:6px;background:var(--s3);border-radius:3px;overflow:hidden}
+.pf{height:100%;border-radius:3px;transition:width .55s}
+.pt-lg{height:9px}
+
+.cy-box{border-radius:10px;overflow:hidden;border:1px solid var(--bdr)}
+.cy-h{padding:9px 13px;background:var(--s3);border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between}
+.cy-title{font-family:var(--syne);font-size:.76rem;font-weight:700}
+.cy-badge{font-size:.59rem;font-weight:700;padding:2px 8px;border-radius:10px}
+.cy-body{padding:11px 13px;background:var(--s2)}
+
+.nx-card{border-radius:10px;overflow:hidden;border:1px solid transparent}
+.nx-card.profit{border-color:var(--grn-bdr);background:linear-gradient(135deg,rgba(34,197,94,.06) 0%,transparent 60%),var(--s2)}
+.nx-card.neutral{border-color:var(--amb-bdr);background:var(--s2)}
+.nx-h{padding:10px 13px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:8px}
+.nx-icon{font-size:1.2rem}
+.nx-title{font-family:var(--syne);font-size:.82rem;font-weight:700}
+.nx-body{padding:11px 13px}
+
+.rec{background:var(--grn-bg);border:1px solid var(--grn-bdr);border-radius:10px;padding:11px 13px}
+.rec-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(34,197,94,.1)}
+.rec-row:last-child{border-bottom:none}
+.rec-a{font-size:.7rem;font-weight:700;min-width:28px}
+.rec-info{flex:1;font-size:.63rem}
+.rec-str{font-family:var(--mono);font-size:.7rem;font-weight:700;color:var(--grn)}
+
+.day-sum{display:flex;align-items:center;gap:8px;padding:7px 11px;border-radius:7px;background:var(--s3);border:1px solid var(--bdr);margin-top:6px;font-size:.65rem;flex-wrap:wrap}
+.ds-l{color:var(--tx2)}
+.ds-v{font-family:var(--mono);font-weight:700}
+.ds-sep{width:1px;height:12px;background:var(--bdr2);flex-shrink:0}
+
+/* V3 card ops */
+.v3-op{border-radius:8px;overflow:hidden;margin-bottom:6px;border:1px solid var(--bdr)}
+.v3-op.ex{border-color:var(--org-bdr)}
+.v3-head{padding:7px 11px;display:flex;align-items:center;gap:8px;background:var(--s3)}
+.v3-met{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0;border-top:1px solid var(--bdr)}
+.v3-m{padding:6px 10px;border-right:1px solid var(--bdr);text-align:center}
+.v3-m:last-child{border-right:none}
+.v3-ml{font-size:.56rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.4px}
+.v3-mv{font-family:var(--mono);font-size:.7rem;font-weight:700;margin-top:2px}
+
+/* V4 pills */
+.v4-op{display:flex;align-items:center;flex-wrap:wrap;gap:5px;padding:7px 10px;background:var(--s3);border-radius:7px;border:1px solid var(--bdr);margin-bottom:4px}
+.v4-op:hover{background:var(--s4)}
+.v4-op.ex{border-left:3px solid var(--org)}
+.pill{font-size:.62rem;padding:2px 9px;border-radius:20px;font-family:var(--mono);font-weight:500}
+</style>
+</head>
+<body>
+<div class="sw">
+  <span class="swl">Variação:</span>
+  <button class="swb on" data-v="1">① Timeline</button>
+  <button class="swb" data-v="2">② Compacto</button>
+  <button class="swb" data-v="3">③ Cards Métrica</button>
+  <button class="swb" data-v="4">④ Pill Rows</button>
+  <button class="swb" data-v="5">⑤ Gráfico + Timeline</button>
+  <button class="swb" data-v="6">⑥ Por Ativo</button>
+  <button class="swb" data-v="7">⑦ Análise Executiva</button>
+</div>
+<div class="modal on" id="m1"></div>
+<div class="modal" id="m2"></div>
+<div class="modal" id="m3"></div>
+<div class="modal" id="m4"></div>
+<div class="modal" id="m5"></div>
+<div class="modal" id="m6"></div>
+<div class="modal" id="m7"></div>
+
+<script>
+const OPS=[
+  {date:'08/04/2026',dow:'Terça',  asset:'BTC',type:'CALL',strike:71500,exercida:false,open:false,prem:14.26},
+  {date:'08/04/2026',dow:'Terça',  asset:'ETH',type:'CALL',strike:2225, exercida:false,open:false,prem:13.53},
+  {date:'08/04/2026',dow:'Terça',  asset:'BTC',type:'PUT', strike:71500,exercida:true, open:false,prem:14.26},
+  {date:'08/04/2026',dow:'Terça',  asset:'ETH',type:'PUT', strike:2225, exercida:true, open:false,prem:13.53},
+  {date:'09/04/2026',dow:'Quarta', asset:'BTC',type:'CALL',strike:71500,exercida:false,open:false,prem:9.23},
+  {date:'09/04/2026',dow:'Quarta', asset:'ETH',type:'CALL',strike:2225, exercida:false,open:false,prem:8.47},
+  {date:'10/04/2026',dow:'Quinta', asset:'BTC',type:'CALL',strike:71500,exercida:false,open:false,prem:9.23},
+  {date:'10/04/2026',dow:'Quinta', asset:'ETH',type:'CALL',strike:2225, exercida:false,open:false,prem:8.47},
+  {date:'13/04/2026',dow:'Segunda',asset:'BTC',type:'CALL',strike:72000,exercida:true, open:false,prem:26.18},
+  {date:'13/04/2026',dow:'Segunda',asset:'ETH',type:'CALL',strike:2225, exercida:true, open:false,prem:22.37},
+  {date:'14/04/2026',dow:'Terça',  asset:'BTC',type:'CALL',strike:72000,exercida:true, open:false,prem:3.90},
+  {date:'14/04/2026',dow:'Terça',  asset:'ETH',type:'CALL',strike:2225, exercida:true, open:false,prem:8.80},
+  {date:'15/04/2026',dow:'Quarta', asset:'BTC',type:'CALL',strike:73500,exercida:false,open:true, prem:0},
+  {date:'15/04/2026',dow:'Quarta', asset:'ETH',type:'CALL',strike:2275, exercida:false,open:true, prem:0},
+];
+const SALDO_INI=6234.37,COT_BTC=74500,COT_ETH=2245;
+const CY={
+  BTC:{putStrike:71500,lastCS:72000,totalPrem:62.80,costoMedio:71437.20,nextStrike:73500,nextProfit:2062.80,nextPremEst:18.50},
+  ETH:{putStrike:2225, lastCS:2225, totalPrem:61.64,costoMedio:2163.36, nextStrike:2275, nextProfit:111.64, nextPremEst:9.20},
+};
+let filt={period:'7d',tipo:'all',status:'all',asset:'all'};
+const fmt=n=>'US$ '+Math.abs(n).toFixed(2).replace('.',',');
+const fmtK=n=>n>=1000?'US$ '+(n/1000).toFixed(1)+'K':'US$ '+n.toFixed(2).replace('.',',');
+const fmtP=n=>(n>=0?'+':'')+n.toFixed(2)+'%';
+const fmtSig=n=>(n>=0?'+':'-')+' US$ '+Math.abs(n).toFixed(2).replace('.',',');
+const ac=a=>a==='BTC'?'var(--amb)':'var(--cya)';
+function getOps(){return OPS.filter(o=>{
+  if(filt.tipo==='call'&&o.type!=='CALL')return false;
+  if(filt.tipo==='put'&&o.type!=='PUT')return false;
+  if(filt.status==='ab'&&!o.open)return false;
+  if(filt.status==='fe'&&o.open)return false;
+  if(filt.status==='ex'&&!o.exercida)return false;
+  if(filt.asset==='btc'&&o.asset!=='BTC')return false;
+  if(filt.asset==='eth'&&o.asset!=='ETH')return false;
+  return true;
+});}
+function byDate(ops){const m={};ops.forEach(o=>{if(!m[o.date])m[o.date]={date:o.date,dow:o.dow,ops:[]};m[o.date].ops.push(o);});return Object.values(m).sort((a,b)=>a.date.localeCompare(b.date));}
+function stats(ops){
+  const cl=ops.filter(o=>!o.open),ex=ops.filter(o=>o.exercida),ab=ops.filter(o=>o.open);
+  const tp=cl.reduce((a,o)=>a+o.prem,0);
+  return{tp,closed:cl.length,exerc:ex.length,ab:ab.length,
+    wr:cl.length>0?((cl.length-ex.length)/cl.length*100):100,
+    roi:SALDO_INI>0?(tp/SALDO_INI*100):0,
+    btcP:ops.filter(o=>o.asset==='BTC'&&!o.open).reduce((a,o)=>a+o.prem,0),
+    ethP:ops.filter(o=>o.asset==='ETH'&&!o.open).reduce((a,o)=>a+o.prem,0),
+    total:ops.length};
+}
+
+function shellH(n,ops,s){
+  const tC=s.tp>=0?'var(--grn)':'var(--red)',tB=s.tp>=0?'var(--grn-bg)':'var(--red-bg)',tBd=s.tp>=0?'var(--grn-bdr)':'var(--red-bdr)';
+  return`<div class="mh"><span style="font-size:.88rem">📅</span>
+    <span class="mh-title">Análise Temporal de Performance</span>
+    <span class="mh-ts">Atualizado: 08:18</span>
+    <button class="mh-btn" onclick="renderAll()">↺</button>
+    <button class="mh-btn">✕</button>
+  </div>
+  <div class="pb"><span class="pbl">Período</span>
+    ${['hoje','7d','30d','60d','90d','mes','ano'].map(p=>{const l={'hoje':'Hoje','7d':'7 dias','30d':'30 dias','60d':'60 dias','90d':'90 dias','mes':'Mês','ano':'Ano'}[p];return`<button class="pp${filt.period===p?' on':''}" onclick="sP('${p}')">${l}</button>`;}).join('')}
+  </div>
+  <div class="fb"><span class="fbl">Tipo:</span>
+    ${[['all','Todos','fc-all'],['call','CALL','fc-call'],['put','PUT','fc-put']].map(([v,l,c])=>`<button class="fp${filt.tipo===v?' '+c:''}" onclick="sF('tipo','${v}')">${l}</button>`).join('')}
+    <div class="fsep"></div><span class="fbl">Status:</span>
+    ${[['all','Todos','fc-all'],['ab','Abertas','fc-ab'],['fe','Fechadas','fc-fe'],['ex','Exercidas','fc-ex']].map(([v,l,c])=>`<button class="fp${filt.status===v?' '+c:''}" onclick="sF('status','${v}')">${l}</button>`).join('')}
+    <div class="fsep"></div>
+    <button class="fp${filt.asset==='btc'?' fc-btc':''}" onclick="sF('asset',filt.asset==='btc'?'all':'btc')">BTC</button>
+    <button class="fp${filt.asset==='eth'?' fc-eth':''}" onclick="sF('asset',filt.asset==='eth'?'all':'eth')">ETH</button>
+    <span style="margin-left:auto;display:flex;align-items:center;gap:7px">
+      <span style="font-size:.6rem;color:var(--tx2)">${ops.length} ops</span>
+      <span style="font-family:var(--mono);font-size:.7rem;font-weight:700;padding:2px 9px;border-radius:5px;background:${tB};color:${tC};border:1px solid ${tBd}">${fmtSig(s.tp)}</span>
+    </span>
+  </div>
+  <div class="hero">
+    <div class="hero-main"><div class="hero-lbl">Total Prêmios</div><div class="hero-val">${fmtSig(s.tp)}</div></div>
+    <div class="hero-kpis">
+      <div class="hk"><div class="hk-l">Último Exercício</div><div class="hk-v" style="color:var(--amb)">${fmtK(72000)}</div></div>
+      <div class="hk"><div class="hk-l">Cotação BTC</div><div class="hk-v" style="color:var(--cya)">${fmtK(COT_BTC)}</div></div>
+      <div class="hk"><div class="hk-l">ROI</div><div class="hk-v" style="color:var(--grn)">${fmtP(s.roi)}</div></div>
+      <div class="hk"><div class="hk-l">Ops</div><div class="hk-v">${s.total}</div></div>
+      <div class="hk"><div class="hk-l">Win Rate</div><div class="hk-v" style="color:${s.wr>=80?'var(--grn)':'var(--amb)'}"> ${s.wr.toFixed(1)}%</div></div>
+      <div class="hk"><div class="hk-l">Exercidas</div><div class="hk-v" style="color:var(--org)">${s.exerc}</div></div>
+    </div>
+  </div>`;
+}
+
+function opRow(op){
+  const a=ac(op.asset),stk=op.asset==='BTC'?'$'+(op.strike/1000).toFixed(1)+'K':'$'+op.strike;
+  return`<div class="op${op.exercida?' ex':''}">
+    <span class="op-a" style="color:${a}">${op.asset}</span>
+    <span class="ot ${op.type==='CALL'?'ot-call':'ot-put'}">${op.type}</span>
+    ${op.exercida?`<span class="op-ex">exercida</span>`:''}
+    <span class="op-str">${op.type} Strike ${stk}</span>
+    <span class="op-st ${op.open?'os-ab':'os-fe'}">${op.open?'Aberta':'Fechada'}</span>
+    <span class="op-v" style="color:${op.prem>0?'var(--grn)':'var(--tx2)'}">${op.prem>0?'+'+fmt(op.prem):'—'}</span>
+  </div>`;
+}
+
+function daySum(d){
+  const tot=d.ops.reduce((a,o)=>a+o.prem,0);if(!tot)return'';
+  return`<div class="day-sum">
+    <span class="ds-l">Total</span><span class="ds-v" style="color:var(--grn)">+${fmt(tot)}</span>
+    <span class="ds-sep"></span><span class="ds-l">BTC</span><span class="ds-v" style="color:var(--amb)">${fmt(d.ops.filter(o=>o.asset==='BTC').reduce((a,o)=>a+o.prem,0))}</span>
+    <span class="ds-sep"></span><span class="ds-l">ETH</span><span class="ds-v" style="color:var(--cya)">${fmt(d.ops.filter(o=>o.asset==='ETH').reduce((a,o)=>a+o.prem,0))}</span>
+    <span class="ds-sep"></span>
+    <span class="ds-v" style="color:${d.ops.some(o=>o.exercida)?'var(--org)':'var(--grn)'}"> ${d.ops.some(o=>o.exercida)?'⚠️ '+d.ops.filter(o=>o.exercida).length+' exercida(s)':'✅ Sem exercício'}</span>
+  </div>`;
+}
+
+function accDay(g,i,bodyFn){
+  const tot=g.ops.reduce((a,o)=>a+o.prem,0);
+  const hasEx=g.ops.some(o=>o.exercida),isOp=g.ops.some(o=>o.open);
+  const dC=isOp?'var(--grn)':hasEx?'var(--org)':'var(--grn)';
+  const hid='h'+Date.now()+i,bid='b'+Date.now()+i;
+  return`<div class="ad">
+    <div class="ah${i===0?' open':''}" id="${hid}" onclick="tog('${hid}','${bid}')">
+      <span class="adot" style="background:${dC}"></span>
+      <span class="adate">${g.date}</span>
+      <span class="adow">${g.dow}</span>
+      <div class="ameta">
+        ${hasEx?`<span class="atag" style="background:var(--org-bg);color:var(--org);border:1px solid var(--org-bdr)">${g.ops.filter(o=>o.exercida).length} exerc.</span>`:''}
+        ${isOp?`<span class="atag" style="background:var(--grn-bg);color:var(--grn);border:1px solid var(--grn-bdr)">${g.ops.filter(o=>o.open).length} aberta</span>`:''}
+        <span class="atag" style="background:var(--s3);color:var(--tx2);border:1px solid var(--bdr)">${g.ops.length} ops</span>
+      </div>
+      <span class="atot" style="color:${tot>0?'var(--grn)':'var(--tx2)'}">${tot>0?'+'+fmt(tot):'—'}</span>
+      <span class="aarr">▼</span>
+    </div>
+    <div class="ab${i===0?' open':''}" id="${bid}">${bodyFn(g)}</div>
+  </div>`;
+}
+
+function tog(hid,bid){
+  const h=document.getElementById(hid),b=document.getElementById(bid);
+  if(!h||!b)return;
+  b.classList.toggle('open');h.classList.toggle('open');
+}
+
+function cyclePanel(asset){
+  const cy=CY[asset],a=ac(asset),icon=asset==='BTC'?'₿':'Ξ';
+  const isP=cy.nextProfit>0,col=isP?'var(--grn)':'var(--red)';
+  return`<div class="cy-box">
+    <div class="cy-h">
+      <span class="cy-title" style="color:${a}">${icon} Ciclo ${asset}</span>
+      <span class="cy-badge" style="background:${isP?'var(--grn-bg)':'var(--red-bg)'};color:${isP?'var(--grn)':'var(--red)'};border:1px solid ${isP?'var(--grn-bdr)':'var(--red-bdr)'}">${isP?'LUCRATIVO':'NEUTRO'}</span>
+    </div>
+    <div class="cy-body">
+      <div class="dr"><span class="dr-k"><span class="dr-dot" style="background:var(--pur)"></span>PUT exercida</span><span class="dr-v" style="color:var(--pur)">${fmtK(cy.putStrike)}</span></div>
+      <div class="dr"><span class="dr-k"><span class="dr-dot" style="background:var(--org)"></span>CALL vendida</span><span class="dr-v" style="color:var(--org)">${fmtK(cy.lastCS)}</span></div>
+      <div class="dr"><span class="dr-k"><span class="dr-dot" style="background:var(--grn)"></span>Prêmios ciclo</span><span class="dr-v" style="color:var(--grn)">+${fmt(cy.totalPrem)}</span></div>
+      <div class="dr"><span class="dr-k"><span class="dr-dot" style="background:${a}"></span>Custo médio</span><span class="dr-v" style="color:${a}">${fmtK(cy.costoMedio)}</span></div>
+      <div class="dr"><span class="dr-k">Desconto obtido</span><span class="dr-v" style="color:var(--grn)">−${(cy.totalPrem/cy.putStrike*100).toFixed(2)}%</span></div>
+    </div>
+  </div>`;
+}
+
+function nextCard(asset){
+  const cy=CY[asset],a=ac(asset),cot=asset==='BTC'?COT_BTC:COT_ETH;
+  const distPct=(cot-cy.nextStrike)/cy.nextStrike*100;
+  const isP=cy.nextProfit>0,col=isP?'var(--grn)':'var(--red)';
+  const exPct=(cy.nextProfit/cy.nextStrike*100);
+  return`<div class="nx-card ${isP?'profit':'neutral'}">
+    <div class="nx-h">
+      <span class="nx-icon">${isP?'🚀':'⚠️'}</span>
+      <div>
+        <div class="nx-title" style="color:${col}">Próxima Operação — ${asset}</div>
+        <div style="font-size:.62rem;color:var(--tx2)">CALL · Strike ${fmtK(cy.nextStrike)} · Resultado se exercida</div>
+      </div>
+    </div>
+    <div class="nx-body">
+      <div class="sg3" style="margin-bottom:10px">
+        <div class="si"><div class="si-v" style="color:${a}">${fmtK(cy.costoMedio)}</div><div class="si-l">Custo Médio</div></div>
+        <div class="si"><div class="si-v" style="color:var(--amb)">${fmtK(cy.nextStrike)}</div><div class="si-l">Strike Sugerido</div></div>
+        <div class="si"><div class="si-v" style="color:${col}">${isP?'+':''}${fmt(cy.nextProfit)}</div><div class="si-l">Lucro se exercida</div></div>
+      </div>
+      <div class="prow"><div class="phd"><span class="pl">Resultado esperado se exercida</span><span class="pv" style="color:${col}">${fmtP(exPct)}</span></div><div class="pt pt-lg"><div class="pf" style="width:${Math.min(Math.abs(exPct)*5,100)}%;background:${col}"></div></div></div>
+      <div class="prow"><div class="phd"><span class="pl">Prêmios coletados no ciclo</span><span class="pv" style="color:var(--grn)">${fmt(cy.totalPrem)}</span></div><div class="pt pt-lg"><div class="pf" style="width:${Math.min(cy.totalPrem/cy.putStrike*100*50,100)}%;background:var(--grn)"></div></div></div>
+      <div class="prow"><div class="phd"><span class="pl">Dist. cotação ao strike (${fmtK(cot)})</span><span class="pv" style="color:${distPct>=0?'var(--grn)':'var(--red)'}">${fmtP(distPct)}</span></div><div class="pt pt-lg"><div class="pf" style="width:${Math.min(Math.abs(distPct)*5,100)}%;background:${distPct>=0?'var(--grn)':'var(--red)'}"></div></div></div>
+      <div style="background:var(--s3);border:1px solid var(--bdr);border-radius:8px;padding:9px 11px;margin-top:8px">
+        <div style="font-size:.62rem;color:var(--tx2);margin-bottom:4px">🧮 Breakdown Custo Médio Real</div>
+        <div class="dr"><span class="dr-k"><span class="dr-dot" style="background:var(--pur)"></span>PUT exercida — comprou ${asset}</span><span class="dr-v" style="color:var(--pur)">${fmtK(cy.putStrike)}</span></div>
+        <div class="dr"><span class="dr-k"><span class="dr-dot" style="background:var(--grn)"></span>Prêmios coletados total</span><span class="dr-v" style="color:var(--grn)">−${fmt(cy.totalPrem)}</span></div>
+        <div class="dr" style="border-top:1px solid var(--bdr2);margin-top:3px;padding-top:5px"><span class="dr-k" style="font-weight:700;color:var(--tx1)">= Custo Médio Real</span><span class="dr-v" style="color:${a};font-size:.8rem">${fmtK(cy.costoMedio)}</span></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function sideP(ops,s){
+  return`<div class="card">
+    <div class="ct"><span>📊</span>Resumo</div>
+    <div class="sg2" style="margin-bottom:8px">
+      <div class="si"><div class="si-v" style="color:var(--grn)">${fmt(s.tp)}</div><div class="si-l">Total Prêmios</div></div>
+      <div class="si"><div class="si-v" style="color:${s.wr>=80?'var(--grn)':'var(--amb)'}"> ${s.wr.toFixed(1)}%</div><div class="si-l">Win Rate</div></div>
+      <div class="si"><div class="si-v" style="color:var(--org)">${s.exerc}</div><div class="si-l">Exercidas</div></div>
+      <div class="si"><div class="si-v" style="color:var(--grn)">${fmtP(s.roi)}</div><div class="si-l">ROI</div></div>
+    </div>
+    <div class="prow"><div class="phd"><span class="pl">BTC ${fmt(s.btcP)}</span><span class="pv" style="color:var(--amb)">${s.tp>0?(s.btcP/s.tp*100).toFixed(0):50}%</span></div><div class="pt"><div class="pf" style="width:${s.tp>0?s.btcP/s.tp*100:50}%;background:var(--amb)"></div></div></div>
+    <div class="prow"><div class="phd"><span class="pl">ETH ${fmt(s.ethP)}</span><span class="pv" style="color:var(--cya)">${s.tp>0?(s.ethP/s.tp*100).toFixed(0):50}%</span></div><div class="pt"><div class="pf" style="width:${s.tp>0?s.ethP/s.tp*100:50}%;background:var(--cya)"></div></div></div>
+  </div>
+  ${cyclePanel('BTC')}${cyclePanel('ETH')}
+  ${nextCard('BTC')}${nextCard('ETH')}
+  <div class="rec">
+    <div class="ct" style="color:var(--grn)"><span>💡</span>Strikes Sugeridos</div>
+    <div class="rec-row"><span class="rec-a" style="color:var(--amb)">BTC</span><div class="rec-info"><div style="color:var(--tx1);font-weight:600">CALL · ${fmt(CY.BTC.nextPremEst)} est.</div><div style="color:var(--tx2)">Lucro +${fmt(CY.BTC.nextProfit)} se exercida</div></div><span class="rec-str">${fmtK(CY.BTC.nextStrike)}</span></div>
+    <div class="rec-row"><span class="rec-a" style="color:var(--cya)">ETH</span><div class="rec-info"><div style="color:var(--tx1);font-weight:600">CALL · ${fmt(CY.ETH.nextPremEst)} est.</div><div style="color:var(--tx2)">Lucro +${fmt(CY.ETH.nextProfit)} se exercida</div></div><span class="rec-str">${fmtK(CY.ETH.nextStrike)}</span></div>
+  </div>`;
+}
+
+/* BUILDS */
+function b1(){const ops=getOps(),s=stats(ops),g=byDate(ops);document.getElementById('m1').innerHTML=shellH(1,ops,s)+`<div class="body tc"><div class="col-m">${g.map((d,i)=>accDay(d,i,dd=>dd.ops.map(opRow).join('')+daySum(dd))).join('')}</div><div class="col-s">${sideP(ops,s)}</div></div>`;}
+
+function b2(){const ops=getOps(),s=stats(ops),g=byDate(ops);document.getElementById('m2').innerHTML=shellH(2,ops,s)+`<div class="body tc"><div class="col-m">${g.map((d,i)=>accDay(d,i,dd=>`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:4px">${dd.ops.map(op=>{const a=ac(op.asset),stk=op.asset==='BTC'?'$'+(op.strike/1000).toFixed(1)+'K':'$'+op.strike;return`<div class="op${op.exercida?' ex':''}" style="gap:6px;padding:7px 10px"><span style="color:${a};font-weight:700;font-size:.7rem;min-width:28px">${op.asset}</span><span class="ot ${op.type==='CALL'?'ot-call':'ot-put'}">${op.type}</span>${op.exercida?`<span class="op-ex">EX</span>`:''}<span style="font-family:var(--mono);font-size:.65rem;color:var(--tx2);flex:1">${stk}</span><span class="op-st ${op.open?'os-ab':'os-fe'}" style="font-size:.57rem">${op.open?'AB':'FE'}</span><span style="font-family:var(--mono);font-size:.7rem;font-weight:700;color:${op.prem>0?'var(--grn)':'var(--tx2)'};min-width:60px;text-align:right">${op.prem>0?'+'+fmt(op.prem):'—'}</span></div>`;}).join('')}</div>`+daySum(dd))).join('')}</div><div class="col-s">${sideP(ops,s)}</div></div>`;}
+
+function b3(){const ops=getOps(),s=stats(ops),g=byDate(ops);document.getElementById('m3').innerHTML=shellH(3,ops,s)+`<div class="body tc"><div class="col-m">${g.map((d,i)=>accDay(d,i,dd=>dd.ops.map(op=>{const a=ac(op.asset),cy=CY[op.asset],stk=op.asset==='BTC'?'$'+(op.strike/1000).toFixed(1)+'K':'$'+op.strike,desc=op.prem>0?(op.prem/op.strike*100).toFixed(3):'—';return`<div class="v3-op${op.exercida?' ex':''}"><div class="v3-head"><span style="color:${a};font-weight:700;font-size:.76rem">${op.asset}</span><span class="ot ${op.type==='CALL'?'ot-call':'ot-put'}">${op.type}</span>${op.exercida?`<span class="op-ex">exercida</span>`:''}<span style="font-family:var(--mono);font-size:.65rem;color:var(--tx2);flex:1">Strike ${stk}</span><span class="op-st ${op.open?'os-ab':'os-fe'}">${op.open?'Aberta':'Fechada'}</span></div><div class="v3-met"><div class="v3-m"><div class="v3-ml">Prêmio</div><div class="v3-mv" style="color:${op.prem>0?'var(--grn)':'var(--tx2)'}">${op.prem>0?'+'+fmt(op.prem):'—'}</div></div><div class="v3-m"><div class="v3-ml">% Strike</div><div class="v3-mv" style="color:var(--cya)">${desc}${desc!=='—'?'%':''}</div></div><div class="v3-m"><div class="v3-ml">Custo Médio</div><div class="v3-mv" style="color:${a}">${fmtK(cy.costoMedio)}</div></div><div class="v3-m"><div class="v3-ml">Status</div><div class="v3-mv" style="color:${op.exercida?'var(--org)':'var(--grn)'}">${op.exercida?'EX':'OK'}</div></div></div></div>`;}).join('')+daySum(dd))).join('')}</div><div class="col-s">${sideP(ops,s)}</div></div>`;}
+
+function b4(){const ops=getOps(),s=stats(ops),g=byDate(ops);document.getElementById('m4').innerHTML=shellH(4,ops,s)+`<div class="body tc"><div class="col-m">${g.map((d,i)=>accDay(d,i,dd=>dd.ops.map(op=>{const a=ac(op.asset),stk=op.asset==='BTC'?'$'+(op.strike/1000).toFixed(1)+'K':'$'+op.strike;return`<div class="v4-op${op.exercida?' ex':''}"><span class="pill" style="background:${op.asset==='BTC'?'var(--amb-bg)':'var(--cya-bg)'};color:${a};border:1px solid ${op.asset==='BTC'?'var(--amb-bdr)':'var(--cya-bdr)'}">${op.asset}</span><span class="pill" style="background:${op.type==='CALL'?'var(--blu-bg)':'var(--pur-bg)'};color:${op.type==='CALL'?'var(--blu)':'var(--pur)'};border:1px solid ${op.type==='CALL'?'var(--blu-bdr)':'var(--pur-bdr)'}">${op.type}</span>${op.exercida?`<span class="pill" style="background:var(--org-bg);color:var(--org);border:1px solid var(--org-bdr)">EXERCIDA</span>`:''}<span class="pill" style="background:var(--s3);color:var(--tx2);border:1px solid var(--bdr)">Strike ${stk}</span><span class="pill" style="background:${op.open?'var(--grn-bg)':'var(--s4)'};color:${op.open?'var(--grn)':'var(--tx2)'};border:1px solid ${op.open?'var(--grn-bdr)':'var(--bdr)'}">${op.open?'ABERTA':'FECHADA'}</span><span style="margin-left:auto;font-family:var(--mono);font-size:.74rem;font-weight:700;color:${op.prem>0?'var(--grn)':'var(--tx2)'}">${op.prem>0?'+'+fmt(op.prem):'—'}</span></div>`;}).join('')+daySum(dd))).join('')}</div><div class="col-s">${sideP(ops,s)}</div></div>`;}
+
+let charts={};
+function dChart(id){if(charts[id]){try{charts[id].destroy()}catch(e){}delete charts[id]}}
+function buildChart(canvasId,ops){
+  dChart(canvasId);const el=document.getElementById(canvasId);if(!el)return;
+  const cl=ops.filter(o=>!o.open&&o.prem>0);let acc=0;
+  const accD=cl.map(o=>{acc+=o.prem;return parseFloat(acc.toFixed(2));});
+  charts[canvasId]=new Chart(el,{type:'bar',data:{labels:cl.map(o=>o.asset+o.type[0]+' '+o.date.substr(0,5)),datasets:[
+    {type:'bar',data:cl.map(o=>o.prem),backgroundColor:cl.map(o=>o.exercida?'rgba(249,115,22,.65)':'rgba(34,197,94,.6)'),borderRadius:3,barThickness:12,order:2},
+    {type:'line',data:accD,borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,.08)',borderWidth:2.5,pointRadius:3,pointBackgroundColor:'#f59e0b',fill:true,tension:.35,order:1}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+    scales:{x:{grid:{display:false},ticks:{color:'#344560',font:{size:8},maxRotation:45,autoSkip:true,maxTicksLimit:12}},
+      y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#344560',font:{size:9},callback:v=>'$'+v.toFixed(0)}}}}});
+}
+
+function b5(){
+  const ops=getOps(),s=stats(ops),g=byDate(ops);
+  document.getElementById('m5').innerHTML=shellH(5,ops,s)+`<div class="body tc">
+    <div class="col-m">
+      <div class="card" style="margin-bottom:10px">
+        <div class="ct"><span>📈</span>Evolução de Prêmios Acumulados</div>
+        <div style="display:flex;gap:8px;font-size:.62rem;color:var(--tx2);margin-bottom:8px">
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:9px;height:9px;border-radius:2px;background:rgba(34,197,94,.65);display:inline-block"></span>Normal</span>
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:9px;height:9px;border-radius:2px;background:rgba(249,115,22,.65);display:inline-block"></span>Exercida</span>
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:3px;height:9px;border-radius:1px;background:var(--amb);display:inline-block"></span>Acumulado</span>
+        </div>
+        <div style="position:relative;height:145px"><canvas id="cv5"></canvas></div>
+      </div>
+      ${g.map((d,i)=>accDay(d,i,dd=>dd.ops.map(opRow).join('')+daySum(dd))).join('')}
+    </div>
+    <div class="col-s">${sideP(ops,s)}</div>
+  </div>`;
+  setTimeout(()=>buildChart('cv5',ops),40);
+}
+
+function b6(){
+  const ops=getOps(),s=stats(ops),g=byDate(ops);
+  document.getElementById('m6').innerHTML=shellH(6,ops,s)+`<div class="body tc">
+    <div class="col-m">${g.map((d,i)=>accDay(d,i,dd=>{
+      const btcO=dd.ops.filter(o=>o.asset==='BTC'),ethO=dd.ops.filter(o=>o.asset==='ETH');
+      return`<div class="sg2">${[['BTC',btcO],['ETH',ethO]].map(([asset,aOps])=>{
+        if(!aOps.length)return`<div></div>`;
+        const a=ac(asset),tot=aOps.reduce((t,o)=>t+o.prem,0);
+        return`<div style="background:var(--s3);border:1px solid ${a}33;border-radius:8px;padding:9px 11px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span style="font-weight:700;color:${a};font-size:.76rem">${asset==='BTC'?'₿':'Ξ'} ${asset}</span><span style="font-family:var(--mono);font-size:.74rem;font-weight:700;color:var(--grn)">+${fmt(tot)}</span></div>
+          ${aOps.map(op=>`<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span class="ot ${op.type==='CALL'?'ot-call':'ot-put'}">${op.type}</span>${op.exercida?`<span class="op-ex">EX</span>`:''}<span style="font-family:var(--mono);font-size:.64rem;color:var(--tx2);flex:1">Strike ${op.asset==='BTC'?'$'+(op.strike/1000).toFixed(1)+'K':'$'+op.strike}</span><span style="font-family:var(--mono);font-size:.7rem;font-weight:700;color:${op.prem>0?'var(--grn)':'var(--tx2)'}">${op.prem>0?'+'+fmt(op.prem):'—'}</span></div>`).join('')}
+          ${aOps.some(o=>o.exercida)?`<div style="background:var(--org-bg);border:1px solid var(--org-bdr);border-radius:6px;padding:5px 8px;margin-top:6px;font-size:.62rem;color:var(--org)">⚠️ Exercida · Custo médio → ${fmtK(CY[asset].costoMedio)}</div>`:''}
+        </div>`;}).join('')}</div>`+daySum(dd);
+    })).join('')}</div>
+    <div class="col-s">${sideP(ops,s)}</div>
+  </div>`;
+}
+
+function b7(){
+  const ops=getOps(),s=stats(ops),g=byDate(ops);
+  document.getElementById('m7').innerHTML=shellH(7,ops,s)+`<div class="body tc">
+    <div class="col-m">${g.map((d,i)=>accDay(d,i,dd=>{
+      const tot=dd.ops.reduce((a,o)=>a+o.prem,0),pctDay=SALDO_INI>0?(tot/SALDO_INI*100):0;
+      return dd.ops.map(op=>{
+        const a=ac(op.asset),stk=op.asset==='BTC'?'$'+(op.strike/1000).toFixed(1)+'K':'$'+op.strike;
+        return`<div class="op${op.exercida?' ex':''}">
+          <span class="op-a" style="color:${a}">${op.asset}</span>
+          <span class="ot ${op.type==='CALL'?'ot-call':'ot-put'}">${op.type}</span>
+          ${op.exercida?`<span class="op-ex">exercida</span>`:''}
+          <span class="op-str">${op.type} Strike ${stk}</span>
+          ${op.prem>0?`<div style="flex:1;height:5px;background:var(--s4);border-radius:3px;overflow:hidden;max-width:80px;margin:0 6px"><div style="height:100%;width:${Math.min(op.prem/50*100,100)}%;background:${op.exercida?'var(--org)':'var(--grn)'};border-radius:3px"></div></div>`:`<span style="flex:1"></span>`}
+          <span class="op-st ${op.open?'os-ab':'os-fe'}">${op.open?'Aberta':'Fechada'}</span>
+          <span class="op-v" style="color:${op.prem>0?'var(--grn)':'var(--tx2)'}">${op.prem>0?'+'+fmt(op.prem):'—'}</span>
+          ${op.prem>0?`<span style="font-family:var(--mono);font-size:.59rem;color:var(--tx2)">${(op.prem/op.strike*100).toFixed(3)}%</span>`:''}
+        </div>`;}).join('')+(tot>0?`<div style="background:var(--s3);border:1px solid var(--bdr);border-radius:7px;padding:8px 11px;margin-top:5px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><span style="font-size:.63rem;color:var(--tx2)">Contribuição ao capital</span><span style="font-family:var(--mono);font-size:.68rem;font-weight:700;color:var(--grn)">+${fmt(tot)} · ${pctDay.toFixed(3)}%</span></div><div style="height:7px;background:var(--s4);border-radius:4px;overflow:hidden"><div style="height:100%;width:${Math.min(pctDay*15,100)}%;background:var(--grn);border-radius:4px"></div></div></div>`:'');
+    })).join('')}</div>
+    <div class="col-s">${sideP(ops,s)}</div>
+  </div>`;
+}
+
+function sP(v){filt.period=v;renderAll()}
+function sF(k,v){filt[k]=v;renderAll()}
+function renderAll(){b1();b2();b3();b4();b5();b6();b7()}
+
+document.querySelectorAll('.swb').forEach(b=>{
+  b.addEventListener('click',function(){
+    document.querySelectorAll('.swb').forEach(x=>x.classList.remove('on'));
+    document.querySelectorAll('.modal').forEach(x=>x.classList.remove('on'));
+    this.classList.add('on');
+    document.getElementById('m'+this.dataset.v).classList.add('on');
+    window.scrollTo({top:0,behavior:'smooth'});
+    renderAll();
+  });
+});
+renderAll();
+</script>
+</body>
+</html>

@@ -395,7 +395,7 @@
             const res     = parseFloat(op.resultado || 0);
             const isActive= idx === currentIdx;
             const typeBadge = tipo === 'CALL' ? '<span class="rmc-badge-call">CALL</span>' : '<span class="rmc-badge-put">PUT</span>';
-            return `<div class="rmc-pos-row${isActive?' active':''}" data-idx="${idx}" style="cursor:pointer;" onclick="(function(){document.querySelectorAll('.rmc-pos-row').forEach(r=>r.classList.remove('active'));this.classList.add('active');})()" >
+            return `<div class="rmc-pos-row${isActive?' active':''} rmc-pos-row-selectable" data-idx="${idx}" style="cursor:pointer;">
                 <span style="font-weight:700;">${esc(ativo)}</span>
                 <span>${typeBadge}</span>
                 <span class="rmc-c-cyan">${abertura>0?fmtUsd(abertura):'—'}</span>
@@ -629,12 +629,34 @@
         renderComparativos(op);
         renderPosicoes();
         renderRisco(op);
+            setupRowSelectListeners();
     }
 
     // ── Listeners ─────────────────────────────────────────────────────────────
+    function setupRowSelectListeners() {
+        document.querySelectorAll('.rmc-pos-row-selectable').forEach((row) => {
+            if (row.dataset.listenerBound) return;
+
+            row.addEventListener('click', function (e) {
+                e.preventDefault();
+                const idx = this.getAttribute('data-idx');
+                if (idx === null || idx === undefined) return;
+
+                currentIdx = parseInt(idx, 10);
+                document.querySelectorAll('.rmc-pos-row').forEach(r => r.classList.remove('active'));
+                this.classList.add('active');
+                render();
+            });
+
+            row.dataset.listenerBound = 'true';
+        });
+    }
+
     function setupFilterListeners() {
         const modal = document.getElementById(cfg.modalElId);
         if (!modal) return;
+        if (modal.dataset.listenersBound === 'true') return;
+        modal.dataset.listenersBound = 'true';
 
         // Período pills
         modal.querySelectorAll('.rmc-pill[data-period]').forEach(btn => {
@@ -642,7 +664,8 @@
                 modal.querySelectorAll('.rmc-pill[data-period]').forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
                 activePeriod = this.dataset.period || 'all';
-                currentIdx = 0; render();
+                currentIdx = 0;
+                render();
             });
         });
 
@@ -650,12 +673,16 @@
         modal.querySelectorAll('.rmc-pill[data-type]').forEach(btn => {
             btn.addEventListener('click', function () {
                 const t = this.dataset.type;
-                if (activeType === t) { activeType = null; this.classList.remove('active'); }
-                else {
+                if (activeType === t) {
+                    activeType = null;
+                    this.classList.remove('active');
+                } else {
                     modal.querySelectorAll('.rmc-pill[data-type]').forEach(b => b.classList.remove('active'));
-                    activeType = t; this.classList.add('active');
+                    activeType = t;
+                    this.classList.add('active');
                 }
-                currentIdx = 0; render();
+                currentIdx = 0;
+                render();
             });
         });
 
@@ -663,12 +690,16 @@
         modal.querySelectorAll('.rmc-pill[data-tipo]').forEach(btn => {
             btn.addEventListener('click', function () {
                 const t = this.dataset.tipo;
-                if (activeTipo === t) { activeTipo = null; this.classList.remove('active'); }
-                else {
+                if (activeTipo === t) {
+                    activeTipo = null;
+                    this.classList.remove('active');
+                } else {
                     modal.querySelectorAll('.rmc-pill[data-tipo]').forEach(b => b.classList.remove('active'));
-                    activeTipo = t; this.classList.add('active');
+                    activeTipo = t;
+                    this.classList.add('active');
                 }
-                currentIdx = 0; render();
+                currentIdx = 0;
+                render();
             });
         });
 

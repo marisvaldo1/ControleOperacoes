@@ -156,6 +156,13 @@ function getSaldoCrypto() {
     catch { return 0; }
 }
 
+function getAtivoBadgeClass(ativo) {
+    const raw = String(ativo || '').toUpperCase();
+    const base = raw.replace('/USDT', '').replace('USDT', '').replace('/', '').trim();
+    if (!base) return 'crypto-asset-badge crypto-asset-generic';
+    return 'crypto-asset-badge crypto-asset-generic crypto-asset-' + base.toLowerCase();
+}
+
 function populateTable(dt, data) {
     dt.clear();
     [...data].sort((a, b) => new Date(b.exercicio || b.data_operacao || 0) - new Date(a.exercicio || a.data_operacao || 0)).forEach(op => {
@@ -175,8 +182,10 @@ function populateTable(dt, data) {
         const statusBadge = status === "ABERTA" ? "<span class=\"badge bg-success\">ABERTA</span>" : status === "FECHADA" ? "<span class=\"badge bg-secondary\">FECHADA</span>" : "<span class=\"badge bg-danger\">VENCIDA</span>";
         const resultado   = parseFloat(op.resultado) || 0;
         const resHtml     = op.resultado != null ? "<span class=\"" + (resultado >= 0 ? "text-success" : "text-danger") + "\">" + resultado.toFixed(2) + "%</span>" : "-";
+        const ativoLabel = (op.ativo || '-');
+        const ativoClass = getAtivoBadgeClass(ativoLabel);
         dt.row.add([
-            "<span class=\"badge bg-warning text-dark\">" + (op.ativo || "-") + "</span>",
+            "<span class=\"badge " + ativoClass + "\">" + ativoLabel + "</span>",
             tipoBadge,
             op.cotacao_atual ? fmtUsd(op.cotacao_atual) : "-",
             op.abertura      ? fmtUsd(op.abertura)      : "-",

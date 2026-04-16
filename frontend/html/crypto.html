@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="../css/shared/style.css?v=1.2.0">
     <link rel="stylesheet" href="../css/opcoes/opcoes.css?v=1.1.8">
     <link rel="stylesheet" href="../css/opcoes/modal-resultado-total.css?v=1.1.7">
-    <link rel="stylesheet" href="../css/crypto/modal-resultado-total-crypto.css?v=1.0.4">
+    <link rel="stylesheet" href="../css/crypto/modal-resultado-total-crypto-v2.css?v=2.1.0">
     <link rel="stylesheet" href="../css/crypto/crypto.css?v=1.3.0">
     <link rel="stylesheet" href="../css/crypto/modal-total-operacoes-crypto.css?v=1.0.0">
     <link rel="stylesheet" href="../css/crypto/modal-detalhe-crypto.css?v=2.5.0">
@@ -100,7 +100,10 @@
                     <div class="card-header">
                         <ul class="nav nav-tabs card-header-tabs" data-bs-toggle="tabs" id="cryptoTabs">
                             <li class="nav-item">
-                                <a href="#tab-mes-atual" class="nav-link active" data-bs-toggle="tab">Mês Atual</a>
+                                <a href="#tab-visao-geral" class="nav-link active" data-bs-toggle="tab">&#128202; Visão Geral</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="#tab-mes-atual" class="nav-link" data-bs-toggle="tab">Mês Atual</a>
                             </li>
                             <li class="nav-item">
                                 <a href="#tab-historico" class="nav-link" data-bs-toggle="tab">Histórico</a>
@@ -116,8 +119,16 @@
                     <div class="card-body">
                         <div class="tab-content">
 
+                            <!-- Tab: Visão Geral -->
+                            <div class="tab-pane active show" id="tab-visao-geral">
+                                <div id="vgContainer">
+                                  <!-- preenchido por visao-geral-crypto.js -->
+                                  <div style="padding:32px;text-align:center;color:#7890b0;font-size:.85rem">Carregando Visão Geral...</div>
+                                </div>
+                            </div>
+
                             <!-- Tab: Mês Atual -->
-                            <div class="tab-pane active show" id="tab-mes-atual">
+                            <div class="tab-pane" id="tab-mes-atual">
                                 <div class="row mb-3" id="mesAtualHeader"></div>
                                 <div class="card">
                                     <div class="card-header d-flex align-items-center justify-content-between">
@@ -132,6 +143,7 @@
                                         <table class="table table-vcenter card-table" id="tableMesAtual">
                                             <thead>
                                                 <tr>
+                                                    <th>Corretora</th>
                                                     <th>Ativo</th>
                                                     <th>Tipo</th>
                                                     <th>Cotação Atual</th>
@@ -193,6 +205,7 @@
                                         <table class="table table-vcenter card-table" id="tableHistorico">
                                             <thead>
                                                 <tr>
+                                                    <th>Corretora</th>
                                                     <th>Ativo</th>
                                                     <th>Tipo</th>
                                                     <th>Cotação Atual</th>
@@ -301,7 +314,14 @@
                     <form id="formOperacao">
                         <input type="hidden" id="operacaoId">
                         <div class="row">
-                            <div class="col-md-3 mb-3">
+                            <div class="col-md-2 mb-3">
+                                <label class="form-label">Corretora <span class="text-danger">*</span></label>
+                                <select class="form-select" id="inputCorretora">
+                                    <option value="BINANCE">&#128993; Binance</option>
+                                    <option value="BYBIT">&#128309; Bybit</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2 mb-3">
                                 <label class="form-label">Par / Ativo <span class="text-danger">*</span></label>
                                 <select class="form-select" id="inputAtivo">
                                     <option value="BTC">BTC/USDT</option>
@@ -311,7 +331,7 @@
                                     <option value="OUTRO">OUTRO</option>
                                 </select>
                             </div>
-                            <div class="col-md-3 mb-3">
+                            <div class="col-md-2 mb-3">
                                 <label class="form-label">Tipo <span class="text-danger">*</span></label>
                                 <select class="form-select" id="inputTipo">
                                     <option value="CALL">CALL</option>
@@ -335,8 +355,8 @@
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">Valor Investido</label>
                                 <div class="btn-group btn-group-sm mb-1 w-100" id="investidoToggle" role="group">
-                                    <button type="button" class="btn btn-primary active" id="btnInvestidoUsd" onclick="setInvestidoMode('usd')">US$</button>
-                                    <button type="button" class="btn btn-outline-secondary" id="btnInvestidoCrypto" onclick="setInvestidoMode('crypto')">Crypto</button>
+                                    <button type="button" class="btn btn-primary active" id="btnInvestidoUsd" >US$</button>
+                                    <button type="button" class="btn btn-outline-secondary" id="btnInvestidoCrypto" >Crypto</button>
                                 </div>
                                 <div class="input-group">
                                     <input type="number" step="0.01" class="form-control" id="inputAbertura" placeholder="Ex: 5000">
@@ -510,7 +530,7 @@
                     </h5>
                     <div class="d-flex align-items-center gap-2 ms-auto me-2">
                         <span class="text-muted" id="simHeaderTime" style="font-size:.72rem"></span>
-                        <button type="button" id="btnSimHeaderRefresh" onclick="buscarCotacaoSimLive()" title="Atualizar cotações">
+                        <button type="button" id="btnSimHeaderRefresh"  title="Atualizar cotações">
                             <svg id="simHeaderRefreshIcon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
                                 <path d="M3 3v5h5"/>
@@ -529,7 +549,7 @@
                         <div class="sim-left">
                             <div class="mb-field">
                                 <label class="form-label">Par</label>
-                                <select class="form-select" id="simPar" onchange="onSimInput()">
+                                <select class="form-select" id="simPar">
                                     <option value="BTC">BTC/USDT</option>
                                     <option value="ETH">ETH/USDT</option>
                                     <option value="BNB">BNB/USDT</option>
@@ -538,7 +558,7 @@
                             </div>
                             <div class="mb-field">
                                 <label class="form-label">Tipo</label>
-                                <select class="form-select" id="simTipo" onchange="onSimInput()">
+                                <select class="form-select" id="simTipo">
                                     <option value="CALL">CALL — Aposta em alta</option>
                                     <option value="PUT">PUT — Aposta em queda</option>
                                 </select>
@@ -546,33 +566,33 @@
                             <div class="mb-field">
                                 <label class="form-label">Valor Investido</label>
                                 <div class="input-group mb-1">
-                                    <button class="btn btn-outline-secondary active" type="button" id="simModoUsd" onclick="setSimModo('usd')">US$</button>
-                                    <button class="btn btn-outline-secondary" type="button" id="simModoCrypto" onclick="setSimModo('crypto')">Crypto</button>
+                                    <button class="btn btn-outline-secondary active" type="button" id="simModoUsd" >US$</button>
+                                    <button class="btn btn-outline-secondary" type="button" id="simModoCrypto" >Crypto</button>
                                     <input type="number" step="0.01" min="0.01" class="form-control" id="simValor" value=""
-                                           placeholder="Valor em US$" oninput="onSimInput()" onblur="simAutoFetchCotacao()">
+                                           placeholder="Valor em US$" >
                                     <span class="input-group-text" id="simValorSuffix">USD</span>
                                 </div>
                                 <div id="simConverterRow" class="d-none d-flex align-items-center gap-2 mt-1">
                                     <span class="text-muted small" id="simCotacaoRef">Cotação: US$ —</span>
-                                    <button class="btn btn-sm btn-outline-info" type="button" onclick="converterSimValor()">↔ Converter</button>
+                                    <button class="btn btn-sm btn-outline-info" type="button" id="btnSimConverterValor">↔ Converter</button>
                                     <span class="text-muted small" id="simUsdEquiv"></span>
                                 </div>
                             </div>
                             <div class="mb-field">
                                 <label class="form-label">Strike (US$)</label>
                                 <input type="number" step="0.01" class="form-control" id="simStrike"
-                                       placeholder="Ex: 65000" oninput="onSimInput()">
+                                       placeholder="Ex: 65000">
                             </div>
                             <div class="row gx-2">
                                 <div class="col-6 mb-field">
                                     <label class="form-label">TAE / APY (%)</label>
                                     <input type="number" step="0.01" class="form-control" id="simTae"
-                                           value="12.5" oninput="onSimInput()">
+                                           value="12.5">
                                 </div>
                                 <div class="col-6 mb-field">
                                     <label class="form-label">Prazo (dias)</label>
                                     <input type="number" class="form-control" id="simPrazo"
-                                           value="7" oninput="onSimInput()">
+                                           value="7">
                                 </div>
                             </div>
                             <div class="mb-field">
@@ -582,7 +602,7 @@
                                 </label>
                                 <div class="input-group">
                                     <input type="number" step="0.01" class="form-control" id="simCotacao"
-                                           placeholder="Ex: 63000" oninput="onSimInput()">
+                                           placeholder="Ex: 63000">
                                     <button class="btn btn-outline-secondary" id="btnSimCotacaoLive" title="Buscar cotação ao vivo">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
                                     </button>
@@ -873,19 +893,281 @@
     <!-- Modal containers -->
     <div id="modalDetalheCryptoContainer"></div>
     <div id="modalAnaliseCompletaContainer"></div>
-    <div id="modalResultadoTotalCryptoContainer"></div>
-    <div id="modalSaldoMedioCryptoContainer"></div>
-    <div id="modalDashboardCryptoContainer"></div>
     <div id="modalTotalOperacoesCryptoContainer"></div>
+    <div id="modalDashboardCryptoContainer"></div>
+    <div id="modalSaldoMedioCryptoContainer"></div>
+    
+    <!-- Nova Modal Resultado Total Crypto (v2) -->
+    <div id="modalResultadoTotalCryptoContainer">
+      <div class="modal fade" id="modalResultadoTotalCrypto" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+          <div class="modal-content">
+            <!-- HEADER -->
+            <div class="modal-header">
+              <h5 class="modal-title">&#9889; Dashboard Anal&#237;tico &middot; Crypto <span id="rtStatusDot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;margin-left:4px;vertical-align:middle"></span></h5>
+              <div class="modal-header-right">
+                <span id="rtLastUpdate" class="mh-time" style="display:none"></span>
+                <button type="button" class="mh-refresh-btn" id="rtCryptoRefreshBtn" title="Atualizar">&#x21BB;</button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+              </div>
+            </div>
+
+            <!-- TOPBAR (FILTROS) - Design Claude8 -->
+            <div class="topbar">
+              <span class="tb-lbl">Período:</span>
+              <button class="chip" data-filter="period" data-value="hoje">Hoje</button>
+              <button class="chip" data-filter="period" data-value="7d">7d</button>
+              <button class="chip" data-filter="period" data-value="30d">30d</button>
+              <button class="chip on" data-filter="period" data-value="60d">60d</button>
+              <button class="chip" data-filter="period" data-value="90d">90d</button>
+              <button class="chip" data-filter="period" data-value="year">Ano</button>
+              <div class="tb-sep"></div>
+              <span class="tb-lbl">Status:</span>
+              <button class="chip on" data-filter="status" data-value="all">Todas</button>
+              <button class="chip" data-filter="status" data-value="ABERTA">Abertas</button>
+              <button class="chip" data-filter="status" data-value="FECHADA">Fechadas</button>
+              <button class="chip" data-filter="status" data-value="EXERCIDA">Exercidas</button>
+              <button class="chip" data-filter="status" data-value="NAO_EXERCIDA">N&atilde;o Exercidas</button>
+              <div class="tb-sep"></div>
+              <span class="tb-lbl">Tipo:</span>
+              <button class="chip on" data-filter="tipo" data-value="all">Todos</button>
+              <button class="chip" data-filter="tipo" data-value="CALL">CALL</button>
+              <button class="chip" data-filter="tipo" data-value="PUT">PUT</button>
+              <div class="tb-sep"></div>
+              <span class="tb-lbl">Moeda:</span>
+              <select class="tipo-sel moeda-sel">
+                <option value="all">Todos</option>
+                <option value="BTC">&#8383; BTC</option>
+                <option value="ETH">&#926; ETH</option>
+              </select>
+            </div>
+
+            <!-- MODAL BODY -->
+            <div class="modal-body p-0">
+              <div class="main-layout">
+                <!-- LEFT: Ciclos -->
+                <div class="col-left" id="rtCyclesContainer">
+                  <!-- Será populado dinamicamente -->
+                </div>
+
+                <!-- RIGHT: Resumo e Análise -->
+                <div class="col-right" id="rtSummaryPanel">
+                  <!-- Será populado dinamicamente -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    <div class="modal modal-blur fade" id="modalAnaliseTecnicaCrypto" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                        Análise Técnica
+                        <span id="tecnicalAtivoTitleCrypto" class="badge bg-primary ms-2"></span>
+                    </h5>
+                    <div class="ms-auto me-2">
+                        <div class="btn-group" role="group">
+                            <input type="radio" class="btn-check" name="timeframeCrypto" id="tf-crypto-1m" value="1m" autocomplete="off">
+                            <label class="btn btn-sm btn-outline-primary" for="tf-crypto-1m">1m</label>
+
+                            <input type="radio" class="btn-check" name="timeframeCrypto" id="tf-crypto-5m" value="5m" autocomplete="off">
+                            <label class="btn btn-sm btn-outline-primary" for="tf-crypto-5m">5m</label>
+
+                            <input type="radio" class="btn-check" name="timeframeCrypto" id="tf-crypto-15m" value="15m" autocomplete="off" checked>
+                            <label class="btn btn-sm btn-outline-primary" for="tf-crypto-15m">15m</label>
+
+                            <input type="radio" class="btn-check" name="timeframeCrypto" id="tf-crypto-1h" value="1h" autocomplete="off">
+                            <label class="btn btn-sm btn-outline-primary" for="tf-crypto-1h">1h</label>
+
+                            <input type="radio" class="btn-check" name="timeframeCrypto" id="tf-crypto-4h" value="4h" autocomplete="off">
+                            <label class="btn btn-sm btn-outline-primary" for="tf-crypto-4h">4h</label>
+
+                            <input type="radio" class="btn-check" name="timeframeCrypto" id="tf-crypto-1D" value="1D" autocomplete="off">
+                            <label class="btn btn-sm btn-outline-primary" for="tf-crypto-1D">1D</label>
+
+                            <input type="radio" class="btn-check" name="timeframeCrypto" id="tf-crypto-1W" value="1W" autocomplete="off">
+                            <label class="btn btn-sm btn-outline-primary" for="tf-crypto-1W">1W</label>
+
+                            <input type="radio" class="btn-check" name="timeframeCrypto" id="tf-crypto-1M" value="1M" autocomplete="off">
+                            <label class="btn btn-sm btn-outline-primary" for="tf-crypto-1M">1M</label>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-primary ms-2" id="btnReloadTradingViewCryptoTop" title="Atualizar gráfico com a moeda selecionada">
+                            Atualizar
+                        </button>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="tecnicalLoadingCrypto" class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p class="mt-3 text-muted">Calculando indicadores técnicos...</p>
+                    </div>
+
+                    <div id="tecnicalContentCrypto" style="display:none;">
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="accordion" id="accordionTradingViewCrypto">
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="headingTradingViewCrypto">
+                                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTradingViewCrypto" aria-expanded="false" aria-controls="collapseTradingViewCrypto">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                                                <strong>Gráfico de Preço em Tempo Real</strong>
+                                                <span class="badge bg-success ms-2">Live</span>
+                                                <span class="text-muted ms-2 small">Powered by TradingView</span>
+                                            </button>
+                                        </h2>
+                                        <div id="collapseTradingViewCrypto" class="accordion-collapse collapse" aria-labelledby="headingTradingViewCrypto" data-bs-parent="#accordionTradingViewCrypto">
+                                            <div class="accordion-body p-0">
+                                                <div class="d-flex justify-content-end p-2 border-bottom">
+                                                    <button type="button" id="btnReloadTradingViewCrypto" class="btn btn-sm btn-outline-primary" title="Atualizar gráfico com a moeda selecionada">
+                                                        Atualizar gráfico
+                                                    </button>
+                                                </div>
+                                                <div class="tradingview-widget-container" style="height:500px;width:100%">
+                                                    <div id="tradingview_chart_crypto"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="card" id="tecnicalSummaryCardCrypto">
+                                    <div class="card-body text-center py-4">
+                                        <h2 class="mb-2" id="tecnicalRecommendationCrypto">Neutro</h2>
+                                        <div class="h5 mb-0 text-muted" id="tecnicalRecommendationSubtextCrypto">Baseado em 24 indicadores</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-lg-4">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h4 class="card-title mb-0">Força do Sinal</h4>
+                                    </div>
+                                    <div class="card-body">
+                                        <div style="height:250px;">
+                                            <canvas id="chartTecnicalGaugeCrypto"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-4">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h4 class="card-title mb-0">Osciladores</h4>
+                                    </div>
+                                    <div class="card-body">
+                                        <div style="height:250px;">
+                                            <canvas id="chartTecnicalOscillatorsCrypto"></canvas>
+                                        </div>
+                                        <div class="mt-2 text-center">
+                                            <span class="badge bg-success me-1" id="oscBuyCountCrypto">0 Compra</span>
+                                            <span class="badge bg-secondary me-1" id="oscNeutralCountCrypto">0 Neutro</span>
+                                            <span class="badge bg-danger" id="oscSellCountCrypto">0 Venda</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-4">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h4 class="card-title mb-0">Médias Móveis</h4>
+                                    </div>
+                                    <div class="card-body">
+                                        <div style="height:250px;">
+                                            <canvas id="chartTecnicalMACrypto"></canvas>
+                                        </div>
+                                        <div class="mt-2 text-center">
+                                            <span class="badge bg-success me-1" id="maBuyCountCrypto">0 Compra</span>
+                                            <span class="badge bg-secondary me-1" id="maNeutralCountCrypto">0 Neutro</span>
+                                            <span class="badge bg-danger" id="maSellCountCrypto">0 Venda</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="accordion" id="accordionTechnicalDetailsCrypto">
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="headingOscillatorsCrypto">
+                                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOscillatorsCrypto" aria-expanded="false" aria-controls="collapseOscillatorsCrypto">
+                                                Detalhes - Osciladores
+                                            </button>
+                                        </h2>
+                                        <div id="collapseOscillatorsCrypto" class="accordion-collapse collapse" aria-labelledby="headingOscillatorsCrypto" data-bs-parent="#accordionTechnicalDetailsCrypto">
+                                            <div class="accordion-body">
+                                                <table class="table table-sm table-hover mb-0" id="tableOscillatorsCrypto">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Indicador</th>
+                                                            <th>Valor</th>
+                                                            <th>Sinal</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody></tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="headingMovingAveragesCrypto">
+                                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseMovingAveragesCrypto" aria-expanded="false" aria-controls="collapseMovingAveragesCrypto">
+                                                Detalhes - Médias Móveis
+                                            </button>
+                                        </h2>
+                                        <div id="collapseMovingAveragesCrypto" class="accordion-collapse collapse" aria-labelledby="headingMovingAveragesCrypto" data-bs-parent="#accordionTechnicalDetailsCrypto">
+                                            <div class="accordion-body">
+                                                <table class="table table-sm table-hover mb-0" id="tableMovingAveragesCrypto">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Média</th>
+                                                            <th>Valor</th>
+                                                            <th>Sinal</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody></tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Scripts -->
     <script src="../js/core/libs.js?v=1.2.1"></script>
     <script src="../js/core/global.js?v=1.2.2"></script>
     <script src="../js/core/layout.js?v=1.2.1"></script>
     <script src="../js/core/crypto-exercise.js?v=1.0.0"></script>
+    <script src="../js/shared/technical-analysis.js?v=1.1.5"></script>
     <script src="../js/shared/modal-analise.js?v=1.5.1"></script>
+    <script src="../js/crypto/analise-tecnica-crypto.js?v=1.0.0"></script>
     <script src="../js/crypto/modal-resultados-crypto-compact.js?v=1.0.0"></script>
     <script src="../js/crypto/modal-resultados-crypto.js?v=1.0.0"></script>
+    <script src="../js/crypto/modal-resultado-total-crypto-simple.js?v=4.0.0"></script>
+    <script src="../js/crypto/visao-geral-crypto.js?v=1.0.0"></script>
     <script src="../js/crypto/modal-resultado-total-crypto.js?v=1.3.0"></script>
     <script src="../js/crypto/modal-saldo-medio-crypto.js?v=1.1.0"></script>
     <script src="../js/crypto/modal-dashboard-crypto.js?v=1.0.0"></script>
@@ -914,6 +1196,21 @@
                 getAtivo: function(op) { return op.ativo || '—'; },
                 metaKey: 'metaCrypto',
             });
+        }
+        // Configurar Modal Resultado Médio (Saldo Médio)
+        if (window.ModalSaldoMedioCrypto) {
+            window.ModalSaldoMedioCrypto.configure({
+                currency: 'USD',
+                apiEndpoint: '/api/crypto',
+                modalElId: 'modalSaldoMedio',
+                containerElId: 'modalSaldoMedioCryptoContainer',
+                templatePath: '../components/modals/crypto/modal-saldo-medio-crypto.html',
+                triggerCard: 'cardResultadoMedioCryptoCard',
+            });
+        }
+        // Configurar Modal Total Operações
+        if (window.ModalTotalOperacoesCrypto) {
+            // initTriggers já vincula o card automaticamente dentro do módulo
         }
     </script>
 </body>

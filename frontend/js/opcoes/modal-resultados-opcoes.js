@@ -70,6 +70,28 @@
 
         return ops.filter(op => {
             const raw = op.data_operacao || op.data_abertura || op.exercicio || '';
+
+            function setupOpcoesPosSelectListeners() {
+                document.querySelectorAll('.ro-pos-selectable').forEach((row) => {
+                    if (!row.dataset.listenerBound) {
+                        row.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            const idx = this.getAttribute('data-idx');
+                            if (idx !== null && idx !== undefined) {
+                                currentIdx = parseInt(idx);
+                                // Remove active de todos e adiciona a este
+                                document.querySelectorAll('.rmc-pos-row').forEach(r => r.classList.remove('rmc-pos-row-active'));
+                                this.classList.add('rmc-pos-row-active');
+                                // Re-renderiza o conteúdo
+                                render();
+                            }
+                        });
+                        row.dataset.listenerBound = 'true';
+                    }
+                });
+            }
+
+            // ── Setup filtros ─────────────────────────────────────────────────────────
             const d = dateOf(raw);
             if (!d && period !== 'all') return false;
             switch (period) {
@@ -362,6 +384,7 @@
             const globalIdx = filteredOps.indexOf(op);
             const isActive  = globalIdx === currentIdx;
             return `<div class="rmc-pos-row${isActive ? ' rmc-pos-row-active' : ''}" onclick="window._roPosSelect(${globalIdx})">
+                            return `<div class="rmc-pos-row${isActive ? ' rmc-pos-row-active' : ''} ro-pos-selectable" data-idx="${globalIdx}">
                 <span class="rmc-pos-ativo">${esc(ativo)}</span>
                 <span><span class="rmc-badge-${tipo.toLowerCase()}">${tipo}</span></span>
                 <span style="color:#7a9ab8;font-size:0.78rem;">${dataFmt}</span>
@@ -566,6 +589,7 @@
         renderSummary();
         renderOpTabs();
         renderAll();
+            setupOpcoesPosSelectListeners();
     }
 
     // ── Setup filtros ─────────────────────────────────────────────────────────

@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Análise Temporal de Performance</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d1117;--surf:#161b27;--surf2:#1c2333;--surf3:#222d40;
+  --bdr:rgba(255,255,255,.07);--bdr2:rgba(255,255,255,.12);
+  --tx1:#e6edf3;--tx2:#8b949e;--tx3:#3d444d;
+  --grn:#22c55e;--grn-d:#166534;--grn-bg:rgba(34,197,94,.12);--grn-bdr:rgba(34,197,94,.25);
+  --red:#ef4444;--red-bg:rgba(239,68,68,.1);--red-bdr:rgba(239,68,68,.22);
+  --yel:#f59e0b;--yel-bg:rgba(245,158,11,.12);--yel-bdr:rgba(245,158,11,.25);
+  --blu:#3b82f6;--blu-bg:rgba(59,130,246,.12);--blu-bdr:rgba(59,130,246,.25);
+  --mono:'JetBrains Mono',monospace;
+  --ui:'Inter',sans-serif;
+}
+html,body{height:100%;font-family:var(--ui);background:var(--bg);color:var(--tx1);font-size:14px}
+body{display:flex;align-items:flex-start;justify-content:center;padding:20px 12px}
+
+/* ── PANEL ── */
+.panel{
+  width:100%;max-width:1200px;
+  background:var(--surf);
+  border:1px solid var(--bdr2);
+  border-radius:14px;
+  overflow:hidden;
+  display:flex;flex-direction:column;
+}
+
+/* ── HEADER ── */
+.ph{
+  display:flex;align-items:center;gap:10px;
+  padding:13px 20px;
+  border-bottom:1px solid var(--bdr);
+  background:var(--surf2);
+  flex-shrink:0;
+}
+.ph-icon{font-size:1rem;color:var(--tx2)}
+.ph-title{font-weight:700;font-size:.95rem;flex:1}
+.ph-ts{font-family:var(--mono);font-size:.68rem;color:var(--tx2)}
+.ph-btn{
+  width:28px;height:28px;border-radius:7px;
+  border:1px solid var(--bdr2);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:.8rem;transition:all .15s;
+}
+.ph-ref{background:var(--surf3);color:var(--blu)}
+.ph-ref:hover{border-color:var(--blu)}
+.ph-ref.spin svg{animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.ph-cls{background:transparent;color:var(--tx2)}
+.ph-cls:hover{border-color:var(--red);color:var(--red)}
+
+/* ── PERIOD BAR ── */
+.pbar{
+  display:flex;align-items:center;gap:6px;
+  padding:10px 20px;
+  border-bottom:1px solid var(--bdr);
+  flex-shrink:0;flex-wrap:wrap;
+}
+.plbl{font-size:.7rem;color:var(--tx2);margin-right:4px}
+.pp{
+  padding:.25rem .7rem;border-radius:20px;
+  font-size:.72rem;font-weight:500;
+  cursor:pointer;border:1px solid transparent;
+  background:transparent;color:var(--tx2);
+  transition:all .14s;white-space:nowrap;font-family:var(--ui);
+}
+.pp:hover{color:var(--tx1);border-color:var(--bdr2)}
+.pp.on{background:var(--yel-bg);border-color:var(--yel);color:var(--yel);font-weight:700}
+
+/* ── HERO ROW ── */
+.hero{
+  display:flex;align-items:flex-start;gap:0;
+  padding:14px 20px 12px;
+  border-bottom:1px solid var(--bdr);
+  flex-shrink:0;flex-wrap:wrap;gap:16px;
+}
+.hero-main{min-width:200px}
+.hero-lbl{font-size:.68rem;color:var(--tx2);margin-bottom:4px}
+.hero-val{font-family:var(--mono);font-size:1.9rem;font-weight:800;color:var(--yel);line-height:1}
+.hero-badges{display:flex;gap:7px;margin-top:8px;flex-wrap:wrap}
+.hbdg{
+  font-size:.66rem;font-weight:600;
+  padding:2px 9px;border-radius:20px;
+}
+.hbdg-g{background:var(--grn-bg);color:var(--grn);border:1px solid var(--grn-bdr)}
+.hbdg-b{background:var(--blu-bg);color:var(--blu);border:1px solid var(--blu-bdr)}
+.hero-kpis{display:flex;gap:0;flex:1;flex-wrap:wrap}
+.hkpi{
+  flex:1;min-width:90px;
+  padding:4px 16px;
+  border-left:1px solid var(--bdr);
+}
+.hkpi:first-child{border-left:none}
+.hk-lbl{font-size:.63rem;color:var(--tx2);margin-bottom:4px}
+.hk-val{font-family:var(--mono);font-size:.95rem;font-weight:700}
+
+/* ── TABS ── */
+.tabs{
+  display:flex;gap:0;
+  border-bottom:1px solid var(--bdr);
+  flex-shrink:0;
+}
+.tab{
+  padding:.5rem 1.1rem;
+  font-size:.75rem;font-weight:500;
+  color:var(--tx2);cursor:pointer;
+  border-bottom:2px solid transparent;
+  transition:all .14s;white-space:nowrap;
+}
+.tab:hover{color:var(--tx1)}
+.tab.on{color:var(--tx1);border-bottom-color:var(--yel);font-weight:600}
+
+/* ── CALENDAR BODY ── */
+.cal-body{
+  display:flex;gap:0;flex:1;overflow:hidden;
+}
+.cal-left{
+  flex:1;padding:14px 16px 12px;
+  border-right:1px solid var(--bdr);
+  display:flex;flex-direction:column;gap:8px;
+  min-width:0;overflow:hidden;
+}
+.cal-right{
+  width:278px;flex-shrink:0;
+  padding:14px 16px 12px;
+  display:flex;flex-direction:column;gap:12px;
+  overflow:hidden;
+}
+
+/* ── WEEKDAY HEADERS ── */
+.cal-week-hdr{
+  display:grid;grid-template-columns:repeat(7,1fr);
+  gap:3px;
+}
+.cal-wlbl{
+  text-align:center;font-size:.62rem;font-weight:600;
+  color:var(--tx3);text-transform:uppercase;letter-spacing:.8px;
+  padding:2px 0;
+}
+
+/* ── CALENDAR GRID ── */
+.cal-grid{
+  display:grid;grid-template-columns:repeat(7,1fr);
+  gap:3px;flex:1;
+}
+.cal-day{
+  border-radius:7px;
+  border:1px solid transparent;
+  padding:5px 6px;
+  cursor:pointer;
+  transition:all .15s;
+  position:relative;
+  min-height:56px;
+  display:flex;flex-direction:column;
+}
+.cal-day.empty{background:transparent;cursor:default}
+.cal-day.no-op{background:var(--surf2);border-color:var(--bdr)}
+.cal-day.no-op:hover{border-color:var(--bdr2)}
+.cal-day.has-op{cursor:pointer}
+.cal-day.has-op:hover{transform:scale(1.03);z-index:2;box-shadow:0 4px 16px rgba(0,0,0,.4)}
+.cal-day.selected{outline:2px solid var(--yel);outline-offset:1px}
+.cal-day.grn-low{background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.22)}
+.cal-day.grn-mid{background:rgba(34,197,94,.22);border-color:rgba(34,197,94,.35)}
+.cal-day.grn-hi {background:rgba(34,197,94,.38);border-color:rgba(34,197,94,.55)}
+.cal-day.red-day{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.25)}
+.cd-num{font-size:.68rem;color:var(--tx2);font-weight:500;line-height:1}
+.cal-day.has-op .cd-num{color:var(--tx1)}
+.cd-val{
+  font-family:var(--mono);font-size:.72rem;font-weight:700;
+  margin-top:auto;padding-top:4px;line-height:1.2;
+}
+.cd-dot{
+  width:5px;height:5px;border-radius:50%;
+  position:absolute;bottom:5px;right:5px;
+  transition:background .2s;
+}
+
+/* ── LEGEND ── */
+.cal-legend{
+  display:flex;gap:14px;flex-wrap:wrap;
+}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:.63rem;color:var(--tx2)}
+.leg-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+
+/* ── RIGHT PANEL ── */
+.rp-section{
+  background:var(--surf2);border:1px solid var(--bdr);
+  border-radius:10px;padding:11px 13px;
+  display:flex;flex-direction:column;gap:8px;
+}
+.rp-title{
+  font-size:.62rem;font-weight:600;color:var(--tx2);
+  text-transform:uppercase;letter-spacing:.8px;
+  margin-bottom:2px;
+}
+/* Day summary */
+.rp-day-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 11px;border-radius:8px;
+  border:1px solid transparent;
+  transition:all .3s;
+}
+.rp-day-date{font-size:.8rem;font-weight:700}
+.rp-day-val{font-family:var(--mono);font-size:1.1rem;font-weight:800;line-height:1}
+.rp-day-sub{font-size:.62rem;color:var(--tx2);margin-top:1px}
+/* Stats 2×2 */
+.rp-stats2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.rp-stat{
+  background:var(--surf3);border-radius:8px;
+  padding:9px 10px;text-align:center;
+}
+.rp-stat-val{font-family:var(--mono);font-size:.95rem;font-weight:700;line-height:1}
+.rp-stat-lbl{font-size:.58rem;color:var(--tx2);margin-top:3px;text-transform:uppercase;letter-spacing:.5px}
+/* Progress bars */
+.rp-bar-row{display:flex;flex-direction:column;gap:3px}
+.rp-bar-hd{display:flex;justify-content:space-between;font-size:.66rem}
+.rp-bar-lbl{color:var(--tx2)}
+.rp-bar-val{font-family:var(--mono);font-weight:600}
+.rp-bar-track{height:6px;background:var(--surf3);border-radius:3px;overflow:hidden}
+.rp-bar-fill{height:100%;border-radius:3px;transition:width .5s cubic-bezier(.4,0,.2,1)}
+/* Month ranking */
+.rp-rank-item{
+  display:flex;align-items:center;gap:8px;
+  padding:5px 0;border-bottom:1px solid var(--bdr);
+}
+.rp-rank-item:last-child{border-bottom:none}
+.rp-rank-pos{font-size:.65rem;font-weight:700;color:var(--tx2);min-width:18px}
+.rp-rank-date{font-size:.68rem;color:var(--tx1);flex:1}
+.rp-rank-val{font-family:var(--mono);font-size:.72rem;font-weight:700}
+.rp-rank-bar{height:4px;background:var(--surf3);border-radius:2px;overflow:hidden;flex:1}
+.rp-rank-fill{height:100%;border-radius:2px}
+/* streak */
+.rp-streak{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 12px;border-radius:8px;
+}
+.rp-streak-n{font-family:var(--mono);font-size:1.5rem;font-weight:900;line-height:1}
+.rp-streak-lbl{font-size:.62rem;color:var(--tx2);margin-top:2px}
+.rp-streak-badge{font-size:.65rem;font-weight:700;padding:3px 9px;border-radius:20px}
+/* no selection placeholder */
+.rp-empty{
+  text-align:center;padding:16px 8px;
+  font-size:.72rem;color:var(--tx3);line-height:1.7;
+}
+.rp-empty-icon{font-size:1.6rem;margin-bottom:6px}
+
+/* ── TAB PANELS (hide non-active) ── */
+.tab-panel{display:none}
+.tab-panel.on{display:flex;flex-direction:column;gap:8px}
+</style>
+</head>
+<body>
+
+<div class="panel" id="panel">
+
+  <!-- HEADER -->
+  <div class="ph">
+    <span class="ph-icon">📅</span>
+    <span class="ph-title">Análise Temporal de Performance</span>
+    <span class="ph-ts" id="ph-ts">Atualizado: 07:09</span>
+    <button class="ph-btn ph-ref" id="ph-ref" onclick="doRefresh()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <path d="M3 12a9 9 0 0 1 15.74-6.74L21 8"/><path d="M21 3v5h-5"/>
+        <path d="M21 12a9 9 0 0 1-15.74 6.74L3 16"/><path d="M3 21v-5h5"/>
+      </svg>
+    </button>
+    <button class="ph-btn ph-cls">✕</button>
+  </div>
+
+  <!-- PERIOD BAR -->
+  <div class="pbar">
+    <span class="plbl">Período</span>
+    <button class="pp" data-p="7">7 dias</button>
+    <button class="pp" data-p="30">30 dias</button>
+    <button class="pp on" data-p="60">60 dias</button>
+    <button class="pp" data-p="90">90 dias</button>
+    <button class="pp" data-p="mes">Mês Atual</button>
+    <button class="pp" data-p="12m">Últimos 12 Meses</button>
+    <button class="pp" data-p="ano">Ano Atual</button>
+    <button class="pp" data-p="past">Ano Passado</button>
+  </div>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-main">
+      <div class="hero-lbl">Resultado Total</div>
+      <div class="hero-val" id="h-total">US$ 351,21</div>
+      <div class="hero-badges">
+        <span class="hbdg hbdg-g" id="h-seq">Sequência: 23</span>
+        <span class="hbdg hbdg-b" id="h-best">Melhor dia: US$ 49,75</span>
+      </div>
+    </div>
+    <div class="hero-kpis">
+      <div class="hkpi"><div class="hk-lbl">Saldo Atual</div><div class="hk-val" id="h-saldo">US$ 6.468,39</div></div>
+      <div class="hkpi"><div class="hk-lbl">ROI</div><div class="hk-val" style="color:var(--grn)" id="h-roi">5.74%</div></div>
+      <div class="hkpi"><div class="hk-lbl">Operações</div><div class="hk-val" id="h-ops">51</div></div>
+      <div class="hkpi"><div class="hk-lbl">Win Rate</div><div class="hk-val" style="color:var(--grn)" id="h-wr">96.08%</div></div>
+      <div class="hkpi"><div class="hk-lbl">Profit Factor</div><div class="hk-val" style="color:var(--grn)" id="h-pf">∞</div></div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <div class="tab" onclick="setTab('geral',this)">Visão Geral</div>
+    <div class="tab" onclick="setTab('graficos',this)">Gráficos</div>
+    <div class="tab on" onclick="setTab('calendar',this)">Calendário</div>
+    <div class="tab" onclick="setTab('final',this)">Resultado Final</div>
+  </div>
+
+  <!-- CALENDAR BODY -->
+  <div class="cal-body" id="cal-body">
+
+    <!-- LEFT: Calendar -->
+    <div class="cal-left">
+      <div class="cal-week-hdr">
+        <div class="cal-wlbl">DOM</div><div class="cal-wlbl">SEG</div>
+        <div class="cal-wlbl">TER</div><div class="cal-wlbl">QUA</div>
+        <div class="cal-wlbl">QUI</div><div class="cal-wlbl">SEX</div>
+        <div class="cal-wlbl">SÁB</div>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+      <div class="cal-legend">
+        <div class="leg-item"><div class="leg-dot" style="background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3)"></div>Lucro Baixo</div>
+        <div class="leg-item"><div class="leg-dot" style="background:rgba(34,197,94,.28);border:1px solid rgba(34,197,94,.45)"></div>Lucro Médio</div>
+        <div class="leg-item"><div class="leg-dot" style="background:rgba(34,197,94,.50);border:1px solid rgba(34,197,94,.7)"></div>Lucro Alto</div>
+        <div class="leg-item"><div class="leg-dot" style="background:rgba(239,68,68,.14);border:1px solid rgba(239,68,68,.28)"></div>Prejuízo</div>
+        <div class="leg-item"><div class="leg-dot" style="background:var(--surf2);border:1px solid var(--bdr)"></div>Sem operação</div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Summary Panel -->
+    <div class="cal-right" id="cal-right">
+      <!-- Injected by JS -->
+    </div>
+
+  </div><!-- /cal-body -->
+</div>
+
+<script>
+/* ════════════ DATA ════════════ */
+const DATASETS = {
+  '60': {
+    year:2026, month:3,
+    saldo:6468.39, total:351.21, roi:5.74, ops:51, wr:96.08,
+    seq:23, bestDay:49.75, mediaDay:15.27,
+    days: {
+      1:30.56, 2:5.87,
+      6:22.99, 8:48.79, 9:18.66, 10:49.75,
+      13:12.69
+    }
+  },
+  '7': {
+    year:2026, month:3,
+    saldo:6468.39, total:68.44, roi:1.07, ops:9, wr:100,
+    seq:5, bestDay:30.56, mediaDay:13.69,
+    days: { 8:48.79, 9:18.66, 10:49.75, 13:12.69 }
+  },
+  '30': {
+    year:2026, month:3,
+    saldo:6468.39, total:188.72, roi:3.01, ops:28, wr:93.33,
+    seq:12, bestDay:49.75, mediaDay:10.48,
+    days: {
+      1:30.56, 2:5.87,
+      6:22.99, 8:48.79, 9:18.66, 10:49.75,
+      13:12.69
+    }
+  },
+  '90': {
+    year:2026, month:3,
+    saldo:6468.39, total:498.33, roi:8.34, ops:74, wr:94.59,
+    seq:23, bestDay:49.75, mediaDay:16.61,
+    days: {
+      1:30.56, 2:5.87,
+      6:22.99, 8:48.79, 9:18.66, 10:49.75,
+      13:12.69, 15:-4.20, 18:9.40, 20:22.10
+    }
+  },
+  'mes': {
+    year:2026, month:3,
+    saldo:6468.39, total:188.72, roi:3.01, ops:28, wr:93.33,
+    seq:12, bestDay:49.75, mediaDay:10.48,
+    days: {
+      1:30.56, 2:5.87,
+      6:22.99, 8:48.79, 9:18.66, 10:49.75,
+      13:12.69
+    }
+  },
+  '12m': {
+    year:2026, month:3,
+    saldo:6468.39, total:1247.85, roi:23.90, ops:183, wr:91.26,
+    seq:23, bestDay:49.75, mediaDay:14.88,
+    days: {
+      1:30.56, 2:5.87,
+      6:22.99, 8:48.79, 9:18.66, 10:49.75,
+      13:12.69, 15:-4.20, 18:9.40, 20:22.10, 22:17.30, 24:-3.10, 27:31.20
+    }
+  },
+  'ano': {
+    year:2026, month:3,
+    saldo:6468.39, total:698.44, roi:12.10, ops:102, wr:95.10,
+    seq:23, bestDay:49.75, mediaDay:15.52,
+    days: {
+      1:30.56, 2:5.87,
+      6:22.99, 8:48.79, 9:18.66, 10:49.75,
+      13:12.69, 20:22.10, 25:14.40
+    }
+  },
+  'past': {
+    year:2025, month:12,
+    saldo:5800.00, total:284.60, roi:5.08, ops:64, wr:89.06,
+    seq:8, bestDay:42.30, mediaDay:11.38,
+    days: {
+      2:12.40, 5:18.80, 9:42.30, 15:6.70,
+      16:22.50, 19:-5.30, 23:15.20, 26:30.40, 28:9.10
+    }
+  }
+};
+
+let activePeriod = '60';
+let selectedDay  = null;
+
+const fmtUS = v => 'US$ ' + Math.abs(v).toFixed(2).replace('.',',');
+const fmtUSS= v => (v>=0?'+':'-')+' US$ '+Math.abs(v).toFixed(2).replace('.',',');
+const fmtP  = v => (v>=0?'+':'')+v.toFixed(2)+'%';
+const monthNames = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const weekDayNames = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+
+function getData(){ return DATASETS[activePeriod] || DATASETS['60']; }
+
+/* ─── helpers ─── */
+function dayClass(val, maxVal){
+  if(val===undefined) return '';
+  if(val < 0)         return 'red-day';
+  const r = maxVal > 0 ? val/maxVal : 0;
+  if(r < 0.33)        return 'grn-low';
+  if(r < 0.66)        return 'grn-mid';
+  return 'grn-hi';
+}
+
+/* ─── BUILD CALENDAR ─── */
+function buildCalendar(){
+  const d    = getData();
+  const days = d.days || {};
+  const maxVal = Math.max(0, ...Object.values(days).filter(v=>v>0));
+  const year = d.year, month = d.month - 1;
+  const firstDow = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+
+  const grid = document.getElementById('cal-grid');
+  grid.innerHTML = '';
+
+  // empty cells
+  for(let i=0;i<firstDow;i++){
+    const c=document.createElement('div');
+    c.className='cal-day empty';
+    grid.appendChild(c);
+  }
+
+  for(let day=1;day<=daysInMonth;day++){
+    const val = days[day];
+    const hasOp = val !== undefined;
+    const c = document.createElement('div');
+    c.className = 'cal-day ' + (hasOp ? 'has-op '+dayClass(val,maxVal) : 'no-op');
+    if(selectedDay===day) c.classList.add('selected');
+
+    const numEl = document.createElement('div');
+    numEl.className = 'cd-num';
+    numEl.textContent = day;
+    c.appendChild(numEl);
+
+    if(hasOp){
+      const valEl = document.createElement('div');
+      valEl.className = 'cd-val';
+      valEl.style.color = val >= 0 ? 'var(--grn)' : 'var(--red)';
+      valEl.textContent = 'US$ '+val.toFixed(2).replace('.',',');
+      c.appendChild(valEl);
+
+      const dot = document.createElement('div');
+      dot.className = 'cd-dot';
+      dot.style.background = val >= 0 ? 'var(--grn)' : 'var(--red)';
+      c.appendChild(dot);
+
+      c.addEventListener('click', ()=>{ selectDay(day); });
+    }
+
+    grid.appendChild(c);
+  }
+
+  buildRightPanel();
+}
+
+/* ─── SELECT DAY ─── */
+function selectDay(day){
+  selectedDay = (selectedDay === day) ? null : day;
+  buildCalendar();
+}
+
+/* ─── BUILD RIGHT PANEL ─── */
+function buildRightPanel(){
+  const d    = getData();
+  const days = d.days || {};
+  const vals = Object.values(days);
+  const positive = vals.filter(v=>v>0);
+  const negative = vals.filter(v=>v<0);
+  const totalGain = positive.reduce((a,v)=>a+v,0);
+  const totalLoss = Math.abs(negative.reduce((a,v)=>a+v,0));
+  const netResult = d.total;
+  const mediaDay  = d.mediaDay;
+  const taxaPos   = vals.length>0 ? (positive.length/vals.length*100) : 0;
+  const lucroSaldo= d.saldo>0 ? (netResult/d.saldo*100) : 0;
+  const maxVal    = Math.max(0,...vals.filter(v=>v>0));
+
+  // top 3 days
+  const sorted = Object.entries(days)
+    .filter(([,v])=>v>0)
+    .sort(([,a],[,b])=>b-a)
+    .slice(0,4);
+
+  const right = document.getElementById('cal-right');
+  right.innerHTML = '';
+
+  /* ── SECTION A: Dia selecionado ── */
+  if(selectedDay !== null && days[selectedDay] !== undefined){
+    const val = days[selectedDay];
+    const isPos = val >= 0;
+    const sec = document.createElement('div');
+    sec.className = 'rp-section';
+    const dow = new Date(d.year, d.month-1, selectedDay).getDay();
+    const pctSaldo = d.saldo>0 ? (val/d.saldo*100) : 0;
+    const pctTotal = netResult!==0 ? (val/netResult*100) : 0;
+    sec.innerHTML = `
+      <div class="rp-title">📌 Dia Selecionado</div>
+      <div class="rp-day-header" style="background:${isPos?'var(--grn-bg)':'var(--red-bg)'};border-color:${isPos?'var(--grn-bdr)':'var(--red-bdr)'}">
+        <div>
+          <div class="rp-day-date" style="color:${isPos?'var(--grn)':'var(--red)'}">${weekDayNames[dow]}, ${selectedDay} de ${monthNames[d.month-1]}</div>
+          <div class="rp-day-sub">${d.year}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="rp-day-val" style="color:${isPos?'var(--grn)':'var(--red)'}">${fmtUS(val)}</div>
+          <div style="font-size:.6rem;color:var(--tx2);margin-top:2px">${pctTotal.toFixed(1)}% do total</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div class="rp-bar-row">
+          <div class="rp-bar-hd">
+            <span class="rp-bar-lbl">% sobre saldo</span>
+            <span class="rp-bar-val" style="color:${isPos?'var(--grn)':'var(--red)'}">${pctSaldo.toFixed(3)}%</span>
+          </div>
+          <div class="rp-bar-track"><div class="rp-bar-fill" style="width:${Math.min(pctSaldo*10,100)}%;background:${isPos?'var(--grn)':'var(--red)'}"></div></div>
+        </div>
+        <div class="rp-bar-row">
+          <div class="rp-bar-hd">
+            <span class="rp-bar-lbl">% do resultado total</span>
+            <span class="rp-bar-val" style="color:var(--yel)">${pctTotal.toFixed(1)}%</span>
+          </div>
+          <div class="rp-bar-track"><div class="rp-bar-fill" style="width:${Math.min(pctTotal,100)}%;background:var(--yel)"></div></div>
+        </div>
+        <div class="rp-bar-row">
+          <div class="rp-bar-hd">
+            <span class="rp-bar-lbl">vs melhor dia (${fmtUS(maxVal)})</span>
+            <span class="rp-bar-val" style="color:var(--blu)">${maxVal>0?(val/maxVal*100).toFixed(0):0}%</span>
+          </div>
+          <div class="rp-bar-track"><div class="rp-bar-fill" style="width:${maxVal>0?Math.min(val/maxVal*100,100):0}%;background:var(--blu)"></div></div>
+        </div>
+      </div>`;
+    right.appendChild(sec);
+  } else {
+    /* placeholder when nothing selected */
+    const sec = document.createElement('div');
+    sec.className = 'rp-section rp-empty';
+    sec.innerHTML = `<div class="rp-empty-icon">📅</div>Clique em um dia<br>para ver o resumo`;
+    right.appendChild(sec);
+  }
+
+  /* ── SECTION B: Resumo do período ── */
+  const secB = document.createElement('div');
+  secB.className = 'rp-section';
+  secB.innerHTML = `
+    <div class="rp-title">📊 Resumo do Período</div>
+    <div class="rp-stats2">
+      <div class="rp-stat">
+        <div class="rp-stat-val" style="color:var(--grn)">${positive.length}</div>
+        <div class="rp-stat-lbl">Dias Positivos</div>
+      </div>
+      <div class="rp-stat">
+        <div class="rp-stat-val" style="color:${negative.length>0?'var(--red)':'var(--tx2)'}">${negative.length}</div>
+        <div class="rp-stat-lbl">Dias Negativos</div>
+      </div>
+      <div class="rp-stat">
+        <div class="rp-stat-val" style="color:var(--yel)">${fmtUS(netResult)}</div>
+        <div class="rp-stat-lbl">Lucro Total</div>
+      </div>
+      <div class="rp-stat">
+        <div class="rp-stat-val" style="color:var(--blu)">${fmtUS(mediaDay)}</div>
+        <div class="rp-stat-lbl">Média por Dia</div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px;margin-top:2px">
+      <div class="rp-bar-row">
+        <div class="rp-bar-hd">
+          <span class="rp-bar-lbl">Taxa Positiva</span>
+          <span class="rp-bar-val" style="color:var(--grn)">${taxaPos.toFixed(2)}%</span>
+        </div>
+        <div class="rp-bar-track"><div class="rp-bar-fill" style="width:${taxaPos}%;background:var(--grn)"></div></div>
+      </div>
+      <div class="rp-bar-row">
+        <div class="rp-bar-hd">
+          <span class="rp-bar-lbl">% Lucro / Saldo</span>
+          <span class="rp-bar-val" style="color:var(--yel)">${lucroSaldo.toFixed(2)}%</span>
+        </div>
+        <div class="rp-bar-track"><div class="rp-bar-fill" style="width:${Math.min(lucroSaldo*3,100)}%;background:var(--yel)"></div></div>
+      </div>
+      ${totalLoss > 0 ? `
+      <div class="rp-bar-row">
+        <div class="rp-bar-hd">
+          <span class="rp-bar-lbl">Total Perdas</span>
+          <span class="rp-bar-val" style="color:var(--red)">-${fmtUS(totalLoss)}</span>
+        </div>
+        <div class="rp-bar-track"><div class="rp-bar-fill" style="width:${Math.min(totalLoss/totalGain*100,100)}%;background:var(--red)"></div></div>
+      </div>` : ''}
+    </div>`;
+  right.appendChild(secB);
+
+  /* ── SECTION C: Top dias ── */
+  if(sorted.length > 0){
+    const secC = document.createElement('div');
+    secC.className = 'rp-section';
+    const medals = ['🥇','🥈','🥉','4️⃣'];
+    secC.innerHTML = `
+      <div class="rp-title">🏅 Melhores Dias</div>
+      ${sorted.map(([day,val],i)=>{
+        const dow = new Date(d.year,d.month-1,parseInt(day)).getDay();
+        const pct = maxVal>0 ? val/maxVal*100 : 0;
+        return `<div class="rp-rank-item">
+          <span class="rp-rank-pos">${medals[i]}</span>
+          <div style="flex:1">
+            <div style="font-size:.67rem;color:var(--tx1);font-weight:500">${weekDayNames[dow]}, ${day}</div>
+            <div class="rp-bar-track" style="margin-top:3px">
+              <div class="rp-rank-fill" style="width:${pct}%;background:var(--grn);height:100%"></div>
+            </div>
+          </div>
+          <span class="rp-rank-val" style="color:var(--grn)">${fmtUS(val)}</span>
+        </div>`;
+      }).join('')}`;
+    right.appendChild(secC);
+  }
+}
+
+/* ─── HERO UPDATE ─── */
+function updateHero(){
+  const d = getData();
+  document.getElementById('h-total').textContent = 'US$ '+d.total.toFixed(2).replace('.',',');
+  document.getElementById('h-saldo').textContent = 'US$ '+d.saldo.toLocaleString('pt-BR',{minimumFractionDigits:2});
+  document.getElementById('h-roi').textContent = '+'+d.roi.toFixed(2)+'%';
+  document.getElementById('h-ops').textContent = d.ops;
+  document.getElementById('h-wr').textContent = d.wr.toFixed(2)+'%';
+  document.getElementById('h-seq').textContent = 'Sequência: '+d.seq;
+  document.getElementById('h-best').textContent = 'Melhor dia: US$ '+d.bestDay.toFixed(2).replace('.',',');
+}
+
+/* ─── PERIOD PILLS ─── */
+document.querySelectorAll('.pp').forEach(btn=>{
+  btn.addEventListener('click',function(){
+    document.querySelectorAll('.pp').forEach(b=>b.classList.remove('on'));
+    this.classList.add('on');
+    activePeriod = this.dataset.p;
+    selectedDay  = null;
+    updateHero();
+    buildCalendar();
+  });
+});
+
+/* ─── TABS ─── */
+function setTab(id, el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  const calBody = document.getElementById('cal-body');
+  calBody.style.display = id==='calendar' ? 'flex' : 'none';
+}
+
+/* ─── REFRESH ─── */
+function doRefresh(){
+  const btn = document.getElementById('ph-ref');
+  if(btn.dataset.loading) return;
+  btn.dataset.loading='1'; btn.classList.add('spin');
+  setTimeout(()=>{
+    buildCalendar(); updateHero();
+    btn.classList.remove('spin'); delete btn.dataset.loading;
+    const now=new Date();
+    document.getElementById('ph-ts').textContent='Atualizado: '+
+      now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  },900);
+}
+
+/* ─── INIT ─── */
+updateHero();
+buildCalendar();
+</script>
+</body>
+</html>

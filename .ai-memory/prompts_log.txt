@@ -1131,3 +1131,17 @@ void OnChartEvent(const int id, const long &lparam, const double &dparam, const 
 [2026-04-10 14:36:14]  fonte: clipboard
 ────────────────────────────────────────────────────────────────────────
 Bedrock
+
+────────────────────────────────────────────────────────────────────────
+[2026-04-13 14:23:31]  fonte: clipboard
+────────────────────────────────────────────────────────────────────────
+REM Cria venv se nao existir
+if not exist "venv" (
+    echo Criando ambiente virtual...
+    python -m venv venv
+)
+
+────────────────────────────────────────────────────────────────────────
+[2026-04-13 16:26:22]  fonte: clipboard
+────────────────────────────────────────────────────────────────────────
+modalSaldoMedio

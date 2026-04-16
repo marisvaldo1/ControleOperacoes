@@ -568,6 +568,9 @@ async function updateUI() {
     
     // Grafico anual
     renderChartAnual(anoData, currentYear);
+    
+        // Setup event listeners para botões dinâmicos
+        setupDynamicButtonListeners();
 }
 
 // Função helper para buscar cotação de um ativo
@@ -669,7 +672,7 @@ async function populateTable(dt, data, showActions = true, updatePrices = false,
             if (isHistorico) {
                 // Histórico: apenas botão de detalhar
                 actionsHtml = `<div class="btn-list flex-nowrap">
-                    <button class="btn btn-sm btn-info btn-icon" onclick="openDetalheOperacao('${op.id}')" title="Detalhes">
+                    <button class="btn btn-sm btn-info btn-icon detalhe-op-btn" data-op-id="${op.id}" title="Detalhes">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
                     </button>
                  </div>`;
@@ -677,7 +680,7 @@ async function populateTable(dt, data, showActions = true, updatePrices = false,
                 // Mês atual: todos os botões, mas ocultar exclusão se operação fechada
                 const isFechada = op.status && (op.status.toUpperCase() === 'FECHADA' || op.status.toUpperCase() === 'EXERCIDA' || op.status.toUpperCase() === 'VENCIDA');
                 actionsHtml = `<div class="btn-list flex-nowrap">
-                    <button class="btn btn-sm btn-info btn-icon" onclick="openDetalheOperacao('${op.id}')" title="Detalhes">
+                    <button class="btn btn-sm btn-info btn-icon detalhe-op-btn" data-op-id="${op.id}" title="Detalhes">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
                     </button>
                     <button class="btn btn-sm btn-primary btn-icon" onclick="editOperacao('${op.id}')" title="Editar">
@@ -792,14 +795,14 @@ async function populateTable(dt, data, showActions = true, updatePrices = false,
         if (showActions) {
             if (isHistorico) {
                 actionsHtml = `<div class="btn-list flex-nowrap">
-                    <button class="btn btn-sm btn-info btn-icon" onclick="openDetalheOperacao('${op.id}')" title="Detalhes">
+                    <button class="btn btn-sm btn-info btn-icon detalhe-op-btn" data-op-id="${op.id}" title="Detalhes">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
                     </button>
                  </div>`;
             } else {
                 const isFechada = op.status && (op.status.toUpperCase() === 'FECHADA' || op.status.toUpperCase() === 'EXERCIDA' || op.status.toUpperCase() === 'VENCIDA');
                 actionsHtml = `<div class="btn-list flex-nowrap">
-                    <button class="btn btn-sm btn-info btn-icon" onclick="openDetalheOperacao('${op.id}')" title="Detalhes">
+                    <button class="btn btn-sm btn-info btn-icon detalhe-op-btn" data-op-id="${op.id}" title="Detalhes">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
                     </button>
                     <button class="btn btn-sm btn-primary btn-icon" onclick="editOperacao('${op.id}')" title="Editar">
@@ -2091,7 +2094,7 @@ function renderAnnualResumo(data, year) {
         totalWins += winsMes;
         if (opsCount > 0) acumuladoPct += rentabilidade; // acumular % mensais
 
-        const rowAttrs = opsCount > 0 ? `class="cursor-pointer" onclick="showMonthOperations(${year}, ${i})" style="cursor: pointer;"` : '';
+        const rowAttrs = opsCount > 0 ? `class="cursor-pointer month-ops-row" data-year="${year}" data-month="${i}" style="cursor: pointer;"` : '';
         rows.push(`
             <tr ${rowAttrs}>
                 <td>${getMonthName(monthKey).split('-')[0]}</td>
@@ -2119,7 +2122,7 @@ function renderAnnualResumo(data, year) {
             const textClass = resultadoMes >= 0 ? 'text-success' : 'text-danger';
             cards.push(`
                 <div class="col-6 col-sm-4 col-md-3 col-lg-2">
-                    <div class="card card-sm ${cardClass}" onclick="showMonthOperations(${year}, ${i})" style="cursor: pointer;">
+                    <div class="card card-sm ${cardClass} month-ops-card" data-year="${year}" data-month="${i}" style="cursor: pointer;">
                         <div class="card-body text-center">
                             <div class="text-muted small">${getMonthName(monthKey).split('-')[0].substring(0, 3)}</div>
                             <div class="h3 mb-0 ${textClass}">${formatROIPct(rentabilidade)}</div>
@@ -2274,7 +2277,7 @@ function showMonthOperations(year, month) {
                 <td class="${resultado >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(resultado)}</td>
                 <td class="${perc >= 0 ? 'text-success' : 'text-danger'}">${formatROIPct(perc)}</td>
                 <td>
-                    <button class="btn btn-sm btn-info btn-icon" onclick="openDetalheFromMonthModal('${op.id}')" title="Detalhes">
+                    <button class="btn btn-sm btn-info btn-icon detalhe-month-btn" data-op-id="${op.id}" title="Detalhes">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
                     </button>
                 </td>
@@ -2384,6 +2387,7 @@ function showMonthOperations(year, month) {
 
     // Show modal
     const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+    setupDynamicButtonListeners();
     modal.show();
 }
 
@@ -2460,7 +2464,7 @@ function showWeekOperations(startDate, endDate) {
                 <td class="${resultado >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(resultado)}</td>
                 <td class="${perc >= 0 ? 'text-success' : 'text-danger'}">${formatROIPct(perc)}</td>
                 <td>
-                    <button class="btn btn-sm btn-info btn-icon" onclick="openDetalheFromMonthModal('${op.id}')" title="Detalhes">
+                    <button class="btn btn-sm btn-info btn-icon detalhe-month-btn" data-op-id="${op.id}" title="Detalhes">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
                     </button>
                 </td>
@@ -2632,7 +2636,7 @@ function renderAnnualTable(data) {
                     <td class="${resultado >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(resultado)}</td>
                     <td class="${perc >= 0 ? 'text-success' : 'text-danger'}">${formatROIPct(perc)}</td>
                     <td>
-                        <button class="btn btn-sm btn-info btn-icon" onclick="openDetalheOperacao('${op.id}')" title="Detalhes">
+                        <button class="btn btn-sm btn-info btn-icon detalhe-op-btn" data-op-id="${op.id}" title="Detalhes">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
                         </button>
                     </td>
@@ -3393,7 +3397,7 @@ function renderSaldoTabela(ops) {
             <td class="${resultado >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(resultado)}</td>
             <td class="${perc >= 0 ? 'text-success' : 'text-danger'}">${formatROIPct(perc)}</td>
             <td>
-                <button class="btn btn-sm btn-info btn-icon" onclick="openDetalheOperacao('${op.id}')" title="Detalhes">
+                <button class="btn btn-sm btn-info btn-icon detalhe-op-btn" data-op-id="${op.id}" title="Detalhes">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
                 </button>
             </td>
@@ -7751,3 +7755,63 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // fim opcoes.js
+    // Função auxiliar para configurar event listeners em botões dinâmicos
+    function setupDynamicButtonListeners() {
+        // Listeners para botões de detalhe de operação
+        document.querySelectorAll('.detalhe-op-btn').forEach(btn => {
+            if (!btn.dataset.listenerBound) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const opId = this.getAttribute('data-op-id');
+                    if (typeof openDetalheOperacao === 'function') {
+                        openDetalheOperacao(opId);
+                    }
+                });
+                btn.dataset.listenerBound = 'true';
+            }
+        });
+
+        // Listeners para botões de detalhe do modal mensal
+        document.querySelectorAll('.detalhe-month-btn').forEach(btn => {
+            if (!btn.dataset.listenerBound) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const opId = this.getAttribute('data-op-id');
+                    if (typeof openDetalheFromMonthModal === 'function') {
+                        openDetalheFromMonthModal(opId);
+                    }
+                });
+                btn.dataset.listenerBound = 'true';
+            }
+        });
+        
+            // Listeners para linhas/cards de operações mensais
+            document.querySelectorAll('.month-ops-row, .month-ops-card').forEach(elem => {
+                if (!elem.dataset.listenerBound) {
+                    elem.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const year = this.getAttribute('data-year');
+                        const month = this.getAttribute('data-month');
+                        if (typeof showMonthOperations === 'function') {
+                            showMonthOperations(year, month);
+                        }
+                    });
+                    elem.dataset.listenerBound = 'true';
+                }
+            });
+        
+            // Listeners para linhas/cards de operações mensais
+            document.querySelectorAll('.month-ops-row, .month-ops-card').forEach(elem => {
+                if (!elem.dataset.listenerBound) {
+                    elem.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const year = this.getAttribute('data-year');
+                        const month = this.getAttribute('data-month');
+                        if (typeof showMonthOperations === 'function') {
+                            showMonthOperations(year, month);
+                        }
+                    });
+                    elem.dataset.listenerBound = 'true';
+                }
+            });
+    }

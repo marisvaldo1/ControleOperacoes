@@ -1,0 +1,1906 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>7 Variações - Dashboard de Operações</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0a0a0f; color: #e0e0e0; }
+
+  /* NAV SELECTOR */
+  .nav-selector {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+    background: #0f0f1a; border-bottom: 1px solid #2a2a3a;
+    padding: 10px 20px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+  }
+  .nav-selector span { color: #888; font-size: 12px; margin-right: 8px; }
+  .nav-btn {
+    padding: 6px 14px; border-radius: 20px; border: 1px solid #333;
+    background: transparent; color: #aaa; cursor: pointer; font-size: 12px; transition: all 0.2s;
+  }
+  .nav-btn:hover { border-color: #667eea; color: #667eea; }
+  .nav-btn.active { background: #667eea; border-color: #667eea; color: white; }
+
+  .variation { display: none; padding-top: 60px; min-height: 100vh; }
+  .variation.active { display: block; }
+
+  /* ============================================
+     DADOS MOCK COMPARTILHADOS
+     ============================================ */
+
+  /* ============================================
+     VARIAÇÃO 1 - COMMAND CENTER (Dark Professional)
+     ============================================ */
+  .v1 { background: #080810; }
+  .v1 .modal {
+    max-width: 900px; margin: 20px auto;
+    background: linear-gradient(135deg, #0d0d1a 0%, #0a0a14 100%);
+    border: 1px solid #1e1e35; border-radius: 16px; overflow: hidden;
+    box-shadow: 0 0 60px rgba(102, 126, 234, 0.1);
+  }
+  .v1 .modal-header {
+    background: linear-gradient(90deg, #0f0f20 0%, #1a1a30 100%);
+    padding: 20px 24px; border-bottom: 1px solid #1e1e35;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .v1 .modal-title { font-size: 16px; font-weight: 700; color: #fff; letter-spacing: 0.5px; }
+  .v1 .badge-live {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; color: #00ff88; background: rgba(0,255,136,0.1);
+    padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(0,255,136,0.3);
+  }
+  .v1 .badge-live::before { content: ''; width: 6px; height: 6px; background: #00ff88; border-radius: 50%; animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* Filtros V1 */
+  .v1 .filters {
+    padding: 14px 24px; background: rgba(255,255,255,0.02);
+    border-bottom: 1px solid #1e1e35; display: flex; gap: 6px; flex-wrap: wrap;
+  }
+  .v1 .filter-pill {
+    padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;
+    border: 1px solid #2a2a40; background: transparent; color: #888; cursor: pointer; transition: all 0.2s;
+  }
+  .v1 .filter-pill:hover { border-color: #667eea; color: #667eea; }
+  .v1 .filter-pill.active { background: rgba(102,126,234,0.2); border-color: #667eea; color: #667eea; }
+  .v1 .filter-pill.active-green { background: rgba(0,255,136,0.15); border-color: #00ff88; color: #00ff88; }
+  .v1 .filter-pill.active-red { background: rgba(255,80,80,0.15); border-color: #ff5050; color: #ff5050; }
+  .v1 .filter-sep { width: 1px; background: #1e1e35; margin: 0 4px; }
+
+  /* KPIs V1 */
+  .v1 .kpi-grid {
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    gap: 1px; background: #1e1e35; border-bottom: 1px solid #1e1e35;
+  }
+  .v1 .kpi-item {
+    padding: 16px 20px; background: #0d0d1a;
+  }
+  .v1 .kpi-label { font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+  .v1 .kpi-value { font-size: 20px; font-weight: 700; }
+  .v1 .kpi-value.green { color: #00ff88; }
+  .v1 .kpi-value.yellow { color: #ffd700; }
+  .v1 .kpi-value.blue { color: #667eea; }
+  .v1 .kpi-value.white { color: #fff; }
+  .v1 .kpi-sub { font-size: 10px; color: #444; margin-top: 3px; }
+
+  /* Progress meter V1 */
+  .v1 .meter-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+  .v1 .meter-bar { flex: 1; height: 3px; background: #1e1e35; border-radius: 2px; overflow: hidden; }
+  .v1 .meter-fill { height: 100%; border-radius: 2px; transition: width 1s ease; }
+  .v1 .meter-val { font-size: 10px; color: #667eea; min-width: 30px; text-align: right; }
+
+  /* Content V1 */
+  .v1 .content { padding: 20px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .v1 .panel {
+    background: rgba(255,255,255,0.02); border: 1px solid #1e1e35;
+    border-radius: 10px; padding: 16px; position: relative; overflow: hidden;
+  }
+  .v1 .panel::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+  }
+  .v1 .panel.green::before { background: linear-gradient(90deg, #00ff88, #00cc66); }
+  .v1 .panel.red::before { background: linear-gradient(90deg, #ff5050, #cc0000); }
+  .v1 .panel-title { font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+  .v1 .panel.full { grid-column: span 2; }
+
+  .v1 .op-row {
+    display: flex; align-items: center; padding: 10px 0;
+    border-bottom: 1px solid #1a1a28; font-size: 12px;
+  }
+  .v1 .op-row:last-child { border-bottom: none; }
+  .v1 .op-type { padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-right: 10px; }
+  .v1 .type-call { background: rgba(102,126,234,0.2); color: #667eea; border: 1px solid #667eea; }
+  .v1 .type-put { background: rgba(255,80,80,0.2); color: #ff5050; border: 1px solid #ff5050; }
+  .v1 .type-exerc { background: rgba(255,165,0,0.2); color: #ffa500; border: 1px solid #ffa500; }
+  .v1 .op-info { flex: 1; }
+  .v1 .op-asset { font-weight: 600; color: #ddd; }
+  .v1 .op-strike { color: #555; font-size: 11px; }
+  .v1 .op-val { font-weight: 700; color: #00ff88; }
+  .v1 .op-val.neg { color: #ff5050; }
+
+  .v1 .strike-rec {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 12px; background: rgba(102,126,234,0.05); border-radius: 6px;
+    border-left: 3px solid #667eea; margin-bottom: 6px;
+  }
+  .v1 .strike-info { font-size: 12px; }
+  .v1 .strike-score { display: flex; align-items: center; gap: 4px; }
+  .v1 .score-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  /* ============================================
+     VARIAÇÃO 2 - GLASSMORPHISM ELEGANTE
+     ============================================ */
+  .v2 { background: radial-gradient(ellipse at top, #0d1528 0%, #050508 60%); }
+  .v2 .modal {
+    max-width: 920px; margin: 20px auto;
+    background: rgba(255,255,255,0.04); backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; overflow: hidden;
+    box-shadow: 0 25px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+  }
+  .v2 .modal-header {
+    padding: 22px 28px; border-bottom: 1px solid rgba(255,255,255,0.08);
+    display: flex; align-items: center; justify-content: space-between;
+    background: rgba(255,255,255,0.02);
+  }
+  .v2 .modal-title { font-size: 17px; font-weight: 600; background: linear-gradient(90deg, #fff, #aab); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .v2 .close-btn { width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,0.1); border: none; color: #888; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+
+  .v2 .filters {
+    padding: 14px 28px; display: flex; gap: 6px; flex-wrap: wrap;
+    border-bottom: 1px solid rgba(255,255,255,0.06); background: rgba(0,0,0,0.2);
+  }
+  .v2 .fp {
+    padding: 5px 14px; border-radius: 20px; font-size: 11px; font-weight: 500;
+    border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04);
+    color: rgba(255,255,255,0.5); cursor: pointer; transition: all 0.2s;
+  }
+  .v2 .fp.active { background: rgba(99,179,237,0.2); border-color: rgba(99,179,237,0.5); color: #63b3ed; }
+  .v2 .fp.call { background: rgba(102,126,234,0.15); border-color: rgba(102,126,234,0.4); color: #818cf8; }
+  .v2 .fp.put { background: rgba(248,113,113,0.15); border-color: rgba(248,113,113,0.4); color: #f87171; }
+  .v2 .fp-div { width: 1px; background: rgba(255,255,255,0.08); margin: 0 4px; }
+
+  /* Stats V2 */
+  .v2 .stats-bar {
+    display: flex; gap: 0; border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .v2 .stat-box {
+    flex: 1; padding: 18px 20px; text-align: center;
+    border-right: 1px solid rgba(255,255,255,0.06); position: relative;
+  }
+  .v2 .stat-box:last-child { border-right: none; }
+  .v2 .stat-label { font-size: 10px; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
+  .v2 .stat-num { font-size: 22px; font-weight: 700; }
+  .v2 .stat-num.profit { background: linear-gradient(135deg, #00ff88, #00cc66); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .v2 .stat-num.blue { background: linear-gradient(135deg, #63b3ed, #667eea); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .v2 .stat-num.gold { background: linear-gradient(135deg, #ffd700, #ffa500); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .v2 .stat-trend { font-size: 10px; margin-top: 4px; }
+  .v2 .stat-trend.up { color: #00ff88; }
+  .v2 .stat-trend.down { color: #ff5050; }
+
+  /* Gauge V2 */
+  .v2 .body { padding: 24px 28px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .v2 .card {
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px; padding: 16px;
+  }
+  .v2 .card.span2 { grid-column: span 2; }
+  .v2 .card.span3 { grid-column: span 3; }
+  .v2 .card-title { font-size: 10px; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; }
+
+  .v2 .gauge-wrap { display: flex; justify-content: center; }
+  .v2 .gauge { width: 120px; height: 60px; position: relative; }
+
+  .v2 .pbar-item { margin-bottom: 10px; }
+  .v2 .pbar-head { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 5px; }
+  .v2 .pbar-track { height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
+  .v2 .pbar-fill { height: 100%; border-radius: 3px; transition: width 1s; }
+
+  .v2 .op-list-item {
+    display: grid; grid-template-columns: auto 1fr auto auto; gap: 10px;
+    align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 12px;
+  }
+  .v2 .op-list-item:last-child { border-bottom: none; }
+  .v2 .badge { padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; }
+  .v2 .b-call { background: rgba(102,126,234,0.2); color: #818cf8; border: 1px solid rgba(102,126,234,0.3); }
+  .v2 .b-put { background: rgba(248,113,113,0.2); color: #f87171; border: 1px solid rgba(248,113,113,0.3); }
+  .v2 .b-ex { background: rgba(251,191,36,0.2); color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
+  .v2 .b-open { background: rgba(52,211,153,0.15); color: #34d399; border: 1px solid rgba(52,211,153,0.3); }
+
+  /* ============================================
+     VARIAÇÃO 3 - MINIMALISTA BLOOMBERG
+     ============================================ */
+  .v3 { background: #000; }
+  .v3 .modal {
+    max-width: 960px; margin: 20px auto;
+    background: #0a0a0a; border: 1px solid #1f1f1f; border-radius: 4px; overflow: hidden;
+    font-family: 'Courier New', monospace;
+  }
+  .v3 .modal-header {
+    padding: 12px 20px; background: #111; border-bottom: 2px solid #ff6600;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .v3 .modal-title { font-size: 13px; font-weight: 700; color: #ff6600; letter-spacing: 2px; text-transform: uppercase; }
+  .v3 .time-display { font-size: 11px; color: #555; }
+
+  .v3 .filters { padding: 10px 20px; background: #0d0d0d; border-bottom: 1px solid #1f1f1f; display: flex; gap: 1px; }
+  .v3 .ftab {
+    padding: 5px 12px; background: #111; border: 1px solid #222;
+    color: #555; font-size: 11px; cursor: pointer; font-family: 'Courier New', monospace;
+    letter-spacing: 1px; text-transform: uppercase; transition: all 0.15s;
+  }
+  .v3 .ftab:hover { background: #1a1a1a; color: #aaa; }
+  .v3 .ftab.active { background: #ff6600; color: #000; border-color: #ff6600; font-weight: 700; }
+  .v3 .ftab.call-tab { --c: #4488ff; }
+  .v3 .ftab.call-tab.active { background: #4488ff; border-color: #4488ff; }
+  .v3 .ftab.put-tab.active { background: #ff4444; border-color: #ff4444; }
+  .v3 .ftab-sep { width: 16px; }
+
+  /* Ticker V3 */
+  .v3 .ticker-row {
+    background: #0d0d0d; border-bottom: 1px solid #1f1f1f;
+    display: grid; grid-template-columns: repeat(6, 1fr); gap: 0;
+  }
+  .v3 .tick-cell {
+    padding: 14px 16px; border-right: 1px solid #1a1a1a; text-align: center;
+  }
+  .v3 .tick-cell:last-child { border-right: none; }
+  .v3 .tick-label { font-size: 9px; color: #444; letter-spacing: 1.5px; text-transform: uppercase; }
+  .v3 .tick-value { font-size: 18px; font-weight: 700; margin: 4px 0 2px; }
+  .v3 .tick-value.orange { color: #ff6600; }
+  .v3 .tick-value.green { color: #00cc66; }
+  .v3 .tick-value.blue { color: #4488ff; }
+  .v3 .tick-value.white { color: #eee; }
+  .v3 .tick-sub { font-size: 10px; color: #333; }
+  .v3 .tick-up { color: #00cc66; }
+  .v3 .tick-down { color: #ff4444; }
+
+  /* Table V3 */
+  .v3 .body { padding: 16px 20px; }
+  .v3 .section-title {
+    font-size: 10px; color: #555; letter-spacing: 2px; text-transform: uppercase;
+    padding: 6px 0; border-bottom: 1px solid #1a1a1a; margin-bottom: 10px;
+    display: flex; justify-content: space-between;
+  }
+  .v3 .table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .v3 .table th {
+    padding: 6px 10px; text-align: left; font-size: 9px; color: #444;
+    letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px solid #1a1a1a;
+    background: #0d0d0d;
+  }
+  .v3 .table td { padding: 9px 10px; border-bottom: 1px solid #111; color: #ccc; }
+  .v3 .table tr:hover td { background: #111; }
+  .v3 .t-call { color: #4488ff; font-weight: 700; }
+  .v3 .t-put { color: #ff4444; font-weight: 700; }
+  .v3 .t-ex { color: #ff8800; font-weight: 700; }
+  .v3 .t-green { color: #00cc66; }
+  .v3 .t-red { color: #ff4444; }
+  .v3 .t-status { font-size: 9px; padding: 1px 6px; border-radius: 2px; }
+  .v3 .s-open { background: #00cc661a; color: #00cc66; border: 1px solid #00cc6633; }
+  .v3 .s-closed { background: #33333366; color: #777; border: 1px solid #333; }
+  .v3 .s-ex { background: #ff88001a; color: #ff8800; border: 1px solid #ff880033; }
+
+  /* Chart row V3 */
+  .v3 .chart-row { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-top: 16px; }
+  .v3 .chart-box {
+    background: #0d0d0d; border: 1px solid #1a1a1a; padding: 14px;
+  }
+  .v3 .chart-title { font-size: 9px; color: #444; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 12px; }
+
+  /* ============================================
+     VARIAÇÃO 4 - CARD DASHBOARD (Colorido)
+     ============================================ */
+  .v4 { background: #0f0f17; }
+  .v4 .modal {
+    max-width: 940px; margin: 20px auto;
+    background: #12121e; border: 1px solid #1e1e30;
+    border-radius: 20px; overflow: hidden;
+    box-shadow: 0 0 80px rgba(0,0,0,0.5);
+  }
+  .v4 .modal-header {
+    padding: 20px 24px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border-bottom: 1px solid #1e1e30; display: flex; align-items: center; justify-content: space-between;
+  }
+  .v4 .modal-title { font-size: 16px; font-weight: 700; color: #fff; }
+  .v4 .header-right { display: flex; align-items: center; gap: 12px; }
+  .v4 .update-badge { font-size: 10px; color: #556; }
+
+  .v4 .filters {
+    padding: 12px 24px; display: flex; gap: 5px; flex-wrap: wrap;
+    border-bottom: 1px solid #1e1e30; background: #0e0e1a;
+  }
+  .v4 .fp { padding: 5px 12px; border-radius: 20px; font-size: 11px; border: 1px solid #2a2a3f; background: transparent; color: #556; cursor: pointer; transition: all 0.2s; font-weight: 500; }
+  .v4 .fp:hover { border-color: #7c6ef5; color: #7c6ef5; }
+  .v4 .fp.a { background: rgba(124,110,245,0.15); border-color: #7c6ef5; color: #7c6ef5; }
+  .v4 .fp.call { background: rgba(56,189,248,0.1); border-color: rgba(56,189,248,0.4); color: #38bdf8; }
+  .v4 .fp.put { background: rgba(251,113,133,0.1); border-color: rgba(251,113,133,0.4); color: #fb7185; }
+  .v4 .fp-sep { width: 1px; background: #1e1e30; margin: 0 2px; }
+
+  /* Big Number V4 */
+  .v4 .hero-strip {
+    background: linear-gradient(135deg, #1a1a35 0%, #0f1525 100%);
+    padding: 20px 24px; border-bottom: 1px solid #1e1e30;
+    display: flex; align-items: center; gap: 32px;
+  }
+  .v4 .hero-num { font-size: 40px; font-weight: 800; background: linear-gradient(135deg, #00ff88, #00ccaa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1; }
+  .v4 .hero-label { font-size: 11px; color: #445; text-transform: uppercase; letter-spacing: 1px; }
+  .v4 .hero-divider { width: 1px; height: 50px; background: #2a2a40; }
+  .v4 .hero-stat { text-align: center; }
+  .v4 .hero-stat-val { font-size: 22px; font-weight: 700; }
+  .v4 .hero-stat-val.g { color: #00ff88; }
+  .v4 .hero-stat-val.b { color: #38bdf8; }
+  .v4 .hero-stat-val.y { color: #fbbf24; }
+  .v4 .hero-stat-val.p { color: #a78bfa; }
+  .v4 .hero-stat-label { font-size: 10px; color: #445; margin-top: 2px; }
+  .v4 .win-bar-wrap { flex: 1; margin-left: 16px; }
+  .v4 .win-bar-label { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 6px; }
+  .v4 .win-bar-track { height: 8px; background: rgba(255,80,80,0.2); border-radius: 4px; overflow: hidden; }
+  .v4 .win-bar-fill { height: 100%; background: linear-gradient(90deg, #00ff88, #00ccaa); border-radius: 4px; }
+
+  /* Cards V4 */
+  .v4 .body { padding: 20px 24px; }
+  .v4 .row { display: grid; gap: 14px; margin-bottom: 14px; }
+  .v4 .row.c3 { grid-template-columns: repeat(3, 1fr); }
+  .v4 .row.c2 { grid-template-columns: 2fr 1fr; }
+  .v4 .row.c12 { grid-template-columns: 1fr 2fr; }
+
+  .v4 .card {
+    background: #16162a; border: 1px solid #1e1e30; border-radius: 14px; padding: 16px;
+    position: relative; overflow: hidden;
+  }
+  .v4 .card-accent { position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+  .v4 .card-title { font-size: 10px; color: #445; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+  .v4 .card-big { font-size: 28px; font-weight: 700; }
+
+  /* Donut V4 */
+  .v4 .donut-wrap { display: flex; align-items: center; gap: 16px; }
+  .v4 .donut-legend { flex: 1; }
+  .v4 .legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 12px; }
+  .v4 .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+  /* Op V4 */
+  .v4 .op-item {
+    display: flex; align-items: center; gap: 10px; padding: 9px 0;
+    border-bottom: 1px solid #1a1a28; font-size: 12px;
+  }
+  .v4 .op-item:last-child { border-bottom: none; }
+  .v4 .op-badge { padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; min-width: 40px; text-align: center; }
+  .v4 .bc { background: rgba(56,189,248,0.15); color: #38bdf8; border: 1px solid rgba(56,189,248,0.3); }
+  .v4 .bp { background: rgba(251,113,133,0.15); color: #fb7185; border: 1px solid rgba(251,113,133,0.3); }
+  .v4 .be { background: rgba(251,191,36,0.15); color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
+  .v4 .op-text { flex: 1; }
+  .v4 .op-asset-name { font-weight: 600; color: #ccc; }
+  .v4 .op-sub { font-size: 10px; color: #445; }
+  .v4 .op-premium { font-weight: 700; color: #00ff88; font-size: 13px; }
+
+  /* ============================================
+     VARIAÇÃO 5 - TABULAR PERFORMANCE (Analítico)
+     ============================================ */
+  .v5 { background: #0b0c10; }
+  .v5 .modal {
+    max-width: 980px; margin: 20px auto;
+    background: #0d0e12; border: 1px solid #1c1d24;
+    border-radius: 12px; overflow: hidden;
+  }
+  .v5 .modal-header {
+    padding: 18px 24px; border-bottom: 1px solid #1c1d24;
+    display: flex; align-items: center; justify-content: space-between;
+    background: #0f1015;
+  }
+  .v5 .modal-title { font-size: 15px; font-weight: 600; color: #e0e0e0; }
+
+  .v5 .filters {
+    padding: 12px 24px; border-bottom: 1px solid #1c1d24;
+    display: flex; gap: 4px; flex-wrap: wrap; align-items: center; background: #0b0c10;
+  }
+  .v5 .fp-group { display: flex; gap: 1px; }
+  .v5 .fp { padding: 5px 12px; font-size: 11px; border: 1px solid #222; background: #111; color: #555; cursor: pointer; transition: all 0.15s; }
+  .v5 .fp:first-child { border-radius: 6px 0 0 6px; }
+  .v5 .fp:last-child { border-radius: 0 6px 6px 0; }
+  .v5 .fp.a { background: #1e1e40; border-color: #4444cc; color: #7788ff; }
+  .v5 .fp.call { background: #0a1a40; border-color: #3366cc; color: #6699ff; }
+  .v5 .fp.put { background: #3a0a0a; border-color: #cc3333; color: #ff6666; }
+  .v5 .fp-gap { width: 12px; }
+
+  /* Summary row V5 */
+  .v5 .summary {
+    display: grid; grid-template-columns: repeat(6, 1fr);
+    border-bottom: 1px solid #1c1d24; background: #0f1015;
+  }
+  .v5 .sum-cell {
+    padding: 14px 16px; border-right: 1px solid #1c1d24; text-align: center;
+  }
+  .v5 .sum-cell:last-child { border-right: none; }
+  .v5 .sum-label { font-size: 9px; color: #333; letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 5px; }
+  .v5 .sum-val { font-size: 17px; font-weight: 700; }
+  .v5 .sv-g { color: #4ade80; }
+  .v5 .sv-b { color: #60a5fa; }
+  .v5 .sv-y { color: #facc15; }
+  .v5 .sv-w { color: #e0e0e0; }
+  .v5 .sv-p { color: #a78bfa; }
+  .v5 .sum-change { font-size: 10px; margin-top: 3px; }
+  .v5 .up { color: #4ade80; }
+  .v5 .dn { color: #f87171; }
+
+  /* Tabs V5 */
+  .v5 .tabs { display: flex; border-bottom: 1px solid #1c1d24; background: #0d0e12; padding: 0 24px; }
+  .v5 .tab { padding: 12px 16px; font-size: 12px; color: #444; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
+  .v5 .tab:hover { color: #777; }
+  .v5 .tab.active { color: #7788ff; border-bottom-color: #7788ff; }
+
+  .v5 .body { padding: 20px 24px; }
+  .v5 .grid2 { display: grid; grid-template-columns: 3fr 2fr; gap: 16px; }
+  .v5 .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 16px; }
+
+  .v5 .box { background: #0f1015; border: 1px solid #1c1d24; border-radius: 8px; padding: 16px; }
+  .v5 .box-title { font-size: 10px; color: #333; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; }
+
+  .v5 .data-table { width: 100%; font-size: 11px; }
+  .v5 .data-table tr { border-bottom: 1px solid #1c1d24; }
+  .v5 .data-table tr:last-child { border-bottom: none; }
+  .v5 .data-table tr:hover { background: rgba(255,255,255,0.02); }
+  .v5 .data-table th { padding: 8px 6px; font-size: 9px; color: #333; text-transform: uppercase; letter-spacing: 0.8px; font-weight: 500; }
+  .v5 .data-table td { padding: 9px 6px; color: #aaa; }
+  .v5 .pill { padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: 600; }
+  .v5 .pc { background: rgba(96,165,250,0.15); color: #60a5fa; }
+  .v5 .pp { background: rgba(248,113,113,0.15); color: #f87171; }
+  .v5 .pe { background: rgba(250,204,21,0.15); color: #facc15; }
+  .v5 .pf { background: rgba(74,222,128,0.15); color: #4ade80; }
+
+  /* Performance bars V5 */
+  .v5 .perf-item { margin-bottom: 12px; }
+  .v5 .perf-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; font-size: 11px; }
+  .v5 .perf-name { color: #888; }
+  .v5 .perf-val { font-weight: 600; }
+  .v5 .perf-track { height: 4px; background: #1c1d24; border-radius: 2px; overflow: hidden; }
+  .v5 .perf-fill { height: 100%; border-radius: 2px; }
+
+  /* Heatmap V5 */
+  .v5 .heatmap-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+  .v5 .hm-cell {
+    aspect-ratio: 1; border-radius: 3px; display: flex; align-items: center; justify-content: center;
+    font-size: 8px; font-weight: 600; cursor: default;
+  }
+
+  /* ============================================
+     VARIAÇÃO 6 - TIMELINE VISUAL (Cronológico)
+     ============================================ */
+  .v6 { background: #080a10; }
+  .v6 .modal {
+    max-width: 900px; margin: 20px auto;
+    background: #0c0e18; border: 1px solid #1a1c28; border-radius: 16px; overflow: hidden;
+  }
+  .v6 .modal-header {
+    padding: 20px 26px; border-bottom: 1px solid #1a1c28;
+    display: flex; align-items: center; justify-content: space-between;
+    background: linear-gradient(90deg, #0e1020 0%, #0c0e18 100%);
+  }
+  .v6 .modal-title { font-size: 16px; font-weight: 700; color: #e0e0ff; }
+
+  .v6 .filters {
+    padding: 12px 26px; border-bottom: 1px solid #1a1c28;
+    display: flex; gap: 5px; flex-wrap: wrap; background: #0a0c14;
+  }
+  .v6 .fp { padding: 4px 12px; border-radius: 4px; font-size: 11px; border: 1px solid #252535; background: rgba(255,255,255,0.02); color: #446; cursor: pointer; transition: all 0.2s; }
+  .v6 .fp:hover { border-color: #5566aa; color: #7788cc; }
+  .v6 .fp.a { border-color: #5566aa; background: rgba(85,102,170,0.15); color: #99aadd; }
+  .v6 .fp-sep { width: 8px; }
+
+  /* Big stats V6 */
+  .v6 .top-stats { display: grid; grid-template-columns: auto 1fr; gap: 0; border-bottom: 1px solid #1a1c28; }
+  .v6 .profit-hero {
+    padding: 20px 30px; background: rgba(0,200,100,0.05); border-right: 1px solid #1a1c28;
+    display: flex; flex-direction: column; justify-content: center; min-width: 200px;
+  }
+  .v6 .profit-label { font-size: 10px; color: #446; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+  .v6 .profit-amount { font-size: 36px; font-weight: 800; color: #00e87a; line-height: 1; }
+  .v6 .profit-period { font-size: 11px; color: #446; margin-top: 4px; }
+  .v6 .stats-right { display: grid; grid-template-columns: repeat(4, 1fr); }
+  .v6 .s-cell { padding: 16px 20px; border-right: 1px solid #1a1c28; border-bottom: 1px solid #1a1c28; }
+  .v6 .s-cell:nth-child(4) { border-right: none; }
+  .v6 .s-cell:nth-child(5), .v6 .s-cell:nth-child(6), .v6 .s-cell:nth-child(7), .v6 .s-cell:nth-child(8) { border-bottom: none; }
+  .v6 .s-cell-label { font-size: 9px; color: #334; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .v6 .s-cell-val { font-size: 16px; font-weight: 600; }
+  .v6 .sc-g { color: #00e87a; }
+  .v6 .sc-b { color: #5588ff; }
+  .v6 .sc-y { color: #ffcc00; }
+  .v6 .sc-p { color: #aa77ff; }
+  .v6 .sc-w { color: #ccc; }
+
+  /* Timeline V6 */
+  .v6 .body { padding: 20px 26px; }
+  .v6 .tl-container { display: grid; grid-template-columns: 1fr 280px; gap: 20px; }
+  .v6 .tl-title { font-size: 11px; color: #334; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
+
+  .v6 .timeline { position: relative; }
+  .v6 .tl-line { position: absolute; left: 70px; top: 0; bottom: 0; width: 1px; background: linear-gradient(180deg, #5566aa33, transparent); }
+  .v6 .tl-item { display: flex; gap: 16px; margin-bottom: 14px; position: relative; }
+  .v6 .tl-date { width: 60px; text-align: right; font-size: 10px; color: #334; padding-top: 12px; flex-shrink: 0; }
+  .v6 .tl-dot { width: 12px; height: 12px; border-radius: 50%; margin-top: 10px; flex-shrink: 0; position: relative; z-index: 1; }
+  .v6 .dot-call { background: #5588ff; box-shadow: 0 0 6px #5588ff66; }
+  .v6 .dot-put { background: #ff5566; box-shadow: 0 0 6px #ff556666; }
+  .v6 .dot-ex { background: #ffcc00; box-shadow: 0 0 6px #ffcc0066; }
+  .v6 .tl-card {
+    flex: 1; background: rgba(255,255,255,0.02); border: 1px solid #1a1c28;
+    border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; gap: 12px;
+    transition: border-color 0.2s; cursor: default;
+  }
+  .v6 .tl-card:hover { border-color: #5566aa; }
+  .v6 .tl-type { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px; white-space: nowrap; }
+  .v6 .tt-c { background: rgba(85,136,255,0.15); color: #5588ff; border: 1px solid #5588ff44; }
+  .v6 .tt-p { background: rgba(255,85,102,0.15); color: #ff5566; border: 1px solid #ff556644; }
+  .v6 .tt-e { background: rgba(255,204,0,0.15); color: #ffcc00; border: 1px solid #ffcc0044; }
+  .v6 .tl-main { flex: 1; }
+  .v6 .tl-asset { font-size: 12px; font-weight: 600; color: #ccc; }
+  .v6 .tl-strike { font-size: 10px; color: #445; }
+  .v6 .tl-prem { font-size: 14px; font-weight: 700; color: #00e87a; }
+  .v6 .tl-prem.neg { color: #ff5566; }
+
+  /* Side panel V6 */
+  .v6 .side-panel {}
+  .v6 .sp-box { background: rgba(255,255,255,0.02); border: 1px solid #1a1c28; border-radius: 8px; padding: 14px; margin-bottom: 14px; }
+  .v6 .sp-title { font-size: 10px; color: #334; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+  .v6 .sp-metric { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #1a1c28; font-size: 12px; }
+  .v6 .sp-metric:last-child { border-bottom: none; }
+  .v6 .sp-key { color: #445; }
+  .v6 .sp-val { font-weight: 600; color: #ccc; }
+  .v6 .sp-val.g { color: #00e87a; }
+  .v6 .sp-val.b { color: #5588ff; }
+
+  /* ============================================
+     VARIAÇÃO 7 - FUTURISTIC NEON (Crypto Style)
+     ============================================ */
+  .v7 { background: radial-gradient(ellipse at 50% 0%, #0a0015 0%, #050508 60%); }
+  .v7 .modal {
+    max-width: 960px; margin: 20px auto;
+    background: rgba(10,0,30,0.95); border: 1px solid rgba(150,50,255,0.3);
+    border-radius: 20px; overflow: hidden;
+    box-shadow: 0 0 100px rgba(150,50,255,0.1), inset 0 0 100px rgba(0,0,0,0.5);
+  }
+  .v7 .modal-header {
+    padding: 20px 28px; border-bottom: 1px solid rgba(150,50,255,0.2);
+    display: flex; align-items: center; justify-content: space-between;
+    background: linear-gradient(135deg, rgba(150,50,255,0.05) 0%, transparent 100%);
+  }
+  .v7 .modal-title {
+    font-size: 16px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+    background: linear-gradient(90deg, #cc88ff, #8844ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .v7 .neon-dot { width: 8px; height: 8px; border-radius: 50%; background: #00ffcc; box-shadow: 0 0 12px #00ffcc; animation: pulse 2s infinite; }
+
+  .v7 .filters {
+    padding: 12px 28px; border-bottom: 1px solid rgba(150,50,255,0.1);
+    display: flex; gap: 5px; flex-wrap: wrap; background: rgba(0,0,0,0.3);
+  }
+  .v7 .fp { padding: 4px 12px; border-radius: 4px; font-size: 11px; border: 1px solid rgba(150,50,255,0.2); background: rgba(150,50,255,0.04); color: rgba(150,50,255,0.5); cursor: pointer; transition: all 0.2s; letter-spacing: 0.5px; }
+  .v7 .fp:hover { border-color: rgba(150,50,255,0.5); color: rgba(150,50,255,0.8); box-shadow: 0 0 8px rgba(150,50,255,0.2); }
+  .v7 .fp.a { background: rgba(150,50,255,0.15); border-color: #9632ff; color: #cc88ff; box-shadow: 0 0 10px rgba(150,50,255,0.3); }
+  .v7 .fp.call { background: rgba(0,200,255,0.08); border-color: rgba(0,200,255,0.3); color: rgba(0,200,255,0.8); }
+  .v7 .fp.put { background: rgba(255,50,100,0.08); border-color: rgba(255,50,100,0.3); color: rgba(255,50,100,0.8); }
+  .v7 .fp-sep { width: 1px; background: rgba(150,50,255,0.15); margin: 0 4px; }
+
+  /* KPI Neon V7 */
+  .v7 .kpi-row {
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    gap: 1px; background: rgba(150,50,255,0.1); border-bottom: 1px solid rgba(150,50,255,0.2);
+  }
+  .v7 .kpi-box { padding: 16px 20px; background: rgba(10,0,30,0.95); text-align: center; }
+  .v7 .kpi-label { font-size: 9px; color: rgba(150,50,255,0.5); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px; }
+  .v7 .kpi-num { font-size: 20px; font-weight: 700; }
+  .v7 .kn-g { color: #00ffcc; text-shadow: 0 0 20px rgba(0,255,204,0.5); }
+  .v7 .kn-p { color: #cc88ff; text-shadow: 0 0 20px rgba(204,136,255,0.4); }
+  .v7 .kn-c { color: #00c8ff; text-shadow: 0 0 20px rgba(0,200,255,0.4); }
+  .v7 .kn-y { color: #ffdd00; text-shadow: 0 0 20px rgba(255,221,0,0.4); }
+  .v7 .kn-w { color: #e0e0ff; }
+
+  /* Body V7 */
+  .v7 .body { padding: 22px 28px; }
+  .v7 .grid { display: grid; gap: 14px; }
+  .v7 .g2 { grid-template-columns: 3fr 2fr; }
+  .v7 .g3 { grid-template-columns: repeat(3, 1fr); margin-top: 14px; }
+
+  .v7 .neon-card {
+    background: rgba(255,255,255,0.02); border: 1px solid rgba(150,50,255,0.15);
+    border-radius: 12px; padding: 16px; position: relative; overflow: hidden;
+  }
+  .v7 .neon-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(150,50,255,0.5), transparent);
+  }
+  .v7 .neon-card.call-card { border-color: rgba(0,200,255,0.2); }
+  .v7 .neon-card.call-card::before { background: linear-gradient(90deg, transparent, rgba(0,200,255,0.5), transparent); }
+  .v7 .neon-card.put-card { border-color: rgba(255,50,100,0.2); }
+  .v7 .neon-card.put-card::before { background: linear-gradient(90deg, transparent, rgba(255,50,100,0.5), transparent); }
+  .v7 .neon-title { font-size: 9px; color: rgba(150,50,255,0.5); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 14px; }
+
+  .v7 .op-neon-item {
+    display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+    background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04);
+    border-radius: 6px; margin-bottom: 6px; font-size: 11px; transition: all 0.2s; cursor: default;
+  }
+  .v7 .op-neon-item:hover { border-color: rgba(150,50,255,0.3); background: rgba(150,50,255,0.05); }
+  .v7 .nb { padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; }
+  .v7 .nb-c { background: rgba(0,200,255,0.15); color: #00c8ff; border: 1px solid rgba(0,200,255,0.3); }
+  .v7 .nb-p { background: rgba(255,50,100,0.15); color: #ff3264; border: 1px solid rgba(255,50,100,0.3); }
+  .v7 .nb-e { background: rgba(255,221,0,0.15); color: #ffdd00; border: 1px solid rgba(255,221,0,0.3); }
+  .v7 .neon-val { font-size: 14px; font-weight: 700; color: #00ffcc; text-shadow: 0 0 10px rgba(0,255,204,0.4); margin-left: auto; }
+  .v7 .neon-val.neg { color: #ff3264; text-shadow: 0 0 10px rgba(255,50,100,0.4); }
+
+  .v7 .rec-item {
+    display: flex; align-items: center; gap: 10px; padding: 10px 0;
+    border-bottom: 1px solid rgba(150,50,255,0.08); font-size: 12px;
+  }
+  .v7 .rec-item:last-child { border-bottom: none; }
+  .v7 .rec-score { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; }
+  .v7 .rs-a { background: rgba(0,255,204,0.15); color: #00ffcc; border: 1px solid rgba(0,255,204,0.3); }
+  .v7 .rs-b { background: rgba(0,200,255,0.15); color: #00c8ff; border: 1px solid rgba(0,200,255,0.3); }
+  .v7 .rs-c { background: rgba(255,221,0,0.15); color: #ffdd00; border: 1px solid rgba(255,221,0,0.3); }
+  .v7 .rec-info { flex: 1; }
+  .v7 .rec-name { color: #ccccff; font-weight: 600; }
+  .v7 .rec-detail { font-size: 10px; color: rgba(150,50,255,0.5); margin-top: 2px; }
+  .v7 .rec-delta { font-size: 12px; font-weight: 700; }
+
+  /* Neon progress */
+  .v7 .np-item { margin-bottom: 10px; }
+  .v7 .np-row { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px; color: #888; }
+  .v7 .np-track { height: 4px; background: rgba(255,255,255,0.04); border-radius: 2px; overflow: hidden; }
+  .v7 .np-fill { height: 100%; border-radius: 2px; }
+  .v7 .np-fill.purple { background: linear-gradient(90deg, #6622cc, #cc88ff); box-shadow: 0 0 8px rgba(150,50,255,0.5); }
+  .v7 .np-fill.cyan { background: linear-gradient(90deg, #0066aa, #00c8ff); box-shadow: 0 0 8px rgba(0,200,255,0.5); }
+  .v7 .np-fill.green { background: linear-gradient(90deg, #00aa66, #00ffcc); box-shadow: 0 0 8px rgba(0,255,204,0.5); }
+  .v7 .np-fill.gold { background: linear-gradient(90deg, #aa6600, #ffdd00); box-shadow: 0 0 8px rgba(255,221,0,0.5); }
+
+</style>
+</head>
+<body>
+
+<!-- NAVIGATION -->
+<div class="nav-selector">
+  <span>Variação:</span>
+  <button class="nav-btn active" onclick="show(1, this)">1 — Command Center</button>
+  <button class="nav-btn" onclick="show(2, this)">2 — Glassmorphism</button>
+  <button class="nav-btn" onclick="show(3, this)">3 — Bloomberg Pro</button>
+  <button class="nav-btn" onclick="show(4, this)">4 — Card Dashboard</button>
+  <button class="nav-btn" onclick="show(5, this)">5 — Analítico</button>
+  <button class="nav-btn" onclick="show(6, this)">6 — Timeline</button>
+  <button class="nav-btn" onclick="show(7, this)">7 — Neon Crypto</button>
+</div>
+
+<!-- ========================================
+     VARIAÇÃO 1 — COMMAND CENTER
+     ======================================== -->
+<div class="variation v1 active" id="v1">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">Análise de Operações</div>
+        <div style="font-size:10px;color:#445;margin-top:2px;">ETH · BTC · Opções</div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center;">
+        <div class="badge-live">AO VIVO</div>
+        <div style="font-size:11px;color:#445;">Atualizado: 08:18</div>
+      </div>
+    </div>
+
+    <div class="filters">
+      <button class="filter-pill active">Todos</button>
+      <button class="filter-pill">Hoje</button>
+      <button class="filter-pill">7d</button>
+      <button class="filter-pill">Mês</button>
+      <button class="filter-pill">30d</button>
+      <button class="filter-pill">Ano</button>
+      <div class="filter-sep"></div>
+      <button class="filter-pill">Abertas</button>
+      <button class="filter-pill">Fechadas</button>
+      <div class="filter-sep"></div>
+      <button class="filter-pill active-green">CALL</button>
+      <button class="filter-pill active-red">PUT</button>
+      <div class="filter-sep"></div>
+      <button class="filter-pill">BTC</button>
+      <button class="filter-pill">ETH</button>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-item">
+        <div class="kpi-label">Resultado Total</div>
+        <div class="kpi-value green">US$ 388,83</div>
+        <div class="meter-row">
+          <div class="meter-bar"><div class="meter-fill" style="width:72%;background:linear-gradient(90deg,#00ff88,#00cc66)"></div></div>
+          <div class="meter-val">+72%</div>
+        </div>
+        <div class="kpi-sub">Meta: US$ 540</div>
+      </div>
+      <div class="kpi-item">
+        <div class="kpi-label">Saldo Atual</div>
+        <div class="kpi-value white">US$ 6.401,89</div>
+        <div class="kpi-sub">Capital alocado: 34%</div>
+        <div class="meter-row">
+          <div class="meter-bar"><div class="meter-fill" style="width:34%;background:linear-gradient(90deg,#667eea,#764ba2)"></div></div>
+          <div class="meter-val" style="color:#667eea">34%</div>
+        </div>
+      </div>
+      <div class="kpi-item">
+        <div class="kpi-label">ROI Período</div>
+        <div class="kpi-value yellow">+4,84%</div>
+        <div class="kpi-sub">14 operações · 100% wins</div>
+        <div class="meter-row">
+          <div class="meter-bar"><div class="meter-fill" style="width:100%;background:linear-gradient(90deg,#ffd700,#ffa500)"></div></div>
+          <div class="meter-val" style="color:#ffd700">100%</div>
+        </div>
+      </div>
+      <div class="kpi-item">
+        <div class="kpi-label">Prêmios Coletados</div>
+        <div class="kpi-value blue">US$ 167,52</div>
+        <div class="kpi-sub">8 operações no ciclo</div>
+        <div class="meter-row">
+          <div class="meter-bar"><div class="meter-fill" style="width:43%;background:linear-gradient(90deg,#667eea,#a855f7)"></div></div>
+          <div class="meter-val" style="color:#a855f7">43%</div>
+        </div>
+      </div>
+      <div class="kpi-item">
+        <div class="kpi-label">Próximo Vencimento</div>
+        <div class="kpi-value white" style="font-size:16px">21/04/2026</div>
+        <div class="kpi-sub">ETH CALL · Strike: 2.275</div>
+        <div style="margin-top:8px;font-size:10px;color:#00ff88">● 7 dias restantes</div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="panel" style="grid-column:span 2">
+        <div class="panel-title">Operações do Período</div>
+        <div class="op-row">
+          <span class="op-type type-put">PUT</span>
+          <div class="op-info"><div class="op-asset">BTC · Strike US$ 71.500</div><div class="op-strike">09/04 · ID #441 · EXERCIDA · Custo médio: US$ 71.500 - US$ 14,26 = US$ 71.485,74</div></div>
+          <span class="op-val">+US$ 14,26</span>
+        </div>
+        <div class="op-row">
+          <span class="op-type type-put">PUT</span>
+          <div class="op-info"><div class="op-asset">ETH · Strike US$ 2.225</div><div class="op-strike">09/04 · ID #445 · EXERCIDA · Custo médio: US$ 2.225 - US$ 13,53 = US$ 2.211,47</div></div>
+          <span class="op-val">+US$ 13,53</span>
+        </div>
+        <div class="op-row">
+          <span class="op-type type-call">CALL</span>
+          <div class="op-info"><div class="op-asset">BTC · Strike US$ 71.500</div><div class="op-strike">10/04 · ID #452 · FECHADA</div></div>
+          <span class="op-val">+US$ 9,23</span>
+        </div>
+        <div class="op-row">
+          <span class="op-type type-call" style="background:rgba(255,165,0,0.2);color:#ffa500;border-color:#ffa500">CALL</span>
+          <div class="op-info"><div class="op-asset">BTC · Strike US$ 72.000</div><div class="op-strike">13/04 · ID #461 · CALL EXERCIDA</div></div>
+          <span class="op-val">+US$ 26,18</span>
+        </div>
+        <div class="op-row">
+          <span class="op-type type-call" style="background:rgba(255,165,0,0.2);color:#ffa500;border-color:#ffa500">CALL</span>
+          <div class="op-info"><div class="op-asset">ETH · Strike US$ 2.225</div><div class="op-strike">13/04 · ID #463 · CALL EXERCIDA</div></div>
+          <span class="op-val">+US$ 22,37</span>
+        </div>
+        <div class="op-row">
+          <span class="op-type type-call" style="background:rgba(255,165,0,0.2);color:#ffa500;border-color:#ffa500">CALL</span>
+          <div class="op-info"><div class="op-asset">BTC · Strike US$ 72.000</div><div class="op-strike">14/04 · ID #468 · CALL EXERCIDA</div></div>
+          <span class="op-val">+US$ 3,90</span>
+        </div>
+        <div class="op-row">
+          <span class="op-type type-call" style="background:rgba(255,165,0,0.2);color:#ffa500;border-color:#ffa500">CALL</span>
+          <div class="op-info"><div class="op-asset">ETH · Strike US$ 2.225</div><div class="op-strike">14/04 · ID #470 · CALL EXERCIDA</div></div>
+          <span class="op-val">+US$ 8,80</span>
+        </div>
+      </div>
+
+      <div class="panel green">
+        <div class="panel-title">Melhores Strikes Sugeridos</div>
+        <div class="strike-rec">
+          <div class="strike-info">
+            <div style="font-size:12px;font-weight:600;color:#ddd">ETH CALL · 2.300</div>
+            <div style="font-size:10px;color:#555">Delta: 0.32 · IV: 68%</div>
+          </div>
+          <div class="strike-score">
+            <div class="score-dot" style="background:#00ff88"></div>
+            <div class="score-dot" style="background:#00ff88"></div>
+            <div class="score-dot" style="background:#00ff88"></div>
+            <div class="score-dot" style="background:#00ff88"></div>
+            <div class="score-dot" style="background:#333"></div>
+            <span style="font-size:11px;color:#00ff88;font-weight:700">4/5</span>
+          </div>
+        </div>
+        <div class="strike-rec">
+          <div class="strike-info">
+            <div style="font-size:12px;font-weight:600;color:#ddd">BTC CALL · 73.500</div>
+            <div style="font-size:10px;color:#555">Delta: 0.28 · IV: 72%</div>
+          </div>
+          <div class="strike-score">
+            <div class="score-dot" style="background:#00ff88"></div>
+            <div class="score-dot" style="background:#00ff88"></div>
+            <div class="score-dot" style="background:#00ff88"></div>
+            <div class="score-dot" style="background:#333"></div>
+            <div class="score-dot" style="background:#333"></div>
+            <span style="font-size:11px;color:#ffa500;font-weight:700">3/5</span>
+          </div>
+        </div>
+        <div class="strike-rec" style="border-left-color:#667eea">
+          <div class="strike-info">
+            <div style="font-size:12px;font-weight:600;color:#ddd">ETH PUT · 2.100</div>
+            <div style="font-size:10px;color:#555">Delta: -0.25 · IV: 65%</div>
+          </div>
+          <div class="strike-score">
+            <div class="score-dot" style="background:#667eea"></div>
+            <div class="score-dot" style="background:#667eea"></div>
+            <div class="score-dot" style="background:#667eea"></div>
+            <div class="score-dot" style="background:#333"></div>
+            <div class="score-dot" style="background:#333"></div>
+            <span style="font-size:11px;color:#667eea;font-weight:700">3/5</span>
+          </div>
+        </div>
+        <div style="margin-top:14px;">
+          <div style="font-size:10px;color:#445;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">Composição Atual</div>
+          <div style="display:flex;gap:6px;height:12px;border-radius:6px;overflow:hidden">
+            <div style="background:#667eea;flex:6;border-radius:6px 0 0 6px"></div>
+            <div style="background:#ff5050;flex:4;border-radius:0 6px 6px 0"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:#555;margin-top:4px">
+            <span>CALL 60%</span><span>PUT 40%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" style="height:220px">
+        <div class="panel-title">Evolução de Prêmios</div>
+        <canvas id="chart1" style="max-height:160px"></canvas>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Análise de Ciclo</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+          <div style="background:rgba(255,80,80,0.05);border:1px solid #2a1a1a;border-radius:6px;padding:10px">
+            <div style="font-size:9px;color:#555;margin-bottom:4px">PUT COMPRA</div>
+            <div style="font-size:16px;font-weight:700;color:#ff5050">2.225,00</div>
+            <div style="font-size:10px;color:#333">ETH · 09/04 · #445</div>
+          </div>
+          <div style="background:rgba(102,126,234,0.05);border:1px solid #1a1a2a;border-radius:6px;padding:10px">
+            <div style="font-size:9px;color:#555;margin-bottom:4px">CALL VENDA</div>
+            <div style="font-size:16px;font-weight:700;color:#667eea">2.225,00</div>
+            <div style="font-size:10px;color:#333">ETH · 14/04 · #470</div>
+          </div>
+        </div>
+        <div style="background:rgba(0,255,136,0.03);border:1px solid #0a2a1a;border-radius:6px;padding:10px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+            <span style="font-size:10px;color:#445">Prêmios no ciclo</span>
+            <span style="font-size:13px;font-weight:700;color:#00ff88">+US$ 107,69</span>
+          </div>
+          <div style="display:flex;justify-content:space-between">
+            <span style="font-size:10px;color:#445">Variação do ativo</span>
+            <span style="font-size:13px;font-weight:700;color:#aaa">US$ 0,00</span>
+          </div>
+        </div>
+        <div style="margin-top:10px;font-size:11px;color:#445">
+          Custo médio atual: <span style="color:#00ff88;font-weight:700">US$ 2.225,00 - US$ 107,69 = US$ 2.117,31</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================
+     VARIAÇÃO 2 — GLASSMORPHISM ELEGANTE
+     ======================================== -->
+<div class="variation v2" id="v2">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">Análise de Performance</div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:2px">Portfólio de Opções Crypto</div>
+      </div>
+      <button class="close-btn">✕</button>
+    </div>
+
+    <div class="filters">
+      <button class="fp active">Todos</button>
+      <button class="fp">Hoje</button>
+      <button class="fp">7d</button>
+      <button class="fp">Mês</button>
+      <button class="fp">30d</button>
+      <button class="fp">Ano</button>
+      <div class="fp-div"></div>
+      <button class="fp">Abertas</button>
+      <button class="fp">Fechadas</button>
+      <div class="fp-div"></div>
+      <button class="fp call">CALL</button>
+      <button class="fp put">PUT</button>
+      <div class="fp-div"></div>
+      <button class="fp">BTC</button>
+      <button class="fp">ETH</button>
+    </div>
+
+    <div class="stats-bar">
+      <div class="stat-box">
+        <div class="stat-label">Resultado Total</div>
+        <div class="stat-num profit">+US$ 388,83</div>
+        <div class="stat-trend up">↑ 4,84% no período</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Saldo Atual</div>
+        <div class="stat-num blue">6.401,89</div>
+        <div class="stat-trend" style="color:rgba(255,255,255,0.2)">Capital total</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Win Rate</div>
+        <div class="stat-num gold">100%</div>
+        <div class="stat-trend up">14 de 14 ops</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Prêmios</div>
+        <div class="stat-num" style="background:linear-gradient(135deg,#a78bfa,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent">167,52</div>
+        <div class="stat-trend" style="color:rgba(255,255,255,0.2)">Este ciclo</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Histórico Total</div>
+        <div class="stat-num profit">388,83</div>
+        <div class="stat-trend up">Sequência: 5</div>
+      </div>
+    </div>
+
+    <div class="body">
+      <div style="grid-column:span 3;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:16px;margin-bottom:16px;">
+        <div class="card-title" style="font-size:10px;color:rgba(255,255,255,0.25);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px">Distribuição Call/Put & Performance</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px">
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:10px;font-size:12px">
+              <span style="color:rgba(255,255,255,0.5)">Tipo de Operação</span>
+            </div>
+            <div class="pbar-item">
+              <div class="pbar-head"><span style="color:#818cf8">CALL</span><span style="color:#818cf8">60%</span></div>
+              <div class="pbar-track"><div class="pbar-fill" style="width:60%;background:linear-gradient(90deg,#4338ca,#818cf8)"></div></div>
+            </div>
+            <div class="pbar-item">
+              <div class="pbar-head"><span style="color:#f87171">PUT</span><span style="color:#f87171">40%</span></div>
+              <div class="pbar-track"><div class="pbar-fill" style="width:40%;background:linear-gradient(90deg,#9f1239,#f87171)"></div></div>
+            </div>
+            <div class="pbar-item">
+              <div class="pbar-head"><span style="color:#34d399">Exercidas</span><span style="color:#34d399">57%</span></div>
+              <div class="pbar-track"><div class="pbar-fill" style="width:57%;background:linear-gradient(90deg,#065f46,#34d399)"></div></div>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:10px">Por Ativo</div>
+            <div class="pbar-item">
+              <div class="pbar-head"><span style="color:#fbbf24">BTC</span><span style="color:#fbbf24">50%</span></div>
+              <div class="pbar-track"><div class="pbar-fill" style="width:50%;background:linear-gradient(90deg,#92400e,#fbbf24)"></div></div>
+            </div>
+            <div class="pbar-item">
+              <div class="pbar-head"><span style="color:#63b3ed">ETH</span><span style="color:#63b3ed">50%</span></div>
+              <div class="pbar-track"><div class="pbar-fill" style="width:50%;background:linear-gradient(90deg,#1e3a5f,#63b3ed)"></div></div>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:10px">Custo Médio Atual</div>
+            <div style="background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.2);border-radius:8px;padding:12px">
+              <div style="font-size:10px;color:rgba(52,211,153,0.6);margin-bottom:4px">ETH — após ciclo</div>
+              <div style="font-size:20px;font-weight:700;color:#34d399">US$ 2.117,31</div>
+              <div style="font-size:10px;color:rgba(52,211,153,0.5);margin-top:4px">2.225 - 107,69 prêmios</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:14px">
+        <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:16px">
+          <div class="card-title" style="font-size:10px;color:rgba(255,255,255,0.25);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px">Operações Recentes</div>
+          <div class="op-list-item">
+            <span class="badge b-ex">PUT EX.</span>
+            <div style="flex:1"><div style="font-size:12px;font-weight:600;color:#ccc">ETH · Strike 2.225</div><div style="font-size:10px;color:rgba(255,255,255,0.3)">09/04 · Compra exercida · #445</div></div>
+            <span style="font-size:11px;color:rgba(255,255,255,0.3)">Custo: 2.211,47</span>
+            <span style="font-weight:700;color:#34d399">+$13,53</span>
+          </div>
+          <div class="op-list-item">
+            <span class="badge b-call">CALL</span>
+            <div style="flex:1"><div style="font-size:12px;font-weight:600;color:#ccc">BTC · Strike 71.500</div><div style="font-size:10px;color:rgba(255,255,255,0.3)">10/04 · Fechada · #452</div></div>
+            <span style="font-size:11px;color:rgba(255,255,255,0.3)">—</span>
+            <span style="font-weight:700;color:#34d399">+$9,23</span>
+          </div>
+          <div class="op-list-item">
+            <span class="badge b-ex" style="background:rgba(102,126,234,0.15);color:#818cf8;border-color:rgba(102,126,234,0.3)">CALL EX.</span>
+            <div style="flex:1"><div style="font-size:12px;font-weight:600;color:#ccc">BTC · Strike 72.000</div><div style="font-size:10px;color:rgba(255,255,255,0.3)">13/04 · CALL exercida · #461</div></div>
+            <span style="font-size:11px;color:rgba(255,255,255,0.3)">—</span>
+            <span style="font-weight:700;color:#34d399">+$26,18</span>
+          </div>
+          <div class="op-list-item">
+            <span class="badge b-ex" style="background:rgba(102,126,234,0.15);color:#818cf8;border-color:rgba(102,126,234,0.3)">CALL EX.</span>
+            <div style="flex:1"><div style="font-size:12px;font-weight:600;color:#ccc">ETH · Strike 2.225</div><div style="font-size:10px;color:rgba(255,255,255,0.3)">13/04 · CALL exercida · #463</div></div>
+            <span style="font-size:11px;color:rgba(255,255,255,0.3)">—</span>
+            <span style="font-weight:700;color:#34d399">+$22,37</span>
+          </div>
+          <div class="op-list-item">
+            <span class="badge b-open">ABERTA</span>
+            <div style="flex:1"><div style="font-size:12px;font-weight:600;color:#ccc">ETH CALL · Strike 2.275</div><div style="font-size:10px;color:rgba(255,255,255,0.3)">Vence 21/04 · 7 dias</div></div>
+            <span style="font-size:11px;color:rgba(255,255,255,0.3)">Prêmio: 18,50</span>
+            <span style="font-size:10px;color:#34d399">Em curso</span>
+          </div>
+        </div>
+        <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:16px">
+          <div class="card-title" style="font-size:10px;color:rgba(255,255,255,0.25);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px">Melhores Strikes</div>
+          <div style="background:rgba(52,211,153,0.06);border:1px solid rgba(52,211,153,0.15);border-radius:8px;padding:10px;margin-bottom:8px">
+            <div style="font-size:11px;font-weight:600;color:#34d399">ETH CALL · 2.300</div>
+            <div style="font-size:10px;color:rgba(52,211,153,0.5);margin-top:2px">Score: ████░ · Delta 0.32</div>
+            <div style="font-size:12px;color:#fff;font-weight:700;margin-top:4px">Prêmio est.: ~$18</div>
+          </div>
+          <div style="background:rgba(99,179,237,0.06);border:1px solid rgba(99,179,237,0.15);border-radius:8px;padding:10px;margin-bottom:8px">
+            <div style="font-size:11px;font-weight:600;color:#63b3ed">BTC CALL · 73.500</div>
+            <div style="font-size:10px;color:rgba(99,179,237,0.5);margin-top:2px">Score: ███░░ · Delta 0.28</div>
+            <div style="font-size:12px;color:#fff;font-weight:700;margin-top:4px">Prêmio est.: ~$24</div>
+          </div>
+          <div style="background:rgba(248,113,113,0.06);border:1px solid rgba(248,113,113,0.15);border-radius:8px;padding:10px">
+            <div style="font-size:11px;font-weight:600;color:#f87171">ETH PUT · 2.100</div>
+            <div style="font-size:10px;color:rgba(248,113,113,0.5);margin-top:2px">Score: ███░░ · Delta -0.25</div>
+            <div style="font-size:12px;color:#fff;font-weight:700;margin-top:4px">Prêmio est.: ~$15</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================
+     VARIAÇÃO 3 — BLOOMBERG PRO
+     ======================================== -->
+<div class="variation v3" id="v3">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">■ CRYPTO OPTIONS ANALYTICS</div>
+      <div class="time-display">14/04/2026 08:18:42 UTC-3</div>
+    </div>
+    <div class="filters">
+      <button class="ftab active">ALL</button>
+      <button class="ftab">TODAY</button>
+      <button class="ftab">7D</button>
+      <button class="ftab">MES</button>
+      <button class="ftab">30D</button>
+      <button class="ftab">ANO</button>
+      <div class="ftab-sep"></div>
+      <button class="ftab">ABERTAS</button>
+      <button class="ftab">FECHADAS</button>
+      <div class="ftab-sep"></div>
+      <button class="ftab call-tab active">CALL</button>
+      <button class="ftab put-tab active">PUT</button>
+      <div class="ftab-sep"></div>
+      <button class="ftab">BTC</button>
+      <button class="ftab">ETH</button>
+    </div>
+    <div class="ticker-row">
+      <div class="tick-cell">
+        <div class="tick-label">RESULTADO TOTAL</div>
+        <div class="tick-value orange">$388.83</div>
+        <div class="tick-sub tick-up">▲ +4.84%</div>
+      </div>
+      <div class="tick-cell">
+        <div class="tick-label">SALDO ATUAL</div>
+        <div class="tick-value white">$6,401.89</div>
+        <div class="tick-sub" style="color:#444">CAPITAL</div>
+      </div>
+      <div class="tick-cell">
+        <div class="tick-label">WIN RATE</div>
+        <div class="tick-value green">100.00%</div>
+        <div class="tick-sub">14/14 OPS</div>
+      </div>
+      <div class="tick-cell">
+        <div class="tick-label">PRÊMIOS CICLO</div>
+        <div class="tick-value blue">$167.52</div>
+        <div class="tick-sub">8 OPERAÇÕES</div>
+      </div>
+      <div class="tick-cell">
+        <div class="tick-label">CUSTO MÉDIO ETH</div>
+        <div class="tick-value green">$2,117.31</div>
+        <div class="tick-sub tick-up">▼ -4.84% DO STRIKE</div>
+      </div>
+      <div class="tick-cell">
+        <div class="tick-label">PROFIT FACTOR</div>
+        <div class="tick-value orange">∞</div>
+        <div class="tick-sub">SEQUÊNCIA: 5</div>
+      </div>
+    </div>
+    <div class="body">
+      <div class="section-title">
+        <span>HISTÓRICO DE OPERAÇÕES</span>
+        <span style="color:#ff6600">14 registros</span>
+      </div>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>DATA</th><th>ATIVO</th><th>TIPO</th><th>STRIKE</th><th>STATUS</th><th>PRÊMIO</th><th>CUSTO MÉDIO</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>09/04</td><td>BTC</td><td class="t-put">PUT</td><td>$71,500</td><td><span class="t-status s-ex">EXERCIDA</span></td><td class="t-green">$14.26</td><td class="t-green">$71,485.74</td>
+          </tr>
+          <tr>
+            <td>09/04</td><td>ETH</td><td class="t-put">PUT</td><td>$2,225</td><td><span class="t-status s-ex">EXERCIDA</span></td><td class="t-green">$13.53</td><td class="t-green">$2,211.47</td>
+          </tr>
+          <tr>
+            <td>10/04</td><td>BTC</td><td class="t-call">CALL</td><td>$71,500</td><td><span class="t-status s-closed">FECHADA</span></td><td class="t-green">$9.23</td><td>—</td>
+          </tr>
+          <tr>
+            <td>13/04</td><td>BTC</td><td class="t-ex">CALL★</td><td>$72,000</td><td><span class="t-status s-ex">C.EXERCIDA</span></td><td class="t-green">$26.18</td><td>—</td>
+          </tr>
+          <tr>
+            <td>13/04</td><td>ETH</td><td class="t-ex">CALL★</td><td>$2,225</td><td><span class="t-status s-ex">C.EXERCIDA</span></td><td class="t-green">$22.37</td><td class="t-green">$2,189.10</td>
+          </tr>
+          <tr>
+            <td>14/04</td><td>BTC</td><td class="t-ex">CALL★</td><td>$72,000</td><td><span class="t-status s-ex">C.EXERCIDA</span></td><td class="t-green">$3.90</td><td>—</td>
+          </tr>
+          <tr>
+            <td>14/04</td><td>ETH</td><td class="t-ex">CALL★</td><td>$2,225</td><td><span class="t-status s-ex">C.EXERCIDA</span></td><td class="t-green">$8.80</td><td class="t-green">$2,117.31</td>
+          </tr>
+          <tr style="background:#0f1a0f">
+            <td colspan="5" style="color:#333;font-size:10px">ABERTA</td><td colspan="2"></td>
+          </tr>
+          <tr style="background:#0a0f0a">
+            <td>21/04</td><td>ETH</td><td class="t-call">CALL</td><td>$2,275</td><td><span class="t-status s-open">ABERTA</span></td><td style="color:#00cc66">$18.50*</td><td>—</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="chart-row">
+        <div class="chart-box">
+          <div class="chart-title">CURVA DE PRÊMIOS ACUMULADOS</div>
+          <canvas id="chart3" style="max-height:160px"></canvas>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title">MELHORES STRIKES — ANÁLISE</div>
+          <table class="table" style="margin-top:0">
+            <tr><th>ATIVO</th><th>TIPO</th><th>STRIKE</th><th>SCORE</th></tr>
+            <tr><td>ETH</td><td class="t-call">CALL</td><td>2.300</td><td style="color:#00cc66">A+ 92</td></tr>
+            <tr><td>BTC</td><td class="t-call">CALL</td><td>73.5K</td><td style="color:#00cc66">A 85</td></tr>
+            <tr><td>ETH</td><td class="t-put">PUT</td><td>2.100</td><td style="color:#4488ff">B+ 78</td></tr>
+            <tr><td>BTC</td><td class="t-put">PUT</td><td>69.0K</td><td style="color:#4488ff">B 71</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================
+     VARIAÇÃO 4 — CARD DASHBOARD
+     ======================================== -->
+<div class="variation v4" id="v4">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">Dashboard de Operações</div>
+      </div>
+      <div class="header-right">
+        <div class="update-badge">Atualizado: 08:18</div>
+      </div>
+    </div>
+
+    <div class="filters">
+      <button class="fp a">Todos</button>
+      <button class="fp">Hoje</button>
+      <button class="fp">7d</button>
+      <button class="fp">Mês</button>
+      <button class="fp">30d</button>
+      <button class="fp">Ano</button>
+      <div class="fp-sep"></div>
+      <button class="fp">Abertas</button>
+      <button class="fp">Fechadas</button>
+      <div class="fp-sep"></div>
+      <button class="fp call">CALL</button>
+      <button class="fp put">PUT</button>
+      <div class="fp-sep"></div>
+      <button class="fp">BTC</button>
+      <button class="fp">ETH</button>
+    </div>
+
+    <div class="hero-strip">
+      <div>
+        <div class="hero-label">Resultado Total</div>
+        <div class="hero-num">+$388,83</div>
+      </div>
+      <div class="hero-divider"></div>
+      <div class="hero-stat">
+        <div class="hero-stat-val g">+4,84%</div>
+        <div class="hero-stat-label">ROI</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-val b">6.401,89</div>
+        <div class="hero-stat-label">Saldo</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-val y">100%</div>
+        <div class="hero-stat-label">Win Rate</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-val p">14</div>
+        <div class="hero-stat-label">Operações</div>
+      </div>
+      <div class="win-bar-wrap">
+        <div class="win-bar-label">
+          <span style="color:#00ff88;font-size:11px">WIN: 14</span>
+          <span style="color:#ff5050;font-size:11px">LOSS: 0</span>
+        </div>
+        <div class="win-bar-track"><div class="win-bar-fill" style="width:100%"></div></div>
+        <div style="font-size:10px;color:#445;margin-top:4px">Sequência de vitórias: 5</div>
+      </div>
+    </div>
+
+    <div class="body">
+      <div class="row c3">
+        <div class="card">
+          <div class="card-accent" style="background:linear-gradient(90deg,#00ff88,#00aa66)"></div>
+          <div class="card-title">Prêmios Coletados</div>
+          <div class="card-big" style="color:#00ff88">$167,52</div>
+          <div style="font-size:10px;color:#445;margin-top:6px">Ciclo atual · 8 operações</div>
+          <div style="margin-top:10px;height:4px;background:#1e1e30;border-radius:2px;overflow:hidden">
+            <div style="width:43%;height:100%;background:linear-gradient(90deg,#00ff88,#00aa66);border-radius:2px"></div>
+          </div>
+          <div style="font-size:10px;color:#445;margin-top:4px">43% da meta mensal</div>
+        </div>
+        <div class="card">
+          <div class="card-accent" style="background:linear-gradient(90deg,#38bdf8,#1d4ed8)"></div>
+          <div class="card-title">Custo Médio ETH</div>
+          <div class="card-big" style="color:#38bdf8">$2.117,31</div>
+          <div style="font-size:10px;color:#445;margin-top:6px">Strike: 2.225 · Desconto: -4,84%</div>
+          <div style="margin-top:10px;display:flex;align-items:center;gap:6px">
+            <div style="height:4px;background:#1e1e30;border-radius:2px;flex:1;overflow:hidden">
+              <div style="width:5%;height:100%;background:#ff5050;border-radius:2px"></div>
+            </div>
+            <span style="font-size:10px;color:#00ff88">-4,84%</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-accent" style="background:linear-gradient(90deg,#fbbf24,#d97706)"></div>
+          <div class="card-title">Histórico Total</div>
+          <div class="card-big" style="color:#fbbf24">$388,83</div>
+          <div style="font-size:10px;color:#445;margin-top:6px">Desde o início · Melhor dia: $49,75</div>
+          <div style="margin-top:10px;font-size:11px">
+            <span style="color:#00ff88">▲ $49,75</span> <span style="color:#445">melhor dia</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="row c2">
+        <div class="card">
+          <div class="card-title">Operações Recentes</div>
+          <div class="op-item">
+            <span class="op-badge bp">PUT</span>
+            <div class="op-text"><div class="op-asset-name">ETH · 09/04 · #445</div><div class="op-sub">Strike $2.225 · Exercida · Custo: $2.211,47</div></div>
+            <span class="op-premium">+$13,53</span>
+          </div>
+          <div class="op-item">
+            <span class="op-badge bc">CALL</span>
+            <div class="op-text"><div class="op-asset-name">BTC · 10/04 · #452</div><div class="op-sub">Strike $71.500 · Fechada</div></div>
+            <span class="op-premium">+$9,23</span>
+          </div>
+          <div class="op-item">
+            <span class="op-badge be">CALL★</span>
+            <div class="op-text"><div class="op-asset-name">BTC · 13/04 · #461</div><div class="op-sub">Strike $72.000 · CALL Exercida</div></div>
+            <span class="op-premium">+$26,18</span>
+          </div>
+          <div class="op-item">
+            <span class="op-badge be">CALL★</span>
+            <div class="op-text"><div class="op-asset-name">ETH · 13/04 · #463</div><div class="op-sub">Strike $2.225 · CALL Exercida</div></div>
+            <span class="op-premium">+$22,37</span>
+          </div>
+          <div class="op-item">
+            <span class="op-badge be">CALL★</span>
+            <div class="op-text"><div class="op-asset-name">ETH · 14/04 · #470</div><div class="op-sub">Strike $2.225 · CALL Exercida</div></div>
+            <span class="op-premium">+$8,80</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Evolução de Capital</div>
+          <canvas id="chart4" style="max-height:200px"></canvas>
+        </div>
+      </div>
+
+      <div class="row c3">
+        <div class="card">
+          <div class="card-accent" style="background:linear-gradient(90deg,#38bdf8,#6366f1)"></div>
+          <div class="card-title">CALL Score</div>
+          <div style="text-align:center;padding:10px 0">
+            <div style="font-size:42px;font-weight:800;color:#38bdf8">60%</div>
+            <div style="font-size:11px;color:#445">8 de 14 operações</div>
+          </div>
+          <div style="height:6px;background:#1e1e30;border-radius:3px;overflow:hidden">
+            <div style="width:60%;height:100%;background:linear-gradient(90deg,#38bdf8,#6366f1);border-radius:3px"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-accent" style="background:linear-gradient(90deg,#fb7185,#e11d48)"></div>
+          <div class="card-title">PUT Score</div>
+          <div style="text-align:center;padding:10px 0">
+            <div style="font-size:42px;font-weight:800;color:#fb7185">40%</div>
+            <div style="font-size:11px;color:#445">6 de 14 operações</div>
+          </div>
+          <div style="height:6px;background:#1e1e30;border-radius:3px;overflow:hidden">
+            <div style="width:40%;height:100%;background:linear-gradient(90deg,#fb7185,#e11d48);border-radius:3px"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-accent" style="background:linear-gradient(90deg,#a78bfa,#7c3aed)"></div>
+          <div class="card-title">Próxima Operação Sugerida</div>
+          <div style="background:rgba(167,139,250,0.08);border:1px solid rgba(167,139,250,0.2);border-radius:8px;padding:10px;margin-bottom:8px">
+            <div style="font-size:12px;font-weight:700;color:#a78bfa">ETH CALL · 2.300</div>
+            <div style="font-size:10px;color:#556;margin-top:3px">Delta: 0.32 · IV: 68% · Prêmio: ~$18</div>
+          </div>
+          <div style="font-size:10px;color:#445">Score de qualidade:
+            <span style="color:#a78bfa;font-weight:700">92/100 ★★★★★</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================
+     VARIAÇÃO 5 — ANALÍTICO TABULAR
+     ======================================== -->
+<div class="variation v5" id="v5">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Performance Analytics — Opções Crypto</div>
+      <div style="font-size:11px;color:#334">Atualizado: 08:18 · 14/04/2026</div>
+    </div>
+
+    <div class="filters">
+      <div class="fp-group">
+        <button class="fp a">Todos</button>
+        <button class="fp">Hoje</button>
+        <button class="fp">7d</button>
+        <button class="fp">Mês</button>
+        <button class="fp">30d</button>
+        <button class="fp">Ano</button>
+      </div>
+      <div class="fp-gap"></div>
+      <div class="fp-group">
+        <button class="fp">Abertas</button>
+        <button class="fp">Fechadas</button>
+      </div>
+      <div class="fp-gap"></div>
+      <div class="fp-group">
+        <button class="fp call">CALL</button>
+        <button class="fp put">PUT</button>
+      </div>
+      <div class="fp-gap"></div>
+      <div class="fp-group">
+        <button class="fp">BTC</button>
+        <button class="fp">ETH</button>
+      </div>
+    </div>
+
+    <div class="summary">
+      <div class="sum-cell"><div class="sum-label">Resultado</div><div class="sum-val sv-g">+$388,83</div><div class="sum-change up">↑ +4,84%</div></div>
+      <div class="sum-cell"><div class="sum-label">Saldo</div><div class="sum-val sv-b">$6.401,89</div><div class="sum-change" style="color:#334">capital total</div></div>
+      <div class="sum-cell"><div class="sum-label">Win Rate</div><div class="sum-val sv-y">100%</div><div class="sum-change up">14 de 14</div></div>
+      <div class="sum-cell"><div class="sum-label">Prêmios</div><div class="sum-val sv-p">$167,52</div><div class="sum-change" style="color:#334">este ciclo</div></div>
+      <div class="sum-cell"><div class="sum-label">Ops Exerc.</div><div class="sum-val sv-w">8</div><div class="sum-change" style="color:#334">57% do total</div></div>
+      <div class="sum-cell"><div class="sum-label">P.Factor</div><div class="sum-val sv-g">∞</div><div class="sum-change up">sequência: 5</div></div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active">Operações</div>
+      <div class="tab">Desempenho</div>
+      <div class="tab">Ciclos</div>
+      <div class="tab">Sugestões</div>
+    </div>
+
+    <div class="body">
+      <div class="grid2">
+        <div>
+          <div class="box" style="margin-bottom:14px">
+            <div class="box-title">Histórico de Operações</div>
+            <table class="data-table">
+              <tr><th>Data</th><th>Ativo</th><th>Tipo</th><th>Strike</th><th>Status</th><th>Prêmio</th><th>Custo Médio</th></tr>
+              <tr><td>09/04</td><td>BTC</td><td><span class="pill pp">PUT</span></td><td>$71.500</td><td><span class="pill pe">EXERCIDA</span></td><td style="color:#4ade80">$14,26</td><td style="color:#4ade80">$71.485,74</td></tr>
+              <tr><td>09/04</td><td>ETH</td><td><span class="pill pp">PUT</span></td><td>$2.225</td><td><span class="pill pe">EXERCIDA</span></td><td style="color:#4ade80">$13,53</td><td style="color:#4ade80">$2.211,47</td></tr>
+              <tr><td>10/04</td><td>BTC</td><td><span class="pill pc">CALL</span></td><td>$71.500</td><td><span class="pill" style="background:rgba(100,100,100,0.15);color:#666">FECHADA</span></td><td style="color:#4ade80">$9,23</td><td>—</td></tr>
+              <tr><td>13/04</td><td>BTC</td><td><span class="pill pc">CALL</span></td><td>$72.000</td><td><span class="pill pe">C.EXERCIDA</span></td><td style="color:#4ade80">$26,18</td><td>—</td></tr>
+              <tr><td>13/04</td><td>ETH</td><td><span class="pill pc">CALL</span></td><td>$2.225</td><td><span class="pill pe">C.EXERCIDA</span></td><td style="color:#4ade80">$22,37</td><td style="color:#4ade80">$2.189,10</td></tr>
+              <tr><td>14/04</td><td>BTC</td><td><span class="pill pc">CALL</span></td><td>$72.000</td><td><span class="pill pe">C.EXERCIDA</span></td><td style="color:#4ade80">$3,90</td><td>—</td></tr>
+              <tr><td>14/04</td><td>ETH</td><td><span class="pill pc">CALL</span></td><td>$2.225</td><td><span class="pill pe">C.EXERCIDA</span></td><td style="color:#4ade80">$8,80</td><td style="color:#4ade80">$2.117,31</td></tr>
+              <tr style="background:rgba(74,222,128,0.04)"><td>21/04</td><td>ETH</td><td><span class="pill pc">CALL</span></td><td>$2.275</td><td><span class="pill pf">ABERTA</span></td><td style="color:#4ade80">$18,50*</td><td>—</td></tr>
+            </table>
+          </div>
+          <div class="box" style="height:200px">
+            <div class="box-title">Evolução de Prêmios Acumulados</div>
+            <canvas id="chart5" style="max-height:150px"></canvas>
+          </div>
+        </div>
+        <div>
+          <div class="box" style="margin-bottom:14px">
+            <div class="box-title">Performance por Tipo</div>
+            <div class="perf-item">
+              <div class="perf-row"><span class="perf-name">CALL — Prêmios</span><span class="perf-val" style="color:#60a5fa">$70,48</span></div>
+              <div class="perf-track"><div class="perf-fill" style="width:60%;background:linear-gradient(90deg,#1e3a5f,#60a5fa)"></div></div>
+            </div>
+            <div class="perf-item">
+              <div class="perf-row"><span class="perf-name">PUT — Prêmios</span><span class="perf-val" style="color:#f87171">$27,79</span></div>
+              <div class="perf-track"><div class="perf-fill" style="width:40%;background:linear-gradient(90deg,#4c0519,#f87171)"></div></div>
+            </div>
+            <div class="perf-item">
+              <div class="perf-row"><span class="perf-name">BTC — Total</span><span class="perf-val" style="color:#facc15">$53,57</span></div>
+              <div class="perf-track"><div class="perf-fill" style="width:50%;background:linear-gradient(90deg,#713f12,#facc15)"></div></div>
+            </div>
+            <div class="perf-item">
+              <div class="perf-row"><span class="perf-name">ETH — Total</span><span class="perf-val" style="color:#60a5fa">$114,26</span></div>
+              <div class="perf-track"><div class="perf-fill" style="width:68%;background:linear-gradient(90deg,#1e3a5f,#60a5fa)"></div></div>
+            </div>
+            <div class="perf-item">
+              <div class="perf-row"><span class="perf-name">Exercidas</span><span class="perf-val" style="color:#facc15">57%</span></div>
+              <div class="perf-track"><div class="perf-fill" style="width:57%;background:linear-gradient(90deg,#713f12,#facc15)"></div></div>
+            </div>
+            <div class="perf-item">
+              <div class="perf-row"><span class="perf-name">Win Rate Geral</span><span class="perf-val" style="color:#4ade80">100%</span></div>
+              <div class="perf-track"><div class="perf-fill" style="width:100%;background:linear-gradient(90deg,#14532d,#4ade80)"></div></div>
+            </div>
+          </div>
+          <div class="box" style="margin-bottom:14px">
+            <div class="box-title">Custo Médio Atual</div>
+            <div style="padding:8px 0">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                <span style="font-size:12px;color:#667">ETH após ciclo</span>
+                <span style="font-size:18px;font-weight:700;color:#4ade80">$2.117,31</span>
+              </div>
+              <div style="height:6px;background:#1c1d24;border-radius:3px;overflow:hidden;margin-bottom:4px">
+                <div style="width:95.16%;height:100%;background:linear-gradient(90deg,#14532d,#4ade80)"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:10px;color:#334">
+                <span>Strike: $2.225</span><span>Desconto: -$107,69 (-4,84%)</span>
+              </div>
+            </div>
+          </div>
+          <div class="box">
+            <div class="box-title">Strikes Recomendados</div>
+            <table class="data-table">
+              <tr><th>Ativo</th><th>Tipo</th><th>Strike</th><th>Score</th><th>Prêmio</th></tr>
+              <tr><td>ETH</td><td><span class="pill pc">CALL</span></td><td>2.300</td><td style="color:#4ade80">A+ 92</td><td style="color:#4ade80">~$18</td></tr>
+              <tr><td>BTC</td><td><span class="pill pc">CALL</span></td><td>73.5K</td><td style="color:#4ade80">A 85</td><td style="color:#4ade80">~$24</td></tr>
+              <tr><td>ETH</td><td><span class="pill pp">PUT</span></td><td>2.100</td><td style="color:#60a5fa">B+ 78</td><td style="color:#4ade80">~$15</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================
+     VARIAÇÃO 6 — TIMELINE VISUAL
+     ======================================== -->
+<div class="variation v6" id="v6">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">Análise Temporal de Performance</div>
+      </div>
+      <div style="font-size:11px;color:#334">Atualizado: 08:18</div>
+    </div>
+    <div class="filters">
+      <button class="fp a">Todos</button>
+      <button class="fp">Hoje</button>
+      <button class="fp">7d</button>
+      <button class="fp">Mês</button>
+      <button class="fp">30d</button>
+      <button class="fp">Ano</button>
+      <div class="fp-sep"></div>
+      <button class="fp">Abertas</button>
+      <button class="fp">Fechadas</button>
+      <div class="fp-sep"></div>
+      <button class="fp" style="color:#5588ff;border-color:#5588ff44">CALL</button>
+      <button class="fp" style="color:#ff5566;border-color:#ff556644">PUT</button>
+      <div class="fp-sep"></div>
+      <button class="fp">BTC</button>
+      <button class="fp">ETH</button>
+    </div>
+    <div class="top-stats">
+      <div class="profit-hero">
+        <div class="profit-label">Resultado Total</div>
+        <div class="profit-amount">+$388,83</div>
+        <div class="profit-period">14/04/2026 · 7 dias</div>
+      </div>
+      <div class="stats-right">
+        <div class="s-cell"><div class="s-cell-label">ROI</div><div class="s-cell-val sc-g">+4,84%</div></div>
+        <div class="s-cell"><div class="s-cell-label">Win Rate</div><div class="s-cell-val sc-y">100%</div></div>
+        <div class="s-cell"><div class="s-cell-label">Operações</div><div class="s-cell-val sc-w">14</div></div>
+        <div class="s-cell"><div class="s-cell-label">Prêmios</div><div class="s-cell-val sc-b">$167,52</div></div>
+        <div class="s-cell"><div class="s-cell-label">Exercidas</div><div class="s-cell-val sc-y">8</div></div>
+        <div class="s-cell"><div class="s-cell-label">Saldo</div><div class="s-cell-val sc-g">$6.401</div></div>
+        <div class="s-cell"><div class="s-cell-label">Custo Médio</div><div class="s-cell-val sc-b">$2.117</div></div>
+        <div class="s-cell"><div class="s-cell-label">Sequência</div><div class="s-cell-val sc-p">5 wins</div></div>
+      </div>
+    </div>
+    <div class="body">
+      <div class="tl-container">
+        <div>
+          <div class="tl-title">Linha do Tempo das Operações</div>
+          <div class="timeline">
+            <div class="tl-line"></div>
+            <div class="tl-item">
+              <div class="tl-date">09 Abr</div>
+              <div class="tl-dot dot-put"></div>
+              <div class="tl-card">
+                <span class="tl-type tt-p">PUT EXERC.</span>
+                <div class="tl-main"><div class="tl-asset">BTC · Strike $71.500</div><div class="tl-strike">#441 · Custo médio: $71.485,74</div></div>
+                <div class="tl-prem">+$14,26</div>
+              </div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-date">09 Abr</div>
+              <div class="tl-dot dot-put"></div>
+              <div class="tl-card">
+                <span class="tl-type tt-p">PUT EXERC.</span>
+                <div class="tl-main"><div class="tl-asset">ETH · Strike $2.225</div><div class="tl-strike">#445 · Custo médio: $2.211,47</div></div>
+                <div class="tl-prem">+$13,53</div>
+              </div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-date">10 Abr</div>
+              <div class="tl-dot dot-call"></div>
+              <div class="tl-card">
+                <span class="tl-type tt-c">CALL</span>
+                <div class="tl-main"><div class="tl-asset">BTC · Strike $71.500</div><div class="tl-strike">#452 · Fechada</div></div>
+                <div class="tl-prem">+$9,23</div>
+              </div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-date">13 Abr</div>
+              <div class="tl-dot dot-ex"></div>
+              <div class="tl-card">
+                <span class="tl-type tt-e">CALL EXERC.</span>
+                <div class="tl-main"><div class="tl-asset">BTC · Strike $72.000</div><div class="tl-strike">#461 · Call exercida</div></div>
+                <div class="tl-prem">+$26,18</div>
+              </div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-date">13 Abr</div>
+              <div class="tl-dot dot-ex"></div>
+              <div class="tl-card">
+                <span class="tl-type tt-e">CALL EXERC.</span>
+                <div class="tl-main"><div class="tl-asset">ETH · Strike $2.225</div><div class="tl-strike">#463 · Custo médio: $2.189,10</div></div>
+                <div class="tl-prem">+$22,37</div>
+              </div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-date">14 Abr</div>
+              <div class="tl-dot dot-ex"></div>
+              <div class="tl-card">
+                <span class="tl-type tt-e">CALL EXERC.</span>
+                <div class="tl-main"><div class="tl-asset">ETH · Strike $2.225</div><div class="tl-strike">#470 · Custo médio: $2.117,31</div></div>
+                <div class="tl-prem">+$8,80</div>
+              </div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-date">21 Abr</div>
+              <div class="tl-dot" style="background:#334;border:2px dashed #5566aa;box-shadow:none;margin-top:8px"></div>
+              <div class="tl-card" style="border-style:dashed;border-color:#5566aa33">
+                <span class="tl-type" style="background:rgba(85,102,170,0.1);color:#5566aa;border:1px solid #5566aa33">ABERTA</span>
+                <div class="tl-main"><div class="tl-asset">ETH CALL · Strike $2.275</div><div class="tl-strike">Vence em 7 dias · Prêmio: $18,50</div></div>
+                <div class="tl-prem" style="color:#5566aa">em curso</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="side-panel">
+          <div class="sp-box">
+            <div class="sp-title">Análise do Ciclo ETH</div>
+            <div class="sp-metric"><span class="sp-key">PUT compra</span><span class="sp-val">$2.225,00</span></div>
+            <div class="sp-metric"><span class="sp-key">CALL venda</span><span class="sp-val">$2.225,00</span></div>
+            <div class="sp-metric"><span class="sp-key">Var. do ativo</span><span class="sp-val">$0,00</span></div>
+            <div class="sp-metric"><span class="sp-key">Prêmios ciclo</span><span class="sp-val g">+$107,69</span></div>
+            <div class="sp-metric"><span class="sp-key">Custo médio</span><span class="sp-val b">$2.117,31</span></div>
+            <div class="sp-metric"><span class="sp-key">Desconto</span><span class="sp-val g">-4,84%</span></div>
+          </div>
+          <div class="sp-box">
+            <div class="sp-title">Melhores Strikes</div>
+            <div style="margin-bottom:10px">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                <div style="width:6px;height:6px;border-radius:50%;background:#00e87a"></div>
+                <span style="font-size:12px;font-weight:600;color:#ccc">ETH CALL · 2.300</span>
+                <span style="margin-left:auto;font-size:11px;color:#00e87a;font-weight:700">A+</span>
+              </div>
+              <div style="font-size:10px;color:#334;padding-left:14px">Delta 0.32 · IV 68% · ~$18</div>
+            </div>
+            <div style="margin-bottom:10px">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                <div style="width:6px;height:6px;border-radius:50%;background:#5588ff"></div>
+                <span style="font-size:12px;font-weight:600;color:#ccc">BTC CALL · 73.500</span>
+                <span style="margin-left:auto;font-size:11px;color:#5588ff;font-weight:700">A</span>
+              </div>
+              <div style="font-size:10px;color:#334;padding-left:14px">Delta 0.28 · IV 72% · ~$24</div>
+            </div>
+            <div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                <div style="width:6px;height:6px;border-radius:50%;background:#ff5566"></div>
+                <span style="font-size:12px;font-weight:600;color:#ccc">ETH PUT · 2.100</span>
+                <span style="margin-left:auto;font-size:11px;color:#ffcc00;font-weight:700">B+</span>
+              </div>
+              <div style="font-size:10px;color:#334;padding-left:14px">Delta -0.25 · IV 65% · ~$15</div>
+            </div>
+          </div>
+          <div class="sp-box" style="padding:12px">
+            <div class="sp-title">Capital (evolução)</div>
+            <canvas id="chart6" style="max-height:100px"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================
+     VARIAÇÃO 7 — NEON CRYPTO
+     ======================================== -->
+<div class="variation v7" id="v7">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">CRYPTO OPTIONS TERMINAL</div>
+        <div style="font-size:10px;color:rgba(150,50,255,0.4);margin-top:2px;letter-spacing:1px">PORTFÓLIO · ANÁLISE · PERFORMANCE</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="font-size:10px;color:rgba(150,50,255,0.4);letter-spacing:1px">14/04/2026 · 08:18</div>
+        <div class="neon-dot"></div>
+      </div>
+    </div>
+
+    <div class="filters">
+      <button class="fp a">Todos</button>
+      <button class="fp">Hoje</button>
+      <button class="fp">7d</button>
+      <button class="fp">Mês</button>
+      <button class="fp">30d</button>
+      <button class="fp">Ano</button>
+      <div class="fp-sep"></div>
+      <button class="fp">Abertas</button>
+      <button class="fp">Fechadas</button>
+      <div class="fp-sep"></div>
+      <button class="fp call">CALL</button>
+      <button class="fp put">PUT</button>
+      <div class="fp-sep"></div>
+      <button class="fp">BTC</button>
+      <button class="fp">ETH</button>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi-box"><div class="kpi-label">Resultado Total</div><div class="kpi-num kn-g">+$388,83</div></div>
+      <div class="kpi-box"><div class="kpi-label">Saldo Atual</div><div class="kpi-num kn-w">$6.401,89</div></div>
+      <div class="kpi-box"><div class="kpi-label">ROI Período</div><div class="kpi-num kn-c">+4,84%</div></div>
+      <div class="kpi-box"><div class="kpi-label">Win Rate</div><div class="kpi-num kn-y">100%</div></div>
+      <div class="kpi-box"><div class="kpi-label">Prêmios</div><div class="kpi-num kn-p">$167,52</div></div>
+    </div>
+
+    <div class="body">
+      <div class="grid g2">
+        <div>
+          <div class="neon-card" style="margin-bottom:14px">
+            <div class="neon-title">Operações — Histórico</div>
+            <div class="op-neon-item">
+              <span class="nb nb-p">PUT</span>
+              <div style="flex:1"><div style="color:#ccccff;font-size:11px;font-weight:600">ETH · 09/04 · #445</div><div style="font-size:10px;color:rgba(150,50,255,0.4)">Strike $2.225 · Exercida · Custo: $2.211,47</div></div>
+              <div class="neon-val">+$13,53</div>
+            </div>
+            <div class="op-neon-item">
+              <span class="nb nb-c">CALL</span>
+              <div style="flex:1"><div style="color:#ccccff;font-size:11px;font-weight:600">BTC · 10/04 · #452</div><div style="font-size:10px;color:rgba(150,50,255,0.4)">Strike $71.500 · Fechada</div></div>
+              <div class="neon-val">+$9,23</div>
+            </div>
+            <div class="op-neon-item">
+              <span class="nb nb-e">CALL★</span>
+              <div style="flex:1"><div style="color:#ccccff;font-size:11px;font-weight:600">BTC · 13/04 · #461</div><div style="font-size:10px;color:rgba(150,50,255,0.4)">Strike $72.000 · CALL Exercida</div></div>
+              <div class="neon-val">+$26,18</div>
+            </div>
+            <div class="op-neon-item">
+              <span class="nb nb-e">CALL★</span>
+              <div style="flex:1"><div style="color:#ccccff;font-size:11px;font-weight:600">ETH · 13/04 · #463</div><div style="font-size:10px;color:rgba(150,50,255,0.4)">Strike $2.225 · Custo: $2.189,10</div></div>
+              <div class="neon-val">+$22,37</div>
+            </div>
+            <div class="op-neon-item">
+              <span class="nb nb-e">CALL★</span>
+              <div style="flex:1"><div style="color:#ccccff;font-size:11px;font-weight:600">ETH · 14/04 · #470</div><div style="font-size:10px;color:rgba(150,50,255,0.4)">Strike $2.225 · Custo: $2.117,31</div></div>
+              <div class="neon-val">+$8,80</div>
+            </div>
+            <div class="op-neon-item" style="border:1px dashed rgba(85,102,170,0.3)">
+              <span class="nb" style="background:rgba(85,102,170,0.1);color:#8899cc;border:1px solid rgba(85,102,170,0.3)">OPEN</span>
+              <div style="flex:1"><div style="color:#8899cc;font-size:11px;font-weight:600">ETH CALL · 21/04 · Vence em 7d</div><div style="font-size:10px;color:rgba(85,102,170,0.4)">Strike $2.275 · Prêmio: $18,50</div></div>
+              <div style="color:#8899cc;font-size:12px;font-weight:600">em curso</div>
+            </div>
+          </div>
+
+          <div class="neon-card" style="height:190px">
+            <div class="neon-title">Curva de Capital</div>
+            <canvas id="chart7" style="max-height:140px"></canvas>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div class="neon-card call-card">
+            <div class="neon-title" style="color:rgba(0,200,255,0.5)">Performance CALL</div>
+            <div style="text-align:center;margin:8px 0">
+              <div style="font-size:36px;font-weight:800;color:#00c8ff;text-shadow:0 0 20px rgba(0,200,255,0.5)">60%</div>
+              <div style="font-size:10px;color:rgba(0,200,255,0.4)">8 operações · $70,48</div>
+            </div>
+            <div style="height:4px;background:rgba(0,200,255,0.08);border-radius:2px;overflow:hidden">
+              <div style="width:60%;height:100%;background:linear-gradient(90deg,#003366,#00c8ff);box-shadow:0 0 8px rgba(0,200,255,0.5);border-radius:2px"></div>
+            </div>
+          </div>
+
+          <div class="neon-card put-card">
+            <div class="neon-title" style="color:rgba(255,50,100,0.5)">Performance PUT</div>
+            <div style="text-align:center;margin:8px 0">
+              <div style="font-size:36px;font-weight:800;color:#ff3264;text-shadow:0 0 20px rgba(255,50,100,0.5)">40%</div>
+              <div style="font-size:10px;color:rgba(255,50,100,0.4)">6 operações · $27,79</div>
+            </div>
+            <div style="height:4px;background:rgba(255,50,100,0.08);border-radius:2px;overflow:hidden">
+              <div style="width:40%;height:100%;background:linear-gradient(90deg,#550011,#ff3264);box-shadow:0 0 8px rgba(255,50,100,0.5);border-radius:2px"></div>
+            </div>
+          </div>
+
+          <div class="neon-card">
+            <div class="neon-title">Custo Médio Atual</div>
+            <div style="background:rgba(0,255,204,0.04);border:1px solid rgba(0,255,204,0.15);border-radius:8px;padding:12px;margin-bottom:8px">
+              <div style="font-size:10px;color:rgba(0,255,204,0.4);margin-bottom:4px">ETH — Após Ciclo</div>
+              <div style="font-size:24px;font-weight:800;color:#00ffcc;text-shadow:0 0 20px rgba(0,255,204,0.5)">$2.117,31</div>
+              <div style="font-size:10px;color:rgba(0,255,204,0.5);margin-top:4px">Strike $2.225 − $107,69 prêmios = −4,84%</div>
+            </div>
+            <div class="np-item">
+              <div class="np-row"><span>Call/Put</span><span>60%/40%</span></div>
+              <div class="np-track"><div class="np-fill cyan" style="width:60%"></div></div>
+            </div>
+            <div class="np-item">
+              <div class="np-row"><span>Win Rate</span><span>100%</span></div>
+              <div class="np-track"><div class="np-fill green" style="width:100%"></div></div>
+            </div>
+          </div>
+
+          <div class="neon-card">
+            <div class="neon-title">Strikes Recomendados</div>
+            <div class="rec-item">
+              <div class="rec-score rs-a">A+</div>
+              <div class="rec-info"><div class="rec-name">ETH CALL · 2.300</div><div class="rec-detail">Delta 0.32 · IV 68% · 7d</div></div>
+              <div class="rec-delta" style="color:#00ffcc">~$18</div>
+            </div>
+            <div class="rec-item">
+              <div class="rec-score rs-b">A</div>
+              <div class="rec-info"><div class="rec-name">BTC CALL · 73.500</div><div class="rec-detail">Delta 0.28 · IV 72% · 7d</div></div>
+              <div class="rec-delta" style="color:#00c8ff">~$24</div>
+            </div>
+            <div class="rec-item">
+              <div class="rec-score rs-c">B+</div>
+              <div class="rec-info"><div class="rec-name">ETH PUT · 2.100</div><div class="rec-detail">Delta -0.25 · IV 65% · 7d</div></div>
+              <div class="rec-delta" style="color:#ffdd00">~$15</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Show/hide variations
+function show(n, btn) {
+  document.querySelectorAll('.variation').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('v'+n).classList.add('active');
+  btn.classList.add('active');
+  setTimeout(() => renderChart(n), 50);
+}
+
+const chartInstances = {};
+function destroyChart(id) {
+  if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; }
+}
+
+const labels = ['BTC CALL 08/04','ETH CALL 08/04','BTC PUT 09/04','ETH PUT 09/04','BTC CALL 10/04','BTC CALL 13/04','ETH CALL 13/04','BTC CALL 14/04','ETH CALL 14/04'];
+const premiums = [9.10, 10.50, 14.26, 13.53, 9.23, 26.18, 22.37, 3.90, 8.80];
+const accumulated = premiums.reduce((acc, v, i) => { acc.push((acc[i-1]||0)+v); return acc; }, []);
+
+const bgColors = ['#667eea','#667eea','#ff5050','#ff5050','#667eea','#ffa500','#ffa500','#ffa500','#ffa500'];
+const darkGrid = { color: 'rgba(255,255,255,0.04)' };
+const noGrid = { display: false };
+
+Chart.defaults.color = '#555';
+Chart.defaults.font.size = 10;
+
+function renderChart(n) {
+  if (n === 1) {
+    destroyChart('chart1');
+    const ctx = document.getElementById('chart1').getContext('2d');
+    chartInstances['chart1'] = new Chart(ctx, {
+      type: 'bar',
+      data: { labels, datasets: [
+        { label: 'Prêmio', data: premiums, backgroundColor: bgColors, borderRadius: 3 },
+        { label: 'Acumulado', data: accumulated, type: 'line', borderColor: '#ffd700', backgroundColor: 'rgba(255,215,0,0.1)', pointBackgroundColor: '#ffd700', tension: 0.4, yAxisID: 'y2', fill: true }
+      ]},
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: {
+        x: { ticks: { maxRotation: 45, font:{size:8} }, grid: darkGrid },
+        y: { grid: darkGrid, ticks: { callback: v => '$'+v } },
+        y2: { position: 'right', grid: noGrid, ticks: { callback: v => '$'+v } }
+      }}
+    });
+  } else if (n === 3) {
+    destroyChart('chart3');
+    const ctx = document.getElementById('chart3').getContext('2d');
+    chartInstances['chart3'] = new Chart(ctx, {
+      type: 'line',
+      data: { labels, datasets: [
+        { label: 'Acumulado', data: accumulated, borderColor: '#ff6600', backgroundColor: 'rgba(255,102,0,0.1)', pointBackgroundColor: '#ff6600', tension: 0.4, fill: true }
+      ]},
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: {
+        x: { ticks: { maxRotation: 45, font:{size:8} }, grid: { color:'rgba(255,255,255,0.03)' } },
+        y: { grid: { color:'rgba(255,255,255,0.03)' }, ticks: { callback: v => '$'+v } }
+      }}
+    });
+  } else if (n === 4) {
+    destroyChart('chart4');
+    const ctx = document.getElementById('chart4').getContext('2d');
+    chartInstances['chart4'] = new Chart(ctx, {
+      type: 'line',
+      data: { labels: ['6013','6026','6051','6098','6143','6190','6250','6320','6401'], datasets: [
+        { data: [6013, 6026, 6051, 6098, 6143, 6190, 6250, 6320, 6401], borderColor: '#00ff88', backgroundColor: 'rgba(0,255,136,0.06)', tension: 0.4, fill: true, pointRadius: 2, pointBackgroundColor: '#00ff88' }
+      ]},
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: {
+        x: { display: false }, y: { grid: { color:'rgba(255,255,255,0.04)' }, ticks: { callback: v => '$'+v } }
+      }}
+    });
+  } else if (n === 5) {
+    destroyChart('chart5');
+    const ctx = document.getElementById('chart5').getContext('2d');
+    chartInstances['chart5'] = new Chart(ctx, {
+      type: 'bar',
+      data: { labels, datasets: [
+        { label: 'Prêmio', data: premiums, backgroundColor: bgColors, borderRadius: 2 },
+        { label: 'Acumulado', data: accumulated, type: 'line', borderColor: '#4ade80', backgroundColor: 'rgba(74,222,128,0.08)', tension: 0.4, yAxisID: 'y2', fill: true, pointRadius: 2, pointBackgroundColor: '#4ade80' }
+      ]},
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: {
+        x: { ticks: { maxRotation: 45, font:{size:8} }, grid: { color:'rgba(255,255,255,0.03)' } },
+        y: { grid: { color:'rgba(255,255,255,0.03)' }, ticks: { callback: v => '$'+v } },
+        y2: { position: 'right', grid: noGrid, ticks: { callback: v => '$'+v } }
+      }}
+    });
+  } else if (n === 6) {
+    destroyChart('chart6');
+    const ctx = document.getElementById('chart6').getContext('2d');
+    chartInstances['chart6'] = new Chart(ctx, {
+      type: 'line',
+      data: { labels: ['9','10','11','12','13','14'], datasets: [
+        { data: [6013, 6035, 6045, 6045, 6095, 6180], borderColor: '#00e87a', backgroundColor: 'rgba(0,232,122,0.05)', tension: 0.4, fill: true, pointRadius: 2, pointBackgroundColor: '#00e87a' }
+      ]},
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: {
+        x: { grid: { color:'rgba(255,255,255,0.03)' }, ticks: { font:{size:9} } },
+        y: { grid: { color:'rgba(255,255,255,0.03)' }, ticks: { callback: v => '$'+Math.round(v/1000)+'K', font:{size:9} } }
+      }}
+    });
+  } else if (n === 7) {
+    destroyChart('chart7');
+    const ctx = document.getElementById('chart7').getContext('2d');
+    chartInstances['chart7'] = new Chart(ctx, {
+      type: 'line',
+      data: { labels: ['08/04','09/04','10/04','11/04','12/04','13/04','14/04'], datasets: [
+        { data: [6013, 6040, 6051, 6051, 6051, 6147, 6401], borderColor: '#00ffcc', backgroundColor: 'rgba(0,255,204,0.04)', tension: 0.4, fill: true, pointRadius: 3, pointBackgroundColor: '#00ffcc', pointBorderColor: 'transparent' }
+      ]},
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: {
+        x: { grid: { color:'rgba(150,50,255,0.06)' }, ticks: { font:{size:9}, color:'rgba(150,50,255,0.4)' } },
+        y: { grid: { color:'rgba(150,50,255,0.06)' }, ticks: { callback: v => '$'+Math.round(v/1000)+'K', color:'rgba(150,50,255,0.4)' } }
+      }}
+    });
+  }
+}
+
+// Filter pills interactivity (visual only)
+document.querySelectorAll('.filter-pill, .fp, .ftab').forEach(btn => {
+  btn.addEventListener('click', function() {
+    const parent = this.closest('.filters');
+    if (!parent) return;
+    const isTimePill = ['Todos','Hoje','7d','Mês','30d','Ano','ALL','TODAY','7D','MES','30D','ANO'].includes(this.textContent.trim());
+    const isStatusPill = ['Abertas','Fechadas','ABERTAS','FECHADAS'].includes(this.textContent.trim());
+    // Just toggle active for simplicity
+  });
+});
+
+// Init first chart
+renderChart(1);
+</script>
+</body>
+</html>

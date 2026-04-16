@@ -519,28 +519,50 @@
         const callsExercidas = ops.filter(o => window.CryptoExerciseStatus?.isExercised
             ? window.CryptoExerciseStatus.isExercised(o, 'CALL')
             : false);
-        const strikeExercida = callsExercidas.length
-            ? Math.max(...callsExercidas.map(o => parseFloat(o.strike||0)))
+        const ultimoExercicio = callsExercidas.length
+            ? [...callsExercidas].sort((a, b) => {
+                const aTime = window.CryptoExerciseStatus?.getOperationDate?.(a)?.getTime?.() || 0;
+                const bTime = window.CryptoExerciseStatus?.getOperationDate?.(b)?.getTime?.() || 0;
+                return bTime - aTime;
+            })[0]
+            : null;
+        const strikeExercida = ultimoExercicio
+            ? parseFloat(ultimoExercicio.strike || 0)
             : parseFloat(ops.reduce((max, o) => parseFloat(o.strike||0) > parseFloat(max.strike||0) ? o : max, ops[0])?.strike || 0);
 
         const totalPremios = ops.reduce((s, o) => s + (parseFloat(o.premio_us)||0), 0);
         const pm = strikeExercida - totalPremios;
         const cot = cotacao || parseFloat(ops.find(o => parseFloat(o.cotacao_atual||0) > 0)?.cotacao_atual || 0);
+        const strikeAtual = parseFloat(op.strike) || 0;
         const pctVsPm = cot && pm ? ((cot - pm) / pm) * 100 : null;
+        /* Resultado se exercido = strike da CALL atual vs custo médio real (PM)
+           Positivo = vende acima do PM → lucro; Negativo = vende abaixo → prejuízo */
+        const resultadoExercicio = strikeAtual && pm ? (strikeAtual - pm) : null;
 
         const acCor = par === 'BTC' ? '#f59f00' : par === 'ETH' ? '#4da6ff' : '#3fb950';
         const icone = par === 'BTC' ? '₿' : par === 'ETH' ? 'Ξ' : '◎';
         const pctColor = pctVsPm === null ? '' : pctVsPm >= 0 ? 'color:#3fb950' : pctVsPm > -3 ? 'color:#f59f00' : 'color:#f85149';
         const pctSign  = pctVsPm === null ? '?' : (pctVsPm >= 0 ? '+' : '') + pctVsPm.toFixed(2) + '%';
+        const resultadoColor = resultadoExercicio === null
+            ? ''
+            : resultadoExercicio > 0
+                ? 'color:#3fb950'
+                : resultadoExercicio < 0
+                    ? 'color:#f85149'
+                    : 'color:#c9d1d9';
+        const resultadoSign = resultadoExercicio === null
+            ? '—'
+            : (resultadoExercicio > 0 ? '+' : '') + '$' + resultadoExercicio.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
         if (title) title.textContent = `${icone} PREÇO MÉDIO ${par}`;
 
         body.innerHTML = `
             <div class="sim-pm-val" style="color:${acCor}">$${pm.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
-            <div class="sim-pm-row"><span class="sim-pm-key">● Strike Exercido</span><span class="sim-pm-v" style="color:var(--tblr-warning)">$${strikeExercida.toLocaleString('en-US',{minimumFractionDigits:2})}</span></div>
+            <div class="sim-pm-row"><span class="sim-pm-key">● Último Exercício</span><span class="sim-pm-v" style="color:var(--tblr-warning)">$${strikeExercida.toLocaleString('en-US',{minimumFractionDigits:2})}</span></div>
             <div class="sim-pm-row"><span class="sim-pm-key">− Prêmios</span><span class="sim-pm-v" style="color:#3fb950">−$${totalPremios.toLocaleString('en-US',{minimumFractionDigits:2})}</span></div>
             ${cot ? `<div class="sim-pm-row"><span class="sim-pm-key">● Cotação</span><span class="sim-pm-v" style="${pctColor}">$${cot.toLocaleString('en-US',{minimumFractionDigits:2})}</span></div>` : ''}
             ${pctVsPm !== null ? `<div class="sim-pm-row"><span class="sim-pm-key">● vs PM</span><span class="sim-pm-v" style="${pctColor}">${pctSign}</span></div>` : ''}
+            ${resultadoExercicio !== null ? `<div class="sim-pm-row"><span class="sim-pm-key">● Resultado se exercido</span><span class="sim-pm-v" style="${resultadoColor}" title="Strike CALL vs Preço Médio Real">${resultadoSign}</span></div>` : ''}
         `;
     }
 
@@ -704,6 +726,7 @@
         const tae      = parseFloat(op.tae) || 0;
         const premio   = parseFloat(op.premio_us) || 0;
         const ativo    = (op.ativo || 'BTC').toUpperCase();
+        const ativoBase = ativo.replace('/USDT', '').replace('USDT', '').replace('/', '').trim();
         const tipo     = (op.tipo || 'PUT').toUpperCase();
         const risk     = getRisk(distNum);
         const timePct       = calcTimePct(op.data_operacao, op.exercicio) || 0;
@@ -751,7 +774,10 @@
     <div class="flex-grow-1" style="min-width:0">
       <div class="d-flex align-items-center justify-content-between gap-2">
         <div class="mdc-hero-title" style="flex:1;min-width:0">${op.ativo || 'CRYPTO'}/USDT${tipoBadge}</div>
-        <div class="d-flex align-items-center gap-2 flex-shrink-0">${semaforoHTML}</div>
+                <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                    <button class="btn btn-sm btn-outline-primary crypto-tech-analysis-btn" type="button" title="Abrir análise técnica" data-ticker="${ativoBase}" data-strike="${Number.isFinite(parseFloat(op.strike)) ? parseFloat(op.strike) : 'null'}" data-current-price="${Number.isFinite(parseFloat(cotacao)) ? parseFloat(cotacao) : 'null'}" data-operation-type="${tipo}" data-distance-pct="${Number.isFinite(distNum) ? distNum : 'null'}">Análise Técnica</button>
+                    ${semaforoHTML}
+                </div>
       </div>
       <div class="mdc-hero-sub mt-1">${isClosed ? '🔒' : '🟢'} <b>${op.status || 'ABERTA'}</b></div>
       <div class="mdc-risk-label mt-1" style="color:${risk.color}">${risk.label}</div>
@@ -973,9 +999,37 @@ ${op.observacoes ? `<div class="mdc-info-row" style="flex-direction:column;align
         // Renderiza após o modal estar visível (evita bug de canvas com display:none)
         modalEl.addEventListener('shown.bs.modal', function () {
             _renderAll(op);
+            // Setup event listeners após renderização do conteúdo
+            setTimeout(() => setupCryptoTechAnalysisListeners(), 100);
         }, { once: true });
     }
 
     window.ModalAnaliseCrypto = { open: open };
+
+    function setupCryptoTechAnalysisListeners() {
+        document.querySelectorAll('.crypto-tech-analysis-btn').forEach(btn => {
+            if (!btn.dataset.listenerBound) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const ticker = this.getAttribute('data-ticker');
+                    const strike = this.getAttribute('data-strike');
+                    const currentPrice = this.getAttribute('data-current-price');
+                    const operationType = this.getAttribute('data-operation-type');
+                    const distancePct = this.getAttribute('data-distance-pct');
+                    
+                    if (typeof window.CryptoTechnicalAnalysis !== 'undefined') {
+                        window.CryptoTechnicalAnalysis.openFromOperation({
+                            ticker: ticker,
+                            strike: strike === 'null' ? null : parseFloat(strike),
+                            currentPrice: currentPrice === 'null' ? null : parseFloat(currentPrice),
+                            operationType: operationType,
+                            distancePct: distancePct === 'null' ? null : parseFloat(distancePct)
+                        });
+                    }
+                });
+                btn.dataset.listenerBound = 'true';
+            }
+        });
+    }
 
 }());

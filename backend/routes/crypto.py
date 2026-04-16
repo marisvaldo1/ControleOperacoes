@@ -263,8 +263,8 @@ def create_crypto():
         INSERT INTO operacoes_crypto
             (ativo, tipo, tipo_estrategia, cotacao_atual, abertura, tae, strike,
              distancia, prazo, crypto, premio_us, resultado, exercicio, dias,
-             exercicio_status, status, observacoes, data_operacao, is_test_data)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+             exercicio_status, status, observacoes, data_operacao, is_test_data, corretora)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     ''', (
         data.get('ativo'),
         data.get('tipo'),
@@ -285,6 +285,7 @@ def create_crypto():
         data.get('observacoes'),
         data.get('data_operacao', datetime.now().strftime('%Y-%m-%d')),
         int(data.get('is_test_data', 0)),
+        data.get('corretora', 'BINANCE'),
     ))
     conn.commit()
     new_id = c.lastrowid
@@ -302,7 +303,7 @@ def update_crypto(id):
             ativo=?, tipo=?, tipo_estrategia=?, cotacao_atual=?, abertura=?, tae=?,
             strike=?, distancia=?, prazo=?, crypto=?, premio_us=?, resultado=?,
             exercicio=?, dias=?, exercicio_status=?, status=?, observacoes=?,
-            data_operacao=?, is_test_data=?
+            data_operacao=?, is_test_data=?, corretora=?
         WHERE id=?
     ''', (
         data.get('ativo'),
@@ -324,6 +325,7 @@ def update_crypto(id):
         data.get('observacoes'),
         data.get('data_operacao'),
         int(data.get('is_test_data', 0)),
+        data.get('corretora', 'BINANCE'),
         id,
     ))
     conn.commit()

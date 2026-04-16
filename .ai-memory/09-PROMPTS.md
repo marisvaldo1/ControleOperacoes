@@ -1,8 +1,28 @@
 # 09 — PROMPTS LOG
 
-> Atualizado automaticamente. Total registrado: 13 entrada(s).
+> Atualizado automaticamente. Total registrado: 15 entrada(s).
 > Para registrar um novo prompt: `memoryIA\log_prompt.bat`
 
+
+---
+
+**`2026-04-13 16:26:22`**
+
+```
+modalSaldoMedio
+```
+
+---
+
+**`2026-04-13 14:23:31`**
+
+```
+REM Cria venv se nao existir
+if not exist "venv" (
+    echo Criando ambiente virtual...
+    python -m venv venv
+)
+```
 
 ---
 

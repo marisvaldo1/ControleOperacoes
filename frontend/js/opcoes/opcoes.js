@@ -494,6 +494,115 @@ function calcTotalsOpcoes(data) {
         resultadoMedio: resultadoMedio
     };
 }
+function setupOpcoesDynamicEventListeners() {
+    // Botões de ação em tabelas
+    document.querySelectorAll('.detalhe-op-btn').forEach(btn => {
+        if (!btn.dataset.listenerBound) {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const opId = this.getAttribute('data-op-id');
+                if (typeof openDetalheOperacao === 'function') {
+                    openDetalheOperacao(opId);
+                }
+            });
+            btn.dataset.listenerBound = 'true';
+        }
+    });
+
+    document.querySelectorAll('.edit-op-btn').forEach(btn => {
+        if (!btn.dataset.listenerBound) {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const opId = this.getAttribute('data-op-id');
+                if (typeof editOperacao === 'function') {
+                    editOperacao(opId);
+                }
+            });
+            btn.dataset.listenerBound = 'true';
+        }
+    });
+
+    document.querySelectorAll('.finalizar-op-btn').forEach(btn => {
+        if (!btn.dataset.listenerBound) {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const opId = this.getAttribute('data-op-id');
+                if (typeof finalizarOpcao === 'function') {
+                    finalizarOpcao(opId);
+                }
+            });
+            btn.dataset.listenerBound = 'true';
+        }
+    });
+
+    document.querySelectorAll('.delete-op-btn').forEach(btn => {
+        if (!btn.dataset.listenerBound) {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const opId = this.getAttribute('data-op-id');
+                if (typeof deleteOperacao === 'function') {
+                    deleteOperacao(opId);
+                }
+            });
+            btn.dataset.listenerBound = 'true';
+        }
+    });
+
+    // Badge de ativo_base que abre modal
+    document.querySelectorAll('.show-detalhe-modal').forEach(elem => {
+        if (!elem.dataset.listenerBound) {
+            elem.addEventListener('click', function(e) {
+                e.preventDefault();
+                const opId = this.getAttribute('data-op-id');
+                if (typeof window.ModalDetalhesOpcoes !== 'undefined') {
+                    window.ModalDetalhesOpcoes.show(opId);
+                }
+            });
+            elem.dataset.listenerBound = 'true';
+        }
+    });
+
+    // Spans para selecionar e mostrar detalhes de opções
+    document.querySelectorAll('.selecionar-opcao-span').forEach(span => {
+        if (!span.dataset.listenerBound) {
+            span.addEventListener('click', function(e) {
+                e.preventDefault();
+                const ativo = this.getAttribute('data-ativo');
+                if (typeof selecionarOpcao === 'function') {
+                    selecionarOpcao(ativo);
+                }
+            });
+            span.dataset.listenerBound = 'true';
+        }
+    });
+
+    document.querySelectorAll('.mostrar-detalhes-opcao-span').forEach(span => {
+        if (!span.dataset.listenerBound) {
+            span.addEventListener('click', function(e) {
+                e.preventDefault();
+                const ativo = this.getAttribute('data-ativo');
+                if (typeof mostrarDetalhesOpcao === 'function') {
+                    mostrarDetalhesOpcao(ativo);
+                }
+            });
+            span.dataset.listenerBound = 'true';
+        }
+    });
+
+    // Card de simulação de preço
+    document.querySelectorAll('.update-sim-price-card').forEach(card => {
+        if (!card.dataset.listenerBound) {
+            card.addEventListener('click', function(e) {
+                e.preventDefault();
+                const price = parseFloat(this.getAttribute('data-price'));
+                if (typeof updateSimulationPrice === 'function') {
+                    updateSimulationPrice(price);
+                }
+            });
+            card.dataset.listenerBound = 'true';
+        }
+    });
+}
 
 async function updateUI() {
     const currentMonth = getCurrentMonth();
@@ -552,6 +661,9 @@ async function updateUI() {
     
     // Grafico anual
     renderChartAnual(anoData, currentYear);
+
+        // Setup event listeners para elementos dinâmicos
+        setupOpcoesDynamicEventListeners();
 }
 
 // Função helper para buscar cotação de um ativo
@@ -638,6 +750,7 @@ async function populateTable(dt, data, showActions = true, updatePrices = false,
                 // Histórico: apenas botão de detalhar
                 actionsHtml = `<div class="btn-list flex-nowrap">
                     <button class="btn btn-sm btn-info btn-icon" onclick="openDetalheOperacao('${op.id}')" title="Detalhes">
+                        <button class="btn btn-sm btn-info btn-icon detalhe-op-btn" data-op-id="${op.id}" title="Detalhes">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
                     </button>
                  </div>`;
@@ -646,16 +759,20 @@ async function populateTable(dt, data, showActions = true, updatePrices = false,
                 const isFechada = op.status && (op.status.toUpperCase() === 'FECHADA' || op.status.toUpperCase() === 'EXERCIDA' || op.status.toUpperCase() === 'VENCIDA');
                 actionsHtml = `<div class="btn-list flex-nowrap">
                     <button class="btn btn-sm btn-info btn-icon" onclick="openDetalheOperacao('${op.id}')" title="Detalhes">
+                        <button class="btn btn-sm btn-info btn-icon detalhe-op-btn" data-op-id="${op.id}" title="Detalhes">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
                     </button>
                     <button class="btn btn-sm btn-primary btn-icon" onclick="editOperacao('${op.id}')" title="Editar">
+                        <button class="btn btn-sm btn-primary btn-icon edit-op-btn" data-op-id="${op.id}" title="Editar">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                     </button>
                     ${!isFechada ? `
                     <button class="btn btn-sm btn-warning btn-icon" onclick="finalizarOpcao('${op.id}')" title="Finalizar operação">
+                        <button class="btn btn-sm btn-warning btn-icon finalizar-op-btn" data-op-id="${op.id}" title="Finalizar operação">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                     </button>
                     <button class="btn btn-sm btn-danger btn-icon" onclick="deleteOperacao('${op.id}')" title="Excluir">
+                        <button class="btn btn-sm btn-danger btn-icon delete-op-btn" data-op-id="${op.id}" title="Excluir">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
                     </button>` : ''}
                  </div>`;
@@ -691,6 +808,7 @@ async function populateTable(dt, data, showActions = true, updatePrices = false,
         
         const rowNode = dt.row.add([
             op.ativo_base ? `<span class="badge bg-azure text-azure-fg" style="cursor:pointer" title="Ver detalhes" onclick="window.ModalDetalhesOpcoes&&window.ModalDetalhesOpcoes.show('${op.id}')">${op.ativo_base}</span>` : '-',
+                op.ativo_base ? `<span class="badge bg-azure text-azure-fg show-detalhe-modal" style="cursor:pointer" title="Ver detalhes" data-op-id="${op.id}">${op.ativo_base}</span>` : '-',
             op.ativo,
             `<span class="badge ${op.tipo === 'CALL' ? 'bg-green text-green-fg' : 'bg-red text-red-fg'}">${op.tipo}</span>`,
             priceCell,
@@ -1901,11 +2019,13 @@ function renderModalSelecionarOpcoesList() {
              
              tr.innerHTML += `
                 <td style="${cellStyle}" class="text-start"><span class="text-nowrap fw-bold text-primary" style="cursor:pointer" onclick="selecionarOpcao('${call.ativo}')">${call.ativo}</span></td>
+                    <td style="${cellStyle}" class="text-start"><span class="text-nowrap fw-bold text-primary selecionar-opcao-span" style="cursor:pointer" data-ativo="${call.ativo}">${call.ativo}</span></td>
                 <td style="${cellStyle}" class="text-end">${call.premio.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})}</td>
                 <td style="${cellStyle}" class="text-center">${diasCall.corridos}/${diasCall.uteis}</td>
                 <td style="${cellStyle}" class="text-center">
                     ${(callDelta*100).toFixed(1)} 
                     <span style="cursor:pointer" onclick="mostrarDetalhesOpcao('${call.ativo}')">📋</span>
+                        <span style="cursor:pointer" class="mostrar-detalhes-opcao-span" data-ativo="${call.ativo}">📋</span>
                 </td>
              `;
         } else {
@@ -1934,10 +2054,12 @@ function renderModalSelecionarOpcoesList() {
                 <td style="${cellStyle}" class="text-center">
                     ${(putDelta*100).toFixed(1)} 
                     <span style="cursor:pointer" onclick="mostrarDetalhesOpcao('${put.ativo}')">📋</span>
+                        <span style="cursor:pointer" class="mostrar-detalhes-opcao-span" data-ativo="${put.ativo}">📋</span>
                 </td>
                 <td style="${cellStyle}" class="text-center">${diasPut.corridos}/${diasPut.uteis}</td>
                 <td style="${cellStyle}" class="text-end">${put.premio.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})}</td>
                 <td style="${cellStyle}" class="text-end"><span class="text-nowrap fw-bold text-primary" style="cursor:pointer" onclick="selecionarOpcao('${put.ativo}')">${put.ativo}</span></td>
+                    <td style="${cellStyle}" class="text-end"><span class="text-nowrap fw-bold text-primary selecionar-opcao-span" style="cursor:pointer" data-ativo="${put.ativo}">${put.ativo}</span></td>
              `;
         } else {
              tr.innerHTML += `<td colspan="4"></td>`;
@@ -4850,6 +4972,7 @@ function renderSimOpcoesList() {
             <td>
                 ${deltaVal.toFixed(2)}
                 <span style="cursor: pointer; margin-left: 5px;" onclick="event.stopPropagation(); mostrarDetalhesOpcao('${op.ativo}')">📋</span>
+                    <span style="cursor: pointer; margin-left: 5px;" class="mostrar-detalhes-opcao-span" data-ativo="${op.ativo}">📋</span>
             </td>
             <td>${popPercent}</td>
         `;
@@ -7712,6 +7835,7 @@ function populateScenarioCards(operacao) {
         html += `
             <div class="col-md-3">
                 <div class="card" style="background: #1a2332; cursor: pointer;" onclick="updateSimulationPrice(${scenario.price})">
+                    <div class="card" style="background: #1a2332; cursor: pointer;" class="update-sim-price-card" data-price="${scenario.price}">
                     <div class="card-body text-center">
                         <div class="display-6 mb-2">${scenario.icon}</div>
                         <div class="fw-bold">${scenario.label}</div>

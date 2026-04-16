@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Análise Temporal de Performance · 7 Variações</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d1117;--s1:#161b27;--s2:#1c2333;--s3:#222d40;--s4:#28344a;
+  --bdr:rgba(255,255,255,.07);--bdr2:rgba(255,255,255,.12);
+  --tx1:#e6edf3;--tx2:#8b949e;--tx3:#3d444d;
+  --grn:#22c55e;--grn-bg:rgba(34,197,94,.12);--grn-bdr:rgba(34,197,94,.28);
+  --red:#ef4444;--red-bg:rgba(239,68,68,.12);--red-bdr:rgba(239,68,68,.28);
+  --yel:#f59e0b;--yel-bg:rgba(245,158,11,.12);--yel-bdr:rgba(245,158,11,.28);
+  --blu:#3b82f6;--blu-bg:rgba(59,130,246,.12);--blu-bdr:rgba(59,130,246,.28);
+  --pur:#a855f7;--pur-bg:rgba(168,85,247,.12);--pur-bdr:rgba(168,85,247,.28);
+  --cya:#06b6d4;--cya-bg:rgba(6,182,212,.12);--cya-bdr:rgba(6,182,212,.28);
+  --org:#f97316;--org-bg:rgba(249,115,22,.12);--org-bdr:rgba(249,115,22,.28);
+  --mono:'JetBrains Mono',monospace;--ui:'Inter',sans-serif;
+}
+html,body{height:100%;font-family:var(--ui);background:#080d14;color:var(--tx1);font-size:13px}
+body{display:flex;flex-direction:column;align-items:center;padding:14px;gap:12px}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── SWITCHER ── */
+.sw{
+  display:flex;gap:5px;flex-wrap:wrap;
+  background:var(--s1);border:1px solid var(--bdr2);
+  border-radius:30px;padding:5px 10px;
+  position:sticky;top:8px;z-index:900;
+  box-shadow:0 4px 24px rgba(0,0,0,.7);
+}
+.sw-lbl{font-size:.62rem;color:var(--tx2);align-self:center;padding-right:3px}
+.swb{
+  padding:.22rem .7rem;border-radius:18px;border:1px solid var(--bdr);
+  background:transparent;color:var(--tx2);font-family:var(--mono);
+  font-size:.61rem;font-weight:500;cursor:pointer;transition:all .14s;white-space:nowrap;
+}
+.swb:hover{color:var(--tx1);border-color:var(--bdr2)}
+.swb.on{background:var(--yel-bg);border-color:var(--yel);color:var(--yel)}
+
+/* ── MODAL SHELL ── */
+.modal{
+  width:100%;max-width:980px;
+  background:var(--s1);border:1px solid var(--bdr2);
+  border-radius:14px;overflow:hidden;
+  display:none;animation:fadeIn .25s ease;
+}
+.modal.on{display:block}
+
+/* ── HEADER ── */
+.mhdr{
+  display:flex;align-items:center;gap:9px;
+  padding:12px 18px;background:var(--bg);border-bottom:1px solid var(--bdr);
+}
+.mhdr-icon{font-size:.9rem;color:var(--tx2)}
+.mhdr-title{font-size:.9rem;font-weight:700;flex:1}
+.mhdr-ts{font-family:var(--mono);font-size:.64rem;color:var(--tx2)}
+.mhdr-btn{
+  width:26px;height:26px;border-radius:6px;border:1px solid var(--bdr2);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:.72rem;color:var(--tx2);background:var(--s2);
+}
+.mhdr-btn:hover{border-color:var(--yel);color:var(--yel)}
+.mhdr-cls:hover{border-color:var(--red);color:var(--red)}
+
+/* ── PERIOD BAR ── */
+.pbar{
+  display:flex;align-items:center;gap:5px;flex-wrap:wrap;
+  padding:9px 18px;border-bottom:1px solid var(--bdr);
+}
+.pbar-lbl{font-size:.65rem;color:var(--tx2);margin-right:4px}
+.pp{
+  padding:.2rem .6rem;border-radius:20px;
+  font-size:.68rem;font-weight:500;cursor:pointer;
+  border:1px solid transparent;background:transparent;
+  color:var(--tx2);transition:all .13s;white-space:nowrap;
+  font-family:var(--ui);
+}
+.pp:hover{color:var(--tx1);border-color:var(--bdr2)}
+.pp.on{background:var(--yel-bg);border-color:var(--yel);color:var(--yel);font-weight:700}
+
+/* ── FILTER BAR ── */
+.fbar{
+  display:flex;align-items:center;gap:5px;flex-wrap:wrap;
+  padding:8px 18px;border-bottom:1px solid var(--bdr);
+  background:var(--bg);
+}
+.fbar-lbl{font-size:.62rem;color:var(--tx2)}
+.fp{
+  padding:.18rem .55rem;border-radius:6px;
+  font-size:.66rem;font-weight:600;cursor:pointer;
+  border:1px solid var(--bdr);background:transparent;
+  color:var(--tx2);transition:all .13s;white-space:nowrap;
+  font-family:var(--ui);text-transform:uppercase;letter-spacing:.4px;
+}
+.fp:hover{color:var(--tx1);border-color:var(--bdr2)}
+.fp.on-all{background:var(--s3);border-color:var(--bdr2);color:var(--tx1)}
+.fp.on-call{background:var(--blu-bg);border-color:var(--blu-bdr);color:var(--blu)}
+.fp.on-put{background:var(--pur-bg);border-color:var(--pur-bdr);color:var(--pur)}
+.fp.on-ab{background:var(--grn-bg);border-color:var(--grn-bdr);color:var(--grn)}
+.fp.on-fe{background:var(--red-bg);border-color:var(--red-bdr);color:var(--red)}
+.fp.on-ex{background:var(--org-bg);border-color:var(--org-bdr);color:var(--org)}
+.fbar-sep{width:1px;height:16px;background:var(--bdr2);flex-shrink:0;margin:0 2px}
+
+/* ── HERO ── */
+.hero{
+  display:flex;align-items:flex-start;gap:14px;
+  padding:12px 18px;border-bottom:1px solid var(--bdr);flex-wrap:wrap;
+}
+.hero-main{min-width:180px}
+.hero-lbl{font-size:.62rem;color:var(--tx2);margin-bottom:3px}
+.hero-val{font-family:var(--mono);font-size:1.75rem;font-weight:800;color:var(--yel);line-height:1}
+.hero-badges{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap}
+.hbdg{font-size:.62rem;font-weight:600;padding:2px 8px;border-radius:20px}
+.hbdg-g{background:var(--grn-bg);color:var(--grn);border:1px solid var(--grn-bdr)}
+.hbdg-b{background:var(--blu-bg);color:var(--blu);border:1px solid var(--blu-bdr)}
+.hero-kpis{display:flex;gap:0;flex:1;flex-wrap:wrap}
+.hkpi{flex:1;min-width:80px;padding:2px 14px;border-left:1px solid var(--bdr)}
+.hkpi:first-child{border-left:none}
+.hk-lbl{font-size:.6rem;color:var(--tx2);margin-bottom:3px}
+.hk-val{font-family:var(--mono);font-size:.88rem;font-weight:700}
+
+/* ── CONTENT AREA ── */
+.content{padding:14px 18px;display:flex;flex-direction:column;gap:12px;max-height:calc(100vh - 260px);overflow-y:auto}
+.content::-webkit-scrollbar{width:4px}
+.content::-webkit-scrollbar-track{background:transparent}
+.content::-webkit-scrollbar-thumb{background:var(--s4);border-radius:2px}
+
+/* ── CARDS ── */
+.card{background:var(--s2);border:1px solid var(--bdr);border-radius:10px;padding:12px 14px}
+.card-title{font-size:.64rem;font-weight:600;color:var(--tx2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.card-title-icon{font-size:.85rem}
+
+/* ── STAT GRIDS ── */
+.sg2{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.sg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
+.sg4{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.sg5{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.sitem{background:var(--s3);border-radius:8px;padding:9px 11px}
+.si-val{font-family:var(--mono);font-size:.9rem;font-weight:700;line-height:1}
+.si-lbl{font-size:.57rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;margin-top:3px}
+
+/* ── PROGRESS BAR ── */
+.pb-row{display:flex;flex-direction:column;gap:3px}
+.pb-hd{display:flex;justify-content:space-between;font-size:.65rem}
+.pb-lbl{color:var(--tx2)}
+.pb-val{font-family:var(--mono);font-weight:600}
+.pb-track{height:6px;background:var(--s3);border-radius:3px;overflow:hidden}
+.pb-fill{height:100%;border-radius:3px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+.pb-track-lg{height:9px}
+
+/* ── OPERATION ROW ── */
+.op-row{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 12px;border-radius:8px;
+  background:var(--s3);border:1px solid transparent;
+  transition:border-color .15s,background .15s;cursor:default;
+}
+.op-row:hover{background:var(--s4);border-color:var(--bdr2)}
+.op-date{font-family:var(--mono);font-size:.66rem;color:var(--tx2);min-width:72px}
+.op-asset{font-size:.75rem;font-weight:700;min-width:36px}
+.op-badge{font-size:.6rem;font-weight:700;padding:2px 7px;border-radius:4px;text-transform:uppercase;white-space:nowrap}
+.op-badge.call{background:var(--blu-bg);color:var(--blu);border:1px solid var(--blu-bdr)}
+.op-badge.put{background:var(--pur-bg);color:var(--pur);border:1px solid var(--pur-bdr)}
+.op-badge.ex-call{background:var(--org-bg);color:var(--org);border:1px solid var(--org-bdr)}
+.op-badge.ex-put{background:var(--red-bg);color:var(--red);border:1px solid var(--red-bdr)}
+.op-strike{font-family:var(--mono);font-size:.7rem;color:var(--tx2);flex:1}
+.op-status{font-size:.6rem;padding:2px 7px;border-radius:4px;font-weight:600;white-space:nowrap}
+.op-status.fechada{background:var(--s4);color:var(--tx2);border:1px solid var(--bdr)}
+.op-status.aberta{background:var(--grn-bg);color:var(--grn);border:1px solid var(--grn-bdr)}
+.op-val{font-family:var(--mono);font-size:.78rem;font-weight:700;min-width:64px;text-align:right}
+
+/* ── CYCLE BLOCK ── */
+.cycle-block{background:var(--s2);border:1px solid var(--bdr);border-radius:10px;overflow:hidden}
+.cycle-header{padding:10px 14px;background:var(--s3);border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between}
+.cycle-title{font-size:.74rem;font-weight:700}
+.cycle-badge{font-size:.6rem;font-weight:700;padding:2px 8px;border-radius:20px}
+.cycle-body{padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.cycle-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.ck{background:var(--s3);border-radius:8px;padding:8px 10px}
+.ck-val{font-family:var(--mono);font-size:.82rem;font-weight:700}
+.ck-lbl{font-size:.56rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.4px;margin-top:2px}
+
+/* ── RECOMMENDATION CARD ── */
+.rec-card{border:1px solid var(--grn-bdr);border-radius:10px;background:var(--grn-bg);padding:11px 14px}
+.rec-title{font-size:.68rem;font-weight:700;color:var(--grn);display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.rec-item{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(34,197,94,.1)}
+.rec-item:last-child{border-bottom:none}
+.rec-asset{font-size:.72rem;font-weight:700;min-width:30px}
+.rec-info{flex:1;font-size:.65rem}
+.rec-strike{font-family:var(--mono);font-size:.7rem;font-weight:700;color:var(--grn)}
+.rec-icon{font-size:.85rem}
+
+/* ── TABLE ── */
+.dt{width:100%;border-collapse:collapse}
+.dt th{font-size:.58rem;font-weight:600;color:var(--tx2);text-transform:uppercase;letter-spacing:.6px;padding:7px 10px;background:var(--s3);border-bottom:1px solid var(--bdr);text-align:left;white-space:nowrap}
+.dt th:last-child,.dt td:last-child{text-align:right}
+.dt td{padding:8px 10px;font-family:var(--mono);font-size:.68rem;border-bottom:1px solid rgba(255,255,255,.04)}
+.dt tr:last-child td{border-bottom:none}
+.dt tr:hover td{background:var(--s3)}
+
+/* ── CHART WRAP ── */
+.ch-wrap{position:relative}
+</style>
+</head>
+<body>
+
+<!-- SWITCHER -->
+<div class="sw">
+  <span class="sw-lbl">Variação:</span>
+  <button class="swb on" data-v="1">① Dashboard Executivo</button>
+  <button class="swb" data-v="2">② Timeline Ciclos</button>
+  <button class="swb" data-v="3">③ Score + Heatmap</button>
+  <button class="swb" data-v="4">④ Análise de Capital</button>
+  <button class="swb" data-v="5">⑤ Vista Compacta</button>
+  <button class="swb" data-v="6">⑥ Monitor de Risco</button>
+  <button class="swb" data-v="7">⑦ Cockpit Total</button>
+</div>
+
+<!-- 7 MODALS -->
+<div class="modal on" id="m1"></div>
+<div class="modal" id="m2"></div>
+<div class="modal" id="m3"></div>
+<div class="modal" id="m4"></div>
+<div class="modal" id="m5"></div>
+<div class="modal" id="m6"></div>
+<div class="modal" id="m7"></div>
+
+<script>
+/* ═══════════════════════════════════════
+   DADOS
+═══════════════════════════════════════ */
+const OPS = [
+  {id:'BTC-CALL-0804',date:'08/04/2026',asset:'BTC',type:'CALL',strike:71500,premio:14.26,status:'FECHADA',exercido:false,open:false},
+  {id:'ETH-CALL-0804',date:'08/04/2026',asset:'ETH',type:'CALL',strike:2225,premio:13.53,status:'FECHADA',exercido:false,open:false},
+  {id:'BTC-PUT-0804', date:'08/04/2026',asset:'BTC',type:'PUT', strike:71500,premio:14.26,status:'FECHADA',exercido:true, open:false},
+  {id:'ETH-PUT-0804', date:'08/04/2026',asset:'ETH',type:'PUT', strike:2225, premio:13.53,status:'FECHADA',exercido:true, open:false},
+  {id:'BTC-CALL-0904',date:'09/04/2026',asset:'BTC',type:'CALL',strike:71500,premio:9.23, status:'FECHADA',exercido:false,open:false},
+  {id:'ETH-CALL-0904',date:'09/04/2026',asset:'ETH',type:'CALL',strike:2225, premio:8.47, status:'FECHADA',exercido:false,open:false},
+  {id:'BTC-CALL-1004',date:'10/04/2026',asset:'BTC',type:'CALL',strike:71500,premio:9.23, status:'FECHADA',exercido:false,open:false},
+  {id:'ETH-CALL-1004',date:'10/04/2026',asset:'ETH',type:'CALL',strike:2225, premio:8.47, status:'FECHADA',exercido:false,open:false},
+  {id:'BTC-CALL-1304',date:'13/04/2026',asset:'BTC',type:'CALL',strike:72000,premio:26.18,status:'FECHADA',exercido:true, open:false},
+  {id:'ETH-CALL-1304',date:'13/04/2026',asset:'ETH',type:'CALL',strike:2225, premio:22.37,status:'FECHADA',exercido:true, open:false},
+  {id:'BTC-CALL-1404',date:'14/04/2026',asset:'BTC',type:'CALL',strike:72000,premio:3.90, status:'FECHADA',exercido:true, open:false},
+  {id:'ETH-CALL-1404',date:'14/04/2026',asset:'ETH',type:'CALL',strike:2225, premio:8.80, status:'FECHADA',exercido:true, open:false},
+  {id:'BTC-CALL-AB1', date:'15/04/2026',asset:'BTC',type:'CALL',strike:73500,premio:0,    status:'ABERTA', exercido:false,open:true},
+  {id:'ETH-CALL-AB2', date:'15/04/2026',asset:'ETH',type:'CALL',strike:2275, premio:0,    status:'ABERTA', exercido:false,open:true},
+];
+
+const SALDO     = 6401.89;
+const SALDO_INI = 6234.37;
+const TOTAL_P   = 167.52;
+const CUSTO_MED = {BTC:71856.73, ETH:2211.47};
+const CICLOS = [
+  {
+    id:1, from:'ETH-PUT', to:'ETH-CALL',
+    putDate:'09/04/2026', callDate:'14/04/2026',
+    putStrike:2225, callStrike:2225,
+    premios:107.69, ops:8, variacao:0, resultado:107.69, variPct:4.84
+  }
+];
+
+let filt = {period:'7d', tipo:'all', status:'all'};
+let chartInstances = {};
+
+/* ── formatters ── */
+const $     = id => document.getElementById(id);
+const fmt   = n => 'US$ '+Math.abs(n).toFixed(2).replace('.',',');
+const fmtP  = n => (n>=0?'+':'')+n.toFixed(2)+'%';
+const fmtSig= n => (n>=0?'+US$ ':'-US$ ')+Math.abs(n).toFixed(2).replace('.',',');
+
+function getOps(){
+  return OPS.filter(o=>{
+    if(filt.tipo==='call' && o.type!=='CALL') return false;
+    if(filt.tipo==='put'  && o.type!=='PUT')  return false;
+    if(filt.status==='ab' && !o.open)         return false;
+    if(filt.status==='fe' && o.open)          return false;
+    if(filt.status==='ex' && !o.exercido)     return false;
+    return true;
+  });
+}
+function calcStats(ops){
+  const fechadas = ops.filter(o=>!o.open);
+  const exercidas= ops.filter(o=>o.exercido);
+  const abertas  = ops.filter(o=>o.open);
+  const totalPrem= fechadas.reduce((a,o)=>a+o.premio,0);
+  const btcOps   = ops.filter(o=>o.asset==='BTC');
+  const ethOps   = ops.filter(o=>o.asset==='ETH');
+  const callOps  = ops.filter(o=>o.type==='CALL');
+  const putOps   = ops.filter(o=>o.type==='PUT');
+  const roi      = SALDO_INI>0 ? (totalPrem/SALDO_INI*100) : 0;
+  return {
+    total:totalPrem, fechadas:fechadas.length, exercidas:exercidas.length,
+    abertas:abertas.length, roi, btcPrem:btcOps.reduce((a,o)=>a+o.premio,0),
+    ethPrem:ethOps.reduce((a,o)=>a+o.premio,0),
+    callCount:callOps.length, putCount:putOps.length,
+    winRate: fechadas.length>0 ? ((fechadas.length-exercidas.length)/fechadas.length*100):100
+  };
+}
+
+/* ── Destroy old chart ── */
+function dChart(id){
+  if(chartInstances[id]){try{chartInstances[id].destroy();}catch(e){} delete chartInstances[id];}
+}
+
+/* ══════════════════════════════════════════
+   SHELL: header + period + filter + hero
+══════════════════════════════════════════ */
+function shell(n, ops, stats){
+  const total = stats.total;
+  const isPos = total >= 0;
+  return `
+  <div class="mhdr">
+    <span class="mhdr-icon">📅</span>
+    <span class="mhdr-title">Análise Temporal de Performance</span>
+    <span class="mhdr-ts" id="ts${n}">Atualizado: 08:18</span>
+    <button class="mhdr-btn" onclick="doRef(${n})">↺</button>
+    <button class="mhdr-btn mhdr-cls">✕</button>
+  </div>
+  <div class="pbar">
+    <span class="pbar-lbl">Período</span>
+    ${['hoje','7d','30d','60d','90d','mes','ano'].map(p=>`<button class="pp${filt.period===p?' on':''}" onclick="setPeriod('${p}',${n})">${p==='hoje'?'Hoje':p==='7d'?'7 dias':p==='30d'?'30 dias':p==='60d'?'60 dias':p==='90d'?'90 dias':p==='mes'?'Mês Atual':'Ano'}</button>`).join('')}
+  </div>
+  <div class="fbar">
+    <span class="fbar-lbl">Tipo:</span>
+    ${[['all','Todos','on-all'],['call','CALL','on-call'],['put','PUT','on-put']].map(([v,l,c])=>`<button class="fp${filt.tipo===v?' '+c:''}" onclick="setFilt('tipo','${v}',${n})">${l}</button>`).join('')}
+    <div class="fbar-sep"></div>
+    <span class="fbar-lbl">Status:</span>
+    ${[['all','Todos','on-all'],['ab','Abertas','on-ab'],['fe','Fechadas','on-fe'],['ex','Exercidas','on-ex']].map(([v,l,c])=>`<button class="fp${filt.status===v?' '+c:''}" onclick="setFilt('status','${v}',${n})">${l}</button>`).join('')}
+    <div style="margin-left:auto;display:flex;gap:5px;align-items:center">
+      <span style="font-size:.6rem;color:var(--tx2)">${ops.length} operações</span>
+      <span style="font-size:.62rem;font-weight:600;padding:2px 8px;border-radius:4px;background:${isPos?'var(--grn-bg)':'var(--red-bg)'};color:${isPos?'var(--grn)':'var(--red)'};border:1px solid ${isPos?'var(--grn-bdr)':'var(--red-bdr)'}">${isPos?'+':''}${fmt(total)}</span>
+    </div>
+  </div>
+  <div class="hero">
+    <div class="hero-main">
+      <div class="hero-lbl">Resultado Total</div>
+      <div class="hero-val" style="color:${isPos?'var(--yel)':'var(--red)'}">${fmtSig(total)}</div>
+      <div class="hero-badges">
+        <span class="hbdg hbdg-g">Sequência: 5</span>
+        <span class="hbdg hbdg-b">Melhor dia: US$ 49,75</span>
+      </div>
+    </div>
+    <div class="hero-kpis">
+      <div class="hkpi"><div class="hk-lbl">Saldo Atual</div><div class="hk-val">${fmt(SALDO)}</div></div>
+      <div class="hkpi"><div class="hk-lbl">ROI</div><div class="hk-val" style="color:var(--grn)">${fmtP(stats.roi)}</div></div>
+      <div class="hkpi"><div class="hk-lbl">Operações</div><div class="hk-val">${ops.length}</div></div>
+      <div class="hkpi"><div class="hk-lbl">Win Rate</div><div class="hk-val" style="color:var(--grn)">${stats.winRate.toFixed(2)}%</div></div>
+      <div class="hkpi"><div class="hk-lbl">Profit Factor</div><div class="hk-val" style="color:var(--grn)">∞</div></div>
+    </div>
+  </div>`;
+}
+
+/* ── OP ROW HTML ── */
+function opRowHTML(op){
+  const hasEx = op.exercido;
+  const typeClass = op.type==='CALL' ? (hasEx?'ex-call':'call') : (hasEx?'ex-put':'put');
+  const typeLbl   = op.type + (hasEx?' exercida':'');
+  const assetCol  = op.asset==='BTC'?'var(--yel)':'var(--blu)';
+  const valCol    = op.premio>0?'var(--grn)':'var(--tx2)';
+  return `<div class="op-row">
+    <span class="op-date">${op.date}</span>
+    <span class="op-asset" style="color:${assetCol}">${op.asset}</span>
+    <span class="op-badge ${typeClass}">${typeLbl}</span>
+    <span class="op-strike">Strike ${op.asset==='BTC'?'US$ '+(op.strike/1000).toFixed(1)+'K':'US$ '+op.strike.toFixed(2).replace('.',',')}</span>
+    <span class="op-status ${op.open?'aberta':'fechada'}">${op.status}</span>
+    <span class="op-val" style="color:${valCol}">${op.premio>0?'+'+fmt(op.premio):'—'}</span>
+  </div>`;
+}
+
+/* ── Accumulated chart data ── */
+function accData(ops){
+  const sorted = [...ops].filter(o=>!o.open&&o.premio>0).sort((a,b)=>a.date.localeCompare(b.date));
+  let acc=0;
+  return {
+    labels: sorted.map(o=>o.asset+' '+o.type.charAt(0)+' '+o.date.substr(0,5)),
+    raw:    sorted.map(o=>o.premio),
+    accum:  sorted.map(o=>{acc+=o.premio; return parseFloat(acc.toFixed(2));})
+  };
+}
+
+function buildBarChart(canvasId,ops){
+  dChart(canvasId);
+  const el=document.getElementById(canvasId); if(!el)return;
+  const d=accData(ops);
+  chartInstances[canvasId]=new Chart(el,{
+    type:'bar',
+    data:{labels:d.labels,datasets:[
+      {type:'bar',label:'Prêmio',data:d.raw,
+       backgroundColor:ops.filter(o=>!o.open&&o.premio>0).map(o=>o.exercido?'rgba(249,115,22,.65)':'rgba(34,197,94,.6)'),
+       borderRadius:3,barThickness:14,order:2},
+      {type:'line',label:'Acumulado',data:d.accum,
+       borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,.08)',
+       borderWidth:2.5,pointBackgroundColor:'#f59e0b',pointRadius:3,
+       fill:true,tension:.35,order:1}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'US$ '+c.raw.toFixed(2)}}},
+      scales:{
+        x:{grid:{display:false},ticks:{color:'#3d444d',font:{size:9},maxRotation:45,autoSkip:true,maxTicksLimit:10}},
+        y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#3d444d',font:{size:9},callback:v=>'$'+v.toFixed(0)}}
+      }
+    }
+  });
+}
+
+function buildLineChart(canvasId,ops){
+  dChart(canvasId);
+  const el=document.getElementById(canvasId); if(!el)return;
+  const d=accData(ops);
+  chartInstances[canvasId]=new Chart(el,{
+    type:'line',
+    data:{labels:d.labels,datasets:[{
+      data:d.accum,borderColor:'#f59e0b',
+      backgroundColor:'rgba(245,158,11,.1)',
+      borderWidth:2.5,pointBackgroundColor:'#f59e0b',
+      pointRadius:4,fill:true,tension:.38
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'US$ '+c.raw.toFixed(2)}}},
+      scales:{
+        x:{grid:{display:false},ticks:{color:'#3d444d',font:{size:9},maxRotation:45,autoSkip:true,maxTicksLimit:9}},
+        y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#3d444d',font:{size:9},callback:v=>'$'+v.toFixed(0)}}
+      }
+    }
+  });
+}
+
+function buildDonut(canvasId, vals, labels, colors){
+  dChart(canvasId);
+  const el=document.getElementById(canvasId); if(!el)return;
+  chartInstances[canvasId]=new Chart(el,{
+    type:'doughnut',
+    data:{labels,datasets:[{data:vals,backgroundColor:colors,borderWidth:0,hoverOffset:6}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'70%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.label+': US$ '+c.raw.toFixed(2)}}}}
+  });
+}
+
+/* ══════════════════════════════════════════
+   LAYOUT 1 — DASHBOARD EXECUTIVO
+   KPI strip → gráfico principal → ciclos → ops → recomendações
+══════════════════════════════════════════ */
+function render1(){
+  const ops=getOps(), s=calcStats(ops);
+  const el=$('m1');
+  el.innerHTML=shell(1,ops,s)+`<div class="content" id="c1"></div>`;
+  const c=$('c1');
+
+  /* KPI strip */
+  c.innerHTML+=`<div class="sg5">
+    <div class="sitem"><div class="si-val" style="color:var(--grn)">${fmt(s.total)}</div><div class="si-lbl">Total Prêmios</div></div>
+    <div class="sitem"><div class="si-val" style="color:var(--yel)">${fmtP(s.roi)}</div><div class="si-lbl">ROI s/ Capital</div></div>
+    <div class="sitem"><div class="si-val" style="color:var(--blu)">${s.fechadas}</div><div class="si-lbl">Ops Fechadas</div></div>
+    <div class="sitem"><div class="si-val" style="color:var(--org)">${s.exercidas}</div><div class="si-lbl">Exercidas</div></div>
+    <div class="sitem"><div class="si-val" style="color:${s.winRate>=90?'var(--grn)':'var(--yel)'}"> ${s.winRate.toFixed(1)}%</div><div class="si-lbl">Win Rate</div></div>
+  </div>`;
+
+  /* Chart */
+  c.innerHTML+=`<div class="card"><div class="card-title"><span class="card-title-icon">📈</span>Evolução do Capital — Prêmios Acumulados</div>
+    <div style="display:flex;gap:10px;margin-bottom:8px;font-size:.62rem;color:var(--tx2)">
+      <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:rgba(34,197,94,.6);display:inline-block"></span>Prêmio normal</span>
+      <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:rgba(249,115,22,.65);display:inline-block"></span>Exercida</span>
+      <span style="display:flex;align-items:center;gap:4px"><span style="width:3px;height:10px;border-radius:1px;background:#f59e0b;display:inline-block"></span>Acumulado</span>
+    </div>
+    <div class="ch-wrap" style="height:180px"><canvas id="ch1main"></canvas></div>
+  </div>`;
+
+  /* Ciclo */
+  c.innerHTML+=`<div class="cycle-block">
+    <div class="cycle-header">
+      <span class="cycle-title">🔄 Ciclo de Reentrada (CALL exercida → PUT exercida)</span>
+      <span class="cycle-badge" style="background:var(--grn-bg);color:var(--grn);border:1px solid var(--grn-bdr)">Ciclo Ativo</span>
+    </div>
+    <div class="cycle-body">
+      <div class="cycle-kpis">
+        <div class="ck"><div class="ck-val" style="color:var(--pur)">US$ 2.225,00</div><div class="ck-lbl">PUT exercida</div></div>
+        <div class="ck"><div class="ck-val" style="color:var(--grn)">US$ 107,69</div><div class="ck-lbl">Prêmios no ciclo</div></div>
+        <div class="ck"><div class="ck-val" style="color:var(--org)">US$ 2.225,00</div><div class="ck-lbl">CALL exercida</div></div>
+        <div class="ck"><div class="ck-val" style="color:var(--yel)">US$ 71.856,73</div><div class="ck-lbl">Custo Médio BTC</div></div>
+      </div>
+      <div class="sg3" style="margin-top:2px">
+        <div class="pb-row"><div class="pb-hd"><span class="pb-lbl">Prêmios ETH</span><span class="pb-val" style="color:var(--blu)">${fmt(s.ethPrem)}</span></div><div class="pb-track pb-track-lg"><div class="pb-fill" style="width:${Math.min(s.ethPrem/s.total*100,100)}%;background:var(--blu)"></div></div></div>
+        <div class="pb-row"><div class="pb-hd"><span class="pb-lbl">Prêmios BTC</span><span class="pb-val" style="color:var(--yel)">${fmt(s.btcPrem)}</span></div><div class="pb-track pb-track-lg"><div class="pb-fill" style="width:${Math.min(s.btcPrem/s.total*100,100)}%;background:var(--yel)"></div></div></div>
+        <div class="pb-row"><div class="pb-hd"><span class="pb-lbl">ROI s/ Saldo</span><span class="pb-val" style="color:var(--grn)">${fmtP(s.roi)}</span></div><div class="pb-track pb-track-lg"><div class="pb-fill" style="width:${Math.min(s.roi*10,100)}%;background:var(--grn)"></div></div></div>
+      </div>
+    </div>
+  </div>`;
+
+  /* Ops */
+  c.innerHTML+=`<div class="card"><div class="card-title"><span>📋</span>Operações do Período</div>${ops.map(opRowHTML).join('')}</div>`;
+
+  /* Recomendações */
+  c.innerHTML+=`<div class="rec-card">
+    <div class="rec-title"><span>💡</span>Sugestão de Novos Strikes — baseado no histórico</div>
+    <div class="rec-item"><span class="rec-asset" style="color:var(--yel)">BTC</span><div class="rec-info"><span style="color:var(--tx2)">CALL · Próxima operação sugerida</span><br><span style="color:var(--tx2);font-size:.62rem">Manter padrão de strike ~1.5% acima da cotação</span></div><span class="rec-strike">US$ 73.500,00</span><span class="rec-icon">✅</span></div>
+    <div class="rec-item"><span class="rec-asset" style="color:var(--blu)">ETH</span><div class="rec-info"><span style="color:var(--tx2)">CALL · Próxima operação sugerida</span><br><span style="color:var(--tx2);font-size:.62rem">Strike 2% acima — histórico favorável</span></div><span class="rec-strike">US$ 2.275,00</span><span class="rec-icon">✅</span></div>
+  </div>`;
+
+  setTimeout(()=>buildBarChart('ch1main',ops),50);
+}
+
+/* ══════════════════════════════════════════
+   LAYOUT 2 — TIMELINE DE CICLOS
+   Linha do tempo visual das operações + custo médio
+══════════════════════════════════════════ */
+function render2(){
+  const ops=getOps(), s=calcStats(ops);
+  const el=$('m2');
+  el.innerHTML=shell(2,ops,s)+`<div class="content" id="c2"></div>`;
+  const c=$('c2');
+
+  /* Timeline visual */
+  const sorted=[...ops].sort((a,b)=>a.date.localeCompare(b.date));
+  const byDate={};
+  sorted.forEach(o=>{if(!byDate[o.date])byDate[o.date]=[];byDate[o.date].push(o);});
+  const dates=Object.keys(byDate).sort();
+  let tl='<div class="card"><div class="card-title"><span>🕐</span>Timeline de Operações</div><div style="position:relative;padding-left:20px">';
+  tl+='<div style="position:absolute;left:8px;top:0;bottom:0;width:2px;background:var(--bdr2);border-radius:1px"></div>';
+  dates.forEach(date=>{
+    const dayOps=byDate[date];
+    const dayTotal=dayOps.reduce((a,o)=>a+o.premio,0);
+    const hasEx=dayOps.some(o=>o.exercido);
+    const dotCol=hasEx?'var(--org)':'var(--grn)';
+    tl+=`<div style="margin-bottom:10px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+      <div style="width:12px;height:12px;border-radius:50%;background:${dotCol};border:2px solid var(--bg);flex-shrink:0;margin-left:-22px"></div>
+      <span style="font-family:var(--mono);font-size:.66rem;color:var(--tx2)">${date}</span>
+      ${dayTotal>0?`<span style="font-family:var(--mono);font-size:.68rem;font-weight:700;color:var(--grn);margin-left:auto">+${fmt(dayTotal)}</span>`:''}
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px">
+      ${dayOps.map(o=>{
+        const tc=o.type==='CALL'?'var(--blu)':'var(--pur)';
+        const exStr=o.exercido?` <span style="font-size:.57rem;padding:1px 5px;border-radius:3px;background:var(--org-bg);color:var(--org);border:1px solid var(--org-bdr)">exercida</span>`:'';
+        return `<div style="display:flex;align-items:center;gap:7px;padding:7px 10px;background:var(--s3);border-radius:7px;border:1px solid ${o.exercido?'rgba(249,115,22,.2)':'var(--bdr)'}">
+          <span style="font-size:.7rem;font-weight:700;color:${o.asset==='BTC'?'var(--yel)':'var(--blu)'};min-width:28px">${o.asset}</span>
+          <span style="font-size:.65rem;font-weight:700;color:${tc}">${o.type}</span>${exStr}
+          <span style="font-family:var(--mono);font-size:.65rem;color:var(--tx2);flex:1">Strike ${o.asset==='BTC'?'$'+(o.strike/1000).toFixed(1)+'K':'$'+o.strike}</span>
+          <span style="font-size:.64rem;padding:1px 6px;border-radius:3px;background:var(--s4);color:var(--tx2)">${o.status}</span>
+          <span style="font-family:var(--mono);font-size:.72rem;font-weight:700;color:${o.premio>0?'var(--grn)':'var(--tx2)'}"> ${o.premio>0?'+'+fmt(o.premio):'—'}</span>
+        </div>`;
+      }).join('')}
+    </div></div>`;
+  });
+  tl+='</div></div>';
+  c.innerHTML+=tl;
+
+  /* Custo médio */
+  c.innerHTML+=`<div class="card"><div class="card-title"><span>⚖️</span>Custo Médio Atual por Ativo</div>
+    <div class="sg2">
+      <div style="background:var(--s3);border-radius:9px;padding:12px 14px;border:1px solid var(--yel-bdr)">
+        <div style="font-size:.7rem;font-weight:700;color:var(--yel);margin-bottom:6px">₿ BTC/USDT</div>
+        <div style="font-family:var(--mono);font-size:1.2rem;font-weight:900;color:var(--yel)">${fmt(CUSTO_MED.BTC)}</div>
+        <div style="font-size:.62rem;color:var(--tx2);margin-top:5px">Strike exercido − Prêmios coletados</div>
+        <div class="pb-row" style="margin-top:8px"><div class="pb-hd"><span class="pb-lbl">Prêmios coletados</span><span class="pb-val" style="color:var(--grn)">${fmt(s.btcPrem)}</span></div><div class="pb-track pb-track-lg"><div class="pb-fill" style="width:${Math.min(s.btcPrem/500*100,100)}%;background:var(--grn)"></div></div></div>
+      </div>
+      <div style="background:var(--s3);border-radius:9px;padding:12px 14px;border:1px solid var(--blu-bdr)">
+        <div style="font-size:.7rem;font-weight:700;color:var(--blu);margin-bottom:6px">Ξ ETH/USDT</div>
+        <div style="font-family:var(--mono);font-size:1.2rem;font-weight:900;color:var(--blu)">${fmt(CUSTO_MED.ETH)}</div>
+        <div style="font-size:.62rem;color:var(--tx2);margin-top:5px">Strike exercido − Prêmios coletados</div>
+        <div class="pb-row" style="margin-top:8px"><div class="pb-hd"><span class="pb-lbl">Prêmios coletados</span><span class="pb-val" style="color:var(--grn)">${fmt(s.ethPrem)}</span></div><div class="pb-track pb-track-lg"><div class="pb-fill" style="width:${Math.min(s.ethPrem/300*100,100)}%;background:var(--grn)"></div></div></div>
+      </div>
+    </div>
+  </div>`;
+
+  /* Line chart */
+  c.innerHTML+=`<div class="card"><div class="card-title"><span>📈</span>Acumulado de Prêmios</div>
+    <div class="ch-wrap" style="height:160px"><canvas id="ch2line"></canvas></div>
+  </div>`;
+
+  setTimeout(()=>buildLineChart('ch2line',ops),50);
+}
+
+/* ══════════════════════════════════════════
+   LAYOUT 3 — SCORE + HEATMAP
+   Mapa de calor + scorecards por ativo + distribuição
+══════════════════════════════════════════ */
+function render3(){
+  const ops=getOps(), s=calcStats(ops);
+  const el=$('m3');
+  el.innerHTML=shell(3,ops,s)+`<div class="content" id="c3"></div>`;
+  const c=$('c3');
+
+  /* Scorecards por ativo */
+  const assets=['BTC','ETH'];
+  let scoreCards='<div class="sg2">';
+  assets.forEach(a=>{
+    const aOps=ops.filter(o=>o.asset===a);
+    const aPrem=aOps.reduce((acc,o)=>acc+o.premio,0);
+    const aEx=aOps.filter(o=>o.exercido).length;
+    const aWR=aOps.filter(o=>!o.open).length>0?((aOps.filter(o=>!o.open).length-aEx)/aOps.filter(o=>!o.open).length*100):100;
+    const col=a==='BTC'?'var(--yel)':'var(--blu)';
+    const icon=a==='BTC'?'₿':'Ξ';
+    scoreCards+=`<div style="background:var(--s2);border:1px solid ${a==='BTC'?'var(--yel-bdr)':'var(--blu-bdr)'};border-radius:10px;padding:12px 14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <span style="font-size:.9rem;font-weight:800;color:${col}">${icon} ${a}</span>
+        <span style="font-family:var(--mono);font-size:.78rem;font-weight:700;color:var(--grn)">+${fmt(aPrem)}</span>
+      </div>
+      ${[
+        {l:'Total Prêmios',v:fmt(aPrem),c:'var(--grn)',w:Math.min(aPrem/200*100,100)},
+        {l:'Win Rate',v:aWR.toFixed(1)+'%',c:aWR>=90?'var(--grn)':'var(--yel)',w:aWR},
+        {l:'Ops Exercidas',v:aEx+' de '+aOps.filter(o=>!o.open).length,c:'var(--org)',w:aOps.filter(o=>!o.open).length>0?aEx/aOps.filter(o=>!o.open).length*100:0},
+      ].map(r=>`<div class="pb-row" style="margin-bottom:5px">
+        <div class="pb-hd"><span class="pb-lbl">${r.l}</span><span class="pb-val" style="color:${r.c}">${r.v}</span></div>
+        <div class="pb-track"><div class="pb-fill" style="width:${r.w}%;background:${r.c}"></div></div>
+      </div>`).join('')}
+      <div class="sg2" style="margin-top:8px">
+        <div style="background:var(--s3);border-radius:7px;padding:7px 9px;text-align:center">
+          <div style="font-family:var(--mono);font-size:.78rem;font-weight:700;color:var(--blu)">${aOps.filter(o=>o.type==='CALL').length}</div>
+          <div style="font-size:.56rem;color:var(--tx2);text-transform:uppercase;margin-top:2px">CALL</div>
+        </div>
+        <div style="background:var(--s3);border-radius:7px;padding:7px 9px;text-align:center">
+          <div style="font-family:var(--mono);font-size:.78rem;font-weight:700;color:var(--pur)">${aOps.filter(o=>o.type==='PUT').length}</div>
+          <div style="font-size:.56rem;color:var(--tx2);text-transform:uppercase;margin-top:2px">PUT</div>
+        </div>
+      </div>
+    </div>`;
+  });
+  scoreCards+='</div>';
+  c.innerHTML+=scoreCards;
+
+  /* Distribuição donuts */
+  c.innerHTML+=`<div class="card"><div class="card-title"><span>🥧</span>Distribuição por Tipo e Status</div>
+    <div class="sg2">
+      <div>
+        <div style="font-size:.62rem;color:var(--tx2);text-align:center;margin-bottom:6px">Por Tipo</div>
+        <div class="ch-wrap" style="height:120px"><canvas id="ch3d1"></canvas></div>
+        <div style="display:flex;justify-content:center;gap:12px;margin-top:6px;font-size:.62rem">
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:2px;background:var(--blu);display:inline-block"></span>CALL ${s.callCount}</span>
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:2px;background:var(--pur);display:inline-block"></span>PUT ${s.putCount}</span>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:.62rem;color:var(--tx2);text-align:center;margin-bottom:6px">Por Status</div>
+        <div class="ch-wrap" style="height:120px"><canvas id="ch3d2"></canvas></div>
+        <div style="display:flex;justify-content:center;gap:12px;margin-top:6px;font-size:.62rem">
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:2px;background:var(--grn);display:inline-block"></span>Normais ${s.fechadas-s.exercidas}</span>
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:2px;background:var(--org);display:inline-block"></span>Exercidas ${s.exercidas}</span>
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:2px;background:var(--blu);display:inline-block"></span>Abertas ${s.abertas}</span>
+        </div>
+      </div>
+    </div>
+  </div>`;
+
+  /* Chart evol */
+  c.innerHTML+=`<div class="card"><div class="card-title"><span>📈</span>Evolução Acumulada de Prêmios</div>
+    <div class="ch-wrap" style="height:150px"><canvas id="ch3line"></canvas></div>
+  </div>`;
+
+  setTimeout(()=>{
+    buildDonut('ch3d1',[s.callCount,s.putCount],['CALL','PUT'],['rgba(59,130,246,.8)','rgba(168,85,247,.8)']);
+    buildDonut('ch3d2',[s.fechadas-s.exercidas,s.exercidas,s.abertas],['Normais','Exercidas','Abertas'],['rgba(34,197,94,.8)','rgba(249,115,22,.8)','rgba(59,130,246,.8)']);
+    buildLineChart('ch3line',ops);
+  },50);
+}
+
+/* ══════════════════════════════════════════
+   LAYOUT 4 — ANÁLISE DE CAPITAL
+   Foco em custo médio, cenário se exercido, ROI real
+══════════════════════════════════════════ */
+function render4(){
+  const ops=getOps(), s=calcStats(ops);
+  const el=$('m4');
+  el.innerHTML=shell(4,ops,s)+`<div class="content" id="c4"></div>`;
+  const c=$('c4');
+
+  /* Capital summary */
+  const lucroExPct = (CUSTO_MED.BTC>0?(71500-CUSTO_MED.BTC)/CUSTO_MED.BTC*100:0);
+  c.innerHTML+=`<div class="card"><div class="card-title"><span>💰</span>Análise de Capital</div>
+    <div class="sg4">
+      <div class="sitem"><div class="si-val" style="color:var(--yel)">${fmt(SALDO)}</div><div class="si-lbl">Saldo Atual</div></div>
+      <div class="sitem"><div class="si-val" style="color:var(--grn)">${fmt(s.total)}</div><div class="si-lbl">Prêmios Ganhos</div></div>
+      <div class="sitem"><div class="si-val" style="color:var(--grn)">${fmtP(s.roi)}</div><div class="si-lbl">ROI Período</div></div>
+      <div class="sitem"><div class="si-val" style="color:var(--blu)">${fmtP(SALDO/SALDO_INI*100-100)}</div><div class="si-lbl">Crescimento Capital</div></div>
+    </div>
+  </div>`;
+
+  /* Custo médio detalhado */
+  c.innerHTML+=`<div class="card"><div class="card-title"><span>⚖️</span>Custo Médio Atual — Cenário de Exercício</div>
+    <div class="sg2">
+      ${[{a:'BTC',icon:'₿',col:'var(--yel)',cm:CUSTO_MED.BTC,prem:s.btcPrem},{a:'ETH',icon:'Ξ',col:'var(--blu)',cm:CUSTO_MED.ETH,prem:s.ethPrem}].map(({a,icon,col,cm,prem})=>`
+      <div style="background:var(--s3);border-radius:10px;padding:12px 14px;border:1px solid ${col}33">
+        <div style="font-size:.76rem;font-weight:700;color:${col};margin-bottom:8px">${icon} ${a}/USDT</div>
+        <table style="width:100%;font-size:.68rem">
+          <tr><td style="color:var(--tx2);padding:4px 0;border-bottom:1px solid var(--bdr)">Strike do exercício</td><td style="text-align:right;font-family:var(--mono);font-weight:600;border-bottom:1px solid var(--bdr);padding:4px 0">${a==='BTC'?'US$ 72.000,00':'US$ 2.225,00'}</td></tr>
+          <tr><td style="color:var(--tx2);padding:4px 0;border-bottom:1px solid var(--bdr)">− Prêmios coletados</td><td style="text-align:right;font-family:var(--mono);font-weight:600;color:var(--grn);border-bottom:1px solid var(--bdr);padding:4px 0">−${fmt(prem)}</td></tr>
+          <tr><td style="color:var(--tx1);padding:4px 0;font-weight:600">= Custo Médio Real</td><td style="text-align:right;font-family:var(--mono);font-weight:700;color:${col};padding:4px 0">${fmt(cm)}</td></tr>
+        </table>
+        <div class="pb-row" style="margin-top:10px">
+          <div class="pb-hd"><span class="pb-lbl">Redução de custo via prêmios</span><span class="pb-val" style="color:var(--grn)">${(prem/(a==='BTC'?72000:2225)*100).toFixed(2)}%</span></div>
+          <div class="pb-track pb-track-lg"><div class="pb-fill" style="width:${Math.min(prem/(a==='BTC'?720:22.25),100)}%;background:var(--grn)"></div></div>
+        </div>
+      </div>`).join('')}
+    </div>
+  </div>`;
+
+  /* Projeção */
+  c.innerHTML+=`<div class="card"><div class="card-title"><span>🔮</span>Projeção — Próximas Operações</div>
+    <table class="dt">
+      <thead><tr><th>Ativo</th><th>Tipo Sugerido</th><th>Strike Sugerido</th><th>Prêmio Est.</th><th>Motivo</th></tr></thead>
+      <tbody>
+        <tr><td style="color:var(--yel)">BTC</td><td><span class="op-badge call">CALL</span></td><td style="color:var(--yel)">US$ 73.500,00</td><td style="color:var(--grn)">~US$ 15-25</td><td style="color:var(--tx2)">+2% acima cotação, padrão histórico</td></tr>
+        <tr><td style="color:var(--blu)">ETH</td><td><span class="op-badge call">CALL</span></td><td style="color:var(--blu)">US$ 2.275,00</td><td style="color:var(--grn)">~US$ 8-12</td><td style="color:var(--tx2)">+2% acima, 3d prazo ideal</td></tr>
+        <tr><td style="color:var(--yel)">BTC</td><td><span class="op-badge put">PUT</span></td><td style="color:var(--yel)">US$ 70.000,00</td><td style="color:var(--grn)">~US$ 10-18</td><td style="color:var(--tx2)">Hedge proteção -3% abaixo</td></tr>
+      </tbody>
+    </table>
+  </div>`;
+
+  /* Chart + ops */
+  c.innerHTML+=`<div class="card"><div class="card-title"><span>📊</span>Operações e Evolução</div>
+    <div class="ch-wrap" style="height:140px"><canvas id="ch4bar"></canvas></div>
+  </div>`;
+  c.innerHTML+=`<div class="card"><div class="card-title"><span>📋</span>Detalhes das Operações</div>${ops.map(opRowHTML).join('')}</div>`;
+
+  setTimeout(()=>buildBarChart('ch4bar',ops),50);
+}
+
+/* ══════════════════════════════════════════
+   LAYOUT 5 — VISTA COMPACTA
+   Tabela densa + KPIs + charts pequenos
+══════════════════════════════════════════ */
+function render5(){
+  const ops=getOps(), s=calcStats(ops);
+  const el=$('m5');
+  el.innerHTML=shell(5,ops,s)+`<div class="content" id="c5"></div>`;
+  const c=$('c5');
+
+  /* KPI row */
+  c.innerHTML+=`<div class="sg4">
+    ${[
+      {l:'Prêmios Totais',v:fmt(s.total),c:'var(--grn)'},
+      {l:'BTC Prêmios',v:fmt(s.btcPrem),c:'var(--yel)'},
+      {l:'ETH Prêmios',v:fmt(s.ethPrem),c:'var(--blu)'},
+      {l:'Win Rate',v:s.winRate.toFixed(1)+'%',c:'var(--grn)'},
+    ].map(k=>`<div class="sitem"><div class="si-val" style="color:${k.c}">${k.v}</div><div class="si-lbl">${k.l}</div></div>`).join('')}
+  </div>`;
+
+  /* Dense table */
+  c.innerHTML+=`<div class="card"><div class="card-title"><span>📋</span>Tabela Completa</div>
+    <div style="overflow-x:auto">
+    <table class="dt">
+      <thead><tr><th>Data</th><th>Ativo</th><th>Tipo</th><th>Strike</th><th>Status</th><th>Exercida?</th><th>Prêmio</th><th>% ROI</th></tr></thead>
+      <tbody>
+        ${ops.map(o=>{
+          const roi=SALDO_INI>0?(o.premio/SALDO_INI*100):0;
+          const exStr=o.exercido?'<span class="op-badge ex-call">SIM</span>':'<span style="font-size:.6rem;color:var(--tx2)">Não</span>';
+          return `<tr>
+            <td>${o.date}</td>
+            <td style="color:${o.asset==='BTC'?'var(--yel)':'var(--blu)'};font-weight:700">${o.asset}</td>
+            <td><span class="op-badge ${o.type.toLowerCase()}">${o.type}</span></td>
+            <td>${o.asset==='BTC'?'$'+(o.strike/1000).toFixed(1)+'K':'$'+o.strike}</td>
+            <td><span class="op-status ${o.open?'aberta':'fechada'}">${o.status}</span></td>
+            <td>${exStr}</td>
+            <td style="color:${o.premio>0?'var(--grn)':'var(--tx2)'}">${o.premio>0?'+'+fmt(o.premio):'—'}</td>
+            <td style="color:${roi>0?'var(--grn)':'var(--tx2)'}">${roi>0?'+'+roi.toFixed(3)+'%':'—'}</td>
+          </tr>`;
+        }).join('')}
+        <tr style="border-top:2px solid var(--bdr2)">
+          <td colspan="6" style="font-weight:700;color:var(--tx1)">TOTAL</td>
+          <td style="font-weight:700;color:var(--grn)">+${fmt(s.total)}</td>
+          <td style="font-weight:700;color:var(--grn)">${fmtP(s.roi)}</td>
+        </tr>
+      </tbody>
+    </table></div>
+  </div>`;
+
+  /* 2 small charts */
+  c.innerHTML+=`<div class="sg2">
+    <div class="card"><div class="card-title"><span>📈</span>Acumulado</div><div class="ch-wrap" style="height:130px"><canvas id="ch5l"></canvas></div></div>
+    <div class="card"><div class="card-title"><span>🥧</span>Distribuição</div><div class="ch-wrap" style="height:130px"><canvas id="ch5d"></canvas></div>
+      <div style="display:flex;justify-content:center;gap:10px;margin-top:5px;font-size:.6rem">
+        <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--blu);margin-right:3px"></span>CALL</span>
+        <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--pur);margin-right:3px"></span>PUT</span>
+      </div>
+    </div>
+  </div>`;
+
+  setTimeout(()=>{
+    buildLineChart('ch5l',ops);
+    buildDonut('ch5d',[s.callCount,s.putCount],['CALL','PUT'],['rgba(59,130,246,.8)','rgba(168,85,247,.8)']);
+  },50);
+}
+
+/* ══════════════════════════════════════════
+   LAYOUT 6 — MONITOR DE RISCO
+   Exercícios, alertas, VaR estimado, PnL
+══════════════════════════════════════════ */
+function render6(){
+  const ops=getOps(), s=calcStats(ops);
+  const el=$('m6');
+  el.innerHTML=shell(6,ops,s)+`<div class="content" id="c6"></div>`;
+  const c=$('c6');
+
+  const exRate = s.fechadas>0?s.exercidas/s.fechadas*100:0;
+  const riskColor = exRate>=50?'var(--red)':exRate>=25?'var(--yel)':'var(--grn)';
+  const riskLabel = exRate>=50?'ALTO RISCO':exRate>=25?'RISCO MODERADO':'BAIXO RISCO';
+
+  /* Risk banner */
+  c.innerHTML+=`<div style="background:${exRate>=50?'var(--red-bg)':exRate>=25?'var(--yel-bg)':'var(--grn-bg)'};border:1px solid ${exRate>=50?'var(--red-bdr)':exRate>=25?'var(--yel-bdr)':'var(--grn-bdr)'};border-radius:10px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between">
+    <div>
+      <div style="font-size:.68rem;font-weight:700;color:${riskColor};display:flex;align-items:center;gap:6px">
+        <span>${exRate>=50?'⚠️':exRate>=25?'🟡':'✅'}</span>${riskLabel}
+      </div>
+      <div style="font-size:.62rem;color:var(--tx2);margin-top:3px">${s.exercidas} de ${s.fechadas} operações exercidas · Taxa de exercício: ${exRate.toFixed(1)}%</div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-family:var(--mono);font-size:1.4rem;font-weight:800;color:${riskColor}">${exRate.toFixed(1)}%</div>
+      <div style="font-size:.6rem;color:var(--tx2)">Taxa de exercício</div>
+    </div>
+  </div>`;
+
+  /* Risk metrics */
+  c.innerHTML+=`<div class="sg4">
+    <div class="sitem"><div class="si-val" style="color:var(--org)">${s.exercidas}</div><div class="si-lbl">Ops Exercidas</div></div>
+    <div class="sitem"><div class="si-val" style="color:var(--grn)">${s.fechadas-s.exercidas}</div><div class="si-lbl">Ops Normais</div></div>
+    <div class="sitem"><div class="si-val" style="color:${riskColor}">${exRate.toFixed(1)}%</div><div class="si-lbl">Taxa Exercício</div></div>
+    <div class="sitem"><div class="si-val" style="color:var(--grn)">${s.winRate.toFixed(1)}%</div><div class="si-lbl">Win Rate</div></div>
+  </div>`;
+
+  /* Exercised ops highlight */
+  const exercidas = ops.filter(o=>o.exercido);
+  if(exercidas.length>0){
+    c.innerHTML+=`<div class="card" style="border-color:var(--org-bdr)"><div class="card-title" style="color:var(--org)"><span>⚠️</span>Operações Exercidas</div>
+      ${exercidas.map(o=>`<div class="op-row" style="border-color:var(--org-bdr);background:var(--org-bg)">
+        <span class="op-date">${o.date}</span>
+        <span class="op-asset" style="color:${o.asset==='BTC'?'var(--yel)':'var(--blu)'}">${o.asset}</span>
+        <span class="op-badge ${o.type.toLowerCase()}">${o.type}</span>
+        <span class="op-strike">Strike ${o.asset==='BTC'?'$'+(o.strike/1000).toFixed(1)+'K':'$'+o.strike}</span>
+        <span style="font-size:.62rem;color:var(--org)">Custo médio reduzido via prêmio</span>
+        <span class="op-val" style="color:var(--org)">+${fmt(o.premio)}</span>
+      </div>`).join('')}
+    </div>`;
+  }
+
+  /* Risk bars per asset */
+  c.innerHTML+=`<div class="card"><div class="card-title"><span>📊</span>Perfil de Risco por Ativo</div>
+    ${[{a:'BTC',col:'var(--yel)'},{a:'ETH',col:'var(--blu)'}].map(({a,col})=>{
+      const aOps=ops.filter(o=>o.asset===a);
+      const aEx=aOps.filter(o=>o.exercido).length;
+      const aTotal=aOps.filter(o=>!o.open).length;
+      const aRate=aTotal>0?aEx/aTotal*100:0;
+      return `<div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <span style="font-size:.7rem;font-weight:700;color:${col}">${a}/USDT</span>
+          <span style="font-family:var(--mono);font-size:.68rem;color:${aRate>=50?'var(--red)':aRate>=25?'var(--yel)':'var(--grn)'}">${aRate.toFixed(0)}% exercida</span>
+        </div>
+        <div style="height:10px;background:var(--s3);border-radius:5px;overflow:hidden;position:relative">
+          <div style="height:100%;width:${100-aRate}%;background:var(--grn);border-radius:5px 0 0 5px"></div>
+          <div style="position:absolute;top:0;right:0;height:100%;width:${aRate}%;background:var(--org);border-radius:0 5px 5px 0"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:.58rem;color:var(--tx2);margin-top:3px">
+          <span>Normal: ${aTotal-aEx}</span><span>Exercida: ${aEx}</span>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+
+  c.innerHTML+=`<div class="card"><div class="card-title"><span>📋</span>Todas as Operações</div>${ops.map(opRowHTML).join('')}</div>`;
+
+  c.innerHTML+=`<div class="card"><div class="card-title"><span>📈</span>Evolução</div><div class="ch-wrap" style="height:140px"><canvas id="ch6bar"></canvas></div></div>`;
+  setTimeout(()=>buildBarChart('ch6bar',ops),50);
+}
+
+/* ══════════════════════════════════════════
+   LAYOUT 7 — COCKPIT TOTAL
+   Tudo numa vista panorâmica
+══════════════════════════════════════════ */
+function render7(){
+  const ops=getOps(), s=calcStats(ops);
+  const el=$('m7');
+  el.innerHTML=shell(7,ops,s)+`<div class="content" id="c7"></div>`;
+  const c=$('c7');
+
+  /* Full KPI strip */
+  c.innerHTML+=`<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px">
+    ${[
+      {l:'Prêmios Totais',v:fmt(s.total),c:'var(--grn)'},
+      {l:'ROI s/ Capital',v:fmtP(s.roi),c:'var(--yel)'},
+      {l:'Win Rate',v:s.winRate.toFixed(1)+'%',c:'var(--grn)'},
+      {l:'Taxa Exercício',v:(s.exercidas/Math.max(s.fechadas,1)*100).toFixed(1)+'%',c:'var(--org)'},
+      {l:'Custo M. BTC',v:'$'+(CUSTO_MED.BTC/1000).toFixed(2)+'K',c:'var(--yel)'},
+      {l:'Custo M. ETH',v:'$'+CUSTO_MED.ETH.toFixed(2),c:'var(--blu)'},
+    ].map(k=>`<div class="sitem"><div class="si-val" style="color:${k.c}">${k.v}</div><div class="si-lbl">${k.l}</div></div>`).join('')}
+  </div>`;
+
+  /* Main chart + donuts in row */
+  c.innerHTML+=`<div style="display:grid;grid-template-columns:2fr 1fr;gap:10px">
+    <div class="card"><div class="card-title"><span>📈</span>Evolução de Capital</div>
+      <div class="ch-wrap" style="height:155px"><canvas id="ch7bar"></canvas></div>
+    </div>
+    <div class="card"><div class="card-title"><span>🥧</span>Mix de Operações</div>
+      <div class="ch-wrap" style="height:115px"><canvas id="ch7d"></canvas></div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-top:5px;font-size:.59rem">
+        <span style="display:flex;align-items:center;gap:3px"><span style="width:7px;height:7px;border-radius:50%;background:var(--blu);display:inline-block"></span>CALL ${s.callCount}</span>
+        <span style="display:flex;align-items:center;gap:3px"><span style="width:7px;height:7px;border-radius:50%;background:var(--pur);display:inline-block"></span>PUT ${s.putCount}</span>
+        <span style="display:flex;align-items:center;gap:3px"><span style="width:7px;height:7px;border-radius:50%;background:var(--org);display:inline-block"></span>Exerc. ${s.exercidas}</span>
+      </div>
+    </div>
+  </div>`;
+
+  /* Custo médio + ciclo */
+  c.innerHTML+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <div class="card"><div class="card-title"><span>⚖️</span>Custo Médio Real</div>
+      ${[{a:'BTC',col:'var(--yel)',cm:CUSTO_MED.BTC,icon:'₿'},{a:'ETH',col:'var(--blu)',cm:CUSTO_MED.ETH,icon:'Ξ'}].map(({a,col,cm,icon})=>`
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--bdr)">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:.9rem">${icon}</span>
+          <div><div style="font-size:.7rem;font-weight:700;color:${col}">${a}/USDT</div>
+          <div style="font-size:.6rem;color:var(--tx2)">Strike − Prêmios</div></div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-family:var(--mono);font-size:.88rem;font-weight:700;color:${col}">${fmt(cm)}</div>
+          <div style="font-size:.6rem;color:var(--grn)">Prêm: ${a==='BTC'?fmt(s.btcPrem):fmt(s.ethPrem)}</div>
+        </div>
+      </div>`).join('')}
+    </div>
+    <div class="card"><div class="card-title"><span>🔄</span>Ciclo Ativo</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        ${[
+          {l:'PUT exercida',v:'US$ 2.225,00',c:'var(--pur)'},
+          {l:'Prêmios ciclo',v:'US$ 107,69',c:'var(--grn)'},
+          {l:'CALL exercida',v:'US$ 2.225,00',c:'var(--org)'},
+          {l:'Resultado',v:'US$ 107,69',c:'var(--grn)'},
+        ].map(k=>`<div class="sitem"><div class="si-val" style="color:${k.c};font-size:.78rem">${k.v}</div><div class="si-lbl">${k.l}</div></div>`).join('')}
+      </div>
+    </div>
+  </div>`;
+
+  /* Recom */
+  c.innerHTML+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <div class="rec-card">
+      <div class="rec-title"><span>💡</span>Strikes Sugeridos</div>
+      ${[{a:'BTC',col:'var(--yel)',strike:'US$ 73.500,00',note:'CALL +2% acima'},
+         {a:'ETH',col:'var(--blu)',strike:'US$ 2.275,00',note:'CALL +2% acima'},
+         {a:'BTC',col:'var(--yel)',strike:'US$ 70.000,00',note:'PUT hedge -3%'}].map(r=>`
+      <div class="rec-item">
+        <span class="rec-asset" style="color:${r.col}">${r.a}</span>
+        <div class="rec-info"><span style="color:var(--tx2)">${r.note}</span></div>
+        <span class="rec-strike">${r.strike}</span>
+        <span class="rec-icon">✅</span>
+      </div>`).join('')}
+    </div>
+    <div class="card"><div class="card-title"><span>📊</span>Barras de Performance</div>
+      ${[
+        {l:'Win Rate',v:s.winRate,c:'var(--grn)',disp:s.winRate.toFixed(1)+'%'},
+        {l:'Prêmios BTC',v:s.btcPrem/s.total*100,c:'var(--yel)',disp:fmt(s.btcPrem)},
+        {l:'Prêmios ETH',v:s.ethPrem/s.total*100,c:'var(--blu)',disp:fmt(s.ethPrem)},
+        {l:'ROI',v:Math.min(s.roi*10,100),c:'var(--yel)',disp:fmtP(s.roi)},
+      ].map(r=>`<div class="pb-row" style="margin-bottom:6px">
+        <div class="pb-hd"><span class="pb-lbl">${r.l}</span><span class="pb-val" style="color:${r.c}">${r.disp}</span></div>
+        <div class="pb-track pb-track-lg"><div class="pb-fill" style="width:${r.v}%;background:${r.c}"></div></div>
+      </div>`).join('')}
+    </div>
+  </div>`;
+
+  /* ops table compact */
+  c.innerHTML+=`<div class="card"><div class="card-title"><span>📋</span>Operações</div>${ops.map(opRowHTML).join('')}</div>`;
+
+  setTimeout(()=>{
+    buildBarChart('ch7bar',ops);
+    buildDonut('ch7d',[s.callCount,s.putCount,s.exercidas],['CALL','PUT','Exercidas'],['rgba(59,130,246,.8)','rgba(168,85,247,.8)','rgba(249,115,22,.8)']);
+  },50);
+}
+
+/* ══ CONTROL ══ */
+function setPeriod(p,n){ filt.period=p; renderAll(); }
+function setFilt(k,v,n){ filt[k]=v; renderAll(); }
+function doRef(n){ renderAll(); const el=$('ts'+n); if(el){const now=new Date();el.textContent='Atualizado: '+now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');} }
+
+function renderAll(){
+  render1();render2();render3();render4();render5();render6();render7();
+}
+
+document.querySelectorAll('.swb').forEach(b=>{
+  b.addEventListener('click',function(){
+    document.querySelectorAll('.swb').forEach(x=>x.classList.remove('on'));
+    document.querySelectorAll('.modal').forEach(x=>x.classList.remove('on'));
+    this.classList.add('on');
+    $('m'+this.dataset.v).classList.add('on');
+    window.scrollTo({top:0,behavior:'smooth'});
+    renderAll();
+  });
+});
+
+renderAll();
+</script>
+</body>
+</html>
