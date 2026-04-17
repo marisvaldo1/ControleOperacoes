@@ -100,6 +100,7 @@ Se houver uma skill ou regra aplicável, ela deve orientar a resposta.
    - Executar `.\run_all_tests.bat` novamente
 3. Repetir o ciclo até que **todos os testes passem** (pytest + Playwright)
 4. Somente após 100% de testes passando, considerar a tarefa concluída
+5. Se os itens do prompt estiverem numerados, ao final criar um checklist com o resultado e confirmação de aplicação de ajustes em cada um dos itens solicitados evidência de correção
 
 **Nunca encerrar uma tarefa com testes falhando.**
 

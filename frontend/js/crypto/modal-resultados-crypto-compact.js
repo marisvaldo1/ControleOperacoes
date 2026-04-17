@@ -18,13 +18,15 @@
     };
 
     let _loaded  = false;
-    let _period  = 'all';
+    let _period  = 'today';
     let _statusF = null;
     let _tipoF   = null;
     let _assetF  = null; // filtro de ativo (BTC, ETH, etc.)
+    let _corrF   = null; // filtro de corretora ('BINANCE' | 'BYBIT' | null)
     let _bsModal = null;
     let _charts  = {};
     let _selIdx  = 0;   // índice da operação selecionada para o gauge row
+    let _header  = null; // controlador CryptoModalHeader
 
     /* ─────────────────────────────
        Formatadores
@@ -113,7 +115,26 @@
     };
     const filterOps = ops => ops.filter(op => {
         if (!inPeriod(op, _period)) return false;
-        if (_statusF && (op.status||'').toLowerCase() !== _statusF.toLowerCase()) return false;
+        if (_corrF) {
+            const c = (op.corretora || 'BINANCE').toUpperCase();
+            if (c !== _corrF) return false;
+        }
+        if (_statusF) {
+            const s = (op.status || '').toLowerCase();
+            if (_statusF === 'exercida') {
+                // Usa função global unificada — ABERTA nunca é exercida
+                const isEx = window.CryptoExerciseStatus
+                    ? window.CryptoExerciseStatus.isActuallyExercised(op)
+                    : (s === 'fechada' && (op.exercicio_status || '').toUpperCase() === 'SIM');
+                if (!isEx) return false;
+            } else if (_statusF === 'nao_exercida') {
+                if (s === 'aberta') return false;
+                const isEx = window.CryptoExerciseStatus
+                    ? window.CryptoExerciseStatus.isActuallyExercised(op)
+                    : (s === 'fechada' && (op.exercicio_status || '').toUpperCase() === 'SIM');
+                if (isEx) return false;
+            } else if (s !== _statusF.toLowerCase()) return false;
+        }
         if (_tipoF   && (op.tipo||'').toUpperCase()   !== _tipoF.toUpperCase())   return false;
         if (_assetF  && getAsset(op.ativo)            !== _assetF)                return false;
         return true;
@@ -182,7 +203,10 @@
         const open   = allOps.filter(o => (o.status||'').toUpperCase() === 'ABERTA');
         const closed = allOps.filter(o => (o.status||'').toUpperCase() !== 'ABERTA');
         const tp     = allOps.reduce((a,o) => a + (parseFloat(o.premio_us)||0), 0);
-        const exQty  = allOps.filter(o => window.CryptoExerciseStatus?.resolveDisplayStatus(o) === 'SIM').length;
+        const exQty  = allOps.filter(o => {
+            const st = (o.status || '').toUpperCase();
+            return st !== 'ABERTA' && window.CryptoExerciseStatus?.resolveDisplayStatus(o) === 'SIM';
+        }).length;
 
         const cells = [
             { p: Math.min(cotacao  / am, 1),        c: ac,                    v: fmtUsd(cotacao),                       l: 'Cotação Atual',  s: asset },
@@ -229,6 +253,10 @@
         const exStr    = (window.CryptoExerciseStatus?.resolveDisplayStatus(op) || 'NAO').toUpperCase();
         const isItm    = exStr === 'SIM';
         const tone     = getExerciseTone(op);
+        const corr     = (op.corretora || 'BINANCE').toUpperCase();
+        const corrBadge = corr === 'BINANCE'
+            ? `<span style="font-size:.60rem;padding:1px 5px;border-radius:3px;background:#3a2800;color:#e8a830;border:1px solid #4a3820;font-family:var(--dsh-mono)">BNC</span>`
+            : `<span style="font-size:.60rem;padding:1px 5px;border-radius:3px;background:var(--dsh-blu-bg);color:var(--dsh-blue);border:1px solid var(--dsh-blu-bdr);font-family:var(--dsh-mono)">BB</span>`;
 
         const dias  = Math.max(prazo - corridos, 0);
         const bw    = prazo > 0 ? Math.min(Math.round((corridos/prazo)*100), 100) : 0;
@@ -240,6 +268,7 @@
                 return `<div class="dsh-op-card ${isItm ? 'itm' : 'otm'} tone-${tone.level}" style="--dsh-ex-bg:${tone.bg};--dsh-ex-border:${tone.border};--dsh-ex-accent:${tone.accent};">
           <div class="dsh-oc-head">
             <span class="dsh-oc-asset" style="color:${ac};">${asset}</span>
+            ${corrBadge}
             ${typeBadge(tipo, isOpen)}
             ${exBadge(exStr, isOpen)}
             <span class="dsh-oc-date">${exData}</span>
@@ -500,13 +529,41 @@
         const open   = ops.filter(o => (o.status||'').toUpperCase() === 'ABERTA');
         const closed = ops.filter(o => (o.status||'').toUpperCase() !== 'ABERTA');
 
-        // Atualiza pills de ativo no filtro
+        // Atualiza pills de ativo no filtro:
+        // — operações ABERTAS: como botões
+        // — restantes: no select (se existirem)
         const assetPillsEl = document.getElementById('dshAssetPills');
         if (assetPillsEl) {
-            const assets = [...new Set(allOps.map(o => getAsset(o.ativo)))].sort();
-            if (assets.length > 1) {
-                assetPillsEl.innerHTML = '<div class="dsh-fsep"></div>'
-                    + assets.map(a => `<button class="dsh-pill${_assetF===a?' aa':''}" data-dsh-a="${a}">${a}</button>`).join('');
+            const allAssets   = [...new Set(allOps.map(o => getAsset(o.ativo)))].sort();
+            const openAssets  = [...new Set(allOps.filter(o => (o.status||'').toUpperCase() === 'ABERTA').map(o => getAsset(o.ativo)))].sort();
+            const closedAssets = allAssets.filter(a => !openAssets.includes(a));
+
+            if (allAssets.length > 1) {
+                let pillsHtml = '<div class="dsh-fsep"></div>';
+                // Botões para ativos ABERTOS
+                openAssets.forEach(a => {
+                    pillsHtml += `<button class="dsh-pill${_assetF === a ? ' aa' : ''}" data-dsh-a="${a}">${a}</button>`;
+                });
+                // Select para ativos apenas FECHADOS
+                if (closedAssets.length > 0) {
+                    const selVal = (_assetF && closedAssets.includes(_assetF)) ? _assetF : '';
+                    pillsHtml += `<select class="dsh-closed-sel" id="dshAssetClosedSel" data-dsh-a-sel style="min-width:80px;">
+                        <option value="">Todas moedas</option>
+                        ${closedAssets.map(a => `<option value="${a}"${selVal === a ? ' selected' : ''}>${a}</option>`).join('')}
+                    </select>`;
+                }
+                assetPillsEl.innerHTML = pillsHtml;
+
+                // Re-bind select de ativos fechados
+                const assetSel = document.getElementById('dshAssetClosedSel');
+                if (assetSel) {
+                    assetSel.addEventListener('change', () => {
+                        _assetF = assetSel.value || null;
+                        // Desativar botões se select tem valor
+                        document.querySelectorAll('#dshModalHeader [data-cfb-a]').forEach(b => b.classList.toggle('a-on', b.getAttribute('data-cfb-a') === _assetF));
+                        _selIdx = 0; render();
+                    });
+                }
             }
         }
 
@@ -522,7 +579,10 @@
         const avgD = ops.length ? ops.reduce((a,o) => a+(parseFloat(o.distancia)||0),0) / ops.length : 0;
         const avgT = ops.length ? ops.reduce((a,o) => a+(parseFloat(o.tae)||0),0) / ops.length : 0;
         const best = open.length ? Math.max(...open.map(o => parseFloat(o.resultado)||0)) : 0;
-        const exQty = ops.filter(o => window.CryptoExerciseStatus?.resolveDisplayStatus(o) === 'SIM').length;
+        const exQty = ops.filter(o => {
+            const st = (o.status || '').toUpperCase();
+            return st !== 'ABERTA' && window.CryptoExerciseStatus?.resolveDisplayStatus(o) === 'SIM';
+        }).length;
 
         const resumoRows = [
             { l: 'Prêmio Total',     v: fmtUsd(tp),                     c: 'var(--dsh-amber)' },
@@ -566,11 +626,16 @@
           <!-- Operações fechadas (accordion) -->
           ${closedFoot(closed)}`;
 
-        // Hora
-        const timeEl = document.getElementById('dshTime');
-        if (timeEl) {
-            const n = new Date();
-            timeEl.textContent = 'Atualizado: ' + n.getHours().toString().padStart(2,'0') + ':' + n.getMinutes().toString().padStart(2,'0');
+        // Hora — atualizada pelo CryptoModalHeader se disponível
+        if (_header) {
+            _header.setOps(allOps, ops);
+            _header.tick();
+        } else {
+            const timeEl = document.getElementById('dshTime');
+            if (timeEl) {
+                const n = new Date();
+                timeEl.textContent = 'Atualizado: ' + n.getHours().toString().padStart(2,'0') + ':' + n.getMinutes().toString().padStart(2,'0');
+            }
         }
 
         // Chart: filtra pelo período + ativo da op selecionada (ou pill de ativo)
@@ -582,85 +647,70 @@
     /* ─────────────────────────────
        Bind filtros
     ───────────────────────────── */
-    function bindFilters() {
-        const fbar = document.getElementById('dshFbar');
-        if (!fbar) return;
-        fbar.addEventListener('click', e => {
-            const btn = e.target.closest('[data-dsh-p],[data-dsh-s],[data-dsh-t],[data-dsh-a]');
-            if (!btn) return;
-            if (btn.hasAttribute('data-dsh-p')) {
-                _period = btn.getAttribute('data-dsh-p');
-                fbar.querySelectorAll('[data-dsh-p]').forEach(b => b.classList.remove('ap'));
-                btn.classList.add('ap');
-            } else if (btn.hasAttribute('data-dsh-s')) {
-                const v = btn.getAttribute('data-dsh-s');
-                if (_statusF === v) {
-                    _statusF = null;
-                    fbar.querySelectorAll('[data-dsh-s]').forEach(b => b.classList.remove('aa','af'));
-                } else {
-                    _statusF = v;
-                    fbar.querySelectorAll('[data-dsh-s]').forEach(b => b.classList.remove('aa','af'));
-                    btn.classList.add(v === 'aberta' ? 'aa' : 'af');
-                }
-            } else if (btn.hasAttribute('data-dsh-t')) {
-                const v = btn.getAttribute('data-dsh-t');
-                if (_tipoF === v) {
-                    _tipoF = null;
-                    fbar.querySelectorAll('[data-dsh-t]').forEach(b => b.classList.remove('ac','apu'));
-                } else {
-                    _tipoF = v;
-                    fbar.querySelectorAll('[data-dsh-t]').forEach(b => b.classList.remove('ac','apu'));
-                    btn.classList.add(v === 'CALL' ? 'ac' : 'apu');
-                }
-            } else if (btn.hasAttribute('data-dsh-a')) {
-                const v = btn.getAttribute('data-dsh-a');
-                if (_assetF === v) {
-                    _assetF = null;
-                    fbar.querySelectorAll('[data-dsh-a]').forEach(b => b.classList.remove('aa'));
-                } else {
-                    _assetF = v;
-                    fbar.querySelectorAll('[data-dsh-a]').forEach(b => b.classList.remove('aa'));
-                    btn.classList.add('aa');
-                }
-            }
-            _selIdx = 0;
-            render();
-        });
-    }
-
     /* ─────────────────────────────
-       Bind botões header
+       Header padrão (CryptoModalHeader)
     ───────────────────────────── */
-    function bindButtons() {
-        const refreshBtn = document.getElementById('btnDshRefresh');
-        if (refreshBtn) {
-            refreshBtn.addEventListener('click', async () => {
-                refreshBtn.classList.add('spin');
+    function _mountHeader() {
+        if (!window.CryptoModalHeader) return;
+        if (_header) { _header.destroy(); _header = null; }
+        _header = window.CryptoModalHeader.mount('#dshModalHeader', {
+            title:         'Dashboard Analítico · Crypto',
+            icon:          '⚡',
+            defaultPeriod: 'today',
+            closeModalId:  cfg.modalElId,
+            actionLabel:   'Análise Detalhada',
+            actionId:      'btnResultadosCryptoDetalhado',
+            onFilter: state => {
+                _period  = state.period;
+                _statusF = state.status;
+                _tipoF   = state.tipo;
+                _assetF  = state.asset;
+                _corrF   = state.corretora;
+                _selIdx  = 0;
+                render();
+            },
+            onRefresh: async () => {
                 showLoading();
                 try {
-                    await fetch('/api/crypto/refresh', {method:'POST'}).catch(()=>{});
-                    const r = await fetch('/api/crypto').catch(()=>null);
+                    await fetch('/api/crypto/refresh', { method: 'POST' }).catch(() => {});
+                    const r = await fetch('/api/crypto').catch(() => null);
                     if (r && r.ok) {
-                        const data = await r.json().catch(()=>null);
+                        const data = await r.json().catch(() => null);
                         if (Array.isArray(data)) window.cryptoOperacoes = data;
                         else if (data && Array.isArray(data.operacoes)) window.cryptoOperacoes = data.operacoes;
                     }
-                } catch(e) { /* silent */ }
+                } catch (e) { /* silent */ }
                 render();
-                setTimeout(() => refreshBtn.classList.remove('spin'), 400);
-            });
-        }
-        const detBtn = document.getElementById('btnResultadosCryptoDetalhado');
-        if (detBtn) {
-            detBtn.addEventListener('click', () => {
+            },
+            onAction: () => {
                 if (_bsModal) _bsModal.hide();
                 setTimeout(() => {
                     if (window.ModalResultadosCrypto && typeof window.ModalResultadosCrypto.open === 'function') {
                         window.ModalResultadosCrypto.open();
                     }
                 }, 400);
-            });
+            },
+            showTotals: true,
+        });
+        /* Sincroniza variáveis locais com o estado inicial do header */
+        if (_header) {
+            const st = _header.getState();
+            _period  = st.period;
+            _statusF = st.status;
+            _tipoF   = st.tipo;
+            _assetF  = st.asset;
+            _corrF   = st.corretora;
         }
+    }
+
+    function bindFilters() {
+        // Filtros locais removidos: todo controle fica no CryptoModalHeader.
+    }
+
+    /* ─────────────────────────────
+       Bind botões (apenas op-row — header gerenciado por CryptoModalHeader)
+    ───────────────────────────── */
+    function bindButtons() {
         // Listener único para tabs de abertas e select de fechadas
         const opRow = document.getElementById('dshOpRow');
         if (opRow) {
@@ -684,6 +734,7 @@
     ───────────────────────────── */
     function openModal() {
         if (_loaded) {
+            _mountHeader();
             render();
             if (_bsModal) _bsModal.show();
             return;
@@ -699,7 +750,7 @@
                 const modalEl = document.getElementById(cfg.modalElId);
                 if (!modalEl) { console.error('DSH: modal element não encontrado:', cfg.modalElId); return; }
                 _bsModal = new bootstrap.Modal(modalEl);
-                bindFilters();
+                _mountHeader();
                 bindButtons();
                 render();
                 _bsModal.show();

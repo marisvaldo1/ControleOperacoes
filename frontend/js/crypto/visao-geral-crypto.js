@@ -28,8 +28,12 @@
       var prem = parseFloat(op.premio_us || 0);
       total   += prem;
       if (prem > 0) profitable++;
-      if ((op.exercicio_status || '').toUpperCase() === 'SIM') exercidas++;
-      if ((op.status || '').toUpperCase() === 'ABERTA') abertas++;
+      // Conta exercidas apenas para operações FECHADAS com exercicio_status = SIM no banco
+      var opStatus = (op.status || '').toUpperCase();
+      if (window.CryptoExerciseStatus
+        ? window.CryptoExerciseStatus.isActuallyExercised(op)
+        : (opStatus !== 'ABERTA' && (op.exercicio_status || '').toUpperCase() === 'SIM')) exercidas++;
+      if (opStatus === 'ABERTA') abertas++;
       var ativo = (op.ativo || '').toUpperCase();
       if (ativo === 'BTC') btcPrem += prem; else if (ativo === 'ETH') ethPrem += prem;
 

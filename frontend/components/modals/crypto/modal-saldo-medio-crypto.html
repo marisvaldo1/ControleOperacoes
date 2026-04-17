@@ -3,73 +3,21 @@
     <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content sm-modal-content">
 
-            <!-- gradient strip animado -->
-            <div class="sm-grad-strip"></div>
+            <!-- Cabeçalho padrão CryptoModalHeader -->
+            <div id="smModalHeader" style="flex-shrink:0;"></div>
 
-            <!-- HEADER -->
-            <div class="modal-header sm-modal-header">
-                <div class="flex-grow-1">
-                    <div class="sm-eyebrow text-primary">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24"
-                             fill="none" stroke="currentColor" stroke-width="2"
-                             stroke-linecap="round" stroke-linejoin="round" class="me-1">
-                            <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
-                            <polyline points="16 7 22 7 22 13"/>
-                        </svg>
-                        Saldo Médio · Análise de Operações
-                    </div>
-                    <div class="d-flex align-items-baseline gap-2 flex-wrap mt-1">
+            <!-- BODY -->
+            <div class="modal-body sm-modal-body">
+
+                <!-- Resumo (antes no header) -->
+                <div class="sm-header-data">
+                    <div class="d-flex align-items-baseline gap-2 flex-wrap">
                         <div class="sm-amount" id="smAmount">—</div>
                         <div class="sm-pct text-muted" id="smPct"></div>
                     </div>
                     <div class="sm-sub text-muted" id="smSub"></div>
                     <div class="sm-pills" id="smPills"></div>
                 </div>
-
-                <!-- Botões: timestamp · ⟳ · X em linha -->
-                <div class="d-flex align-items-center gap-2 flex-shrink-0 ms-3">
-                    <span class="mdh-ts" id="smLastUpdated">Atualizado: --:--</span>
-                    <button type="button"
-                            class="mdh-refresh"
-                            id="btnRefreshSaldoMedio"
-                            title="Atualizar dados">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
-                             fill="none" stroke="currentColor" stroke-width="2.2"
-                             stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
-                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-                        </svg>
-                    </button>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
-                </div>
-            </div>
-
-            <!-- BODY -->
-            <div class="modal-body sm-modal-body">
-
-                <div class="rmc-filter-bar sm-map-filter-bar">
-                    <div class="rmc-pills-group" id="smPeriodPills">
-                        <button class="rmc-pill active" data-period="all">Todos</button>
-                        <button class="rmc-pill" data-period="today">Hoje</button>
-                        <button class="rmc-pill" data-period="7d">7d</button>
-                        <button class="rmc-pill" data-period="15d">15d</button>
-                        <button class="rmc-pill" data-period="mes">Mês</button>
-                        <button class="rmc-pill" data-period="30d">30d</button>
-                        <button class="rmc-pill" data-period="90d">90d</button>
-                        <button class="rmc-pill" data-period="12m">12m</button>
-                        <button class="rmc-pill" data-period="ano">Ano</button>
-                    </div>
-                    <div class="rmc-pills-group" id="smStatusPills">
-                        <button class="rmc-pill rmc-pill-ab active" data-type="aberta">Abertas</button>
-                        <button class="rmc-pill rmc-pill-fe" data-type="fechada">Fechadas</button>
-                    </div>
-                    <div class="rmc-pills-group" id="smTipoPills">
-                        <button class="rmc-pill rmc-pill-call" data-tipo="CALL">CALL</button>
-                        <button class="rmc-pill rmc-pill-put" data-tipo="PUT">PUT</button>
-                    </div>
-                    <div class="rmc-pills-group" id="smCoinPills"></div>
-                </div>
-
                 <div class="sm-map-kpis" id="smMapKpis">
                     <div class="sm-map-kpi"><span>Operações</span><strong id="smKpiOps">0</strong></div>
                     <div class="sm-map-kpi"><span>Exercidas</span><strong id="smKpiEx">0</strong></div>
@@ -126,3 +74,5 @@
         </div><!-- /modal-content -->
     </div><!-- /modal-dialog -->
 </div><!-- /modal -->
+
+

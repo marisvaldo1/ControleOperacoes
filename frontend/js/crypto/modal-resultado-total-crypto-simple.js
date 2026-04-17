@@ -7,7 +7,8 @@
   var currentOperacoes = [];
   var filteredCycles   = [];
   var accChart         = null;
-  var filterState      = { period: '60d', asset: 'all', tipo: 'all', status: 'all' };
+  var filterState      = { period: 'today', status: null, tipo: null, asset: null, corretora: null };
+  var _header          = null; /* controlador CryptoModalHeader */
 
   /* ─ Formatadores ─ */
   function fmt(n)  { return 'US$ ' + Math.abs(n).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}); }
@@ -28,6 +29,15 @@
     return { date: str, dow: '?', iso: str };
   }
 
+  function isActuallyExercised(op) {
+    if (window.CryptoExerciseStatus && window.CryptoExerciseStatus.isActuallyExercised) {
+      return !!window.CryptoExerciseStatus.isActuallyExercised(op);
+    }
+    var status = (op && op.status ? String(op.status) : '').toUpperCase();
+    if (status === 'ABERTA') return false;
+    return (String(op && op.exercicio_status || '').toUpperCase() === 'SIM');
+  }
+
   /* ─ Agrupar por ciclo ─ */
   function groupByCycle(ops) {
     var map = {};
@@ -46,8 +56,7 @@
       cy.ops.forEach(function (op) {
         var prem   = parseFloat(op.premio_us || 0);
         total     += prem;
-        var ts     = (op.exercicio_status || '').toUpperCase();
-        if (ts === 'SIM') exercidas++;
+        if (isActuallyExercised(op)) exercidas++;
         var tipo   = (op.tipo || '').toUpperCase();
         if (tipo === 'PUT' && !putStrike) {
           putStrike   = parseFloat(op.strike   || 0);
@@ -91,33 +100,40 @@
 
   /* ─ Op Row ─ */
   function opRow(op) {
-    var asset = (op.ativo || '?').toUpperCase();
-    var tipo  = (op.tipo  || 'CALL').toUpperCase();
+    var asset  = (op.ativo || '?').toUpperCase();
+    var tipo   = (op.tipo  || 'CALL').toUpperCase();
     var strike = parseFloat(op.strike || 0);
-    var status  = (op.status     || '').toUpperCase();
-    var ts      = (op.tipo_status|| status).toUpperCase();
-    var premio  = parseFloat(op.premio_us || 0);
-    var resul   = parseFloat(op.resultado  || 0);
-    var isEx    = ts === 'EXERCIDA';
+    var status = (op.status || '').toUpperCase();
+    var isEx   = isActuallyExercised(op);
+    var premio = parseFloat(op.premio_us || 0);
+    var resul  = parseFloat(op.resultado  || 0);
 
-    var stk = (asset === 'BTC' && strike >= 1000)
-      ? '$' + (strike/1000).toFixed(1) + 'K'
-      : '$' + strike.toLocaleString('pt-BR');
+    var stk = strike > 0
+      ? 'US$ ' + strike.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})
+      : '—';
+
+    var corrRaw   = (op.corretora || 'BINANCE').toUpperCase();
+    var corrBadge = corrRaw === 'BINANCE'
+      ? '<span class="or-corr bnc">BNC</span>'
+      : '<span class="or-corr bb">BB</span>';
+
+    var exStatusBadge = isEx
+      ? '<span class="or-ex-badge sim">SIM</span>'
+      : '<span class="or-ex-badge nao">NÃO</span>';
 
     var stCls = status === 'FECHADA' ? 'st-fe' : status === 'ABERTA' ? 'st-ab' : 'st-ex';
     var stTxt = status === 'FECHADA' ? 'Fechada' : status === 'ABERTA' ? 'Aberta' : 'Exercida';
     if (isEx) { stCls = 'st-ex'; stTxt = 'Exercida'; }
 
     var hasP = premio > 0;
-    var bw   = Math.min(Math.abs(resul), 100);
-    var bc   = isEx ? 'var(--org)' : hasP ? 'var(--grn)' : 'var(--cya)';
 
     var h = '<div class="op-row' + (isEx ? ' ex' : '') + '">';
     h += '<span class="or-a ' + acCls(asset) + '">' + asset + '</span>';
+    h += corrBadge;
     h += '<span class="or-t ' + tipo.toLowerCase() + '">' + tipo + '</span>';
     if (isEx) h += '<span class="or-t exbdg">exercida</span>';
     h += '<span class="or-str">' + tipo + ' Strike ' + stk + '</span>';
-    h += '<div class="or-bar"><div class="or-bf" style="width:' + bw + '%;background:' + bc + '"></div></div>';
+    h += exStatusBadge;
     h += '<span class="or-st ' + stCls + '">' + stTxt + '</span>';
     h += '<span class="or-val" style="color:' + (hasP ? 'var(--grn)' : 'var(--tx2)') + '">' + (hasP ? '+' + fmt(premio) : '—') + '</span>';
     h += '<span class="or-pct">' + (resul ? resul.toFixed(3) + '%' : '') + '</span>';
@@ -206,7 +222,8 @@
       var prem = parseFloat(op.premio_us || 0);
       total   += prem;
       if (prem > 0) profitable++;
-      if ((op.exercicio_status || '').toUpperCase() === 'SIM') exercidas++;
+      var opSt = (op.status || '').toUpperCase();
+      if (isActuallyExercised(op)) exercidas++;
       var ativo = (op.ativo || '').toUpperCase();
       if (ativo === 'BTC') btcP += prem; else if (ativo === 'ETH') ethP += prem;
     });
@@ -367,6 +384,8 @@
 
   /* ─ Filtros ─ */
   function getFilteredOps() {
+    if (window.CryptoFilterBar) return window.CryptoFilterBar.filter(currentOperacoes, filterState);
+    // Fallback sem CryptoFilterBar
     var ops = currentOperacoes.slice();
     if (filterState.period && filterState.period !== 'all') {
       var now = new Date(), cutoff = new Date();
@@ -375,22 +394,17 @@
       else if (filterState.period === '30d')  cutoff.setDate(now.getDate() - 30);
       else if (filterState.period === '60d')  cutoff.setDate(now.getDate() - 60);
       else if (filterState.period === '90d')  cutoff.setDate(now.getDate() - 90);
-      else if (filterState.period === 'year') cutoff = new Date(now.getFullYear(), 0, 1);
+      else if (filterState.period === 'ano')  cutoff = new Date(now.getFullYear(), 0, 1);
       ops = ops.filter(function (o) { return new Date((o.data_operacao || o.data_abertura || '2000-01-01') + 'T00:00:00') >= cutoff; });
     }
-    if (filterState.asset && filterState.asset !== 'all') {
-      ops = ops.filter(function (o) { return (o.ativo||'').toUpperCase() === filterState.asset.toUpperCase(); });
-    }
-    if (filterState.tipo && filterState.tipo !== 'all') {
-      ops = ops.filter(function (o) { return (o.tipo||'').toUpperCase() === filterState.tipo.toUpperCase(); });
-    }
-    if (filterState.status && filterState.status !== 'all') {
+    if (filterState.asset) ops = ops.filter(function (o) { return (o.ativo||'').toUpperCase() === filterState.asset.toUpperCase(); });
+    if (filterState.tipo)  ops = ops.filter(function (o) { return (o.tipo||'').toUpperCase() === filterState.tipo.toUpperCase(); });
+    if (filterState.status) {
       var st = filterState.status.toUpperCase();
       ops = ops.filter(function (o) {
-        var s  = (o.status          || '').toUpperCase();
-        var ex = (o.exercicio_status|| '').toUpperCase();
-        if (st === 'EXERCIDA')     return s === 'FECHADA' && ex === 'SIM';
-        if (st === 'NAO_EXERCIDA') return s === 'FECHADA' && ex !== 'SIM';
+        var s  = (o.status || '').toUpperCase();
+        if (st === 'EXERCIDA')     return isActuallyExercised(o);
+        if (st === 'NAO_EXERCIDA') return s !== 'ABERTA' && !isActuallyExercised(o);
         if (st === 'FECHADA')      return s === 'FECHADA';
         return s === st;
       });
@@ -410,31 +424,56 @@
     attachCycleListeners();
   }
 
+  /* ─ Monta (ou remonta) o cabeçalho padrão ─ */
+  function _mountHeader() {
+    if (!window.CryptoModalHeader) return;
+    if (_header) { _header.destroy(); _header = null; }
+    _header = window.CryptoModalHeader.mount('#rtModalHeader', {
+      title:         'Dashboard Analítico · Crypto',
+      icon:          '⚡',
+      defaultPeriod: 'today',
+      closeModalId:  'modalResultadoTotalCrypto',
+      onFilter: function (state) {
+        filterState.period    = state.period;
+        filterState.status    = state.status;
+        filterState.tipo      = state.tipo;
+        filterState.asset     = state.asset;
+        filterState.corretora = state.corretora;
+        renderCycles();
+        var sp = document.getElementById('rtSummaryPanel');
+        if (sp) { sp.innerHTML = renderRightPanel(); attachCycleListeners(); attachRpListeners(); }
+        if (_header) _header.setOps(currentOperacoes, getFilteredOps());
+      },
+      onRefresh: handleAtualizar,
+      showTotals: true,
+    });
+    /* Sincroniza filterState com estado inicial do header (period = 'today') */
+    if (_header) {
+      var st = _header.getState();
+      filterState.period    = st.period;
+      filterState.status    = st.status;
+      filterState.tipo      = st.tipo;
+      filterState.asset     = st.asset;
+      filterState.corretora = st.corretora;
+    }
+  }
+
   /* ─ Render modal ─ */
   function renderModal() {
     currentOperacoes = window.cryptoOperacoes || [];
     if (!Array.isArray(currentOperacoes)) currentOperacoes = [];
-    updateLastUpdateTime();
+    _mountHeader();
     renderCycles();
     var sp = document.getElementById('rtSummaryPanel');
     if (sp) { sp.innerHTML = renderRightPanel(); }
     attachEventListeners();
-  }
-
-  /* ─ Atualizar (fetch) ─ */
-  function updateLastUpdateTime() {
-    var el = document.getElementById('rtLastUpdate');
-    if (!el) return;
-    var now = new Date();
-    var hh = String(now.getHours()).padStart(2, '0');
-    var mm = String(now.getMinutes()).padStart(2, '0');
-    el.textContent = 'Atualizado: ' + hh + ':' + mm;
-    el.style.display = '';
+    if (_header) {
+      _header.setOps(currentOperacoes, getFilteredOps());
+      _header.tick();
+    }
   }
 
   function handleAtualizar() {
-    var btn = document.getElementById('rtCryptoRefreshBtn');
-    if (btn) btn.classList.add('loading');
     /* Mostrar estado de carregamento nos valores */
     var loadingHtml = '<span class="kpi-loading">&#8226;&#8226;&#8226;</span>';
     document.querySelectorAll('#modalResultadoTotalCrypto .kpi-v').forEach(function (el) { el.innerHTML = loadingHtml; });
@@ -445,10 +484,8 @@
         window.cryptoOperacoes = Array.isArray(data) ? data : (Array.isArray(data.operacoes) ? data.operacoes : []);
         currentOperacoes = window.cryptoOperacoes;
         renderModal();
-        updateLastUpdateTime();
       })
-      .catch(function (e) { console.error('[CryptoModal] Erro ao atualizar:', e); })
-      .finally(function () { if (btn) btn.classList.remove('loading'); });
+      .catch(function (e) { console.error('[CryptoModal] Erro ao atualizar:', e); });
   }
 
   /* ─ Event Listeners ─ */
@@ -465,14 +502,16 @@
       h.removeEventListener('click', toggleRpSection);
       h.addEventListener('click', toggleRpSection);
     });
-    document.querySelectorAll('#modalResultadoTotalCrypto .chip[data-filter]').forEach(function (c) {
-      c.removeEventListener('click', applyChipFilter);
-      c.addEventListener('click', applyChipFilter);
+    // Refresh e filtros gerenciados por CryptoModalHeader (_mountHeader)
+    var btnIA = document.getElementById('btnAnaliseIACrypto');
+    if (btnIA) { btnIA.removeEventListener('click', handleAnaliseIA); btnIA.addEventListener('click', handleAnaliseIA); }
+  }
+
+  function attachRpListeners() {
+    document.querySelectorAll('#modalResultadoTotalCrypto .rp-head[data-rp-id]').forEach(function (h) {
+      h.removeEventListener('click', toggleRpSection);
+      h.addEventListener('click', toggleRpSection);
     });
-    var moedaSel = document.querySelector('#modalResultadoTotalCrypto .moeda-sel');
-    if (moedaSel) { moedaSel.removeEventListener('change', applyMoedaFilter); moedaSel.addEventListener('change', applyMoedaFilter); }
-    var refreshBtn = document.getElementById('rtCryptoRefreshBtn');
-    if (refreshBtn) { refreshBtn.removeEventListener('click', handleAtualizar); refreshBtn.addEventListener('click', handleAtualizar); }
     var btnIA = document.getElementById('btnAnaliseIACrypto');
     if (btnIA) { btnIA.removeEventListener('click', handleAnaliseIA); btnIA.addEventListener('click', handleAnaliseIA); }
   }
@@ -493,33 +532,15 @@
     body.classList.toggle('hide');
   }
 
-  function applyChipFilter() {
-    var filter = this.getAttribute('data-filter');
-    var value  = this.getAttribute('data-value');
-    document.querySelectorAll('#modalResultadoTotalCrypto .chip[data-filter="' + filter + '"]').forEach(function (c) {
-      c.classList.remove('on', 'btc', 'eth', 'todos');
-    });
-    this.classList.add('on');
-    if (filter === 'asset') {
-      if (value === 'BTC') this.classList.add('btc');
-      else if (value === 'ETH') this.classList.add('eth');
-      else this.classList.add('todos');
-    }
-    filterState[filter] = value;
-    renderCycles();
-    var sp = document.getElementById('rtSummaryPanel');
-    if (sp) { sp.innerHTML = renderRightPanel(); attachEventListeners(); }
-  }
-
   function applyTipoFilter() {
-    filterState.tipo = this.value || 'all';
+    filterState.tipo = this.value || null;
     renderCycles();
     var sp = document.getElementById('rtSummaryPanel');
     if (sp) { sp.innerHTML = renderRightPanel(); attachEventListeners(); }
   }
 
   function applyMoedaFilter() {
-    filterState.asset = this.value || 'all';
+    filterState.asset = this.value || null;
     renderCycles();
     var sp = document.getElementById('rtSummaryPanel');
     if (sp) { sp.innerHTML = renderRightPanel(); attachEventListeners(); }

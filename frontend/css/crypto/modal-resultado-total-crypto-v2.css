@@ -634,10 +634,20 @@
 #modalResultadoTotalCrypto .ch-rec-bar{width:80px;height:4px;background:var(--s3);border-radius:2px;overflow:hidden}
 #modalResultadoTotalCrypto .ch-rec-fill{height:100%;border-radius:2px;background:var(--amb)}
 
-/* or-bar (progress na op row) */
+/* or-bar (progress na op row) - mantido para compat */
 #modalResultadoTotalCrypto .or-t.exbdg{background:var(--org-bg);color:var(--org);border-color:var(--org-bdr)}
 #modalResultadoTotalCrypto .or-bar{width:90px;height:5px;background:var(--s3);border-radius:3px;overflow:hidden;flex-shrink:0}
 #modalResultadoTotalCrypto .or-bf{height:100%;border-radius:3px}
+
+/* or-corr (badge corretora na op row) */
+#modalResultadoTotalCrypto .or-corr{font-size:.60rem;padding:1px 5px;border-radius:3px;font-family:var(--mono);flex-shrink:0}
+#modalResultadoTotalCrypto .or-corr.bnc{background:#3a2800;color:#e8a830;border:1px solid #4a3820}
+#modalResultadoTotalCrypto .or-corr.bb{background:var(--s2);color:var(--blu);border:1px solid var(--bdr)}
+
+/* or-ex-badge (status exercicio na op row) */
+#modalResultadoTotalCrypto .or-ex-badge{font-size:.58rem;padding:1px 5px;border-radius:3px;font-family:var(--mono);flex-shrink:0;font-weight:600}
+#modalResultadoTotalCrypto .or-ex-badge.sim{background:#0a2e1a;color:#2fb344;border:1px solid #1a4a2a}
+#modalResultadoTotalCrypto .or-ex-badge.nao{background:var(--s2);color:var(--tx2);border:1px solid var(--bdr)}
 
 /* cfoot (rodape do ciclo) */
 #modalResultadoTotalCrypto .cfoot{padding:10px 16px 10px 28px;background:rgba(0,0,0,.12);border-top:1px solid var(--bdr)}

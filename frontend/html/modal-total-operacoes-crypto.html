@@ -1,39 +1,11 @@
 <div class="modal modal-blur fade" id="modalTotalOperacoesCrypto" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
         <div class="modal-content toc-modal-content">
-            <div class="modal-header toc-modal-header">
-                <div>
-                    <div class="toc-eyebrow text-white opacity-75">Total de Operações Crypto</div>
-                    <div class="toc-amount" id="tocTotalResultado">US$ 0.00</div>
-                    <div class="toc-sub" id="tocTotalSub">Prêmios acumulados</div>
-                    <div class="toc-pills">
-                        <span class="toc-pill bg-success-lt text-success" id="tocPillAbertas">0 abertas</span>
-                        <span class="toc-pill bg-danger-lt text-danger" id="tocPillFechadas">0 fechadas</span>
-                        <span class="toc-pill bg-azure-lt text-azure" id="tocPillOps">0 operações</span>
-                        <span class="toc-pill bg-orange-lt text-orange" id="tocPillRoi">0.00%</span>
-                    </div>
-                </div>
-                <div class="d-flex align-items-center gap-2 flex-shrink-0">
-                    <span class="mdh-ts" id="tocLastUpdated">Atualizado: --:--</span>
-                    <button type="button" class="mdh-refresh" id="btnRefreshTotalOpsCrypto" title="Atualizar">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
-                             fill="none" stroke="currentColor" stroke-width="2.2"
-                             stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
-                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-                        </svg>
-                    </button>
-                    <button class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-            </div>
+
+            <!-- Header padrão — gerenciado por CryptoModalHeader (modal-total-operacoes-crypto.js) -->
+            <div id="tocModalHeader" style="flex-shrink:0;"></div>
+
             <div class="modal-body toc-modal-body">
-                <div class="toc-ftabs" id="tocFtabs">
-                    <button class="toc-ftab active" data-filter="all" type="button">Tudo</button>
-                    <button class="toc-ftab" data-filter="ABERTA" type="button">Abertas</button>
-                    <button class="toc-ftab" data-filter="FECHADA" type="button">Fechadas</button>
-                    <button class="toc-ftab" data-filter="CALL" type="button">CALL</button>
-                    <button class="toc-ftab" data-filter="PUT" type="button">PUT</button>
-                </div>
 
                 <div class="toc-card-grid">
                     <div class="toc-card">

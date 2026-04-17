@@ -1,0 +1,156 @@
+<!--
+  modal-header.html — Template de referência para CryptoModalHeader
+  ===================================================================
+
+  Este arquivo documenta a estrutura HTML gerada pelo componente JS
+  e serve como guia de integração para novas janelas.
+
+  INTEGRAÇÃO (3 passos):
+  ──────────────────────
+  1. Adicione o container no seu modal HTML:
+
+       <div id="meuModalHeader"></div>
+
+  2. Inclua os scripts ANTES do seu script:
+
+       <script src="../js/core/crypto-filter-bar.js"></script>
+       <script src="../js/core/modal-header.js"></script>
+
+  3. No JS da sua janela, monte o componente após o template carregar:
+
+       const header = CryptoModalHeader.mount('#meuModalHeader', {
+         title:         'Nome da Janela',
+         icon:          '⚡',
+         defaultPeriod: 'today',
+         closeModalId:  'idDoModalBootstrap',
+         actionLabel:   'Ação Extra',         // opcional
+         actionId:      'idBotaoAcao',        // opcional
+         onFilter:      (state) => render(state),
+         onRefresh:     async () => fetchDados(),
+         onAction:      () => abrirOutroModal(),
+         showTotals:    true,
+       });
+
+       // Após carregar as operações:
+       header.setOps(todasOps, opsFiltradas);
+
+       // Para atualizar o relógio:
+       header.tick();
+
+  PARÂMETROS DO ESTADO (objeto state retornado via onFilter):
+  ──────────────────────────────────────────────────────────
+    state.period    — 'all' | 'today' | '7d' | 'mes' | '30d' | '60d' | '90d' | 'ano'
+    state.status    — null | 'aberta' | 'fechada' | 'exercida' | 'nao_exercida'
+    state.tipo      — null | 'CALL' | 'PUT'
+    state.asset     — null | 'BTC' | 'ETH' | <qualquer ativo>
+    state.corretora — null | 'BINANCE' | 'BYBIT'
+
+  ESTRUTURA HTML GERADA (referência):
+  ────────────────────────────────────
+-->
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CryptoModalHeader — Exemplo de Uso</title>
+  <link rel="stylesheet" href="../css/modal-header.css">
+  <style>
+    body { background: #0d1117; color: #e8f0f8; font-family: 'Inter', sans-serif; margin: 0; padding: 20px; }
+    .demo-box { border: 1px solid #263347; border-radius: 12px; overflow: hidden; max-width: 900px; margin: 0 auto; }
+    .demo-body { padding: 20px; color: #6b82a0; font-size: .85rem; }
+    h1 { font-size: 1.1rem; margin: 0 0 16px; color: #e8f0f8; }
+    code { background: #1a2436; padding: 2px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: .8rem; }
+    pre { background: #1a2436; border: 1px solid #263347; border-radius: 8px; padding: 16px; font-family: 'JetBrains Mono', monospace; font-size: .78rem; color: #e8f0f8; overflow-x: auto; }
+  </style>
+</head>
+<body>
+
+  <h1>CryptoModalHeader — Demonstração</h1>
+
+  <!-- Container onde o componente será montado -->
+  <div class="demo-box">
+    <div id="demoHeader"></div>
+    <div class="demo-body">
+      <p>↑ Cabeçalho padrão gerado por <code>CryptoModalHeader.mount()</code></p>
+      <p>Os filtros acima são funcionais. Selecione um período, status ou tipo e observe o callback.</p>
+      <div id="demoState" style="margin-top:12px;padding:10px;background:#1a2436;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:.75rem;"></div>
+    </div>
+  </div>
+
+  <div style="margin-top:24px;max-width:900px;">
+    <h1>Código de integração</h1>
+    <pre>
+// 1. No HTML do seu modal:
+&lt;div id="meuModalHeader"&gt;&lt;/div&gt;
+
+// 2. No JS da sua janela:
+const header = CryptoModalHeader.mount('#meuModalHeader', {
+  title:         'Dashboard Analítico · Crypto',
+  icon:          '⚡',
+  defaultPeriod: 'today',
+  closeModalId:  'meuModalId',
+  actionLabel:   'Análise Detalhada',   // opcional
+  actionId:      'btnAnaliseDetalhada', // opcional
+  onFilter: (state) =&gt; {
+    // state = { period, status, tipo, asset, corretora }
+    render(state);
+  },
+  onRefresh: async () =&gt; {
+    const data = await fetch('/api/crypto').then(r =&gt; r.json());
+    window.cryptoOperacoes = data;
+    render(header.getState());
+  },
+  onAction: () =&gt; {
+    abrirAnaliseDetalhada();
+  },
+  showTotals: true,
+});
+
+// 3. Após carregar/filtrar operações:
+header.setOps(todasOps, opsFiltradas);
+
+// 4. Para atualizar o relógio (chamado no final de cada render):
+header.tick();
+    </pre>
+  </div>
+
+  <!-- Dependências -->
+  <script src="../js/core/crypto-filter-bar.js"></script>
+  <script src="../js/core/modal-header.js"></script>
+  <script>
+    // Demo interativo
+    var ops = [
+      { ativo: 'BTC/USDT', tipo: 'PUT', status: 'ABERTA', premio_us: 120, exercicio_status: 'NAO' },
+      { ativo: 'ETH/USDT', tipo: 'CALL', status: 'FECHADA', premio_us: 85, exercicio_status: 'NAO' },
+      { ativo: 'BTC/USDT', tipo: 'CALL', status: 'FECHADA', premio_us: 60, exercicio_status: 'SIM' },
+    ];
+
+    var header = CryptoModalHeader.mount('#demoHeader', {
+      title:         'Demo · CryptoModalHeader',
+      icon:          '⚡',
+      defaultPeriod: 'today',
+      actionLabel:   'Ação Extra',
+      actionId:      'demoBtnAction',
+      onFilter: function (state) {
+        document.getElementById('demoState').textContent =
+          'Estado atual: ' + JSON.stringify(state, null, 2);
+      },
+      onRefresh: function () {
+        return new Promise(function (resolve) { setTimeout(resolve, 800); });
+      },
+      onAction: function () {
+        alert('Botão de ação clicado!');
+      },
+      showTotals: true,
+    });
+
+    header.setOps(ops, ops);
+    header.tick();
+
+    document.getElementById('demoState').textContent =
+      'Estado atual: ' + JSON.stringify(header.getState(), null, 2);
+  </script>
+</body>
+</html>

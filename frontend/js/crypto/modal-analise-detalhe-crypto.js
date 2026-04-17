@@ -773,7 +773,7 @@
     <div class="mdc-pulse-ring ${assetPulseClass(ativo)}">${ativo.slice(0,3)}</div>
     <div class="flex-grow-1" style="min-width:0">
       <div class="d-flex align-items-center justify-content-between gap-2">
-        <div class="mdc-hero-title" style="flex:1;min-width:0">${op.ativo || 'CRYPTO'}/USDT${tipoBadge}</div>
+        <div class="mdc-hero-title" style="flex:1;min-width:0">${op.ativo || 'CRYPTO'}/USDT${tipoBadge} ${(() => { const c = (op.corretora||'BINANCE').toUpperCase(); return c === 'BINANCE' ? '<span style="font-size:.65rem;padding:2px 6px;border-radius:3px;background:#3a2800;color:#e8a830;border:1px solid #4a3820;font-family:monospace">BNC</span>' : '<span style="font-size:.65rem;padding:2px 6px;border-radius:3px;background:rgba(66,153,225,.15);color:#63b3ed;border:1px solid rgba(66,153,225,.3);font-family:monospace">BB</span>'; })()}</div>
                 <div class="d-flex align-items-center gap-2 flex-shrink-0">
                     <button class="btn btn-sm btn-outline-primary crypto-tech-analysis-btn" type="button" title="Abrir análise técnica" data-ticker="${ativoBase}" data-strike="${Number.isFinite(parseFloat(op.strike)) ? parseFloat(op.strike) : 'null'}" data-current-price="${Number.isFinite(parseFloat(cotacao)) ? parseFloat(cotacao) : 'null'}" data-operation-type="${tipo}" data-distance-pct="${Number.isFinite(distNum) ? distNum : 'null'}">Análise Técnica</button>
                     ${semaforoHTML}

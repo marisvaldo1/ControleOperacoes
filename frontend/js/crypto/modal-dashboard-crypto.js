@@ -42,6 +42,25 @@
     let chartComparacao = null;
     let chartPatrimonio = null;
     let loaded          = false;
+    let _dcStartDate    = null;
+    let _dcEndDate      = null;
+    let _header         = null;
+    let _dcTipo         = 'ALL';
+    let _dcAsset        = null;
+    let _dcCorr         = null;
+    let _dcStatus       = null;
+
+    /* Mapeamento de período cfb-bar → applyPeriodo() */
+    const _PERIOD_MAP = {
+        'all':   '_all',
+        'today': 'today',
+        '7d':    '7',
+        'mes':   'month',
+        '30d':   '30',
+        '60d':   '60',
+        '90d':   '90',
+        'ano':   'year',
+    };
 
     /* ------------------------------------------------------------------ */
     /*  Utilitários                                                         */
@@ -103,12 +122,37 @@
         return 'heatmap-loss-low';
     }
 
-    function filterOps(ops, startDate, endDate, tipoFiltro) {
+    function filterOps(ops, startDate, endDate, tipoFiltro, asset, corretora, status) {
         return ops.filter(op => {
             const d = getOpDate(op);
             if (!d) return false;
-            const matchTipo = tipoFiltro === 'ALL' || (op.tipo || '') === tipoFiltro;
-            return d >= startDate && d <= endDate && matchTipo;
+            if (d < startDate || d > endDate) return false;
+            if (tipoFiltro && tipoFiltro !== 'ALL' && (op.tipo || '') !== tipoFiltro) return false;
+            if (asset) {
+                const a = (op.ativo || '').toUpperCase();
+                const assetOp = a.split('/')[0].replace(/USDT$/, '').trim();
+                if (assetOp !== asset.toUpperCase()) return false;
+            }
+            if (corretora) {
+                const c = (op.corretora || 'BINANCE').toUpperCase();
+                if (c !== corretora) return false;
+            }
+            if (status) {
+                const s = (op.status || '').toLowerCase();
+                if (status === 'exercida') {
+                    const isEx = window.CryptoExerciseStatus
+                        ? window.CryptoExerciseStatus.isActuallyExercised(op)
+                        : (s === 'fechada' && (op.exercicio_status || '').toUpperCase() === 'SIM');
+                    if (!isEx) return false;
+                } else if (status === 'nao_exercida') {
+                    if (s === 'aberta') return false;
+                    const isEx = window.CryptoExerciseStatus
+                        ? window.CryptoExerciseStatus.isActuallyExercised(op)
+                        : (s === 'fechada' && (op.exercicio_status || '').toUpperCase() === 'SIM');
+                    if (isEx) return false;
+                } else if (s !== status.toLowerCase()) return false;
+            }
+            return true;
         });
     }
 
@@ -134,12 +178,9 @@
     /*  Aplicar período (seletor)                                           */
     /* ------------------------------------------------------------------ */
     function applyPeriodo(value) {
-        const inicioEl = document.getElementById('dcInicio');
-        const fimEl    = document.getElementById('dcFim');
-        if (!inicioEl || !fimEl) return;
-
-        const today    = new Date();
-        let start, end = today;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        let start, end = new Date(today);
 
         if (value === '7')        { start = new Date(today); start.setDate(today.getDate() - 6); }
         else if (value === '30')  { start = new Date(today); start.setDate(today.getDate() - 29); }
@@ -147,15 +188,16 @@
         else if (value === '90')  { start = new Date(today); start.setDate(today.getDate() - 89); }
         else if (value === 'month') { start = new Date(today.getFullYear(), today.getMonth(), 1); }
         else if (value === 'year')  { start = new Date(today.getFullYear(), 0, 1); }
+        else if (value === 'today') { start = new Date(today); }
         else if (value === 'lastYear') {
             start = new Date(today.getFullYear() - 1, 0, 1);
             end   = new Date(today.getFullYear() - 1, 11, 31);
         }
         else if (value === '12') { start = new Date(today); start.setFullYear(today.getFullYear() - 1); }
-        else { return; /* custom */ }
+        else { return; }
 
-        inicioEl.value = start.toISOString().slice(0, 10);
-        fimEl.value    = end  .toISOString().slice(0, 10);
+        _dcStartDate = start;
+        _dcEndDate   = end;
     }
 
     /* ------------------------------------------------------------------ */
@@ -262,21 +304,25 @@
         html.push('</div>');
         container.innerHTML = html.join('');
 
-        // Delegated click: clique em dia do heatmap → exibe operações daquele dia
-        container.addEventListener('click', function (e) {
-            const dayEl = e.target.closest('.heatmap-day[data-date]');
-            if (!dayEl) return;
-            const date = dayEl.getAttribute('data-date');
-            if (!date) return;
-            // Inclui ops fechadas nesta data (por data de exercício/fechamento)
-            // E ops abertas com data_operacao nesta data
-            const allOps2 = window.cryptoOperacoes || window.allOperacoesCrypto || [];
-            const dayOps = allOps2.filter(op => {
-                const d = getOpDate(op);
-                return d && getDateKey(d) === date;
+        // Delegated click: clique em dia do heatmap → exibe operações daquele dia.
+        // O bind é feito uma única vez para evitar múltiplos handlers ao re-renderizar.
+        if (!container.dataset.dayClickBound) {
+            container.addEventListener('click', function (e) {
+                const dayEl = e.target.closest('.heatmap-day[data-date]');
+                if (!dayEl) return;
+                const date = dayEl.getAttribute('data-date');
+                if (!date) return;
+                // Inclui ops fechadas nesta data (por data de exercício/fechamento)
+                // e ops abertas com data_operacao nesta data.
+                const allOps2 = window.cryptoOperacoes || window.allOperacoesCrypto || [];
+                const dayOps = allOps2.filter(op => {
+                    const d = getOpDate(op);
+                    return d && getDateKey(d) === date;
+                });
+                showDayDetailModal(date, dayOps);
             });
-            showDayDetailModal(date, dayOps);
-        });
+            container.dataset.dayClickBound = '1';
+        }
     }
 
     /* ------------------------------------------------------------------ */
@@ -597,24 +643,21 @@
     /*  Orquestrador principal                                              */
     /* ------------------------------------------------------------------ */
     function renderAll() {
-        const inicioEl = document.getElementById('dcInicio');
-        const fimEl    = document.getElementById('dcFim');
-        const tipoEl   = document.getElementById('dcTipo');
-        if (!inicioEl || !fimEl) return;
+        const startDate = _dcStartDate || new Date(new Date().getFullYear(), 0, 1);
+        const endDate   = _dcEndDate   || new Date();
 
-        const startDate = parseDateLocal(inicioEl.value) || new Date(new Date().getFullYear(), 0, 1);
-        const endDate   = parseDateLocal(fimEl   .value) || new Date();
-        const tipo      = tipoEl ? tipoEl.value : 'ALL';
+        const tipo      = _dcTipo   || 'ALL';
+        const asset     = _dcAsset  || null;
+        const corretora = _dcCorr   || null;
+        const status    = _dcStatus || null;
 
-        // Obtém operações do estado global de crypto (fallback: array vazio)
         const allOps  = (window.cryptoOperacoes || window.allOperacoesCrypto || []);
-        const ops     = filterOps(allOps, startDate, endDate, tipo);
+        const ops     = filterOps(allOps, startDate, endDate, tipo, asset, corretora, status);
 
-        // Período anterior (para comparação)
-        const diffMs  = endDate - startDate;
+        const diffMs    = endDate - startDate;
         const prevEnd   = new Date(startDate.getTime() - 1);
         const prevStart = new Date(prevEnd.getTime() - diffMs);
-        const prevOps = filterOps(allOps, prevStart, prevEnd, tipo);
+        const prevOps   = filterOps(allOps, prevStart, prevEnd, tipo, asset, corretora);
 
         const { current: stats } = computeStats(ops, prevOps);
 
@@ -627,11 +670,9 @@
         renderConsistencia(ops);
         renderProbabilidades(ops, stats);
 
-        // Atualiza timestamp do cabeçalho
-        const tsEl = document.getElementById('dcLastUpdated');
-        if (tsEl) {
-            const now = new Date();
-            tsEl.textContent = 'Atualizado: ' + now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        if (_header) {
+            _header.setOps(allOps, ops);
+            _header.tick();
         }
     }
 
@@ -655,6 +696,57 @@
     }
 
     /* ------------------------------------------------------------------ */
+    /*  Montar CryptoModalHeader                                            */
+    /* ------------------------------------------------------------------ */
+    function _mountHeader() {
+        if (_header) { _header.destroy(); _header = null; }
+        if (!window.CryptoModalHeader) {
+            console.warn('[ModalDashboardCrypto] CryptoModalHeader não disponível');
+            return;
+        }
+        _header = window.CryptoModalHeader.mount('#dcModalHeader', {
+            title:         'Dashboard Avançado de Performance · Crypto',
+            icon:          '🔥',
+            defaultPeriod: 'today',
+            closeModalId:  cfg.modalElId,
+            onFilter: function (state) {
+                const pv = _PERIOD_MAP[state.period] || 'today';
+                if (pv === '_all') {
+                    _dcStartDate = new Date(2000, 0, 1);
+                    _dcEndDate   = new Date();
+                } else {
+                    applyPeriodo(pv);
+                }
+                _dcTipo   = state.tipo   || 'ALL';
+                _dcAsset  = state.asset  || null;
+                _dcCorr   = state.corretora || null;
+                _dcStatus = state.status    || null;
+                renderAll();
+            },
+            onRefresh: async function () {
+                try {
+                    const res = await fetch(cfg.apiEndpoint);
+                    if (res.ok) {
+                        const data = await res.json();
+                        window.cryptoOperacoes = Array.isArray(data) ? data : [];
+                        window.allOperacoesCrypto = window.cryptoOperacoes;
+                    }
+                } catch (err) {
+                    console.error('[ModalDashboardCrypto] Erro ao atualizar:', err);
+                }
+                renderAll();
+            },
+            showTotals: true,
+        });
+        // Estado inicial: hoje, todos os tipos
+        applyPeriodo('today');
+        _dcTipo   = 'ALL';
+        _dcAsset  = null;
+        _dcCorr   = null;
+        _dcStatus = null;
+    }
+
+    /* ------------------------------------------------------------------ */
     /*  Abrir modal                                                         */
     /* ------------------------------------------------------------------ */
     async function openModal() {
@@ -666,49 +758,7 @@
         const modal = new bootstrap.Modal(modalEl);
         modal.show();
 
-        // Inicializa filtros na primeira abertura
-        const periodoEl = document.getElementById('dcPeriodo');
-        if (periodoEl && !periodoEl.dataset.init) {
-            periodoEl.value = 'year';
-            periodoEl.dataset.init = '1';
-            applyPeriodo('year');
-
-            periodoEl.addEventListener('change', () => {
-                if (periodoEl.value !== 'custom') applyPeriodo(periodoEl.value);
-            });
-
-            const btnFiltrar = document.getElementById('dcBtnFiltrar');
-            if (btnFiltrar) btnFiltrar.addEventListener('click', renderAll);
-
-            const btnAtualizar = document.getElementById('dcBtnAtualizar');
-            const doAtualizar = async () => {
-                const btn = document.getElementById('dcBtnAtualizar');
-                const hdrBtn = document.getElementById('dcBtnHeaderAtualizar');
-                [btn, hdrBtn].forEach(b => { if (b) b.disabled = true; });
-                const originalHtml = btn ? btn.innerHTML : '';
-                if (btn) btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Atualizando...';
-                if (hdrBtn) hdrBtn.classList.add('mdh-spin');
-                try {
-                    const res = await fetch(cfg.apiEndpoint);
-                    if (res.ok) {
-                        const data = await res.json();
-                        window.cryptoOperacoes = Array.isArray(data) ? data : [];
-                        window.allOperacoesCrypto = window.cryptoOperacoes;
-                        renderAll();
-                    }
-                } catch (err) {
-                    console.error('[ModalDashboardCrypto] Erro ao atualizar:', err);
-                } finally {
-                    [btn, hdrBtn].forEach(b => { if (b) b.disabled = false; });
-                    if (btn) btn.innerHTML = originalHtml;
-                    if (hdrBtn) hdrBtn.classList.remove('mdh-spin');
-                }
-            };
-            if (btnAtualizar) btnAtualizar.addEventListener('click', doAtualizar);
-            const btnHeaderAtualizar = document.getElementById('dcBtnHeaderAtualizar');
-            if (btnHeaderAtualizar) btnHeaderAtualizar.addEventListener('click', doAtualizar);
-        }
-
+        _mountHeader();
         renderAll();
     }
 

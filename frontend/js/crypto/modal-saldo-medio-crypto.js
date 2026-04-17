@@ -57,10 +57,11 @@
 
     const charts = { donut: null, bar: null };
     const FILTER_DEFAULTS = {
-        period: 'all',
-        status: 'aberta',
+        period: 'today',
+        status: null,
         tipo: null,
-        coins: null,
+        asset: null,
+        corretora: null,
     };
     let apexLoaded = false;
     let htmlLoading = false;
@@ -68,7 +69,9 @@
     let activePeriod = FILTER_DEFAULTS.period;
     let activeStatus = FILTER_DEFAULTS.status;
     let activeTipo = FILTER_DEFAULTS.tipo;
-    let activeCoins = FILTER_DEFAULTS.coins;
+    let activeAsset = FILTER_DEFAULTS.asset;
+    let activeCorretora = FILTER_DEFAULTS.corretora;
+    let _header = null;
 
     function configure(opts) {
         Object.assign(cfg, opts);
@@ -139,6 +142,28 @@
         }
     }
 
+    function _mountHeader() {
+        if (typeof CryptoModalHeader === 'undefined') return;
+        _header = CryptoModalHeader.mount('#smModalHeader', {
+            title:         'Saldo Médio · Análise de Operações',
+            icon:          '📈',
+            defaultPeriod: FILTER_DEFAULTS.period,
+            closeModalId:  cfg.modalElId,
+            onFilter: function (state) {
+                activePeriod = state.period;
+                activeStatus = state.status || null;
+                activeTipo   = state.tipo   || null;
+                activeAsset  = state.asset  || null;
+                activeCorretora = state.corretora || null;
+                render();
+            },
+            onRefresh: function () { loadAndRender(true); },
+            showTotals: true
+        });
+        _header.setOps(currentOps, currentOps);
+        _header.tick();
+    }
+
     async function openModal() {
         const loaded = await ensureModalLoaded();
         if (!loaded) return;
@@ -146,16 +171,8 @@
         const modalEl = document.getElementById(cfg.modalElId);
         if (!modalEl) return;
 
-        const refreshBtn = document.getElementById('btnRefreshSaldoMedio');
-        if (refreshBtn && !refreshBtn._smBound) {
-            refreshBtn._smBound = true;
-            refreshBtn.addEventListener('click', function () { loadAndRender(true); });
-        }
-
-        setupFilterListeners(modalEl);
         resetFilters();
-        updateFilterUi(modalEl);
-
+        _mountHeader();
         const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl, { keyboard: true });
         modal.show();
         loadAndRender(false);
@@ -178,11 +195,6 @@
             .then(function (data) {
                 currentOps = Array.isArray(data) ? data : (data.data || []);
                 ensureApex(function () { render(); });
-                const tsEl = document.getElementById('smLastUpdated');
-                if (tsEl) {
-                    const now = new Date();
-                    tsEl.textContent = 'Atualizado: ' + now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                }
             })
             .catch(function (err) {
                 console.error('[modal-saldo-medio]', err);
@@ -198,10 +210,7 @@
 
     function render() {
         const saldoCorretora = cfg.getSaldo();
-        const opsNoCoinFilter = applyFilters(currentOps, true);
-        const ops = applyFilters(currentOps, false);
-
-        renderCoinPills(opsNoCoinFilter);
+        const ops = applyFilters(currentOps);
 
         const fechadas = ops.filter(function (o) { return (o.status || '').toUpperCase() === 'FECHADA'; });
         const abertas = ops.filter(function (o) { return (o.status || '').toUpperCase() === 'ABERTA'; });
@@ -248,6 +257,7 @@
         renderAssetMap(ops);
         renderTable(ops, saldoCorretora);
         renderCharts(ops);
+        if (_header) { _header.setOps(currentOps, ops); _header.tick(); }
     }
 
     function renderAssetMap(ops) {
@@ -356,93 +366,19 @@
         }
     }
 
-    function setupFilterListeners(modalEl) {
-        if (modalEl._smFilterBound) return;
-        modalEl._smFilterBound = true;
-
-        modalEl.querySelectorAll('#smPeriodPills .rmc-pill[data-period]').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                activePeriod = this.dataset.period || 'all';
-                updateFilterUi(modalEl);
-                render();
-            });
-        });
-
-        modalEl.querySelectorAll('#smStatusPills .rmc-pill[data-type]').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                const t = this.dataset.type;
-                activeStatus = activeStatus === t ? null : t;
-                updateFilterUi(modalEl);
-                render();
-            });
-        });
-
-        modalEl.querySelectorAll('#smTipoPills .rmc-pill[data-tipo]').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                const t = this.dataset.tipo;
-                activeTipo = activeTipo === t ? null : t;
-                updateFilterUi(modalEl);
-                render();
-            });
-        });
-    }
-
-    function renderCoinPills(baseOps) {
-        const wrap = document.getElementById('smCoinPills');
-        if (!wrap) return;
-
-        const coins = Array.from(new Set((baseOps || []).map(getCoinSymbol))).filter(Boolean).sort();
-        if (activeCoins instanceof Set) {
-            activeCoins = new Set(Array.from(activeCoins).filter(function (coin) { return coins.includes(coin); }));
-            if (!activeCoins.size || activeCoins.size === coins.length) activeCoins = null;
-        }
-
-        let html = '<button class="rmc-pill' + (activeCoins === null ? ' active' : '') + '" data-coin="all">Todas moedas</button>';
-        html += coins.map(function (coin) {
-            const cls = activeCoins instanceof Set && activeCoins.has(coin) ? ' active' : '';
-            return '<button class="rmc-pill sm-coin-pill' + cls + '" data-coin="' + esc(coin) + '">' + esc(coin) + '</button>';
-        }).join('');
-        wrap.innerHTML = html;
-
-        wrap.querySelectorAll('.rmc-pill[data-coin]').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                const coin = this.dataset.coin;
-                if (coin === 'all') {
-                    activeCoins = null;
-                } else if (!(activeCoins instanceof Set)) {
-                    activeCoins = new Set([coin]);
-                } else if (activeCoins.has(coin)) {
-                    activeCoins.delete(coin);
-                    if (!activeCoins.size) activeCoins = null;
-                } else {
-                    activeCoins.add(coin);
-                    if (activeCoins.size === coins.length) activeCoins = null;
-                }
-                render();
-            });
-        });
-    }
-
-    function updateFilterUi(modalEl) {
-        modalEl.querySelectorAll('#smPeriodPills .rmc-pill[data-period]').forEach(function (btn) {
-            btn.classList.toggle('active', btn.dataset.period === activePeriod);
-        });
-        modalEl.querySelectorAll('#smStatusPills .rmc-pill[data-type]').forEach(function (btn) {
-            btn.classList.toggle('active', btn.dataset.type === activeStatus);
-        });
-        modalEl.querySelectorAll('#smTipoPills .rmc-pill[data-tipo]').forEach(function (btn) {
-            btn.classList.toggle('active', btn.dataset.tipo === activeTipo);
-        });
+    function updateFilterUi() {
+        // Period/Status/Tipo managed by CryptoModalHeader
     }
 
     function resetFilters() {
         activePeriod = FILTER_DEFAULTS.period;
         activeStatus = FILTER_DEFAULTS.status;
         activeTipo = FILTER_DEFAULTS.tipo;
-        activeCoins = FILTER_DEFAULTS.coins;
+        activeAsset = FILTER_DEFAULTS.asset;
+        activeCorretora = FILTER_DEFAULTS.corretora;
     }
 
-    function applyFilters(ops, ignoreCoinFilter) {
+    function applyFilters(ops) {
         let result = Array.isArray(ops) ? ops.slice() : [];
         result = filterByPeriod(result, activePeriod);
 
@@ -456,9 +392,14 @@
                 return (o.tipo || '').toUpperCase() === activeTipo;
             });
         }
-        if (!ignoreCoinFilter && activeCoins instanceof Set && activeCoins.size > 0) {
+        if (activeAsset) {
             result = result.filter(function (o) {
-                return activeCoins.has(getCoinSymbol(o));
+                return getCoinSymbol(o) === activeAsset;
+            });
+        }
+        if (activeCorretora) {
+            result = result.filter(function (o) {
+                return (o.corretora || 'BINANCE').toUpperCase() === activeCorretora;
             });
         }
         return result;

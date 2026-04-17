@@ -53,7 +53,9 @@ def resolve_crypto_exercicio_status(operation):
         return current_status
     if op_status == 'EXERCIDA':
         return 'SIM'
-    return persisted_status or current_status
+    # Operação encerrada: nunca recalcular por cotação atual.
+    # Usa exclusivamente o valor persistido no banco.
+    return persisted_status or 'NAO'
 
 
 def serialize_crypto_operation(operation):

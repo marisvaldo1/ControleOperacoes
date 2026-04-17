@@ -96,13 +96,21 @@
         const explicitDisplay = normalizeStatus(op.exercicio_status_exibicao);
         if (explicitDisplay) return explicitDisplay;
 
-        const persisted = normalizeStatus(op.exercicio_status_persistido ?? op.exercicio_status);
-        const current = calculateCurrentStatus(op);
         const status = String(op.status || 'ABERTA').trim().toUpperCase();
 
-        if (status === 'ABERTA') return current;
+        // Para operações ABERTAS: calcular pelo preço atual vs strike (ITM/OTM em tempo real)
+        if (status === 'ABERTA') {
+            return calculateCurrentStatus(op);
+        }
+
+        // Se a operação foi encerrada como EXERCIDA
         if (status === 'EXERCIDA') return 'SIM';
-        return persisted || current;
+
+        // Para FECHADA: usar EXCLUSIVAMENTE o valor gravado no banco.
+        // Nunca recalcular pelo preço atual para operações encerradas —
+        // o preço atual não tem relação com o estado no momento do vencimento.
+        const persisted = normalizeStatus(op.exercicio_status_persistido ?? op.exercicio_status);
+        return persisted || 'NAO';
     }
 
     function resolveDisplayLabel(op) {
@@ -141,6 +149,23 @@
         return resolveDisplayStatus(op) === 'SIM';
     }
 
+    /**
+     * Retorna true SE a operação foi EFETIVAMENTE exercida no vencimento.
+     * Regra única do sistema para verificação de exercício real:
+     *   - ABERTA: sempre false (exercício não ocorreu — nunca usar cotação atual)
+     *   - EXERCIDA (status): sempre true
+     *   - FECHADA: lê EXCLUSIVAMENTE o campo exercicio_status do banco
+     * Nunca recalcula pelo preço atual para operações encerradas.
+     */
+    function isActuallyExercised(op) {
+        if (!op) return false;
+        const status = String(op.status || 'ABERTA').trim().toUpperCase();
+        if (status === 'ABERTA') return false;
+        if (status === 'EXERCIDA') return true;
+        const persisted = normalizeStatus(op.exercicio_status_persistido ?? op.exercicio_status);
+        return persisted === 'SIM';
+    }
+
     global.CryptoExerciseStatus = {
         normalizeStatus,
         calculateCurrentStatusFromValues,
@@ -149,6 +174,7 @@
         resolveDisplayLabel,
         renderBadgeHtml,
         isExercised,
+        isActuallyExercised,
         formatUsd,
         parseDateSafe,
         getOperationDate,

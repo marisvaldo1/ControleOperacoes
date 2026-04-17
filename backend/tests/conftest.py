@@ -1,90 +1,78 @@
+﻿"""
+Global backend fixtures without mocked DB connections.
 """
-Fixtures globais para os testes do Controle de Operações.
-
-Estratégia:
-- O banco de dados (SQLite) é completamente mockado após o import do server,
-  evitando dependência de arquivo físico durante os testes.
-- Esta aplicação NÃO possui autenticação — todas as rotas são acessíveis diretamente.
-"""
-import pytest
 import os
 import sys
-from unittest.mock import MagicMock
+import sqlite3
+import pytest
 
-# ─────────────────────────────────────────
-# CONFIGURAR PATH
-# ─────────────────────────────────────────
+
 BACKEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if BACKEND_DIR not in sys.path:
     sys.path.insert(0, BACKEND_DIR)
-
-# Alterar diretório de trabalho para o backend
 os.chdir(BACKEND_DIR)
 
-
-# ─────────────────────────────────────────
-# MOCK DO BANCO DE DADOS
-# ─────────────────────────────────────────
-def _build_mock_connection():
-    """Cria um objeto mock que simula uma conexão SQLite."""
-    conn = MagicMock()
-    cursor = MagicMock()
-    cursor.lastrowid = 1
-    cursor.fetchone.return_value = None
-    cursor.fetchall.return_value = []
-    conn.cursor.return_value = cursor
-    conn.execute.return_value = cursor
-    conn.commit.return_value = None
-    conn.close.return_value = None
-    return conn
-
-
-# ─────────────────────────────────────────
-# MOCK DO BANCO DE DADOS
-# ─────────────────────────────────────────
-# O app agora usa Flask Blueprints.
-# Cada blueprint importa get_db de db.py via `import db; db.get_db()`.
-# Mockamos db.get_db ANTES de qualquer import de blueprint para que
-# todas as rotas usem o mesmo mock centralizado.
-# ─────────────────────────────────────────
 import db as _db_module  # noqa: E402
-
-# Importar o app Flask (init_db já rodou na execução anterior — sem impacto nos testes)
 import server as _server_module  # noqa: E402
 
-# Substituir get_db no módulo db pelo mock (afeta TODOS os blueprints)
-_db_module.get_db = MagicMock(side_effect=_build_mock_connection)
+
+class _ConnectionProxy:
+    """Proxy that keeps a shared in-memory SQLite connection alive during all tests."""
+
+    def __init__(self, conn):
+        self._conn = conn
+
+    def close(self):
+        # Routes call close() after each request. Keep shared DB alive for the session.
+        return None
+
+    def real_close(self):
+        self._conn.close()
+
+    def __getattr__(self, name):
+        return getattr(self._conn, name)
+
+
+@pytest.fixture(scope='session', autouse=True)
+def _configure_test_db():
+    """Use one real in-memory sqlite DB shared by all tests in this process."""
+    base_conn = sqlite3.connect(':memory:', check_same_thread=False)
+    base_conn.row_factory = sqlite3.Row
+    proxy = _ConnectionProxy(base_conn)
+
+    def _get_test_db():
+        return proxy
+
+    _db_module.get_db = _get_test_db
+    _db_module.DB_PATH = ':memory:'
+    _db_module.init_db()
+    yield
+    proxy.real_close()
 
 
 @pytest.fixture(scope='session')
 def app():
-    """App Flask configurado para testes."""
     _server_module.app.config.update({'TESTING': True})
-    yield _server_module.app
+    return _server_module.app
 
 
 @pytest.fixture(scope='function')
-def mock_db():
-    """
-    Fornece uma conexão mockada configurável por teste.
+def db_conn():
+    yield _db_module.get_db()
 
-    Uso típico:
-        mock_db.execute.return_value.fetchall.return_value = [{'id': 1, ...}]
-        mock_db.execute.return_value.fetchone.return_value = {'id': 1, ...}
-        mock_db.cursor.return_value.lastrowid = 5
-    """
-    db = _build_mock_connection()
-    # Todas as chamadas a db.get_db() no escopo deste teste retornam o MESMO mock
-    _db_module.get_db.side_effect = None
-    _db_module.get_db.return_value = db
-    yield db
-    # Restaurar comportamento padrão após o teste
-    _db_module.get_db.return_value = None
-    _db_module.get_db.side_effect = _build_mock_connection
+
+@pytest.fixture(scope='function', autouse=True)
+def _clean_db():
+    """Guarantee test isolation by truncating tables before each test."""
+    conn = _db_module.get_db()
+    conn.execute('DELETE FROM operacoes_crypto')
+    conn.execute('DELETE FROM operacoes_opcoes')
+    conn.execute('DELETE FROM configuracoes')
+    conn.commit()
+    yield
 
 
 @pytest.fixture(scope='function')
-def client(app, mock_db):
-    """Test client Flask com banco mockado."""
+def client(app):
     with app.test_client() as c:
         yield c

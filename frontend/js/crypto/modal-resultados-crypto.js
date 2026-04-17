@@ -18,10 +18,13 @@
     // ── Estado ────────────────────────────────────────────────────────────────
     let filteredOps = [];
     let currentIdx  = 0;
-    let activePeriod = 'all';
-    let activeType   = 'aberta';  // 'aberta' | 'fechada' | null
+    let activePeriod = 'today';
+    let activeType   = null;  // 'aberta' | 'fechada' | 'exercida' | 'nao_exercida' | null
     let activeTipo   = null;  // 'CALL' | 'PUT' | null
+    let activeAsset  = null;  // 'BTC' | 'ETH' | null
+    let activeCorr   = null;  // 'BINANCE' | 'BYBIT' | null
     let loaded       = false;
+    let _header      = null;
 
     // ── Helpers ───────────────────────────────────────────────────────────────
     const setEl = (id, html) => { const e = document.getElementById(id); if (e) e.innerHTML = html; };
@@ -79,8 +82,31 @@
     function applyFilters() {
         let ops = cfg.getOperacoes();
         ops = filterByPeriod(ops, activePeriod);
-        if (activeType)  ops = ops.filter(o => (o.status || 'ABERTA').toUpperCase() === activeType.toUpperCase());
+        if (activeType) {
+            const st = activeType.toLowerCase();
+            if (st === 'exercida') {
+                // Usa função global unificada — ABERTA nunca é exercida
+                ops = ops.filter(o => window.CryptoExerciseStatus
+                    ? window.CryptoExerciseStatus.isActuallyExercised(o)
+                    : ((o.status || '').toUpperCase() === 'FECHADA' && (o.exercicio_status || '').toUpperCase() === 'SIM'));
+            } else if (st === 'nao_exercida') {
+                ops = ops.filter(o => {
+                    const s = (o.status || '').toUpperCase();
+                    if (s === 'ABERTA') return false;
+                    return window.CryptoExerciseStatus
+                        ? !window.CryptoExerciseStatus.isActuallyExercised(o)
+                        : (o.exercicio_status || '').toUpperCase() !== 'SIM';
+                });
+            } else {
+                ops = ops.filter(o => (o.status || 'ABERTA').toUpperCase() === activeType.toUpperCase());
+            }
+        }
         if (activeTipo)  ops = ops.filter(o => (o.tipo || '').toUpperCase() === activeTipo);
+        if (activeAsset) {
+            const wanted = String(activeAsset).toUpperCase();
+            ops = ops.filter(o => String(o.ativo || '').toUpperCase().includes(wanted));
+        }
+        if (activeCorr)  ops = ops.filter(o => (o.corretora || 'BINANCE').toUpperCase() === activeCorr.toUpperCase());
         filteredOps = ops;
         if (currentIdx >= filteredOps.length) currentIdx = Math.max(0, filteredOps.length - 1);
     }
@@ -616,6 +642,7 @@
             if (empty)  empty.classList.remove('d-none');
             if (body)   body.classList.add('d-none');
             if (secTab) secTab.style.display = 'none';
+            if (_header) { _header.setOps(cfg.getOperacoes(), filteredOps); _header.tick(); }
             return;
         }
 
@@ -629,7 +656,8 @@
         renderComparativos(op);
         renderPosicoes();
         renderRisco(op);
-            setupRowSelectListeners();
+        setupRowSelectListeners();
+        if (_header) { _header.setOps(cfg.getOperacoes(), filteredOps); _header.tick(); }
     }
 
     // ── Listeners ─────────────────────────────────────────────────────────────
@@ -652,56 +680,38 @@
         });
     }
 
+    function _mountHeader() {
+        if (typeof CryptoModalHeader === 'undefined') return;
+        const allOps = cfg.getOperacoes();
+        _header = CryptoModalHeader.mount('#rcModalHeader', {
+            title:         'Resultados · Crypto',
+            icon:          '⚡',
+            defaultPeriod: 'today',
+            closeModalId:  cfg.modalElId,
+            onFilter: (state) => {
+                activePeriod = state.period;
+                activeType   = state.status   || null;
+                activeTipo   = state.tipo     || null;
+                activeAsset  = state.asset    || null;
+                activeCorr   = state.corretora || null;
+                currentIdx   = 0;
+                render();
+            },
+            onRefresh: () => {
+                currentIdx = 0;
+                render();
+            },
+            showTotals: true
+        });
+        _header.setOps(allOps, allOps);
+        _header.tick();
+    }
+
     function setupFilterListeners() {
         const modal = document.getElementById(cfg.modalElId);
         if (!modal) return;
         if (modal.dataset.listenersBound === 'true') return;
         modal.dataset.listenersBound = 'true';
-
-        // Período pills
-        modal.querySelectorAll('.rmc-pill[data-period]').forEach(btn => {
-            btn.addEventListener('click', function () {
-                modal.querySelectorAll('.rmc-pill[data-period]').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                activePeriod = this.dataset.period || 'all';
-                currentIdx = 0;
-                render();
-            });
-        });
-
-        // Status pills
-        modal.querySelectorAll('.rmc-pill[data-type]').forEach(btn => {
-            btn.addEventListener('click', function () {
-                const t = this.dataset.type;
-                if (activeType === t) {
-                    activeType = null;
-                    this.classList.remove('active');
-                } else {
-                    modal.querySelectorAll('.rmc-pill[data-type]').forEach(b => b.classList.remove('active'));
-                    activeType = t;
-                    this.classList.add('active');
-                }
-                currentIdx = 0;
-                render();
-            });
-        });
-
-        // Tipo pills (CALL/PUT)
-        modal.querySelectorAll('.rmc-pill[data-tipo]').forEach(btn => {
-            btn.addEventListener('click', function () {
-                const t = this.dataset.tipo;
-                if (activeTipo === t) {
-                    activeTipo = null;
-                    this.classList.remove('active');
-                } else {
-                    modal.querySelectorAll('.rmc-pill[data-tipo]').forEach(b => b.classList.remove('active'));
-                    activeTipo = t;
-                    this.classList.add('active');
-                }
-                currentIdx = 0;
-                render();
-            });
-        });
 
         // Section tabs
         modal.querySelectorAll('.rmc-section-tab').forEach(btn => {
@@ -715,20 +725,6 @@
             });
         });
 
-        // Refresh
-        document.getElementById('rcRefreshBtn')?.addEventListener('click', function () {
-            this.classList.add('spinning');
-            setTimeout(() => this.classList.remove('spinning'), 800);
-            currentIdx = 0;
-            render();
-            updateTimestamp('rcLastUpdate');
-        });
-    }
-
-    function updateTimestamp(id) {
-        const now = new Date();
-        const el = document.getElementById(id);
-        if (el) el.textContent = `Atualizado: ${now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
     }
 
     // ── Template loading ──────────────────────────────────────────────────────
@@ -744,7 +740,6 @@
             if (!res.ok) throw new Error('HTTP ' + res.status);
             container.innerHTML = await res.text();
             loaded = true;
-            setupFilterListeners();
             return true;
         } catch (e) {
             console.error('[ModalResultadosCrypto] Erro ao carregar template:', e);
@@ -756,22 +751,18 @@
         const ok = await ensureTemplate();
         if (!ok) return;
         // Reset state on open
-        activePeriod = 'all';
-        activeType   = 'aberta';
+        activePeriod = 'today';
+        activeType   = null;
         activeTipo   = null;
+        activeAsset  = null;
+        activeCorr   = null;
         currentIdx   = 0;
-        // Sync filter UI
-        document.querySelectorAll('#modalResultadosCrypto .rmc-pill[data-period]').forEach(b => {
-            b.classList.toggle('active', b.dataset.period === 'all');
-        });
-        document.querySelectorAll('#modalResultadosCrypto .rmc-pill[data-type]').forEach(b => b.classList.remove('active'));
-        document.querySelector('#modalResultadosCrypto .rmc-pill[data-type="aberta"]')?.classList.add('active');
-        document.querySelectorAll('#modalResultadosCrypto .rmc-pill[data-tipo]').forEach(b => b.classList.remove('active'));
         // Show first section tab
         document.querySelectorAll('#modalResultadosCrypto .rmc-section-tab').forEach((b, i) => b.classList.toggle('active', i===0));
         document.querySelectorAll('#modalResultadosCrypto .rmc-tab-panel').forEach((p, i) => p.classList.toggle('active', i===0));
+        _mountHeader();
+        setupFilterListeners();
         render();
-        updateTimestamp('rcLastUpdate');
         const modalEl = document.getElementById(cfg.modalElId);
         if (!modalEl) return;
         let bsModal = bootstrap.Modal.getInstance(modalEl);

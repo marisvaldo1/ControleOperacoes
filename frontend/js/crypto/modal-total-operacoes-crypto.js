@@ -3,7 +3,12 @@
     'use strict';
 
     let currentOps = [];
-    let activeFilter = 'all';
+    let activePeriod = 'today';
+    let activeFilter = null;
+    let activeTipo = null;
+    let activeAsset = null;
+    let activeCorr = null;
+    let _header = null;
 
     function fmtUsd(v) {
         return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(v || 0);
@@ -42,14 +47,53 @@
     }
 
     function applyFilter(ops, filter) {
-        if (filter === 'all') return ops;
+        if (!filter || filter === 'all') return ops;
+        // Status filters — usa isActuallyExercised para consistência global
         if (filter === 'ABERTA' || filter === 'FECHADA' || filter === 'VENCIDA') {
             return ops.filter(op => (op.status || 'ABERTA').toUpperCase() === filter);
+        }
+        if (filter === 'exercida') {
+            return ops.filter(op => window.CryptoExerciseStatus
+                ? window.CryptoExerciseStatus.isActuallyExercised(op)
+                : ((op.status || '').toUpperCase() === 'FECHADA' && (op.exercicio_status || '').toUpperCase() === 'SIM'));
+        }
+        if (filter === 'nao_exercida') {
+            return ops.filter(op => {
+                const s = (op.status || '').toUpperCase();
+                if (s === 'ABERTA') return false;
+                return window.CryptoExerciseStatus
+                    ? !window.CryptoExerciseStatus.isActuallyExercised(op)
+                    : (op.exercicio_status || '').toUpperCase() !== 'SIM';
+            });
         }
         if (filter === 'CALL' || filter === 'PUT') {
             return ops.filter(op => (op.tipo || '').toUpperCase() === filter);
         }
         return ops;
+    }
+
+    function applyFilterFull(ops, state) {
+        if (window.CryptoFilterBar?.filter) {
+            return window.CryptoFilterBar.filter(ops, {
+                period: state.period || 'today',
+                status: state.status || null,
+                tipo: state.tipo || null,
+                asset: state.asset || null,
+                corretora: state.corretora || null,
+            });
+        }
+        let result = applyFilter(ops, state.status);
+        if (state.tipo) {
+            result = result.filter(op => (op.tipo || '').toUpperCase() === state.tipo.toUpperCase());
+        }
+        if (state.asset) {
+            const asset = state.asset.toUpperCase();
+            result = result.filter(op => String(op.ativo || '').toUpperCase().includes(asset));
+        }
+        if (state.corretora) {
+            result = result.filter(op => (op.corretora || 'BINANCE').toUpperCase() === state.corretora);
+        }
+        return result;
     }
 
     function calcStats(ops) {
@@ -182,17 +226,15 @@
 
     function renderSummary(stats, monthlyRows) {
         const totalResultadoEl = document.getElementById('tocTotalResultado');
-        const totalSubEl = document.getElementById('tocTotalSub');
         const pillAbertas = document.getElementById('tocPillAbertas');
         const pillFechadas = document.getElementById('tocPillFechadas');
         const pillOps = document.getElementById('tocPillOps');
         const pillRoi = document.getElementById('tocPillRoi');
 
         if (totalResultadoEl) totalResultadoEl.textContent = fmtUsd(stats.totalPremio);
-        if (totalSubEl) totalSubEl.textContent = `${stats.totalOps} operações · ${stats.wins}W / ${stats.losses}L`;
-        if (pillAbertas) pillAbertas.textContent = `${stats.abertas} abertas`;
-        if (pillFechadas) pillFechadas.textContent = `${stats.fechadas} fechadas`;
-        if (pillOps) pillOps.textContent = `${stats.totalOps} operações`;
+        if (pillAbertas) pillAbertas.textContent = String(stats.abertas);
+        if (pillFechadas) pillFechadas.textContent = String(stats.fechadas);
+        if (pillOps) pillOps.textContent = String(stats.totalOps);
 
         const totalSaldo = monthlyRows.reduce((acc, r) => acc + (r.saldoMedio || 0), 0);
         const roi = totalSaldo > 0 ? (stats.totalPremio / totalSaldo) * 100 : 0;
@@ -223,21 +265,46 @@
             .then(r => r.json())
             .then(data => {
                 currentOps = Array.isArray(data) ? data : [];
-                renderAll(applyFilter(currentOps, activeFilter));
-                // Atualiza timestamp do cabeçalho
-                const tsEl = document.getElementById('tocLastUpdated');
-                if (tsEl) {
-                    const now = new Date();
-                    tsEl.textContent = 'Atualizado: ' + now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                }
+                const filtered = applyFilterFull(currentOps, {
+                    period: activePeriod,
+                    status: activeFilter,
+                    tipo: activeTipo,
+                    asset: activeAsset,
+                    corretora: activeCorr,
+                });
+                renderAll(filtered);
+                if (_header) _header.setOps(currentOps, filtered);
             })
             .catch(() => renderAll([]));
     }
 
-    function setActiveTab(btn) {
-        const tabs = document.querySelectorAll('#tocFtabs .toc-ftab');
-        tabs.forEach(t => t.classList.remove('active'));
-        if (btn) btn.classList.add('active');
+    function _mountHeader() {
+        if (!window.CryptoModalHeader) return;
+        if (_header) { _header.destroy(); _header = null; }
+        _header = window.CryptoModalHeader.mount('#tocModalHeader', {
+            title:         'Total de Operações Crypto',
+            icon:          '📊',
+            defaultPeriod: 'today',
+            closeModalId:  'modalTotalOperacoesCrypto',
+            onFilter: function (state) {
+                activePeriod = state.period || 'today';
+                activeFilter = state.status  || null;
+                activeTipo   = state.tipo    || null;
+                activeAsset  = state.asset   || null;
+                activeCorr   = state.corretora || null;
+                const filtered = applyFilterFull(currentOps, {
+                    period: activePeriod,
+                    status: activeFilter,
+                    tipo: activeTipo,
+                    asset: activeAsset,
+                    corretora: activeCorr,
+                });
+                renderAll(filtered);
+                if (_header) _header.setOps(currentOps, filtered);
+            },
+            onRefresh: loadData,
+            showTotals: true,
+        });
     }
 
     function ensureModalHtml() {
@@ -260,6 +327,7 @@
                 if (!modalEl) return;
                 const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
                 modal.show();
+                _mountHeader();
                 loadData();
             })
             .catch(() => {});
@@ -268,21 +336,6 @@
     window.ModalTotalOperacoesCrypto = { openModal };
 
     function initTriggers() {
-        document.addEventListener('click', e => {
-            const target = e.target;
-            if (!target) return;
-            if (target.id === 'btnRefreshTotalOpsCrypto') {
-                loadData();
-                return;
-            }
-            if (target.classList && target.classList.contains('toc-ftab')) {
-                const filter = target.getAttribute('data-filter') || 'all';
-                activeFilter = filter;
-                setActiveTab(target);
-                renderAll(applyFilter(currentOps, activeFilter));
-            }
-        });
-
         const card = document.getElementById('cardTotalOpsCryptoCard');
         if (card) {
             card.addEventListener('click', openModal);

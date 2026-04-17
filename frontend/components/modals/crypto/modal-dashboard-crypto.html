@@ -2,70 +2,11 @@
 <div class="modal modal-blur fade" id="modalDashboardCrypto" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content saldo-dashboard">
-            <div class="modal-header mp-header">
-                <h5 class="modal-title">🔥 Dashboard Avançado de Performance · Crypto</h5>
-                <div class="d-flex align-items-center gap-2 flex-shrink-0">
-                    <span class="mdh-ts" id="dcLastUpdated">Atualizado: --:--</span>
-                    <button type="button" class="mdh-refresh" id="dcBtnHeaderAtualizar" title="Atualizar dados">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
-                            fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
-                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-                        </svg>
-                    </button>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
-                </div>
-            </div>
+
+            <!-- Cabeçalho padrão — gerenciado por CryptoModalHeader -->
+            <div id="dcModalHeader" style="flex-shrink:0;"></div>
+
             <div class="modal-body">
-
-                <!-- Filtros -->
-                <div class="row g-3 mb-4">
-                    <div class="col-md-3">
-                        <label class="form-label">Data Início</label>
-                        <input type="date" class="form-control" id="dcInicio">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Data Fim</label>
-                        <input type="date" class="form-control" id="dcFim">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Período</label>
-                        <select class="form-select" id="dcPeriodo">
-                            <option value="custom">Personalizado</option>
-                            <option value="7">Últimos 7 dias</option>
-                            <option value="30">Últimos 30 dias</option>
-                            <option value="60">Últimos 60 dias</option>
-                            <option value="90">Últimos 90 dias</option>
-                            <option value="month">Mês atual</option>
-                            <option value="12">Últimos 12 meses</option>
-                            <option value="year" selected>Ano atual</option>
-                            <option value="lastYear">Ano passado</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Tipo</label>
-                        <select class="form-select" id="dcTipo">
-                            <option value="ALL">Todos</option>
-                            <option value="CALL">CALL</option>
-                            <option value="PUT">PUT</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="row g-3 mb-4">
-                    <div class="col-md-3 align-self-end">
-                        <button class="btn btn-primary w-100" id="dcBtnFiltrar">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                            Filtrar
-                        </button>
-                    </div>
-                    <div class="col-md-3 align-self-end">
-                        <button class="btn btn-success w-100" id="dcBtnAtualizar">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
-                            Atualizar
-                        </button>
-                    </div>
-                </div>
-
                 <!-- KPI cards -->
                 <div class="row g-3 mb-4">
                     <div class="col-md-3">

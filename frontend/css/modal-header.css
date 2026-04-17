@@ -1,0 +1,113 @@
+/**
+ * modal-header.css — CSS standalone para CryptoModalHeader
+ *
+ * Inclua este arquivo quando preferir um link CSS estático em vez
+ * da injeção via JS (CryptoFilterBar.injectCSS).
+ *
+ * Uso:
+ *   <link rel="stylesheet" href="../css/modal-header.css">
+ *
+ * Nota: CryptoFilterBar e CryptoModalHeader também injetam este CSS
+ * automaticamente via JS se este arquivo não for incluído.
+ */
+
+/* CryptoFilterBar / CryptoModalHeader shared styles */
+.cfb-hdr {
+  background: #1a2436;
+  border-bottom: 1px solid #263347;
+  padding: .50rem 1rem;
+  display: flex; align-items: center; gap: .6rem;
+  flex-shrink: 0;
+}
+.cfb-icon { color: #6b82a0; font-size: .95rem; }
+.cfb-title {
+  font-family: 'Inter', sans-serif; font-size: .90rem; font-weight: 600;
+  color: #e8f0f8; flex: 1; display: flex; align-items: center; gap: .4rem;
+}
+.cfb-live {
+  width: 7px; height: 7px; border-radius: 50%; background: #3dd68c;
+  flex-shrink: 0; animation: cfbBlink 2.5s infinite;
+}
+@keyframes cfbBlink { 0%,100%{opacity:1} 60%{opacity:.3} }
+.cfb-time {
+  font-family: 'JetBrains Mono', monospace; font-size: .66rem;
+  color: #6b82a0; white-space: nowrap;
+}
+.cfb-act-btn {
+  padding: .22rem .65rem; border-radius: 5px; font-size: .70rem; font-weight: 600;
+  background: rgba(66,153,225,.15); color: #63b3ed;
+  border: 1px solid rgba(66,153,225,.30); cursor: pointer; white-space: nowrap;
+  font-family: 'Inter', sans-serif; display: flex; align-items: center; gap: .3rem;
+  transition: background .15s, border-color .15s;
+}
+.cfb-act-btn:hover { background: rgba(66,153,225,.25); border-color: rgba(66,153,225,.5); }
+.cfb-btn {
+  width: 28px; height: 28px; border-radius: 6px;
+  border: 1px solid #334560; background: #1e2a3d; color: #6b82a0;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all .15s; flex-shrink: 0;
+}
+.cfb-btn.ref { background: #1e2a3d; color: #4db8d4; }
+.cfb-btn.ref:hover { border-color: #4db8d4; }
+.cfb-btn.ref.spin svg,
+.cfb-btn.ref.spinning svg { animation: cfbSpin .8s linear infinite; }
+@keyframes cfbSpin { to { transform: rotate(360deg); } }
+.cfb-btn.cls:hover { border-color: #e85555; color: #e85555; background: #2d1a1a; }
+
+/* Filter bar */
+.cfb-bar {
+  background: #1a2436; border-bottom: 1px solid #263347;
+  padding: .30rem .8rem; display: flex; align-items: center; gap: .22rem;
+  flex-wrap: wrap; overflow-x: auto; scrollbar-width: none; flex-shrink: 0;
+}
+.cfb-bar::-webkit-scrollbar { display: none; }
+.cfb-bar-lbl {
+  font-family: 'Inter', sans-serif; font-size: .62rem; font-weight: 600;
+  color: #6b82a0; letter-spacing: .04em; text-transform: uppercase;
+  white-space: nowrap; padding: 0 .2rem;
+}
+.cfb-sep { width: 1px; height: 16px; background: #263347; margin: 0 .25rem; flex-shrink: 0; }
+.cfb-pill {
+  padding: .22rem .55rem; border-radius: 20px;
+  border: 1px solid #263347; background: transparent;
+  color: #6b82a0; font-family: 'Inter', sans-serif; font-size: .72rem; font-weight: 500;
+  cursor: pointer; transition: all .15s; white-space: nowrap;
+}
+.cfb-pill:hover { border-color: #334560; color: #e8f0f8; }
+.cfb-pill.p-on  { background: rgba(77,184,212,.15); border-color: rgba(77,184,212,.4); color: #4db8d4; }
+.cfb-pill.s-ab  { background: rgba(61,214,140,.12); border-color: rgba(61,214,140,.35); color: #3dd68c; }
+.cfb-pill.s-fe  { background: rgba(107,130,160,.12); border-color: rgba(107,130,160,.35); color: #a0b0c8; }
+.cfb-pill.s-ex  { background: rgba(232,168,48,.12); border-color: rgba(232,168,48,.35); color: #e8a830; }
+.cfb-pill.s-nex { background: rgba(232,85,85,.10); border-color: rgba(232,85,85,.30); color: #e85555; }
+.cfb-pill.t-call { background: rgba(77,184,212,.12); border-color: rgba(77,184,212,.35); color: #4db8d4; }
+.cfb-pill.t-put  { background: rgba(155,114,212,.12); border-color: rgba(155,114,212,.35); color: #9b72d4; }
+.cfb-pill.a-on  { background: rgba(232,168,48,.15); border-color: rgba(232,168,48,.45); color: #e8a830; }
+.cfb-sel {
+  background: #1e2a3d; border: 1px solid #263347; border-radius: 5px;
+  color: #6b82a0; font-family: 'JetBrains Mono', monospace; font-size: .67rem;
+  padding: .22rem .5rem; cursor: pointer; outline: none; min-width: 100px;
+  transition: border-color .15s, color .15s;
+}
+.cfb-sel:hover, .cfb-sel:focus { border-color: #334560; color: #e8f0f8; }
+
+/* Totais */
+.cfb-totals {
+  background: #141b28; border-bottom: 1px solid #263347;
+  padding: .28rem .9rem; display: flex; align-items: center; gap: .35rem;
+  flex-wrap: wrap; flex-shrink: 0;
+}
+.cfb-tag {
+  padding: .18rem .52rem; border-radius: 10px;
+  font-family: 'JetBrains Mono', monospace; font-size: .68rem; font-weight: 600;
+  white-space: nowrap;
+}
+.cfb-tag-b { background: #162430; color: #4db8d4; border: 1px solid #254050; }
+.cfb-tag-g { background: #1a3028; color: #3dd68c; border: 1px solid #2a5040; }
+.cfb-tag-r { background: #1e1e28; color: #6b82a0; border: 1px solid #263347; }
+.cfb-tag-a { background: #2d2010; color: #e8a830; border: 1px solid #4a3820; }
+
+/* Totalizador inline (cfb-tot-*) */
+.cfb-tot-item { display:flex; flex-direction:column; align-items:center; padding:0 .4rem; }
+.cfb-tot-label { font-size:.55rem; font-weight:600; color:#6b82a0; text-transform:uppercase; letter-spacing:.04em; }
+.cfb-tot-val   { font-family:'JetBrains Mono',monospace; font-size:.78rem; font-weight:700; color:#e8f0f8; }
+.cfb-tot-sep   { width:1px; height:28px; background:#263347; margin:0 .25rem; flex-shrink:0; }

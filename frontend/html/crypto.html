@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="../css/crypto/modal-analise-detalhe-crypto.css?v=1.1.0">
     <link rel="stylesheet" href="../css/crypto/modal-saldo-medio-crypto.css?v=1.0.0">
     <link rel="stylesheet" href="../css/crypto/modal-dashboard-crypto.css?v=1.0.0">
+    <link rel="stylesheet" href="../css/crypto/modal-resultados-crypto-compact.css?v=1.0.0">
     <link rel="stylesheet" href="../css/shared/modal-analise.css?v=1.0.1">
     <link rel="stylesheet" href="../css/shared/modal-resultados.css?v=1.0.0">
 </head>
@@ -710,29 +711,23 @@
     <div id="modalAnaliseCryptoContainer"><div class="modal modal-blur fade" id="modalAnalise" tabindex="-1">
     <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content ma-modal-content">
-            <div class="modal-header ma-header">
-                <h5 class="modal-title ma-title">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="icon me-2" width="20" height="20" viewBox="0 0 24 24"
-                        stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round"
-                        stroke-linejoin="round">
-                        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            <!-- Cabeçalho padrão cfb -->
+            <div class="cfb-hdr">
+                <span class="cfb-icon">⚡</span>
+                <span class="cfb-title">
+                    Análise de Performance · Crypto
+                    <span class="cfb-live"></span>
+                </span>
+                <span class="cfb-time" id="maRefreshStatus">—</span>
+                <button type="button" class="cfb-btn ref" id="maRefreshBtn" title="Atualizar dados">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                        <path d="M3 12a9 9 0 0 1 15.74-6.74L21 8"/><path d="M21 3v5h-5"/>
+                        <path d="M21 12a9 9 0 0 1-15.74 6.74L3 16"/><path d="M3 21v-5h5"/>
                     </svg>
-                    Análise de Performance
-                </h5>
-                <div class="d-flex align-items-center gap-2 ms-auto me-3">
-                    <span class="text-muted small" id="maRefreshStatus">Atualizado agora</span>
-                    <button type="button" class="ma-refresh-btn" id="maRefreshBtn" title="Atualizar dados">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                            stroke-linejoin="round">
-                            <path d="M23 4v6h-6"/>
-                            <path d="M1 20v-6h6"/>
-                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-                        </svg>
-                    </button>
-                </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </button>
+                <button type="button" class="cfb-btn cls" data-bs-dismiss="modal" aria-label="Close">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
             </div>
 
             <div class="modal-body p-0 ma-body">
@@ -902,45 +897,8 @@
       <div class="modal fade" id="modalResultadoTotalCrypto" tabindex="-1">
         <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
           <div class="modal-content">
-            <!-- HEADER -->
-            <div class="modal-header">
-              <h5 class="modal-title">&#9889; Dashboard Anal&#237;tico &middot; Crypto <span id="rtStatusDot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;margin-left:4px;vertical-align:middle"></span></h5>
-              <div class="modal-header-right">
-                <span id="rtLastUpdate" class="mh-time" style="display:none"></span>
-                <button type="button" class="mh-refresh-btn" id="rtCryptoRefreshBtn" title="Atualizar">&#x21BB;</button>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-              </div>
-            </div>
-
-            <!-- TOPBAR (FILTROS) - Design Claude8 -->
-            <div class="topbar">
-              <span class="tb-lbl">Período:</span>
-              <button class="chip" data-filter="period" data-value="hoje">Hoje</button>
-              <button class="chip" data-filter="period" data-value="7d">7d</button>
-              <button class="chip" data-filter="period" data-value="30d">30d</button>
-              <button class="chip on" data-filter="period" data-value="60d">60d</button>
-              <button class="chip" data-filter="period" data-value="90d">90d</button>
-              <button class="chip" data-filter="period" data-value="year">Ano</button>
-              <div class="tb-sep"></div>
-              <span class="tb-lbl">Status:</span>
-              <button class="chip on" data-filter="status" data-value="all">Todas</button>
-              <button class="chip" data-filter="status" data-value="ABERTA">Abertas</button>
-              <button class="chip" data-filter="status" data-value="FECHADA">Fechadas</button>
-              <button class="chip" data-filter="status" data-value="EXERCIDA">Exercidas</button>
-              <button class="chip" data-filter="status" data-value="NAO_EXERCIDA">N&atilde;o Exercidas</button>
-              <div class="tb-sep"></div>
-              <span class="tb-lbl">Tipo:</span>
-              <button class="chip on" data-filter="tipo" data-value="all">Todos</button>
-              <button class="chip" data-filter="tipo" data-value="CALL">CALL</button>
-              <button class="chip" data-filter="tipo" data-value="PUT">PUT</button>
-              <div class="tb-sep"></div>
-              <span class="tb-lbl">Moeda:</span>
-              <select class="tipo-sel moeda-sel">
-                <option value="all">Todos</option>
-                <option value="BTC">&#8383; BTC</option>
-                <option value="ETH">&#926; ETH</option>
-              </select>
-            </div>
+            <!-- Header padrão — gerenciado por CryptoModalHeader (modal-resultado-total-crypto-simple.js) -->
+            <div id="rtModalHeader" style="flex-shrink:0;"></div>
 
             <!-- MODAL BODY -->
             <div class="modal-body p-0">
@@ -1160,7 +1118,9 @@
     <script src="../js/core/libs.js?v=1.2.1"></script>
     <script src="../js/core/global.js?v=1.2.2"></script>
     <script src="../js/core/layout.js?v=1.2.1"></script>
-    <script src="../js/core/crypto-exercise.js?v=1.0.0"></script>
+    <script src="../js/core/crypto-exercise.js?v=1.1.0"></script>
+    <script src="../js/core/crypto-filter-bar.js?v=1.0.0"></script>
+    <script src="../js/core/modal-header.js?v=1.0.0"></script>
     <script src="../js/shared/technical-analysis.js?v=1.1.5"></script>
     <script src="../js/shared/modal-analise.js?v=1.5.1"></script>
     <script src="../js/crypto/analise-tecnica-crypto.js?v=1.0.0"></script>

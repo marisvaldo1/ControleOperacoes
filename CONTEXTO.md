@@ -1,191 +1,159 @@
-# CONTEXTO — CentralClinica (sessão acumulada)
+# CONTEXTO — ControleOperacoes (sessão acumulada)
 
-> Última atualização: 04/03/2026  
-> Estado: ✅ 159 pytest + 36 Playwright — todos passando
+> Última atualização: 17/04/2026
+> Estado verificado nesta sessão:
+> - ✅ `backend/tests/test_api_crypto.py`: 20/20 passando
+> - ✅ `tests/results/pytest_results.json`: 66/66 passando (12 deselected)
+> - ✅ `tests/results/playwright_results.json`: 26/26 specs OK
 
 ---
 
-## 1. Estrutura do Projeto
+## 1. Visão Geral
+
+Aplicação web local para controle de operações de investimento com dois domínios principais:
+
+- **Crypto**: Dual Investment, Opções Crypto, Spot, Hold, Futures, Staking
+- **Opções B3**: operações CALL/PUT em ações
+
+Stack principal:
+
+- **Backend**: Flask + SQLite
+- **Frontend**: HTML/CSS/JS + Tabler
+- **Porta padrão backend**: `8888`
+
+---
+
+## 2. Estrutura do Projeto
 
 ```
-CentralClinica/
+ControleOperacoes/
 ├── backend/
-│   ├── server.py            # Flask principal, porta 8881
-│   ├── routes/              # auth, agenda, atendimento, pacientes, financeiro, relatorios, cadastros, dashboard, admin
-│   ├── database.py
-│   ├── utils.py             # active_tokens, parse_permissoes, log_action
-│   ├── config.py
-│   └── tests/               # pytest — 159 testes
+│   ├── server.py                # Entry point Flask (blueprints + static frontend)
+│   ├── db.py                    # get_db(), init_db(), migrações leves de colunas
+│   ├── routes/
+│   │   ├── crypto.py            # /api/crypto
+│   │   ├── opcoes.py            # /api/opcoes
+│   │   ├── config.py            # /api/config, /api/available-ais, /api/config-ia
+│   │   ├── ai.py                # /api/analyze
+│   │   └── market.py            # proxies/cotações
+│   ├── data/
+│   │   └── controle_operacoes.db
+│   └── tests/
+│
 ├── frontend/
-│   ├── html/                # dashboard, agenda, atendimento, pacientes, financeiro, relatorios, administracao, login
-│   ├── js/                  # um .js por página + layout.js, app.js, auth.js
+│   ├── html/
+│   │   ├── crypto.html
+│   │   └── opcoes.html
+│   ├── js/
+│   │   ├── core/
+│   │   │   ├── libs.js
+│   │   │   ├── global.js
+│   │   │   ├── layout.js
+│   │   │   ├── crypto-filter-bar.js
+│   │   │   └── modal-header.js
+│   │   ├── crypto/
+│   │   └── opcoes/
 │   ├── css/
-│   └── tests/               # Playwright — 36 testes
+│   │   ├── shared/
+│   │   ├── crypto/
+│   │   └── opcoes/
+│   ├── components/modals/
+│   │   ├── crypto/
+│   │   └── opcoes/
+│   └── tests/                   # Playwright
+│
 ├── tests/
-│   ├── dashboardTestes.html # Dashboard de testes visual
-│   ├── dashboardTestes.css
-│   ├── dashboardTestes.js
-│   ├── test_server.py       # Servidor do dashboard, porta 8883
-│   └── results/             # JSONs de resultado (gerados pelo run_all_tests.bat)
-│       ├── pytest_results.json
-│       ├── playwright_results.json
-│       └── ai_results.json
-├── run_all_tests.bat        # Suite completa: pytest + Playwright
-├── start.bat                # Inicia o sistema completo
-├── playwright.config.js
-└── pytest.ini
+│   └── results/                 # JSON de resultado (pytest/playwright)
+├── ARQUITETURA.md
+├── README.md
+├── run_all_tests.bat
+└── start.bat
 ```
 
 ---
 
-## 2. Comandos Essenciais
+## 3. Endpoints Principais
 
-| Ação | Comando |
-|------|---------|
-| Rodar todos os testes | `.\run_all_tests.bat` |
-| Iniciar sistema completo | `.\start.bat` |
-| Iniciar dashboard de testes | `python tests/test_server.py` → http://localhost:8883 |
-| Backend apenas | `cd backend && python server.py` |
-| Python do projeto | `d:\Sistemas\python\CentralClinica\.venv\Scripts\python.exe` |
+### Crypto (`/api/crypto`)
+- `GET /api/crypto`
+- `GET /api/crypto/<id>`
+- `POST /api/crypto`
+- `PUT /api/crypto/<id>`
+- `DELETE /api/crypto/<id>`
+- `PATCH /api/crypto/<id>/fechar`
+- `GET /api/crypto/estrategias`
 
----
+### Opções (`/api/opcoes`)
+- `GET /api/opcoes`
+- `GET /api/opcoes/<id>`
+- `POST /api/opcoes`
+- `PUT /api/opcoes/<id>`
+- `DELETE /api/opcoes/<id>`
+- `POST /api/opcoes/refresh`
 
-## 3. Dashboard de Testes (`tests/dashboardTestes.*`)
-
-### Layout do Health Card
-
-```
-[ hc-left-col 300px ] [ hc-right-col flex:1 ] [ hc-bd-col 290px ]
-  rings + métricas      heatmap + timeline       breakdown categorias
-```
-
-O card ocupa **largura total** abaixo do `mid-row` (estrutura HTML):
-```
-.content
-  ├── .kpi-row
-  ├── .mid-row          (gráficos menores)
-  ├── #panel-saude      ← full width (fora do mid-row)
-  └── .bottom-row
-```
-
-### Componentes JS relevantes
-
-```javascript
-// Categorias para breakdown
-const HC_CATEGORIES = [
-  { id: 'auth',  icon: '🔒', label: 'Autenticacao',  fn: t => /auth|login/i.test(t.suite) },
-  { id: 'fin',   icon: '💰', label: 'Financeiro',    fn: t => /financ/i.test(t.suite) },
-  { id: 'atnd',  icon: '🦷', label: 'Atendimento',   fn: t => /atendimento|prontuario|plano|orcamento|baixa/i.test(t.suite) },
-  { id: 'agnd',  icon: '📅', label: 'Agenda',        fn: t => /agenda/i.test(t.suite) },
-  { id: 'pac',   icon: '🧑‍⚕️', label: 'Pacientes',   fn: t => /paciente|ocr|merge/i.test(t.suite) },
-  { id: 'ia',    icon: '🤖', label: 'IA Providers',  fn: t => t.type === 'ai' },
-];
-
-// buildBreakdown(tests)   → renderiza coluna "Aprovação por Categoria"
-// copyLog()               → copia log para área de transferência
-// pollResults()           → polling a cada 15s, detecta novos JSONs pelo mtime
-// reloadResults()         → re-popula dashboard sem recarregar a página
-```
-
-### Auto-refresh (implementado nesta sessão)
-
-- `pollResults()` consulta `/api/results/mtime` a cada 15s
-- Se `mtime` mudou, chama `reloadResults()` → atualiza tudo automaticamente
-- Para quando uma execução SSE está em andamento
-- Exibe no log: `[AUTO] Resultados atualizados automaticamente (HH:MM:SS) — X/Y passando`
-
-### CSS crítico (valores atuais)
-
-```css
-.hc-card-body   { height: 680px; }          /* fixo — necessário para scroll flex */
-.hc-hcell       { width: 20px; height: 20px; }
-.hc-tl-rows     { overflow-y: auto; min-height: 0; }   /* min-height:0 OBRIGATÓRIO para scroll */
-.hc-timeline-area { min-height: 0; }
-.hc-bd-rows     { overflow-y: auto; min-height: 0; }
-.hc-hmap-area   { max-height: 340px; overflow: hidden; }
-```
+### Config/IA/Market (`/api`)
+- `GET /api/config`
+- `POST /api/config`
+- `GET /api/available-ais`
+- `POST /api/config-ia`
+- `POST /api/analyze`
+- `GET /api/proxy/stocks/<ticker>`
+- `GET /api/proxy/options/<ticker>`
+- `GET /api/proxy/crypto/<ticker>`
+- `GET /api/cotacao/realtime/<ticker>`
+- `GET /api/cotacao/hibrido/<ticker>`
+- `GET /api/cache/clear`
 
 ---
 
-## 4. Sincronismo Dashboard ↔ run_all_tests.bat
+## 4. Fluxo de Inicialização
 
-### Problema resolvido
-
-O `run_all_tests.bat` não gravava o JSON do pytest → dashboard não refletia falhas reais.
-
-### Solução implementada
-
-**`run_all_tests.bat`** — pytest agora usa `--json-report`:
-```bat
-if not exist "tests\results" mkdir "tests\results"
-"%PYTHON%" -m pytest backend/tests/ -v --json-report --json-report-file=tests/results/pytest_results.json --tb=short
-```
-
-**`tests/test_server.py`** — novo endpoint e campo `mtime`:
-```python
-@app.route('/api/results/mtime')   # novo endpoint
-def api_results_mtime():
-    resp = jsonify({'mtime': get_results_mtime()})
-    ...
-
-@app.route('/api/results')         # agora inclui 'mtime' na resposta
-def api_results():
-    data = load_all_results()
-    data['mtime'] = get_results_mtime()
-    ...
-```
-
-**Playwright** já gravava em `tests/results/playwright_results.json` via `playwright.config.js` (sem alteração necessária).
+1. `backend/server.py` cria app Flask e registra blueprints.
+2. `init_db()` é chamado na subida para garantir tabelas/colunas.
+3. Frontend é servido pelo próprio Flask (`static_folder=../frontend`).
+4. `frontend/html/crypto.html` e `frontend/html/opcoes.html` carregam módulos JS específicos.
 
 ---
 
-## 5. Arquivos Modificados (histórico desta sessão)
+## 5. Estado Atual de Frontend (Crypto)
 
-| Arquivo | Modificação |
-|---------|-------------|
-| `tests/dashboardTestes.html` | `panel-saude` fora do `mid-row` (full width), SVG 200×200, coluna breakdown, botão copiar log |
-| `tests/dashboardTestes.css` | `hc-hcell` 20×20px, `height: 680px`, `min-height:0` para scroll, hc-bd-* estilos |
-| `tests/dashboardTestes.js` | `HC_CATEGORIES`, `buildBreakdown()`, `copyLog()`, `pollResults()`, `reloadResults()`, `lastResultsMtime` |
-| `tests/test_server.py` | `get_results_mtime()`, `/api/results/mtime`, campo `mtime` em `/api/results` |
-| `run_all_tests.bat` | `--json-report` adicionado ao pytest |
-| `backend/tests/test_ai_providers.py` | Skip em 404 além de 429 (Gemini 1.5-Pro deprecated) |
-| `frontend/js/layout.js` | `loadSystemConfig()` em try/catch (renderFooter sempre executa) |
-| `backend/routes/auth.py` | `login2` → `login` (era um teste proposital de simulação de erro) |
+Área com maior volume de alterações locais atualmente:
 
----
+- Migração para cabeçalho/filtros padronizados em modais crypto:
+  - `frontend/js/core/crypto-filter-bar.js`
+  - `frontend/js/core/modal-header.js`
+- Novos fragmentos/componentes em `frontend/components/shared/`.
+- Ajustes em múltiplos modais e estilos crypto:
+  - `modal-dashboard-crypto`
+  - `modal-resultados-crypto`
+  - `modal-resultados-crypto-compact`
+  - `modal-saldo-medio-crypto`
+  - `modal-resultado-total-crypto-v2`
 
-## 6. Problemas Resolvidos
+Observação importante:
 
-### Dashboard não refletia falhas do run_all_tests.bat
-- **Causa:** pytest sem `--json-report` → JSON não era gravado → dashboard lia dados stale
-- **Fix:** `--json-report-file=tests/results/pytest_results.json` no bat + auto-refresh por mtime
-
-### Gemini 1.5-Pro — teste falhando com 404
-- **Causa:** Modelo deprecado pelo Google
-- **Fix:** `if status in (429, 404): pytest.skip(...)`
-
-### Footer não aparecia em testes Playwright
-- **Causa:** `loadSystemConfig()` lançava exceção e bloqueava `renderFooter()`
-- **Fix:** try/catch em torno de `loadSystemConfig()`
-
-### Scroll não funcionava em `.hc-tl-rows`
-- **Causa:** Flex children precisam de `min-height: 0` explícito para `overflow-y: auto` funcionar
-- **Fix:** `min-height: 0` em `.hc-timeline-area`, `.hc-tl-rows`, `.hc-bd-rows`
+- O repositório está com mudanças locais não commitadas, principalmente em `frontend` (crypto). Evitar resets/reverts automáticos.
 
 ---
 
-## 7. Estado Atual
+## 6. Comandos Essenciais
 
-- ✅ **159 pytest** — todos passando
-- ✅ **36 Playwright** — todos passando
-- ✅ Dashboard sincronizado com `run_all_tests.bat` via JSON + polling
-- ✅ Auto-refresh a cada 15s detecta novos resultados automaticamente
-- ✅ `backend/routes/auth.py` — função `login()` correta
+- Iniciar backend:
+  - `cd backend && python server.py`
+- Iniciar sistema (script):
+  - `./start.bat`
+- Rodar testes backend:
+  - `python -m pytest backend/tests -q`
+- Rodar suíte completa:
+  - `./run_all_tests.bat`
+- Rodar Playwright:
+  - `npx playwright test`
 
 ---
 
-## 8. Próximos Passos Sugeridos
+## 7. Próximos Ajustes Recomendados
 
-- Testar o auto-refresh visualmente: rodar `run_all_tests.bat` com error proposital e observer o dashboard atualizar em ≤15s
-- Avaliar se o intervalo de 15s é adequado ou se deve ser configurável
-- Considerar adicionar notificação visual (toast/badge) quando o auto-refresh detectar uma regressão
+1. Consolidar o padrão `CryptoModalHeader` em todos os modais crypto restantes.
+2. Revisar caminhos de templates de modal para padronizar (`components/modals/crypto/...`).
+3. Executar regressão rápida Playwright focada em `frontend/tests/pages/crypto/*.spec.js` após cada bloco de refatoração.
+4. Atualizar documentação funcional (`README.md`) para refletir o novo padrão de cabeçalho/filtros compartilhados.

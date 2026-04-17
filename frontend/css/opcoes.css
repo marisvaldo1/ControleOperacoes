@@ -1882,19 +1882,10 @@
     from { background-position: 300% center; }
     to   { background-position: -300% center; }
 }
-#modalSaldoMedio .sm-modal-header {
+#modalSaldoMedio .sm-header-data {
+    padding: .75rem 1rem .5rem;
     border-bottom: 1px solid rgba(255,255,255,.08);
-    padding: 1.5rem 1.75rem 1.25rem;
-    align-items: flex-start;
     background: rgba(255,255,255,.02);
-}
-#modalSaldoMedio .sm-eyebrow {
-    font-size: .7rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1.2px;
-    display: flex;
-    align-items: center;
 }
 #modalSaldoMedio .sm-amount {
     font-size: 2.2rem;

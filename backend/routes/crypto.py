@@ -47,6 +47,24 @@ ESTRATEGIAS_CRYPTO = [
 ]
 
 
+def _row_value(row, key, default=None):
+    """Lê chave de sqlite.Row/dict com fallback seguro."""
+    if row is None:
+        return default
+    if isinstance(row, dict):
+        return row.get(key, default)
+    try:
+        return row[key]
+    except Exception:
+        try:
+            keys = row.keys()
+            if key in keys:
+                return row[key]
+        except Exception:
+            pass
+    return default
+
+
 # ─── Listar estratégias disponíveis ─────────────────────────────────────────
 @crypto_bp.route('/estrategias', methods=['GET'])
 def get_estrategias():
@@ -74,15 +92,23 @@ def _auto_close_expired(conn):
         op_str = "exercicio < ?"
 
     ops_to_close = conn.execute(
-        f"SELECT id, tipo, cotacao_atual, strike FROM operacoes_crypto "
+        f"SELECT id, tipo, abertura, cotacao_atual, strike, exercicio_status FROM operacoes_crypto "
         f"WHERE status='ABERTA' AND exercicio IS NOT NULL AND {op_str}",
         (cutoff,)
     ).fetchall()
     for op in ops_to_close:
-        ex_status = _calc_exercicio_status(op['tipo'], op['cotacao_atual'], op['strike'])
+        abertura_ref = _row_value(op, 'abertura')
+        if abertura_ref is None:
+            abertura_ref = _row_value(op, 'cotacao_atual')
+        ex_status = _calc_exercicio_status_no_fechamento(
+            _row_value(op, 'tipo'),
+            abertura_ref,
+            _row_value(op, 'strike'),
+            _row_value(op, 'exercicio_status'),
+        )
         conn.execute(
             "UPDATE operacoes_crypto SET status='FECHADA', exercicio_status=? WHERE id=?",
-            (ex_status, op['id'])
+            (ex_status, _row_value(op, 'id'))
         )
     if ops_to_close:
         conn.commit()
@@ -338,16 +364,37 @@ def _calc_exercicio_status(tipo, cotacao_atual, strike):
     return calculate_crypto_exercicio_status(tipo, cotacao_atual, strike)
 
 
+def _calc_exercicio_status_no_fechamento(tipo, abertura, strike, exercicio_status_persistido=None):
+    """Calcula exercício no fechamento usando abertura x strike (ou status persistido)."""
+    persisted = str(exercicio_status_persistido or '').strip().upper()
+    if persisted == 'NÃO':
+        persisted = 'NAO'
+    if persisted in ('SIM', 'NAO'):
+        return persisted
+    return calculate_crypto_exercicio_status(tipo, abertura, strike)
+
+
 # ─── Fechar manualmente ───────────────────────────────────────────────────────
 @crypto_bp.route('/<int:id>/fechar', methods=['PATCH'])
 def fechar_operacao(id):
     """Fecha manualmente uma operação crypto (muda status para FECHADA) e calcula exercicio_status."""
     conn = db.get_db()
-    op = conn.execute('SELECT id, status, tipo, cotacao_atual, strike FROM operacoes_crypto WHERE id=?', (id,)).fetchone()
+    op = conn.execute(
+        'SELECT id, status, tipo, abertura, cotacao_atual, strike, exercicio_status FROM operacoes_crypto WHERE id=?',
+        (id,)
+    ).fetchone()
     if not op:
         conn.close()
         return jsonify({'error': 'Operação não encontrada'}), 404
-    ex_status = _calc_exercicio_status(op['tipo'], op['cotacao_atual'], op['strike'])
+    abertura_ref = _row_value(op, 'abertura')
+    if abertura_ref is None:
+        abertura_ref = _row_value(op, 'cotacao_atual')
+    ex_status = _calc_exercicio_status_no_fechamento(
+        _row_value(op, 'tipo'),
+        abertura_ref,
+        _row_value(op, 'strike'),
+        _row_value(op, 'exercicio_status'),
+    )
     conn.execute("UPDATE operacoes_crypto SET status='FECHADA', exercicio_status=? WHERE id=?", (ex_status, id))
     conn.commit()
     conn.close()

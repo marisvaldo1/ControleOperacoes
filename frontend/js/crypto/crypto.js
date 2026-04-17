@@ -31,7 +31,55 @@ function setInvestidoMode(mode) {
     if (input) input.step        = mode === 'usd' ? '0.01' : '0.00000001';
 }
 function setupCryptoDynamicEventListeners() {
-    // Tabela mensal - cliques para abrir modal
+    // ── Event delegation para botões do DataTable (funciona após dt.draw()) ──
+    if (!document.__cryptoTableDelegated) {
+        document.__cryptoTableDelegated = true;
+        document.addEventListener('click', function(e) {
+            // Badge de ativo abre modal de análise
+            const link = e.target.closest('.op-analise-link');
+            if (link) {
+                e.preventDefault();
+                const opId = link.getAttribute('data-op-id');
+                if (window.ModalAnaliseCrypto && typeof window.ModalAnaliseCrypto.open === 'function') {
+                    window.ModalAnaliseCrypto.open(opId);
+                }
+                return;
+            }
+            // Link ativo na tabela anual
+            const ativoLink = e.target.closest('.op-ativo-link');
+            if (ativoLink) {
+                e.preventDefault();
+                const opId = ativoLink.getAttribute('data-analise-id');
+                if (window.ModalAnaliseCrypto && typeof window.ModalAnaliseCrypto.open === 'function') {
+                    window.ModalAnaliseCrypto.open(opId);
+                }
+                return;
+            }
+            const fecharBtn = e.target.closest('.crypto-fechar-btn');
+            if (fecharBtn) {
+                e.preventDefault();
+                const opId = fecharBtn.getAttribute('data-op-id');
+                if (typeof fecharOperacao === 'function') fecharOperacao(opId);
+                return;
+            }
+            const editBtn = e.target.closest('.crypto-edit-btn');
+            if (editBtn) {
+                e.preventDefault();
+                const opId = parseInt(editBtn.getAttribute('data-op-id'), 10);
+                if (typeof editOperacao === 'function') editOperacao(opId);
+                return;
+            }
+            const deleteBtn = e.target.closest('.crypto-delete-btn');
+            if (deleteBtn) {
+                e.preventDefault();
+                const opId = parseInt(deleteBtn.getAttribute('data-op-id'), 10);
+                if (typeof deleteOperacao === 'function') deleteOperacao(opId);
+                return;
+            }
+        });
+    }
+
+    // ── querySelectorAll para elementos estáticos (não DataTable) ────────────
     document.querySelectorAll('.show-crypto-month-ops-row').forEach(row => {
         if (!row.dataset.listenerBound) {
             row.addEventListener('click', function(e) {
@@ -88,64 +136,6 @@ function setupCryptoDynamicEventListeners() {
                 }
             });
             link.dataset.listenerBound = 'true';
-        }
-    });
-
-    // Ações da tabela de operações
-    document.querySelectorAll('.op-analise-link').forEach(el => {
-        if (!el.dataset.listenerBound) {
-            el.addEventListener('click', function(e) {
-                e.preventDefault();
-                const opId = this.getAttribute('data-op-id');
-                if (window.ModalAnaliseCrypto && typeof window.ModalAnaliseCrypto.open === 'function') {
-                    window.ModalAnaliseCrypto.open(opId);
-                }
-            });
-            el.dataset.listenerBound = 'true';
-        }
-    });
-
-    document.querySelectorAll('.crypto-detalhes-btn').forEach(btn => {
-        if (!btn.dataset.listenerBound) {
-            btn.addEventListener('click', function(e) {
-                e.preventDefault();
-                const opId = this.getAttribute('data-op-id');
-                if (typeof showDetalhes === 'function') showDetalhes(opId);
-            });
-            btn.dataset.listenerBound = 'true';
-        }
-    });
-
-    document.querySelectorAll('.crypto-fechar-btn').forEach(btn => {
-        if (!btn.dataset.listenerBound) {
-            btn.addEventListener('click', function(e) {
-                e.preventDefault();
-                const opId = this.getAttribute('data-op-id');
-                if (typeof fecharOperacao === 'function') fecharOperacao(opId);
-            });
-            btn.dataset.listenerBound = 'true';
-        }
-    });
-
-    document.querySelectorAll('.crypto-edit-btn').forEach(btn => {
-        if (!btn.dataset.listenerBound) {
-            btn.addEventListener('click', function(e) {
-                e.preventDefault();
-                const opId = parseInt(this.getAttribute('data-op-id'), 10);
-                if (typeof editOperacao === 'function') editOperacao(opId);
-            });
-            btn.dataset.listenerBound = 'true';
-        }
-    });
-
-    document.querySelectorAll('.crypto-delete-btn').forEach(btn => {
-        if (!btn.dataset.listenerBound) {
-            btn.addEventListener('click', function(e) {
-                e.preventDefault();
-                const opId = parseInt(this.getAttribute('data-op-id'), 10);
-                if (typeof deleteOperacao === 'function') deleteOperacao(opId);
-            });
-            btn.dataset.listenerBound = 'true';
         }
     });
 }
@@ -808,10 +798,9 @@ function populateTable(dt, data, options) {
             op.crypto        ? parseFloat(op.crypto).toFixed(6) : "-",
             exBadge, statusBadge,
             "<div class=\"btn-list flex-nowrap\">" +
-            "<button class=\"btn btn-sm btn-info btn-icon crypto-detalhes-btn\" data-op-id=\"" + op.id + "\" title=\"Detalhes\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M12 16v-4\"/><path d=\"M12 8h.01\"/></svg></button>" +
             (status === "ABERTA" ? "<button class=\"btn btn-sm btn-warning btn-icon crypto-fechar-btn\" data-op-id=\"" + op.id + "\" title=\"Fechar Operação\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M18 6 6 18\"/><path d=\"m6 6 12 12\"/></svg></button>" : "") +
-            (status === "ABERTA" ? "<button class=\"btn btn-sm btn-primary btn-icon crypto-edit-btn\" data-op-id=\"" + op.id + "\" title=\"Editar\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7\"/><path d=\"M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z\"/></svg></button>" : "") +
-            "<button class=\"btn btn-sm btn-danger btn-icon crypto-delete-btn\" data-op-id=\"" + op.id + "\" title=\"Excluir\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"3 6 5 6 21 6\"/><path d=\"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2\"/><line x1=\"10\" y1=\"11\" x2=\"10\" y2=\"17\"/><line x1=\"14\" y1=\"11\" x2=\"14\" y2=\"17\"/></svg></button>" +
+            "<button class=\"btn btn-sm btn-primary btn-icon crypto-edit-btn\" data-op-id=\"" + op.id + "\" title=\"Editar\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7\"/><path d=\"M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z\"/></svg></button>" +
+            (status === "ABERTA" ? "<button class=\"btn btn-sm btn-danger btn-icon crypto-delete-btn\" data-op-id=\"" + op.id + "\" title=\"Excluir\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"3 6 5 6 21 6\"/><path d=\"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2\"/><line x1=\"10\" y1=\"11\" x2=\"10\" y2=\"17\"/><line x1=\"14\" y1=\"11\" x2=\"14\" y2=\"17\"/></svg></button>" : "") +
             "</div>"
         ]);
     });
@@ -982,8 +971,16 @@ function renderChartAnual(data, year) {
             const rentabilidade = saldoCrypto > 0 ? (premio / saldoCrypto * 100) : 0;
             const rentAbs    = Math.min(100, Math.abs(rentabilidade));
             const rentBarCls = rentabilidade >= 5 ? "bg-green" : rentabilidade >= 2 ? "bg-blue" : rentabilidade >= 0 ? "bg-yellow" : "bg-red";
-            const exercidas    = ops.filter(o => (o.exercicio_status || '').toUpperCase() === 'SIM').length;
-            const naoExercidas = ops.filter(o => (o.status || '').toUpperCase() === 'FECHADA' && (o.exercicio_status || '').toUpperCase() !== 'SIM').length;
+            const exercidas = ops.filter(o => window.CryptoExerciseStatus
+                ? window.CryptoExerciseStatus.isActuallyExercised(o)
+                : ((o.status || '').toUpperCase() !== 'ABERTA' && (o.exercicio_status || '').toUpperCase() === 'SIM')).length;
+            const naoExercidas = ops.filter(o => {
+                const st = (o.status || '').toUpperCase();
+                if (st === 'ABERTA') return false;
+                return window.CryptoExerciseStatus
+                    ? !window.CryptoExerciseStatus.isActuallyExercised(o)
+                    : (o.exercicio_status || '').toUpperCase() !== 'SIM';
+            }).length;
             cumulative      += premio;
             totalOps        += ops.length;
             totalPremios    += premio;
@@ -1067,7 +1064,9 @@ function renderChartAnual(data, year) {
                 const statusBadge = (op.status || "ABERTA") === "ABERTA"
                     ? `<span class="badge bg-success text-white">${op.status || "ABERTA"}</span>`
                     : `<span class="badge bg-azure text-white">${op.status || "FECHADA"}</span>`;
-                const isExercida = (op.exercicio_status || '').toUpperCase() === 'SIM';
+                const isExercida = window.CryptoExerciseStatus
+                    ? window.CryptoExerciseStatus.isActuallyExercised(op)
+                    : (op.exercicio_status || '').toUpperCase() === 'SIM';
                 const exercBadge = isExercida
                     ? '<span class="badge bg-warning text-dark">SIM</span>'
                     : '<span class="badge bg-secondary text-white">N\u00c3O</span>';
@@ -1081,13 +1080,7 @@ function renderChartAnual(data, year) {
                     <td class="${result >= 0 ? "text-success" : "text-danger"}">${result.toFixed(2)}%</td>
                     <td>${statusBadge}</td>
                     <td>${exercBadge}</td>
-                    <td>
-                      <div class="btn-list flex-nowrap">
-                                                <button class="btn btn-sm btn-info btn-icon detalhes-btn" data-detalhe-id="${op.id}" title="Detalhes">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-                        </button>
-                      </div>
-                    </td>
+                    <td></td>
                 </tr>`;
             });
 
@@ -1138,17 +1131,6 @@ function renderChartAnual(data, year) {
                         });
                 });
     }
-                    // Adicionar listeners para botões de detalhes
-                    tabelaCont.querySelectorAll('.detalhes-btn').forEach(btn => {
-                        btn.addEventListener('click', function(e) {
-                            e.preventDefault();
-                            const opId = this.getAttribute('data-detalhe-id');
-                            if (typeof showDetalhes === 'function') {
-                                showDetalhes(opId);
-                            }
-                        });
-                    });
-
     // ─── Evolução do Resultado (linha acumulada) ─────────────────────────────
     const extraCont = document.getElementById("anualExtraCharts");
     if (extraCont) {
@@ -1248,10 +1230,6 @@ function openNewModal() {
 function editOperacao(id) {
     const op = allOperacoes.find(o => o.id === id);
     if (!op) return;
-    if ((op.status || 'ABERTA').toUpperCase() === 'FECHADA') {
-        iziToast.warning({ title: 'Aviso', message: 'Operações fechadas não podem ser editadas.' });
-        return;
-    }
     document.getElementById("modalOperacaoTitle").textContent = "Editar Operacao";
     document.getElementById("operacaoId").value              = op.id;
     document.getElementById("inputAtivo").value              = op.ativo || "BTC";
