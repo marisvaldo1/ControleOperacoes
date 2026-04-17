@@ -15,7 +15,8 @@ test("[Opcoes-Assets] CSS organizados devem carregar com status 200", async ({ p
             cssRequests.push({ url: resp.url(), status: resp.status() });
         }
     });
-    await page.goto(BASE, { waitUntil: "networkidle" });
+    await page.goto(BASE, { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("load");
 
     // Verificar que não há 404 nos CSS
     const failedCss = cssRequests.filter(r => r.status === 404);
@@ -29,7 +30,8 @@ test("[Opcoes-Assets] JS do módulo opções deve carregar sem erros 404", async
             jsRequests.push({ url: resp.url(), status: resp.status() });
         }
     });
-    await page.goto(BASE, { waitUntil: "networkidle" });
+    await page.goto(BASE, { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("load");
 
     const failedJs = jsRequests.filter(r => r.status === 404);
     expect(failedJs, `JS com 404: ${failedJs.map(r => r.url).join(", ")}`).toHaveLength(0);
@@ -42,7 +44,8 @@ test("[Opcoes-Assets] CSS deve carregar de js/opcoes/, js/shared/ ou js/core/", 
             loadedJs.push(resp.url());
         }
     });
-    await page.goto(BASE, { waitUntil: "networkidle" });
+    await page.goto(BASE, { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("load");
 
     // Confirmar que pelo menos algum JS de opcoes/ ou shared/ foi carregado
     const hasOpcoes = loadedJs.some(url => url.includes("/js/opcoes/") || url.includes("/js/shared/") || url.includes("/js/core/"));

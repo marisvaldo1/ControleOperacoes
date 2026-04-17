@@ -16,7 +16,8 @@ test("[Crypto-Assets] CSS e JS devem carregar sem 404", async ({ page }) => {
             failed.push(resp.url());
         }
     });
-    await page.goto(BASE, { waitUntil: "networkidle" });
+    await page.goto(BASE, { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("load");
     expect(failed, `Assets com 404: ${failed.join(", ")}`).toHaveLength(0);
 });
 
@@ -27,7 +28,8 @@ test("[Crypto-Assets] JS do módulo crypto deve estar presente (js/crypto/)", as
             loadedJs.push(resp.url());
         }
     });
-    await page.goto(BASE, { waitUntil: "networkidle" });
+    await page.goto(BASE, { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("load");
 
     const hasCrypto = loadedJs.some(url => url.includes("/js/crypto/"));
     expect(hasCrypto, `crypto.js não carregado. Carregados: ${loadedJs.join(", ")}`).toBe(true);

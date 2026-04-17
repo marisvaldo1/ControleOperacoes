@@ -89,6 +89,16 @@
   scrollbar-width: none;
 }
 .cfb-bar::-webkit-scrollbar { display: none; }
+.cfb-bar-lbl {
+  font-family: 'Inter', sans-serif;
+  font-size: .62rem;
+  font-weight: 600;
+  color: #6b82a0;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  padding: 0 .2rem;
+}
 .cfb-sep { width: 1px; height: 16px; background: #263347; margin: 0 .25rem; flex-shrink: 0; }
 .cfb-pill {
   padding: .22rem .55rem;
@@ -105,12 +115,10 @@
 }
 .cfb-pill:hover { border-color: #334560; color: #e8f0f8; }
 .cfb-pill.p-on { background: rgba(77,184,212,.15); border-color: rgba(77,184,212,.4); color: #4db8d4; }
-.cfb-pill.s-all { background: rgba(77,184,212,.12); border-color: rgba(77,184,212,.35); color: #4db8d4; }
 .cfb-pill.s-ab  { background: rgba(61,214,140,.12); border-color: rgba(61,214,140,.35); color: #3dd68c; }
 .cfb-pill.s-fe  { background: rgba(107,130,160,.12); border-color: rgba(107,130,160,.35); color: #a0b0c8; }
 .cfb-pill.s-ex  { background: rgba(232,168,48,.12); border-color: rgba(232,168,48,.35); color: #e8a830; }
 .cfb-pill.s-nex { background: rgba(232,85,85,.10); border-color: rgba(232,85,85,.30); color: #e85555; }
-.cfb-pill.t-all  { background: rgba(77,184,212,.12); border-color: rgba(77,184,212,.35); color: #4db8d4; }
 .cfb-pill.t-call { background: rgba(77,184,212,.12); border-color: rgba(77,184,212,.35); color: #4db8d4; }
 .cfb-pill.t-put  { background: rgba(155,114,212,.12); border-color: rgba(155,114,212,.35); color: #9b72d4; }
 .cfb-pill.a-on   { background: rgba(232,168,48,.15); border-color: rgba(232,168,48,.45); color: #e8a830; }
@@ -272,13 +280,13 @@
             { v: 'all', l: 'Todos' },
             { v: 'today', l: 'Hoje' },
             { v: '7d', l: '7d' },
-            { v: 'mes', l: 'Mês' },
             { v: '30d', l: '30d' },
+            { v: '60d', l: '60d' },
+            { v: '90d', l: '90d' },
             { v: 'ano', l: 'Ano' },
         ];
 
         const statuses = [
-            { v: '', l: 'Todas', cls: 's-all' },
             { v: 'aberta', l: 'Abertas', cls: 's-ab' },
             { v: 'fechada', l: 'Fechadas', cls: 's-fe' },
             { v: 'exercida', l: 'Exercidas', cls: 's-ex' },
@@ -288,6 +296,7 @@
         let html = `<div class="cfb-bar" id="${barId}">`;
 
         if (cfg.showPeriods !== false) {
+            html += '<span class="cfb-bar-lbl">PERÍODO:</span>';
             periods.forEach(function (p) {
                 html += `<button class="cfb-pill${state.period === p.v ? ' p-on' : ''}" data-cfb-p="${p.v}">${p.l}</button>`;
             });
@@ -295,21 +304,23 @@
         }
 
         if (cfg.showStatus !== false) {
+            html += '<span class="cfb-bar-lbl">STATUS:</span>';
             statuses.forEach(function (s) {
-                const selected = (state.status || '') === s.v;
+                const selected = state.status === s.v;
                 html += `<button class="cfb-pill${selected ? ' ' + s.cls : ''}" data-cfb-s="${s.v}">${s.l}</button>`;
             });
             html += '<div class="cfb-sep"></div>';
         }
 
         if (cfg.showTipo !== false) {
-            html += `<button class="cfb-pill${!state.tipo ? ' t-all' : ''}" data-cfb-t="">Todos</button>`;
+            html += '<span class="cfb-bar-lbl">TIPO:</span>';
             html += `<button class="cfb-pill${state.tipo === 'CALL' ? ' t-call' : ''}" data-cfb-t="CALL">CALL</button>`;
             html += `<button class="cfb-pill${state.tipo === 'PUT' ? ' t-put' : ''}" data-cfb-t="PUT">PUT</button>`;
             html += '<div class="cfb-sep"></div>';
         }
 
         if (cfg.showMoeda !== false) {
+            html += '<span class="cfb-bar-lbl">MOEDA:</span>';
             openAs.forEach(function (a) {
                 html += `<button class="cfb-pill${state.asset === a ? ' a-on' : ''}" data-cfb-a="${a}">${a}</button>`;
             });
@@ -318,7 +329,7 @@
             if (closedAs.length > 0 || allAs.length > openAs.length) {
                 const selVal = state.asset && openAs.indexOf(state.asset) === -1 ? state.asset : '';
                 html += '<select class="cfb-sel" data-cfb-a-sel>';
-                html += '<option value="">Todas moedas</option>';
+                html += '<option value="">Todas</option>';
                 closedAs.forEach(function (a) {
                     html += `<option value="${a}"${selVal === a ? ' selected' : ''}>${a}</option>`;
                 });
@@ -328,6 +339,7 @@
         }
 
         if (cfg.showCorretora !== false) {
+            html += '<span class="cfb-bar-lbl">CORRETORA:</span>';
             html += '<select class="cfb-sel" data-cfb-c>';
             html += `<option value=""${!state.corretora ? ' selected' : ''}>Todas</option>`;
             html += `<option value="BINANCE"${state.corretora === 'BINANCE' ? ' selected' : ''}>Binance</option>`;
@@ -381,20 +393,23 @@
 
             if (btn.hasAttribute('data-cfb-s')) {
                 const v = btn.getAttribute('data-cfb-s');
-                state.status = v || null;
-                el.querySelectorAll('[data-cfb-s]').forEach(function (b) { b.classList.remove('s-all', 's-ab', 's-fe', 's-ex', 's-nex'); });
-                const map = { '': 's-all', aberta: 's-ab', fechada: 's-fe', exercida: 's-ex', nao_exercida: 's-nex' };
-                btn.classList.add(map[v] || 's-all');
+                const same = state.status === v;
+                state.status = same ? null : v;
+                el.querySelectorAll('[data-cfb-s]').forEach(function (b) { b.classList.remove('s-ab', 's-fe', 's-ex', 's-nex'); });
+                if (!same) {
+                    const map = { aberta: 's-ab', fechada: 's-fe', exercida: 's-ex', nao_exercida: 's-nex' };
+                    btn.classList.add(map[v] || '');
+                }
                 emit();
                 return;
             }
 
             if (btn.hasAttribute('data-cfb-t')) {
                 const v = btn.getAttribute('data-cfb-t');
-                state.tipo = v || null;
-                el.querySelectorAll('[data-cfb-t]').forEach(function (b) { b.classList.remove('t-all', 't-call', 't-put'); });
-                if (!v) btn.classList.add('t-all');
-                else btn.classList.add(v === 'CALL' ? 't-call' : 't-put');
+                const same = state.tipo === v;
+                state.tipo = same ? null : v;
+                el.querySelectorAll('[data-cfb-t]').forEach(function (b) { b.classList.remove('t-call', 't-put'); });
+                if (!same) btn.classList.add(v === 'CALL' ? 't-call' : 't-put');
                 emit();
                 return;
             }
