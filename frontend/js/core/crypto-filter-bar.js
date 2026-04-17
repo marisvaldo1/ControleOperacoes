@@ -296,7 +296,6 @@
         let html = `<div class="cfb-bar" id="${barId}">`;
 
         if (cfg.showPeriods !== false) {
-            html += '<span class="cfb-bar-lbl">PERÍODO:</span>';
             periods.forEach(function (p) {
                 html += `<button class="cfb-pill${state.period === p.v ? ' p-on' : ''}" data-cfb-p="${p.v}">${p.l}</button>`;
             });
