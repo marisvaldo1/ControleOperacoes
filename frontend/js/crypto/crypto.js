@@ -3,6 +3,7 @@
 let allOperacoes = [];
 let tableMesAtual, tableHistorico;
 let chartAnual = null;
+let _anualAccDts = {}; // DataTable instances por accordion item
 let currentFilterCrypto = "ABERTA";
 let _lastSimData = null;
 let _investidoMode = 'usd';
@@ -1030,6 +1031,9 @@ function renderChartAnual(data, year) {
     }
 
         // ─── Operações Detalhadas por mês (accordion) ───────────────────────────
+    // Destrói DataTables anteriores antes de re-renderizar o accordion
+    Object.values(_anualAccDts).forEach(dt => { try { dt.destroy(); } catch (_) {} });
+    _anualAccDts = {};
     const tabelaCont = document.getElementById("anualTabelaContainer");
     if (tabelaCont) {
         const sortedMonths = [];
@@ -1098,7 +1102,7 @@ function renderChartAnual(data, year) {
   <div id="anualAP-${safeId}" class="accordion-collapse collapse" aria-labelledby="anualAH-${safeId}">
     <div class="accordion-body p-0">
       <div class="table-responsive">
-        <table class="table table-vcenter table-hover table-sm card-table mb-0">
+        <table id="dt_anualAP-${safeId}" class="table table-vcenter table-hover table-sm card-table mb-0">
           <thead><tr>
             <th>Abertura</th><th>Ativo</th><th>Tipo</th><th>Strike</th>
             <th>Exercício</th><th>Prêmio</th><th>Resultado</th><th>Status</th><th>Exerc.</th><th></th>
@@ -1120,15 +1124,37 @@ function renderChartAnual(data, year) {
                </div>`
             : "";
         
-                // Adicionar listeners para links de análise
-                tabelaCont.querySelectorAll('.op-ativo-link').forEach(link => {
-                        link.addEventListener('click', function(e) {
-                                e.preventDefault();
-                                const opId = this.getAttribute('data-analise-id');
-                                if (window.ModalAnaliseCrypto) {
-                                        window.ModalAnaliseCrypto.open(opId);
-                                }
+                // Delegação para links de análise (funciona após redraws do DataTable)
+                if (!tabelaCont._analinkBound) {
+                    tabelaCont._analinkBound = true;
+                    tabelaCont.addEventListener('click', function (e) {
+                        const link = e.target.closest('.op-ativo-link');
+                        if (link) {
+                            e.preventDefault();
+                            const opId = link.getAttribute('data-analise-id');
+                            if (window.ModalAnaliseCrypto) window.ModalAnaliseCrypto.open(opId);
+                        }
+                    });
+                }
+                // Inicialização lazy do DataTable quando accordion expande
+                tabelaCont.querySelectorAll('.accordion-collapse').forEach(pane => {
+                    pane.addEventListener('shown.bs.collapse', function () {
+                        const key = this.id; // ex: "anualAP-2026_04"
+                        if (_anualAccDts[key]) {
+                            _anualAccDts[key].columns.adjust();
+                            return;
+                        }
+                        if (!window.jQuery || !$.fn.DataTable) return;
+                        const $t = $('#dt_' + key);
+                        if (!$t.length) return;
+                        _anualAccDts[key] = $t.DataTable({
+                            language: { url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json' },
+                            pageLength: 10,
+                            order: [[0, 'desc']],
+                            autoWidth: false,
+                            columnDefs: [{ targets: [9], orderable: false }]
                         });
+                    });
                 });
     }
     // ─── Evolução do Resultado (linha acumulada) ─────────────────────────────

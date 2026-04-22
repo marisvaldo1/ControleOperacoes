@@ -443,3 +443,74 @@
         font-size: .58rem;
     }
 }
+
+/* ═══ LIGHT THEME OVERRIDES ════════════════════════════════════════════════ */
+/* KPI cards */
+[data-bs-theme="light"] .mac-kpi-card {
+    background: rgba(0,0,0,0.02);
+    border: 1px solid rgba(0,0,0,0.10);
+    border-left: 3px solid rgba(0,0,0,0.15);
+}
+[data-bs-theme="light"] .mac-kpi-card::after {
+    background: var(--mac-kpi-color, rgba(0,0,0,.08));
+}
+[data-bs-theme="light"] .mac-kpi-label {
+    color: rgba(0,0,0,0.50);
+}
+[data-bs-theme="light"] .mac-kpi-val {
+    color: var(--mac-kpi-color, rgba(0,0,0,0.85));
+}
+/* Seções */
+[data-bs-theme="light"] .mac-section {
+    background: rgba(0,0,0,.02);
+    border: 1px solid rgba(0,0,0,.09);
+}
+[data-bs-theme="light"] .mac-section-title {
+    color: rgba(0,0,0,.70);
+    border-bottom: 1px solid rgba(0,0,0,.07);
+    background: rgba(0,0,0,.02);
+}
+/* Inner cards */
+[data-bs-theme="light"] .mac-inner-card {
+    background: rgba(0,0,0,.02);
+    border: 1px solid rgba(0,0,0,.08);
+}
+[data-bs-theme="light"] .mac-inner-title {
+    color: rgba(0,0,0,.50);
+}
+/* Card retorno */
+[data-bs-theme="light"] .mac-ret-card {
+    background: linear-gradient(165deg, rgba(0,0,0,.018) 0%, rgba(0,0,0,.008) 100%);
+    border: 1px solid rgba(0,0,0,.10);
+}
+[data-bs-theme="light"] .mac-ret-card-open  { box-shadow: inset 0 0 0 1px rgba(0,0,0,.03); }
+[data-bs-theme="light"] .mac-ret-card-closed { box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); }
+[data-bs-theme="light"] .mac-ret-ticker { color: rgba(0,0,0,.90); }
+[data-bs-theme="light"] .mac-ret-sub    { color: rgba(0,0,0,.50); }
+[data-bs-theme="light"] .mac-ret-pill   { background: rgba(0,0,0,.04); }
+[data-bs-theme="light"] .mac-ret-mode {
+    border: 1px dashed rgba(0,0,0,.20);
+    color: rgba(0,0,0,.65);
+}
+[data-bs-theme="light"] .mac-ret-mode.is-open {
+    background: rgba(32,107,196,.07);
+    border-color: rgba(32,107,196,.28);
+}
+[data-bs-theme="light"] .mac-ret-mode.is-closed {
+    background: rgba(0,0,0,.05);
+    border-color: rgba(0,0,0,.22);
+    color: rgba(0,0,0,.72);
+}
+[data-bs-theme="light"] .mac-ret-metrics-lines {
+    border-top: 1px solid rgba(0,0,0,.07);
+    border-bottom: 1px solid rgba(0,0,0,.07);
+}
+[data-bs-theme="light"] .mac-ret-metric-line span { color: rgba(0,0,0,.55); }
+/* Status banner */
+[data-bs-theme="light"] .mac-status-banner {
+    border: 1px solid rgba(0,0,0,.14);
+    background: rgba(0,0,0,.03);
+}
+[data-bs-theme="light"] .mac-status-banner-title { color: rgba(0,0,0,.85); }
+[data-bs-theme="light"] .mac-status-banner-sub   { color: rgba(0,0,0,.55); }
+[data-bs-theme="light"] .mac-status-banner.is-closed { background: rgba(0,0,0,.05); }
