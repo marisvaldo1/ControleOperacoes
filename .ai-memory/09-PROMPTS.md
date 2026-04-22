@@ -1,8 +1,62 @@
 # 09 — PROMPTS LOG
 
-> Atualizado automaticamente. Total registrado: 15 entrada(s).
+> Atualizado automaticamente. Total registrado: 17 entrada(s).
 > Para registrar um novo prompt: `memoryIA\log_prompt.bat`
 
+
+---
+
+**`2026-04-17 17:15:13`**
+
+```
+No cabeÃ§alho padrÃ£o, as moedas que nÃ£o estÃ£o com operaÃ§Ãµes abertas devem ser colocadas dentro de select para seleÃ§Ã£o e aplicaÃ§Ã£o no filtro conforme a imagem1 
+
+Estou repetindo esses itens porque acho que nÃ£o foram implementados
+
+1 - Preciso de verificaÃ§Ã£o minunciosa aqui pois acho que essa informaÃ§Ã£o deve ser unificada para todas as funcionalidades do sistema.
+Regra: VerificaÃ§Ã£o de exercÃ­cio.
+Se operaÃ§Ã£o aberta, verificar exercÃ­cio pelo strike x cotaÃ§Ã£o atual (retorno da api). 
+Se verificaÃ§Ã£o fechada, verificar exercÃ­cio pelo banco calculando de acordo com o strike x abertura ou pelo campo exercicio_status na tabela operacoes_crypto
+Essa funcionalidade de verificaÃ§Ã£o de exercÃ­cio deve ser Ãºnica no sistema e ser chamada em todas as funcionalidade que precisarem dessa informaÃ§Ã£o.
+Nessa tela por exemplo veja que todas as operaÃ§Ãµes mostradas estÃ£o com status de exercida. Certamente isso estÃ¡ errado. Suspeito que a regra acima estÃ¡ sendo aplicada pelo strike x cotaÃ§Ã£o atual e nÃ£o estÃ¡ sendo verificado o status de operaÃ§Ã£o aberta ou fechada. Veja nesse caso que mostra que todas as 9 operaÃ§Ãµes de todos os ciclos estÃ¡ mostrado como exercida e o card Resumo do PerÃ­odo mostra 9 exercidas e se eu mudar para nÃ£o exercidas mostra 0. Isso Ã© um problema recorrente e deve ser analisar e ajustado em todo o sistema de crypto.
+Lembre-se de criar uma funÃ§Ã£o Ãºnica e global para ser utilizada em todas as funcionalidades do sistema crypto que precisam dessa informaÃ§Ã£o.
+Em todos os filtros do sistema crypto, preciso que insira em formato de select as opÃ§Ãµes Todas, Binance e Bybit para que o usuÃ¡rio selecione a corretora.
+Nos locais onde ele pode selecionar a moeda, como na imagem 2, as moedas devem ficar dentro de selects. Sempre deixar como botÃ£o somente as moedas que estÃ£o com status aberta
+
+2 - Excluir o filtro de todas as janelas e incluir somente o filtro padrÃ£o. Todas as janelas devem apresentar o mesmo filtro da imagem 4, ou seja, o filtro serÃ¡ uma funÃ§Ã£o global ser importada em cada janela modal. Alterar o cabeÃ§alho da modal, ou seja, todas as janelas que possuem filtro padrÃ£o. Quero que todos os filtros e cabeÃ§alhos das janelas do site tenha a mesma aparencia que esta na imagem 4 com todas as regras de apresentaÃ§Ã£o, perÃ­odo, tipo, moeda, usar botÃ£o para moedas com operaÃ§Ãµes abertas e select para operaÃ§Ãµes fechadas. Manter o totalizador que existe Ã  direita na imagem 4, manter o cabeÃ§alho com dsh-live em todas as janelas, Manter os botÃµes de atualizaÃ§Ã£o e fechar janelas exatamente como estÃ¡ na imagem 4. Essa imagem deve ser o padrÃ£o para todos os cabeÃ§alhos e filtros de todas as janelas. Por isso quero um cabeÃ§alho Ãºnico que somente serÃ¡ incluÃ­do em cada janela e mantendo a funcionalidade dos botÃµes e dos filtros de acordo com o contexto de cada janela.
+
+3 - A janela da image 1 nÃ£o estÃ¡ obedecendo o filtro. Ele nÃ£o funciona ao ser alterado. Deve sempre vir com o filtro hoje aplicado automaticamente
+
+me mostre evidÃªncias que o tÃ³pico 2 foi implementado conforme solicitado.
+Retirar todas as referencias locais de filtros em todas as janelas e deixar apenas o filtro padrÃ£o que Ã© importado.
+```
+
+---
+
+**`2026-04-17 17:14:59`**
+
+```
+No cabeÃ§alho padrÃ£o, as moedas que nÃ£o estÃ£o com operaÃ§Ãµes abertas devem ser colocadas dentro de select para seleÃ§Ã£o e aplicaÃ§Ã£o no filtro conforme a imagem1 
+
+Estou repetindo esses itens porque acho que nÃ£o foram implementados
+
+1 - Preciso de verificaÃ§Ã£o minunciosa aqui pois acho que essa informaÃ§Ã£o deve ser unificada para todas as funcionalidades do sistema.
+Regra: VerificaÃ§Ã£o de exercÃ­cio.
+Se operaÃ§Ã£o aberta, verificar exercÃ­cio pelo strike x cotaÃ§Ã£o atual (retorno da api). 
+Se verificaÃ§Ã£o fechada, verificar exercÃ­cio pelo banco calculando de acordo com o strike x abertura ou pelo campo exercicio_status na tabela operacoes_crypto
+Essa funcionalidade de verificaÃ§Ã£o de exercÃ­cio deve ser Ãºnica no sistema e ser chamada em todas as funcionalidade que precisarem dessa informaÃ§Ã£o.
+Nessa tela por exemplo veja que todas as operaÃ§Ãµes mostradas estÃ£o com status de exercida. Certamente isso estÃ¡ errado. Suspeito que a regra acima estÃ¡ sendo aplicada pelo strike x cotaÃ§Ã£o atual e nÃ£o estÃ¡ sendo verificado o status de operaÃ§Ã£o aberta ou fechada. Veja nesse caso que mostra que todas as 9 operaÃ§Ãµes de todos os ciclos estÃ¡ mostrado como exercida e o card Resumo do PerÃ­odo mostra 9 exercidas e se eu mudar para nÃ£o exercidas mostra 0. Isso Ã© um problema recorrente e deve ser analisar e ajustado em todo o sistema de crypto.
+Lembre-se de criar uma funÃ§Ã£o Ãºnica e global para ser utilizada em todas as funcionalidades do sistema crypto que precisam dessa informaÃ§Ã£o.
+Em todos os filtros do sistema crypto, preciso que insira em formato de select as opÃ§Ãµes Todas, Binance e Bybit para que o usuÃ¡rio selecione a corretora.
+Nos locais onde ele pode selecionar a moeda, como na imagem 2, as moedas devem ficar dentro de selects. Sempre deixar como botÃ£o somente as moedas que estÃ£o com status aberta
+
+2 - Excluir o filtro de todas as janelas e incluir somente o filtro padrÃ£o. Todas as janelas devem apresentar o mesmo filtro da imagem 4, ou seja, o filtro serÃ¡ uma funÃ§Ã£o global ser importada em cada janela modal. Alterar o cabeÃ§alho da modal, ou seja, todas as janelas que possuem filtro padrÃ£o. Quero que todos os filtros e cabeÃ§alhos das janelas do site tenha a mesma aparencia que esta na imagem 4 com todas as regras de apresentaÃ§Ã£o, perÃ­odo, tipo, moeda, usar botÃ£o para moedas com operaÃ§Ãµes abertas e select para operaÃ§Ãµes fechadas. Manter o totalizador que existe Ã  direita na imagem 4, manter o cabeÃ§alho com dsh-live em todas as janelas, Manter os botÃµes de atualizaÃ§Ã£o e fechar janelas exatamente como estÃ¡ na imagem 4. Essa imagem deve ser o padrÃ£o para todos os cabeÃ§alhos e filtros de todas as janelas. Por isso quero um cabeÃ§alho Ãºnico que somente serÃ¡ incluÃ­do em cada janela e mantendo a funcionalidade dos botÃµes e dos filtros de acordo com o contexto de cada janela.
+
+3 - A janela da image 1 nÃ£o estÃ¡ obedecendo o filtro. Ele nÃ£o funciona ao ser alterado. Deve sempre vir com o filtro hoje aplicado automaticamente
+
+me mostre evidÃªncias que o tÃ³pico 2 foi implementado conforme solicitado.
+Retirar todas as referencias locais de filtros em todas as janelas e deixar apenas o filtro padrÃ£o que Ã© importado.
+```
 
 ---
 

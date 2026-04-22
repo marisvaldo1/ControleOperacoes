@@ -70,11 +70,13 @@
         }
 
         const normalizedType = String(tipo || '').trim().toUpperCase();
+        // CALL: exercício quando cotação SOBE acima do strike (vendedor é forçado a vender)
         if (normalizedType === 'CALL') {
-            return current <= strikeValue ? 'SIM' : 'NAO';
+            return current > strikeValue ? 'SIM' : 'NAO';
         }
+        // PUT: exercício quando cotação CAI abaixo do strike (vendedor é forçado a comprar)
         if (normalizedType === 'PUT') {
-            return current >= strikeValue ? 'SIM' : 'NAO';
+            return current < strikeValue ? 'SIM' : 'NAO';
         }
         return 'NAO';
     }

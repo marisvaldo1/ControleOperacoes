@@ -224,8 +224,8 @@
         if (!Number.isFinite(strike) || !Number.isFinite(current) || strike <= 0 || current <= 0) {
             return 'NAO';
         }
-        if (tipo === 'CALL') return current <= strike ? 'SIM' : 'NAO';
-        if (tipo === 'PUT') return current >= strike ? 'SIM' : 'NAO';
+        if (tipo === 'CALL') return current > strike ? 'SIM' : 'NAO';
+        if (tipo === 'PUT') return current < strike ? 'SIM' : 'NAO';
         return 'NAO';
     }
 
@@ -349,18 +349,22 @@
         const strike = parseFloat(op.strike) || 0;
         const tipo   = (op.tipo || 'PUT').toUpperCase();
 
-        const premioEst = valor > 0 && tae > 0 ? valor * (tae / 100) * (prazo / 365) : 0;
-        const roi       = valor > 0 && premioEst ? (premioEst / valor) * 100 : 0;
+        // Usa o prêmio real recebido (registrado na operação), não a estimativa por unidade
+        const premioReal = parseFloat(op.premio_us) || 0;
+        // Colateral = strike × quantidade de crypto
+        const qty        = parseFloat(op.crypto) || 0;
+        const colateral  = strike > 0 && qty > 0 ? strike * qty : valor;
+        const roi        = colateral > 0 && premioReal > 0 ? (premioReal / colateral) * 100 : 0;
         const distancia = (cotacao && strike)
             ? (tipo === 'CALL'
                 ? ((strike - cotacao) / cotacao) * 100
                 : ((cotacao - strike) / strike) * 100)
             : null;
 
-        // Prêmio Est. — verde se positivo, cinza se sem dados
+        // Prêmio — valor real recebido na operação
         _setKpiCard('macKpiPremioCard', 'macSimPremio',
-            premioEst > 0 ? '+$' + premioEst.toFixed(2) : '—',
-            premioEst > 0 ? '#3fb950' : 'rgba(255,255,255,.3)');
+            premioReal > 0 ? '+$' + premioReal.toFixed(2) : '—',
+            premioReal > 0 ? '#3fb950' : 'rgba(255,255,255,.3)');
 
         // ROI — verde se positivo
         _setKpiCard('macKpiRoiCard', 'macSimRoi',
@@ -787,7 +791,7 @@
 
 <!-- Cards financeiros -->
 <div class="row g-2 mb-3">
-  <div class="col-4"><div class="mdc-card text-center"><div class="mdc-card-label">Investido</div><div class="mdc-card-value">${op.abertura ? fmtUsd(op.abertura) : '—'}</div></div></div>
+  <div class="col-4"><div class="mdc-card text-center"><div class="mdc-card-label">Pr. Abertura</div><div class="mdc-card-value">${op.abertura ? fmtUsd(op.abertura) : '—'}</div></div></div>
   <div class="col-4"><div class="mdc-card text-center"><div class="mdc-card-label">Strike</div><div class="mdc-card-value">${op.strike ? fmtUsd(op.strike) : '—'}</div></div></div>
   <div class="col-4"><div class="mdc-card text-center"><div class="mdc-card-label">Cotação${isLive ? ' 🟢' : ''}</div><div class="mdc-card-value" id="macCardCotacao">${cotacao ? fmtUsd(cotacao) : '—'}</div></div></div>
   <div class="col-4"><div class="mdc-card text-center"><div class="mdc-card-label">TAE</div><div class="mdc-card-value" style="color:#4da6ff">${tae ? tae.toFixed(2) + '%' : '—'}</div></div></div>
@@ -918,6 +922,9 @@ ${op.observacoes ? `<div class="mdc-info-row" style="flex-direction:column;align
         _renderNextOpCard(op, cotacao);
         _renderPnLChart(op, cotacao);
 
+        // Bind do botão Análise Técnica (feito aqui pois o DOM é gerado de forma assíncrona)
+        setupCryptoTechAnalysisListeners();
+
         // Título do header
         const titleEl = document.getElementById('macTitle');
         if (titleEl) {
@@ -999,8 +1006,6 @@ ${op.observacoes ? `<div class="mdc-info-row" style="flex-direction:column;align
         // Renderiza após o modal estar visível (evita bug de canvas com display:none)
         modalEl.addEventListener('shown.bs.modal', function () {
             _renderAll(op);
-            // Setup event listeners após renderização do conteúdo
-            setTimeout(() => setupCryptoTechAnalysisListeners(), 100);
         }, { once: true });
     }
 

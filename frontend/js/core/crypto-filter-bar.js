@@ -178,6 +178,8 @@
             tipo: null,
             asset: null,
             corretora: null,
+            dateFrom: null,
+            dateTo: null,
         }, overrides || {});
     }
 
@@ -186,7 +188,7 @@
         return a.split('/')[0].replace(/USDT$/, '').trim() || '?';
     }
 
-    function inPeriod(op, period) {
+    function inPeriod(op, period, state) {
         if (!period || period === 'all') return true;
         const raw = op.data_operacao || op.criado_em || '';
         if (!raw) return true;
@@ -202,13 +204,21 @@
         if (period === 'mes') { const t = new Date(now.getFullYear(), now.getMonth(), 1); return dt >= t; }
         if (period === 'ano') { const t = new Date(now.getFullYear(), 0, 1); return dt >= t; }
         if (period === 'year') { const t = new Date(now.getFullYear(), 0, 1); return dt >= t; }
+        if (period === 'custom') {
+            const s = state && state.dateFrom ? new Date(state.dateFrom + 'T00:00:00') : null;
+            const e = state && state.dateTo   ? new Date(state.dateTo   + 'T23:59:59') : null;
+            if (!s && !e) return true;
+            if (s && dt < s) return false;
+            if (e && dt > e) return false;
+            return true;
+        }
         return true;
     }
 
     function filter(ops, state) {
         if (!Array.isArray(ops)) return [];
         return ops.filter(function (op) {
-            if (!inPeriod(op, state.period)) return false;
+            if (!inPeriod(op, state.period, state)) return false;
 
             if (state.corretora) {
                 const c = (op.corretora || 'BINANCE').toUpperCase();
@@ -242,6 +252,7 @@
     const SVG_REFRESH = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M3 12a9 9 0 0 1 15.74-6.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.74 6.74L3 16"/><path d="M3 21v-5h5"/></svg>';
     const SVG_CLOSE = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
     const SVG_ACTION = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0 0h18"/></svg>';
+    const SVG_CALENDAR_SMALL = '<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="margin-right:3px;vertical-align:middle"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
 
     function renderHeader(config) {
         injectCSS();
@@ -281,9 +292,6 @@
             { v: 'today', l: 'Hoje' },
             { v: '7d', l: '7d' },
             { v: '30d', l: '30d' },
-            { v: '60d', l: '60d' },
-            { v: '90d', l: '90d' },
-            { v: 'ano', l: 'Ano' },
         ];
 
         const statuses = [
@@ -299,6 +307,12 @@
             periods.forEach(function (p) {
                 html += `<button class="cfb-pill${state.period === p.v ? ' p-on' : ''}" data-cfb-p="${p.v}">${p.l}</button>`;
             });
+            var customBtnLabel = 'Período';
+            if (state.period === 'custom' && (state.dateFrom || state.dateTo)) {
+                var fmt = function(d) { return d ? d.split('-').reverse().join('/') : ''; };
+                customBtnLabel = (state.dateFrom ? fmt(state.dateFrom) : '') + (state.dateTo ? ' → ' + fmt(state.dateTo) : '');
+            }
+            html += `<button class="cfb-pill${state.period === 'custom' ? ' p-on' : ''}" data-cfb-p="custom">${SVG_CALENDAR_SMALL}${customBtnLabel}</button>`;
             html += '<div class="cfb-sep"></div>';
         }
 
@@ -320,20 +334,12 @@
 
         if (cfg.showMoeda !== false) {
             html += '<span class="cfb-bar-lbl">MOEDA:</span>';
-            openAs.forEach(function (a) {
-                html += `<button class="cfb-pill${state.asset === a ? ' a-on' : ''}" data-cfb-a="${a}">${a}</button>`;
+            html += '<select class="cfb-sel" data-cfb-a-sel>';
+            html += `<option value=""${!state.asset ? ' selected' : ''}>Todas</option>`;
+            allAs.forEach(function (a) {
+                html += `<option value="${a}"${state.asset === a ? ' selected' : ''}>${a}</option>`;
             });
-
-            const closedAs = allAs.filter(function (a) { return openAs.indexOf(a) === -1; });
-            if (closedAs.length > 0 || allAs.length > openAs.length) {
-                const selVal = state.asset && openAs.indexOf(state.asset) === -1 ? state.asset : '';
-                html += '<select class="cfb-sel" data-cfb-a-sel>';
-                html += '<option value="">Todas</option>';
-                closedAs.forEach(function (a) {
-                    html += `<option value="${a}"${selVal === a ? ' selected' : ''}>${a}</option>`;
-                });
-                html += '</select>';
-            }
+            html += '</select>';
             html += '<div class="cfb-sep"></div>';
         }
 
@@ -370,6 +376,60 @@
 </div>`;
     }
 
+    function _openCustomPeriodSwal(state, barEl, emit) {
+        if (typeof window.Swal === 'undefined') {
+            console.warn('[CryptoFilterBar] SweetAlert2 não carregado');
+            return;
+        }
+        var fmtInput = function(d) { return d || ''; };
+        window.Swal.fire({
+            title: 'Defina o período',
+            icon: 'warning',
+            iconColor: '#e8a830',
+            showCancelButton: true,
+            confirmButtonText: 'Aplicar',
+            cancelButtonText: 'Cancelar',
+            reverseButtons: true,
+            html: '<div style="text-align:left;margin-top:.5rem;">' +
+                    '<label style="display:block;font-size:.78rem;color:#a0b0c8;margin-bottom:.3rem;">Data início</label>' +
+                    '<input id="cfb-swal-from" type="date" value="' + fmtInput(state.dateFrom) + '" ' +
+                    'style="width:100%;background:#1e2a3d;border:1px solid #334560;border-radius:6px;' +
+                    'color:#e8f0f8;padding:.4rem .7rem;font-size:.82rem;font-family:Inter,sans-serif;outline:none;box-sizing:border-box;">' +
+                  '</div>' +
+                  '<div style="text-align:left;margin-top:.75rem;">' +
+                    '<label style="display:block;font-size:.78rem;color:#a0b0c8;margin-bottom:.3rem;">Data Fim</label>' +
+                    '<input id="cfb-swal-to" type="date" value="' + fmtInput(state.dateTo) + '" ' +
+                    'style="width:100%;background:#1e2a3d;border:1px solid #334560;border-radius:6px;' +
+                    'color:#e8f0f8;padding:.4rem .7rem;font-size:.82rem;font-family:Inter,sans-serif;outline:none;box-sizing:border-box;">' +
+                  '</div>',
+            preConfirm: function() {
+                var from = document.getElementById('cfb-swal-from').value || null;
+                var to   = document.getElementById('cfb-swal-to').value   || null;
+                if (from && to && from > to) {
+                    window.Swal.showValidationMessage('Data início deve ser anterior à Data Fim.');
+                    return false;
+                }
+                return { from: from, to: to };
+            }
+        }).then(function(result) {
+            if (!result.isConfirmed) return;
+            state.period   = 'custom';
+            state.dateFrom = result.value.from;
+            state.dateTo   = result.value.to;
+            barEl.querySelectorAll('[data-cfb-p]').forEach(function(b) { b.classList.remove('p-on'); });
+            var customBtn = barEl.querySelector('[data-cfb-p="custom"]');
+            if (customBtn) {
+                customBtn.classList.add('p-on');
+                var fmt = function(d) { return d ? d.split('-').reverse().join('/') : ''; };
+                var lbl = (state.dateFrom || state.dateTo)
+                    ? (state.dateFrom ? fmt(state.dateFrom) : '') + (state.dateTo ? ' → ' + fmt(state.dateTo) : '')
+                    : 'Período';
+                customBtn.innerHTML = SVG_CALENDAR_SMALL + lbl;
+            }
+            emit();
+        });
+    }
+
     function bind(barEl, state, onChange) {
         const el = typeof barEl === 'string' ? document.querySelector(barEl) : barEl;
         if (!el) return;
@@ -383,7 +443,14 @@
             if (!btn) return;
 
             if (btn.hasAttribute('data-cfb-p')) {
-                state.period = btn.getAttribute('data-cfb-p');
+                const pv = btn.getAttribute('data-cfb-p');
+                if (pv === 'custom') {
+                    _openCustomPeriodSwal(state, el, emit);
+                    return;
+                }
+                state.period = pv;
+                state.dateFrom = null;
+                state.dateTo = null;
                 el.querySelectorAll('[data-cfb-p]').forEach(function (b) { b.classList.remove('p-on'); });
                 btn.classList.add('p-on');
                 emit();

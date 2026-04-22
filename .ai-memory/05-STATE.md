@@ -1,42 +1,22 @@
 # STATE (auto)
 
-Última atualização: 2026-04-13 16:27:39
+Última atualização: 2026-04-17 17:14:46
 Branch: master
 
 ## Commits recentes (últimos 10)
+  f908157 | 2026-04-17 | â€œMarisvaldoâ€ | Ajustes
+  0a6c0d6 | 2026-04-17 | â€œMarisvaldoâ€ | ajustes
+  9585113 | 2026-04-17 | â€œMarisvaldoâ€ | Ajustes gerais
+  c42fbeb | 2026-04-16 | â€œMarisvaldoâ€ | Ajustes gerais em crypto
   ae71c94 | 2026-04-10 | â€œMarisvaldoâ€ | Ajustes no layout
   f048d65 | 2026-04-10 | â€œMarisvaldoâ€ | Ajustes no layout
   4401226 | 2026-04-10 | â€œMarisvaldoâ€ | Ajustes de layout
   ffbe5de | 2026-04-06 | â€œMarisvaldoâ€ | Ajustes de layout
   1be511c | 2026-04-02 | â€œMarisvaldoâ€ | Ajustes nos servicos do cliente
   3716e53 | 2026-03-24 | â€œMarisvaldoâ€ | Tela de resultados
-  3aa8644 | 2026-03-20 | â€œMarisvaldoâ€ | Tela de resultados
-  edbb352 | 2026-03-19 | â€œMarisvaldoâ€ | Tela de resultados
-  fd1a31d | 2026-03-13 | â€œMarisvaldoâ€ | Tela de cryptos
-  c9934aa | 2026-03-13 | â€œMarisvaldoâ€ | Tela de cryptos
 
 ## Working tree
-  M .ai-memory/05-STATE.md
-   M .ai-memory/08-CHANGELOG.md
-   M .ai-memory/09-PROMPTS.md
-   M .ai-memory/prompts_log.txt
-   M .ai-memory/snapshots/latest.md
-   M backend/data/controle_operacoes.db
-   M frontend/css/crypto/crypto.css
-   M frontend/css/crypto/modal-resultado-total-crypto.css
-   M frontend/css/crypto/modal-saldo-medio-crypto.css
-   M frontend/html/crypto.html
-   M frontend/html/modal-saldo-medio-crypto.html
-   M frontend/js/crypto.js
-   M frontend/js/crypto/crypto.js
-   M frontend/js/crypto/modal-analise-detalhe-crypto.js
-   M frontend/js/crypto/modal-resultado-total-crypto.js
-   M frontend/js/crypto/modal-saldo-medio-crypto.js
-   M tests/results/playwright_results.json
-   M tests/results/pytest_results.json
-  ?? frontend/js/crypto/analise-tecnica-crypto.js
-  ?? ideias/claude5.html
-  ?? ideias/ideia17-operacoes-exercicio-hub.html
+  (working tree limpo)
 
 ## Arquivos mais tocados (últimos 20 commits)
 - .agent/.shared/ui-ux-pro-max/scripts/__pycache__/core.cpython-313.pyc

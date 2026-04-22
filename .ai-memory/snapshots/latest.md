@@ -1,6 +1,6 @@
 # AI PROJECT SNAPSHOT
 > Cole todo este arquivo na IA para retomar o projeto sem perder contexto.
-> Gerado em: 2026-04-13 16:27:41 | Branch: master
+> Gerado em: 2026-04-17 17:14:48 | Branch: master
 
 ---
 
@@ -12,17 +12,17 @@
 ---
 
 ## GIT — últimos 5 commits
+f908157 2026-04-17 Ajustes
+0a6c0d6 2026-04-17 ajustes
+9585113 2026-04-17 Ajustes gerais
+c42fbeb 2026-04-16 Ajustes gerais em crypto
 ae71c94 2026-04-10 Ajustes no layout
-f048d65 2026-04-10 Ajustes no layout
-4401226 2026-04-10 Ajustes de layout
-ffbe5de 2026-04-06 Ajustes de layout
-1be511c 2026-04-02 Ajustes nos servicos do cliente
 
 ## Arquivos alterados no último commit
-.gitignore
-frontend/css/crypto/modal-analise-detalhe-crypto.css
-frontend/js/crypto/modal-analise-detalhe-crypto.js
-ideias/t2.html
+backend/data/controle_operacoes.db
+frontend/js/core/crypto-filter-bar.js
+tests/results/playwright_results.json
+tests/results/pytest_results.json
 
 ---
 
@@ -162,50 +162,54 @@ ControleOperacoes/
 
 ## Padrã
 
-... [truncado — 1362 chars omitidos]
+... [truncado — 6124 chars omitidos]
 
 ---
 
 ## ESTADO ATUAL (auto)
 # STATE (auto)
 
-Última atualização: 2026-04-13 16:27:39
+Última atualização: 2026-04-17 17:14:46
 Branch: master
 
 ## Commits recentes (últimos 10)
+  f908157 | 2026-04-17 | â€œMarisvaldoâ€ | Ajustes
+  0a6c0d6 | 2026-04-17 | â€œMarisvaldoâ€ | ajustes
+  9585113 | 2026-04-17 | â€œMarisvaldoâ€ | Ajustes gerais
+  c42fbeb | 2026-04-16 | â€œMarisvaldoâ€ | Ajustes gerais em crypto
   ae71c94 | 2026-04-10 | â€œMarisvaldoâ€ | Ajustes no layout
   f048d65 | 2026-04-10 | â€œMarisvaldoâ€ | Ajustes no layout
   4401226 | 2026-04-10 | â€œMarisvaldoâ€ | Ajustes de layout
   ffbe5de | 2026-04-06 | â€œMarisvaldoâ€ | Ajustes de layout
   1be511c | 2026-04-02 | â€œMarisvaldoâ€ | Ajustes nos servicos do cliente
   3716e53 | 2026-03-24 | â€œMarisvaldoâ€ | Tela de resultados
-  3aa8644 | 2026-03-20 | â€œMarisvaldoâ€ | Tela de resultados
-  edbb352 | 2026-03-19 | â€œMarisvaldoâ€ | Tela de resultados
-  fd1a31d | 2026-03-13 | â€œMarisvaldoâ€ | Tela de cryptos
-  c9934aa | 2026-03-13 | â€œMarisvaldoâ€ | Tela de cryptos
 
 ## Working tree
-  M .ai-memory/05-STATE.md
-   M .ai-memory/08-CHANGELOG.md
-   M .ai-memory/09-PROMPTS.md
-   M .ai-memory/prompts_log.txt
-   M .ai-memory/snapshots/latest.md
-   M backend/data/controle_operacoes.db
-   M frontend/css/crypto/crypto.css
-   M frontend/css/crypto/modal-resultado-total-crypto.css
-   M frontend/css/crypto/modal-saldo-medio-crypto.css
-   M frontend/html/crypto.html
-   M frontend/html/modal-saldo-medio-crypto.html
-   M frontend/js/crypto.js
-   M frontend/js/crypto/crypto.js
-   M frontend/js/crypto/modal-analise-detalhe-crypto.js
-   M frontend/js/crypto/modal-resultado-total-crypto.js
-   M frontend/js/crypto/modal-saldo-medio-crypto.js
-   M tests/results/playwright_results.json
-   M tests/results/pytest_results.json
-  ?? frontend/js/crypto
+  (working tree limpo)
 
-... [truncado — 1124 chars omitidos]
+## Arquivos mais tocados (últimos 20 commits)
+- .agent/.shared/ui-ux-pro-max/scripts/__pycache__/core.cpython-313.pyc
+- .agent/.shared/ui-ux-pro-max/scripts/__pycache__/design_system.cpython-313.pyc
+- .ai-memory/00-ENTRYPOINT.md
+- .ai-memory/01-CONTEXT.md
+- .ai-memory/02-ARCHITECTURE.md
+- .ai-memory/03-TECH-STACK.md
+- .ai-memory/04-RULES.md
+- .ai-memory/05-STATE.md
+- .ai-memory/06-TASKS.md
+- .ai-memory/08-CHANGELOG.md
+- .ai-memory/09-PROMPTS.md
+- .ai-memory/prompts_log.txt
+- .ai-memory/snapshots/latest.md
+- .githooks/post-checkout
+- .githooks/post-commit
+- .githooks/post-merge
+- .github/agents/ARCHITECTURE.md
+- .github/agents/backend-specialist.agent.md
+- .github/agents/code-archaeologist.agent.md
+- .github/agents/database-architect.ag
+
+... [truncado — 277 chars omitidos]
 
 ---
 

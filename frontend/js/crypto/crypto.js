@@ -2192,7 +2192,7 @@ async function refreshQuotes() {
         await refreshCryptoCotacoes();
         updateUI();
         updateCryptoMarketStatus();
-        iziToast.success({ title: "Atualizado", message: "Cotações e status atualizados." });
+        // iziToast.success({ title: "Atualizado", message: "Cotações e status atualizados." });
     } catch (e) {
         console.error("[refreshQuotes]", e);
         iziToast.error({ title: "Erro", message: "Falha ao atualizar cotações." });
