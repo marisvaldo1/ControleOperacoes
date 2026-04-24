@@ -108,6 +108,21 @@
         return map;
     }
 
+    function computeDailyHeatmapMetrics(ops) {
+        const map = new Map();
+        ops.forEach(op => {
+            const d = getOpDate(op);
+            if (!d) return;
+            const key = getDateKey(d);
+            const premium = cfg.getResultValue(op);
+            if (!map.has(key)) map.set(key, { premium: 0, ops: 0 });
+            const dayMetrics = map.get(key);
+            dayMetrics.premium += premium;
+            dayMetrics.ops += 1;
+        });
+        return map;
+    }
+
     function getHeatmapClass(value, maxPos, maxNeg) {
         if (!value) return 'heatmap-neutral';
         if (value > 0) {
@@ -225,6 +240,7 @@
         if (!container) return;
 
         const dailyMap = computeDailyResults(ops);
+        const dailyMetrics = computeDailyHeatmapMetrics(ops);
         let maxPos = 0, maxNeg = 0;
         dailyMap.forEach(v => {
             if (v > maxPos) maxPos = v;
@@ -277,18 +293,48 @@
                                 <div class="heatmap-grid">
             `);
 
+            const firstWeekday = (new Date(year, month, 1).getDay() + 6) % 7;
+            for (let i = 0; i < firstWeekday; i++) {
+                html.push('<span class="heatmap-day heatmap-empty" aria-hidden="true"></span>');
+            }
+
             for (let day = 1; day <= days; day++) {
                 const date    = new Date(year, month, day);
                 const inRange = date >= startDate && date <= endDate;
+                const dayLabel = String(day).padStart(2, '0');
+
                 if (!inRange) {
-                    html.push('<span class="heatmap-day heatmap-neutral"></span>');
+                    html.push(`
+                        <span class="heatmap-day heatmap-neutral heatmap-out-range">
+                            <span class="hm-top">Dia</span>
+                            <span class="hm-daynum">${dayLabel}</span>
+                            <span class="hm-meta">Ops: -</span>
+                            <span class="hm-prem">Prêmios: -</span>
+                        </span>
+                    `);
                     continue;
                 }
+
                 const key    = getDateKey(date);
                 const value  = dailyMap.get(key) || 0;
+                const dayData = dailyMetrics.get(key) || { premium: 0, ops: 0 };
                 const cls    = getHeatmapClass(value, maxPos, maxNeg);
-                const tip    = day + '/' + String(month + 1).padStart(2, '0') + ' · ' + fmtC(value);
-                html.push(`<span class="heatmap-day ${cls}" data-date="${key}" title="${tip}">${day}</span>`);
+                const tip    = dayLabel + '/' + String(month + 1).padStart(2, '0')
+                    + ' · Ops: ' + dayData.ops + ' · ' + fmtC(dayData.premium);
+                html.push(`
+                    <span class="heatmap-day ${cls}" data-date="${key}" title="${tip}">
+                        <span class="hm-top">Dia</span>
+                        <span class="hm-daynum">${dayLabel}</span>
+                        <span class="hm-meta">Ops: ${dayData.ops}</span>
+                        <span class="hm-prem">Prêmios: ${fmtC(dayData.premium)}</span>
+                    </span>
+                `);
+            }
+
+            const totalCells = firstWeekday + days;
+            const trailing = (7 - (totalCells % 7)) % 7;
+            for (let i = 0; i < trailing; i++) {
+                html.push('<span class="heatmap-day heatmap-empty" aria-hidden="true"></span>');
             }
 
             html.push(`
@@ -324,7 +370,6 @@
             container.dataset.dayClickBound = '1';
         }
     }
-
     /* ------------------------------------------------------------------ */
     /*  Modal de detalhe por dia (heatmap click)                            */
     /* ------------------------------------------------------------------ */

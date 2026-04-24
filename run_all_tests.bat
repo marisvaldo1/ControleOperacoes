@@ -36,7 +36,7 @@ if exist "%~dp0.venv\Scripts\python.exe" (
 :: ============================================
 :: 1. Verificar / Iniciar servidor Flask
 :: ============================================
-set FLASK_PID=
+set "FLASK_PID="
 
 echo [INFO] Verificando servidor em localhost:8888...
 powershell -Command "try{$t=New-Object Net.Sockets.TcpClient;$t.Connect('127.0.0.1',8888);$t.Close();exit 0}catch{exit 1}" >nul 2>&1
@@ -54,7 +54,7 @@ if "%PYTHON%"=="" (
 )
 set PYTHONIOENCODING=UTF-8
 :: Inicia Flask em janela separada visivel, captura PID para kill preciso ao final
-for /f "delims=" %%P in ('powershell -Command "(Start-Process -FilePath '%PYTHON%' -ArgumentList 'server.py' -WorkingDirectory '%~dp0backend' -WindowStyle Normal -PassThru).Id"') do set FLASK_PID=%%P
+for /f "delims=" %%P in ('powershell -Command "(Start-Process -FilePath '%PYTHON%' -ArgumentList 'server.py' -WorkingDirectory '%~dp0backend' -WindowStyle Normal -PassThru).Id"') do set "FLASK_PID=%%P"
 
 if "%FLASK_PID%"=="" (
     echo [ERRO] Nao foi possivel iniciar o Flask.
@@ -159,7 +159,7 @@ echo.
 echo [INFO] Encerrando servidor Flask...
 if defined FLASK_PID (
     powershell -Command "Stop-Process -Id %FLASK_PID% -Force -ErrorAction SilentlyContinue" >nul 2>&1
-    echo [OK] Processo Flask (PID: %FLASK_PID%) encerrado.
+    echo [OK] Processo Flask PID !FLASK_PID! encerrado.
 )
 :: Fallback: garante que a porta 8888 foi liberada de qualquer modo
 powershell -Command "$conns = Get-NetTCPConnection -LocalPort 8888 -State Listen -ErrorAction SilentlyContinue; if ($conns) { $conns | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }; Write-Host '[OK] Porta 8888 liberada.' } else { Write-Host '[OK] Servidor encerrado e porta 8888 liberada.' }" 2>nul
