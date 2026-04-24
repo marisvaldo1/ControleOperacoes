@@ -7,7 +7,7 @@
   var currentOperacoes = [];
   var filteredCycles   = [];
   var accChart         = null;
-  var filterState      = { period: 'today', status: null, tipo: null, asset: null, corretora: null };
+  var filterState      = { period: 'today', status: null, tipo: null, asset: null, corretora: null, dateFrom: null, dateTo: null };
   var _header          = null; /* controlador CryptoModalHeader */
 
   /* ─ Formatadores ─ */
@@ -389,13 +389,29 @@
     var ops = currentOperacoes.slice();
     if (filterState.period && filterState.period !== 'all') {
       var now = new Date(), cutoff = new Date();
-      if      (filterState.period === 'hoje')  cutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      else if (filterState.period === '7d')   cutoff.setDate(now.getDate() - 7);
-      else if (filterState.period === '30d')  cutoff.setDate(now.getDate() - 30);
-      else if (filterState.period === '60d')  cutoff.setDate(now.getDate() - 60);
-      else if (filterState.period === '90d')  cutoff.setDate(now.getDate() - 90);
-      else if (filterState.period === 'ano')  cutoff = new Date(now.getFullYear(), 0, 1);
-      ops = ops.filter(function (o) { return new Date((o.data_operacao || o.data_abertura || '2000-01-01') + 'T00:00:00') >= cutoff; });
+      if      (filterState.period === 'hoje')   cutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      else if (filterState.period === 'today')  cutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      else if (filterState.period === 'semana') { var dow = now.getDay(); cutoff = new Date(now); cutoff.setDate(now.getDate() - (dow === 0 ? 6 : dow - 1)); cutoff.setHours(0,0,0,0); }
+      else if (filterState.period === '7d')    cutoff.setDate(now.getDate() - 7);
+      else if (filterState.period === '30d')   cutoff.setDate(now.getDate() - 30);
+      else if (filterState.period === '60d')   cutoff.setDate(now.getDate() - 60);
+      else if (filterState.period === '90d')   cutoff.setDate(now.getDate() - 90);
+      else if (filterState.period === 'mes')   cutoff = new Date(now.getFullYear(), now.getMonth(), 1);
+      else if (filterState.period === 'ano')   cutoff = new Date(now.getFullYear(), 0, 1);
+      else if (filterState.period === 'custom') {
+        var cFrom = filterState.dateFrom ? new Date(filterState.dateFrom + 'T00:00:00') : null;
+        var cTo   = filterState.dateTo   ? new Date(filterState.dateTo   + 'T23:59:59') : null;
+        ops = ops.filter(function (o) {
+          var dt = new Date((o.data_operacao || o.data_abertura || '2000-01-01') + 'T00:00:00');
+          if (cFrom && dt < cFrom) return false;
+          if (cTo   && dt > cTo)   return false;
+          return true;
+        });
+        cutoff = null; // evitar segundo filtro abaixo
+      }
+      if (cutoff !== null) {
+        ops = ops.filter(function (o) { return new Date((o.data_operacao || o.data_abertura || '2000-01-01') + 'T00:00:00') >= cutoff; });
+      }
     }
     if (filterState.asset) ops = ops.filter(function (o) { return (o.ativo||'').toUpperCase() === filterState.asset.toUpperCase(); });
     if (filterState.tipo)  ops = ops.filter(function (o) { return (o.tipo||'').toUpperCase() === filterState.tipo.toUpperCase(); });
@@ -439,6 +455,8 @@
         filterState.tipo      = state.tipo;
         filterState.asset     = state.asset;
         filterState.corretora = state.corretora;
+        filterState.dateFrom  = state.dateFrom || null;
+        filterState.dateTo    = state.dateTo   || null;
         renderCycles();
         var sp = document.getElementById('rtSummaryPanel');
         if (sp) { sp.innerHTML = renderRightPanel(); attachCycleListeners(); attachRpListeners(); }

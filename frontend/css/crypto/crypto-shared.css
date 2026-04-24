@@ -1,0 +1,189 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   crypto-shared.css  v1.0.0
+   Estilos COMPARTILHADOS entre todos os módulos crypto.
+   • Consolida classes duplicadas entre crypto.css e modal-detalhe-crypto.css
+   • Light theme overrides para modal-resultados.css (.mp-*, .rg-*, .rmc-*)
+   • Light theme overrides para modais com CSS variables hardcoded dark
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════════════════
+   1. BADGES HIGH / LOW  (única fonte — usando vars Bootstrap, adaptive ao tema)
+   ══════════════════════════════════════════════════════════════════════ */
+.crypto-badge-high {
+    background-color: var(--bs-success-bg-subtle, #d1e7dd);
+    color: var(--bs-success-text-emphasis, #0a3622);
+    border: 1px solid var(--bs-success-border-subtle, #a3cfbb);
+    font-size: 0.78rem;
+    padding: 3px 8px;
+    font-weight: 700;
+}
+.crypto-badge-low {
+    background-color: var(--bs-danger-bg-subtle, #f8d7da);
+    color: var(--bs-danger-text-emphasis, #842029);
+    border: 1px solid var(--bs-danger-border-subtle, #f1aeb5);
+    font-size: 0.78rem;
+    padding: 3px 8px;
+    font-weight: 700;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   2. LIGHT THEME — modal-resultados.css (.mp-*, .res-*, .rg-*, .rmc-*)
+      Estes overrides estão em frontend/css/shared/modal-resultados.css (seção LIGHT THEME v1.0.0)
+      que é carregado em opcoes.html e crypto.html.
+      Aqui mantemos apenas os overrides específicos de crypto que não estão no shared.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════════════════
+   3. LIGHT THEME — #modalResultadoTotalCrypto (usa :root vars hardcoded dark)
+   ══════════════════════════════════════════════════════════════════════ */
+[data-bs-theme="light"] #modalResultadoTotalCrypto {
+    --bg:  var(--bs-body-bg, #fff);
+    --s1:  var(--bs-body-bg, #fff);
+    --s2:  rgba(0,0,0,0.02);
+    --s3:  rgba(0,0,0,0.04);
+    --s4:  rgba(0,0,0,0.06);
+    --bdr:  rgba(0,0,0,0.08);
+    --bdr2: rgba(0,0,0,0.12);
+    --tx1: var(--bs-body-color, #212529);
+    --tx2: #6c757d;
+    --tx3: #adb5bd;
+    color: var(--bs-body-color, #212529);
+}
+[data-bs-theme="light"] #modalResultadoTotalCrypto .modal-content {
+    background: var(--bs-body-bg, #fff);
+    border: 1px solid rgba(0,0,0,0.12);
+    box-shadow: 0 12px 48px rgba(0,0,0,0.15);
+}
+[data-bs-theme="light"] #modalResultadoTotalCrypto .modal-header {
+    background: var(--bs-body-bg, #fff);
+    border-bottom: 1px solid rgba(0,0,0,0.10);
+}
+[data-bs-theme="light"] #modalResultadoTotalCrypto .modal-title { color: var(--bs-body-color, #212529); }
+
+/* ══════════════════════════════════════════════════════════════════════
+   4. LIGHT THEME — #modalResultadosCryptoCompact (scoped vars hardcoded dark)
+   ══════════════════════════════════════════════════════════════════════ */
+[data-bs-theme="light"] #modalResultadosCryptoCompact {
+    --dsh-bg:       var(--bs-body-bg, #fff);
+    --dsh-card:     var(--bs-body-bg, #fff);
+    --dsh-card2:    rgba(0,0,0,0.02);
+    --dsh-card3:    rgba(0,0,0,0.03);
+    --dsh-bdr:      rgba(0,0,0,0.10);
+    --dsh-bdr-hi:   rgba(0,0,0,0.18);
+    --dsh-tx1:      var(--bs-body-color, #212529);
+    --dsh-tx2:      #6c757d;
+    --dsh-tx3:      #adb5bd;
+}
+[data-bs-theme="light"] #modalResultadosCryptoCompact .modal-content {
+    background: var(--bs-body-bg, #fff);
+    border: 1px solid rgba(0,0,0,0.12);
+    color: var(--bs-body-color, #212529);
+}
+[data-bs-theme="light"] #modalResultadosCryptoCompact .dsh-hdr {
+    background: var(--bs-body-bg, #fff);
+    border-bottom: 1px solid rgba(0,0,0,0.10);
+}
+[data-bs-theme="light"] #modalResultadosCryptoCompact .dsh-hdr-title { color: var(--bs-body-color, #212529); }
+[data-bs-theme="light"] #modalResultadosCryptoCompact .dsh-hdr-time  { color: #6c757d; }
+[data-bs-theme="light"] #modalResultadosCryptoCompact .dsh-hdr-btn {
+    background: transparent;
+    border: 1px solid rgba(0,0,0,0.14);
+    color: #6c757d;
+}
+[data-bs-theme="light"] #modalResultadosCryptoCompact .dsh-hdr-btn.ref { color: #0d6efd; }
+[data-bs-theme="light"] #modalResultadosCryptoCompact .dsh-hdr-btn.ref:hover { border-color: #0d6efd; }
+[data-bs-theme="light"] #modalResultadosCryptoCompact .dsh-hdr-btn.cls:hover {
+    border-color: #dc3545; color: #dc3545; background: rgba(220,53,69,0.07);
+}
+[data-bs-theme="light"] #modalResultadosCryptoCompact .dsh-btn-det {
+    background: rgba(13,110,253,0.08);
+    color: #0d6efd;
+    border: 1px solid rgba(13,110,253,0.28);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   5. LIGHT THEME — #modalSaldoMedio
+   ══════════════════════════════════════════════════════════════════════ */
+[data-bs-theme="light"] #modalSaldoMedio .modal-content {
+    background: var(--bs-body-bg, #fff);
+    color: var(--bs-body-color, #212529);
+}
+[data-bs-theme="light"] #modalSaldoMedio .modal-header,
+[data-bs-theme="light"] #modalSaldoMedio .sm-modal-header {
+    background: var(--bs-body-bg, #fff);
+    border-bottom: 1px solid rgba(0,0,0,0.10);
+}
+[data-bs-theme="light"] #modalSaldoMedio .sm-map-kpi {
+    background: rgba(0,0,0,0.03);
+    border: 1px solid rgba(0,0,0,0.10);
+}
+[data-bs-theme="light"] #modalSaldoMedio .sm-map-kpi span { color: #6c757d; }
+[data-bs-theme="light"] #modalSaldoMedio .sm-map-kpi strong { color: var(--bs-body-color, #212529); }
+[data-bs-theme="light"] #modalSaldoMedio .sm-map-filter-bar {
+    border: 1px solid rgba(0,0,0,0.12);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   6. LIGHT THEME — #modalDashboardCrypto
+   ══════════════════════════════════════════════════════════════════════ */
+[data-bs-theme="light"] #modalDashboardCrypto .modal-content {
+    background: var(--bs-body-bg, #fff);
+    color: var(--bs-body-color, #212529);
+}
+[data-bs-theme="light"] #modalDashboardCrypto .modal-header {
+    background: var(--bs-body-bg, #fff);
+    border-bottom: 1px solid rgba(0,0,0,0.10);
+}
+[data-bs-theme="light"] #modalDashboardCrypto .metric-card {
+    background: linear-gradient(135deg, rgba(0,0,0,0.03), rgba(0,0,0,0.01));
+    border: 1px solid rgba(0,0,0,0.12);
+}
+[data-bs-theme="light"] #modalDashboardCrypto .metric-label-lg { color: #6c757d; }
+[data-bs-theme="light"] #modalDashboardCrypto .heatmap-month-title { color: #6c757d; }
+[data-bs-theme="light"] #modalDashboardCrypto .heatmap-weekdays { color: #6c757d; }
+[data-bs-theme="light"] #modalDashboardCrypto .heatmap-neutral { background: rgba(0,0,0,0.07); }
+[data-bs-theme="light"] #modalDashboardCrypto .heatmap-day { color: #212529; }
+[data-bs-theme="light"] #modalDashboardCrypto .saldo-metric-success {
+    background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+    border-color: #10b981;
+}
+[data-bs-theme="light"] #modalDashboardCrypto .saldo-metric-primary {
+    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+    border-color: #3b82f6;
+}
+[data-bs-theme="light"] #modalDashboardCrypto .saldo-metric-warning {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    border-color: #f59e0b;
+}
+[data-bs-theme="light"] #modalDashboardCrypto .saldo-metric-purple {
+    background: linear-gradient(135deg, #ede9fe, #ddd6fe);
+    border-color: #8b5cf6;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   7. LIGHT THEME — #modalTotalOperacoesCrypto (.toc-*)
+   ══════════════════════════════════════════════════════════════════════ */
+[data-bs-theme="light"] .toc-modal-content {
+    background: var(--bs-body-bg, #fff);
+    color: var(--bs-body-color, #212529);
+}
+[data-bs-theme="light"] .toc-ftabs {
+    border-bottom: 1px solid rgba(0,0,0,0.10);
+}
+[data-bs-theme="light"] .toc-ftab {
+    border: 1px solid rgba(0,0,0,0.15);
+    color: rgba(0,0,0,0.55);
+}
+[data-bs-theme="light"] .toc-ftab:hover { background: rgba(0,0,0,0.05); color: #212529; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   8. LIGHT THEME — #modalDashboardAnaliticoCrypto / #modalResultadosCrypto
+      Ambos usam o CryptoModalHeader (cfb-*) — já coberto pelo SHARED_CSS do JS.
+      Aqui cobrimos a estrutura .res-* do corpo do modal.
+   ══════════════════════════════════════════════════════════════════════ */
+[data-bs-theme="light"] #modalResultadosCrypto .modal-content,
+[data-bs-theme="light"] #modalDashboardAnaliticoCrypto .modal-content {
+    background: var(--bs-body-bg, #fff);
+    color: var(--bs-body-color, #212529);
+    border: 1px solid rgba(0,0,0,0.12);
+}

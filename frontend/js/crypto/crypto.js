@@ -1293,7 +1293,7 @@ async function saveOperacao() {
     const id = document.getElementById("operacaoId").value;
     const isNew = !id;
     const recoverySnapshot = computeRecoverySnapshot();
-    if (isNew && recoverySnapshot.hasLoss) {
+    if (isNew && recoverySnapshot.hasLoss && recoverySnapshot.missing > 0.01) {
         const proceed = await Swal.fire({
             title: 'Prejuízo pendente detectado',
             text: `Ainda faltam ${fmtUsd(recoverySnapshot.missing)} para cobrir o ciclo CALL/PUT. Deseja salvar mesmo assim?`,

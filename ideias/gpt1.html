@@ -1,0 +1,608 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gpt1 - Base Saldo Dashboard + Novo Card Diário</title>
+  <style>
+    :root {
+      --bg: #0f1f33;
+      --panel: #14263f;
+      --panel-2: #172b46;
+      --line: #29415f;
+      --txt: #deebfb;
+      --muted: #90a8c6;
+      --chip-bg: #10223a;
+      --chip-line: #2e4968;
+      --good-h: #10b981;
+      --good-m: #148f73;
+      --good-l: #176f61;
+      --neutral: #2d425d;
+      --bad-l: #7b3c4d;
+      --bad-m: #b74a56;
+      --premium: #f0b428;
+      --accent: #40bfe6;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: radial-gradient(circle at top, #17304d 0%, var(--bg) 45%);
+      color: var(--txt);
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+      padding: 16px;
+    }
+
+    .modal-mock {
+      max-width: 1500px;
+      margin: 0 auto;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+      background: #12233b;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, .28);
+    }
+
+    .header {
+      background: #152741;
+      border-bottom: 1px solid var(--line);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .title {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: .2px;
+    }
+
+    .title .dot { color: #2fd28f; }
+
+    .upd {
+      color: #90aac8;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .filters {
+      background: #13253d;
+      border-bottom: 1px solid var(--line);
+      padding: 10px 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .pill {
+      border: 1px solid #315072;
+      background: transparent;
+      color: #8fa9c6;
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 12px;
+      cursor: default;
+    }
+
+    .pill.active {
+      background: rgba(64, 191, 230, .18);
+      border-color: #4fa7c2;
+      color: #d8f3ff;
+      font-weight: 700;
+    }
+
+    .lbl {
+      margin-left: 8px;
+      font-size: 12px;
+      color: #7994b7;
+      font-weight: 700;
+    }
+
+    select {
+      border: 1px solid #2f4a69;
+      background: #1a2f4a;
+      color: #97b0cd;
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-size: 12px;
+      min-width: 110px;
+    }
+
+    .totals {
+      background: #101f35;
+      border-bottom: 1px solid var(--line);
+      padding: 10px 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
+      border: 1px solid var(--chip-line);
+      background: var(--chip-bg);
+      border-radius: 999px;
+      color: #8fb3d6;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 5px 10px;
+    }
+
+    .chip.premium {
+      border-color: #65501e;
+      background: #2e2410;
+      color: var(--premium);
+    }
+
+    .toolbar {
+      background: #132640;
+      border-bottom: 1px solid var(--line);
+      padding: 10px 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .toolbar .hint {
+      color: #9bb4d2;
+      font-size: 12px;
+      margin-right: 8px;
+      font-weight: 700;
+    }
+
+    .mode {
+      border: 1px solid #355679;
+      background: #1a3252;
+      color: #9fc0de;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+
+    .mode.active {
+      border-color: #5cb5d5;
+      background: #214264;
+      color: #e3f6ff;
+    }
+
+    .body {
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: linear-gradient(180deg, #172b46 0%, #14263f 100%);
+      overflow: hidden;
+    }
+
+    .card-h {
+      border-bottom: 1px solid rgba(52, 75, 106, .6);
+      padding: 10px 12px;
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .card-h h3 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .card-h p {
+      margin: 0;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .card-b { padding: 12px; }
+
+    .heatmap-week {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+
+    .heatmap-week span {
+      text-align: center;
+      color: #89a4c2;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .heatmap-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+    }
+
+    .day {
+      min-height: 84px;
+      border: 1px solid #244261;
+      border-radius: 7px;
+      padding: 7px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 6px;
+      background: var(--neutral);
+    }
+
+    .day.profit-high { background: var(--good-h); border-color: #2bcf9f; }
+    .day.profit-med { background: var(--good-m); border-color: #1ca689; }
+    .day.profit-low { background: var(--good-l); border-color: #1f8475; }
+    .day.loss-low { background: var(--bad-l); border-color: #965064; }
+    .day.loss-med { background: var(--bad-m); border-color: #cf5f6c; }
+    .day.empty { background: var(--neutral); border-color: #36506f; }
+
+    .d1 {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .d2, .d3 {
+      font-size: 11px;
+      line-height: 1.2;
+    }
+
+    .d2 b, .d3 b { color: #d9ebff; font-weight: 600; }
+    .d3 strong { color: #ffd26b; }
+
+    .legend {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      font-size: 12px;
+      color: #9cb6d4;
+    }
+
+    .k {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid #304f70;
+      background: #142a45;
+    }
+
+    .sw {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      display: inline-block;
+    }
+
+    .chart-ph {
+      height: 250px;
+      border: 1px dashed #355273;
+      border-radius: 8px;
+      background: repeating-linear-gradient(
+        to right,
+        rgba(146, 171, 199, .06) 0,
+        rgba(146, 171, 199, .06) 1px,
+        transparent 1px,
+        transparent 90px
+      );
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #8ea8c6;
+      font-size: 13px;
+      text-align: center;
+      padding: 12px;
+    }
+
+    .row2, .row3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    th, td {
+      border-bottom: 1px solid #2b4564;
+      padding: 8px;
+      text-align: left;
+      color: #c8ddf6;
+    }
+
+    th { color: #8ea8c8; font-weight: 700; }
+
+    .list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .bar {
+      height: 8px;
+      background: #0f1e33;
+      border-radius: 999px;
+      overflow: hidden;
+      flex: 1;
+      border: 1px solid #2d4868;
+    }
+
+    .bar > i {
+      display: block;
+      height: 100%;
+      background: #2fb344;
+    }
+
+    .mini {
+      font-size: 12px;
+      color: #a0b9d7;
+      min-width: 86px;
+      text-align: right;
+    }
+
+    .pblock {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .p {
+      border: 1px solid #2d4868;
+      border-radius: 8px;
+      background: #15304f;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .p .t {
+      color: #88a3c4;
+      font-size: 11px;
+      margin-bottom: 6px;
+    }
+
+    .p .v {
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .hide { display: none !important; }
+
+    @media (max-width: 1100px) {
+      .row2, .row3 { grid-template-columns: 1fr; }
+      .day { min-height: 78px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="modal-mock">
+    <header class="header">
+      <h1 class="title">🔥 Dashboard Avançado de Performance · Crypto <span class="dot">●</span></h1>
+      <div class="upd">Atualizado: 09:35</div>
+    </header>
+
+    <section class="filters">
+      <button class="pill">Todos</button>
+      <button class="pill">Hoje</button>
+      <button class="pill">Semana</button>
+      <button class="pill active">Mês</button>
+      <button class="pill">Período</button>
+      <span class="lbl">STATUS:</span>
+      <button class="pill active">A, F</button>
+      <span class="lbl">TIPO:</span>
+      <button class="pill">C, P</button>
+      <span class="lbl">MOEDA:</span>
+      <select><option>Todas</option></select>
+      <span class="lbl">CORRETORA:</span>
+      <select><option>Todas</option></select>
+    </section>
+
+    <section class="totals">
+      <span class="chip">TOTAL 44</span>
+      <span class="chip">ABERTAS 0</span>
+      <span class="chip">FECHADAS 44</span>
+      <span class="chip premium">PRÊMIO US$ 404.03</span>
+    </section>
+
+    <section class="toolbar">
+      <span class="hint">Opções para os demais objetos da tela:</span>
+      <button class="mode active" data-mode="full">Completo (base atual)</button>
+      <button class="mode" data-mode="focus">Foco Heatmap + Patrimônio</button>
+      <button class="mode" data-mode="summary">Resumo Rápido (sem tabela)</button>
+      <button class="mode" data-mode="heatmap">Só Heatmap</button>
+    </section>
+
+    <section class="body" id="dashboardBody">
+      <article class="card" id="cardHeatmap">
+        <div class="card-h">
+          <h3>🗓️ Heatmap de Performance Diária</h3>
+          <p>Resultado diário por prêmio acumulado · Verde = Lucro | Vermelho = Prejuízo</p>
+        </div>
+        <div class="card-b">
+          <div class="heatmap-week">
+            <span>Segunda</span><span>Terça</span><span>Quarta</span><span>Quinta</span><span>Sexta</span><span>Sábado</span><span>Domingo</span>
+          </div>
+          <div class="heatmap-grid" id="heatmapGrid"></div>
+          <div class="legend">
+            <span class="k"><i class="sw" style="background:var(--good-h)"></i>Lucro Alto</span>
+            <span class="k"><i class="sw" style="background:var(--good-m)"></i>Lucro Médio</span>
+            <span class="k"><i class="sw" style="background:var(--good-l)"></i>Lucro Baixo</span>
+            <span class="k"><i class="sw" style="background:var(--neutral)"></i>Sem Operação</span>
+            <span class="k"><i class="sw" style="background:var(--bad-l)"></i>Perda Baixa</span>
+            <span class="k"><i class="sw" style="background:var(--bad-m)"></i>Perda Média</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="card" id="cardPatrimonio">
+        <div class="card-h"><h3>📈 Evolução do Patrimônio Acumulado</h3></div>
+        <div class="card-b"><div class="chart-ph">[Área do gráfico de patrimônio]<br>Melhoria sugerida: linha + marcador dos picos e quedas por semana.</div></div>
+      </article>
+
+      <section class="row2" id="rowComparativos">
+        <article class="card" id="cardCallPut">
+          <div class="card-h"><h3>📊 CALL vs PUT</h3></div>
+          <div class="card-b"><div class="chart-ph">[Comparativo CALL vs PUT]<br>Melhoria sugerida: mostrar diferença líquida no topo.</div></div>
+        </article>
+
+        <article class="card" id="cardWeekday">
+          <div class="card-h"><h3>📅 Performance por Dia da Semana</h3></div>
+          <div class="card-b">
+            <div class="list">
+              <div class="li"><span>Seg</span><div class="bar"><i style="width:64%"></i></div><span class="mini">US$ 42.20</span></div>
+              <div class="li"><span>Ter</span><div class="bar"><i style="width:71%"></i></div><span class="mini">US$ 46.90</span></div>
+              <div class="li"><span>Qua</span><div class="bar"><i style="width:58%"></i></div><span class="mini">US$ 38.10</span></div>
+              <div class="li"><span>Qui</span><div class="bar"><i style="width:33%"></i></div><span class="mini">US$ 21.40</span></div>
+              <div class="li"><span>Sex</span><div class="bar"><i style="width:72%"></i></div><span class="mini">US$ 47.30</span></div>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <article class="card" id="cardTopAtivos">
+        <div class="card-h"><h3>🏆 Top Ativos por Prêmio</h3></div>
+        <div class="card-b" style="padding:0;">
+          <table>
+            <thead>
+              <tr><th>#</th><th>Ativo</th><th>Operações</th><th>Win Rate</th><th>Prêmio Total</th><th>Ticket Médio</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>#1</td><td>BTC</td><td>18</td><td>92%</td><td>US$ 182.40</td><td>US$ 10.13</td></tr>
+              <tr><td>#2</td><td>ETH</td><td>16</td><td>88%</td><td>US$ 141.80</td><td>US$ 8.86</td></tr>
+              <tr><td>#3</td><td>SOL</td><td>10</td><td>81%</td><td>US$ 79.83</td><td>US$ 7.98</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+      <section class="row3" id="rowIndicadores">
+        <article class="card" id="cardConsistencia">
+          <div class="card-h"><h3>💪 Consistência</h3></div>
+          <div class="card-b">
+            <div class="li"><span style="min-width:130px">Dias Lucrativos</span><div class="bar"><i style="width:81%"></i></div><span class="mini">81%</span></div>
+            <div class="li"><span style="min-width:130px">Dias Negativos</span><div class="bar"><i style="width:19%; background:#d45555"></i></div><span class="mini">19%</span></div>
+            <div class="li"><span style="min-width:130px">Estabilidade</span><div class="bar"><i style="width:78%; background:#40bfe6"></i></div><span class="mini">78%</span></div>
+          </div>
+        </article>
+
+        <article class="card" id="cardProbabilidades">
+          <div class="card-h"><h3>🎲 Probabilidades</h3></div>
+          <div class="card-b pblock">
+            <div class="p"><div class="t">Acerto CALL</div><div class="v">89%</div></div>
+            <div class="p"><div class="t">Acerto PUT</div><div class="v">93%</div></div>
+            <div class="p"><div class="t">Expectativa Média</div><div class="v">US$ 9.18</div></div>
+            <div class="p"><div class="t">ROI s/ Saldo</div><div class="v">1.37%</div></div>
+          </div>
+        </article>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const sampleDays = [
+      { d: 1, ops: 2, p: 11.8, c: 'profit-low' },
+      { d: 2, ops: 3, p: 19.4, c: 'profit-med' },
+      { d: 3, ops: 2, p: 12.2, c: 'profit-low' },
+      { d: 4, ops: 0, p: 0, c: 'empty' },
+      { d: 5, ops: 0, p: 0, c: 'empty' },
+      { d: 6, ops: 2, p: 14.9, c: 'profit-low' },
+      { d: 7, ops: 3, p: 22.3, c: 'profit-med' },
+      { d: 8, ops: 1, p: 7.2, c: 'profit-low' },
+      { d: 9, ops: 2, p: 16.1, c: 'profit-med' },
+      { d: 10, ops: 1, p: 9.7, c: 'profit-low' },
+      { d: 11, ops: 0, p: 0, c: 'empty' },
+      { d: 12, ops: 0, p: 0, c: 'empty' },
+      { d: 13, ops: 4, p: 33.1, c: 'profit-high' },
+      { d: 14, ops: 2, p: 15.4, c: 'profit-med' },
+      { d: 15, ops: 3, p: 21.0, c: 'profit-med' },
+      { d: 16, ops: 1, p: 5.5, c: 'profit-low' },
+      { d: 17, ops: 2, p: 17.6, c: 'profit-med' },
+      { d: 18, ops: 0, p: 0, c: 'empty' },
+      { d: 19, ops: 0, p: 0, c: 'empty' },
+      { d: 20, ops: 4, p: 35.2, c: 'profit-high' },
+      { d: 21, ops: 2, p: 13.8, c: 'profit-med' },
+      { d: 22, ops: 2, p: 10.3, c: 'profit-low' },
+      { d: 23, ops: 3, p: 21.8, c: 'profit-med' },
+      { d: 24, ops: 3, p: 24.0, c: 'profit-med' }
+    ];
+
+    const fmt = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    function buildHeatmap() {
+      const grid = document.getElementById('heatmapGrid');
+      const cells = [];
+      for (let i = 0; i < 35; i += 1) cells.push(sampleDays[i] || null);
+
+      grid.innerHTML = cells.map(item => {
+        if (!item) return '<div class="day empty"></div>';
+        return `
+          <div class="day ${item.c}" title="Dia ${item.d} · ${item.ops} ops · US$ ${fmt.format(item.p)}">
+            <div class="d1"><span>Dia ${item.d}</span><span>${item.ops > 0 ? '●' : '-'}</span></div>
+            <div class="d2"><b>Ops:</b> ${item.ops}</div>
+            <div class="d3"><b>Prêmios:</b> <strong>US$ ${fmt.format(item.p)}</strong></div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function applyMode(mode) {
+      const ids = {
+        patrimonio: document.getElementById('cardPatrimonio'),
+        comparativos: document.getElementById('rowComparativos'),
+        top: document.getElementById('cardTopAtivos'),
+        indicadores: document.getElementById('rowIndicadores')
+      };
+
+      Object.values(ids).forEach(el => el.classList.remove('hide'));
+
+      if (mode === 'focus') {
+        ids.top.classList.add('hide');
+        ids.indicadores.classList.add('hide');
+      }
+
+      if (mode === 'summary') {
+        ids.top.classList.add('hide');
+      }
+
+      if (mode === 'heatmap') {
+        ids.patrimonio.classList.add('hide');
+        ids.comparativos.classList.add('hide');
+        ids.top.classList.add('hide');
+        ids.indicadores.classList.add('hide');
+      }
+    }
+
+    document.querySelectorAll('.mode').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.mode').forEach(x => x.classList.remove('active'));
+        btn.classList.add('active');
+        applyMode(btn.dataset.mode);
+      });
+    });
+
+    buildHeatmap();
+    applyMode('full');
+  </script>
+</body>
+</html>

@@ -159,6 +159,121 @@
 .cfb-tag-g { background: #1a3028; color: #3dd68c; border: 1px solid #2a5040; }
 .cfb-tag-r { background: #1e1e28; color: #6b82a0; border: 1px solid #263347; }
 .cfb-tag-a { background: #2d2010; color: #e8a830; border: 1px solid #4a3820; }
+
+/* ══ MULTI-SELECT DROPDOWN ════════════════════════════════════════════ */
+.cfb-msel { position: relative; display: inline-block; vertical-align: middle; }
+.cfb-msel-btn {
+  display: flex;
+  align-items: center;
+  gap: .3rem;
+  padding: .22rem .60rem;
+  border-radius: 20px;
+  border: 1px solid #263347;
+  background: transparent;
+  color: #6b82a0;
+  font-family: 'Inter', sans-serif;
+  font-size: .72rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+  min-width: 110px;
+  justify-content: space-between;
+}
+.cfb-msel-btn:hover { border-color: #334560; color: #e8f0f8; }
+.cfb-msel-btn.has-sel { background: rgba(61,214,140,.10); border-color: rgba(61,214,140,.30); color: #3dd68c; }
+.cfb-msel-arrow { font-size: .58rem; transition: transform .15s; flex-shrink: 0; margin-left: .15rem; }
+.cfb-msel.open .cfb-msel-arrow { transform: rotate(180deg); }
+.cfb-msel-panel {
+  display: none;
+  position: fixed;
+  background: #1a2436;
+  border: 1px solid #334560;
+  border-radius: 8px;
+  padding: .3rem 0;
+  min-width: 160px;
+  z-index: 99999;
+  box-shadow: 0 6px 24px rgba(0,0,0,.45);
+}
+.cfb-msel.open .cfb-msel-panel { display: block; }
+.cfb-msel-item {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .34rem .75rem;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-size: .78rem;
+  color: #a0b0c8;
+  transition: background .1s, color .1s;
+  user-select: none;
+}
+.cfb-msel-item:hover { background: rgba(255,255,255,.05); color: #e8f0f8; }
+.cfb-msel-chk { width: 15px; height: 15px; accent-color: #3dd68c; cursor: pointer; flex-shrink: 0; }
+
+/* ══ LIGHT THEME ══════════════════════════════════════════════════════ */
+[data-bs-theme="light"] .cfb-hdr {
+  background: var(--bs-body-bg, #fff);
+  border-bottom: 1px solid rgba(0,0,0,0.10);
+}
+[data-bs-theme="light"] .cfb-icon { color: #6c757d; }
+[data-bs-theme="light"] .cfb-title { color: #212529; }
+[data-bs-theme="light"] .cfb-time  { color: #6c757d; }
+[data-bs-theme="light"] .cfb-btn {
+  background: rgba(0,0,0,0.04);
+  border: 1px solid rgba(0,0,0,0.14);
+  color: #6c757d;
+}
+[data-bs-theme="light"] .cfb-btn.ref { background: rgba(0,0,0,0.03); color: #0d6efd; }
+[data-bs-theme="light"] .cfb-btn.ref:hover { border-color: #0d6efd; }
+[data-bs-theme="light"] .cfb-btn.cls:hover { border-color: #dc3545; color: #dc3545; background: rgba(220,53,69,0.07); }
+[data-bs-theme="light"] .cfb-act-btn {
+  background: rgba(13,110,253,0.10);
+  color: #0d6efd;
+  border: 1px solid rgba(13,110,253,0.28);
+}
+[data-bs-theme="light"] .cfb-act-btn:hover { background: rgba(13,110,253,0.18); border-color: rgba(13,110,253,0.5); }
+[data-bs-theme="light"] .cfb-bar {
+  background: rgba(0,0,0,0.02);
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+[data-bs-theme="light"] .cfb-bar-lbl { color: #6c757d; }
+[data-bs-theme="light"] .cfb-sep    { background: rgba(0,0,0,0.12); }
+[data-bs-theme="light"] .cfb-pill {
+  border: 1px solid rgba(0,0,0,0.14);
+  color: #6c757d;
+  background: transparent;
+}
+[data-bs-theme="light"] .cfb-pill:hover { border-color: rgba(0,0,0,0.28); color: #212529; }
+[data-bs-theme="light"] .cfb-pill.p-on { background: rgba(13,110,253,0.10); border-color: rgba(13,110,253,0.4); color: #0d6efd; }
+[data-bs-theme="light"] .cfb-pill.s-ab  { background: rgba(25,135,84,0.10); border-color: rgba(25,135,84,0.4);  color: #198754; }
+[data-bs-theme="light"] .cfb-pill.s-fe  { background: rgba(108,117,125,0.10); border-color: rgba(108,117,125,0.4); color: #495057; }
+[data-bs-theme="light"] .cfb-pill.s-ex  { background: rgba(255,153,0,0.10); border-color: rgba(255,153,0,0.4); color: #cc6200; }
+[data-bs-theme="light"] .cfb-pill.s-nex { background: rgba(220,53,69,0.08); border-color: rgba(220,53,69,0.35); color: #dc3545; }
+[data-bs-theme="light"] .cfb-pill.t-call { background: rgba(13,110,253,0.10); border-color: rgba(13,110,253,0.35); color: #0d6efd; }
+[data-bs-theme="light"] .cfb-pill.t-put  { background: rgba(111,66,193,0.10); border-color: rgba(111,66,193,0.35); color: #6f42c1; }
+[data-bs-theme="light"] .cfb-pill.a-on   { background: rgba(255,153,0,0.12); border-color: rgba(255,153,0,0.45); color: #cc6200; }
+[data-bs-theme="light"] .cfb-sel {
+  background: var(--bs-body-bg, #fff);
+  border: 1px solid rgba(0,0,0,0.18);
+  color: #495057;
+}
+[data-bs-theme="light"] .cfb-sel:hover, [data-bs-theme="light"] .cfb-sel:focus { border-color: rgba(0,0,0,0.35); color: #212529; }
+[data-bs-theme="light"] .cfb-totals {
+  background: rgba(0,0,0,0.015);
+  border-bottom: 1px solid rgba(0,0,0,0.07);
+}
+[data-bs-theme="light"] .cfb-tag-b { background: rgba(13,110,253,0.08); color: #0d6efd; border: 1px solid rgba(13,110,253,0.25); }
+[data-bs-theme="light"] .cfb-tag-g { background: rgba(25,135,84,0.08); color: #198754; border: 1px solid rgba(25,135,84,0.25); }
+[data-bs-theme="light"] .cfb-tag-r { background: rgba(108,117,125,0.08); color: #495057; border: 1px solid rgba(108,117,125,0.20); }
+[data-bs-theme="light"] .cfb-tag-a { background: rgba(255,153,0,0.10); color: #cc6200; border: 1px solid rgba(255,153,0,0.30); }
+[data-bs-theme="light"] .cfb-msel-btn { border: 1px solid rgba(0,0,0,0.14); color: #6c757d; background: transparent; }
+[data-bs-theme="light"] .cfb-msel-btn:hover { border-color: rgba(0,0,0,0.28); color: #212529; }
+[data-bs-theme="light"] .cfb-msel-btn.has-sel { background: rgba(25,135,84,0.10); border-color: rgba(25,135,84,0.4); color: #198754; }
+[data-bs-theme="light"] .cfb-msel-panel { background: #fff; border: 1px solid rgba(0,0,0,0.14); box-shadow: 0 4px 20px rgba(0,0,0,.12); }
+[data-bs-theme="light"] .cfb-msel-item { color: #495057; }
+[data-bs-theme="light"] .cfb-msel-item:hover { background: rgba(0,0,0,.04); color: #212529; }
+[data-bs-theme="light"] .cfb-msel-chk { accent-color: #198754; }
 `;
 
     let cssInjected = false;
@@ -173,9 +288,11 @@
 
     function createState(overrides) {
         return Object.assign({
-            period: '7d',
+            period: 'semana',
             status: null,
             tipo: null,
+            statusList: ['aberta', 'fechada'],
+            tipoList: ['CALL', 'PUT'],
             asset: null,
             corretora: null,
             dateFrom: null,
@@ -196,6 +313,13 @@
         const now = new Date();
         now.setHours(0, 0, 0, 0);
         if (period === 'today') return dt >= now;
+        if (period === 'semana') {
+            var dow = now.getDay();
+            var mon = new Date(now);
+            mon.setDate(now.getDate() - (dow === 0 ? 6 : dow - 1));
+            mon.setHours(0, 0, 0, 0);
+            return dt >= mon;
+        }
         if (period === '7d')  { const t = new Date(now); t.setDate(t.getDate() - 7); return dt >= t; }
         if (period === '15d') { const t = new Date(now); t.setDate(t.getDate() - 15); return dt >= t; }
         if (period === '30d') { const t = new Date(now); t.setDate(t.getDate() - 30); return dt >= t; }
@@ -225,7 +349,26 @@
                 if (c !== state.corretora.toUpperCase()) return false;
             }
 
-            if (state.status) {
+            if (Array.isArray(state.statusList) && state.statusList.length > 0) {
+                const s = (op.status || '').toLowerCase();
+                const matchStatus = state.statusList.some(function (sv) {
+                    if (sv === 'exercida') {
+                        const isEx = global.CryptoExerciseStatus
+                            ? global.CryptoExerciseStatus.isActuallyExercised(op)
+                            : (s === 'fechada' && (op.exercicio_status || '').toUpperCase() === 'SIM');
+                        return isEx;
+                    }
+                    if (sv === 'nao_exercida') {
+                        if (s === 'aberta') return false;
+                        const isEx = global.CryptoExerciseStatus
+                            ? global.CryptoExerciseStatus.isActuallyExercised(op)
+                            : (s === 'fechada' && (op.exercicio_status || '').toUpperCase() === 'SIM');
+                        return !isEx;
+                    }
+                    return s === sv.toLowerCase();
+                });
+                if (!matchStatus) return false;
+            } else if (state.status) {
                 const s = (op.status || '').toLowerCase();
                 if (state.status === 'exercida') {
                     const isEx = global.CryptoExerciseStatus
@@ -243,11 +386,67 @@
                 }
             }
 
-            if (state.tipo && (op.tipo || '').toUpperCase() !== state.tipo.toUpperCase()) return false;
+            if (Array.isArray(state.tipoList) && state.tipoList.length > 0) {
+                if (!state.tipoList.some(function (t) { return (op.tipo || '').toUpperCase() === t.toUpperCase(); })) return false;
+            } else if (state.tipo) {
+                if ((op.tipo || '').toUpperCase() !== state.tipo.toUpperCase()) return false;
+            }
+
             if (state.asset && getAsset(op.ativo) !== state.asset) return false;
             return true;
         });
     }
+
+    // ── Multi-select helpers ─────────────────────────────────────────────────
+    var _STATUS_OPTS = [
+        { v: 'aberta',      l: 'Abertas' },
+        { v: 'fechada',     l: 'Fechadas' },
+        { v: 'exercida',    l: 'Exercidas' },
+        { v: 'nao_exercida', l: 'Não exercidas' },
+    ];
+    var _TIPO_OPTS = [
+        { v: 'CALL', l: 'Call' },
+        { v: 'PUT',  l: 'Put' },
+    ];
+
+    function _msLabel(list, allOpts) {
+        if (!list || list.length === 0) return 'Nenhum';
+        return list.map(function (v) {
+            var found = allOpts.filter(function (o) { return o.v === v; })[0];
+            return found ? found.l.charAt(0) : v.charAt(0);
+        }).join(', ');
+    }
+
+    function _syncCompat(state) {
+        var sl = state.statusList;
+        if (!Array.isArray(sl) || sl.length === 0 || sl.length === _STATUS_OPTS.length) {
+            state.status = null;
+        } else if (sl.length === 1) {
+            state.status = sl[0];
+        } else {
+            state.status = null; // multi — consumers devem usar statusList
+        }
+        var tl = state.tipoList;
+        if (!Array.isArray(tl) || tl.length === 0 || tl.length === _TIPO_OPTS.length) {
+            state.tipo = null;
+        } else if (tl.length === 1) {
+            state.tipo = tl[0];
+        } else {
+            state.tipo = null;
+        }
+    }
+
+    function _updateMsBtn(barEl, group, list, allOpts) {
+        var msel = barEl.querySelector('[data-cfb-ms="' + group + '"]');
+        if (!msel) return;
+        var btn = msel.querySelector('.cfb-msel-btn');
+        if (!btn) return;
+        var lbl = _msLabel(list, allOpts);
+        btn.innerHTML = lbl + ' <span class="cfb-msel-arrow">▾</span>';
+        var isAll = list.length === allOpts.length || list.length === 0;
+        btn.classList.toggle('has-sel', !isAll);
+    }
+    // ─────────────────────────────────────────────────────────────────────────
 
     const SVG_REFRESH = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M3 12a9 9 0 0 1 15.74-6.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.74 6.74L3 16"/><path d="M3 21v-5h5"/></svg>';
     const SVG_CLOSE = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
@@ -283,22 +482,26 @@
         injectCSS();
         const cfg = config || {};
         const state = cfg.state || createState();
-        const openAs = Array.isArray(cfg.openAssets) ? cfg.openAssets : [];
         const allAs = Array.isArray(cfg.allAssets) ? cfg.allAssets : [];
         const barId = cfg.id || 'cfbFilterBar';
 
         const periods = [
-            { v: 'all', l: 'Todos' },
-            { v: 'today', l: 'Hoje' },
-            { v: '7d', l: '7d' },
-            { v: '30d', l: '30d' },
+            { v: 'all',    l: 'Todos' },
+            { v: 'today',  l: 'Hoje' },
+            { v: 'semana', l: 'Semana' },
+            { v: 'mes',    l: 'Mês' },
         ];
 
         const statuses = [
-            { v: 'aberta', l: 'Abertas', cls: 's-ab' },
-            { v: 'fechada', l: 'Fechadas', cls: 's-fe' },
-            { v: 'exercida', l: 'Exercidas', cls: 's-ex' },
-            { v: 'nao_exercida', l: 'Não Exercidas', cls: 's-nex' },
+            { v: 'aberta',      l: 'Abertas' },
+            { v: 'fechada',     l: 'Fechadas' },
+            { v: 'exercida',    l: 'Exercidas' },
+            { v: 'nao_exercida', l: 'Não exercidas' },
+        ];
+
+        const tipos = [
+            { v: 'CALL', l: 'Call' },
+            { v: 'PUT',  l: 'Put' },
         ];
 
         let html = `<div class="cfb-bar" id="${barId}">`;
@@ -317,18 +520,38 @@
         }
 
         if (cfg.showStatus !== false) {
+            var statusList = Array.isArray(state.statusList) ? state.statusList : [];
+            var statusLabel = _msLabel(statusList, statuses);
+            var statusHasSel = statusList.length > 0 && statusList.length < statuses.length;
             html += '<span class="cfb-bar-lbl">STATUS:</span>';
+            html += '<div class="cfb-msel" data-cfb-ms="status">';
+            html += '<button class="cfb-msel-btn' + (statusHasSel ? ' has-sel' : '') + '" type="button">';
+            html += statusLabel + ' <span class="cfb-msel-arrow">▾</span>';
+            html += '</button>';
+            html += '<div class="cfb-msel-panel">';
             statuses.forEach(function (s) {
-                const selected = state.status === s.v;
-                html += `<button class="cfb-pill${selected ? ' ' + s.cls : ''}" data-cfb-s="${s.v}">${s.l}</button>`;
+                var chk = statusList.indexOf(s.v) !== -1;
+                html += '<label class="cfb-msel-item"><input type="checkbox" class="cfb-msel-chk" data-cfb-msc="status" value="' + s.v + '"' + (chk ? ' checked' : '') + '> ' + s.l + '</label>';
             });
+            html += '</div></div>';
             html += '<div class="cfb-sep"></div>';
         }
 
         if (cfg.showTipo !== false) {
+            var tipoList = Array.isArray(state.tipoList) ? state.tipoList : [];
+            var tipoLabel = _msLabel(tipoList, tipos);
+            var tipoHasSel = tipoList.length > 0 && tipoList.length < tipos.length;
             html += '<span class="cfb-bar-lbl">TIPO:</span>';
-            html += `<button class="cfb-pill${state.tipo === 'CALL' ? ' t-call' : ''}" data-cfb-t="CALL">CALL</button>`;
-            html += `<button class="cfb-pill${state.tipo === 'PUT' ? ' t-put' : ''}" data-cfb-t="PUT">PUT</button>`;
+            html += '<div class="cfb-msel" data-cfb-ms="tipo">';
+            html += '<button class="cfb-msel-btn' + (tipoHasSel ? ' has-sel' : '') + '" type="button">';
+            html += tipoLabel + ' <span class="cfb-msel-arrow">▾</span>';
+            html += '</button>';
+            html += '<div class="cfb-msel-panel">';
+            tipos.forEach(function (t) {
+                var chk = tipoList.indexOf(t.v) !== -1;
+                html += '<label class="cfb-msel-item"><input type="checkbox" class="cfb-msel-chk" data-cfb-msc="tipo" value="' + t.v + '"' + (chk ? ' checked' : '') + '> ' + t.l + '</label>';
+            });
+            html += '</div></div>';
             html += '<div class="cfb-sep"></div>';
         }
 
@@ -376,12 +599,41 @@
 </div>`;
     }
 
+    // Calcula dateFrom/dateTo para o período selecionado (ISO YYYY-MM-DD)
+    function _periodToDates(period) {
+        var now = new Date();
+        var pad = function(n) { return String(n).padStart(2, '0'); };
+        var toIso = function(d) { return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()); };
+        var today = toIso(now);
+        if (period === 'today') {
+            return { from: today, to: today };
+        }
+        if (period === 'semana') {
+            var dow = now.getDay();
+            var mon = new Date(now);
+            mon.setDate(now.getDate() - (dow === 0 ? 6 : dow - 1));
+            return { from: toIso(mon), to: today };
+        }
+        if (period === 'mes') {
+            var first = new Date(now.getFullYear(), now.getMonth(), 1);
+            return { from: toIso(first), to: today };
+        }
+        if (period === 'all') {
+            return { from: null, to: null };
+        }
+        return { from: null, to: null };
+    }
+
     function _openCustomPeriodSwal(state, barEl, emit) {
         if (typeof window.Swal === 'undefined') {
             console.warn('[CryptoFilterBar] SweetAlert2 não carregado');
             return;
         }
         var fmtInput = function(d) { return d || ''; };
+        // Pré-popula datas com base no período ativo, se não houver custom já definido
+        var preload = (state.period !== 'custom' || (!state.dateFrom && !state.dateTo))
+            ? _periodToDates(state.period)
+            : { from: state.dateFrom, to: state.dateTo };
         window.Swal.fire({
             title: 'Defina o período',
             icon: 'warning',
@@ -392,13 +644,13 @@
             reverseButtons: true,
             html: '<div style="text-align:left;margin-top:.5rem;">' +
                     '<label style="display:block;font-size:.78rem;color:#a0b0c8;margin-bottom:.3rem;">Data início</label>' +
-                    '<input id="cfb-swal-from" type="date" value="' + fmtInput(state.dateFrom) + '" ' +
+                    '<input id="cfb-swal-from" type="date" value="' + fmtInput(preload.from) + '" ' +
                     'style="width:100%;background:#1e2a3d;border:1px solid #334560;border-radius:6px;' +
                     'color:#e8f0f8;padding:.4rem .7rem;font-size:.82rem;font-family:Inter,sans-serif;outline:none;box-sizing:border-box;">' +
                   '</div>' +
                   '<div style="text-align:left;margin-top:.75rem;">' +
                     '<label style="display:block;font-size:.78rem;color:#a0b0c8;margin-bottom:.3rem;">Data Fim</label>' +
-                    '<input id="cfb-swal-to" type="date" value="' + fmtInput(state.dateTo) + '" ' +
+                    '<input id="cfb-swal-to" type="date" value="' + fmtInput(preload.to) + '" ' +
                     'style="width:100%;background:#1e2a3d;border:1px solid #334560;border-radius:6px;' +
                     'color:#e8f0f8;padding:.4rem .7rem;font-size:.82rem;font-family:Inter,sans-serif;outline:none;box-sizing:border-box;">' +
                   '</div>',
@@ -439,7 +691,34 @@
         };
 
         el.addEventListener('click', function (e) {
-            const btn = e.target.closest('[data-cfb-p],[data-cfb-s],[data-cfb-t],[data-cfb-a]');
+            // Clique no botão do multi-select → abrir/fechar painel
+            var msBtn = e.target.closest('.cfb-msel-btn');
+            if (msBtn && el.contains(msBtn)) {
+                var msel = msBtn.closest('.cfb-msel');
+                var isOpen = msel.classList.contains('open');
+                el.querySelectorAll('.cfb-msel.open').forEach(function (m) { m.classList.remove('open'); });
+                if (!isOpen) {
+                    msel.classList.add('open');
+                    // Posiciona o painel com position:fixed para escapar do overflow do pai
+                    var panel = msel.querySelector('.cfb-msel-panel');
+                    if (panel) {
+                        var rect = msBtn.getBoundingClientRect();
+                        panel.style.top  = (rect.bottom + 5) + 'px';
+                        panel.style.left = rect.left + 'px';
+                    }
+                }
+                e.stopPropagation();
+                return;
+            }
+
+            // Clique dentro do painel — não fecha (só stop propagation)
+            var msPanel = e.target.closest('.cfb-msel-panel');
+            if (msPanel) {
+                e.stopPropagation();
+                return;
+            }
+
+            const btn = e.target.closest('[data-cfb-p],[data-cfb-a]');
             if (!btn) return;
 
             if (btn.hasAttribute('data-cfb-p')) {
@@ -457,29 +736,6 @@
                 return;
             }
 
-            if (btn.hasAttribute('data-cfb-s')) {
-                const v = btn.getAttribute('data-cfb-s');
-                const same = state.status === v;
-                state.status = same ? null : v;
-                el.querySelectorAll('[data-cfb-s]').forEach(function (b) { b.classList.remove('s-ab', 's-fe', 's-ex', 's-nex'); });
-                if (!same) {
-                    const map = { aberta: 's-ab', fechada: 's-fe', exercida: 's-ex', nao_exercida: 's-nex' };
-                    btn.classList.add(map[v] || '');
-                }
-                emit();
-                return;
-            }
-
-            if (btn.hasAttribute('data-cfb-t')) {
-                const v = btn.getAttribute('data-cfb-t');
-                const same = state.tipo === v;
-                state.tipo = same ? null : v;
-                el.querySelectorAll('[data-cfb-t]').forEach(function (b) { b.classList.remove('t-call', 't-put'); });
-                if (!same) btn.classList.add(v === 'CALL' ? 't-call' : 't-put');
-                emit();
-                return;
-            }
-
             if (btn.hasAttribute('data-cfb-a')) {
                 const v = btn.getAttribute('data-cfb-a');
                 const same = state.asset === v;
@@ -492,9 +748,47 @@
             }
         });
 
+        // Handler de change — inclui checkboxes (que borbulham pelo DOM, não pela posição visual)
+        function onDocChange(e) {
+            var target = e.target;
+            if (!target) return;
+            if (!target.classList.contains('cfb-msel-chk')) return;
+            // Verifica se o checkbox pertence a um cfb-msel dentro de el
+            var msel = target.closest('.cfb-msel');
+            if (!msel || !el.contains(msel)) return;
+
+            var group = target.getAttribute('data-cfb-msc');
+            var value = target.value;
+            if (group === 'status') {
+                if (!Array.isArray(state.statusList)) state.statusList = [];
+                if (target.checked) {
+                    if (state.statusList.indexOf(value) === -1) state.statusList.push(value);
+                } else {
+                    state.statusList = state.statusList.filter(function (v) { return v !== value; });
+                }
+                _syncCompat(state);
+                _updateMsBtn(el, 'status', state.statusList, _STATUS_OPTS);
+                emit();
+            } else if (group === 'tipo') {
+                if (!Array.isArray(state.tipoList)) state.tipoList = [];
+                if (target.checked) {
+                    if (state.tipoList.indexOf(value) === -1) state.tipoList.push(value);
+                } else {
+                    state.tipoList = state.tipoList.filter(function (v) { return v !== value; });
+                }
+                _syncCompat(state);
+                _updateMsBtn(el, 'tipo', state.tipoList, _TIPO_OPTS);
+                emit();
+            }
+        }
+        if (el._cfbOnDocChange) document.removeEventListener('change', el._cfbOnDocChange);
+        el._cfbOnDocChange = onDocChange;
+        document.addEventListener('change', onDocChange);
+
         el.addEventListener('change', function (e) {
             const target = e.target;
             if (!target) return;
+            if (target.classList.contains('cfb-msel-chk')) return; // tratado pelo onDocChange
 
             if (target.hasAttribute('data-cfb-a-sel')) {
                 state.asset = target.value || null;
@@ -510,6 +804,13 @@
                 emit();
             }
         });
+
+        // Fechar dropdowns ao clicar fora
+        if (el._cfbCloseDropdowns) document.removeEventListener('click', el._cfbCloseDropdowns);
+        el._cfbCloseDropdowns = function () {
+            el.querySelectorAll('.cfb-msel.open').forEach(function (m) { m.classList.remove('open'); });
+        };
+        document.addEventListener('click', el._cfbCloseDropdowns);
     }
 
     function updateTime(id) {

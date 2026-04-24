@@ -23,22 +23,8 @@
 }
 
 /* =========================================
-   Badges HIGH / LOW
+   Badges HIGH / LOW — movido para crypto-shared.css (seção 1)
    ========================================= */
-.crypto-badge-high {
-    background-color: #2fb344;
-    color: #fff;
-    min-width: 50px;
-    font-weight: 700;
-    letter-spacing: 0.03em;
-}
-.crypto-badge-low {
-    background-color: #d63939;
-    color: #fff;
-    min-width: 50px;
-    font-weight: 700;
-    letter-spacing: 0.03em;
-}
 
 /* =========================================
    Simulador de Retorno

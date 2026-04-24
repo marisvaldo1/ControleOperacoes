@@ -4,22 +4,8 @@
  * Tema: amber/gold + zonas de risco coloridas
  */
 
-/* ═══ Badge tipo HIGH/LOW ═══════════════════════════════════════════════════ */
-.crypto-badge-high {
-    background-color: var(--bs-success-bg-subtle, #d1e7dd);
-    color: var(--bs-success-text-emphasis, #0a3622);
-    border: 1px solid var(--bs-success-border-subtle, #a3cfbb);
-    font-size: 0.78rem;
-    padding: 3px 8px;
-}
-
-.crypto-badge-low {
-    background-color: var(--bs-danger-bg-subtle, #f8d7da);
-    color: var(--bs-danger-text-emphasis, #842029);
-    border: 1px solid var(--bs-danger-border-subtle, #f1aeb5);
-    font-size: 0.78rem;
-    padding: 3px 8px;
-}
+/* ═══ Badge HIGH/LOW — movido para crypto-shared.css ═══════════════════════ */
+/* (ver frontend/css/crypto/crypto-shared.css seção 1) */
 
 /* ═══ Header do Modal — Redesign v2.1.0 ════════════════════════════════════ */
 #modalDetalhesCrypto .modal-header {
@@ -538,4 +524,12 @@
     background: rgba(0,0,0,0.06);
     border: 1px solid rgba(0,0,0,0.10);
 }
+/* Info rows */
+[data-bs-theme="light"] .mdc-info-row {
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+/* Countdown box */
+[data-bs-theme="light"] .mdc-countdown-box { background: rgba(0,0,0,0.02); }
+/* Loading overlay */
+[data-bs-theme="light"] .ma-loading-overlay { background: rgba(255,255,255,0.75); }
 

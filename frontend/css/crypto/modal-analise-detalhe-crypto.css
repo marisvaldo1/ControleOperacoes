@@ -514,3 +514,14 @@
 [data-bs-theme="light"] .mac-status-banner-title { color: rgba(0,0,0,.85); }
 [data-bs-theme="light"] .mac-status-banner-sub   { color: rgba(0,0,0,.55); }
 [data-bs-theme="light"] .mac-status-banner.is-closed { background: rgba(0,0,0,.05); }
+
+/* Elementos adicionais não cobertos anteriormente */
+[data-bs-theme="light"] .mac-ret-pct-lbl   { color: rgba(0,0,0,.50); }
+[data-bs-theme="light"] .mac-ret-risk-desc  { color: rgba(0,0,0,.55); }
+[data-bs-theme="light"] .mac-ret-divider    { background: rgba(0,0,0,.07); }
+[data-bs-theme="light"] .mac-ret-risk {
+    background: rgba(0,0,0,.02);
+    border: 1px solid var(--mac-ret-accent);
+}
+[data-bs-theme="light"] .mac-ret-seg        { background: rgba(0,0,0,.09); }
+[data-bs-theme="light"] .mac-ret-risk-bar   { background: rgba(0,0,0,.14); }

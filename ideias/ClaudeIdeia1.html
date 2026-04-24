@@ -1,0 +1,430 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d1117;--bg2:#161b27;--bg3:#1e2436;--bg4:#252c40;
+  --border:#2a3050;--border2:#353d5e;
+  --gold:#c9a227;--gold2:#e8c060;
+  --green1:#0d4a2a;--green2:#135e35;--green3:#1a7a42;--green4:#21a058;--green5:#27c078;
+  --red1:#4a1515;--red2:#6b1e1e;--red3:#8b2a2a;
+  --text:#dde2f0;--muted:#7a85a0;--accent:#4f7cde;
+  --none:#1a1d2e;
+}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;line-height:1.4}
+
+.header{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 16px}
+.header-top{display:flex;align-items:center;gap:10px;padding:10px 0 8px}
+.header-top .title{font-size:14px;font-weight:500;color:var(--gold)}
+.dot{width:7px;height:7px;border-radius:50%;background:#27c078;display:inline-block}
+.filters{display:flex;align-items:center;gap:6px;padding-bottom:10px;flex-wrap:wrap}
+.f-btn{padding:4px 12px;border-radius:14px;border:1px solid var(--border2);background:transparent;color:var(--muted);font-size:11px;cursor:pointer}
+.f-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.f-sep{color:var(--border2);font-size:11px}
+.f-label{font-size:11px;color:var(--muted);font-weight:500}
+.f-pill{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:3px 10px;font-size:11px;color:var(--text);display:flex;align-items:center;gap:4px}
+
+.stats-row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;padding:12px 16px;background:var(--bg2);border-bottom:1px solid var(--border)}
+.stat{background:var(--bg3);border-radius:8px;padding:8px 12px}
+.stat-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
+.stat-val{font-size:17px;font-weight:500}
+.stat-sub{font-size:10px;color:var(--muted);margin-top:1px}
+.c-gold{color:var(--gold)}
+.c-green{color:#27c078}
+.c-acc{color:var(--accent)}
+.c-red{color:#e05c5c}
+
+.idea-nav{display:flex;gap:4px;padding:10px 16px;background:var(--bg2);border-bottom:1px solid var(--border);flex-wrap:wrap}
+.idea-btn{padding:4px 11px;border-radius:14px;border:1px solid var(--border2);background:transparent;color:var(--muted);font-size:11px;cursor:pointer;transition:all .18s}
+.idea-btn.active{background:var(--gold);border-color:var(--gold);color:#0d1117}
+.idea-btn:hover:not(.active){border-color:var(--gold);color:var(--gold)}
+.idea-label{font-size:10px;color:var(--muted);padding:10px 16px 0;font-style:italic}
+
+.body{padding:14px 16px}
+.section-title{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.section-title span{font-size:13px;font-weight:500;color:var(--gold)}
+.section-title small{font-size:11px;color:var(--muted)}
+
+.month-header{display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 14px;margin-bottom:8px;cursor:pointer}
+.month-header h4{font-size:12px;font-weight:500;color:var(--text)}
+.month-stats{display:flex;gap:12px}
+.month-stat{font-size:11px;color:var(--muted)}
+.month-stat b{color:var(--text);font-weight:500}
+
+.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;margin-bottom:12px}
+.cal-head{text-align:center;font-size:10px;color:var(--muted);padding:4px 0;font-weight:500}
+
+.day-cell{border-radius:7px;cursor:pointer;position:relative;transition:border-color .15s;border:1px solid transparent;overflow:hidden}
+.day-cell:hover{border-color:rgba(201,162,39,.6)}
+.day-cell.empty{background:transparent;cursor:default;border:none}
+.day-cell.no-op{background:var(--none)}
+
+.day-inner{padding:5px 6px;height:100%}
+.day-num{font-size:11px;font-weight:500;line-height:1;margin-bottom:3px}
+.day-ops{font-size:10px;line-height:1.3}
+.day-total{font-size:11px;font-weight:500;line-height:1}
+.day-bar{height:2px;border-radius:1px;margin-top:3px}
+
+.tooltip-box{position:absolute;z-index:10;background:#1a1d2e;border:1px solid var(--border2);border-radius:8px;padding:8px 10px;font-size:11px;pointer-events:none;min-width:130px;top:calc(100% + 4px);left:50%;transform:translateX(-50%);white-space:nowrap}
+.tooltip-box .tr{display:flex;justify-content:space-between;gap:12px;padding:1px 0}
+.tooltip-box .tl{color:var(--muted)}
+.tooltip-box .tv{color:var(--text);font-weight:500}
+
+.legend{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted)}
+.leg-swatch{width:12px;height:12px;border-radius:3px}
+
+.chart-wrap{position:relative;width:100%}
+
+.mini-bars{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:12px}
+.mini-bar-col{display:flex;flex-direction:column;align-items:center;gap:2px}
+.mini-bar-track{width:100%;background:var(--bg3);border-radius:2px;overflow:hidden;position:relative}
+.mini-bar-fill{width:100%;border-radius:2px}
+.mini-bar-label{font-size:9px;color:var(--muted)}
+
+.week-row{display:flex;align-items:stretch;gap:4px;margin-bottom:4px}
+.week-label{width:40px;font-size:10px;color:var(--muted);display:flex;align-items:center}
+</style>
+
+<div class="header">
+  <div class="header-top">
+    <span style="font-size:16px">🔥</span>
+    <span class="title">Dashboard Avançado de Performance · Crypto</span>
+    <span class="dot"></span>
+    <span style="font-size:11px;color:var(--muted);margin-left:auto">Atualizado: 09:40</span>
+  </div>
+  <div class="filters">
+    <button class="f-btn active">Todos</button>
+    <button class="f-btn">Hoje</button>
+    <button class="f-btn">Semana</button>
+    <button class="f-btn">Mês</button>
+    <button class="f-btn">Período</button>
+    <span class="f-sep">|</span>
+    <span class="f-label">STATUS:</span>
+    <div class="f-pill"><span>A, F</span><span style="color:var(--muted)">▾</span></div>
+    <span class="f-label">TIPO:</span>
+    <div class="f-pill">C, P</div>
+    <span class="f-label">MOEDA:</span>
+    <div class="f-pill">Todas <span style="color:var(--muted)">▾</span></div>
+    <span class="f-label">CORRETORA:</span>
+    <div class="f-pill">Todas <span style="color:var(--muted)">▾</span></div>
+  </div>
+</div>
+
+<div class="stats-row">
+  <div class="stat"><div class="stat-label">Prêmios totais</div><div class="stat-val c-gold">$560,09</div><div class="stat-sub">acumulado</div></div>
+  <div class="stat"><div class="stat-label">Operações</div><div class="stat-val c-acc">74</div><div class="stat-sub">total</div></div>
+  <div class="stat"><div class="stat-label">Win rate</div><div class="stat-val c-green">97,3%</div><div class="stat-sub">fechadas</div></div>
+  <div class="stat"><div class="stat-label">Melhor dia</div><div class="stat-val c-green">$33,00</div><div class="stat-sub">18/03</div></div>
+  <div class="stat"><div class="stat-label">Média/dia</div><div class="stat-val">$10,42</div><div class="stat-sub">dias ativos</div></div>
+</div>
+
+<div class="idea-nav">
+  <button class="idea-btn active" onclick="setIdea(1)">1 Célula rica</button>
+  <button class="idea-btn" onclick="setIdea(2)">2 Mini-barra</button>
+  <button class="idea-btn" onclick="setIdea(3)">3 Compacto + tooltip</button>
+  <button class="idea-btn" onclick="setIdea(4)">4 Semanas laterais</button>
+  <button class="idea-btn" onclick="setIdea(5)">5 Intensidade + sparkline</button>
+  <button class="idea-btn" onclick="setIdea(6)">6 Grade dupla</button>
+  <button class="idea-btn" onclick="setIdea(7)">7 Lista + heatmap</button>
+</div>
+<div class="idea-label" id="idea-desc">Células com dia, operações, total e barra proporcional visível dentro do calendário</div>
+
+<div class="body" id="main-body"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const marData={
+  1:{ops:1,total:1.59},2:{ops:0,total:0},3:{ops:0,total:0},4:{ops:0,total:0},5:{ops:0,total:0},6:{ops:0,total:0},
+  7:{ops:0,total:0},8:{ops:0,total:0},9:{ops:0,total:0},10:{ops:0,total:0},11:{ops:1,total:1.74},
+  12:{ops:2,total:4.99},13:{ops:2,total:2.85},14:{ops:0,total:0},15:{ops:0,total:0},
+  16:{ops:2,total:7.28},17:{ops:4,total:28.26},18:{ops:2,total:33.00},19:{ops:2,total:26.55},
+  20:{ops:3,total:18.92},21:{ops:0,total:0},22:{ops:0,total:0},23:{ops:2,total:13.20},
+  24:{ops:2,total:2.93},25:{ops:2,total:4.66},26:{ops:2,total:7.56},27:{ops:2,total:1.75},
+  28:{ops:0,total:0},29:{ops:0,total:0},30:{ops:0,total:0},31:{ops:1,total:0.78}
+};
+const aprData={
+  1:{ops:4,total:21.57},2:{ops:3,total:18.42},3:{ops:2,total:9.80},4:{ops:0,total:0},
+  5:{ops:0,total:0},6:{ops:2,total:8.10},7:{ops:3,total:14.30},8:{ops:2,total:11.20},
+  9:{ops:4,total:22.80},10:{ops:2,total:7.40},11:{ops:0,total:0},12:{ops:0,total:0},
+  13:{ops:5,total:31.50},14:{ops:2,total:6.90},15:{ops:3,total:13.20},16:{ops:2,total:9.60},
+  17:{ops:4,total:18.90},18:{ops:0,total:0},19:{ops:0,total:0},20:{ops:3,total:24.70},
+  21:{ops:2,total:10.10},22:{ops:4,total:19.80},23:{ops:3,total:15.40}
+};
+const maxAll=Math.max(...Object.values({...marData,...aprData}).map(d=>d.total));
+
+function cellColor(total){
+  if(total<=0)return'var(--none)';
+  const p=total/maxAll;
+  if(p>0.85)return'#1a5c38';
+  if(p>0.6)return'#145030';
+  if(p>0.35)return'#0f3e24';
+  if(p>0.15)return'#0a2d1a';
+  return'#081f12';
+}
+function barColor(total){
+  if(total<=0)return'#2a3050';
+  const p=total/maxAll;
+  if(p>0.85)return'#27c078';
+  if(p>0.6)return'#1d9e60';
+  if(p>0.35)return'#157a48';
+  if(p>0.15)return'#0e5630';
+  return'#093d21';
+}
+function fmt(v){return'$'+v.toFixed(2).replace('.',',')}
+function monthStart(y,m){return new Date(y,m-1,1).getDay()||7}
+function daysIn(y,m){return new Date(y,m,0).getDate()}
+
+let activeIdea=1;
+let activeChart=null;
+
+function setIdea(n){
+  activeIdea=n;
+  document.querySelectorAll('.idea-btn').forEach((b,i)=>b.classList.toggle('active',i===n-1));
+  const descs=['Células com dia, operações, total e barra proporcional visível dentro do calendário',
+    'Mini-barra de altura variável em cada célula — volume visível de relance',
+    'Células compactas com número + total; tooltip rico aparece no hover',
+    'Semanas indexadas na lateral esquerda para referência rápida',
+    'Gradiente de intensidade + sparkline de evolução acumulada abaixo do calendário',
+    'Duas colunas: heatmap + tabela-resumo de dias ativos lado a lado',
+    'Heatmap compacto + lista dos top dias ordenada por prêmio'];
+  document.getElementById('idea-desc').textContent=descs[n-1];
+  render();
+}
+
+function buildCal(year,month,data,mode){
+  const start=monthStart(year,month);
+  const days=daysIn(year,month);
+  const head=['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
+  let h=head.map(d=>`<div class="cal-head">${d}</div>`).join('');
+  let cells='';
+  for(let i=1;i<start;i++) cells+=`<div class="day-cell empty"></div>`;
+  for(let d=1;d<=days;d++){
+    const info=data[d]||{ops:0,total:0};
+    const hasOp=info.ops>0;
+    const bg=cellColor(info.total);
+    const bc=barColor(info.total);
+    const pct=maxAll>0?(info.total/maxAll*100).toFixed(1):0;
+    if(mode===1){
+      cells+=`<div class="day-cell${hasOp?'':' no-op'}" style="background:${bg}" title="${d}/${month}">
+        <div class="day-inner">
+          <div class="day-num" style="color:${hasOp?'#e8f0dc':'var(--muted)'}">${d}</div>
+          ${hasOp?`<div class="day-ops" style="color:#8fba6a">${info.ops} op${info.ops>1?'s':''}</div>
+          <div class="day-total" style="color:#c5e89a">${fmt(info.total)}</div>
+          <div class="day-bar" style="background:${bc};width:${pct}%"></div>`:''}
+        </div>
+      </div>`;
+    } else if(mode===2){
+      const bh=hasOp?Math.max(6,Math.round(info.total/maxAll*36)):0;
+      cells+=`<div class="day-cell${hasOp?'':' no-op'}" style="background:${bg};min-height:52px" title="${d}/${month}">
+        <div class="day-inner" style="display:flex;flex-direction:column;justify-content:flex-end;height:52px;padding:4px 5px">
+          ${hasOp?`<div style="width:100%;height:${bh}px;background:${bc};border-radius:2px;margin-bottom:3px"></div>`:''}
+          <div style="font-size:10px;font-weight:500;color:${hasOp?'#c5e89a':'var(--muted)'};">${d}</div>
+          ${hasOp?`<div style="font-size:9px;color:#8fba6a">${fmt(info.total)}</div>`:''}
+        </div>
+      </div>`;
+    } else if(mode===3){
+      cells+=`<div class="day-cell${hasOp?'':' no-op'}" style="background:${bg};position:relative" onmouseenter="showTip(this,${d},${month},${info.ops},'${fmt(info.total)}',${info.ops>0?info.total/info.ops:0})" onmouseleave="hideTip(this)">
+        <div class="day-inner" style="text-align:center;padding:6px 2px">
+          <div style="font-size:12px;font-weight:500;color:${hasOp?'#e8f0dc':'var(--muted)'};">${d}</div>
+          ${hasOp?`<div style="font-size:10px;color:#c5e89a;margin-top:1px">${fmt(info.total)}</div>`:''}
+        </div>
+      </div>`;
+    } else if(mode===4){
+      cells+=`<div class="day-cell${hasOp?'':' no-op'}" style="background:${bg}">
+        <div class="day-inner">
+          <div style="font-size:11px;font-weight:500;color:${hasOp?'#e8f0dc':'var(--muted)'};">${d}</div>
+          ${hasOp?`<div style="font-size:9px;color:#8fba6a;margin-top:1px">${info.ops}x</div>
+          <div style="font-size:10px;color:#c5e89a">${fmt(info.total)}</div>`:''}
+        </div>
+      </div>`;
+    } else {
+      cells+=`<div class="day-cell${hasOp?'':' no-op'}" style="background:${bg}">
+        <div class="day-inner">
+          <div style="font-size:11px;font-weight:500;color:${hasOp?'#e8f0dc':'var(--muted)'};">${d}</div>
+          ${hasOp?`<div style="font-size:9px;color:#8fba6a">${info.ops}x</div>
+          <div style="font-size:10px;color:#c5e89a">${fmt(info.total)}</div>`:''}
+        </div>
+      </div>`;
+    }
+  }
+  return `<div class="cal-grid">${h}${cells}</div>`;
+}
+
+function buildCalWeeks(year,month,data){
+  const start=monthStart(year,month);
+  const days=daysIn(year,month);
+  const head=['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
+  let html=`<div style="display:flex;gap:3px;margin-bottom:3px"><div style="width:38px"></div>${head.map(d=>`<div style="flex:1;text-align:center;font-size:10px;color:var(--muted);padding:3px 0">${d}</div>`).join('')}</div>`;
+  let week=1, col=start-1;
+  let row=`<div class="week-row"><div class="week-label">S${week}</div>`;
+  for(let i=1;i<start;i++) row+=`<div style="flex:1"></div>`;
+  for(let d=1;d<=days;d++){
+    const info=data[d]||{ops:0,total:0};
+    const hasOp=info.ops>0;
+    const bg=cellColor(info.total);
+    const bc=barColor(info.total);
+    row+=`<div style="flex:1;background:${bg};border-radius:6px;padding:4px 5px;min-height:54px;border:1px solid transparent" onmouseenter="this.style.borderColor='rgba(201,162,39,.5)'" onmouseleave="this.style.borderColor='transparent'">
+      <div style="font-size:11px;font-weight:500;color:${hasOp?'#e8f0dc':'var(--muted)'};">${d}</div>
+      ${hasOp?`<div style="font-size:9px;color:#8fba6a;margin-top:1px">${info.ops} op${info.ops>1?'s':''}</div>
+      <div style="font-size:10px;color:#c5e89a">${fmt(info.total)}</div>
+      <div style="height:2px;background:${bc};border-radius:1px;margin-top:3px"></div>`:''}
+    </div>`;
+    col++;
+    if(col===7&&d<days){col=0;week++;html+=row+'</div>';row=`<div class="week-row"><div class="week-label">S${week}</div>`;}
+  }
+  while(col<7&&col>0){row+=`<div style="flex:1"></div>`;col++;}
+  html+=row+'</div>';
+  return html;
+}
+
+function showTip(el,d,m,ops,total,media){
+  if(ops===0)return;
+  let t=el.querySelector('.tooltip-box');
+  if(!t){
+    t=document.createElement('div');t.className='tooltip-box';
+    t.innerHTML=`<div class="tr"><span class="tl">Data</span><span class="tv">${d}/${m}</span></div>
+      <div class="tr"><span class="tl">Operações</span><span class="tv" style="color:#4f7cde">${ops}</span></div>
+      <div class="tr"><span class="tl">Total prêmios</span><span class="tv" style="color:#27c078">${total}</span></div>
+      <div class="tr"><span class="tl">Média/op</span><span class="tv">${'$'+parseFloat(media).toFixed(2).replace('.',',')}</span></div>`;
+    el.appendChild(t);
+  }
+}
+function hideTip(el){const t=el.querySelector('.tooltip-box');if(t)t.remove();}
+
+function monthSummary(data){
+  const days=Object.values(data).filter(d=>d.ops>0);
+  const total=days.reduce((s,d)=>s+d.total,0);
+  const ops=days.reduce((s,d)=>s+d.ops,0);
+  return{total,ops,dias:days.length};
+}
+
+function sparkline(data,canvasId){
+  const entries=Object.entries(data).filter(([,v])=>v.ops>0).sort((a,b)=>+a[0]-+b[0]);
+  let acc=0;
+  const vals=entries.map(([,v])=>{acc+=v.total;return parseFloat(acc.toFixed(2));});
+  const labels=entries.map(([d])=>d);
+  return`<div style="position:relative;height:80px;margin-top:8px">
+    <canvas id="${canvasId}" role="img" aria-label="Evolução acumulada do mês">${vals[vals.length-1]||0}</canvas>
+  </div>
+  <script>new Chart(document.getElementById('${canvasId}'),{type:'line',data:{labels:${JSON.stringify(labels)},datasets:[{data:${JSON.stringify(vals)},borderColor:'#c9a227',borderWidth:1.5,fill:true,backgroundColor:'rgba(201,162,39,.1)',tension:.4,pointRadius:2,pointBackgroundColor:'#c9a227'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{display:false},y:{display:false}}}})}<\/script>`;
+}
+
+function topDays(data,month,n){
+  return Object.entries(data).filter(([,v])=>v.ops>0).sort((a,b)=>b[1].total-a[1].total).slice(0,n).map(([d,v],i)=>{
+    const cols=['#c9a227','#8890aa','#cd7f32'];
+    const c=cols[i]||'#4f7cde';
+    return`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:11px;color:${c};min-width:14px;font-weight:500">${i+1}</span>
+      <span style="font-size:11px;color:var(--muted);min-width:50px">${d}/${month}</span>
+      <div style="flex:1;height:4px;background:var(--bg3);border-radius:2px;overflow:hidden">
+        <div style="height:100%;width:${(v.total/maxAll*100).toFixed(1)}%;background:${c};border-radius:2px"></div>
+      </div>
+      <span style="font-size:11px;color:#c5e89a;min-width:52px;text-align:right;font-weight:500">${fmt(v.total)}</span>
+      <span style="font-size:10px;color:var(--muted);min-width:28px;text-align:right">${v.ops}x</span>
+    </div>`;
+  }).join('');
+}
+
+function legend(){
+  return`<div class="legend">
+    <div class="leg-item"><div class="leg-swatch" style="background:#1a5c38"></div>Alto (&gt;60%)</div>
+    <div class="leg-item"><div class="leg-swatch" style="background:#0f3e24"></div>Médio</div>
+    <div class="leg-item"><div class="leg-swatch" style="background:#081f12"></div>Baixo</div>
+    <div class="leg-item"><div class="leg-swatch" style="background:var(--none)"></div>Sem operação</div>
+  </div>`;
+}
+
+function monthBlock(title,year,month,data,calHtml,extra){
+  const s=monthSummary(data);
+  return`<div style="margin-bottom:16px">
+    <div class="month-header">
+      <h4>${title}</h4>
+      <div class="month-stats">
+        <span class="month-stat"><b style="color:#27c078">${fmt(s.total)}</b> prêmios</span>
+        <span class="month-stat"><b style="color:#4f7cde">${s.ops}</b> operações</span>
+        <span class="month-stat"><b>${s.dias}</b> dias ativos</span>
+        <span class="month-stat">méd <b>${fmt(s.total/Math.max(s.dias,1))}</b>/dia</span>
+      </div>
+    </div>
+    ${calHtml}
+    ${extra||''}
+  </div>`;
+}
+
+function render(){
+  if(activeChart){activeChart.destroy();activeChart=null;}
+  const b=document.getElementById('main-body');
+  const m=activeIdea;
+  let html='';
+  html+=`<div class="section-title"><span>Heatmap de Performance Diária</span><small>Verde = Lucro · Vermelho = Prejuízo</small></div>`;
+
+  if(m===1){
+    html+=monthBlock('Março 2026',2026,3,marData,buildCal(2026,3,marData,1));
+    html+=monthBlock('Abril 2026',2026,4,aprData,buildCal(2026,4,aprData,1));
+    html+=legend();
+  } else if(m===2){
+    html+=monthBlock('Março 2026',2026,3,marData,buildCal(2026,3,marData,2));
+    html+=monthBlock('Abril 2026',2026,4,aprData,buildCal(2026,4,aprData,2));
+    html+=legend();
+  } else if(m===3){
+    html+=`<div style="font-size:10px;color:var(--muted);margin-bottom:8px">Passe o mouse sobre os dias ativos para ver o detalhe completo.</div>`;
+    html+=monthBlock('Março 2026',2026,3,marData,buildCal(2026,3,marData,3));
+    html+=monthBlock('Abril 2026',2026,4,aprData,buildCal(2026,4,aprData,3));
+    html+=legend();
+  } else if(m===4){
+    html+=monthBlock('Março 2026',2026,3,marData,buildCalWeeks(2026,3,marData));
+    html+=monthBlock('Abril 2026',2026,4,aprData,buildCalWeeks(2026,4,aprData));
+    html+=legend();
+  } else if(m===5){
+    html+=monthBlock('Março 2026',2026,3,marData,buildCal(2026,3,marData,1),sparkline(marData,'sp1'));
+    html+=monthBlock('Abril 2026',2026,4,aprData,buildCal(2026,4,aprData,1),sparkline(aprData,'sp2'));
+    html+=legend();
+  } else if(m===6){
+    const s3=monthSummary(marData);
+    const s4=monthSummary(aprData);
+    html+=`<div style="display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:12px;margin-bottom:14px">
+      <div>
+        ${monthBlock('Março 2026',2026,3,marData,buildCal(2026,3,marData,1))}
+        ${monthBlock('Abril 2026',2026,4,aprData,buildCal(2026,4,aprData,1))}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px">
+          <div style="font-size:11px;font-weight:500;color:var(--gold);margin-bottom:8px">Top dias · Março</div>
+          ${topDays(marData,3,5)}
+        </div>
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px">
+          <div style="font-size:11px;font-weight:500;color:var(--gold);margin-bottom:8px">Top dias · Abril</div>
+          ${topDays(aprData,4,5)}
+        </div>
+      </div>
+    </div>`;
+    html+=legend();
+  } else if(m===7){
+    const s3=monthSummary(marData);
+    const s4=monthSummary(aprData);
+    html+=`<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin-bottom:14px">
+      <div>
+        ${monthBlock('Março',2026,3,marData,buildCal(2026,3,marData,3))}
+      </div>
+      <div>
+        ${monthBlock('Abril',2026,4,aprData,buildCal(2026,4,aprData,3))}
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px">
+        <div style="font-size:11px;font-weight:500;color:var(--gold);margin-bottom:8px">Ranking março</div>
+        ${topDays(marData,3,8)}
+      </div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px">
+        <div style="font-size:11px;font-weight:500;color:var(--gold);margin-bottom:8px">Ranking abril</div>
+        ${topDays(aprData,4,8)}
+      </div>
+    </div>`;
+    html+=`<div style="margin-top:8px">${legend()}</div>`;
+  }
+
+  b.innerHTML=html;
+}
+
+render();
+</script>

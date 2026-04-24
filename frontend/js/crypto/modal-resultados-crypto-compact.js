@@ -21,8 +21,12 @@
     let _period  = 'today';
     let _statusF = null;
     let _tipoF   = null;
+    let _statusList = null; // array multi-select
+    let _tipoList   = null; // array multi-select
     let _assetF  = null; // filtro de ativo (BTC, ETH, etc.)
     let _corrF   = null; // filtro de corretora ('BINANCE' | 'BYBIT' | null)
+    let _dateFrom = null; // filtro custom: data início (YYYY-MM-DD)
+    let _dateTo   = null; // filtro custom: data fim   (YYYY-MM-DD)
     let _bsModal = null;
     let _charts  = {};
     let _selIdx  = 0;   // índice da operação selecionada para o gauge row
@@ -107,6 +111,15 @@
         const dt  = new Date(d.split('T')[0] + 'T00:00:00');
         const now = new Date(); now.setHours(0,0,0,0);
         if (p === 'today') return dt >= now;
+        if (p === 'semana') { const dow = now.getDay(); const mon = new Date(now); mon.setDate(now.getDate() - (dow === 0 ? 6 : dow - 1)); return dt >= mon; }
+        if (p === 'custom') {
+            const s = _dateFrom ? new Date(_dateFrom + 'T00:00:00') : null;
+            const e = _dateTo   ? new Date(_dateTo   + 'T23:59:59') : null;
+            if (!s && !e) return true;
+            if (s && dt < s) return false;
+            if (e && dt > e) return false;
+            return true;
+        }
         if (p === '7d')  { const t = new Date(now); t.setDate(t.getDate()-7);  return dt >= t; }
         if (p === '30d') { const t = new Date(now); t.setDate(t.getDate()-30); return dt >= t; }
         if (p === 'mes') { const t = new Date(now.getFullYear(), now.getMonth(), 1); return dt >= t; }
@@ -119,10 +132,28 @@
             const c = (op.corretora || 'BINANCE').toUpperCase();
             if (c !== _corrF) return false;
         }
-        if (_statusF) {
+        if (_statusList && _statusList.length > 0) {
+            const s = (op.status || '').toLowerCase();
+            const matchStatus = _statusList.some(sv => {
+                if (sv === 'exercida') {
+                    const isEx = window.CryptoExerciseStatus
+                        ? window.CryptoExerciseStatus.isActuallyExercised(op)
+                        : (s === 'fechada' && (op.exercicio_status || '').toUpperCase() === 'SIM');
+                    return isEx;
+                }
+                if (sv === 'nao_exercida') {
+                    if (s === 'aberta') return false;
+                    const isEx = window.CryptoExerciseStatus
+                        ? window.CryptoExerciseStatus.isActuallyExercised(op)
+                        : (s === 'fechada' && (op.exercicio_status || '').toUpperCase() === 'SIM');
+                    return !isEx;
+                }
+                return s === sv.toLowerCase();
+            });
+            if (!matchStatus) return false;
+        } else if (_statusF) {
             const s = (op.status || '').toLowerCase();
             if (_statusF === 'exercida') {
-                // Usa função global unificada — ABERTA nunca é exercida
                 const isEx = window.CryptoExerciseStatus
                     ? window.CryptoExerciseStatus.isActuallyExercised(op)
                     : (s === 'fechada' && (op.exercicio_status || '').toUpperCase() === 'SIM');
@@ -135,7 +166,9 @@
                 if (isEx) return false;
             } else if (s !== _statusF.toLowerCase()) return false;
         }
-        if (_tipoF   && (op.tipo||'').toUpperCase()   !== _tipoF.toUpperCase())   return false;
+        if (_tipoList && _tipoList.length > 0) {
+            if (!_tipoList.some(t => (op.tipo||'').toUpperCase() === t.toUpperCase())) return false;
+        } else if (_tipoF && (op.tipo||'').toUpperCase() !== _tipoF.toUpperCase()) return false;
         if (_assetF  && getAsset(op.ativo)            !== _assetF)                return false;
         return true;
     });
@@ -662,10 +695,14 @@
             actionId:      'btnResultadosCryptoDetalhado',
             onFilter: state => {
                 _period  = state.period;
-                _statusF = state.status;
-                _tipoF   = state.tipo;
+                _statusF    = state.status;
+                _tipoF      = state.tipo;
+                _statusList = Array.isArray(state.statusList) ? state.statusList : null;
+                _tipoList   = Array.isArray(state.tipoList)   ? state.tipoList   : null;
                 _assetF  = state.asset;
                 _corrF   = state.corretora;
+                _dateFrom = state.dateFrom || null;
+                _dateTo   = state.dateTo   || null;
                 _selIdx  = 0;
                 render();
             },

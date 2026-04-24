@@ -1381,3 +1381,277 @@
     color: #c9d1d9;
     letter-spacing: .04em;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   LIGHT THEME OVERRIDES — modal-analise.css
+   Todos os seletores prefixados com [data-bs-theme="light"]
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Estrutura principal ──────────────────────────────────────────────── */
+[data-bs-theme="light"] .ma-modal-content {
+    background: var(--bs-body-bg, #fff);
+    border: 1px solid rgba(0,0,0,0.12);
+}
+[data-bs-theme="light"] .ma-header {
+    background: var(--bs-body-bg, #fff);
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+[data-bs-theme="light"] .ma-title { color: var(--bs-body-color, #212529); }
+[data-bs-theme="light"] .ma-filter-bar {
+    background: rgba(0,0,0,0.02);
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+[data-bs-theme="light"] .ma-body { background: var(--bs-body-bg, #fff); }
+[data-bs-theme="light"] .ma-left {
+    background: rgba(0,0,0,0.02);
+    border-right: 1px solid rgba(0,0,0,0.08);
+}
+
+/* ── Filtros e botões ─────────────────────────────────────────────────── */
+[data-bs-theme="light"] .ma-filter-btn {
+    background: rgba(0,0,0,0.04);
+    border: 1px solid rgba(0,0,0,0.12);
+    color: #6c757d;
+}
+[data-bs-theme="light"] .ma-filter-btn:hover {
+    background: rgba(0,0,0,0.08);
+    color: #212529;
+}
+[data-bs-theme="light"] .ma-refresh-btn {
+    background: rgba(0,0,0,0.04);
+    border: 1px solid rgba(0,0,0,0.12);
+    color: #6c757d;
+}
+[data-bs-theme="light"] .ma-refresh-btn:hover {
+    background: rgba(0,0,0,0.08);
+    color: #212529;
+}
+[data-bs-theme="light"] .ma-sort-btn {
+    background: rgba(0,0,0,0.04);
+    border: 1px solid rgba(0,0,0,0.12);
+    color: #6c757d;
+}
+[data-bs-theme="light"] .ma-sort-btn:hover {
+    background: rgba(0,0,0,0.08);
+    color: #212529;
+}
+
+/* ── Tabs ─────────────────────────────────────────────────────────────── */
+[data-bs-theme="light"] .ma-tab-nav {
+    background: rgba(0,0,0,0.02);
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+[data-bs-theme="light"] .ma-tab-btn { color: #6c757d; }
+[data-bs-theme="light"] .ma-tab-btn:hover {
+    background: rgba(0,0,0,0.06);
+    color: #212529;
+}
+[data-bs-theme="light"] .ma-tab-btn.active {
+    background: var(--bs-body-bg, #fff);
+    border-color: rgba(0,0,0,0.12);
+    border-bottom-color: var(--bs-body-bg, #fff);
+}
+
+/* ── Donut e métricas esquerda ────────────────────────────────────────── */
+[data-bs-theme="light"] .ma-donut-label { color: #6c757d; }
+[data-bs-theme="light"] .ma-donut-sub   { color: #adb5bd; }
+[data-bs-theme="light"] .ma-left .ma-section-title  { color: #6c757d; }
+[data-bs-theme="light"] .ma-right .ma-section-title { color: #6c757d; }
+[data-bs-theme="light"] .ma-roi-label   { color: #6c757d; }
+[data-bs-theme="light"] .ma-right-sub   { color: #6c757d; }
+
+/* ── Tipo list ────────────────────────────────────────────────────────── */
+[data-bs-theme="light"] .ma-tipo-item {
+    background: rgba(0,0,0,0.02);
+    border: 1px solid rgba(0,0,0,0.08);
+}
+[data-bs-theme="light"] .ma-tipo-name  { color: #212529; }
+[data-bs-theme="light"] .ma-tipo-value { color: #212529; }
+[data-bs-theme="light"] .ma-tipo-bar-wrap { background: rgba(0,0,0,0.09); }
+
+/* ── Métricas ─────────────────────────────────────────────────────────── */
+[data-bs-theme="light"] .ma-metric-row {
+    background: rgba(0,0,0,0.02);
+    border: 1px solid rgba(0,0,0,0.08);
+}
+[data-bs-theme="light"] .ma-metric-label { color: #6c757d; }
+
+/* ── Footer summary ───────────────────────────────────────────────────── */
+[data-bs-theme="light"] .ma-footer-summary {
+    background: rgba(0,0,0,0.02);
+    border: 1px solid rgba(0,0,0,0.08);
+}
+[data-bs-theme="light"] .ma-summary-item   { border-right: 1px solid rgba(0,0,0,0.08); }
+[data-bs-theme="light"] .ma-summary-value  { color: #212529; }
+[data-bs-theme="light"] .ma-summary-label  { color: #6c757d; }
+
+/* ── Distribuição ─────────────────────────────────────────────────────── */
+[data-bs-theme="light"] .ma-dist-name     { color: #212529; }
+[data-bs-theme="light"] .ma-dist-bar-wrap { background: rgba(0,0,0,0.07); }
+
+/* ── Operações list ───────────────────────────────────────────────────── */
+[data-bs-theme="light"] .ma-ops-empty { color: #6c757d; }
+[data-bs-theme="light"] .ma-op-item {
+    background: rgba(0,0,0,0.02);
+    border: 1px solid rgba(0,0,0,0.08);
+}
+[data-bs-theme="light"] .ma-op-item:hover { border-color: rgba(0,0,0,0.18); }
+[data-bs-theme="light"] .ma-op-nome       { color: #212529; }
+[data-bs-theme="light"] .ma-op-meta       { color: #6c757d; }
+[data-bs-theme="light"] .ma-op-meta strong { color: #495057; }
+[data-bs-theme="light"] .ma-op-bar-wrap   { background: rgba(0,0,0,0.07); }
+
+/* ── Badges neutros ───────────────────────────────────────────────────── */
+[data-bs-theme="light"] .ma-badge-outro {
+    background: rgba(0,0,0,0.05);
+    border: 1px solid rgba(0,0,0,0.12);
+    color: #6c757d;
+}
+[data-bs-theme="light"] .ma-badge-fechada {
+    background: rgba(0,0,0,0.04);
+    border: 1px solid rgba(0,0,0,0.10);
+    color: #6c757d;
+}
+
+/* ── Position cards ───────────────────────────────────────────────────── */
+[data-bs-theme="light"] .ma-pos-container { background: var(--bs-body-bg, #fff); }
+[data-bs-theme="light"] .ma-pos-empty     { color: #6c757d; }
+[data-bs-theme="light"] .ma-pos-summary {
+    background: rgba(0,0,0,0.02);
+    border: 1px solid rgba(0,0,0,0.08);
+}
+[data-bs-theme="light"] .ma-pos-sumval   { color: #212529; }
+[data-bs-theme="light"] .ma-pos-sumlbl   { color: #6c757d; }
+[data-bs-theme="light"] .ma-pos-chart-card {
+    background: rgba(0,0,0,0.02);
+    border: 1px solid rgba(0,0,0,0.08);
+}
+[data-bs-theme="light"] .ma-pos-chart-title { color: #6c757d; }
+[data-bs-theme="light"] .ma-poscard {
+    background: rgba(0,0,0,0.02);
+    border: 1px solid rgba(0,0,0,0.09);
+}
+[data-bs-theme="light"] .ma-poscard:hover  { border-color: rgba(0,0,0,0.20); }
+[data-bs-theme="light"] .ma-poscard-nome   { color: #212529; }
+[data-bs-theme="light"] .ma-poscard-meta   { color: #6c757d; }
+[data-bs-theme="light"] .ma-poscard-table thead tr th {
+    background: rgba(0,0,0,0.04);
+    color: #6c757d;
+}
+[data-bs-theme="light"] .ma-poscard-table tbody tr td {
+    border-top: 1px solid rgba(0,0,0,0.06);
+    color: #212529;
+}
+[data-bs-theme="light"] .ma-poscard-bar-lbl  { color: #6c757d; }
+[data-bs-theme="light"] .ma-poscard-progress { background: rgba(0,0,0,0.08); }
+[data-bs-theme="light"] .ma-poscard-ind {
+    background: rgba(0,0,0,0.02);
+    border: 1px solid rgba(0,0,0,0.08);
+}
+[data-bs-theme="light"] .ma-poscard-ind-lbl { color: #6c757d; }
+[data-bs-theme="light"] .ma-poscard-ind-val { color: #212529; }
+
+/* ── Poscard tabs ─────────────────────────────────────────────────────── */
+[data-bs-theme="light"] .ma-poscard-tabs { border-bottom: 1px solid rgba(0,0,0,0.10); }
+[data-bs-theme="light"] .ma-poscard-tab  { color: #6c757d; }
+[data-bs-theme="light"] .ma-poscard-tab:hover {
+    color: #212529;
+    background: rgba(0,0,0,0.05);
+}
+[data-bs-theme="light"] .ma-poscard-tab.active {
+    background: rgba(0,0,0,0.03);
+    border-color: rgba(0,0,0,0.12);
+    border-bottom-color: transparent;
+}
+
+/* ── KPI rows dentro dos cards ────────────────────────────────────────── */
+[data-bs-theme="light"] .ma-pos-kpi {
+    background: rgba(0,0,0,0.02);
+    border: 1px solid rgba(0,0,0,0.09);
+}
+[data-bs-theme="light"] .ma-kpi-lbl { color: #6c757d; }
+[data-bs-theme="light"] .ma-kpi-sub { color: #6c757d; }
+[data-bs-theme="light"] .ma-pos-kpi-sm { background: rgba(0,0,0,0.03); }
+[data-bs-theme="light"] .ma-kpi-sm-val { color: #212529; }
+[data-bs-theme="light"] .ma-kpi-sm-lbl { color: #6c757d; }
+
+/* ── Mid row: comparativo + payoff ───────────────────────────────────── */
+[data-bs-theme="light"] .ma-pos-section-title { color: #6c757d; }
+[data-bs-theme="light"] .ma-pos-comparativo-wrap,
+[data-bs-theme="light"] .ma-pos-payoff-wrap {
+    background: rgba(0,0,0,0.02);
+    border: 1px solid rgba(0,0,0,0.08);
+}
+[data-bs-theme="light"] .ma-comp-table thead tr th {
+    color: #6c757d;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+[data-bs-theme="light"] .ma-comp-table tbody tr td {
+    color: #212529;
+    border-bottom: 1px solid rgba(0,0,0,0.04);
+}
+[data-bs-theme="light"] .ma-comp-table tbody tr td:first-child { color: #6c757d; }
+[data-bs-theme="light"] .ma-payoff-stat { color: #6c757d; }
+
+/* ── Probabilidade ────────────────────────────────────────────────────── */
+[data-bs-theme="light"] .ma-pos-prob-section {
+    background: rgba(0,0,0,0.02);
+    border: 1px solid rgba(0,0,0,0.08);
+}
+[data-bs-theme="light"] .ma-pos-prob-bar    { background: rgba(0,0,0,0.09); }
+[data-bs-theme="light"] .ma-pos-prob-labels { color: #6c757d; }
+
+/* ── Bottom cards ─────────────────────────────────────────────────────── */
+[data-bs-theme="light"] .ma-pos-bottom-card {
+    background: rgba(0,0,0,0.02);
+    border: 1px solid rgba(0,0,0,0.08);
+}
+[data-bs-theme="light"] .ma-kv-row { border-bottom: 1px solid rgba(0,0,0,0.04); }
+[data-bs-theme="light"] .ma-kv-row span:first-child { color: #6c757d; }
+[data-bs-theme="light"] .ma-kv-row span:last-child  { color: #212529; }
+
+/* ── Gauge e risco ────────────────────────────────────────────────────── */
+[data-bs-theme="light"] .ma-gauge-wrap {
+    background: rgba(0,0,0,0.02);
+    border: 1px solid rgba(0,0,0,0.08);
+}
+[data-bs-theme="light"] .ma-gauge-val { color: #212529; }
+[data-bs-theme="light"] .ma-gauge-sub { color: #6c757d; }
+[data-bs-theme="light"] .ma-risk-lbl  { color: #6c757d; }
+[data-bs-theme="light"] .ma-risk-val  { color: #212529; }
+[data-bs-theme="light"] .ma-risk-sub  { color: #6c757d; }
+
+/* ── Evolução ─────────────────────────────────────────────────────────── */
+[data-bs-theme="light"] .ma-pos-evo-chart-wrap {
+    background: rgba(0,0,0,0.02);
+    border: 1px solid rgba(0,0,0,0.08);
+}
+[data-bs-theme="light"] .ma-milestone-lbl { color: #6c757d; }
+[data-bs-theme="light"] .ma-milestone-val { color: #212529; }
+[data-bs-theme="light"] .ma-milestone-sub { color: #6c757d; }
+
+/* ── Seção wrap (evolução/risco) ──────────────────────────────────────── */
+[data-bs-theme="light"] .ma-pos-section-wrap {
+    background: rgba(0,0,0,0.02);
+    border: 1px solid rgba(0,0,0,0.09);
+}
+[data-bs-theme="light"] .ma-pos-section-hdr {
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+[data-bs-theme="light"] .ma-pos-section-hdr strong { color: #212529; }
+
+/* ── Scrollbars ───────────────────────────────────────────────────────── */
+[data-bs-theme="light"] .ma-ops-list::-webkit-scrollbar-track,
+[data-bs-theme="light"] .ma-pos-container::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.04);
+}
+[data-bs-theme="light"] .ma-ops-list::-webkit-scrollbar-thumb,
+[data-bs-theme="light"] .ma-pos-container::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,0.18);
+}
+
+/* ── Spinner ──────────────────────────────────────────────────────────── */
+[data-bs-theme="light"] .ma-spin-cell {
+    border: 2px solid rgba(0,0,0,0.12);
+    border-top-color: #4d9de0;
+}

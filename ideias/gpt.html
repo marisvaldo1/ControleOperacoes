@@ -1,95 +1,531 @@
-<!DOCTYPE html>
-<html lang="pt-br">
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel de Investimentos</title>
-    <style>
-        body {
-            background-color: #141414;
-            color: white;
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: space-around;
-            height: 100vh;
-            margin: 0;
-        }
-        .gauge-container {
-            display: flex;
-            justify-content: space-around;
-            width: 80%;
-        }
-        .gauge {
-            width: 300px;
-            height: 150px;
-            margin: 20px;
-        }
-        .info-text {
-            font-size: 18px;
-            color: #00a6ed;
-            text-align: center;
-            margin-top: 20px;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ideias - Heatmap Performance Crypto</title>
+  <style>
+    :root {
+      --bg: #0f1b2d;
+      --panel: #14253b;
+      --panel-2: #182b44;
+      --line: #2a3f5c;
+      --txt: #dfe9f7;
+      --muted: #8da2bf;
+      --green-high: #1fbf8f;
+      --green-mid: #149f78;
+      --green-low: #0f6f60;
+      --empty: #2b3f59;
+      --amber: #f0b429;
+      --red: #d45555;
+      --chip: #101f35;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: radial-gradient(circle at top, #162842 0%, var(--bg) 45%);
+      color: var(--txt);
+      font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+      padding: 18px;
+    }
+
+    .page {
+      max-width: 1440px;
+      margin: 0 auto;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      background: #102137;
+    }
+
+    .header {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      background: #15263f;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .title {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: .2px;
+    }
+
+    .dot { color: #29d48f; }
+
+    .note {
+      padding: 10px 14px;
+      background: #12253e;
+      color: #9fb4d2;
+      border-bottom: 1px solid var(--line);
+      font-size: 13px;
+    }
+
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--line);
+      background: #13253d;
+    }
+
+    .pill {
+      border: 1px solid #2f4766;
+      border-radius: 999px;
+      padding: 5px 10px;
+      color: #9eb3cf;
+      background: transparent;
+      font-size: 12px;
+    }
+
+    .pill.active {
+      color: #58c8f0;
+      border-color: #4a87aa;
+      background: rgba(65, 138, 171, .2);
+      font-weight: 600;
+    }
+
+    .lbl {
+      color: #7892b2;
+      font-size: 12px;
+      font-weight: 700;
+      margin-left: 8px;
+    }
+
+    select {
+      background: #1a2f4c;
+      border: 1px solid #2c4564;
+      color: #a8bdd8;
+      border-radius: 6px;
+      padding: 5px 9px;
+      font-size: 12px;
+      min-width: 110px;
+    }
+
+    .totals {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--line);
+      background: #101f35;
+    }
+
+    .chip {
+      background: var(--chip);
+      border: 1px solid #28405f;
+      color: #8eb3d4;
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .chip.premium {
+      color: var(--amber);
+      border-color: #654e1a;
+      background: #2f2410;
+    }
+
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      background: #11243b;
+    }
+
+    .tab {
+      border: 1px solid #385276;
+      color: #9eb7d4;
+      background: #162c48;
+      border-radius: 8px;
+      padding: 7px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .tab.active {
+      border-color: #5ca8c8;
+      color: #d8f0ff;
+      background: #1b3a5b;
+    }
+
+    .content { padding: 14px; }
+    .idea { display: none; }
+    .idea.active { display: block; }
+
+    .section-title {
+      font-size: 24px;
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+
+    .section-sub {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 14px;
+    }
+
+    .heatmap-wrap {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: linear-gradient(180deg, #152a45 0%, #12253d 100%);
+      padding: 12px;
+    }
+
+    .weekdays, .grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+    }
+
+    .weekdays div {
+      color: #8ea4c3;
+      font-size: 11px;
+      text-align: center;
+      padding: 4px 0;
+      font-weight: 600;
+    }
+
+    .day {
+      border-radius: 6px;
+      border: 1px solid #23405a;
+      min-height: 82px;
+      padding: 6px 8px;
+      background: var(--empty);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    .day.no-data { border-color: #2b425f; background: var(--empty); }
+    .day.low { background: #155851; border-color: #1b6f6a; }
+    .day.mid { background: #147161; border-color: #1b8a7a; }
+    .day.high { background: #16967a; border-color: #22b08f; }
+
+    .d-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 700;
+      font-size: 12px;
+    }
+
+    .d-mid, .d-bot {
+      font-size: 11px;
+      color: #d7e6fa;
+      line-height: 1.2;
+    }
+
+    .d-mid span, .d-bot span {
+      color: #a6bed8;
+      font-weight: 600;
+      margin-right: 4px;
+    }
+
+    .d-bot strong { color: #ffd26b; }
+
+    .legend {
+      margin-top: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      color: #a4bad5;
+      font-size: 12px;
+    }
+
+    .k {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border: 1px solid #294564;
+      border-radius: 999px;
+      background: #132844;
+    }
+
+    .sw {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      display: inline-block;
+    }
+
+    .layout-2 {
+      display: grid;
+      grid-template-columns: 1.6fr .9fr;
+      gap: 12px;
+    }
+
+    .side {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #132845;
+      padding: 10px;
+    }
+
+    .side h4 { margin: 0 0 8px; font-size: 13px; color: #c9dff7; }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 7px 0;
+      border-bottom: 1px dashed #2e4766;
+      font-size: 12px;
+    }
+
+    .row:last-child { border-bottom: 0; }
+    .muted { color: #8ca4c2; }
+
+    .layout-3 .day {
+      min-height: 64px;
+      padding: 6px;
+    }
+
+    .layout-3 .d-mid, .layout-3 .d-bot {
+      font-size: 10px;
+    }
+
+    .rank {
+      margin-top: 10px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #12253f;
+      padding: 10px;
+    }
+
+    .rank-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .rank-card {
+      border: 1px solid #2e4969;
+      border-radius: 8px;
+      background: #17314f;
+      padding: 8px;
+      font-size: 12px;
+    }
+
+    .rank-card strong { color: #ffd26b; }
+
+    @media (max-width: 1100px) {
+      .layout-2 { grid-template-columns: 1fr; }
+      .rank-grid { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body>
-    <div class="gauge-container">
-        <!-- Cotação Atual (Gauge) -->
-        <div id="gauge1" class="gauge"></div>
-        <!-- Prêmio Recebido (Gauge) -->
-        <div id="gauge2" class="gauge"></div>
-        <!-- Prêmio Atual (Gauge) -->
-        <div id="gauge3" class="gauge"></div>
-    </div>
-    <div class="gauge-container">
-        <!-- Distância do Strike (Gauge) -->
-        <div id="gauge4" class="gauge"></div>
-        <!-- % Atual do Prêmio (Gauge) -->
-        <div id="gauge5" class="gauge"></div>
+  <div class="page">
+    <div class="header">
+      <div class="title">🔥 Dashboard Avançado de Performance · Crypto <span class="dot">●</span></div>
+      <div style="font-size:12px;color:#8ba6c8;">Atualizado: 09:35</div>
     </div>
 
-    <div class="info-text">
-        <p><strong>Data de Exercício:</strong> 2026-03-10</p>
-        <p><strong>Tempo Restante:</strong> 2 dias</p>
-        <p><strong>Recomendação:</strong> Fechar operação.</p>
+    <div class="note">
+      Observação: o valor "24" no grid atual provavelmente representa o <strong>dia do mês</strong> (24), não dia da semana.
     </div>
 
-    <script src="https://bernii.github.io/gauge.js/dist/gauge.min.js"></script>
-    <script>
-        function createGauge(elementId, value) {
-            var opts = {
-                angle: 0.0, lineWidth: 0.3, radiusScale: 1, pointer: {
-                    length: 0.6, strokeWidth: 0.035, color: '#000000'
-                },
-                limitMax: false, limitMin: false, colorStart: '#6FADCF', colorStop: '#8FC0DA',
-                strokeColor: '#E0E0E0', generateGradient: true, highDpiSupport: true,
-                staticZones: [
-                    {strokeStyle: "red", min: 0, max: 25}, 
-                    {strokeStyle: "yellow", min: 25, max: 75}, 
-                    {strokeStyle: "green", min: 75, max: 100}
-                ],
-                staticLabels: {
-                    font: "15px sans-serif", labels: [0, 25, 50, 75, 100], color: "#FFFFFF", fractionDigits: 0
-                },
-                renderTicks: {divisions: 5, divWidth: 1.1, divLength: 0.7, divColor: "#333333", subDivisions: 4, subLength: 0.5, subWidth: 0.6, subColor: "#666666"}
-            };
+    <div class="filters">
+      <button class="pill">Todos</button>
+      <button class="pill">Hoje</button>
+      <button class="pill">Semana</button>
+      <button class="pill active">Mês</button>
+      <button class="pill">Período</button>
+      <span class="lbl">STATUS:</span>
+      <button class="pill active">A, F</button>
+      <span class="lbl">TIPO:</span>
+      <button class="pill">C, P</button>
+      <span class="lbl">MOEDA:</span>
+      <select><option>Todas</option></select>
+      <span class="lbl">CORRETORA:</span>
+      <select><option>Todas</option></select>
+    </div>
 
-            var target = document.getElementById(elementId);
-            var gauge = new Gauge(target).setOptions(opts);
-            gauge.maxValue = 100;
-            gauge.setMinValue(0);
-            gauge.animationSpeed = 32;
-            gauge.set(value);
-        }
+    <div class="totals">
+      <span class="chip">TOTAL 44</span>
+      <span class="chip">ABERTAS 0</span>
+      <span class="chip">FECHADAS 44</span>
+      <span class="chip premium">PRÊMIO US$ 404.03</span>
+    </div>
 
-        // Exemplo de valores para os gauges
-        createGauge('gauge1', 65);  // Cotação Atual
-        createGauge('gauge2', 80);  // Prêmio Recebido
-        createGauge('gauge3', 75);  // Prêmio Atual
-        createGauge('gauge4', 30);  // Distância do Strike
-        createGauge('gauge5', 45);  // % Atual do Prêmio
-    </script>
+    <div class="tabs" id="tabs"></div>
+    <div class="content">
+      <section id="idea-1" class="idea active"></section>
+      <section id="idea-2" class="idea"></section>
+      <section id="idea-3" class="idea"></section>
+      <section id="idea-4" class="idea"></section>
+    </div>
+  </div>
+
+  <script>
+    const weekDays = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
+
+    const days = [
+      { day: 1,  ops: 2, premium: 12.40, level: "low" },
+      { day: 2,  ops: 3, premium: 18.20, level: "mid" },
+      { day: 3,  ops: 1, premium: 9.10,  level: "low" },
+      { day: 4,  ops: 0, premium: 0,     level: "no-data" },
+      { day: 5,  ops: 0, premium: 0,     level: "no-data" },
+      { day: 6,  ops: 1, premium: 8.40,  level: "low" },
+      { day: 7,  ops: 2, premium: 14.60, level: "mid" },
+      { day: 8,  ops: 1, premium: 6.70,  level: "low" },
+      { day: 9,  ops: 3, premium: 24.30, level: "high" },
+      { day: 10, ops: 2, premium: 11.20, level: "low" },
+      { day: 11, ops: 0, premium: 0,     level: "no-data" },
+      { day: 12, ops: 0, premium: 0,     level: "no-data" },
+      { day: 13, ops: 4, premium: 31.80, level: "high" },
+      { day: 14, ops: 2, premium: 15.00, level: "mid" },
+      { day: 15, ops: 2, premium: 13.90, level: "mid" },
+      { day: 16, ops: 1, premium: 6.10,  level: "low" },
+      { day: 17, ops: 3, premium: 20.00, level: "mid" },
+      { day: 18, ops: 0, premium: 0,     level: "no-data" },
+      { day: 19, ops: 0, premium: 0,     level: "no-data" },
+      { day: 20, ops: 4, premium: 36.50, level: "high" },
+      { day: 21, ops: 2, premium: 12.30, level: "mid" },
+      { day: 22, ops: 1, premium: 7.20,  level: "low" },
+      { day: 23, ops: 3, premium: 22.50, level: "mid" },
+      { day: 24, ops: 3, premium: 24.00, level: "mid" }
+    ];
+
+    const tabs = [
+      { id: "idea-1", title: "Ideia 1 · Heatmap Descritivo" },
+      { id: "idea-2", title: "Ideia 2 · Heatmap + Resumo Lateral" },
+      { id: "idea-3", title: "Ideia 3 · Heatmap Compacto" },
+      { id: "idea-4", title: "Ideia 4 · Heatmap + Ranking" }
+    ];
+
+    const BRL = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    function dayCell(d, compact = false) {
+      if (!d) return `<div class="day no-data"></div>`;
+      return `
+        <div class="day ${d.level}">
+          <div class="d-top"><span>Dia ${d.day}</span><span>${d.ops > 0 ? "●" : "-"}</span></div>
+          <div class="d-mid"><span>Ops:</span>${d.ops}</div>
+          <div class="d-bot"><span>Prêmios:</span><strong>US$ ${BRL.format(d.premium)}</strong></div>
+        </div>
+      `;
+    }
+
+    function renderGrid(compact = false) {
+      const cells = [];
+      for (let i = 0; i < 35; i += 1) cells.push(days[i] || null);
+
+      return `
+        <div class="weekdays">${weekDays.map(w => `<div>${w}</div>`).join("")}</div>
+        <div class="grid">${cells.map(d => dayCell(d, compact)).join("")}</div>
+      `;
+    }
+
+    function legend() {
+      return `
+        <div class="legend">
+          <span class="k"><i class="sw" style="background:var(--green-high)"></i>Lucro Alto</span>
+          <span class="k"><i class="sw" style="background:var(--green-mid)"></i>Lucro Médio</span>
+          <span class="k"><i class="sw" style="background:var(--green-low)"></i>Lucro Baixo</span>
+          <span class="k"><i class="sw" style="background:var(--empty)"></i>Sem Operação</span>
+        </div>
+      `;
+    }
+
+    function buildIdea1() {
+      return `
+        <h2 class="section-title">Ideia 1 · Heatmap Descritivo</h2>
+        <div class="section-sub">Cada bloco já mostra o que importa no mês: dia, quantidade de operações e total de prêmios do dia.</div>
+        <div class="heatmap-wrap">
+          ${renderGrid(false)}
+          ${legend()}
+        </div>
+      `;
+    }
+
+    function buildIdea2() {
+      const top3 = [...days].sort((a, b) => b.premium - a.premium).slice(0, 3);
+      const totalOps = days.reduce((acc, d) => acc + d.ops, 0);
+      const totalPremium = days.reduce((acc, d) => acc + d.premium, 0);
+
+      return `
+        <h2 class="section-title">Ideia 2 · Heatmap + Resumo Lateral</h2>
+        <div class="section-sub">Mesma grade principal, com leitura rápida de KPI do período no painel lateral.</div>
+        <div class="layout-2">
+          <div class="heatmap-wrap">${renderGrid(false)}${legend()}</div>
+          <aside class="side">
+            <h4>Resumo do Mês</h4>
+            <div class="row"><span class="muted">Ops no período</span><strong>${totalOps}</strong></div>
+            <div class="row"><span class="muted">Prêmios no período</span><strong>US$ ${BRL.format(totalPremium)}</strong></div>
+            <div class="row"><span class="muted">Média por dia ativo</span><strong>US$ ${BRL.format(totalPremium / days.filter(d => d.ops > 0).length)}</strong></div>
+            <h4 style="margin-top:10px;">Top dias</h4>
+            ${top3.map(d => `<div class="row"><span>Dia ${d.day}</span><strong>US$ ${BRL.format(d.premium)}</strong></div>`).join("")}
+          </aside>
+        </div>
+      `;
+    }
+
+    function buildIdea3() {
+      return `
+        <h2 class="section-title">Ideia 3 · Heatmap Compacto</h2>
+        <div class="section-sub">Versão mais densa para caber mais informação sem perder leitura, ideal para modal menor.</div>
+        <div class="heatmap-wrap layout-3">
+          ${renderGrid(true)}
+          ${legend()}
+        </div>
+      `;
+    }
+
+    function buildIdea4() {
+      const ranked = [...days].sort((a, b) => b.premium - a.premium).slice(0, 6);
+      return `
+        <h2 class="section-title">Ideia 4 · Heatmap + Ranking por Dia</h2>
+        <div class="section-sub">Heatmap para visão espacial + ranking direto de melhores dias para análise rápida.</div>
+        <div class="heatmap-wrap">${renderGrid(false)}${legend()}</div>
+        <div class="rank">
+          <div class="rank-grid">
+            ${ranked.map((d, idx) => `
+              <div class="rank-card">
+                <div><strong>#${idx + 1}</strong> · Dia ${d.day}</div>
+                <div class="muted">${d.ops} operações</div>
+                <div><strong>US$ ${BRL.format(d.premium)}</strong></div>
+              </div>
+            `).join("")}
+          </div>
+        </div>
+      `;
+    }
+
+    document.getElementById("idea-1").innerHTML = buildIdea1();
+    document.getElementById("idea-2").innerHTML = buildIdea2();
+    document.getElementById("idea-3").innerHTML = buildIdea3();
+    document.getElementById("idea-4").innerHTML = buildIdea4();
+
+    const tabsHost = document.getElementById("tabs");
+    tabsHost.innerHTML = tabs
+      .map((t, i) => `<button class="tab ${i === 0 ? "active" : ""}" data-id="${t.id}">${t.title}</button>`)
+      .join("");
+
+    tabsHost.addEventListener("click", (ev) => {
+      const btn = ev.target.closest(".tab");
+      if (!btn) return;
+
+      document.querySelectorAll(".tab").forEach(el => el.classList.remove("active"));
+      btn.classList.add("active");
+
+      const id = btn.getAttribute("data-id");
+      document.querySelectorAll(".idea").forEach(el => el.classList.remove("active"));
+      document.getElementById(id).classList.add("active");
+    });
+  </script>
 </body>
 </html>

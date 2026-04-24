@@ -67,6 +67,8 @@
     let htmlLoading = false;
     let currentOps = [];
     let activePeriod = FILTER_DEFAULTS.period;
+    let activeDateFrom = null; // filtro custom: data início (YYYY-MM-DD)
+    let activeDateTo   = null; // filtro custom: data fim   (YYYY-MM-DD)
     let activeStatus = FILTER_DEFAULTS.status;
     let activeTipo = FILTER_DEFAULTS.tipo;
     let activeAsset = FILTER_DEFAULTS.asset;
@@ -150,7 +152,9 @@
             defaultPeriod: FILTER_DEFAULTS.period,
             closeModalId:  cfg.modalElId,
             onFilter: function (state) {
-                activePeriod = state.period;
+                activePeriod   = state.period;
+                activeDateFrom = state.dateFrom || null;
+                activeDateTo   = state.dateTo   || null;
                 activeStatus = state.status || null;
                 activeTipo   = state.tipo   || null;
                 activeAsset  = state.asset  || null;
@@ -425,6 +429,8 @@
             switch (period) {
                 case 'all': return true;
                 case 'today': return raw.slice(0, 10) === todayStr;
+                case 'semana': { const dow = now.getDay(); const mon = new Date(now); mon.setDate(now.getDate() - (dow === 0 ? 6 : dow - 1)); return d >= mon; }
+                case 'custom': { const s = activeDateFrom ? new Date(activeDateFrom + 'T00:00:00') : null; const e = activeDateTo ? new Date(activeDateTo + 'T23:59:59') : null; if (!s && !e) return true; if (s && d < s) return false; if (e && d > e) return false; return true; }
                 case '7d': return d >= after(7);
                 case '15d': return d >= after(15);
                 case '30d': return d >= after(30);
