@@ -4972,7 +4972,6 @@ function renderSimOpcoesList() {
             <td>
                 ${deltaVal.toFixed(2)}
                 <span style="cursor: pointer; margin-left: 5px;" onclick="event.stopPropagation(); mostrarDetalhesOpcao('${op.ativo}')">📋</span>
-                    <span style="cursor: pointer; margin-left: 5px;" class="mostrar-detalhes-opcao-span" data-ativo="${op.ativo}">📋</span>
             </td>
             <td>${popPercent}</td>
         `;

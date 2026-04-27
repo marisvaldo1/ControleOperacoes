@@ -925,32 +925,122 @@ function renderHistoricoMensal() {
 
 function renderChartAnual(data, year) {
     const grouped = groupByMonth(data);
-    const labels  = [], values = [], colors = [];
+    const months  = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    const monthlyValues = [];
     for (let i = 1; i <= 12; i++) {
         const k = year + "-" + String(i).padStart(2, "0");
         const d = grouped[k] || [];
-        const p = d.reduce((s, o) => s + (parseFloat(o.premio_us) || 0), 0);
-        labels.push(getMonthName(k).slice(0, 3));
-        values.push(p);
-        colors.push(p > 0 ? "rgba(47,179,68,0.75)" : "rgba(100,100,120,0.4)");
+        monthlyValues.push(d.reduce((s, o) => s + (parseFloat(o.premio_us) || 0), 0));
     }
-    const anoTotal = data.reduce((s, o) => s + (parseFloat(o.premio_us) || 0), 0);
+    const anoTotal = monthlyValues.reduce((s, v) => s + v, 0);
     const anoMedio = calcResultadoMedio(data);
+
+    // Métricas para o header
+    const mesesComOps  = monthlyValues.filter(v => v !== 0);
+    const melhorMes    = mesesComOps.length > 0 ? Math.max(...mesesComOps) : 0;
+    const piorMes      = mesesComOps.length > 0 ? Math.min(...mesesComOps) : 0;
+    const totalWins    = data.filter(o => (parseFloat(o.premio_us) || 0) > 0).length;
+    const taxaAcerto   = data.length > 0 ? (totalWins / data.length * 100) : 0;
+
+    // Header com 4 cards estilo opcoes
     const anualHeaderEl = document.getElementById("anualHeader");
     if (anualHeaderEl) {
-        anualHeaderEl.innerHTML = `
-            <div class="col-12 mb-2"><h3 class="d-inline">${year}</h3><span class="ms-2 badge bg-info text-dark">Resultado Anual</span></div>
-            <div class="col-md-3 col-sm-6 mb-2"><div class="text-muted small">Total Operações</div><div class="fw-bold">${data.length}</div></div>
-            <div class="col-md-3 col-sm-6 mb-2"><div class="text-muted small">Prêmio Total</div><div class="fw-bold text-success">${fmtUsd(anoTotal)}</div></div>
-            <div class="col-md-3 col-sm-6 mb-2"><div class="text-muted small">Resultado Médio</div><div class="fw-bold text-success">${anoMedio.toFixed(2)}%</div></div>
-            <div class="col-md-3 col-sm-6 mb-2"><div class="text-muted small">Média por Mês</div><div class="fw-bold">${fmtUsd(anoTotal / 12)}</div></div>`;
+        anualHeaderEl.innerHTML =
+            `<div class="col-md-3 col-sm-6 mb-2">
+                <div class="card card-sm">
+                    <div class="card-body d-flex align-items-center gap-3">
+                        <span class="bg-blue text-white avatar"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
+                        <div>
+                            <div class="text-muted small">Resultado Anual</div>
+                            <div class="fw-bold ${anoTotal >= 0 ? 'text-success' : 'text-danger'}">${fmtUsd(anoTotal)}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-2">
+                <div class="card card-sm">
+                    <div class="card-body d-flex align-items-center gap-3">
+                        <span class="bg-green text-white avatar"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+                        <div>
+                            <div class="text-muted small">Taxa de Acerto</div>
+                            <div class="fw-bold">${taxaAcerto.toFixed(1)}% (${totalWins}/${data.length})</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-2">
+                <div class="card card-sm">
+                    <div class="card-body d-flex align-items-center gap-3">
+                        <span class="bg-blue text-white avatar"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></span>
+                        <div>
+                            <div class="text-muted small">Melhor Mês</div>
+                            <div class="fw-bold text-success">${fmtUsd(melhorMes)}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-2">
+                <div class="card card-sm">
+                    <div class="card-body d-flex align-items-center gap-3">
+                        <span class="bg-red text-white avatar"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg></span>
+                        <div>
+                            <div class="text-muted small">Pior Mês</div>
+                            <div class="fw-bold ${piorMes < 0 ? 'text-danger' : 'text-muted'}">${fmtUsd(piorMes)}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
     }
+
+    // Barra Total azul no final
+    const chartLabels = [...months, 'Total'];
+    const chartData   = [...monthlyValues, anoTotal];
+    const chartColors = chartData.map((v, idx) =>
+        idx === chartData.length - 1 ? '#206bc4' : (v >= 0 ? '#2fb344' : '#d63939')
+    );
+
+    // Tema
+    const isDark    = document.body.getAttribute('data-bs-theme') === 'dark';
+    const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)';
+    const textColor = isDark ? '#c8d3e0' : '#666666';
+
     const ctx = document.getElementById("chartAnual").getContext("2d");
     if (chartAnual) chartAnual.destroy();
     chartAnual = new Chart(ctx, {
         type: "bar",
-        data: { labels, datasets: [{ label: "Premio US$", data: values, backgroundColor: colors, borderRadius: 6 }] },
-        options: { responsive: true, plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => "US$ " + c.parsed.y.toFixed(2) } } }, scales: { y: { beginAtZero: true, ticks: { callback: v => "US$ " + v.toFixed(0) } } } }
+        data: {
+            labels: chartLabels,
+            datasets: [{
+                label: 'Resultado Mensal',
+                data: chartData,
+                backgroundColor: chartColors,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    labels: { color: textColor, font: { size: 12 } }
+                },
+                tooltip: {
+                    callbacks: { label: c => 'US$ ' + c.parsed.y.toFixed(2) }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: gridColor },
+                    ticks: { color: textColor, callback: v => 'US$ ' + v.toFixed(0) }
+                },
+                x: {
+                    grid: { color: gridColor },
+                    ticks: { color: textColor, autoSkip: false, maxRotation: 0, minRotation: 0 }
+                }
+            }
+        }
     });
 
     // ─── Resumo Mensal (padrão opcoes: tabela com barra de progresso) ───────
