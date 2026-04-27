@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="../css/opcoes/modal-resultado-total.css?v=1.1.7">
     <link rel="stylesheet" href="../css/crypto/modal-resultado-total-crypto-v2.css?v=2.1.0">
     <link rel="stylesheet" href="../css/crypto/crypto.css?v=1.3.0">
-    <link rel="stylesheet" href="../css/crypto/modal-total-operacoes-crypto.css?v=1.0.0">
+    <link rel="stylesheet" href="../css/crypto/modal-total-operacoes-crypto.css?v=1.1.0">
     <link rel="stylesheet" href="../css/crypto/modal-detalhe-crypto.css?v=2.6.0">
     <link rel="stylesheet" href="../css/crypto/modal-analise-detalhe-crypto.css?v=1.2.0">
     <link rel="stylesheet" href="../css/crypto/modal-saldo-medio-crypto.css?v=1.0.0">
@@ -437,10 +437,10 @@
     <style>
     /* ── Simulador DI: Split Layout ──────────────────────────────── */
     .sim-split { display: flex; gap: 0; min-height: 520px; }
-    .sim-left  { width: 362px; min-width: 300px; max-width: 340px; flex-shrink: 0;
-                 border-right: 1px solid rgba(255,255,255,.08); padding: 16px 18px;
+    .sim-left  { width: 400px; min-width: 400px; max-width: 400px; flex-shrink: 0;
+                 border-right: 1px solid rgba(255,255,255,.08); padding: 16px 14px;
                  overflow-y: auto; background: transparent; }
-    .sim-right { flex: 1; padding: 14px 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+    .sim-right { flex: 1; min-width: 0; padding: 14px 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
     .sim-left .form-label { font-size: .75rem; margin-bottom: 3px; color: var(--tblr-secondary); }
     .sim-left .form-control,
     .sim-left .form-select { font-size: .82rem; padding: 5px 10px; height: auto; }
@@ -520,6 +520,34 @@
     .sim-left .sim-pop-pct  { font-size:.9rem; }
     /* Reduz min-height do split e chart */
     .sim-split { min-height: 400px !important; }
+    /* Hint de último exercício ao lado do Strike */
+    .sim-strike-hint {
+        display: none; align-items: center; gap: 4px; flex-wrap: nowrap;
+        margin-top: 5px; padding: 4px 7px; border-radius: 6px;
+        background: rgba(245,159,0,.07); border: 1px solid rgba(245,159,0,.18);
+        font-size: .67rem; cursor: default; overflow: hidden; min-width: 0;
+    }
+    .sim-strike-hint.visible { display: flex; }
+    .sim-strike-hint.sim-recovery-profit {
+        background: rgba(47,179,68,.07); border-color: rgba(47,179,68,.22);
+    }
+    .sim-strike-hint.sim-recovery-loss {
+        background: rgba(248,81,73,.07); border-color: rgba(248,81,73,.22);
+    }
+    .sim-strike-hint .ssh-badge {
+        font-size: .6rem; font-weight: 700; padding: 1px 6px; border-radius: 4px;
+        text-transform: uppercase; letter-spacing: .5px; flex-shrink: 0;
+    }
+    .sim-strike-hint .ssh-badge.call { background: rgba(47,179,68,.22); color: #3fb950; }
+    .sim-strike-hint .ssh-badge.put  { background: rgba(248,81,73,.22); color: #f85149; }
+    .sim-strike-hint .ssh-badge.ssh-badge-ref { background: rgba(255,255,255,.08); color: var(--tblr-secondary); }
+    .sim-strike-hint .ssh-lbl  { color: var(--tblr-secondary); white-space: nowrap; }
+    .sim-strike-hint .ssh-date { color: var(--tblr-secondary); white-space: nowrap; }
+    .sim-strike-hint .ssh-sep  { color: rgba(255,255,255,.18); }
+    .sim-strike-hint .ssh-val  {
+        font-family: 'JetBrains Mono', monospace; font-weight: 700;
+        color: #f59f00; margin-left: auto; white-space: nowrap;
+    }
     </style>
     <div class="modal modal-blur fade" id="modalSimuladorCrypto" tabindex="-1">
         <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
@@ -586,6 +614,8 @@
                                 <label class="form-label">Strike (US$)</label>
                                 <input type="number" step="0.01" class="form-control" id="simStrike"
                                        placeholder="Ex: 65000">
+                                <div id="simLastExerciseHint" class="sim-strike-hint" title="Strike da última operação exercida nesse par e tipo"></div>
+                                <div id="simCallRecoveryAlert" class="sim-strike-hint" title="Comparação com última PUT exercida"></div>
                             </div>
                             <div class="row gx-2">
                                 <div class="col-6 mb-field">
@@ -1134,10 +1164,10 @@
     <script src="../js/crypto/modal-resultado-total-crypto.js?v=1.3.0"></script>
     <script src="../js/crypto/modal-saldo-medio-crypto.js?v=1.1.0"></script>
     <script src="../js/crypto/modal-dashboard-crypto.js?v=1.0.0"></script>
-    <script src="../js/crypto/modal-total-operacoes-crypto.js?v=1.0.0"></script>
+    <script src="../js/crypto/modal-total-operacoes-crypto.js?v=1.3.0"></script>
     <script src="../js/crypto/modal-detalhe-crypto.js?v=3.1.3"></script>
     <script src="../js/crypto/modal-analise-detalhe-crypto.js?v=1.0.0"></script>
-    <script src="../js/crypto/crypto.js?v=1.6.0"></script>
+    <script src="../js/crypto/crypto.js?v=1.6.7"></script>
     <script>
         // Configurar Dashboard Avançado para crypto
         if (window.ModalDashboardCrypto) {

@@ -5,6 +5,10 @@
     color: var(--tblr-body-color, #e0e0e0);
     border-radius: 12px;
     overflow: hidden;
+    height: 90vh;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
 }
 
 .toc-modal-header {
@@ -51,6 +55,9 @@
 
 .toc-modal-body {
     padding: 1.25rem 1.5rem;
+    flex: 1 1 0;
+    overflow-y: auto;
+    min-height: 0;
 }
 
 .toc-ftabs {

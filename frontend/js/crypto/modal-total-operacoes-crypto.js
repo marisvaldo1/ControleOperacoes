@@ -8,6 +8,7 @@
     let activeTipo = null;
     let activeAsset = null;
     let activeCorr = null;
+    let activeFullState = null;
     let _header = null;
 
     function fmtUsd(v) {
@@ -170,38 +171,150 @@
         }).join('');
     }
 
-    function renderOpsTable(ops) {
+    // Verifica se a data de exercício (vencimento) da op está no período ativo
+    function inExercisePeriod(op) {
+        const period = activePeriod;
+        const state  = activeFullState || {};
+        if (!period || period === 'all') return true;
+        const raw = op.exercicio || op.data_operacao || '';
+        if (!raw) return true;
+        const dt = new Date(String(raw).split('T')[0] + 'T00:00:00');
+        if (isNaN(dt.getTime())) return true;
+        const now = new Date(); now.setHours(0, 0, 0, 0);
+        if (period === 'today') return dt >= now;
+        if (period === 'semana') {
+            const dow = now.getDay();
+            const mon = new Date(now);
+            mon.setDate(now.getDate() - (dow === 0 ? 6 : dow - 1));
+            return dt >= mon;
+        }
+        if (period === '7d')  { const t = new Date(now); t.setDate(t.getDate() - 7);  return dt >= t; }
+        if (period === '15d') { const t = new Date(now); t.setDate(t.getDate() - 15); return dt >= t; }
+        if (period === '30d') { const t = new Date(now); t.setDate(t.getDate() - 30); return dt >= t; }
+        if (period === '60d') { const t = new Date(now); t.setDate(t.getDate() - 60); return dt >= t; }
+        if (period === '90d') { const t = new Date(now); t.setDate(t.getDate() - 90); return dt >= t; }
+        if (period === 'mes')  { return dt >= new Date(now.getFullYear(), now.getMonth(), 1); }
+        if (period === 'ano' || period === 'year') { return dt >= new Date(now.getFullYear(), 0, 1); }
+        if (period === 'custom') {
+            const s = state.dateFrom ? new Date(state.dateFrom + 'T00:00:00') : null;
+            const e = state.dateTo   ? new Date(state.dateTo   + 'T23:59:59') : null;
+            if (s && dt < s) return false;
+            if (e && dt > e) return false;
+            return true;
+        }
+        return true;
+    }
+
+    // Aplica apenas os filtros NÃO-data (tipo, ativo, corretora, status) em currentOps
+    function applyNonDateFilters() {
+        return currentOps.filter(op => {
+            if (activeTipo) {
+                if ((op.tipo || '').toUpperCase() !== activeTipo.toUpperCase()) return false;
+            }
+            if (activeAsset) {
+                if (!String(op.ativo || '').toUpperCase().includes(activeAsset.toUpperCase())) return false;
+            }
+            if (activeCorr) {
+                if ((op.corretora || 'BINANCE').toUpperCase() !== activeCorr.toUpperCase()) return false;
+            }
+            return true;
+        });
+    }
+
+    function isExercised(op) {
+        if (window.CryptoExerciseStatus?.isActuallyExercised) {
+            return window.CryptoExerciseStatus.isActuallyExercised(op);
+        }
+        return (op.exercicio_status || '').toUpperCase() === 'SIM';
+    }
+
+    function getExercicioLabel(op) {
+        const status = (op.exercicio_status || '').toUpperCase();
+        if (status === 'SIM') return '<span class="badge bg-danger">Exercida</span>';
+        if (status === 'POSSIVEL' || status === 'POSSÍVEL') return '<span class="badge bg-warning text-dark">Possível Exercício</span>';
+        return '<span class="badge bg-success">Sem Exercício</span>';
+    }
+
+    function getCorretoraBadge(op) {
+        const corr = (op.corretora || 'BNC').toUpperCase().slice(0, 3);
+        const color = corr === 'BB' ? '#f6a623' : '#00c896';
+        return `<span class="badge" style="background:${color};color:#fff;font-size:.7rem;">${corr}</span>`;
+    }
+
+    function getAtivoBadge(op) {
+        const ativo = (op.ativo || '-').toUpperCase();
+        const color = ativo === 'BTC' ? '#f7931a' : ativo === 'ETH' ? '#627eea' : '#888';
+        return `<span class="badge" style="background:${color};color:#fff;font-size:.7rem;">${ativo}</span>`;
+    }
+
+    function buildOpRow(op) {
+        const premio = getPremio(op);
+        const abertura = parseFloat(op.abertura || 0);
+        const pct = abertura > 0 ? ((premio / abertura) * 100).toFixed(2) + '%' : '-';
+        const resultado = parseFloat(op.resultado || 0);
+        const tae = op.tae ? parseFloat(op.tae).toFixed(2) + '%' : '-';
+        const strike = op.strike ? fmtUsd(parseFloat(op.strike)) : '-';
+        const cotacao = op.cotacao_atual ? fmtUsd(parseFloat(op.cotacao_atual)) : '-';
+        const prazo = op.prazo ? op.prazo + 'd' : '-';
+        const crypto = op.crypto ? parseFloat(op.crypto).toFixed(6) : '-';
+        const vencimento = op.exercicio ? new Date(op.exercicio).toLocaleDateString('pt-BR') : '-';
+        const status = (op.status || 'ABERTA').toUpperCase();
+        const statusBadge = status === 'ABERTA'
+            ? `<span class="badge bg-success">${status}</span>`
+            : `<span class="badge bg-secondary">${status}</span>`;
+        const tipoBadge = (op.tipo || '').toUpperCase() === 'CALL'
+            ? '<span class="badge" style="background:#1a6fc4;color:#fff;font-size:.7rem;">CALL</span>'
+            : '<span class="badge" style="background:#d63939;color:#fff;font-size:.7rem;">PUT</span>';
+        const resCls = resultado >= 0 ? 'text-success' : 'text-danger';
+        const premioCls = premio >= 0 ? 'text-success' : 'text-danger';
+        return `<tr>
+            <td>${getCorretoraBadge(op)}</td>
+            <td>${getAtivoBadge(op)}</td>
+            <td>${tipoBadge}</td>
+            <td>${cotacao}</td>
+            <td>${abertura ? fmtUsd(abertura) : '-'}</td>
+            <td>${tae}</td>
+            <td>${strike}</td>
+            <td class="${premioCls}">${fmtUsd(premio)}</td>
+            <td>${vencimento}</td>
+            <td>${prazo}</td>
+            <td>${statusBadge}</td>
+        </tr>`;
+    }
+
+    function renderOpsTable() {
         const tbody = document.getElementById('tocOpsTbody');
         if (!tbody) return;
-        if (!ops.length) {
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-3">Sem dados</td></tr>';
+
+        // Pool: currentOps com filtros de tipo/ativo/corretora, SEM filtro de data
+        // Depois filtra exercidas pela data de exercício (vencimento) dentro do período ativo
+        const pool = applyNonDateFilters();
+        const exercidas = pool.filter(op => isExercised(op) && inExercisePeriod(op));
+        exercidas.sort((a, b) => {
+            const da = a.exercicio ? new Date(a.exercicio) : (getOpDate(a) || new Date(0));
+            const db = b.exercicio ? new Date(b.exercicio) : (getOpDate(b) || new Date(0));
+            return db - da;
+        });
+
+        if (!exercidas.length) {
+            tbody.innerHTML = '<tr><td colspan="11" class="text-center text-muted py-3">Nenhuma operação exercida no período filtrado</td></tr>';
             return;
         }
-        const sorted = [...ops].sort((a, b) => {
-            const da = getOpDate(a) || new Date(0);
-            const db = getOpDate(b) || new Date(0);
-            return da - db;
+
+        // Última exercida por combinação ativo + corretora
+        const seen = new Map();
+        const lastPerGroup = [];
+        exercidas.forEach(op => {
+            const ativo = (op.ativo || '').toUpperCase();
+            const corr  = (op.corretora || 'BNC').toUpperCase();
+            const key   = `${ativo}|${corr}`;
+            if (!seen.has(key)) {
+                seen.set(key, true);
+                lastPerGroup.push(op);
+            }
         });
-        let acumulado = 0;
-        tbody.innerHTML = sorted.map(op => {
-            const d = getOpDate(op);
-            const premio = getPremio(op);
-            acumulado += premio;
-            const resultadoPct = getResultadoPct(op);
-            const ativo = op.ativo || op.codigo || '-';
-            const tipo = (op.tipo || '-').toUpperCase();
-            const status = (op.status || 'ABERTA').toUpperCase();
-            const pctCls = resultadoPct >= 0 ? 'text-success' : 'text-danger';
-            return `<tr>
-                <td>${formatDate(d)}</td>
-                <td>${ativo}</td>
-                <td>${tipo}</td>
-                <td>${status}</td>
-                <td class="${premio >= 0 ? 'text-success' : 'text-danger'}">${fmtUsd(premio)}</td>
-                <td class="${pctCls}">${resultadoPct ? fmtPct(resultadoPct) : '-'}</td>
-                <td class="${acumulado >= 0 ? 'text-success' : 'text-danger'}">${fmtUsd(acumulado)}</td>
-            </tr>`;
-        }).join('');
+
+        tbody.innerHTML = lastPerGroup.map(op => buildOpRow(op)).join('');
     }
 
     function renderMeta(stats, monthlyRows) {
@@ -256,7 +369,7 @@
         renderSummary(stats, monthlyRows);
         renderMonthly(monthlyRows);
         renderTimeline(monthlyRows);
-        renderOpsTable(ops);
+        renderOpsTable();
         renderMeta(stats, monthlyRows);
     }
 
@@ -265,6 +378,11 @@
             .then(r => r.json())
             .then(data => {
                 currentOps = Array.isArray(data) ? data : [];
+                // Captura o state atual do header se disponível
+                if (_header && typeof _header.getState === 'function') {
+                    activeFullState = _header.getState();
+                    activePeriod = activeFullState.period || activePeriod;
+                }
                 const filtered = applyFilterFull(currentOps, {
                     period: activePeriod,
                     status: activeFilter,
@@ -287,6 +405,7 @@
             defaultPeriod: 'today',
             closeModalId:  'modalTotalOperacoesCrypto',
             onFilter: function (state) {
+                activeFullState = state;
                 activePeriod = state.period || 'today';
                 activeFilter = state.status  || null;
                 activeTipo   = state.tipo    || null;

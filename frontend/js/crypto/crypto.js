@@ -177,12 +177,50 @@ function setupEventListeners() {
     document.getElementById("btnSimConverterValor")?.addEventListener("click", converterSimValor);
 
     // Atualiza cotação automaticamente ao trocar o par e recalcula painel
-    document.getElementById("simPar")?.addEventListener("change", function() { buscarCotacaoSimLive(); onSimInput(); });
-    document.getElementById("simTipo")?.addEventListener("change", onSimInput);
+    document.getElementById("simPar")?.addEventListener("change", function() {
+        // Limpa strike ao trocar o par — referência muda completamente
+        const strikeEl = document.getElementById("simStrike");
+        if (strikeEl) strikeEl.value = '';
+        buscarCotacaoSimLive();
+        onSimInput();
+        const tipo = document.getElementById("simTipo")?.value;
+        simUpdateStrikeHint(this.value, tipo);
+        simUpdateCallRecovery(this.value.toUpperCase(), 0, null);
+    });
+    document.getElementById("simTipo")?.addEventListener("change", function() {
+        // Limpa strike ao trocar o tipo — contexto de exercício muda
+        const strikeEl = document.getElementById("simStrike");
+        if (strikeEl) strikeEl.value = '';
+        onSimInput();
+        const par = document.getElementById("simPar")?.value;
+        simUpdateStrikeHint(par, this.value);
+        simUpdateCallRecovery((par || 'BTC').toUpperCase(), 0, null);
+    });
 
     // Campos de entrada do simulador
-    ["simValor", "simStrike", "simTae", "simPrazo", "simCotacao"].forEach(id => {
+    ["simTae", "simPrazo", "simCotacao"].forEach(id => {
         document.getElementById(id)?.addEventListener("input", onSimInput);
+    });
+    // simValor: além de onSimInput, atualiza alerta de recuperação
+    document.getElementById("simValor")?.addEventListener("input", function () {
+        onSimInput();
+        const par  = document.getElementById("simPar")?.value  || 'BTC';
+        const tipo = document.getElementById("simTipo")?.value || 'CALL';
+        if (tipo === 'CALL') {
+            const todayEnd = new Date(); todayEnd.setHours(23,59,59,999);
+            const strike = parseFloat(document.getElementById('simStrike')?.value) || 0;
+            simUpdateCallRecovery(par.toUpperCase(), strike, todayEnd);
+        }
+    });
+    // simStrike: além de onSimInput, atualiza alerta de recuperação
+    document.getElementById("simStrike")?.addEventListener("input", function () {
+        onSimInput();
+        const par  = document.getElementById("simPar")?.value  || 'BTC';
+        const tipo = document.getElementById("simTipo")?.value || 'CALL';
+        if (tipo === 'CALL') {
+            const todayEnd = new Date(); todayEnd.setHours(23,59,59,999);
+            simUpdateCallRecovery(par.toUpperCase(), parseFloat(this.value) || 0, todayEnd);
+        }
     });
     document.getElementById("simValor")?.addEventListener("blur", simAutoFetchCotacao);
 
@@ -737,6 +775,8 @@ function computeRecoverySnapshot(opsSource) {
 function notifyRecoveryLossContext(contextLabel) {
     const snapshot = computeRecoverySnapshot();
     if (!snapshot.hasLoss) return snapshot;
+    // Não notificar se o prejuízo já foi 100% coberto
+    if (snapshot.missing <= 0 || snapshot.progressPct >= 100) return snapshot;
     iziToast.warning({
         title: 'Prejuízo pendente',
         message: `${contextLabel}: falta cobrir ${fmtUsd(snapshot.missing)} (${snapshot.progressPct.toFixed(2)}% coberto).`
@@ -1469,8 +1509,168 @@ function openSimuladorModal() {
     // Limpa painel direito
     simResetRight();
     new bootstrap.Modal(document.getElementById("modalSimuladorCrypto")).show();
+    // Atualiza hint de último exercício
+    const par  = document.getElementById("simPar")?.value  || 'BTC';
+    const tipo = document.getElementById("simTipo")?.value || 'CALL';
+    simUpdateStrikeHint(par, tipo);
     // Renderiza estado inicial com os valores padrão após o modal estar visível
     setTimeout(() => onSimInput(), 300);
+}
+
+// Exibe hint do último exercício para o par/tipo selecionado abaixo do campo Strike
+function simUpdateStrikeHint(par, tipo) {
+    const hint = document.getElementById('simLastExerciseHint');
+    if (!hint) return;
+
+    const parNorm  = (par  || 'BTC').toUpperCase();
+    const tipoNorm = (tipo || 'CALL').toUpperCase();
+
+    // Hoje ao fim do dia — ignora operações com exercício futuro
+    const todayEnd = new Date(); todayEnd.setHours(23, 59, 59, 999);
+
+    const ops = (allOperacoes || []).filter(o => {
+        const ativo = (o.ativo || '').toUpperCase().replace('USDT','').replace('/','').trim();
+        return ativo === parNorm && String(o.tipo || '').toUpperCase() === tipoNorm;
+    });
+
+    // Apenas exercidas cuja data de exercício já ocorreu (não futuras)
+    const exercidas = ops.filter(o => {
+        if (!isTypeExercised(o, tipoNorm)) return false;
+        const raw = o.exercicio || o.data_operacao || '';
+        if (!raw) return true; // sem data, não descarta
+        const dt = new Date(String(raw).split('T')[0] + 'T00:00:00');
+        return isNaN(dt.getTime()) || dt <= todayEnd;
+    });
+
+    if (!exercidas.length) {
+        hint.classList.remove('visible');
+        hint.innerHTML = '';
+        simUpdateCallRecovery(parNorm, 0, 0); // limpa alerta
+        return;
+    }
+
+    exercidas.sort((a, b) => {
+        const aT = window.CryptoExerciseStatus?.getOperationDate?.(a)?.getTime?.()
+                   || new Date((a.exercicio || a.data_operacao || '').split('T')[0] + 'T00:00:00').getTime() || 0;
+        const bT = window.CryptoExerciseStatus?.getOperationDate?.(b)?.getTime?.()
+                   || new Date((b.exercicio || b.data_operacao || '').split('T')[0] + 'T00:00:00').getTime() || 0;
+        return bT - aT;
+    });
+
+    const last       = exercidas[0];
+    const strikeVal  = parseFloat(last.strike || 0);
+    const dateRaw    = last.exercicio || last.data_operacao || '';
+    let dateStr = '—';
+    if (dateRaw) {
+        const d = new Date(String(dateRaw).split('T')[0] + 'T00:00:00');
+        if (!isNaN(d.getTime())) {
+            dateStr = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        }
+    }
+
+    const badgeClass = tipoNorm === 'PUT' ? 'put' : 'call';
+    hint.innerHTML = `
+        <span class="ssh-badge ${badgeClass}">${tipoNorm}</span>
+        <span class="ssh-lbl">Último exercício</span>
+        <span class="ssh-sep">·</span>
+        <span class="ssh-date">${dateStr}</span>
+        <span class="ssh-val">US$ ${strikeVal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+    `;
+    hint.classList.add('visible');
+
+    // Atualiza alerta de recuperação se for CALL
+    if (tipoNorm === 'CALL') {
+        const strikeSim = parseFloat(document.getElementById('simStrike')?.value) || 0;
+        simUpdateCallRecovery(parNorm, strikeSim, todayEnd);
+    }
+}
+
+// Alerta de recuperação CALL: compara strike simulado vs último PUT exercido
+function simUpdateCallRecovery(parNorm, strikeSim, todayEnd) {
+    const alertEl = document.getElementById('simCallRecoveryAlert');
+    if (!alertEl) return;
+
+    // Só faz sentido para CALL
+    const tipo = document.getElementById('simTipo')?.value || '';
+    if (tipo !== 'CALL') { alertEl.classList.remove('visible'); return; }
+
+    const _todayEnd = todayEnd || (() => { const d = new Date(); d.setHours(23,59,59,999); return d; })();
+
+    // Busca última PUT exercida (passada) para o mesmo par
+    const putOps = (allOperacoes || []).filter(o => {
+        const ativo = (o.ativo || '').toUpperCase().replace('USDT','').replace('/','').trim();
+        if (ativo !== parNorm) return false;
+        if (String(o.tipo || '').toUpperCase() !== 'PUT') return false;
+        if (!isTypeExercised(o, 'PUT')) return false;
+        const raw = o.exercicio || o.data_operacao || '';
+        if (!raw) return true;
+        const dt = new Date(String(raw).split('T')[0] + 'T00:00:00');
+        return isNaN(dt.getTime()) || dt <= _todayEnd;
+    });
+
+    if (!putOps.length) { alertEl.classList.remove('visible'); return; }
+
+    putOps.sort((a, b) => {
+        const aT = new Date((a.exercicio || a.data_operacao || '').split('T')[0] + 'T00:00:00').getTime() || 0;
+        const bT = new Date((b.exercicio || b.data_operacao || '').split('T')[0] + 'T00:00:00').getTime() || 0;
+        return bT - aT;
+    });
+
+    const lastPut      = putOps[0];
+    const putStrike    = parseFloat(lastPut.strike || 0);
+    const putDateRaw   = lastPut.exercicio || lastPut.data_operacao || '';
+    let putDateStr = '—';
+    if (putDateRaw) {
+        const d = new Date(String(putDateRaw).split('T')[0] + 'T00:00:00');
+        if (!isNaN(d.getTime())) putDateStr = d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric' });
+    }
+
+    // Se não há strike simulado ainda, mostra só a referência PUT
+    if (!strikeSim || !putStrike) {
+        alertEl.innerHTML = `
+            <span class="ssh-badge ssh-badge-ref">PUT ref.</span>
+            <span class="ssh-lbl">Último exerc. PUT</span>
+            <span class="ssh-sep">·</span>
+            <span class="ssh-date">${putDateStr}</span>
+            <span class="ssh-val" style="color:var(--tblr-secondary)">US$ ${putStrike.toLocaleString('pt-BR', { minimumFractionDigits:2 })}</span>
+        `;
+        alertEl.className = 'sim-strike-hint visible';
+        return;
+    }
+
+    const diff      = strikeSim - putStrike;
+    const isProfit  = diff >= 0;
+    const icon      = isProfit ? '▲' : '▼';
+    const label     = isProfit ? 'Lucro' : 'Prejuízo';
+    const cls       = isProfit ? 'sim-strike-hint visible sim-recovery-profit' : 'sim-strike-hint visible sim-recovery-loss';
+    const valColor  = isProfit ? '#3fb950' : '#f85149';
+    const pct       = putStrike ? (diff / putStrike * 100) : 0;
+    const pctFmt    = (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%';
+
+    // Lucro/prejuízo total: multiplica pela quantidade de crypto do investimento
+    // Modo USD: qty = valorInvestido / putStrike
+    // Modo Crypto: qty = valorInvestido diretamente
+    const rawValor   = parseFloat(document.getElementById('simValor')?.value) || 0;
+    const isCrypto   = document.getElementById('simModoCrypto')?.classList.contains('active');
+    const qtyCrypto  = putStrike > 0 && rawValor > 0
+        ? (isCrypto ? rawValor : rawValor / putStrike)
+        : 0;
+    const totalDiff  = qtyCrypto > 0 ? Math.abs(diff * qtyCrypto) : Math.abs(diff);
+    const totalFmt   = 'US$ ' + totalDiff.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const qtyFmt     = qtyCrypto > 0
+        ? `<span class="ssh-sep">·</span><span style="font-size:.62rem;color:var(--tblr-secondary)">${qtyCrypto.toFixed(4)} ${parNorm}</span>`
+        : '';
+
+    alertEl.innerHTML = `
+        <span class="ssh-badge ssh-badge-ref">PUT ${putDateStr}</span>
+        <span class="ssh-sep">·</span>
+        <span class="ssh-lbl" style="color:${valColor};font-weight:600">${label}</span>
+        <span class="ssh-sep">·</span>
+        <span style="font-size:.65rem;color:${valColor};font-family:monospace">${icon} ${pctFmt}</span>
+        ${qtyFmt}
+        <span class="ssh-val" style="color:${valColor}">${totalFmt}</span>
+    `;
+    alertEl.className = cls;
 }
 
 // Busca cotação ao vivo para o campo de simulação
@@ -1685,6 +1885,11 @@ function simAtualizar() {
     // Gráfico P&L
     if (valor && strike && tae) {
         simRenderPnLChart(valor, strike, cotacao, tipo, prazo, tae);
+    } else {
+        // Limpa gráfico antigo quando strike/valor são zerados (ex: troca de par/tipo)
+        if (_simPnLChart) { try { _simPnLChart.destroy(); } catch(e) {} _simPnLChart = null; }
+        const empty = document.getElementById('simPnLEmpty');
+        if (empty) empty.style.display = 'flex';
     }
 }
 
@@ -1788,7 +1993,7 @@ function simRenderNextOpCard(par, strike, cotacao, tipo) {
     const distSign = dist > 0 ? '+' : '';
     const distColor = riskClass === 'danger' ? '#f85149' : riskClass === 'warn' ? '#f59f00' : '#3fb950';
     const recovery = computeRecoverySnapshot();
-    const recoveryWarning = recovery.hasLoss
+    const recoveryWarning = (recovery.hasLoss && recovery.missing > 0.01)
         ? `<div style="margin-top:8px;padding:8px;border:1px solid rgba(248,81,73,.45);border-radius:8px;background:rgba(248,81,73,.10)">
                 <div style="font-size:.72rem;font-weight:700;color:#f85149">⚠ Prejuízo pendente no ciclo</div>
                 <div style="font-size:.68rem;color:#fca5a5">Falta cobrir ${fmtUsd(recovery.missing)} (${recovery.progressPct.toFixed(2)}% coberto).</div>

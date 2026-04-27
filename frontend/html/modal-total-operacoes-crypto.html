@@ -1,5 +1,5 @@
 <div class="modal modal-blur fade" id="modalTotalOperacoesCrypto" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+    <div class="modal-dialog modal-xl" style="height:90vh;max-height:90vh;" role="document">
         <div class="modal-content toc-modal-content">
 
             <!-- Header padrão — gerenciado por CryptoModalHeader (modal-total-operacoes-crypto.js) -->
@@ -28,12 +28,50 @@
 
                 <div class="accordion toc-accordion" id="tocAccordion">
                     <div class="accordion-item">
+                        <h2 class="accordion-header" id="tocOpsHeading">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#tocOpsCollapse" aria-expanded="true" aria-controls="tocOpsCollapse">
+                                Últimas Operações Exercidas
+                            </button>
+                        </h2>
+                        <div id="tocOpsCollapse" class="accordion-collapse collapse show" aria-labelledby="tocOpsHeading" data-bs-parent="#tocAccordion">
+                            <div class="accordion-body">
+                                <div style="overflow-x:auto;">
+                                    <table class="toc-table toc-table-ops">
+                                        <thead>
+                                            <tr>
+                                                <th>Corretora</th>
+                                                <th>Ativo</th>
+                                                <th>Tipo</th>
+                                                <th>Cotação Atual</th>
+                                                <th>Abertura</th>
+                                                <th>TAE %</th>
+                                                <th>Strike</th>
+                                                <th>Prêmio US$</th>
+                                                <th>Vencimento</th>
+                                                <th>Prazo</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tocOpsTbody">
+                                            <tr>
+                                                <td colspan="11" class="text-center text-muted py-3">
+                                                    <div class="spinner-border spinner-border-sm me-2"></div>Carregando...
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
                         <h2 class="accordion-header" id="tocMonthlyHeading">
-                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#tocMonthlyCollapse" aria-expanded="true" aria-controls="tocMonthlyCollapse">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#tocMonthlyCollapse" aria-expanded="false" aria-controls="tocMonthlyCollapse">
                                 Resultados Mensais e Meta
                             </button>
                         </h2>
-                        <div id="tocMonthlyCollapse" class="accordion-collapse collapse show" aria-labelledby="tocMonthlyHeading" data-bs-parent="#tocAccordion">
+                        <div id="tocMonthlyCollapse" class="accordion-collapse collapse" aria-labelledby="tocMonthlyHeading" data-bs-parent="#tocAccordion">
                             <div class="accordion-body">
                                 <div class="row g-3">
                                     <div class="col-lg-8">
@@ -95,40 +133,6 @@
                                         <div class="fw-bold">Carregando...</div>
                                         <div class="text-muted" style="font-size:.75rem;">Aguardando dados</div>
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="accordion-item">
-                        <h2 class="accordion-header" id="tocOpsHeading">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#tocOpsCollapse" aria-expanded="false" aria-controls="tocOpsCollapse">
-                                Operações Detalhadas
-                            </button>
-                        </h2>
-                        <div id="tocOpsCollapse" class="accordion-collapse collapse" aria-labelledby="tocOpsHeading" data-bs-parent="#tocAccordion">
-                            <div class="accordion-body">
-                                <div style="overflow:auto;max-height:420px;">
-                                    <table class="toc-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Data</th>
-                                                <th>Ativo</th>
-                                                <th>Tipo</th>
-                                                <th>Status</th>
-                                                <th>Prêmio (USD)</th>
-                                                <th>Resultado %</th>
-                                                <th>Acumulado (USD)</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="tocOpsTbody">
-                                            <tr>
-                                                <td colspan="7" class="text-center text-muted py-3">
-                                                    <div class="spinner-border spinner-border-sm me-2"></div>Carregando...
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
                                 </div>
                             </div>
                         </div>
