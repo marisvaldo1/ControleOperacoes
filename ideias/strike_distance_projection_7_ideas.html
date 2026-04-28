@@ -1,0 +1,493 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d1117;--bg2:#161b27;--bg3:#1e2436;--bg4:#252c40;
+  --brd:#2a3050;--brd2:#353d5e;
+  --gold:#c9a227;--gold2:#e8c060;
+  --grn:#27c078;--grn2:#1a9e5e;--grn3:#0e5c36;
+  --red:#e05c5c;--red2:#9e2a2a;
+  --blu:#4f7cde;--blu2:#2a4fa0;
+  --amb:#e8a020;
+  --txt:#dde2f0;--mut:#7a85a0;--mut2:#4a5270;
+}
+body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;line-height:1.4}
+.nav{display:flex;gap:4px;padding:12px 14px;background:var(--bg2);border-bottom:1px solid var(--brd);flex-wrap:wrap}
+.nb{padding:4px 12px;border-radius:14px;border:1px solid var(--brd2);background:transparent;color:var(--mut);font-size:11px;cursor:pointer;transition:all .15s}
+.nb.active{background:var(--gold);border-color:var(--gold);color:#0d1117;font-weight:500}
+.nb:hover:not(.active){border-color:var(--gold);color:var(--gold)}
+.desc{font-size:11px;color:var(--mut);padding:8px 14px;background:var(--bg2);border-bottom:1px solid var(--brd);font-style:italic}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px}
+.card{background:var(--bg3);border:1px solid var(--brd);border-radius:10px;padding:12px 14px}
+.ch{font-size:10px;font-weight:500;color:var(--gold);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.ch svg{width:12px;height:12px;flex-shrink:0}
+.pos-row{display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid rgba(42,48,80,.6)}
+.pos-row:last-child{border-bottom:none}
+.tag{padding:2px 6px;border-radius:4px;font-size:10px;font-weight:500}
+.tag-eth{background:#1a2a4a;color:#6aabff}
+.tag-btc{background:#2a1e0a;color:#e8a020}
+.tag-call{background:#0a2a1a;color:#27c078}
+.tag-bnc{background:#1a1e30;color:#8090c0}
+.tag-bb{background:#0a1a2a;color:#4f7cde}
+.val{font-size:13px;font-weight:500}
+.mut{color:var(--mut);font-size:11px}
+
+.track-wrap{position:relative;height:18px;border-radius:4px;overflow:hidden;margin:2px 0}
+.track-bg{position:absolute;inset:0;border-radius:4px}
+.track-zones{position:absolute;inset:0;display:flex}
+.tz-itm{background:#3a1010;flex:0 0 30%}
+.tz-safe{background:#0e2a18;flex:1}
+.tz-otm{background:#0a1e10;flex:0 0 25%}
+.track-dot{position:absolute;top:50%;transform:translate(-50%,-50%);width:10px;height:10px;border-radius:50%;background:var(--grn);border:2px solid var(--bg)}
+.track-lbl{display:flex;justify-content:space-between;font-size:9px;color:var(--mut);margin-top:1px}
+
+.gauge-wrap{display:flex;flex-direction:column;align-items:center;gap:4px}
+.gauge-svg{width:90px;height:52px}
+.gauge-val{font-size:14px;font-weight:500;color:var(--grn);text-align:center}
+.gauge-sub{font-size:10px;color:var(--mut);text-align:center}
+
+.bullet-wrap{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(42,48,80,.4)}
+.bullet-wrap:last-child{border-bottom:none}
+.bullet-track{flex:1;height:12px;border-radius:3px;background:var(--bg4);position:relative;overflow:hidden}
+.bullet-fill{height:100%;border-radius:3px;position:absolute;left:0;top:0}
+.bullet-target{position:absolute;right:0;top:-1px;bottom:-1px;width:3px;background:var(--gold)}
+
+.arrow-indicator{display:flex;align-items:center;gap:6px}
+.arrow-track{flex:1;height:8px;background:var(--bg4);border-radius:4px;position:relative}
+.arrow-fill{height:100%;border-radius:4px;transition:width .3s}
+.arrow-ptr{position:absolute;top:-4px;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:8px solid var(--gold);transform:translateX(-50%)}
+
+.risk-badge{display:flex;align-items:center;gap:4px;padding:3px 8px;border-radius:12px;font-size:10px;font-weight:500}
+.risk-safe{background:rgba(39,192,120,.15);color:var(--grn)}
+.risk-warn{background:rgba(232,160,32,.15);color:var(--amb)}
+.risk-danger{background:rgba(224,92,92,.15);color:var(--red)}
+
+.proj-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(42,48,80,.5)}
+.proj-row:last-child{border-bottom:none}
+.proj-asset{display:flex;align-items:center;gap:6px}
+.proj-prem{font-size:14px;font-weight:500;color:var(--grn)}
+.proj-meta{font-size:10px;color:var(--mut)}
+
+.thermometer{display:flex;flex-direction:column;align-items:center;gap:2px}
+.therm-bar{width:10px;border-radius:3px}
+
+.seg-track{height:8px;border-radius:4px;overflow:hidden;display:flex;margin:3px 0}
+.seg-zone{height:100%}
+
+.radial-outer{position:relative;width:80px;height:80px}
+.radial-svg{width:80px;height:80px}
+
+.card-full{padding:14px}
+
+.timeline-row{display:flex;align-items:stretch;gap:0;margin-bottom:6px}
+.tl-left{width:56px;text-align:right;padding-right:10px;display:flex;flex-direction:column;justify-content:center}
+.tl-dot-wrap{width:14px;display:flex;flex-direction:column;align-items:center;flex-shrink:0}
+.tl-dot-inner{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:3px}
+.tl-line{width:1px;background:var(--brd2);flex:1;margin-top:2px}
+.tl-content{flex:1;padding:0 0 10px 10px}
+
+.score-ring{position:relative;width:56px;height:56px;flex-shrink:0}
+.score-ring svg{width:56px;height:56px}
+.score-inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+</style>
+
+<div class="nav">
+  <button class="nb active" onclick="show(1)">1 Régua visual</button>
+  <button class="nb" onclick="show(2)">2 Medidores radiais</button>
+  <button class="nb" onclick="show(3)">3 Bullet chart</button>
+  <button class="nb" onclick="show(4)">4 Semáforo + score</button>
+  <button class="nb" onclick="show(5)">5 Timeline de risco</button>
+  <button class="nb" onclick="show(6)">6 Termômetro dual</button>
+  <button class="nb" onclick="show(7)">7 Cards compactos</button>
+</div>
+<div class="desc" id="desc-txt">Régua com zonas ITM/Seguro/OTM e marcador de posição da cotação atual — leitura instantânea da distância ao strike</div>
+<div id="root"></div>
+
+<script>
+const pos=[
+  {asset:'ETH',tipo:'CALL',cor:'BB',strike:2350,cot:2284.26,dist:2.80,prem:0.40,safe:true},
+  {asset:'BTC',tipo:'CALL',cor:'BNC',strike:77500,cot:76511,dist:1.28,prem:4.32,safe:true},
+  {asset:'ETH',tipo:'CALL',cor:'BNC',strike:2350,cot:2312.51,dist:1.60,prem:26.71,safe:true},
+];
+const prox=[
+  {asset:'BTC',strike:77500,cot:76511,acima:9.6,prem:4.32,tipo:'CALL'},
+  {asset:'ETH',strike:2350,cot:2284.26,acima:14.7,prem:0.40,tipo:'CALL'},
+  {lucro:true,label:'Lucro projetado se exercidas',sub:'BTC: strike US$ 77.500,00 vs custo médio US$ 68.721,34',val:9154.96},
+];
+
+const fmt=(v,d=2)=>v.toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fmtUSD=(v)=>'US$ '+fmt(v);
+const riskColor=(d)=>d>3?'#27c078':d>1.5?'#e8a020':'#e05c5c';
+const riskLabel=(d)=>d>3?'Seguro':d>1.5?'Atenção':'Crítico';
+const riskBg=(d)=>d>3?'rgba(39,192,120,.15)':d>1.5?'rgba(232,160,32,.15)':'rgba(224,92,92,.15)';
+
+function tagHtml(p){
+  return`<span class="tag tag-${p.asset.toLowerCase()}">${p.asset}</span><span class="tag tag-${p.tipo.toLowerCase()}">${p.tipo}</span><span class="tag tag-${p.cor.toLowerCase()}">${p.cor}</span>`;
+}
+
+function rulerTrack(p){
+  const maxDist=6;
+  const dotPct=Math.min(95,Math.max(5,(1-(p.dist/maxDist))*70+5));
+  return`<div style="margin:6px 0">
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+      ${tagHtml(p)}
+      <span style="color:var(--mut);font-size:11px;margin-left:auto">Cot. ${fmtUSD(p.cot)}</span>
+    </div>
+    <div class="track-wrap" style="height:22px">
+      <div class="track-zones" style="border-radius:4px">
+        <div class="tz-itm" style="display:flex;align-items:center;justify-content:center"><span style="font-size:9px;color:#c06060">ITM</span></div>
+        <div class="tz-safe" style="flex:1;display:flex;align-items:center;padding:0 8px"><span style="font-size:9px;color:#80c090">Zona Segura</span></div>
+        <div class="tz-otm" style="display:flex;align-items:center;justify-content:flex-end;padding-right:5px"><span style="font-size:9px;color:#6090c0">OTM</span></div>
+      </div>
+      <div class="track-dot" style="left:${dotPct}%"></div>
+      <div style="position:absolute;left:30%;top:0;bottom:0;width:1px;background:rgba(255,255,255,.15)"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--mut);margin-top:2px">
+      <span>ITM</span>
+      <span style="color:${riskColor(p.dist)};font-weight:500">+${p.dist.toFixed(2)}% ao strike</span>
+      <span>Strike ${fmtUSD(p.strike)}</span>
+    </div>
+  </div>`;
+}
+
+function projRow1(p){
+  if(p.lucro) return`<div style="background:rgba(39,192,120,.08);border:1px solid rgba(39,192,120,.2);border-radius:7px;padding:8px 10px;margin-top:6px">
+    <div style="font-size:11px;color:var(--grn);font-weight:500;margin-bottom:2px">${p.label}</div>
+    <div style="font-size:10px;color:var(--mut);margin-bottom:4px">${p.sub}</div>
+    <div style="font-size:16px;font-weight:500;color:var(--grn)">+${fmtUSD(p.val)}</div>
+  </div>`;
+  const dotPct=Math.min(90,Math.max(5,100-p.acima*3));
+  return`<div style="padding:5px 0;border-bottom:1px solid rgba(42,48,80,.4)">
+    <div style="display:flex;align-items:center;gap:5px;margin-bottom:4px">
+      <span class="tag tag-${p.asset.toLowerCase()}">${p.asset}</span>
+      <span class="tag tag-call">${p.tipo}</span>
+      <span style="font-size:11px;color:var(--txt)">Strike ${fmtUSD(p.strike)}</span>
+      <span style="margin-left:auto;font-size:13px;font-weight:500;color:var(--grn)">+${fmtUSD(p.prem)}</span>
+    </div>
+    <div style="background:var(--bg4);height:14px;border-radius:3px;position:relative;overflow:hidden">
+      <div style="height:100%;background:rgba(39,192,120,.2);width:${dotPct}%;border-radius:3px"></div>
+      <div style="position:absolute;left:${dotPct}%;top:-1px;bottom:-1px;width:2px;background:var(--grn)"></div>
+      <span style="position:absolute;left:${dotPct+1}%;top:50%;transform:translateY(-50%);font-size:9px;color:var(--grn)">cot.</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--mut);margin-top:2px">
+      <span>Cot. ${fmtUSD(p.cot)}</span>
+      <span style="color:var(--amb)">+${p.acima}% acima cot.</span>
+      <span>Strike ${fmtUSD(p.strike)}</span>
+    </div>
+  </div>`;
+}
+
+function gaugeArc(pct,color,r=28){
+  const cx=40,cy=42,sa=-Math.PI*0.85,ea=Math.PI*0.85;
+  const total=ea-sa;
+  const angle=sa+total*pct;
+  const x1=cx+r*Math.cos(sa),y1=cy+r*Math.sin(sa);
+  const x2=cx+r*Math.cos(ea),y2=cy+r*Math.sin(ea);
+  const xp=cx+r*Math.cos(angle),yp=cy+r*Math.sin(angle);
+  const dx=cx+(r-3)*Math.cos(angle),dy=cy+(r-3)*Math.sin(angle);
+  return`<svg class="gauge-svg" viewBox="0 0 80 52" role="img" aria-label="Medidor">
+    <path d="M${x1},${y1} A${r},${r} 0 1 1 ${x2},${y2}" fill="none" stroke="#2a3050" stroke-width="5" stroke-linecap="round"/>
+    <path d="M${x1},${y1} A${r},${r} 0 ${pct>0.5?1:0} 1 ${xp},${yp}" fill="none" stroke="${color}" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="${dx}" cy="${dy}" r="3" fill="${color}"/>
+  </svg>`;
+}
+
+function idea1(){
+  return`<div class="grid2">
+    <div class="card">
+      <div class="ch"><svg viewBox="0 0 12 12"><circle cx="6" cy="6" r="5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>Distância ao strike</div>
+      ${pos.map(rulerTrack).join('')}
+    </div>
+    <div class="card">
+      <div class="ch"><svg viewBox="0 0 12 12"><path d="M6 1 L11 11 H1 Z" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>Projeção próximas ops</div>
+      ${prox.map(projRow1).join('')}
+    </div>
+  </div>`;
+}
+
+function idea2(){
+  const gauges=pos.map(p=>{
+    const maxD=5; const pct=Math.min(1,p.dist/maxD);
+    const col=riskColor(p.dist);
+    return`<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(42,48,80,.4)">
+      <div class="gauge-wrap" style="flex-shrink:0">
+        ${gaugeArc(pct,col)}
+        <div style="font-size:13px;font-weight:500;color:${col};margin-top:-6px">+${p.dist.toFixed(2)}%</div>
+      </div>
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:5px;margin-bottom:3px">${tagHtml(p)}<span class="risk-badge" style="background:${riskBg(p.dist)};color:${col};margin-left:auto;font-size:10px;padding:2px 7px;border-radius:10px">${riskLabel(p.dist)}</span></div>
+        <div style="font-size:11px;color:var(--mut)">Strike <b style="color:var(--txt)">${fmtUSD(p.strike)}</b></div>
+        <div style="font-size:11px;color:var(--mut)">Cotação <b style="color:var(--txt)">${fmtUSD(p.cot)}</b></div>
+        <div style="font-size:11px;color:var(--mut)">Prêmio <b style="color:var(--grn)">+${fmtUSD(p.prem)}</b></div>
+      </div>
+    </div>`;
+  });
+  const proxCards=prox.map(p=>{
+    if(p.lucro) return`<div style="background:rgba(39,192,120,.08);border:1px solid rgba(39,192,120,.2);border-radius:7px;padding:8px;margin-top:4px"><div style="font-size:10px;color:var(--grn);font-weight:500">${p.label}</div><div style="font-size:10px;color:var(--mut);margin:2px 0">${p.sub}</div><div style="font-size:15px;font-weight:500;color:var(--grn)">+${fmtUSD(p.val)}</div></div>`;
+    const pct=Math.min(1,p.acima/20);
+    const col=p.acima>10?'#27c078':p.acima>5?'#e8a020':'#e05c5c';
+    return`<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(42,48,80,.4)">
+      <div class="gauge-wrap" style="flex-shrink:0">
+        ${gaugeArc(pct,col,26)}
+        <div style="font-size:11px;font-weight:500;color:${col};margin-top:-4px">+${p.acima}%</div>
+      </div>
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:5px;margin-bottom:2px"><span class="tag tag-${p.asset.toLowerCase()}">${p.asset}</span><span class="tag tag-call">${p.tipo}</span></div>
+        <div style="font-size:11px;color:var(--mut)">Strike <b style="color:var(--txt)">${fmtUSD(p.strike)}</b></div>
+        <div style="font-size:11px;color:var(--mut)">Prêm. est. <b style="color:var(--grn)">+${fmtUSD(p.prem)}</b></div>
+      </div>
+    </div>`;
+  });
+  return`<div class="grid2">
+    <div class="card"><div class="ch">Distância ao strike</div>${gauges.join('')}</div>
+    <div class="card"><div class="ch">Projeção próximas ops</div>${proxCards.join('')}</div>
+  </div>`;
+}
+
+function idea3(){
+  const bullets=pos.map(p=>{
+    const pct=Math.min(95,(p.dist/5)*100);
+    const col=riskColor(p.dist);
+    return`<div style="padding:5px 0;border-bottom:1px solid rgba(42,48,80,.4)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <div style="display:flex;align-items:center;gap:5px">${tagHtml(p)}</div>
+        <span style="font-size:12px;font-weight:500;color:${col}">+${p.dist.toFixed(2)}%</span>
+      </div>
+      <div style="background:var(--bg4);height:16px;border-radius:4px;position:relative;overflow:visible">
+        <div style="height:100%;border-radius:4px;background:rgba(39,192,120,.12);width:60%"></div>
+        <div style="position:absolute;left:0;top:0;height:100%;width:${pct}%;background:${col};opacity:.7;border-radius:4px;transition:width .3s"></div>
+        <div style="position:absolute;left:60%;top:-3px;bottom:-3px;width:2px;background:var(--gold)"></div>
+        <span style="position:absolute;left:61%;top:50%;transform:translateY(-50%);font-size:9px;color:var(--gold)">Strike</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--mut);margin-top:2px">
+        <span>Cot. ${fmtUSD(p.cot)}</span><span>Strike ${fmtUSD(p.strike)}</span>
+      </div>
+    </div>`;
+  });
+  const proxBullets=prox.map(p=>{
+    if(p.lucro) return`<div style="background:rgba(39,192,120,.08);border:1px solid rgba(39,192,120,.2);border-radius:7px;padding:7px;margin-top:4px"><div style="font-size:10px;color:var(--grn)">${p.label}</div><div style="font-size:10px;color:var(--mut);margin:1px 0">${p.sub}</div><div style="font-size:15px;font-weight:500;color:var(--grn)">+${fmtUSD(p.val)}</div></div>`;
+    const pct=Math.min(90,(1-p.acima/30)*80);
+    return`<div style="padding:5px 0;border-bottom:1px solid rgba(42,48,80,.4)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <div style="display:flex;align-items:center;gap:5px"><span class="tag tag-${p.asset.toLowerCase()}">${p.asset}</span><span class="tag tag-call">${p.tipo}</span></div>
+        <span style="font-size:12px;font-weight:500;color:var(--amb)">+${p.acima}% acima cot.</span>
+      </div>
+      <div style="background:var(--bg4);height:16px;border-radius:4px;position:relative;overflow:hidden">
+        <div style="height:100%;background:rgba(79,124,222,.25);width:${pct}%;border-radius:4px"></div>
+        <div style="position:absolute;left:${pct}%;top:-1px;bottom:-1px;width:2px;background:var(--grn)"></div>
+        <span style="position:absolute;left:${pct+1}%;top:50%;transform:translateY(-50%);font-size:9px;color:var(--grn)">cot. atual</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--mut);margin-top:2px">
+        <span>Cot. ${fmtUSD(p.cot)}</span>
+        <span style="color:var(--grn)">Prêm. ~+${fmtUSD(p.prem)}</span>
+        <span>Strike ${fmtUSD(p.strike)}</span>
+      </div>
+    </div>`;
+  });
+  return`<div class="grid2">
+    <div class="card"><div class="ch">Distância ao strike — bullet chart</div>${bullets.join('')}</div>
+    <div class="card"><div class="ch">Projeção próximas ops</div>${proxBullets.join('')}</div>
+  </div>`;
+}
+
+function scoreRing(pct,color,val,label){
+  const r=22,cx=28,cy=28,circ=2*Math.PI*r;
+  const dash=circ*pct;
+  return`<div class="score-ring">
+    <svg viewBox="0 0 56 56" role="img" aria-label="Score ring">
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#2a3050" stroke-width="4"/>
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="4"
+        stroke-dasharray="${dash} ${circ}" stroke-dashoffset="${circ/4}" stroke-linecap="round"/>
+    </svg>
+    <div class="score-inner">
+      <div style="font-size:11px;font-weight:500;color:${color}">${val}</div>
+      <div style="font-size:9px;color:var(--mut)">${label}</div>
+    </div>
+  </div>`;
+}
+
+function idea4(){
+  const rows=pos.map(p=>{
+    const col=riskColor(p.dist);
+    const score=Math.min(100,Math.round(p.dist/5*100));
+    return`<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(42,48,80,.4)">
+      ${scoreRing(score/100,col,'+'+p.dist.toFixed(1)+'%','dist')}
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:4px;margin-bottom:3px">${tagHtml(p)}
+          <span style="margin-left:auto;padding:2px 8px;border-radius:10px;font-size:10px;background:${riskBg(p.dist)};color:${col}">${riskLabel(p.dist)}</span>
+        </div>
+        <div style="display:flex;gap:12px;font-size:11px;color:var(--mut)">
+          <span>Strike <b style="color:var(--txt)">${fmtUSD(p.strike)}</b></span>
+          <span>Cot. <b style="color:var(--txt)">${fmtUSD(p.cot)}</b></span>
+          <span>Prêm. <b style="color:var(--grn)">+${fmtUSD(p.prem)}</b></span>
+        </div>
+      </div>
+    </div>`;
+  });
+  const prows=prox.map(p=>{
+    if(p.lucro) return`<div style="background:rgba(39,192,120,.08);border:1px solid rgba(39,192,120,.2);border-radius:7px;padding:7px;margin-top:4px"><div style="font-size:10px;color:var(--grn)">${p.label}</div><div style="font-size:10px;color:var(--mut);margin:1px 0">${p.sub}</div><div style="font-size:15px;font-weight:500;color:var(--grn)">+${fmtUSD(p.val)}</div></div>`;
+    const col=p.acima>10?'#27c078':'#e8a020';
+    const score=Math.min(100,Math.round(p.acima/25*100));
+    return`<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(42,48,80,.4)">
+      ${scoreRing(score/100,col,'+'+p.acima+'%','acima')}
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:4px;margin-bottom:3px"><span class="tag tag-${p.asset.toLowerCase()}">${p.asset}</span><span class="tag tag-call">${p.tipo}</span></div>
+        <div style="display:flex;gap:10px;font-size:11px;color:var(--mut)">
+          <span>Strike <b style="color:var(--txt)">${fmtUSD(p.strike)}</b></span>
+          <span>Prêm. <b style="color:var(--grn)">+${fmtUSD(p.prem)}</b></span>
+        </div>
+      </div>
+    </div>`;
+  });
+  return`<div class="grid2">
+    <div class="card"><div class="ch">Distância ao strike — score ring</div>${rows.join('')}</div>
+    <div class="card"><div class="ch">Projeção próximas ops</div>${prows.join('')}</div>
+  </div>`;
+}
+
+function idea5(){
+  const tlItems=pos.map((p,i)=>{
+    const col=riskColor(p.dist);
+    const isLast=i===pos.length-1;
+    return`<div class="timeline-row">
+      <div class="tl-left"><div style="font-size:10px;font-weight:500;color:${col}">+${p.dist.toFixed(2)}%</div><div style="font-size:9px;color:var(--mut)">${riskLabel(p.dist)}</div></div>
+      <div class="tl-dot-wrap">
+        <div class="tl-dot-inner" style="background:${col}"></div>
+        ${isLast?'':'<div class="tl-line"></div>'}
+      </div>
+      <div class="tl-content">
+        <div style="display:flex;align-items:center;gap:4px;margin-bottom:3px">${tagHtml(p)}</div>
+        <div style="font-size:11px;color:var(--mut)">Strike <b style="color:var(--txt)">${fmtUSD(p.strike)}</b> · Cot. <b style="color:var(--txt)">${fmtUSD(p.cot)}</b></div>
+        <div style="margin-top:4px;background:var(--bg4);height:6px;border-radius:3px;overflow:hidden">
+          <div style="height:100%;width:${Math.min(90,p.dist/5*100)}%;background:${col};border-radius:3px"></div>
+        </div>
+        <div style="font-size:10px;color:var(--grn);margin-top:2px">Prêmio +${fmtUSD(p.prem)}</div>
+      </div>
+    </div>`;
+  });
+  const tlProx=prox.map((p,i)=>{
+    if(p.lucro) return`<div style="background:rgba(39,192,120,.08);border:1px solid rgba(39,192,120,.2);border-radius:7px;padding:7px;margin:4px 0"><div style="font-size:10px;color:var(--grn)">${p.label}</div><div style="font-size:10px;color:var(--mut);margin:1px 0">${p.sub}</div><div style="font-size:15px;font-weight:500;color:var(--grn)">+${fmtUSD(p.val)}</div></div>`;
+    const col=p.acima>10?'#27c078':'#e8a020';
+    return`<div class="timeline-row">
+      <div class="tl-left"><div style="font-size:10px;font-weight:500;color:${col}">+${p.acima}%</div><div style="font-size:9px;color:var(--mut)">acima cot.</div></div>
+      <div class="tl-dot-wrap"><div class="tl-dot-inner" style="background:${col}"></div>${i<prox.length-2?'<div class="tl-line"></div>':''}</div>
+      <div class="tl-content">
+        <div style="display:flex;align-items:center;gap:4px;margin-bottom:3px"><span class="tag tag-${p.asset.toLowerCase()}">${p.asset}</span><span class="tag tag-call">${p.tipo}</span></div>
+        <div style="font-size:11px;color:var(--mut)">Strike <b style="color:var(--txt)">${fmtUSD(p.strike)}</b></div>
+        <div style="margin-top:4px;background:var(--bg4);height:6px;border-radius:3px;overflow:hidden">
+          <div style="height:100%;width:${Math.min(90,p.acima/25*100)}%;background:${col};border-radius:3px"></div>
+        </div>
+        <div style="font-size:10px;color:var(--grn);margin-top:2px">Prêm. est. +${fmtUSD(p.prem)}</div>
+      </div>
+    </div>`;
+  });
+  return`<div class="grid2">
+    <div class="card"><div class="ch">Distância ao strike — timeline</div>${tlItems.join('')}</div>
+    <div class="card"><div class="ch">Projeção próximas ops</div>${tlProx.join('')}</div>
+  </div>`;
+}
+
+function thermometerBlock(pct,col,label,val){
+  const height=60;
+  const fill=Math.round(height*pct);
+  return`<div style="display:flex;flex-direction:column;align-items:center;gap:3px;min-width:42px">
+    <div style="font-size:10px;color:${col};font-weight:500">${val}</div>
+    <div style="width:16px;height:${height}px;background:var(--bg4);border-radius:8px;position:relative;overflow:hidden;border:1px solid var(--brd2)">
+      <div style="position:absolute;bottom:0;left:0;right:0;height:${fill}px;background:${col};border-radius:8px;transition:height .3s"></div>
+    </div>
+    <div style="font-size:9px;color:var(--mut);text-align:center;max-width:40px">${label}</div>
+  </div>`;
+}
+
+function idea6(){
+  const therms=pos.map(p=>{
+    const col=riskColor(p.dist);
+    return`<div style="background:var(--bg4);border:1px solid var(--brd);border-radius:8px;padding:8px;display:flex;align-items:flex-end;gap:10px">
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:4px;margin-bottom:6px">${tagHtml(p)}</div>
+        <div style="font-size:11px;color:var(--mut);margin-bottom:2px">Strike <b style="color:var(--txt)">${fmtUSD(p.strike)}</b></div>
+        <div style="font-size:11px;color:var(--mut);margin-bottom:4px">Cot. <b style="color:var(--txt)">${fmtUSD(p.cot)}</b></div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="padding:2px 8px;border-radius:10px;font-size:10px;background:${riskBg(p.dist)};color:${col}">${riskLabel(p.dist)}</span>
+          <span style="font-size:10px;color:var(--grn)">+${fmtUSD(p.prem)}</span>
+        </div>
+      </div>
+      ${thermometerBlock(Math.min(1,p.dist/5),col,'+'+p.dist.toFixed(2)+'%','dist')}
+    </div>`;
+  });
+  const proxT=prox.map(p=>{
+    if(p.lucro) return`<div style="background:rgba(39,192,120,.08);border:1px solid rgba(39,192,120,.2);border-radius:7px;padding:8px"><div style="font-size:10px;color:var(--grn)">${p.label}</div><div style="font-size:10px;color:var(--mut);margin:1px 0">${p.sub}</div><div style="font-size:15px;font-weight:500;color:var(--grn)">+${fmtUSD(p.val)}</div></div>`;
+    const col=p.acima>10?'#27c078':'#e8a020';
+    return`<div style="background:var(--bg4);border:1px solid var(--brd);border-radius:8px;padding:8px;display:flex;align-items:flex-end;gap:10px">
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:4px;margin-bottom:6px"><span class="tag tag-${p.asset.toLowerCase()}">${p.asset}</span><span class="tag tag-call">${p.tipo}</span></div>
+        <div style="font-size:11px;color:var(--mut)">Strike <b style="color:var(--txt)">${fmtUSD(p.strike)}</b></div>
+        <div style="font-size:11px;color:var(--mut)">Cot. <b style="color:var(--txt)">${fmtUSD(p.cot)}</b></div>
+        <div style="font-size:11px;color:var(--grn);margin-top:2px">Prêm. est. +${fmtUSD(p.prem)}</div>
+      </div>
+      ${thermometerBlock(Math.min(1,p.acima/25),col,'+'+p.acima+'%','acima\ncot.')}
+    </div>`;
+  });
+  return`<div class="grid2">
+    <div class="card"><div class="ch">Distância ao strike — termômetro</div><div style="display:flex;flex-direction:column;gap:6px">${therms.join('')}</div></div>
+    <div class="card"><div class="ch">Projeção próximas ops</div><div style="display:flex;flex-direction:column;gap:6px">${proxT.join('')}</div></div>
+  </div>`;
+}
+
+function idea7(){
+  const miniCards=pos.map(p=>{
+    const col=riskColor(p.dist);
+    const pct=Math.min(100,(p.dist/5)*100);
+    return`<div style="background:var(--bg4);border:1px solid var(--brd);border-left:3px solid ${col};border-radius:0 8px 8px 0;padding:8px 10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <div style="display:flex;align-items:center;gap:4px">${tagHtml(p)}</div>
+        <div style="font-size:15px;font-weight:500;color:${col}">+${p.dist.toFixed(2)}%</div>
+      </div>
+      <div style="background:var(--bg3);height:5px;border-radius:2px;overflow:hidden;margin-bottom:4px">
+        <div style="height:100%;width:${pct}%;background:${col};border-radius:2px"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--mut)">
+        <span>Cot. <b style="color:var(--txt)">${fmtUSD(p.cot)}</b></span>
+        <span style="color:${col};font-weight:500">${riskLabel(p.dist)}</span>
+        <span>Strike <b style="color:var(--txt)">${fmtUSD(p.strike)}</b></span>
+      </div>
+    </div>`;
+  });
+  const miniProx=prox.map(p=>{
+    if(p.lucro) return`<div style="background:rgba(39,192,120,.08);border:1px solid rgba(39,192,120,.2);border-radius:7px;padding:8px"><div style="display:flex;align-items:center;justify-content:space-between"><div><div style="font-size:10px;color:var(--grn)">${p.label}</div><div style="font-size:10px;color:var(--mut)">${p.sub}</div></div><div style="font-size:16px;font-weight:500;color:var(--grn);white-space:nowrap">+${fmtUSD(p.val)}</div></div></div>`;
+    const col=p.acima>10?'#27c078':'#e8a020';
+    return`<div style="background:var(--bg4);border:1px solid var(--brd);border-left:3px solid ${col};border-radius:0 8px 8px 0;padding:8px 10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">
+        <div style="display:flex;align-items:center;gap:4px"><span class="tag tag-${p.asset.toLowerCase()}">${p.asset}</span><span class="tag tag-call">${p.tipo}</span></div>
+        <div style="font-size:15px;font-weight:500;color:var(--grn)">+${fmtUSD(p.prem)}</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--mut)">
+        <span>Strike <b style="color:var(--txt)">${fmtUSD(p.strike)}</b></span>
+        <span style="color:${col}">+${p.acima}% acima cot.</span>
+      </div>
+    </div>`;
+  });
+  return`<div class="grid2">
+    <div class="card"><div class="ch">Distância ao strike</div><div style="display:flex;flex-direction:column;gap:6px">${miniCards.join('')}</div></div>
+    <div class="card"><div class="ch">Projeção próximas ops</div><div style="display:flex;flex-direction:column;gap:6px">${miniProx.join('')}</div></div>
+  </div>`;
+}
+
+const descs=[
+  'Régua com zonas ITM/Seguro/OTM e marcador de posição da cotação atual — leitura instantânea da distância ao strike',
+  'Medidores radiais (gauge) por posição com score de segurança colorido e resumo de dados ao lado',
+  'Bullet chart horizontal com zona de referência e marcador do strike — ideal para comparar múltiplos ativos',
+  'Score ring circular por posição com badge de risco e todos os dados na mesma linha horizontal',
+  'Timeline vertical ordenada por risco com barra de progresso proporcional à distância',
+  'Termômetro vertical lateral: altura proporcional à distância — leitura de urgência de baixo para cima',
+  'Cards ultra-compactos com borda colorida por nível de risco, valor grande em destaque e barra mínima',
+];
+
+function show(n){
+  document.querySelectorAll('.nb').forEach((b,i)=>b.classList.toggle('active',i===n-1));
+  document.getElementById('desc-txt').textContent=descs[n-1];
+  const fns=[idea1,idea2,idea3,idea4,idea5,idea6,idea7];
+  document.getElementById('root').innerHTML=fns[n-1]();
+}
+show(1);
+</script>

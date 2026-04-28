@@ -223,9 +223,16 @@
         var isEx   = (op.tipo_status||'').toUpperCase() === 'EXERCIDA' || Math.abs(dist) < 1;
         var bcol   = asset === 'BTC' ? '#f59e0b' : '#06b6d4';
         var acol   = isEx ? '#f97316' : '#22c55e';
+        var corr   = (op.corretora || 'BINANCE').toUpperCase();
+        var corrBadge = corr === 'BINANCE'
+            ? '<span class="vg-badge" style="background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.35)" title="Binance">BNC</span>'
+            : corr === 'BYBIT'
+            ? '<span class="vg-badge" style="background:rgba(6,182,212,.15);color:#06b6d4;border:1px solid rgba(6,182,212,.35)" title="Bybit">BB</span>'
+            : '<span class="vg-badge" style="background:rgba(148,163,184,.12);color:#94a3b8;border:1px solid rgba(148,163,184,.3)" title="'+corr+'">'+corr+'</span>';
         h += '<div class="vg-op-row" data-op-id="' + (op.id || '') + '" style="border-left:3px solid ' + acol + ';cursor:pointer">';
         h += '<span style="font-family:var(--syne,Syne),sans-serif;font-size:.8rem;font-weight:700;min-width:30px;color:'+bcol+'">'+asset+'</span>';
         h += '<span class="vg-badge" style="background:rgba(59,130,246,.1);color:#3b82f6;border:1px solid rgba(59,130,246,.26)">'+tipo+'</span>';
+        h += corrBadge;
         if (isEx) h += '<span class="vg-badge" style="background:rgba(249,115,22,.1);color:#f97316;border:1px solid rgba(249,115,22,.26)">Poss. Exercício</span>';
         h += '<div style="flex:1;font-size:.68rem;color:' + C_MUTED + '">Strike ' + fmtK(strike) + ' &middot; Cot. ' + fmtK(cot) + '</div>';
         h += '<div style="font-size:.68rem;color:' + C_MUTED + '">Dist. <span style="color:' + (isEx?'#f97316':'#22c55e') + '">' + fmtP(Math.abs(dist)) + '</span></div>';
@@ -233,26 +240,59 @@
         h += '</div>';
       });
     }
-    /* Heat bars */
-    h += '<div style="margin-top:10px"><div class="vg-card-title" style="margin-bottom:8px">Distância ao Strike</div>';
+    /* Bullet Chart — Distância ao Strike */
+    h += '<div style="margin-top:12px">';
+    h += '<div class="vg-card-title" style="margin-bottom:8px">Distância ao Strike — Bullet Chart</div>';
     abertas.forEach(function(op) {
-      var asset  = (op.ativo||'?').toUpperCase();
-      var cot    = parseFloat(op.cotacao_atual || 0);
-      var strike = parseFloat(op.strike || 0);
-      var dist   = strike > 0 && cot > 0 ? ((cot - strike) / strike * 100) : 0;
-      var sym    = asset === 'BTC' ? '&#8383;' : '&#926;';
-      var isEx   = Math.abs(dist) < 1;
-      var dc     = isEx ? '#f97316' : '#22c55e';
-      var dlbl   = isEx ? 'Zona de atenção' : 'Seguro';
-      var cur    = Math.max(5, Math.min(93, 50 + dist * 5));
-      h += '<div style="margin-bottom:10px">';
-      h += '<div style="font-size:.65rem;color:' + C_MUTED + ';margin-bottom:4px">' + sym + ' ' + asset + ' &middot; ' + fmtP(Math.abs(dist)) + ' &middot; <span style="color:' + dc + '">' + dlbl + '</span></div>';
-      h += '<div class="vg-heat-bar">';
-      h += '<div style="position:absolute;inset:0;border-radius:8px;background:linear-gradient(90deg,#ef4444,#f59e0b 40%,#22c55e 100%);opacity:.2"></div>';
-      h += '<div style="position:absolute;top:50%;transform:translate(-50%,-50%);left:' + cur + '%;width:20px;height:20px;border-radius:50%;border:3px solid ' + C_DOT_BDR + ';background:' + dc + '"></div>';
-      h += '<span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:.6rem;color:' + C_HEAT_LBL + '">ITM</span>';
-      h += '<span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:.6rem;color:' + C_HEAT_LBL + '">OTM Seguro</span>';
-      h += '</div></div>';
+      var asset   = (op.ativo||'?').toUpperCase();
+      var tipo    = (op.tipo||'CALL').toUpperCase();
+      var cot     = parseFloat(op.cotacao_atual || 0);
+      var strike  = parseFloat(op.strike || 0);
+      // dist positivo = cot acima do strike (OTM para CALL) → seguro
+      // dist negativo = cot abaixo do strike (ITM para CALL) → risco
+      var dist    = strike > 0 && cot > 0 ? ((cot - strike) / strike * 100) : 0;
+      var absDist = Math.abs(dist);
+      var corr    = (op.corretora || 'BINANCE').toUpperCase();
+      var col     = absDist < 2 ? '#e05c5c' : absDist < 4 ? '#e8a020' : '#27c078';
+      var acol    = asset === 'BTC' ? '#f59e0b' : '#06b6d4';
+      // Range visual: -10% (deep ITM) → 0% (Strike) → +10% (OTM seguro)
+      // Strike fixo em 50% da barra. Fill proporcional à cotação nesse range.
+      var RANGE   = 10; // % de cada lado
+      var cotPct  = Math.max(2, Math.min(97, 50 + (dist / RANGE) * 50));
+      var strikePct = 50;
+      var corrStyle = corr === 'BINANCE'
+        ? 'background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.35)'
+        : corr === 'BYBIT'
+        ? 'background:rgba(6,182,212,.15);color:#06b6d4;border:1px solid rgba(6,182,212,.35)'
+        : 'background:rgba(148,163,184,.12);color:#94a3b8;border:1px solid rgba(148,163,184,.3)';
+      var corrLabel = corr === 'BINANCE' ? 'BNC' : corr === 'BYBIT' ? 'BB' : corr;
+      h += '<div style="padding:6px 0;border-bottom:1px solid rgba(42,48,80,.4)">';
+      h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">';
+      h += '<div style="display:flex;align-items:center;gap:5px">';
+      h += '<span style="font-family:var(--syne,Syne),sans-serif;font-size:.75rem;font-weight:700;color:'+acol+'">'+asset+'</span>';
+      h += '<span style="padding:2px 5px;border-radius:4px;font-size:.67rem;font-weight:500;background:rgba(59,130,246,.1);color:#3b82f6;border:1px solid rgba(59,130,246,.26)">'+tipo+'</span>';
+      h += '<span style="padding:2px 5px;border-radius:4px;font-size:.67rem;font-weight:500;'+corrStyle+'">'+corrLabel+'</span>';
+      h += '</div>';
+      h += '<span style="font-size:.75rem;font-weight:600;color:'+col+'">' + fmtP(dist) + '</span>';
+      h += '</div>';
+      // Barra: zona vermelha (0–50%), zona verde (50–100%), marcador Strike, círculo cotação
+      h += '<div style="background:#252c40;height:16px;border-radius:4px;position:relative;overflow:hidden">';
+      h += '<div style="position:absolute;left:0;top:0;width:50%;height:100%;background:rgba(224,92,92,.10)"></div>';
+      h += '<div style="position:absolute;left:50%;top:0;width:50%;height:100%;background:rgba(39,192,120,.10)"></div>';
+      h += '<span style="position:absolute;left:6px;top:50%;transform:translateY(-50%);font-size:9px;color:rgba(255,255,255,.35)">ITM</span>';
+      h += '<span style="position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:9px;color:rgba(255,255,255,.35)">OTM</span>';
+      h += '</div>';
+      // Overlay: marcador Strike + dot cotação (overflow:visible no container)
+      h += '<div style="position:relative;height:0;margin-top:-16px;margin-bottom:16px">';
+      h += '<div style="position:absolute;left:'+strikePct+'%;top:-18px;bottom:-2px;width:2px;background:#c9a227;z-index:2"></div>';
+      h += '<span style="position:absolute;left:'+(strikePct+1)+'%;top:-14px;transform:translateY(-50%);font-size:9px;color:#c9a227;z-index:3">Strike</span>';
+      h += '<div style="position:absolute;left:'+cotPct+'%;top:-8px;width:14px;height:14px;border-radius:50%;background:'+col+';border:2px solid #0d1117;transform:translateX(-50%);z-index:4;box-shadow:0 0 6px '+col+'88"></div>';
+      h += '</div>';
+      h += '<div style="display:flex;justify-content:space-between;font-size:.6rem;color:'+C_MUTED+';margin-top:4px">';
+      h += '<span>Cot. ' + fmtK(cot) + '</span>';
+      h += '<span>Strike ' + fmtK(strike) + '</span>';
+      h += '</div>';
+      h += '</div>';
     });
     h += '</div>';
     h += '</div>';
@@ -286,36 +326,32 @@
     /* RIGHT-BOTTOM: Projeção + Resumo */
     h += '<div style="display:flex;flex-direction:column;gap:14px">';
 
-    /* Projeção */
+    /* Projeção — Bullet Chart */
     h += '<div class="vg-card">';
     h += '<div class="vg-card-title"><span>&#128302;</span>Projeção Próximas Ops</div>';
-    var totalLucroEx = 0;
     proj.forEach(function(p) {
-      var sym = p.asset === 'BTC' ? '&#8383;' : '&#926;';
       var ac  = p.asset === 'BTC' ? '#f59e0b' : '#06b6d4';
-      h += '<div class="vg-fc-row">';
-      h += '<span style="font-family:var(--syne,Syne),sans-serif;font-size:.8rem;font-weight:700;min-width:14px;color:'+ac+'">'+sym+'</span>';
-      h += '<div style="flex:1">';
-      h += '<div style="font-family:monospace;font-size:.75rem;font-weight:700;color:#f59e0b">' + fmtK(p.strikeCall) + '</div>';
-      h += '<div style="font-size:.6rem;color:' + C_MUTED + '">CALL sugerida &middot; +' + p.dist.toFixed(1) + '% acima cot.</div>';
+      var pct = Math.min(90, Math.max(10, (1 - p.dist / 30) * 80));
+      h += '<div style="padding:6px 0;border-bottom:1px solid rgba(42,48,80,.4)">';
+      h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">';
+      h += '<div style="display:flex;align-items:center;gap:5px">';
+      h += '<span style="font-family:var(--syne,Syne),sans-serif;font-size:.75rem;font-weight:700;color:'+ac+'">'+p.asset+'</span>';
+      h += '<span style="padding:2px 5px;border-radius:4px;font-size:.67rem;font-weight:500;background:rgba(59,130,246,.1);color:#3b82f6;border:1px solid rgba(59,130,246,.26)">CALL</span>';
       h += '</div>';
-      if (p.premEst > 0) {
-        h += '<div style="text-align:right">';
-        h += '<div style="font-family:monospace;font-size:.78rem;font-weight:700;color:#22c55e">+' + fmt(p.premEst) + '</div>';
-        h += '<div style="font-size:.58rem;color:' + C_MUTED + '">prêm. estimado</div>';
-        h += '</div>';
-      }
+      h += '<span style="font-size:.75rem;font-weight:500;color:#e8a020">+'+p.dist.toFixed(1)+'% acima cot.</span>';
       h += '</div>';
-      if (p.lucroEx > 0) totalLucroEx += p.lucroEx;
+      h += '<div style="background:#252c40;height:16px;border-radius:4px;position:relative;overflow:hidden">';
+      h += '<div style="height:100%;background:rgba(79,124,222,.25);width:'+pct+'%;border-radius:4px"></div>';
+      h += '<div style="position:absolute;left:'+pct+'%;top:-1px;bottom:-1px;width:2px;background:#27c078"></div>';
+      h += '<span style="position:absolute;left:'+(pct+1)+'%;top:50%;transform:translateY(-50%);font-size:9px;color:#27c078">cot. atual</span>';
+      h += '</div>';
+      h += '<div style="display:flex;justify-content:space-between;font-size:.6rem;color:'+C_MUTED+';margin-top:3px">';
+      h += '<span>Cot. ' + fmtK(p.cot) + '</span>';
+      if (p.premEst > 0) h += '<span style="color:#27c078">Prêm. ~+' + fmt(p.premEst) + '</span>';
+      h += '<span>Strike ' + fmtK(p.strikeCall) + '</span>';
+      h += '</div>';
+      h += '</div>';
     });
-    if (totalLucroEx > 0) {
-      h += '<div style="margin-top:10px;padding:9px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.26);border-radius:7px">';
-      h += '<div style="font-size:.65rem;color:#22c55e;font-weight:600">&#128161; Lucro projetado se exercidas</div>';
-      h += '<div style="display:flex;justify-content:space-between;margin-top:4px">';
-      h += '<span style="font-size:.63rem;color:' + C_MUTED + '">BTC: strike ' + fmtK(proj[0] && proj[0].strikeCall || 0) + ' vs custo médio ' + fmtK(proj[0] && proj[0].cm || 0) + '</span>';
-      h += '<span style="font-family:monospace;font-weight:700;color:#22c55e">+' + fmt(totalLucroEx) + '</span>';
-      h += '</div></div>';
-    }
     h += '</div>';
 
     h += '</div>'; /* end right-bottom */

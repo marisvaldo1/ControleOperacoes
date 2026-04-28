@@ -52,14 +52,15 @@
 
     /* Mapeamento de período cfb-bar → applyPeriodo() */
     const _PERIOD_MAP = {
-        'all':   '_all',
-        'today': 'today',
-        '7d':    '7',
-        'mes':   'month',
-        '30d':   '30',
-        '60d':   '60',
-        '90d':   '90',
-        'ano':   'year',
+        'all':    '_all',
+        'today':  'today',
+        'semana': 'semana',
+        '7d':     '7',
+        'mes':    'month',
+        '30d':    '30',
+        '60d':    '60',
+        '90d':    '90',
+        'ano':    'year',
     };
 
     /* ------------------------------------------------------------------ */
@@ -85,7 +86,11 @@
     }
 
     function getOpDate(op) {
-        const raw = op.exercicio || op.data_operacao || op.created_at || null;
+        // Usa data_operacao (abertura) como referência primária do heatmap.
+        // Operações abertas têm exercicio no futuro — usá-lo colocaria o dia
+        // fora do range de períodos como "semana" ou "hoje".
+        // Para operações já fechadas/exercidas, usa exercicio se não houver data_operacao.
+        const raw = op.data_operacao || op.created_at || op.exercicio || null;
         if (!raw) return null;
         return parseDateLocal(raw.toString().trim().slice(0, 10));
     }
@@ -197,7 +202,12 @@
         today.setHours(0, 0, 0, 0);
         let start, end = new Date(today);
 
-        if (value === '7')        { start = new Date(today); start.setDate(today.getDate() - 6); }
+        if (value === 'semana') {
+            const dow = today.getDay();
+            start = new Date(today);
+            start.setDate(today.getDate() - (dow === 0 ? 6 : dow - 1));
+        }
+        else if (value === '7')        { start = new Date(today); start.setDate(today.getDate() - 6); }
         else if (value === '30')  { start = new Date(today); start.setDate(today.getDate() - 29); }
         else if (value === '60')  { start = new Date(today); start.setDate(today.getDate() - 59); }
         else if (value === '90')  { start = new Date(today); start.setDate(today.getDate() - 89); }
