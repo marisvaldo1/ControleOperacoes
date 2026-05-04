@@ -234,8 +234,8 @@
         h += '<span class="vg-badge" style="background:rgba(59,130,246,.1);color:#3b82f6;border:1px solid rgba(59,130,246,.26)">'+tipo+'</span>';
         h += corrBadge;
         if (isEx) h += '<span class="vg-badge" style="background:rgba(249,115,22,.1);color:#f97316;border:1px solid rgba(249,115,22,.26)">Poss. Exercício</span>';
-        h += '<div style="flex:1;font-size:.68rem;color:' + C_MUTED + '">Strike ' + fmtK(strike) + ' &middot; Cot. ' + fmtK(cot) + '</div>';
-        h += '<div style="font-size:.68rem;color:' + C_MUTED + '">Dist. <span style="color:' + (isEx?'#f97316':'#22c55e') + '">' + fmtP(Math.abs(dist)) + '</span></div>';
+        h += '<div style="flex:1;font-size:.72rem;color:' + C_MUTED + '">Strike ' + fmtK(strike) + ' &middot; Cot. ' + fmtK(cot) + '</div>';
+        h += '<div style="font-size:.72rem;color:' + C_MUTED + '">Dist. <span style="color:' + (isEx?'#f97316':'#22c55e') + '">' + fmtP(Math.abs(dist)) + '</span></div>';
         h += '<span style="font-family:monospace;font-size:.78rem;font-weight:700;color:#22c55e">+' + fmt(premio) + '</span>';
         h += '</div>';
       });
@@ -251,9 +251,16 @@
       // dist positivo = cot acima do strike (OTM para CALL) → seguro
       // dist negativo = cot abaixo do strike (ITM para CALL) → risco
       var dist    = strike > 0 && cot > 0 ? ((cot - strike) / strike * 100) : 0;
-      var absDist = Math.abs(dist);
       var corr    = (op.corretora || 'BINANCE').toUpperCase();
-      var col     = absDist < 2 ? '#e05c5c' : absDist < 4 ? '#e8a020' : '#27c078';
+      // Cor baseada em tipo + direção:
+      // PUT  vendida: OTM = cot > strike (dist>0). Verde se >+5%, amarelo se 0~+5%, vermelho se <0 (ITM)
+      // CALL vendida: OTM = cot < strike (dist<0). Verde se <-5%, amarelo se -5~0%, vermelho se >0 (ITM)
+      var col;
+      if (tipo === 'PUT') {
+        col = dist > 5 ? '#27c078' : dist >= 0 ? '#e8a020' : '#e05c5c';
+      } else { // CALL
+        col = dist < -5 ? '#27c078' : dist <= 0 ? '#e8a020' : '#e05c5c';
+      }
       var acol    = asset === 'BTC' ? '#f59e0b' : '#06b6d4';
       // Range visual: -10% (deep ITM) → 0% (Strike) → +10% (OTM seguro)
       // Strike fixo em 50% da barra. Fill proporcional à cotação nesse range.
@@ -270,8 +277,8 @@
       h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">';
       h += '<div style="display:flex;align-items:center;gap:5px">';
       h += '<span style="font-family:var(--syne,Syne),sans-serif;font-size:.75rem;font-weight:700;color:'+acol+'">'+asset+'</span>';
-      h += '<span style="padding:2px 5px;border-radius:4px;font-size:.67rem;font-weight:500;background:rgba(59,130,246,.1);color:#3b82f6;border:1px solid rgba(59,130,246,.26)">'+tipo+'</span>';
-      h += '<span style="padding:2px 5px;border-radius:4px;font-size:.67rem;font-weight:500;'+corrStyle+'">'+corrLabel+'</span>';
+      h += '<span style="padding:2px 5px;border-radius:4px;font-size:.72rem;font-weight:500;background:rgba(59,130,246,.1);color:#3b82f6;border:1px solid rgba(59,130,246,.26)">'+tipo+'</span>';
+      h += '<span style="padding:2px 5px;border-radius:4px;font-size:.72rem;font-weight:500;'+corrStyle+'">'+corrLabel+'</span>';
       h += '</div>';
       h += '<span style="font-size:.75rem;font-weight:600;color:'+col+'">' + fmtP(dist) + '</span>';
       h += '</div>';
@@ -279,83 +286,24 @@
       h += '<div style="background:#252c40;height:16px;border-radius:4px;position:relative;overflow:hidden">';
       h += '<div style="position:absolute;left:0;top:0;width:50%;height:100%;background:rgba(224,92,92,.10)"></div>';
       h += '<div style="position:absolute;left:50%;top:0;width:50%;height:100%;background:rgba(39,192,120,.10)"></div>';
-      h += '<span style="position:absolute;left:6px;top:50%;transform:translateY(-50%);font-size:9px;color:rgba(255,255,255,.35)">ITM</span>';
-      h += '<span style="position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:9px;color:rgba(255,255,255,.35)">OTM</span>';
+      h += '<span style="position:absolute;left:6px;top:50%;transform:translateY(-50%);font-size:11px;color:rgba(255,255,255,.35)">ITM</span>';
+      h += '<span style="position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:11px;color:rgba(255,255,255,.35)">OTM</span>';
       h += '</div>';
       // Overlay: marcador Strike + dot cotação (overflow:visible no container)
       h += '<div style="position:relative;height:0;margin-top:-16px;margin-bottom:16px">';
       h += '<div style="position:absolute;left:'+strikePct+'%;top:-18px;bottom:-2px;width:2px;background:#c9a227;z-index:2"></div>';
-      h += '<span style="position:absolute;left:'+(strikePct+1)+'%;top:-14px;transform:translateY(-50%);font-size:9px;color:#c9a227;z-index:3">Strike</span>';
+      h += '<span style="position:absolute;left:'+(strikePct+1)+'%;top:-14px;transform:translateY(-50%);font-size:11px;color:#c9a227;z-index:3">Strike</span>';
       h += '<div style="position:absolute;left:'+cotPct+'%;top:-8px;width:14px;height:14px;border-radius:50%;background:'+col+';border:2px solid #0d1117;transform:translateX(-50%);z-index:4;box-shadow:0 0 6px '+col+'88"></div>';
       h += '</div>';
-      h += '<div style="display:flex;justify-content:space-between;font-size:.6rem;color:'+C_MUTED+';margin-top:4px">';
-      h += '<span>Cot. ' + fmtK(cot) + '</span>';
+      h += '<div style="display:flex;justify-content:space-between;font-size:.72rem;color:'+C_MUTED+';margin-top:4px">';
       h += '<span>Strike ' + fmtK(strike) + '</span>';
+      h += '<span>Cot. ' + fmtK(cot) + '</span>';
       h += '</div>';
       h += '</div>';
     });
     h += '</div>';
     h += '</div>';
     h += '</div>'; /* end top grid */
-
-    /* BOTTOM GRID */
-    h += '<div style="display:grid;grid-template-columns:3fr 2fr;gap:14px">';
-
-    /* LEFT-BOTTOM: Fluxo do ciclo + Prêmios por ciclo */
-    var fluxo = computeBtcFluxo(ops);
-    h += '<div class="vg-card">';
-    h += '<div class="vg-card-title"><span>&#128260;</span>Fluxo do Ciclo — PUT &#8594; CALL</div>';
-    /* Prêmios por ciclo */
-    h += '<div class="vg-card-title">Prêmios por Ciclo</div>';
-    var maxTotal = Math.max.apply(null, ciclos.map(function(c) { return c.total; })) || 1;
-    ciclos.forEach(function(cy) {
-      var barW  = Math.min((cy.total / maxTotal) * 100, 100);
-      var bc    = cy.total > 0 ? '#22c55e' : '#3b82f6';
-      var label = cy.hasOpen ? 'aguardando' : (cy.total > 0 ? '+' + fmt(cy.total) : '—');
-      var lc    = cy.hasOpen ? C_MUTED : '#22c55e';
-      h += '<div style="margin-bottom:10px">';
-      h += '<div style="display:flex;justify-content:space-between;font-size:.66rem;margin-bottom:4px">';
-      h += '<span style="color:' + C_MUTED + '">Ciclo ' + cy.date + ' &middot; ' + (cy.assets||'') + '</span>';
-      h += '<span style="font-family:monospace;font-weight:600;color:'+lc+'">' + label + '</span>';
-      h += '</div>';
-      h += '<div style="height:10px;background:' + C_BAR_BG + ';border-radius:3px;overflow:hidden"><div style="height:100%;width:'+barW+'%;background:'+bc+';border-radius:3px;transition:width .7s"></div></div>';
-      h += '</div>';
-    });
-    h += '</div>';
-
-    /* RIGHT-BOTTOM: Projeção + Resumo */
-    h += '<div style="display:flex;flex-direction:column;gap:14px">';
-
-    /* Projeção — Bullet Chart */
-    h += '<div class="vg-card">';
-    h += '<div class="vg-card-title"><span>&#128302;</span>Projeção Próximas Ops</div>';
-    proj.forEach(function(p) {
-      var ac  = p.asset === 'BTC' ? '#f59e0b' : '#06b6d4';
-      var pct = Math.min(90, Math.max(10, (1 - p.dist / 30) * 80));
-      h += '<div style="padding:6px 0;border-bottom:1px solid rgba(42,48,80,.4)">';
-      h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">';
-      h += '<div style="display:flex;align-items:center;gap:5px">';
-      h += '<span style="font-family:var(--syne,Syne),sans-serif;font-size:.75rem;font-weight:700;color:'+ac+'">'+p.asset+'</span>';
-      h += '<span style="padding:2px 5px;border-radius:4px;font-size:.67rem;font-weight:500;background:rgba(59,130,246,.1);color:#3b82f6;border:1px solid rgba(59,130,246,.26)">CALL</span>';
-      h += '</div>';
-      h += '<span style="font-size:.75rem;font-weight:500;color:#e8a020">+'+p.dist.toFixed(1)+'% acima cot.</span>';
-      h += '</div>';
-      h += '<div style="background:#252c40;height:16px;border-radius:4px;position:relative;overflow:hidden">';
-      h += '<div style="height:100%;background:rgba(79,124,222,.25);width:'+pct+'%;border-radius:4px"></div>';
-      h += '<div style="position:absolute;left:'+pct+'%;top:-1px;bottom:-1px;width:2px;background:#27c078"></div>';
-      h += '<span style="position:absolute;left:'+(pct+1)+'%;top:50%;transform:translateY(-50%);font-size:9px;color:#27c078">cot. atual</span>';
-      h += '</div>';
-      h += '<div style="display:flex;justify-content:space-between;font-size:.6rem;color:'+C_MUTED+';margin-top:3px">';
-      h += '<span>Cot. ' + fmtK(p.cot) + '</span>';
-      if (p.premEst > 0) h += '<span style="color:#27c078">Prêm. ~+' + fmt(p.premEst) + '</span>';
-      h += '<span>Strike ' + fmtK(p.strikeCall) + '</span>';
-      h += '</div>';
-      h += '</div>';
-    });
-    h += '</div>';
-
-    h += '</div>'; /* end right-bottom */
-    h += '</div>'; /* end bottom grid */
 
     return h;
   }

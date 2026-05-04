@@ -1086,12 +1086,14 @@ function renderChartAnual(data, year) {
     // ─── Resumo Mensal (padrão opcoes: tabela com barra de progresso) ───────
     const resumoCont = document.getElementById("anualResumoContainer");
     if (resumoCont) {
-        let rows = "", totalOps = 0, totalPremios = 0, totalResultado = 0, totalWins = 0;
+        let totalOps = 0, totalPremios = 0, totalResultado = 0, totalWins = 0;
         let cumulative = 0;
         const saldoCrypto = getSaldoCrypto() || 1;
         const sortedMonths = [];
         for (let i = 1; i <= 12; i++) sortedMonths.push(year + "-" + String(i).padStart(2, "0"));
 
+        // Primeira passagem (crescente) para calcular acumulados corretamente
+        const rowsData = [];
         sortedMonths.forEach(month => {
             const ops = grouped[month] || [];
             if (!ops.length) return;
@@ -1118,44 +1120,61 @@ function renderChartAnual(data, year) {
             totalResultado  += resultado;
             totalWins       += wins;
 
-            rows += `<tr class="cursor-pointer show-crypto-month-ops-row" data-year="${year}" data-month="${month}" style="cursor:pointer" title="Clique para ver detalhes">
-                <td>${getMonthName(month).split("-")[0]}</td>
-                <td class="text-end">${ops.length}</td>
-                <td class="text-end ${premio >= 0 ? "text-success" : "text-danger"}">${fmtUsd(premio)}</td>
-                <td class="text-end ${resultado >= 0 ? "text-success" : "text-danger"}">${resultado.toFixed(2)}%</td>
-                <td class="text-end">${taxaAcerto.toFixed(0)}%</td>
-                <td class="text-end ${cumulative >= 0 ? "text-success" : "text-danger"}">${fmtUsd(cumulative)}</td>
-                <td class="text-end">${exercidas > 0 ? `<span class="badge bg-warning text-dark">${exercidas}</span>` : '<span class="text-muted">-</span>'}</td>
-                <td class="text-end">${naoExercidas > 0 ? naoExercidas : '<span class="text-muted">-</span>'}</td>
-                <td style="cursor:pointer" class="show-crypto-month-ops-td" data-year="${year}" data-month="${month}">
+            rowsData.push({ month, ops, premio, resultado, wins, taxaAcerto, rentabilidade, rentAbs, rentBarCls, exercidas, naoExercidas, cumulative });
+        });
+
+        // Renderiza em ordem decrescente (meses mais recentes primeiro)
+        let rows = "";
+        [...rowsData].reverse().forEach(d => {
+            rows += `<tr class="cursor-pointer show-crypto-month-ops-row" data-year="${year}" data-month="${d.month}" style="cursor:pointer" title="Clique para ver detalhes">
+                <td>${getMonthName(d.month).split("-")[0]}</td>
+                <td class="text-end">${d.ops.length}</td>
+                <td class="text-end ${d.premio >= 0 ? "text-success" : "text-danger"}">${fmtUsd(d.premio)}</td>
+                <td class="text-end ${d.resultado >= 0 ? "text-success" : "text-danger"}">${d.resultado.toFixed(2)}%</td>
+                <td class="text-end">${d.taxaAcerto.toFixed(0)}%</td>
+                <td class="text-end ${d.cumulative >= 0 ? "text-success" : "text-danger"}">${fmtUsd(d.cumulative)}</td>
+                <td class="text-end">${d.exercidas > 0 ? `<span class="badge bg-warning text-dark">${d.exercidas}</span>` : '<span class="text-muted">-</span>'}</td>
+                <td class="text-end">${d.naoExercidas > 0 ? d.naoExercidas : '<span class="text-muted">-</span>'}</td>
+                <td style="cursor:pointer" class="show-crypto-month-ops-td" data-year="${year}" data-month="${d.month}">
                     <div class="d-flex align-items-center">
                         <div class="progress progress-sm flex-grow-1 me-2" style="pointer-events:none">
-                            <div class="progress-bar ${rentBarCls}" style="width:${rentAbs.toFixed(0)}%"></div>
+                            <div class="progress-bar ${d.rentBarCls}" style="width:${d.rentAbs.toFixed(0)}%"></div>
                         </div>
-                        <span class="text-muted small">${rentabilidade.toFixed(2)}%</span>
+                        <span class="text-muted small">${d.rentabilidade.toFixed(2)}%</span>
                     </div>
                 </td>
             </tr>`;
         });
 
+        const summaryText = `${totalOps} ops · ${fmtUsd(totalPremios)} prêmio · ${totalWins > 0 ? (totalWins / totalOps * 100).toFixed(0) + "% acerto" : ""}`;
         resumoCont.innerHTML = `
-        <div class="card">
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <h3 class="card-title mb-0">📊 Resumo Mensal ${year}</h3>
-            <div class="text-muted small">${totalOps} ops · ${fmtUsd(totalPremios)} prêmio · ${totalWins > 0 ? (totalWins / totalOps * 100).toFixed(0) + "% acerto" : ""}</div>
-          </div>
-          <div class="table-responsive">
-            <table class="table table-vcenter table-hover card-table">
-              <thead><tr>
-                <th>Mês</th><th class="text-end">Ops</th><th class="text-end">Prêmio</th>
-                <th class="text-end">Resultado</th><th class="text-end">Acerto</th>
-                <th class="text-end">Acumulado</th>
-                <th class="text-end" title="Operações exercidas">Exercidas</th>
-                <th class="text-end" title="Operações não exercidas">Não Exerc.</th>
-                <th>Rentabilidade</th>
-              </tr></thead>
-              <tbody>${rows || '<tr><td colspan="9" class="text-muted text-center py-3">Nenhuma operação encerrada neste ano.</td></tr>'}</tbody>
-            </table>
+        <div class="accordion" id="resumoMensalAcc">
+          <div class="accordion-item border-0">
+            <h2 class="accordion-header" id="resumoMensalHeader">
+              <button class="accordion-button collapsed" type="button"
+                      data-bs-toggle="collapse" data-bs-target="#resumoMensalBody"
+                      aria-expanded="false" aria-controls="resumoMensalBody">
+                <span class="fw-bold me-2">📊 Resumo Mensal ${year}</span>
+                <span class="text-muted small ms-2">${summaryText}</span>
+              </button>
+            </h2>
+            <div id="resumoMensalBody" class="accordion-collapse collapse" aria-labelledby="resumoMensalHeader">
+              <div class="accordion-body p-0">
+                <div class="table-responsive">
+                  <table class="table table-vcenter table-hover card-table mb-0">
+                    <thead><tr>
+                      <th>Mês</th><th class="text-end">Ops</th><th class="text-end">Prêmio</th>
+                      <th class="text-end">Resultado</th><th class="text-end">Acerto</th>
+                      <th class="text-end">Acumulado</th>
+                      <th class="text-end" title="Operações exercidas">Exercidas</th>
+                      <th class="text-end" title="Operações não exercidas">Não Exerc.</th>
+                      <th>Rentabilidade</th>
+                    </tr></thead>
+                    <tbody>${rows || '<tr><td colspan="9" class="text-muted text-center py-3">Nenhuma operação encerrada neste ano.</td></tr>'}</tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
           </div>
         </div>`;
     }

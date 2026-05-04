@@ -10,6 +10,7 @@
     let activeCorr = null;
     let activeFullState = null;
     let _header = null;
+    let _dtTable = null;
 
     function fmtUsd(v) {
         return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(v || 0);
@@ -75,21 +76,31 @@
 
     function applyFilterFull(ops, state) {
         if (window.CryptoFilterBar?.filter) {
-            return window.CryptoFilterBar.filter(ops, {
-                period: state.period || 'today',
-                status: state.status || null,
-                tipo: state.tipo || null,
-                asset: state.asset || null,
-                corretora: state.corretora || null,
-            });
+            return window.CryptoFilterBar.filter(ops, state);
         }
-        let result = applyFilter(ops, state.status);
-        if (state.tipo) {
+        // manual fallback com suporte a tipoList/statusList
+        let result = ops;
+        if (Array.isArray(state.tipoList)) {
+            if (state.tipoList.length === 0) return [];
+            result = result.filter(op => state.tipoList.some(t => t === (op.tipo || '').toUpperCase()));
+        } else if (state.tipo) {
             result = result.filter(op => (op.tipo || '').toUpperCase() === state.tipo.toUpperCase());
         }
+        if (Array.isArray(state.statusList)) {
+            if (state.statusList.length === 0) return [];
+            result = result.filter(op => {
+                const s = (op.status || '').toLowerCase();
+                return state.statusList.some(sv => {
+                    if (sv === 'exercida') return window.CryptoExerciseStatus?.isActuallyExercised(op) ?? false;
+                    if (sv === 'nao_exercida') { if (s === 'aberta') return false; return !(window.CryptoExerciseStatus?.isActuallyExercised(op) ?? false); }
+                    return s === sv.toLowerCase();
+                });
+            });
+        } else if (state.status) {
+            result = applyFilter(result, state.status);
+        }
         if (state.asset) {
-            const asset = state.asset.toUpperCase();
-            result = result.filter(op => String(op.ativo || '').toUpperCase().includes(asset));
+            result = result.filter(op => String(op.ativo || '').toUpperCase().includes(state.asset.toUpperCase()));
         }
         if (state.corretora) {
             result = result.filter(op => (op.corretora || 'BINANCE').toUpperCase() === state.corretora);
@@ -282,14 +293,18 @@
         </tr>`;
     }
 
-    function renderOpsTable() {
+    function renderOpsTable(filteredOps) {
         const tbody = document.getElementById('tocOpsTbody');
         if (!tbody) return;
 
-        // Pool: currentOps com filtros de tipo/ativo/corretora, SEM filtro de data
-        // Depois filtra exercidas pela data de exercício (vencimento) dentro do período ativo
-        const pool = applyNonDateFilters();
-        const exercidas = pool.filter(op => isExercised(op) && inExercisePeriod(op));
+        // Destrói instância DataTable anterior
+        if (_dtTable) {
+            try { _dtTable.destroy(); } catch (e) {}
+            _dtTable = null;
+        }
+
+        // Filtra exercidas a partir dos ops já filtrados pelos controles do header
+        const exercidas = (filteredOps || []).filter(op => isExercised(op) && inExercisePeriod(op));
         exercidas.sort((a, b) => {
             const da = a.exercicio ? new Date(a.exercicio) : (getOpDate(a) || new Date(0));
             const db = b.exercicio ? new Date(b.exercicio) : (getOpDate(b) || new Date(0));
@@ -301,20 +316,25 @@
             return;
         }
 
-        // Última exercida por combinação ativo + corretora
-        const seen = new Map();
-        const lastPerGroup = [];
-        exercidas.forEach(op => {
-            const ativo = (op.ativo || '').toUpperCase();
-            const corr  = (op.corretora || 'BNC').toUpperCase();
-            const key   = `${ativo}|${corr}`;
-            if (!seen.has(key)) {
-                seen.set(key, true);
-                lastPerGroup.push(op);
-            }
-        });
+        tbody.innerHTML = exercidas.map(op => buildOpRow(op)).join('');
 
-        tbody.innerHTML = lastPerGroup.map(op => buildOpRow(op)).join('');
+        // Inicializa DataTable (jQuery + DataTables já carregados via libs.js)
+        if (typeof $ !== 'undefined' && $.fn && $.fn.DataTable) {
+            const table = tbody.closest('table');
+            if (table) {
+                try {
+                    _dtTable = $(table).DataTable({
+                        pageLength: 15,
+                        order: [[8, 'desc']],
+                        language: { url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json' },
+                        dom: '<"toc-dt-top"f>rtip',
+                        columnDefs: [{ orderable: false, targets: [0, 1, 2, 10] }],
+                    });
+                } catch (e) {
+                    console.warn('[TOC] DataTable init error', e);
+                }
+            }
+        }
     }
 
     function renderMeta(stats, monthlyRows) {
@@ -369,7 +389,7 @@
         renderSummary(stats, monthlyRows);
         renderMonthly(monthlyRows);
         renderTimeline(monthlyRows);
-        renderOpsTable();
+        renderOpsTable(ops);
         renderMeta(stats, monthlyRows);
     }
 
@@ -381,14 +401,11 @@
                 // Captura o state atual do header se disponível
                 if (_header && typeof _header.getState === 'function') {
                     activeFullState = _header.getState();
-                    activePeriod = activeFullState.period || activePeriod;
+                    activePeriod = (activeFullState.period) || activePeriod;
                 }
-                const filtered = applyFilterFull(currentOps, {
-                    period: activePeriod,
-                    status: activeFilter,
-                    tipo: activeTipo,
-                    asset: activeAsset,
-                    corretora: activeCorr,
+                const filtered = applyFilterFull(currentOps, activeFullState || {
+                    period: activePeriod, status: activeFilter, tipo: activeTipo,
+                    tipoList: null, statusList: null, asset: activeAsset, corretora: activeCorr,
                 });
                 renderAll(filtered);
                 if (_header) _header.setOps(currentOps, filtered);
@@ -404,20 +421,18 @@
             icon:          '📊',
             defaultPeriod: 'today',
             closeModalId:  'modalTotalOperacoesCrypto',
+            defaultState: {
+                statusList: ['aberta', 'fechada', 'exercida', 'nao_exercida'],
+                tipoList:   ['CALL', 'PUT'],
+            },
             onFilter: function (state) {
                 activeFullState = state;
-                activePeriod = state.period || 'today';
-                activeFilter = state.status  || null;
-                activeTipo   = state.tipo    || null;
-                activeAsset  = state.asset   || null;
-                activeCorr   = state.corretora || null;
-                const filtered = applyFilterFull(currentOps, {
-                    period: activePeriod,
-                    status: activeFilter,
-                    tipo: activeTipo,
-                    asset: activeAsset,
-                    corretora: activeCorr,
-                });
+                activePeriod    = state.period     || 'today';
+                activeFilter    = state.status     || null;
+                activeTipo      = state.tipo       || null;
+                activeAsset     = state.asset      || null;
+                activeCorr      = state.corretora  || null;
+                const filtered  = applyFilterFull(currentOps, state);
                 renderAll(filtered);
                 if (_header) _header.setOps(currentOps, filtered);
             },

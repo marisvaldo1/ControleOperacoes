@@ -55,8 +55,8 @@
         const idTotals = id + '_totals';
 
         const state = global.CryptoFilterBar
-            ? global.CryptoFilterBar.createState({ period: cfg.defaultPeriod || 'semana' })
-            : { period: cfg.defaultPeriod || 'semana', status: null, tipo: null, statusList: ['aberta', 'fechada'], tipoList: ['CALL', 'PUT'], asset: null, corretora: null };
+            ? global.CryptoFilterBar.createState(Object.assign({ period: cfg.defaultPeriod || 'semana' }, cfg.defaultState || {}))
+            : Object.assign({ period: cfg.defaultPeriod || 'semana', status: null, tipo: null, statusList: ['aberta', 'fechada'], tipoList: ['CALL', 'PUT'], asset: null, corretora: null }, cfg.defaultState || {});
 
         let allOpsCache = [];
         let filteredOpsCache = [];

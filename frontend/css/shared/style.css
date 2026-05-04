@@ -16,19 +16,23 @@
 }
 
 body {
-    min-height: 100vh;
+    height: 100vh;
+    overflow: hidden;
     background-color: var(--tblr-body-bg, #ffffff);
     color: var(--tblr-body-color, #1e293b);
 }
 
 .page-wrapper {
-    min-height: 100vh;
+    height: 100vh;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 .page-body {
     flex: 1;
+    overflow-y: auto;
+    min-height: 0;
 }
 
 /* Container fluid para ocupar toda largura */

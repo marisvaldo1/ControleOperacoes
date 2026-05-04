@@ -349,7 +349,8 @@
                 if (c !== state.corretora.toUpperCase()) return false;
             }
 
-            if (Array.isArray(state.statusList) && state.statusList.length > 0) {
+            if (Array.isArray(state.statusList)) {
+                if (state.statusList.length === 0) return false;
                 const s = (op.status || '').toLowerCase();
                 const matchStatus = state.statusList.some(function (sv) {
                     if (sv === 'exercida') {
@@ -386,7 +387,8 @@
                 }
             }
 
-            if (Array.isArray(state.tipoList) && state.tipoList.length > 0) {
+            if (Array.isArray(state.tipoList)) {
+                if (state.tipoList.length === 0) return false;
                 if (!state.tipoList.some(function (t) { return (op.tipo || '').toUpperCase() === t.toUpperCase(); })) return false;
             } else if (state.tipo) {
                 if ((op.tipo || '').toUpperCase() !== state.tipo.toUpperCase()) return false;

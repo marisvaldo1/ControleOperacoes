@@ -236,53 +236,6 @@ function renderChartAnual(data, year) {
     const piorMes   = mesesComOps.length > 0 ? Math.min(...mesesComOps) : 0;
     const taxaAcerto = data.length > 0 ? (data.filter(o => (parseFloat(o.premio_us) || 0) > 0).length / data.length * 100) : 0;
 
-    // Header com 4 cards estilo opcoes
-    document.getElementById("anualHeader").innerHTML =
-        `<div class="col-md-3 col-sm-6 mb-2">
-            <div class="card card-sm">
-                <div class="card-body d-flex align-items-center gap-3">
-                    <span class="bg-blue text-white avatar"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
-                    <div>
-                        <div class="text-muted small">Resultado Anual</div>
-                        <div class="fw-bold ${anoTotal >= 0 ? 'text-success' : 'text-danger'}">US$ ${anoTotal.toFixed(2)}</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 col-sm-6 mb-2">
-            <div class="card card-sm">
-                <div class="card-body d-flex align-items-center gap-3">
-                    <span class="bg-green text-white avatar"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
-                    <div>
-                        <div class="text-muted small">Taxa de Acerto</div>
-                        <div class="fw-bold">${taxaAcerto.toFixed(1)}% (${data.filter(o => (parseFloat(o.premio_us)||0)>0).length}/${data.length})</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 col-sm-6 mb-2">
-            <div class="card card-sm">
-                <div class="card-body d-flex align-items-center gap-3">
-                    <span class="bg-blue text-white avatar"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></span>
-                    <div>
-                        <div class="text-muted small">Melhor Mês</div>
-                        <div class="fw-bold text-success">US$ ${melhorMes.toFixed(2)}</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 col-sm-6 mb-2">
-            <div class="card card-sm">
-                <div class="card-body d-flex align-items-center gap-3">
-                    <span class="bg-red text-white avatar"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg></span>
-                    <div>
-                        <div class="text-muted small">Pior Mês</div>
-                        <div class="fw-bold ${piorMes < 0 ? 'text-danger' : 'text-muted'}">US$ ${piorMes.toFixed(2)}</div>
-                    </div>
-                </div>
-            </div>
-        </div>`;
-
     // Barra Total azul no final
     const chartLabels = [...months, 'Total'];
     const chartData   = [...monthlyValues, anoTotal];
