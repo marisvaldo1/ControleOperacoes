@@ -2548,7 +2548,11 @@ async function refreshCryptoCotacoes() {
             }
         }
     });
-    if (Object.keys(priceMap).length) updateUI();
+    if (Object.keys(priceMap).length) {
+        updateUI();
+        // Re-renderiza visão geral (Bullet Chart) com a cotação ao vivo
+        document.dispatchEvent(new CustomEvent('cryptoDataUpdated'));
+    }
 }
 
 // Atualiza badge de mercado no navbar com cotação BTC

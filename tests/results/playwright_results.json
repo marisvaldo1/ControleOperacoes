@@ -90,12 +90,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 3041,
+                  "duration": 8972,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-04-27T18:49:26.883Z",
+                  "startTime": "2026-05-04T13:59:29.563Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -124,12 +124,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 2503,
+                  "duration": 8244,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-04-27T18:49:30.228Z",
+                  "startTime": "2026-05-04T13:59:39.068Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -158,12 +158,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 57,
+                  "duration": 65,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-04-27T18:49:32.757Z",
+                  "startTime": "2026-05-04T13:59:47.344Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -192,12 +192,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 32,
+                  "duration": 60,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-04-27T18:49:32.836Z",
+                  "startTime": "2026-05-04T13:59:47.434Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -226,12 +226,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 49,
+                  "duration": 67,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-04-27T18:49:32.894Z",
+                  "startTime": "2026-05-04T13:59:47.528Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -260,12 +260,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 96,
+                  "duration": 57,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-04-27T18:49:32.971Z",
+                  "startTime": "2026-05-04T13:59:47.619Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -302,12 +302,12 @@
                   "workerIndex": 1,
                   "parallelIndex": 1,
                   "status": "passed",
-                  "duration": 3759,
+                  "duration": 8653,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-04-27T18:49:26.899Z",
+                  "startTime": "2026-05-04T13:59:29.687Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -336,12 +336,12 @@
                   "workerIndex": 1,
                   "parallelIndex": 1,
                   "status": "passed",
-                  "duration": 4007,
+                  "duration": 9469,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-04-27T18:49:31.049Z",
+                  "startTime": "2026-05-04T13:59:38.954Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -370,12 +370,12 @@
                   "workerIndex": 1,
                   "parallelIndex": 1,
                   "status": "passed",
-                  "duration": 2445,
+                  "duration": 4389,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-04-27T18:49:35.084Z",
+                  "startTime": "2026-05-04T13:59:48.469Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -404,12 +404,12 @@
                   "workerIndex": 1,
                   "parallelIndex": 1,
                   "status": "passed",
-                  "duration": 2472,
+                  "duration": 7448,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-04-27T18:49:37.564Z",
+                  "startTime": "2026-05-04T13:59:52.890Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -438,12 +438,12 @@
                   "workerIndex": 1,
                   "parallelIndex": 1,
                   "status": "passed",
-                  "duration": 2488,
+                  "duration": 7513,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-04-27T18:49:40.059Z",
+                  "startTime": "2026-05-04T14:00:00.361Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -472,12 +472,12 @@
                   "workerIndex": 1,
                   "parallelIndex": 1,
                   "status": "passed",
-                  "duration": 2411,
+                  "duration": 19169,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-04-27T18:49:42.567Z",
+                  "startTime": "2026-05-04T14:00:07.909Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -492,7 +492,7 @@
         },
         {
           "title": "[Crypto] modal de Análise deve abrir e carregar dados",
-          "ok": true,
+          "ok": false,
           "tags": [],
           "tests": [
             {
@@ -505,18 +505,80 @@
                 {
                   "workerIndex": 1,
                   "parallelIndex": 1,
-                  "status": "passed",
-                  "duration": 3626,
-                  "errors": [],
+                  "status": "timedOut",
+                  "duration": 35113,
+                  "error": {
+                    "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                    "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                  },
+                  "errors": [
+                    {
+                      "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                    },
+                    {
+                      "location": {
+                        "file": "D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\crypto.spec.js",
+                        "column": 16,
+                        "line": 77
+                      },
+                      "message": "Error: page.waitForFunction: Test timeout of 30000ms exceeded.\n\n  75 |     // Aguarda __appLayoutReady: definido em layout.js APÓS dispatchEvent(layoutReady)\n  76 |     // Como dispatchEvent é síncrono, garante que crypto.js setupEventListeners() já rodou\n> 77 |     await page.waitForFunction(() =>\n     |                ^\n  78 |         window.__appLayoutReady === true &&\n  79 |         typeof window.bootstrap !== 'undefined' &&\n  80 |         typeof window.bootstrap.Modal !== 'undefined' &&\n    at D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\crypto.spec.js:77:16"
+                    }
+                  ],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-04-27T18:49:44.998Z",
+                  "startTime": "2026-05-04T14:00:27.109Z",
                   "annotations": [],
-                  "attachments": []
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "D:\\Sistemas\\python\\ControleOperacoes\\.tmp\\test-results\\pages-crypto--Crypto-modal-9ddaa-deve-abrir-e-carregar-dados-chromium\\error-context.md"
+                    }
+                  ]
+                },
+                {
+                  "workerIndex": 5,
+                  "parallelIndex": 0,
+                  "status": "timedOut",
+                  "duration": 32831,
+                  "error": {
+                    "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                    "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                  },
+                  "errors": [
+                    {
+                      "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                    },
+                    {
+                      "location": {
+                        "file": "D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\crypto.spec.js",
+                        "column": 16,
+                        "line": 90
+                      },
+                      "message": "Error: page.waitForSelector: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#modalAnalise.show') to be visible\u001b[22m\n\n\n  88 |\n  89 |     // Modal abre antes dos dados (template fetch pode demorar sob carga paralela)\n> 90 |     await page.waitForSelector(\"#modalAnalise.show\", { timeout: 20000 });\n     |                ^\n  91 |\n  92 |     // O modal deve estar visível\n  93 |     const modal = page.locator(\"#modalAnalise\");\n    at D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\crypto.spec.js:90:16"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 1,
+                  "startTime": "2026-05-04T14:01:04.888Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "D:\\Sistemas\\python\\ControleOperacoes\\.tmp\\test-results\\pages-crypto--Crypto-modal-9ddaa-deve-abrir-e-carregar-dados-chromium-retry1\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "D:\\Sistemas\\python\\ControleOperacoes\\.tmp\\test-results\\pages-crypto--Crypto-modal-9ddaa-deve-abrir-e-carregar-dados-chromium-retry1\\error-context.md"
+                    }
+                  ]
                 }
               ],
-              "status": "expected"
+              "status": "unexpected"
             }
           ],
           "id": "5f55ffe30675bc30dd6e-03e827746c581ba96622",
@@ -526,7 +588,7 @@
         },
         {
           "title": "[Crypto] botão atualizar da Análise deve funcionar",
-          "ok": true,
+          "ok": false,
           "tags": [],
           "tests": [
             {
@@ -537,20 +599,93 @@
               "projectName": "chromium",
               "results": [
                 {
-                  "workerIndex": 1,
-                  "parallelIndex": 1,
-                  "status": "passed",
-                  "duration": 5287,
-                  "errors": [],
+                  "workerIndex": 7,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 9150,
+                  "error": {
+                    "message": "Error: page.goto: net::ERR_CONNECTION_RESET at http://localhost:8888/html/crypto.html\nCall log:\n\u001b[2m  - navigating to \"http://localhost:8888/html/crypto.html\", waiting until \"domcontentloaded\"\u001b[22m\n",
+                    "stack": "Error: page.goto: net::ERR_CONNECTION_RESET at http://localhost:8888/html/crypto.html\nCall log:\n\u001b[2m  - navigating to \"http://localhost:8888/html/crypto.html\", waiting until \"domcontentloaded\"\u001b[22m\n\n    at D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\crypto.spec.js:121:16",
+                    "location": {
+                      "file": "D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\crypto.spec.js",
+                      "column": 16,
+                      "line": 121
+                    },
+                    "snippet": "\u001b[0m \u001b[90m 119 |\u001b[39m     page\u001b[33m.\u001b[39mon(\u001b[32m\"pageerror\"\u001b[39m\u001b[33m,\u001b[39m (err) \u001b[33m=>\u001b[39m jsErrors\u001b[33m.\u001b[39mpush(err\u001b[33m.\u001b[39mmessage))\u001b[33m;\u001b[39m\n \u001b[90m 120 |\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 121 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[33mBASE\u001b[39m\u001b[33m,\u001b[39m { waitUntil\u001b[33m:\u001b[39m \u001b[32m\"domcontentloaded\"\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 122 |\u001b[39m     \u001b[90m// Aguarda __appLayoutReady: definido em layout.js APÓS dispatchEvent(layoutReady)\u001b[39m\n \u001b[90m 123 |\u001b[39m     \u001b[90m// Como dispatchEvent é síncrono, garante que crypto.js setupEventListeners() já rodou\u001b[39m\n \u001b[90m 124 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForFunction(() \u001b[33m=>\u001b[39m\u001b[0m"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\crypto.spec.js",
+                        "column": 16,
+                        "line": 121
+                      },
+                      "message": "Error: page.goto: net::ERR_CONNECTION_RESET at http://localhost:8888/html/crypto.html\nCall log:\n\u001b[2m  - navigating to \"http://localhost:8888/html/crypto.html\", waiting until \"domcontentloaded\"\u001b[22m\n\n\n  119 |     page.on(\"pageerror\", (err) => jsErrors.push(err.message));\n  120 |\n> 121 |     await page.goto(BASE, { waitUntil: \"domcontentloaded\" });\n      |                ^\n  122 |     // Aguarda __appLayoutReady: definido em layout.js APÓS dispatchEvent(layoutReady)\n  123 |     // Como dispatchEvent é síncrono, garante que crypto.js setupEventListeners() já rodou\n  124 |     await page.waitForFunction(() =>\n    at D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\crypto.spec.js:121:16"
+                    }
+                  ],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-04-27T18:49:48.648Z",
+                  "startTime": "2026-05-04T14:01:40.783Z",
                   "annotations": [],
-                  "attachments": []
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "D:\\Sistemas\\python\\ControleOperacoes\\.tmp\\test-results\\pages-crypto--Crypto-botão-e288d-r-da-Análise-deve-funcionar-chromium\\test-failed-1.png"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\crypto.spec.js",
+                    "column": 16,
+                    "line": 121
+                  }
+                },
+                {
+                  "workerIndex": 8,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 2787,
+                  "error": {
+                    "message": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:8888/html/crypto.html\nCall log:\n\u001b[2m  - navigating to \"http://localhost:8888/html/crypto.html\", waiting until \"domcontentloaded\"\u001b[22m\n",
+                    "stack": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:8888/html/crypto.html\nCall log:\n\u001b[2m  - navigating to \"http://localhost:8888/html/crypto.html\", waiting until \"domcontentloaded\"\u001b[22m\n\n    at D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\crypto.spec.js:121:16",
+                    "location": {
+                      "file": "D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\crypto.spec.js",
+                      "column": 16,
+                      "line": 121
+                    },
+                    "snippet": "\u001b[0m \u001b[90m 119 |\u001b[39m     page\u001b[33m.\u001b[39mon(\u001b[32m\"pageerror\"\u001b[39m\u001b[33m,\u001b[39m (err) \u001b[33m=>\u001b[39m jsErrors\u001b[33m.\u001b[39mpush(err\u001b[33m.\u001b[39mmessage))\u001b[33m;\u001b[39m\n \u001b[90m 120 |\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 121 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[33mBASE\u001b[39m\u001b[33m,\u001b[39m { waitUntil\u001b[33m:\u001b[39m \u001b[32m\"domcontentloaded\"\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 122 |\u001b[39m     \u001b[90m// Aguarda __appLayoutReady: definido em layout.js APÓS dispatchEvent(layoutReady)\u001b[39m\n \u001b[90m 123 |\u001b[39m     \u001b[90m// Como dispatchEvent é síncrono, garante que crypto.js setupEventListeners() já rodou\u001b[39m\n \u001b[90m 124 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForFunction(() \u001b[33m=>\u001b[39m\u001b[0m"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\crypto.spec.js",
+                        "column": 16,
+                        "line": 121
+                      },
+                      "message": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:8888/html/crypto.html\nCall log:\n\u001b[2m  - navigating to \"http://localhost:8888/html/crypto.html\", waiting until \"domcontentloaded\"\u001b[22m\n\n\n  119 |     page.on(\"pageerror\", (err) => jsErrors.push(err.message));\n  120 |\n> 121 |     await page.goto(BASE, { waitUntil: \"domcontentloaded\" });\n      |                ^\n  122 |     // Aguarda __appLayoutReady: definido em layout.js APÓS dispatchEvent(layoutReady)\n  123 |     // Como dispatchEvent é síncrono, garante que crypto.js setupEventListeners() já rodou\n  124 |     await page.waitForFunction(() =>\n    at D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\crypto.spec.js:121:16"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 1,
+                  "startTime": "2026-05-04T14:01:53.208Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "D:\\Sistemas\\python\\ControleOperacoes\\.tmp\\test-results\\pages-crypto--Crypto-botão-e288d-r-da-Análise-deve-funcionar-chromium-retry1\\test-failed-1.png"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\crypto.spec.js",
+                    "column": 16,
+                    "line": 121
+                  }
                 }
               ],
-              "status": "expected"
+              "status": "unexpected"
             }
           ],
           "id": "5f55ffe30675bc30dd6e-683030a40b0d6aedc584",
@@ -589,12 +724,12 @@
                       "workerIndex": 2,
                       "parallelIndex": 2,
                       "status": "passed",
-                      "duration": 3265,
+                      "duration": 8477,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-27T18:49:26.991Z",
+                      "startTime": "2026-05-04T13:59:29.913Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -623,12 +758,12 @@
                       "workerIndex": 2,
                       "parallelIndex": 2,
                       "status": "passed",
-                      "duration": 5330,
+                      "duration": 7883,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-27T18:49:30.829Z",
+                      "startTime": "2026-05-04T13:59:38.893Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -657,12 +792,12 @@
                       "workerIndex": 2,
                       "parallelIndex": 2,
                       "status": "passed",
-                      "duration": 3042,
+                      "duration": 5224,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-27T18:49:36.191Z",
+                      "startTime": "2026-05-04T13:59:46.848Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -691,12 +826,12 @@
                       "workerIndex": 2,
                       "parallelIndex": 2,
                       "status": "passed",
-                      "duration": 5117,
+                      "duration": 16727,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-27T18:49:39.262Z",
+                      "startTime": "2026-05-04T13:59:52.113Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -733,12 +868,12 @@
                       "workerIndex": 2,
                       "parallelIndex": 2,
                       "status": "passed",
-                      "duration": 3701,
+                      "duration": 9041,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-27T18:49:44.432Z",
+                      "startTime": "2026-05-04T14:00:08.875Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -767,12 +902,12 @@
                       "workerIndex": 2,
                       "parallelIndex": 2,
                       "status": "passed",
-                      "duration": 6591,
+                      "duration": 12060,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-27T18:49:48.157Z",
+                      "startTime": "2026-05-04T14:00:17.944Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -801,12 +936,12 @@
                       "workerIndex": 2,
                       "parallelIndex": 2,
                       "status": "passed",
-                      "duration": 3692,
+                      "duration": 8597,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-27T18:49:54.771Z",
+                      "startTime": "2026-05-04T14:00:30.029Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -834,18 +969,53 @@
                     {
                       "workerIndex": 2,
                       "parallelIndex": 2,
-                      "status": "passed",
-                      "duration": 7905,
-                      "errors": [],
+                      "status": "timedOut",
+                      "duration": 35554,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js",
+                            "column": 20,
+                            "line": 130
+                          },
+                          "message": "Error: page.reload: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for navigation until \"networkidle\"\u001b[22m\n\u001b[2m    - navigated to \"http://localhost:8888/html/crypto.html\"\u001b[22m\n\n\n  128 |             if (is404 && isInternal && !isWellKnown) failed.push(`[${r.status()}] ${url}`);\n  129 |         });\n> 130 |         await page.reload({ waitUntil: \"networkidle\" });\n      |                    ^\n  131 |         await shot(page, \"e2e-crypto-assets-ok\");\n  132 |         expect(failed, `Recursos com 404:\\n${failed.join(\"\\n\")}`).toHaveLength(0);\n  133 |     });\n    at D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js:130:20"
+                        }
+                      ],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-27T18:49:58.485Z",
+                      "startTime": "2026-05-04T14:00:38.649Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\Sistemas\\python\\ControleOperacoes\\.tmp\\test-results\\pages-e2e-smoke--E2E-Págin-f373c-HTML-fonts-carregam-sem-404-chromium\\error-context.md"
+                        }
+                      ]
+                    },
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 15361,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 1,
+                      "startTime": "2026-05-04T14:01:16.779Z",
                       "annotations": [],
                       "attachments": []
                     }
                   ],
-                  "status": "expected"
+                  "status": "flaky"
                 }
               ],
               "id": "cc8c3f501263ca73d616-df43f6c4cdf5ba662621",
@@ -855,7 +1025,7 @@
             },
             {
               "title": "[E2E-Crypto] card Resultado Médio abre modal sem 404",
-              "ok": true,
+              "ok": false,
               "tags": [],
               "tests": [
                 {
@@ -866,20 +1036,93 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 2,
-                      "parallelIndex": 2,
-                      "status": "passed",
-                      "duration": 10005,
-                      "errors": [],
+                      "workerIndex": 6,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 17744,
+                      "error": {
+                        "message": "Error: page.goto: net::ERR_CONNECTION_RESET at http://localhost:8888/html/crypto.html\nCall log:\n\u001b[2m  - navigating to \"http://localhost:8888/html/crypto.html\", waiting until \"domcontentloaded\"\u001b[22m\n",
+                        "stack": "Error: page.goto: net::ERR_CONNECTION_RESET at http://localhost:8888/html/crypto.html\nCall log:\n\u001b[2m  - navigating to \"http://localhost:8888/html/crypto.html\", waiting until \"domcontentloaded\"\u001b[22m\n\n    at D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js:87:20",
+                        "location": {
+                          "file": "D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js",
+                          "column": 20,
+                          "line": 87
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 85 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m\"[E2E] Página de Crypto\"\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n \u001b[90m 86 |\u001b[39m     test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 87 |\u001b[39m         \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m\"/html/crypto.html\"\u001b[39m\u001b[33m,\u001b[39m { waitUntil\u001b[33m:\u001b[39m \u001b[32m\"domcontentloaded\"\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                    \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 88 |\u001b[39m         \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForTimeout(\u001b[35m1200\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 89 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 90 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js",
+                            "column": 20,
+                            "line": 87
+                          },
+                          "message": "Error: page.goto: net::ERR_CONNECTION_RESET at http://localhost:8888/html/crypto.html\nCall log:\n\u001b[2m  - navigating to \"http://localhost:8888/html/crypto.html\", waiting until \"domcontentloaded\"\u001b[22m\n\n\n  85 | test.describe(\"[E2E] Página de Crypto\", () => {\n  86 |     test.beforeEach(async ({ page }) => {\n> 87 |         await page.goto(\"/html/crypto.html\", { waitUntil: \"domcontentloaded\" });\n     |                    ^\n  88 |         await page.waitForTimeout(1200);\n  89 |     });\n  90 |\n    at D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js:87:20"
+                        }
+                      ],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-27T18:50:06.414Z",
+                      "startTime": "2026-05-04T14:01:32.478Z",
                       "annotations": [],
-                      "attachments": []
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Sistemas\\python\\ControleOperacoes\\.tmp\\test-results\\pages-e2e-smoke--E2E-Págin-1513e-do-Médio-abre-modal-sem-404-chromium\\test-failed-1.png"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js",
+                        "column": 20,
+                        "line": 87
+                      }
+                    },
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 2748,
+                      "error": {
+                        "message": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:8888/html/crypto.html\nCall log:\n\u001b[2m  - navigating to \"http://localhost:8888/html/crypto.html\", waiting until \"domcontentloaded\"\u001b[22m\n",
+                        "stack": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:8888/html/crypto.html\nCall log:\n\u001b[2m  - navigating to \"http://localhost:8888/html/crypto.html\", waiting until \"domcontentloaded\"\u001b[22m\n\n    at D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js:87:20",
+                        "location": {
+                          "file": "D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js",
+                          "column": 20,
+                          "line": 87
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 85 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m\"[E2E] Página de Crypto\"\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n \u001b[90m 86 |\u001b[39m     test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 87 |\u001b[39m         \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m\"/html/crypto.html\"\u001b[39m\u001b[33m,\u001b[39m { waitUntil\u001b[33m:\u001b[39m \u001b[32m\"domcontentloaded\"\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                    \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 88 |\u001b[39m         \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForTimeout(\u001b[35m1200\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 89 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 90 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js",
+                            "column": 20,
+                            "line": 87
+                          },
+                          "message": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:8888/html/crypto.html\nCall log:\n\u001b[2m  - navigating to \"http://localhost:8888/html/crypto.html\", waiting until \"domcontentloaded\"\u001b[22m\n\n\n  85 | test.describe(\"[E2E] Página de Crypto\", () => {\n  86 |     test.beforeEach(async ({ page }) => {\n> 87 |         await page.goto(\"/html/crypto.html\", { waitUntil: \"domcontentloaded\" });\n     |                    ^\n  88 |         await page.waitForTimeout(1200);\n  89 |     });\n  90 |\n    at D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js:87:20"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 1,
+                      "startTime": "2026-05-04T14:01:53.259Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Sistemas\\python\\ControleOperacoes\\.tmp\\test-results\\pages-e2e-smoke--E2E-Págin-1513e-do-Médio-abre-modal-sem-404-chromium-retry1\\test-failed-1.png"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js",
+                        "column": 20,
+                        "line": 87
+                      }
                     }
                   ],
-                  "status": "expected"
+                  "status": "unexpected"
                 }
               ],
               "id": "cc8c3f501263ca73d616-781c5f5d8ee1fbf775aa",
@@ -897,7 +1140,7 @@
           "specs": [
             {
               "title": "[E2E-API] GET /api/opcoes retorna JSON válido",
-              "ok": true,
+              "ok": false,
               "tags": [],
               "tests": [
                 {
@@ -908,24 +1151,81 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 2,
-                      "parallelIndex": 2,
-                      "status": "passed",
-                      "duration": 36,
-                      "errors": [],
-                      "stdout": [
+                      "workerIndex": 10,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 388,
+                      "error": {
+                        "message": "Error: apiRequestContext.get: connect ECONNREFUSED 127.0.0.1:8888\nCall log:\n\u001b[2m  - → GET http://localhost:8888/api/opcoes\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.7632.6 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n",
+                        "stack": "Error: apiRequestContext.get: connect ECONNREFUSED 127.0.0.1:8888\nCall log:\n\u001b[2m  - → GET http://localhost:8888/api/opcoes\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.7632.6 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\n    at D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js:160:36",
+                        "location": {
+                          "file": "D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js",
+                          "column": 36,
+                          "line": 160
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 158 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m\"[E2E] API Backend\"\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n \u001b[90m 159 |\u001b[39m     test(\u001b[32m\"[E2E-API] GET /api/opcoes retorna JSON válido\"\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ request }) \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 160 |\u001b[39m         \u001b[36mconst\u001b[39m resp \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m request\u001b[33m.\u001b[39m\u001b[36mget\u001b[39m(\u001b[32m`${BASE}/api/opcoes`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                                    \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 161 |\u001b[39m         expect(resp\u001b[33m.\u001b[39mstatus())\u001b[33m.\u001b[39mtoBe(\u001b[35m200\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 162 |\u001b[39m         \u001b[36mconst\u001b[39m data \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m resp\u001b[33m.\u001b[39mjson()\u001b[33m;\u001b[39m\n \u001b[90m 163 |\u001b[39m         expect(\u001b[33mArray\u001b[39m\u001b[33m.\u001b[39misArray(data))\u001b[33m.\u001b[39mtoBe(\u001b[36mtrue\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
                         {
-                          "text": "  ✓ /api/opcoes: 12 operação(ões)\n"
+                          "location": {
+                            "file": "D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js",
+                            "column": 36,
+                            "line": 160
+                          },
+                          "message": "Error: apiRequestContext.get: connect ECONNREFUSED 127.0.0.1:8888\nCall log:\n\u001b[2m  - → GET http://localhost:8888/api/opcoes\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.7632.6 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\n\n  158 | test.describe(\"[E2E] API Backend\", () => {\n  159 |     test(\"[E2E-API] GET /api/opcoes retorna JSON válido\", async ({ request }) => {\n> 160 |         const resp = await request.get(`${BASE}/api/opcoes`);\n      |                                    ^\n  161 |         expect(resp.status()).toBe(200);\n  162 |         const data = await resp.json();\n  163 |         expect(Array.isArray(data)).toBe(true);\n    at D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js:160:36"
                         }
                       ],
+                      "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-27T18:50:16.439Z",
+                      "startTime": "2026-05-04T14:01:59.454Z",
                       "annotations": [],
-                      "attachments": []
+                      "attachments": [],
+                      "errorLocation": {
+                        "file": "D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js",
+                        "column": 36,
+                        "line": 160
+                      }
+                    },
+                    {
+                      "workerIndex": 11,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 358,
+                      "error": {
+                        "message": "Error: apiRequestContext.get: connect ECONNREFUSED 127.0.0.1:8888\nCall log:\n\u001b[2m  - → GET http://localhost:8888/api/opcoes\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.7632.6 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n",
+                        "stack": "Error: apiRequestContext.get: connect ECONNREFUSED 127.0.0.1:8888\nCall log:\n\u001b[2m  - → GET http://localhost:8888/api/opcoes\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.7632.6 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\n    at D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js:160:36",
+                        "location": {
+                          "file": "D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js",
+                          "column": 36,
+                          "line": 160
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 158 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m\"[E2E] API Backend\"\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n \u001b[90m 159 |\u001b[39m     test(\u001b[32m\"[E2E-API] GET /api/opcoes retorna JSON válido\"\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ request }) \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 160 |\u001b[39m         \u001b[36mconst\u001b[39m resp \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m request\u001b[33m.\u001b[39m\u001b[36mget\u001b[39m(\u001b[32m`${BASE}/api/opcoes`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                                    \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 161 |\u001b[39m         expect(resp\u001b[33m.\u001b[39mstatus())\u001b[33m.\u001b[39mtoBe(\u001b[35m200\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 162 |\u001b[39m         \u001b[36mconst\u001b[39m data \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m resp\u001b[33m.\u001b[39mjson()\u001b[33m;\u001b[39m\n \u001b[90m 163 |\u001b[39m         expect(\u001b[33mArray\u001b[39m\u001b[33m.\u001b[39misArray(data))\u001b[33m.\u001b[39mtoBe(\u001b[36mtrue\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js",
+                            "column": 36,
+                            "line": 160
+                          },
+                          "message": "Error: apiRequestContext.get: connect ECONNREFUSED 127.0.0.1:8888\nCall log:\n\u001b[2m  - → GET http://localhost:8888/api/opcoes\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.7632.6 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\n\n  158 | test.describe(\"[E2E] API Backend\", () => {\n  159 |     test(\"[E2E-API] GET /api/opcoes retorna JSON válido\", async ({ request }) => {\n> 160 |         const resp = await request.get(`${BASE}/api/opcoes`);\n      |                                    ^\n  161 |         expect(resp.status()).toBe(200);\n  162 |         const data = await resp.json();\n  163 |         expect(Array.isArray(data)).toBe(true);\n    at D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js:160:36"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 1,
+                      "startTime": "2026-05-04T14:02:02.337Z",
+                      "annotations": [],
+                      "attachments": [],
+                      "errorLocation": {
+                        "file": "D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js",
+                        "column": 36,
+                        "line": 160
+                      }
                     }
                   ],
-                  "status": "expected"
+                  "status": "unexpected"
                 }
               ],
               "id": "cc8c3f501263ca73d616-0dab0ff2813de383ddf6",
@@ -935,7 +1235,7 @@
             },
             {
               "title": "[E2E-API] GET /api/crypto retorna JSON válido",
-              "ok": true,
+              "ok": false,
               "tags": [],
               "tests": [
                 {
@@ -946,24 +1246,81 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 2,
-                      "parallelIndex": 2,
-                      "status": "passed",
-                      "duration": 19,
-                      "errors": [],
-                      "stdout": [
+                      "workerIndex": 12,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 351,
+                      "error": {
+                        "message": "Error: apiRequestContext.get: connect ECONNREFUSED 127.0.0.1:8888\nCall log:\n\u001b[2m  - → GET http://localhost:8888/api/crypto\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.7632.6 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n",
+                        "stack": "Error: apiRequestContext.get: connect ECONNREFUSED 127.0.0.1:8888\nCall log:\n\u001b[2m  - → GET http://localhost:8888/api/crypto\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.7632.6 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\n    at D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js:168:36",
+                        "location": {
+                          "file": "D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js",
+                          "column": 36,
+                          "line": 168
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 166 |\u001b[39m\n \u001b[90m 167 |\u001b[39m     test(\u001b[32m\"[E2E-API] GET /api/crypto retorna JSON válido\"\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ request }) \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 168 |\u001b[39m         \u001b[36mconst\u001b[39m resp \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m request\u001b[33m.\u001b[39m\u001b[36mget\u001b[39m(\u001b[32m`${BASE}/api/crypto`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                                    \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 169 |\u001b[39m         expect(resp\u001b[33m.\u001b[39mstatus())\u001b[33m.\u001b[39mtoBe(\u001b[35m200\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 170 |\u001b[39m         \u001b[36mconst\u001b[39m data \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m resp\u001b[33m.\u001b[39mjson()\u001b[33m;\u001b[39m\n \u001b[90m 171 |\u001b[39m         expect(\u001b[33mArray\u001b[39m\u001b[33m.\u001b[39misArray(data))\u001b[33m.\u001b[39mtoBe(\u001b[36mtrue\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
                         {
-                          "text": "  ✓ /api/crypto: 80 operação(ões)\n"
+                          "location": {
+                            "file": "D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js",
+                            "column": 36,
+                            "line": 168
+                          },
+                          "message": "Error: apiRequestContext.get: connect ECONNREFUSED 127.0.0.1:8888\nCall log:\n\u001b[2m  - → GET http://localhost:8888/api/crypto\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.7632.6 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\n\n  166 |\n  167 |     test(\"[E2E-API] GET /api/crypto retorna JSON válido\", async ({ request }) => {\n> 168 |         const resp = await request.get(`${BASE}/api/crypto`);\n      |                                    ^\n  169 |         expect(resp.status()).toBe(200);\n  170 |         const data = await resp.json();\n  171 |         expect(Array.isArray(data)).toBe(true);\n    at D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js:168:36"
                         }
                       ],
+                      "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-27T18:50:16.494Z",
+                      "startTime": "2026-05-04T14:02:05.383Z",
                       "annotations": [],
-                      "attachments": []
+                      "attachments": [],
+                      "errorLocation": {
+                        "file": "D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js",
+                        "column": 36,
+                        "line": 168
+                      }
+                    },
+                    {
+                      "workerIndex": 13,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 349,
+                      "error": {
+                        "message": "Error: apiRequestContext.get: connect ECONNREFUSED 127.0.0.1:8888\nCall log:\n\u001b[2m  - → GET http://localhost:8888/api/crypto\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.7632.6 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n",
+                        "stack": "Error: apiRequestContext.get: connect ECONNREFUSED 127.0.0.1:8888\nCall log:\n\u001b[2m  - → GET http://localhost:8888/api/crypto\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.7632.6 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\n    at D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js:168:36",
+                        "location": {
+                          "file": "D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js",
+                          "column": 36,
+                          "line": 168
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 166 |\u001b[39m\n \u001b[90m 167 |\u001b[39m     test(\u001b[32m\"[E2E-API] GET /api/crypto retorna JSON válido\"\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ request }) \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 168 |\u001b[39m         \u001b[36mconst\u001b[39m resp \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m request\u001b[33m.\u001b[39m\u001b[36mget\u001b[39m(\u001b[32m`${BASE}/api/crypto`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                                    \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 169 |\u001b[39m         expect(resp\u001b[33m.\u001b[39mstatus())\u001b[33m.\u001b[39mtoBe(\u001b[35m200\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 170 |\u001b[39m         \u001b[36mconst\u001b[39m data \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m resp\u001b[33m.\u001b[39mjson()\u001b[33m;\u001b[39m\n \u001b[90m 171 |\u001b[39m         expect(\u001b[33mArray\u001b[39m\u001b[33m.\u001b[39misArray(data))\u001b[33m.\u001b[39mtoBe(\u001b[36mtrue\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js",
+                            "column": 36,
+                            "line": 168
+                          },
+                          "message": "Error: apiRequestContext.get: connect ECONNREFUSED 127.0.0.1:8888\nCall log:\n\u001b[2m  - → GET http://localhost:8888/api/crypto\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.7632.6 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\n\n  166 |\n  167 |     test(\"[E2E-API] GET /api/crypto retorna JSON válido\", async ({ request }) => {\n> 168 |         const resp = await request.get(`${BASE}/api/crypto`);\n      |                                    ^\n  169 |         expect(resp.status()).toBe(200);\n  170 |         const data = await resp.json();\n  171 |         expect(Array.isArray(data)).toBe(true);\n    at D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js:168:36"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 1,
+                      "startTime": "2026-05-04T14:02:08.142Z",
+                      "annotations": [],
+                      "attachments": [],
+                      "errorLocation": {
+                        "file": "D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js",
+                        "column": 36,
+                        "line": 168
+                      }
                     }
                   ],
-                  "status": "expected"
+                  "status": "unexpected"
                 }
               ],
               "id": "cc8c3f501263ca73d616-d3a02267bc0f6fa29a81",
@@ -973,7 +1330,7 @@
             },
             {
               "title": "[E2E-API] GET /api/version retorna versão",
-              "ok": true,
+              "ok": false,
               "tags": [],
               "tests": [
                 {
@@ -984,24 +1341,81 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 2,
-                      "parallelIndex": 2,
-                      "status": "passed",
-                      "duration": 13,
-                      "errors": [],
-                      "stdout": [
+                      "workerIndex": 14,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 363,
+                      "error": {
+                        "message": "Error: apiRequestContext.get: connect ECONNREFUSED 127.0.0.1:8888\nCall log:\n\u001b[2m  - → GET http://localhost:8888/api/version\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.7632.6 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n",
+                        "stack": "Error: apiRequestContext.get: connect ECONNREFUSED 127.0.0.1:8888\nCall log:\n\u001b[2m  - → GET http://localhost:8888/api/version\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.7632.6 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\n    at D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js:176:36",
+                        "location": {
+                          "file": "D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js",
+                          "column": 36,
+                          "line": 176
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 174 |\u001b[39m\n \u001b[90m 175 |\u001b[39m     test(\u001b[32m\"[E2E-API] GET /api/version retorna versão\"\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ request }) \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 176 |\u001b[39m         \u001b[36mconst\u001b[39m resp \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m request\u001b[33m.\u001b[39m\u001b[36mget\u001b[39m(\u001b[32m`${BASE}/api/version`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                                    \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 177 |\u001b[39m         expect(resp\u001b[33m.\u001b[39mstatus())\u001b[33m.\u001b[39mtoBe(\u001b[35m200\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 178 |\u001b[39m         \u001b[36mconst\u001b[39m data \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m resp\u001b[33m.\u001b[39mjson()\u001b[33m;\u001b[39m\n \u001b[90m 179 |\u001b[39m         expect(data)\u001b[33m.\u001b[39mtoHaveProperty(\u001b[32m\"version\"\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
                         {
-                          "text": "  ✓ /api/version: 2.0.0\n"
+                          "location": {
+                            "file": "D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js",
+                            "column": 36,
+                            "line": 176
+                          },
+                          "message": "Error: apiRequestContext.get: connect ECONNREFUSED 127.0.0.1:8888\nCall log:\n\u001b[2m  - → GET http://localhost:8888/api/version\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.7632.6 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\n\n  174 |\n  175 |     test(\"[E2E-API] GET /api/version retorna versão\", async ({ request }) => {\n> 176 |         const resp = await request.get(`${BASE}/api/version`);\n      |                                    ^\n  177 |         expect(resp.status()).toBe(200);\n  178 |         const data = await resp.json();\n  179 |         expect(data).toHaveProperty(\"version\");\n    at D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js:176:36"
                         }
                       ],
+                      "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-27T18:50:16.529Z",
+                      "startTime": "2026-05-04T14:02:11.056Z",
                       "annotations": [],
-                      "attachments": []
+                      "attachments": [],
+                      "errorLocation": {
+                        "file": "D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js",
+                        "column": 36,
+                        "line": 176
+                      }
+                    },
+                    {
+                      "workerIndex": 15,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 355,
+                      "error": {
+                        "message": "Error: apiRequestContext.get: connect ECONNREFUSED 127.0.0.1:8888\nCall log:\n\u001b[2m  - → GET http://localhost:8888/api/version\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.7632.6 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n",
+                        "stack": "Error: apiRequestContext.get: connect ECONNREFUSED 127.0.0.1:8888\nCall log:\n\u001b[2m  - → GET http://localhost:8888/api/version\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.7632.6 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\n    at D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js:176:36",
+                        "location": {
+                          "file": "D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js",
+                          "column": 36,
+                          "line": 176
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 174 |\u001b[39m\n \u001b[90m 175 |\u001b[39m     test(\u001b[32m\"[E2E-API] GET /api/version retorna versão\"\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ request }) \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 176 |\u001b[39m         \u001b[36mconst\u001b[39m resp \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m request\u001b[33m.\u001b[39m\u001b[36mget\u001b[39m(\u001b[32m`${BASE}/api/version`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                                    \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 177 |\u001b[39m         expect(resp\u001b[33m.\u001b[39mstatus())\u001b[33m.\u001b[39mtoBe(\u001b[35m200\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 178 |\u001b[39m         \u001b[36mconst\u001b[39m data \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m resp\u001b[33m.\u001b[39mjson()\u001b[33m;\u001b[39m\n \u001b[90m 179 |\u001b[39m         expect(data)\u001b[33m.\u001b[39mtoHaveProperty(\u001b[32m\"version\"\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js",
+                            "column": 36,
+                            "line": 176
+                          },
+                          "message": "Error: apiRequestContext.get: connect ECONNREFUSED 127.0.0.1:8888\nCall log:\n\u001b[2m  - → GET http://localhost:8888/api/version\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.7632.6 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\n\n  174 |\n  175 |     test(\"[E2E-API] GET /api/version retorna versão\", async ({ request }) => {\n> 176 |         const resp = await request.get(`${BASE}/api/version`);\n      |                                    ^\n  177 |         expect(resp.status()).toBe(200);\n  178 |         const data = await resp.json();\n  179 |         expect(data).toHaveProperty(\"version\");\n    at D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js:176:36"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 1,
+                      "startTime": "2026-05-04T14:02:13.797Z",
+                      "annotations": [],
+                      "attachments": [],
+                      "errorLocation": {
+                        "file": "D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js",
+                        "column": 36,
+                        "line": 176
+                      }
                     }
                   ],
-                  "status": "expected"
+                  "status": "unexpected"
                 }
               ],
               "id": "cc8c3f501263ca73d616-bf91a34c09a9ce0d310c",
@@ -1011,7 +1425,7 @@
             },
             {
               "title": "[E2E-API] GET /api/config retorna lista de configurações",
-              "ok": true,
+              "ok": false,
               "tags": [],
               "tests": [
                 {
@@ -1022,20 +1436,81 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 2,
-                      "parallelIndex": 2,
-                      "status": "passed",
-                      "duration": 13,
-                      "errors": [],
+                      "workerIndex": 16,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 356,
+                      "error": {
+                        "message": "Error: apiRequestContext.get: connect ECONNREFUSED 127.0.0.1:8888\nCall log:\n\u001b[2m  - → GET http://localhost:8888/api/config\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.7632.6 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n",
+                        "stack": "Error: apiRequestContext.get: connect ECONNREFUSED 127.0.0.1:8888\nCall log:\n\u001b[2m  - → GET http://localhost:8888/api/config\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.7632.6 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\n    at D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js:184:36",
+                        "location": {
+                          "file": "D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js",
+                          "column": 36,
+                          "line": 184
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 182 |\u001b[39m\n \u001b[90m 183 |\u001b[39m     test(\u001b[32m\"[E2E-API] GET /api/config retorna lista de configurações\"\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ request }) \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 184 |\u001b[39m         \u001b[36mconst\u001b[39m resp \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m request\u001b[33m.\u001b[39m\u001b[36mget\u001b[39m(\u001b[32m`${BASE}/api/config`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                                    \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 185 |\u001b[39m         expect(resp\u001b[33m.\u001b[39mstatus())\u001b[33m.\u001b[39mtoBe(\u001b[35m200\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 186 |\u001b[39m         \u001b[90m// Pode ser array ou objeto\u001b[39m\n \u001b[90m 187 |\u001b[39m         \u001b[36mconst\u001b[39m data \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m resp\u001b[33m.\u001b[39mjson()\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js",
+                            "column": 36,
+                            "line": 184
+                          },
+                          "message": "Error: apiRequestContext.get: connect ECONNREFUSED 127.0.0.1:8888\nCall log:\n\u001b[2m  - → GET http://localhost:8888/api/config\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.7632.6 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\n\n  182 |\n  183 |     test(\"[E2E-API] GET /api/config retorna lista de configurações\", async ({ request }) => {\n> 184 |         const resp = await request.get(`${BASE}/api/config`);\n      |                                    ^\n  185 |         expect(resp.status()).toBe(200);\n  186 |         // Pode ser array ou objeto\n  187 |         const data = await resp.json();\n    at D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js:184:36"
+                        }
+                      ],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-27T18:50:16.558Z",
+                      "startTime": "2026-05-04T14:02:16.577Z",
                       "annotations": [],
-                      "attachments": []
+                      "attachments": [],
+                      "errorLocation": {
+                        "file": "D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js",
+                        "column": 36,
+                        "line": 184
+                      }
+                    },
+                    {
+                      "workerIndex": 17,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 366,
+                      "error": {
+                        "message": "Error: apiRequestContext.get: connect ECONNREFUSED 127.0.0.1:8888\nCall log:\n\u001b[2m  - → GET http://localhost:8888/api/config\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.7632.6 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n",
+                        "stack": "Error: apiRequestContext.get: connect ECONNREFUSED 127.0.0.1:8888\nCall log:\n\u001b[2m  - → GET http://localhost:8888/api/config\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.7632.6 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\n    at D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js:184:36",
+                        "location": {
+                          "file": "D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js",
+                          "column": 36,
+                          "line": 184
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 182 |\u001b[39m\n \u001b[90m 183 |\u001b[39m     test(\u001b[32m\"[E2E-API] GET /api/config retorna lista de configurações\"\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ request }) \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 184 |\u001b[39m         \u001b[36mconst\u001b[39m resp \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m request\u001b[33m.\u001b[39m\u001b[36mget\u001b[39m(\u001b[32m`${BASE}/api/config`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                                    \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 185 |\u001b[39m         expect(resp\u001b[33m.\u001b[39mstatus())\u001b[33m.\u001b[39mtoBe(\u001b[35m200\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 186 |\u001b[39m         \u001b[90m// Pode ser array ou objeto\u001b[39m\n \u001b[90m 187 |\u001b[39m         \u001b[36mconst\u001b[39m data \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m resp\u001b[33m.\u001b[39mjson()\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js",
+                            "column": 36,
+                            "line": 184
+                          },
+                          "message": "Error: apiRequestContext.get: connect ECONNREFUSED 127.0.0.1:8888\nCall log:\n\u001b[2m  - → GET http://localhost:8888/api/config\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.7632.6 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\n\n  182 |\n  183 |     test(\"[E2E-API] GET /api/config retorna lista de configurações\", async ({ request }) => {\n> 184 |         const resp = await request.get(`${BASE}/api/config`);\n      |                                    ^\n  185 |         expect(resp.status()).toBe(200);\n  186 |         // Pode ser array ou objeto\n  187 |         const data = await resp.json();\n    at D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js:184:36"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 1,
+                      "startTime": "2026-05-04T14:02:19.283Z",
+                      "annotations": [],
+                      "attachments": [],
+                      "errorLocation": {
+                        "file": "D:\\Sistemas\\python\\ControleOperacoes\\frontend\\tests\\pages\\e2e-smoke.spec.js",
+                        "column": 36,
+                        "line": 184
+                      }
                     }
                   ],
-                  "status": "expected"
+                  "status": "unexpected"
                 }
               ],
               "id": "cc8c3f501263ca73d616-4e95e97e57dfb836685e",
@@ -1056,30 +1531,20 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 2,
-                      "parallelIndex": 2,
-                      "status": "passed",
-                      "duration": 60,
+                      "workerIndex": 18,
+                      "parallelIndex": 0,
+                      "status": "skipped",
+                      "duration": 0,
                       "errors": [],
-                      "stdout": [
-                        {
-                          "text": "  ✓ Criou operação id=448 (fixture: Operação usada APENAS para teste CRUD automatizado — será deletada ao final)\n"
-                        },
-                        {
-                          "text": "  ✓ Buscou operação id=448: ativo=PETRF325\n"
-                        },
-                        {
-                          "text": "  ✓ Deletou operação id=448\n"
-                        }
-                      ],
+                      "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-27T18:50:16.587Z",
+                      "startTime": "2026-05-04T14:02:22.110Z",
                       "annotations": [],
                       "attachments": []
                     }
                   ],
-                  "status": "expected"
+                  "status": "skipped"
                 }
               ],
               "id": "cc8c3f501263ca73d616-f1dace6e0f0cef9b0f2f",
@@ -1098,29 +1563,8 @@
                   "expectedStatus": "passed",
                   "projectId": "chromium",
                   "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 2,
-                      "parallelIndex": 2,
-                      "status": "passed",
-                      "duration": 40,
-                      "errors": [],
-                      "stdout": [
-                        {
-                          "text": "  ✓ Criou crypto id=717 (fixture: Operação usada APENAS para teste CRUD automatizado — será deletada ao final)\n"
-                        },
-                        {
-                          "text": "  ✓ Deletou crypto id=717\n"
-                        }
-                      ],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-04-27T18:50:16.662Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "cc8c3f501263ca73d616-58b50838e86effbcb9d1",
@@ -1147,26 +1591,8 @@
                   "expectedStatus": "passed",
                   "projectId": "chromium",
                   "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 2,
-                      "parallelIndex": 2,
-                      "status": "passed",
-                      "duration": 6899,
-                      "errors": [],
-                      "stdout": [
-                        {
-                          "text": "  ▶ 7 botão(ões) encontrado(s) na tela\n"
-                        }
-                      ],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-04-27T18:50:16.716Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "cc8c3f501263ca73d616-304440d628a058d9a98e",
@@ -1185,26 +1611,8 @@
                   "expectedStatus": "passed",
                   "projectId": "chromium",
                   "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 2,
-                      "parallelIndex": 2,
-                      "status": "passed",
-                      "duration": 4239,
-                      "errors": [],
-                      "stdout": [
-                        {
-                          "text": "  ℹ️ API retornou 12 operação(ões)\n"
-                        }
-                      ],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-04-27T18:50:23.635Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "results": [],
+                  "status": "skipped"
                 }
               ],
               "id": "cc8c3f501263ca73d616-38981970d70a750c97f3",
@@ -1238,12 +1646,12 @@
                   "workerIndex": 3,
                   "parallelIndex": 3,
                   "status": "passed",
-                  "duration": 2414,
+                  "duration": 7983,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-04-27T18:49:26.965Z",
+                  "startTime": "2026-05-04T13:59:29.639Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -1272,12 +1680,12 @@
                   "workerIndex": 3,
                   "parallelIndex": 3,
                   "status": "passed",
-                  "duration": 2129,
+                  "duration": 7080,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-04-27T18:49:29.795Z",
+                  "startTime": "2026-05-04T13:59:39.170Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -1306,12 +1714,12 @@
                   "workerIndex": 3,
                   "parallelIndex": 3,
                   "status": "passed",
-                  "duration": 2129,
+                  "duration": 5528,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-04-27T18:49:31.955Z",
+                  "startTime": "2026-05-04T13:59:46.288Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -1340,12 +1748,12 @@
                   "workerIndex": 3,
                   "parallelIndex": 3,
                   "status": "passed",
-                  "duration": 203,
+                  "duration": 255,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-04-27T18:49:34.121Z",
+                  "startTime": "2026-05-04T13:59:51.852Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -1374,12 +1782,12 @@
                   "workerIndex": 3,
                   "parallelIndex": 3,
                   "status": "passed",
-                  "duration": 68,
+                  "duration": 82,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-04-27T18:49:34.349Z",
+                  "startTime": "2026-05-04T13:59:52.142Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -1416,12 +1824,12 @@
                   "workerIndex": 4,
                   "parallelIndex": 4,
                   "status": "passed",
-                  "duration": 3198,
+                  "duration": 8085,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-04-27T18:49:26.931Z",
+                  "startTime": "2026-05-04T13:59:30.009Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -1450,12 +1858,12 @@
                   "workerIndex": 4,
                   "parallelIndex": 4,
                   "status": "passed",
-                  "duration": 3277,
+                  "duration": 7061,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-04-27T18:49:30.476Z",
+                  "startTime": "2026-05-04T13:59:39.067Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -1484,12 +1892,12 @@
                   "workerIndex": 4,
                   "parallelIndex": 4,
                   "status": "passed",
-                  "duration": 2145,
+                  "duration": 6509,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-04-27T18:49:33.778Z",
+                  "startTime": "2026-05-04T13:59:46.171Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -1518,12 +1926,12 @@
                   "workerIndex": 4,
                   "parallelIndex": 4,
                   "status": "passed",
-                  "duration": 1885,
+                  "duration": 6743,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-04-27T18:49:35.958Z",
+                  "startTime": "2026-05-04T13:59:52.712Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -1552,12 +1960,12 @@
                   "workerIndex": 4,
                   "parallelIndex": 4,
                   "status": "passed",
-                  "duration": 2624,
+                  "duration": 7644,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-04-27T18:49:37.866Z",
+                  "startTime": "2026-05-04T13:59:59.479Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -1586,12 +1994,12 @@
                   "workerIndex": 4,
                   "parallelIndex": 4,
                   "status": "passed",
-                  "duration": 2327,
+                  "duration": 7311,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-04-27T18:49:40.514Z",
+                  "startTime": "2026-05-04T14:00:07.149Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -1620,12 +2028,12 @@
                   "workerIndex": 4,
                   "parallelIndex": 4,
                   "status": "passed",
-                  "duration": 1996,
+                  "duration": 25324,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-04-27T18:49:42.864Z",
+                  "startTime": "2026-05-04T14:00:14.483Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -1643,11 +2051,11 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-04-27T18:49:23.275Z",
-    "duration": 64703.943,
-    "expected": 43,
-    "skipped": 0,
-    "unexpected": 0,
-    "flaky": 0
+    "startTime": "2026-05-04T13:59:16.528Z",
+    "duration": 185607.076,
+    "expected": 31,
+    "skipped": 4,
+    "unexpected": 7,
+    "flaky": 1
   }
 }
