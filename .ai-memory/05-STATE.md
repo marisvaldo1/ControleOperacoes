@@ -1,44 +1,59 @@
 # STATE (auto)
 
-Última atualização: 2026-04-17 17:14:46
+Última atualização: 2026-05-06 09:56:50
 Branch: master
 
 ## Commits recentes (últimos 10)
-  f908157 | 2026-04-17 | â€œMarisvaldoâ€ | Ajustes
-  0a6c0d6 | 2026-04-17 | â€œMarisvaldoâ€ | ajustes
-  9585113 | 2026-04-17 | â€œMarisvaldoâ€ | Ajustes gerais
-  c42fbeb | 2026-04-16 | â€œMarisvaldoâ€ | Ajustes gerais em crypto
-  ae71c94 | 2026-04-10 | â€œMarisvaldoâ€ | Ajustes no layout
-  f048d65 | 2026-04-10 | â€œMarisvaldoâ€ | Ajustes no layout
-  4401226 | 2026-04-10 | â€œMarisvaldoâ€ | Ajustes de layout
-  ffbe5de | 2026-04-06 | â€œMarisvaldoâ€ | Ajustes de layout
-  1be511c | 2026-04-02 | â€œMarisvaldoâ€ | Ajustes nos servicos do cliente
-  3716e53 | 2026-03-24 | â€œMarisvaldoâ€ | Tela de resultados
+  bbabf89 | 2026-05-05 | â€œMarisvaldoâ€ | Ajustes
+  3b79574 | 2026-05-04 | â€œMarisvaldoâ€ | Ajustes
+  a212c5a | 2026-05-04 | â€œMarisvaldoâ€ | Ajustes
+  913aeec | 2026-04-28 | â€œMarisvaldoâ€ | Ajustes nas telas
+  92e6acd | 2026-04-27 | â€œMarisvaldoâ€ | Ajustes no layout
+  84da8c8 | 2026-04-27 | â€œMarisvaldoâ€ | Ajustes nas telas
+  32045c4 | 2026-04-24 | â€œMarisvaldoâ€ | Ajustes
+  48ad3e1 | 2026-04-24 | â€œMarisvaldoâ€ | Ajusteste
+  b7c09a1 | 2026-04-22 | â€œMarisvaldoâ€ | Ajustes no layout
+  3031d8d | 2026-04-22 | â€œMarisvaldoâ€ | Ajustes no layout
 
 ## Working tree
-  (working tree limpo)
+  D ARQUITETURA.md
+   D CONTEXTO.md
+   D DetalhesDesenvolvimento
+   D GUIA_TESTES.md
+   D README.md
+   M backend/data/controle_operacoes.db
+   M frontend/components/modals/opcoes/modal-analise.html
+   M frontend/html/crypto.html
+   M frontend/js/shared/modal-analise.js
+   M frontend/tests/pages/crypto.spec.js
+   M tests/results/playwright_results.json
+   M tests/results/pytest_results.json
+  ?? .kiro/
+  ?? _documentacao/
+  ?? frontend/_documentacao/
+  ?? ia_memory_update.bat
 
 ## Arquivos mais tocados (últimos 20 commits)
 - .agent/.shared/ui-ux-pro-max/scripts/__pycache__/core.cpython-313.pyc
 - .agent/.shared/ui-ux-pro-max/scripts/__pycache__/design_system.cpython-313.pyc
-- .ai-memory/00-ENTRYPOINT.md
-- .ai-memory/01-CONTEXT.md
-- .ai-memory/02-ARCHITECTURE.md
-- .ai-memory/03-TECH-STACK.md
 - .ai-memory/04-RULES.md
 - .ai-memory/05-STATE.md
-- .ai-memory/06-TASKS.md
 - .ai-memory/08-CHANGELOG.md
 - .ai-memory/09-PROMPTS.md
 - .ai-memory/prompts_log.txt
 - .ai-memory/snapshots/latest.md
-- .githooks/post-checkout
-- .githooks/post-commit
-- .githooks/post-merge
-- .github/agents/ARCHITECTURE.md
-- .github/agents/backend-specialist.agent.md
-- .github/agents/code-archaeologist.agent.md
-- .github/agents/database-architect.agent.md
+- .github/agents/shared/ui-ux-pro-max/scripts/__pycache__/core.cpython-313.pyc
+- .github/agents/shared/ui-ux-pro-max/scripts/__pycache__/design_system.cpython-313.pyc
+- .github/copilot-instructions.md
+- .gitignore
+- CONTEXTO.md
+- backend/__pycache__/db.cpython-313.pyc
+- backend/__pycache__/server.cpython-313.pyc
+- backend/data/controle_operacoes.db
+- backend/db.py
+- backend/models/crypto_exercise.py
+- backend/routes/__pycache__/__init__.cpython-313.pyc
+- backend/routes/__pycache__/ai.cpython-313.pyc
 
 ## Contexto de testes detectado
 - Python: pytest detectado

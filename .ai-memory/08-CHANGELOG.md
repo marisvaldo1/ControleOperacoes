@@ -1,18 +1,5 @@
 # 08 — CHANGELOG: Histórico de Mudanças
 
-- 2c2b88a | 2026-02-12 | â€œMarisvaldoâ€ | Janela de insigths
-- 10a5284 | 2026-02-11 | â€œMarisvaldoâ€ | Ajustes no registro de controle
-- 0fa948d | 2026-02-11 | â€œMarisvaldoâ€ | Janela de insigths
-
-## 2026-03-31 07:49:23 — branch: master
-
-- 3716e53 | 2026-03-24 | â€œMarisvaldoâ€ | Tela de resultados
-- 3aa8644 | 2026-03-20 | â€œMarisvaldoâ€ | Tela de resultados
-- edbb352 | 2026-03-19 | â€œMarisvaldoâ€ | Tela de resultados
-- fd1a31d | 2026-03-13 | â€œMarisvaldoâ€ | Tela de cryptos
-- c9934aa | 2026-03-13 | â€œMarisvaldoâ€ | Tela de cryptos
-- c8f34d5 | 2026-03-05 | â€œMarisvaldoâ€ | Tela de testes
-- 6482359 | 2026-02-23 | â€œMarisvaldoâ€ | Janela de totais finais
 - 308a0b6 | 2026-02-23 | â€œMarisvaldoâ€ | Janela de totais finais
 - 0d01e39 | 2026-02-18 | â€œMarisvaldoâ€ | Janela de totais finais
 - 8dd62bc | 2026-02-13 | â€œMarisvaldoâ€ | Janela de totais finais
@@ -198,3 +185,16 @@
 - ffbe5de | 2026-04-06 | â€œMarisvaldoâ€ | Ajustes de layout
 - 1be511c | 2026-04-02 | â€œMarisvaldoâ€ | Ajustes nos servicos do cliente
 - 3716e53 | 2026-03-24 | â€œMarisvaldoâ€ | Tela de resultados
+
+## 2026-05-06 09:56:50 — branch: master
+
+- bbabf89 | 2026-05-05 | â€œMarisvaldoâ€ | Ajustes
+- 3b79574 | 2026-05-04 | â€œMarisvaldoâ€ | Ajustes
+- a212c5a | 2026-05-04 | â€œMarisvaldoâ€ | Ajustes
+- 913aeec | 2026-04-28 | â€œMarisvaldoâ€ | Ajustes nas telas
+- 92e6acd | 2026-04-27 | â€œMarisvaldoâ€ | Ajustes no layout
+- 84da8c8 | 2026-04-27 | â€œMarisvaldoâ€ | Ajustes nas telas
+- 32045c4 | 2026-04-24 | â€œMarisvaldoâ€ | Ajustes
+- 48ad3e1 | 2026-04-24 | â€œMarisvaldoâ€ | Ajusteste
+- b7c09a1 | 2026-04-22 | â€œMarisvaldoâ€ | Ajustes no layout
+- 3031d8d | 2026-04-22 | â€œMarisvaldoâ€ | Ajustes no layout

@@ -741,51 +741,47 @@
 
     <!-- Container para modal de Análise (pré-carregado para evitar fetch lazy sob carga paralela) -->
     <div id="modalAnaliseCryptoContainer"><div class="modal modal-blur fade" id="modalAnalise" tabindex="-1">
-    <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-dialog modal-xl modal-dialog-centered" style="max-width:1360px">
         <div class="modal-content ma-modal-content">
-            <!-- Cabeçalho padrão cfb -->
-            <div class="cfb-hdr">
-                <span class="cfb-icon">⚡</span>
-                <span class="cfb-title">
-                    Análise de Performance · Crypto
-                    <span class="cfb-live"></span>
-                </span>
-                <span class="cfb-time" id="maRefreshStatus">—</span>
-                <button type="button" class="cfb-btn ref" id="maRefreshBtn" title="Atualizar dados">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-                        <path d="M3 12a9 9 0 0 1 15.74-6.74L21 8"/><path d="M21 3v5h-5"/>
-                        <path d="M21 12a9 9 0 0 1-15.74 6.74L3 16"/><path d="M3 21v-5h5"/>
-                    </svg>
-                </button>
-                <button type="button" class="cfb-btn cls" data-bs-dismiss="modal" aria-label="Close">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                </button>
-            </div>
+            
+            <!-- Header padrão — gerenciado por CryptoModalHeader -->
+            <div id="maModalHeader" style="flex-shrink:0;"></div>
 
             <div class="modal-body p-0 ma-body">
 
-                <!-- Barra de filtros de período -->
-                <div class="ma-filter-bar">
-                    <div class="ma-filter-group" id="maFilterButtons">
-                        <button type="button" class="ma-filter-btn" data-period="all">Todos</button>
-                        <button type="button" class="ma-filter-btn" data-period="today">Hoje</button>
-                        <button type="button" class="ma-filter-btn" data-period="7d">7 dias</button>
-                        <button type="button" class="ma-filter-btn" data-period="15d">15 dias</button>
-                        <button type="button" class="ma-filter-btn active" data-period="month">Mês atual</button>
-                        <button type="button" class="ma-filter-btn" data-period="30d">30 dias</button>
-                        <button type="button" class="ma-filter-btn" data-period="90d">90 dias</button>
-                        <button type="button" class="ma-filter-btn" data-period="12m">12 meses</button>
-                        <button type="button" class="ma-filter-btn" data-period="year">Ano atual</button>
-                        <button type="button" class="ma-filter-btn" data-period="lastyear">Ano passado</button>
-                    </div>
-                </div>
-
                 <!-- Tab Navigation -->
                 <div class="ma-tab-nav" id="maTabNav">
-                    <button type="button" class="ma-tab-btn active" data-tab="desempenho">&#128202; Desempenho</button>
-                    <button type="button" class="ma-tab-btn" data-tab="posicoes">&#128200; Posições Abertas <span class="ma-tab-badge" id="maPosBadge"></span></button>
-                    <button type="button" class="ma-tab-btn" data-tab="evolucao">&#128198; Evolução</button>
-                    <button type="button" class="ma-tab-btn" data-tab="risco">&#9888;&#65039; Risco</button>
+                    <button type="button" class="ma-tab-btn active" data-tab="desempenho">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                        </svg>
+                        Desempenho
+                    </button>
+                    <button type="button" class="ma-tab-btn" data-tab="posicoes">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                            <rect x="3" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="14" width="7" height="7"></rect>
+                            <rect x="3" y="14" width="7" height="7"></rect>
+                        </svg>
+                        Posições Abertas
+                        <span class="ma-tab-badge" id="maPosBadge"></span>
+                    </button>
+                    <button type="button" class="ma-tab-btn" data-tab="evolucao">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                            <polyline points="17 6 23 6 23 12"></polyline>
+                        </svg>
+                        Evolução
+                    </button>
+                    <button type="button" class="ma-tab-btn" data-tab="risco">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                            <line x1="12" y1="9" x2="12" y2="13"></line>
+                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                        Risco
+                    </button>
                 </div>
 
                 <!-- Tab: Desempenho -->

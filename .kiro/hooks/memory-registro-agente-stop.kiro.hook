@@ -1,0 +1,13 @@
+{
+  "ativado": true,
+  "name": "Registro de Memória IA",
+  "description": "Executa os scripts de atualização de memória da IA ao final de cada execução do agente",
+  "version": "1.0.0",
+  "when": {
+    "type": "agentStop"
+  },
+  "then": {
+    "type": "runCommand",
+    "command": ".\\memoryIA\\log_prompt.bat & .\\memoryIA\\ia_update.bat & .\\ia_memory_update.bat"
+  }
+}

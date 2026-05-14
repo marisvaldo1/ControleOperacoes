@@ -66,10 +66,12 @@ try {
 
     Push-Location $backendDir
     try {
-        & $python -m pip install -r $requirementsFile -q *>> $startupLog
+        $pipOutput = & $python -m pip install -r $requirementsFile -q --disable-pip-version-check 2>&1
         if ($LASTEXITCODE -ne 0) {
+            Add-Content -Path $startupLog -Value ("[{0}] Saida pip: {1}" -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'), ($pipOutput -join "`n"))
             throw 'Falha ao instalar as dependencias do backend.'
         }
+        Add-Content -Path $startupLog -Value ("[{0}] Dependencias instaladas com sucesso" -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'))
     } finally {
         Pop-Location
     }
@@ -95,7 +97,9 @@ try {
     Add-Content -Path $startupLog -Value ("[{0}] Navegador aberto em {1}" -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'), $appUrl)
     exit 0
 } catch {
-    Add-Content -Path $startupLog -Value ("[{0}] ERRO: {1}" -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'), $_.Exception.Message)
-    Show-StartupError ($_.Exception.Message + "`n`nConsulte o arquivo .tmp\\start_hidden.log para mais detalhes.")
+    $errorMsg = if ($_.Exception.Message) { $_.Exception.Message } else { $_.ToString() }
+    Add-Content -Path $startupLog -Value ("[{0}] ERRO: {1}" -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'), $errorMsg)
+    Add-Content -Path $startupLog -Value ("[{0}] Stack: {1}" -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'), $_.ScriptStackTrace)
+    Show-StartupError ($errorMsg + "`n`nConsulte o arquivo .tmp\\start_hidden.log para mais detalhes.")
     exit 1
 }

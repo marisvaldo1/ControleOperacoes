@@ -1,56 +1,45 @@
 <div class="modal modal-blur fade" id="modalAnalise" tabindex="-1">
-    <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-dialog modal-xl modal-dialog-centered" style="max-width:1360px">
         <div class="modal-content ma-modal-content">
-            <div class="modal-header ma-header">
-                <h5 class="modal-title ma-title">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="icon me-2" width="20" height="20" viewBox="0 0 24 24"
-                        stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round"
-                        stroke-linejoin="round">
-                        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-                    </svg>
-                    Análise de Performance
-                </h5>
-                <div class="d-flex align-items-center gap-2 ms-auto me-3">
-                    <span class="text-muted small" id="maRefreshStatus">Atualizado agora</span>
-                    <button type="button" class="ma-refresh-btn" id="maRefreshBtn" title="Atualizar dados">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                            stroke-linejoin="round">
-                            <path d="M23 4v6h-6"/>
-                            <path d="M1 20v-6h6"/>
-                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-                        </svg>
-                    </button>
-                </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
+            
+            <!-- Header padrão — gerenciado por CryptoModalHeader -->
+            <div id="maModalHeader" style="flex-shrink:0;"></div>
 
             <div class="modal-body p-0 ma-body">
 
-                <!-- Barra de filtros de período -->
-                <div class="ma-filter-bar">
-                    <div class="ma-filter-group" id="maFilterButtons">
-                        <button type="button" class="ma-filter-btn" data-period="all">Todos</button>
-                        <button type="button" class="ma-filter-btn" data-period="today">Hoje</button>
-                        <button type="button" class="ma-filter-btn" data-period="7d">7 dias</button>
-                        <button type="button" class="ma-filter-btn" data-period="15d">15 dias</button>
-                        <button type="button" class="ma-filter-btn active" data-period="month">Mês atual</button>
-                        <button type="button" class="ma-filter-btn" data-period="30d">30 dias</button>
-                        <button type="button" class="ma-filter-btn" data-period="90d">90 dias</button>
-                        <button type="button" class="ma-filter-btn" data-period="12m">12 meses</button>
-                        <button type="button" class="ma-filter-btn" data-period="year">Ano atual</button>
-                        <button type="button" class="ma-filter-btn" data-period="lastyear">Ano passado</button>
-                    </div>
-                    <!-- refresh movido para o cabeçalho do modal -->
-                </div>
-
                 <!-- Tab Navigation -->
                 <div class="ma-tab-nav" id="maTabNav">
-                    <button type="button" class="ma-tab-btn active" data-tab="desempenho">&#128202; Desempenho</button>
-                    <button type="button" class="ma-tab-btn" data-tab="posicoes">&#128200; Posições Abertas <span class="ma-tab-badge" id="maPosBadge"></span></button>
-                    <button type="button" class="ma-tab-btn" data-tab="evolucao">&#128198; Evolução</button>
-                    <button type="button" class="ma-tab-btn" data-tab="risco">&#9888;&#65039; Risco</button>
+                    <button type="button" class="ma-tab-btn active" data-tab="desempenho">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                        </svg>
+                        Desempenho
+                    </button>
+                    <button type="button" class="ma-tab-btn" data-tab="posicoes">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                            <rect x="3" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="14" width="7" height="7"></rect>
+                            <rect x="3" y="14" width="7" height="7"></rect>
+                        </svg>
+                        Posições Abertas
+                        <span class="ma-tab-badge" id="maPosBadge"></span>
+                    </button>
+                    <button type="button" class="ma-tab-btn" data-tab="evolucao">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                            <polyline points="17 6 23 6 23 12"></polyline>
+                        </svg>
+                        Evolução
+                    </button>
+                    <button type="button" class="ma-tab-btn" data-tab="risco">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                            <line x1="12" y1="9" x2="12" y2="13"></line>
+                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                        Risco
+                    </button>
                 </div>
 
                 <!-- Tab: Desempenho (conteúdo atual) -->
@@ -78,20 +67,38 @@
 
                         <!-- Métricas rápidas -->
                         <div class="ma-metrics">
-                            <div class="ma-metric-row">
-                                <span class="ma-metric-label">Win Rate</span>
+                            <div class="ma-metric-row" title="Percentual de operações que resultaram em lucro">
+                                <span class="ma-metric-label">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1" style="vertical-align:text-bottom">
+                                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                                    </svg>
+                                    Win Rate
+                                </span>
                                 <span class="ma-metric-value" id="maWinRate">0%</span>
                             </div>
-                            <div class="ma-metric-row">
-                                <span class="ma-metric-label">Ticket Médio</span>
+                            <div class="ma-metric-row" title="Resultado médio por operação (Lucro Total ÷ Número de Operações)">
+                                <span class="ma-metric-label">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1" style="vertical-align:text-bottom">
+                                        <line x1="12" y1="1" x2="12" y2="23"></line>
+                                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                                    </svg>
+                                    Ticket Médio
+                                </span>
                                 <span class="ma-metric-value ma-orange" id="maTicketMedio">R$ 0,00</span>
                             </div>
                         </div>
 
                         <!-- ROI box -->
-                        <div class="ma-roi-box">
+                        <div class="ma-roi-box" title="Retorno sobre Investimento: (Lucro Total ÷ Saldo Configurado) × 100">
                             <div class="ma-roi-value" id="maRoiValue">+0,00%</div>
-                            <div class="ma-roi-label">ROI TOTAL DO PERÍODO</div>
+                            <div class="ma-roi-label">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1" style="vertical-align:text-bottom">
+                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                    <polyline points="19 12 12 19 5 12"></polyline>
+                                </svg>
+                                ROI TOTAL DO PERÍODO
+                            </div>
                         </div>
 
                     </div>
@@ -119,9 +126,30 @@
                                 <div class="ma-ops-header">
                                     <div class="ma-section-title">Operações</div>
                                     <div class="ma-ops-sort" id="maOpsSort">
-                                        <button class="ma-sort-btn active" data-sort="date">Data</button>
-                                        <button class="ma-sort-btn" data-sort="result">Resultado</button>
-                                        <button class="ma-sort-btn" data-sort="pct">%</button>
+                                        <button class="ma-sort-btn active" data-sort="date" title="Ordenar por data da operação (mais recente primeiro)">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                                            </svg>
+                                            Data
+                                        </button>
+                                        <button class="ma-sort-btn" data-sort="result" title="Ordenar por resultado (maior lucro primeiro)">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                                                <line x1="12" y1="1" x2="12" y2="23"></line>
+                                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                                            </svg>
+                                            Resultado
+                                        </button>
+                                        <button class="ma-sort-btn" data-sort="pct" title="Ordenar por percentual de retorno (maior % primeiro)">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                                                <line x1="19" y1="5" x2="5" y2="19"></line>
+                                                <circle cx="6.5" cy="6.5" r="2.5"></circle>
+                                                <circle cx="17.5" cy="17.5" r="2.5"></circle>
+                                            </svg>
+                                            %
+                                        </button>
                                     </div>
                                 </div>
                                 <div class="ma-ops-list" id="maOpsList">

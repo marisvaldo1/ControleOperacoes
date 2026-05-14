@@ -29,7 +29,13 @@
         posRefreshing: false,
         posPayoffCharts: {},
         posEvolutionCharts: {},
-        posGaugeCharts: {}
+        posGaugeCharts: {},
+        /* Header component */
+        header: null,
+        headerInitialized: false,  // ✅ Flag para evitar inicialização dupla
+        /* Período customizado */
+        dateFrom: null,
+        dateTo: null
     };
 
     function configure(opts) {
@@ -94,7 +100,25 @@
     function getNumber(op, fields) {
         for (let i = 0; i < fields.length; i++) {
             const v = parseFloat(op[fields[i]]);
-            if (!Number.isNaN(v)) return v;
+            if (!Number.isNaN(v)) {
+                // Validação: alertar sobre valores suspeitos em crypto
+                if (state.apiEndpoint.includes('/crypto') && fields[0] === 'premio_us') {
+                    if (v > 0 && v < 0.5) {
+                        console.warn('[modal-analise] ⚠️ Valor suspeito detectado:', {
+                            id: op.id,
+                            ativo: op.ativo_base || op.ativo,
+                            tipo: op.tipo,
+                            campo: fields[i],
+                            valor: v,
+                            premio_us: op.premio_us,
+                            resultado: op.resultado,
+                            cotacao_atual: op.cotacao_atual,
+                            sugestao: 'Verificar se o campo correto está sendo usado'
+                        });
+                    }
+                }
+                return v;
+            }
         }
         return 0;
     }
@@ -103,14 +127,40 @@
     /* Filtro de período                                                    */
     /* ------------------------------------------------------------------ */
     function filterByPeriod(ops, period) {
+        // Delegar para CryptoFilterBar.inPeriod se disponível — garante lógica única
+        if (window.CryptoFilterBar && typeof window.CryptoFilterBar.filter === 'function') {
+            const filterState = {
+                period: period,
+                dateFrom: state.dateFrom || null,
+                dateTo: state.dateTo || null,
+                statusList: null,   // sem filtro de status aqui (aplicado depois)
+                tipoList: null,
+                status: null,
+                tipo: null,
+                asset: null,
+                corretora: null,
+            };
+            // CryptoFilterBar.filter aplica período + status + tipo.
+            // Como queremos só o período, passamos statusList/tipoList nulos
+            // e usamos inPeriod diretamente.
+            return ops.filter(op => window.CryptoFilterBar.inPeriod(op, period, filterState));
+        }
+
+        // Fallback local (caso CryptoFilterBar não esteja carregado)
         const now = new Date();
-        const msDay = 86400000;
+        now.setHours(0, 0, 0, 0);
 
         function opDate(op) {
-            const raw = op.data_operacao || op.created_at || op.data || op.exercicio || op.vencimento || null;
+            const raw = op.data_operacao || op.created_at || op.data || null;
             if (!raw) return null;
-            const d = new Date(raw);
-            return Number.isNaN(d.getTime()) ? null : d;
+            let dateStr = raw;
+            if (typeof raw === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+                dateStr = raw + 'T00:00:00';
+            }
+            const d = new Date(dateStr);
+            if (Number.isNaN(d.getTime())) return null;
+            d.setHours(0, 0, 0, 0);
+            return d;
         }
 
         if (period === 'all') return ops;
@@ -118,28 +168,31 @@
         return ops.filter(op => {
             const d = opDate(op);
             if (!d) return false;
-            switch (period) {
-                case 'today':
-                    return d.toDateString() === now.toDateString();
-                case '7d':
-                    return (now - d) <= 7 * msDay;
-                case '15d':
-                    return (now - d) <= 15 * msDay;
-                case '30d':
-                    return (now - d) <= 30 * msDay;
-                case '90d':
-                    return (now - d) <= 90 * msDay;
-                case '12m':
-                    return (now - d) <= 365 * msDay;
-                case 'month':
-                    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-                case 'year':
-                    return d.getFullYear() === now.getFullYear();
-                case 'lastyear':
-                    return d.getFullYear() === now.getFullYear() - 1;
-                default:
-                    return true;
+
+            if (period === 'custom') {
+                const dateFrom = state.dateFrom ? new Date(state.dateFrom + 'T00:00:00') : null;
+                const dateTo   = state.dateTo   ? new Date(state.dateTo   + 'T23:59:59') : null;
+                if (dateFrom && d < dateFrom) return false;
+                if (dateTo   && d > dateTo)   return false;
+                return true;
             }
+
+            if (period === 'today')  return d >= now;
+            if (period === 'semana') {
+                const dow = now.getDay();
+                const mon = new Date(now);
+                mon.setDate(now.getDate() - (dow === 0 ? 6 : dow - 1));
+                mon.setHours(0, 0, 0, 0);
+                return d >= mon;
+            }
+            if (period === 'mes')  { const t = new Date(now.getFullYear(), now.getMonth(), 1); return d >= t; }
+            if (period === 'ano')  { const t = new Date(now.getFullYear(), 0, 1); return d >= t; }
+            if (period === '7d')   { const t = new Date(now); t.setDate(t.getDate() - 7);  return d >= t; }
+            if (period === '15d')  { const t = new Date(now); t.setDate(t.getDate() - 15); return d >= t; }
+            if (period === '30d')  { const t = new Date(now); t.setDate(t.getDate() - 30); return d >= t; }
+            if (period === '60d')  { const t = new Date(now); t.setDate(t.getDate() - 60); return d >= t; }
+            if (period === '90d')  { const t = new Date(now); t.setDate(t.getDate() - 90); return d >= t; }
+            return true;
         });
     }
 
@@ -347,8 +400,9 @@
 
     function sortOps(ops, sortKey) {
         const isCrypto = state.apiEndpoint.includes('/crypto');
+        // ✅ CORRIGIDO: Para crypto, priorizar premio_us (prêmio recebido)
         const resultField = isCrypto
-            ? ['resultado', 'premio_us']
+            ? ['premio_us', 'resultado']
             : ['resultado', 'resultado_total', 'resultado_op', 'resultado_fechamento'];
         const saldoField = ['saldo_abertura', 'saldo', 'saldo_entrada', 'saldo_inicial'];
 
@@ -382,8 +436,9 @@
         if (!el) return;
 
         const isCrypto = state.apiEndpoint.includes('/crypto');
+        // ✅ CORRIGIDO: Para crypto, priorizar premio_us (prêmio recebido)
         const resultField = isCrypto
-            ? ['resultado', 'premio_us']
+            ? ['premio_us', 'resultado']
             : ['resultado', 'resultado_total', 'resultado_op', 'resultado_fechamento'];
         const saldoField = ['saldo_abertura', 'saldo', 'saldo_entrada', 'saldo_inicial'];
 
@@ -488,8 +543,9 @@
     /* Render completo                                                       */
     /* ------------------------------------------------------------------ */
     function renderAll(ops) {
-        const filtered = filterByPeriod(ops, state.period);
-        const stats = calcStats(filtered);
+        // Se ops não for passado, usar state.ops e aplicar filtro de período
+        const opsToRender = ops || filterByPeriod(state.ops, state.period);
+        const stats = calcStats(opsToRender);
 
         /* Donut */
         ensureApex(() => renderDonut(stats));
@@ -504,7 +560,7 @@
 
         /* Operações individuais */
         setupOpsSortButtons();
-        renderOpsList(filtered);
+        renderOpsList(opsToRender);
 
         /* Métricas esquerda */
         setEl('maWinRate', stats.winRate.toFixed(0) + '%');
@@ -554,31 +610,76 @@
     /* Atualizar timestamp                                                  */
     /* ------------------------------------------------------------------ */
     function updateTimestamp() {
-        const el = document.getElementById('maRefreshStatus');
-        if (el) {
-            const now = new Date();
-            el.textContent = `Atualizado: ${now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+        // O timestamp agora é gerenciado pelo CryptoModalHeader
+        // Chamamos o método tick() do header
+        if (state.header && typeof state.header.tick === 'function') {
+            state.header.tick();
         }
     }
 
     /* ------------------------------------------------------------------ */
     /* Refresh completo (carrega + renderiza)                               */
     /* ------------------------------------------------------------------ */
-    /* Loading visual nos valores durante refresh                          */
-    /* ------------------------------------------------------------------ */
     const _LOADING_SPIN = '<span class="spinner-border spinner-border-sm text-secondary" role="status"></span>';
     function setMetricsLoading() {
-        ['maDonutValue', 'maDonutSub', 'maWinRate', 'maRoiValue', 'maRoiFooter',
-         'maRightResult', 'maRightSub'].forEach(function(id) {
+        // Métricas principais (centro do donut)
+        ['maDonutValue', 'maDonutSub'].forEach(function(id) {
             const el = document.getElementById(id);
             if (el) el.innerHTML = _LOADING_SPIN;
         });
+        
+        // Métricas da esquerda
+        ['maWinRate', 'maTicketMedio', 'maRoiValue'].forEach(function(id) {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = _LOADING_SPIN;
+        });
+        
+        // Painel direito header
+        ['maRightResult', 'maRightSub'].forEach(function(id) {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = _LOADING_SPIN;
+        });
+        
+        // Footer summary
+        ['maMelhorTrade', 'maTicketMedioFooter', 'maRoiFooter'].forEach(function(id) {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = _LOADING_SPIN;
+        });
+        
+        // Lista de operações
+        const opsList = document.getElementById('maOpsList');
+        if (opsList) {
+            opsList.innerHTML = '<div class="text-center py-4">' + _LOADING_SPIN + '</div>';
+        }
+        
+        // Listas de tipo (esquerda e direita)
+        const tipoList = document.getElementById('maTipoList');
+        if (tipoList) {
+            tipoList.innerHTML = '<div class="text-center py-2">' + _LOADING_SPIN + '</div>';
+        }
+        
+        const distTipo = document.getElementById('maDistTipo');
+        if (distTipo) {
+            distTipo.innerHTML = '<div class="text-center py-2">' + _LOADING_SPIN + '</div>';
+        }
+        
+        // Badges de totalização (se existirem)
+        const totalsContainer = document.querySelector('.cfb-totals');
+        if (totalsContainer) {
+            const badges = totalsContainer.querySelectorAll('.cfb-tag');
+            badges.forEach(function(badge) {
+                const originalClass = badge.className;
+                badge.innerHTML = _LOADING_SPIN;
+                badge.className = originalClass; // Preserva as classes de estilo
+            });
+        }
     }
 
     /* ------------------------------------------------------------------ */
     async function refresh() {
-        const btn = document.getElementById('maRefreshBtn');
+        const btn = document.querySelector('.cfb-refresh-btn');
         if (btn) btn.classList.add('spinning');
+        
         if (['posicoes', 'evolucao', 'risco'].includes(state.activeTab)) {
             await refreshPosicoesCompleto();
             if (state.activeTab === 'evolucao') ensureApex(() => renderEvolucaoPane());
@@ -586,10 +687,19 @@
         } else {
             setMetricsLoading();
             await loadData();
-            renderAll(state.ops);
+            const filtered = filterByPeriod(state.ops, state.period);
+            renderAll(filtered);
         }
+        
         updateTimestamp();
         if (btn) btn.classList.remove('spinning');
+        
+        // ✅ IMPORTANTE: Atualizar header com operações para exibir badges
+        if (state.header) {
+            const filtered = filterByPeriod(state.ops, state.period);
+            state.header.setOps(state.ops, filtered);
+            state.header.tick();
+        }
     }
 
     /* ------------------------------------------------------------------ */
@@ -650,17 +760,92 @@
             }
         }
 
-        /* Sincronizar botão de período com state.period */
-        const filterBox = document.getElementById('maFilterButtons');
-        if (filterBox) {
-            filterBox.querySelectorAll('button[data-period]').forEach(b => {
-                b.classList.toggle('active', b.dataset.period === state.period);
+        /* Inicializar CryptoModalHeader se disponível */
+        if (typeof CryptoModalHeader !== 'undefined') {
+            // ✅ IMPORTANTE: Só inicializar header uma vez
+            if (state.headerInitialized && state.header) {
+                // Header já inicializado, apenas atualizar dados
+            } else {
+                // Destruir header anterior se existir
+                if (state.header && typeof state.header.destroy === 'function') {
+                    state.header.destroy();
+                    state.header = null;
+                }
+                
+                // Limpar conteúdo anterior se existir
+                const headerEl = document.getElementById('maModalHeader');
+                if (headerEl && headerEl.innerHTML.trim()) {
+                    headerEl.innerHTML = '';
+                }
+                
+                const isCrypto = state.apiEndpoint.includes('/crypto');
+                // ✅ SINCRONIZAR: definir state.period antes do mount para que o
+                // primeiro refresh() já use o período correto (sem esperar clique do usuário)
+                const _defaultPeriod = 'mes';
+                state.period = _defaultPeriod;
+
+                state.header = CryptoModalHeader.mount('#maModalHeader', {
+                title: isCrypto ? 'Análise de Performance · Crypto' : 'Análise de Performance · Opções',
+                icon: '⚡',
+                defaultPeriod: _defaultPeriod,
+                closeModalId: state.modalId,
+                onFilter: (filterState) => {
+                    // Período do header é o mesmo usado em filterByPeriod —
+                    // não há mapeamento: ambos usam os mesmos tokens ('mes', 'semana', 'today', etc.)
+                    state.period = filterState.period;
+                    
+                    // ✅ CORRIGIDO: Capturar dateFrom e dateTo para período customizado
+                    if (filterState.period === 'custom') {
+                        state.dateFrom = filterState.dateFrom || null;
+                        state.dateTo = filterState.dateTo || null;
+                    }
+                    
+                    // Aplicar filtros e re-renderizar
+                    let filtered = filterByPeriod(state.ops, state.period);
+                    
+                    // ✅ CORRIGIDO: Aplicar filtros de status usando statusList (array)
+                    if (Array.isArray(filterState.statusList) && filterState.statusList.length > 0) {
+                        filtered = filtered.filter(op => {
+                            const status = (op.status || '').toLowerCase();
+                            return filterState.statusList.some(s => s.toLowerCase() === status);
+                        });
+                    }
+                    
+                    // ✅ CORRIGIDO: Aplicar filtros de tipo usando tipoList (array)
+                    if (Array.isArray(filterState.tipoList) && filterState.tipoList.length > 0) {
+                        filtered = filtered.filter(op => {
+                            const tipo = (op.tipo || '').toUpperCase();
+                            return filterState.tipoList.some(t => t.toUpperCase() === tipo);
+                        });
+                    }
+                    
+                    if (filterState.asset) {
+                        filtered = filtered.filter(op => 
+                            (op.ativo_base || op.ativo || '').toUpperCase().includes(filterState.asset.toUpperCase())
+                        );
+                    }
+                    
+                    renderAll(filtered);
+                    
+                    // Atualizar header com operações filtradas para atualizar badges
+                    if (state.header) {
+                        state.header.setOps(state.ops, filtered);
+                        state.header.tick();
+                    }
+                },
+                onRefresh: async () => {
+                    await refresh();
+                },
+                showTotals: true  // ✅ IMPORTANTE: Habilitar badges de totalização
             });
+            
+            state.headerInitialized = true;  // ✅ Marcar como inicializado
+            }
+        } else {
+            console.warn('[modal-analise] CryptoModalHeader não disponível! Verifique se o script foi carregado.');
         }
 
         setupTabs();
-        setupFilterButtons();
-        setupRefreshButton();
 
         try {
             const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
@@ -670,38 +855,18 @@
             return;
         }
 
+        // Carregar dados e atualizar header
         await refresh();
+        
+        // ✅ GARANTIR que os badges sejam exibidos após carregar os dados
+        if (state.header) {
+            const filtered = filterByPeriod(state.ops, state.period);
+            state.header.setOps(state.ops, filtered);
+            state.header.tick();
+        }
     }
 
     /* ------------------------------------------------------------------ */
-    /* Setup botões de filtro                                               */
-    /* ------------------------------------------------------------------ */
-    function setupFilterButtons() {
-        const container = document.getElementById('maFilterButtons');
-        if (!container || container.dataset.bound === 'true') return;
-        container.dataset.bound = 'true';
-        container.addEventListener('click', event => {
-            const btn = event.target.closest('button[data-period]');
-            if (!btn) return;
-            const period = btn.dataset.period;
-            if (!period || state.period === period) return;
-            state.period = period;
-            container.querySelectorAll('button').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            renderAll(state.ops);
-        });
-    }
-
-    /* ------------------------------------------------------------------ */
-    /* Setup botão refresh                                                  */
-    /* ------------------------------------------------------------------ */
-    function setupRefreshButton() {
-        const btn = document.getElementById('maRefreshBtn');
-        if (!btn || btn.dataset.bound === 'true') return;
-        btn.dataset.bound = 'true';
-        btn.addEventListener('click', () => refresh());
-    }
-
     /* ------------------------------------------------------------------ */
     /* Tab Navigation interna de cada card de posição (lazy charts)        */
     /* ------------------------------------------------------------------ */
@@ -724,8 +889,10 @@
             if (body) body.querySelectorAll('.ma-tab-pane').forEach(p => p.classList.add('d-none'));
             const pane = document.getElementById('maTabPane-' + tab);
             if (pane) pane.classList.remove('d-none');
-            const filterBar = document.querySelector('.ma-filter-bar');
-            if (filterBar) filterBar.style.display = tab === 'desempenho' ? '' : 'none';
+            
+            // ✅ IMPORTANTE: Manter filtros visíveis em TODAS as abas
+            // (removido o código que escondia os filtros)
+            
             const isPosicoesTab = ['posicoes', 'evolucao', 'risco'].includes(tab);
             if (isPosicoesTab && state.posicoes.length === 0 && !state.posRefreshing) {
                 refreshPosicoesCompleto().then(() => {
