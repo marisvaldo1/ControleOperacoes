@@ -490,7 +490,6 @@
       var isITM = isCall ? (diffVal > 0) : (diffVal < 0);
       var popEst = isITM ? Math.max(5, 50 - distPct * 4) : Math.min(95, 50 + distPct * 4);
       var popColor = popEst >= 65 ? '#22c55e' : popEst >= 50 ? '#eab308' : '#ef4444';
-      // var popColor = '#56a5fa';
       diffEl.innerHTML = '<span>Strike: <span>' + fmtK(s) + '</span></span>' +
                          '<span>Cotação: <span>' + fmtK(q) + '</span></span>' +
                          '<span>Diferença: <span style="color:' + diffCol + '">' + diffSign2 + fmtShort(diffVal) + '</span></span>' +
