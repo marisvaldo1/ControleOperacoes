@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Termômetro Duplo — Ideias de Leitura Instantânea</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: #0a0e1a;
+  color: #e2e8f0;
+  min-height: 100vh;
+  padding: 28px 24px 60px;
+}
+
+h1 {
+  text-align: center;
+  font-size: 22px;
+  color: #60a5fa;
+  letter-spacing: 1.5px;
+  margin-bottom: 4px;
+}
+
+.subtitle {
+  text-align: center;
+  color: #64748b;
+  font-size: 13px;
+  margin-bottom: 26px;
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.5;
+}
+
+/* ── CONTROLES ─────────────────────────────── */
+.controls {
+  position: sticky;
+  top: 10px;
+  z-index: 50;
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 34px;
+  background: rgba(10,14,26,.92);
+  backdrop-filter: blur(6px);
+  padding: 14px;
+  border-radius: 16px;
+}
+
+.ctrl-card {
+  background: #111827;
+  border: 1px solid #1e2d45;
+  border-radius: 14px;
+  padding: 14px 24px;
+  min-width: 200px;
+  text-align: center;
+}
+
+.ctrl-card label {
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #64748b;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.ctrl-card .big-val {
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.ctrl-card input[type="range"] {
+  width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+#sRange { background: linear-gradient(to right, #1d4ed8, #3b82f6); }
+#qRange { background: linear-gradient(to right, #15803d, #22c55e); }
+
+.ctrl-card input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  border: 3px solid #0a0e1a;
+  cursor: pointer;
+}
+#sRange::-webkit-slider-thumb { background: #3b82f6; }
+#qRange::-webkit-slider-thumb { background: #22c55e; }
+
+.presets {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.presets button {
+  background: #111827;
+  border: 1px solid #1e2d45;
+  color: #94a3b8;
+  font-size: 12px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.presets button:hover { border-color: #3b82f6; color: #e2e8f0; }
+
+/* ── GRID ──────────────────────────────────── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 22px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.card {
+  background: #111827;
+  border: 1px solid #1e2d45;
+  border-radius: 18px;
+  padding: 22px 20px 20px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color .3s, transform .3s, background .3s;
+}
+.card:hover { transform: translateY(-3px); }
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #1d4ed8, #22c55e);
+}
+
+.card-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #475569;
+  margin-bottom: 3px;
+}
+.card-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #e2e8f0;
+  margin-bottom: 4px;
+}
+.card-idea {
+  font-size: 12px;
+  color: #64748b;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+.card-idea b { color: #94a3b8; }
+
+.viz {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 60px;
+}
+
+.diff-row {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 14px;
+  font-size: 12px;
+  color: #64748b;
+  border-top: 1px dashed #1e2d45;
+  padding-top: 10px;
+}
+.diff-row span { color: #94a3b8; font-weight: 600; }
+
+/* original reference */
+.original {
+  max-width: 380px;
+  margin: 0 auto 40px;
+  opacity: .6;
+}
+.original .card-title { color: #ef4444; }
+</style>
+</head>
+<body>
+
+<h1>🌡️ Termômetro Duplo — Laboratório de Legibilidade</h1>
+<p class="subtitle">
+  6 variações da <b>Opção 02</b> testando cor, emoji, ícone e hierarquia visual para leitura em menos de 1 segundo.
+  Mexa nos controles abaixo — todas as variações reagem juntas.
+</p>
+
+<!-- CONTROLES -->
+<div class="controls">
+  <div class="ctrl-card">
+    <label>🎯 Strike</label>
+    <div class="big-val" style="color:#3b82f6">R$ <span id="sVal">120</span></div>
+    <input type="range" id="sRange" min="50" max="200" value="120" step="0.5">
+  </div>
+  <div class="ctrl-card">
+    <label>📍 Cotação Atual</label>
+    <div class="big-val" style="color:#22c55e">R$ <span id="qVal">138</span></div>
+    <input type="range" id="qRange" min="50" max="200" value="138" step="0.5">
+  </div>
+  <div class="ctrl-card presets">
+    <button data-s="120" data-q="185">🟢 ITM forte</button>
+    <button data-s="120" data-q="138">🟢 ITM leve</button>
+    <button data-s="120" data-q="121">🟡 ATM</button>
+    <button data-s="120" data-q="105">🔴 OTM leve</button>
+    <button data-s="120" data-q="60">🔴 OTM forte</button>
+  </div>
+</div>
+
+<!-- GRID DE CARDS -->
+<div class="grid">
+
+  <div class="card">
+    <div class="card-title">Variação 01</div>
+    <div class="card-name">🚦 Semáforo Interno</div>
+    <div class="card-idea"><b>Ideia:</b> o próprio tubo do termômetro é dividido em 3 zonas coloridas (vermelho/amarelo/verde). A bolha da cotação "cai" numa zona — dá pra ver o status sem ler número nenhum.</div>
+    <div class="viz"><svg id="g1" viewBox="0 0 340 240" width="340" height="240"></svg></div>
+    <div class="diff-row" id="d1"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Variação 02</div>
+    <div class="card-name">😀 Status em Primeiro Lugar</div>
+    <div class="card-idea"><b>Ideia:</b> inverte a hierarquia. O emoji + % gigante vem PRIMEIRO (o que importa pra decisão rápida); o termômetro vira coadjuvante pequeno, só pra contexto.</div>
+    <div class="viz"><div id="g2"></div></div>
+    <div class="diff-row" id="d2"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Variação 03</div>
+    <div class="card-name">📏 Gap em Destaque</div>
+    <div class="card-idea"><b>Ideia:</b> a faixa ENTRE strike e cotação é preenchida e rotulada com seta grande. O olho vê imediatamente "quanto" e "pra que lado", que é a pergunta real na operação.</div>
+    <div class="viz"><svg id="g3" viewBox="0 0 340 240" width="340" height="240"></svg></div>
+    <div class="diff-row" id="d3"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Variação 04</div>
+    <div class="card-name">🙂 Rosto Reativo</div>
+    <div class="card-idea"><b>Ideia:</b> um "rosto" muda de expressão conforme a distância % (feliz/neutro/preocupado). Emoções são processadas mais rápido pelo cérebro do que números — leitura quase instantânea.</div>
+    <div class="viz"><svg id="g4" viewBox="0 0 340 240" width="340" height="240"></svg></div>
+    <div class="diff-row" id="d4"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Variação 05</div>
+    <div class="card-name">↔️ Régua Horizontal</div>
+    <div class="card-idea"><b>Ideia:</b> troca vertical por horizontal (como uma linha do tempo). O trilho inteiro muda de cor conforme o status, e uma seta grande cruza de strike até cotação — bom pra comparar vários ativos em fileira.</div>
+    <div class="viz"><svg id="g5" viewBox="0 0 340 170" width="340" height="170"></svg></div>
+    <div class="diff-row" id="d5"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Variação 06</div>
+    <div class="card-name">🔴🟡🟢 Farol Minimalista</div>
+    <div class="card-idea"><b>Ideia:</b> versão "resumo executivo" — um círculo enorme faz as vezes de farol (cor = status) com o número dentro. Zero poluição visual, ideal pra dashboards com múltiplos ativos lado a lado.</div>
+    <div class="viz"><svg id="g6" viewBox="0 0 340 220" width="340" height="220"></svg></div>
+    <div class="diff-row" id="d6"></div>
+  </div>
+
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const MIN = 50, MAX = 200;
+const clamp = v => Math.max(0, Math.min(1, (v - MIN) / (MAX - MIN)));
+
+function statusOf(s, q) {
+  const diff = q - s;
+  const pct = (diff / s * 100);
+  let cls, label, emoji, color, glow;
+  if (Math.abs(pct) < 1) { cls='atm'; label='ATM — NA MOCHA'; emoji='🟡'; color='#facc15'; glow='rgba(234,179,8,.35)'; }
+  else if (diff > 0)     { cls='itm'; label='ITM — DENTRO DO DINHEIRO'; emoji='🟢'; color='#4ade80'; glow='rgba(34,197,94,.35)'; }
+  else                   { cls='otm'; label='OTM — FORA DO DINHEIRO'; emoji='🔴'; color='#f87171'; glow='rgba(239,68,68,.35)'; }
+  return { diff, pct, cls, label, emoji, color, glow };
+}
+
+function setDiff(id, s, q) {
+  const diff = (q - s).toFixed(2);
+  const sign = diff > 0 ? '+' : '';
+  $(id).innerHTML = `<span>Strike: <span>R$ ${s.toFixed(2)}</span></span>
+                     <span>Cotação: <span>R$ ${q.toFixed(2)}</span></span>
+                     <span>Diferença: <span>${sign}${diff}</span></span>`;
+}
+
+/* ============================================================
+   V1 — Semáforo Interno: tubo dividido em 3 zonas coloridas
+============================================================= */
+function g1(s, q) {
+  const svg = $('g1');
+  const st = statusOf(s, q);
+  const totalH = 150, barW = 40, y0 = 20;
+  const sx = 110, qx = 230;
+  const sh = clamp(s) * totalH, qh = clamp(q) * totalH;
+  const sy0 = y0 + totalH - sh, qy0 = y0 + totalH - qh;
+
+  const zoneH = totalH / 3;
+  const zoneColors = ['#7f1d1d', '#713f12', '#14532d']; // baixo->alto (OTM/ATM/ITM na base 50-200)
+
+  let h = '';
+  // emoji + label topo
+  h += `<text x="170" y="14" text-anchor="middle" font-size="20">${st.emoji}</text>`;
+
+  function tube(cx) {
+    let t = '';
+    for (let i = 0; i < 3; i++) {
+      const zy = y0 + totalH - (i + 1) * zoneH;
+      t += `<rect x="${cx - barW/2}" y="${zy}" width="${barW}" height="${zoneH}" fill="${zoneColors[i]}" opacity=".35"/>`;
+    }
+    t += `<rect x="${cx - barW/2}" y="${y0}" width="${barW}" height="${totalH}" fill="none" stroke="#1e293b" stroke-width="1.5" rx="8"/>`;
+    return t;
+  }
+  h += tube(sx);
+  h += tube(qx);
+
+  // fill strike
+  h += `<rect x="${sx - barW/2 + 3}" y="${sy0}" width="${barW - 6}" height="${sh}" fill="#3b82f6" rx="5" opacity=".9"/>`;
+  h += `<circle cx="${sx}" cy="${sy0}" r="5" fill="#93c5fd"/>`;
+  // fill cotação com glow do status
+  h += `<defs><filter id="gl1"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`;
+  h += `<rect x="${qx - barW/2 + 3}" y="${qy0}" width="${barW - 6}" height="${qh}" fill="${st.color}" rx="5" filter="url(#gl1)"/>`;
+  h += `<circle cx="${qx}" cy="${qy0}" r="6" fill="${st.color}" filter="url(#gl1)"/>`;
+
+  // linha conectando os topos (mostra o gap de relance)
+  h += `<line x1="${sx}" y1="${sy0}" x2="${qx}" y2="${qy0}" stroke="${st.color}" stroke-width="1.5" stroke-dasharray="4,3" opacity=".7"/>`;
+
+  // valores
+  h += `<text x="${sx}" y="${y0 - 8}" fill="#93c5fd" font-size="13" text-anchor="middle" font-weight="700">${s.toFixed(2)}</text>`;
+  h += `<text x="${qx}" y="${qy0 - 10}" fill="${st.color}" font-size="13" text-anchor="middle" font-weight="700">${q.toFixed(2)}</text>`;
+
+  // labels base
+  h += `<text x="${sx}" y="${y0 + totalH + 22}" fill="#64748b" font-size="11" text-anchor="middle">Strike</text>`;
+  h += `<text x="${qx}" y="${y0 + totalH + 22}" fill="#64748b" font-size="11" text-anchor="middle">Cotação</text>`;
+
+  // badge status embaixo
+  h += `<rect x="60" y="${y0 + totalH + 34}" width="220" height="26" rx="13" fill="${st.glow}" stroke="${st.color}" stroke-width="1"/>`;
+  h += `<text x="170" y="${y0 + totalH + 51}" fill="${st.color}" font-size="12" text-anchor="middle" font-weight="700">${st.label}</text>`;
+
+  svg.innerHTML = h;
+  setDiff('d1', s, q);
+}
+
+/* ============================================================
+   V2 — Status primeiro (HTML puro, emoji + % gigante)
+============================================================= */
+function g2(s, q) {
+  const st = statusOf(s, q);
+  const sign = st.pct > 0 ? '+' : '';
+  const sh = clamp(s) * 60, qh = clamp(q) * 60;
+
+  let html = `
+  <div style="text-align:center; width:100%;">
+    <div style="font-size:52px; line-height:1;">${st.emoji}</div>
+    <div style="font-size:34px; font-weight:800; color:${st.color}; margin:4px 0 2px;">${sign}${st.pct.toFixed(2)}%</div>
+    <div style="font-size:12px; letter-spacing:1px; color:${st.color}; font-weight:700; margin-bottom:14px;">${st.label}</div>
+    <div style="display:flex; justify-content:center; align-items:flex-end; gap:26px; height:70px;">
+      <div style="display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%;">
+        <div style="width:14px; height:${sh}px; background:#3b82f6; border-radius:4px 4px 0 0;"></div>
+        <div style="font-size:10px; color:#64748b; margin-top:4px;">🎯 ${s.toFixed(0)}</div>
+      </div>
+      <div style="display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%;">
+        <div style="width:14px; height:${qh}px; background:${st.color}; border-radius:4px 4px 0 0;"></div>
+        <div style="font-size:10px; color:#64748b; margin-top:4px;">📍 ${q.toFixed(0)}</div>
+      </div>
+    </div>
+  </div>`;
+  $('g2').innerHTML = html;
+  setDiff('d2', s, q);
+}
+
+/* ============================================================
+   V3 — Gap em destaque
+============================================================= */
+function g3(s, q) {
+  const svg = $('g3');
+  const st = statusOf(s, q);
+  const totalH = 150, barW = 40, y0 = 26;
+  const sx = 110, qx = 230;
+  const sh = clamp(s) * totalH, qh = clamp(q) * totalH;
+  const sy0 = y0 + totalH - sh, qy0 = y0 + totalH - qh;
+  const sign = st.diff > 0 ? '+' : '';
+  const arrowUp = st.diff >= 0;
+
+  let h = `<defs><filter id="gl3"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`;
+
+  // tubos base
+  [sx, qx].forEach(cx => {
+    h += `<rect x="${cx - barW/2}" y="${y0}" width="${barW}" height="${totalH}" fill="#0d1424" rx="8" stroke="#1e293b" stroke-width="1.5"/>`;
+  });
+  h += `<rect x="${sx - barW/2 + 3}" y="${sy0}" width="${barW - 6}" height="${sh}" fill="#3b82f6" rx="5" opacity=".85"/>`;
+  h += `<rect x="${qx - barW/2 + 3}" y="${qy0}" width="${barW - 6}" height="${qh}" fill="${st.color}" rx="5" filter="url(#gl3)"/>`;
+
+  // faixa do gap preenchida entre os dois topos
+  const topY = Math.min(sy0, qy0), botY = Math.max(sy0, qy0);
+  h += `<rect x="${sx + barW/2}" y="${topY}" width="${qx - sx - barW}" height="${botY - topY}" fill="${st.color}" opacity=".12"/>`;
+  h += `<line x1="${sx + barW/2}" y1="${sy0}" x2="${qx - barW/2}" y2="${sy0}" stroke="#3b82f6" stroke-width="1" stroke-dasharray="3,3"/>`;
+  h += `<line x1="${sx + barW/2}" y1="${qy0}" x2="${qx - barW/2}" y2="${qy0}" stroke="${st.color}" stroke-width="1" stroke-dasharray="3,3"/>`;
+
+  // seta grande no meio indicando direção + valor
+  const midX = (sx + qx) / 2, midY = (sy0 + qy0) / 2;
+  const arrowChar = st.diff === 0 ? '●' : (arrowUp ? '▲' : '▼');
+  h += `<circle cx="${midX}" cy="${midY}" r="26" fill="#111827" stroke="${st.color}" stroke-width="2" filter="url(#gl3)"/>`;
+  h += `<text x="${midX}" y="${midY - 5}" fill="${st.color}" font-size="16" text-anchor="middle">${arrowChar}</text>`;
+  h += `<text x="${midX}" y="${midY + 12}" fill="${st.color}" font-size="11" text-anchor="middle" font-weight="700">${sign}${st.diff.toFixed(2)}</text>`;
+
+  // valores
+  h += `<text x="${sx}" y="${sy0 - 10}" fill="#93c5fd" font-size="12" text-anchor="middle" font-weight="700">${s.toFixed(2)}</text>`;
+  h += `<text x="${qx}" y="${qy0 - 10}" fill="${st.color}" font-size="12" text-anchor="middle" font-weight="700">${q.toFixed(2)}</text>`;
+  h += `<text x="${sx}" y="${y0 + totalH + 20}" fill="#64748b" font-size="11" text-anchor="middle">🎯 Strike</text>`;
+  h += `<text x="${qx}" y="${y0 + totalH + 20}" fill="#64748b" font-size="11" text-anchor="middle">📍 Cotação</text>`;
+
+  svg.innerHTML = h;
+  setDiff('d3', s, q);
+}
+
+/* ============================================================
+   V4 — Rosto reativo (emoji facial construído em SVG)
+============================================================= */
+function g4(s, q) {
+  const svg = $('g4');
+  const st = statusOf(s, q);
+  const cx = 170, cy = 90, r = 55;
+
+  let h = `<defs><filter id="gl4"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`;
+
+  // rosto
+  h += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${st.glow}" stroke="${st.color}" stroke-width="3" filter="url(#gl4)"/>`;
+  // olhos
+  h += `<circle cx="${cx - 18}" cy="${cy - 10}" r="5" fill="${st.color}"/>`;
+  h += `<circle cx="${cx + 18}" cy="${cy - 10}" r="5" fill="${st.color}"/>`;
+  // boca reage à intensidade do %
+  const intensity = Math.max(-1, Math.min(1, st.pct / 20));
+  const mouthY = cy + 18;
+  const curve = intensity * 22;
+  h += `<path d="M ${cx - 22} ${mouthY} Q ${cx} ${mouthY + curve} ${cx + 22} ${mouthY}" stroke="${st.color}" stroke-width="4" fill="none" stroke-linecap="round"/>`;
+
+  // % grande ao lado
+  const sign = st.pct > 0 ? '+' : '';
+  h += `<text x="${cx}" y="${cy + r + 34}" fill="${st.color}" font-size="22" font-weight="800" text-anchor="middle">${sign}${st.pct.toFixed(1)}%</text>`;
+  h += `<text x="${cx}" y="${cy + r + 52}" fill="#64748b" font-size="11" text-anchor="middle" letter-spacing="1">${st.label}</text>`;
+
+  // mini barras strike/cotação no rodapé
+  const baseY = cy + r + 70;
+  h += `<text x="90" y="${baseY}" fill="#93c5fd" font-size="11" text-anchor="middle">🎯 ${s.toFixed(0)}</text>`;
+  h += `<text x="250" y="${baseY}" fill="${st.color}" font-size="11" text-anchor="middle">📍 ${q.toFixed(0)}</text>`;
+
+  svg.innerHTML = h;
+  setDiff('d4', s, q);
+}
+
+/* ============================================================
+   V5 — Régua horizontal (trilho muda de cor + seta cruzando)
+============================================================= */
+function g5(s, q) {
+  const svg = $('g5');
+  const st = statusOf(s, q);
+  const x0 = 40, x1 = 300, y = 70;
+  const sx = x0 + clamp(s) * (x1 - x0);
+  const qx = x0 + clamp(q) * (x1 - x0);
+  const sign = st.diff > 0 ? '+' : '';
+
+  let h = `<defs><filter id="gl5"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`;
+
+  // status badge topo
+  h += `<text x="170" y="18" text-anchor="middle" font-size="12" font-weight="700" fill="${st.color}">${st.emoji} ${st.label}</text>`;
+
+  // trilho de fundo
+  h += `<rect x="${x0}" y="${y - 6}" width="${x1 - x0}" height="12" rx="6" fill="#1e293b"/>`;
+  // trilho colorido entre strike e cotação (mostra o "quanto" de relance)
+  const segX = Math.min(sx, qx), segW = Math.abs(qx - sx);
+  h += `<rect x="${segX}" y="${y - 6}" width="${segW}" height="12" rx="6" fill="${st.color}" opacity=".8" filter="url(#gl5)"/>`;
+
+  // marcador strike
+  h += `<line x1="${sx}" y1="${y - 20}" x2="${sx}" y2="${y + 20}" stroke="#3b82f6" stroke-width="3"/>`;
+  h += `<text x="${sx}" y="${y - 26}" fill="#3b82f6" font-size="11" text-anchor="middle" font-weight="700">🎯 ${s.toFixed(2)}</text>`;
+
+  // marcador cotação
+  h += `<circle cx="${qx}" cy="${y}" r="9" fill="${st.color}" stroke="#0a0e1a" stroke-width="2" filter="url(#gl5)"/>`;
+  h += `<text x="${qx}" y="${y + 32}" fill="${st.color}" font-size="11" text-anchor="middle" font-weight="700">📍 ${q.toFixed(2)}</text>`;
+
+  // seta/label do gap no centro do segmento
+  const midX = (sx + qx) / 2;
+  h += `<text x="${midX}" y="${y - 32}" fill="${st.color}" font-size="13" text-anchor="middle" font-weight="800">${sign}${st.diff.toFixed(2)}</text>`;
+
+  svg.innerHTML = h;
+  setDiff('d5', s, q);
+}
+
+/* ============================================================
+   V6 — Farol minimalista (círculo único, resumo executivo)
+============================================================= */
+function g6(s, q) {
+  const svg = $('g6');
+  const st = statusOf(s, q);
+  const cx = 170, cy = 100, r = 70;
+  const sign = st.pct > 0 ? '+' : '';
+
+  let h = `<defs><filter id="gl6"><feGaussianBlur stdDeviation="8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`;
+
+  h += `<circle cx="${cx}" cy="${cy}" r="${r + 10}" fill="${st.color}" opacity=".15" filter="url(#gl6)"/>`;
+  h += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="#0d1424" stroke="${st.color}" stroke-width="5"/>`;
+  h += `<text x="${cx}" y="${cy - 18}" text-anchor="middle" font-size="26">${st.emoji}</text>`;
+  h += `<text x="${cx}" y="${cy + 16}" text-anchor="middle" font-size="24" font-weight="800" fill="${st.color}">${sign}${st.pct.toFixed(1)}%</text>`;
+  h += `<text x="${cx}" y="${cy + 34}" text-anchor="middle" font-size="9" fill="#64748b" letter-spacing="1">${st.cls.toUpperCase()}</text>`;
+
+  h += `<text x="${cx - 100}" y="${cy + r + 30}" fill="#93c5fd" font-size="12" text-anchor="middle">🎯 ${s.toFixed(2)}</text>`;
+  h += `<text x="${cx + 100}" y="${cy + r + 30}" fill="${st.color}" font-size="12" text-anchor="middle">📍 ${q.toFixed(2)}</text>`;
+
+  svg.innerHTML = h;
+  setDiff('d6', s, q);
+}
+
+/* ── RENDER ───────────────────────────────────────── */
+function render() {
+  const s = parseFloat($('sRange').value);
+  const q = parseFloat($('qRange').value);
+  $('sVal').textContent = s.toFixed(2);
+  $('qVal').textContent = q.toFixed(2);
+  g1(s, q); g2(s, q); g3(s, q); g4(s, q); g5(s, q); g6(s, q);
+
+  // tinge levemente o fundo dos cards conforme o status (percepção periférica)
+  const st = statusOf(s, q);
+  document.querySelectorAll('.card').forEach(c => {
+    c.style.borderColor = st.color + '55';
+  });
+}
+
+$('sRange').addEventListener('input', render);
+$('qRange').addEventListener('input', render);
+document.querySelectorAll('.presets button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    $('sRange').value = btn.dataset.s;
+    $('qRange').value = btn.dataset.q;
+    render();
+  });
+});
+
+render();
+</script>
+</body>
+</html>

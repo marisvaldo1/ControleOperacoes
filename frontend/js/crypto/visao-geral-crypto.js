@@ -204,7 +204,7 @@
     h += '<span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:rgba(6,182,212,.7);display:inline-block"></span>ETH</span>';
     h += '<span style="display:flex;align-items:center;gap:4px"><span style="width:18px;height:3px;background:#f59e0b;display:inline-block;border-radius:2px"></span>Acumulado</span>';
     h += '</div>';
-    h += '<div class="vg-chart-wrap" style="height:300px"><canvas id="vgChartAcc"></canvas></div>';
+    h += '<div class="vg-chart-wrap" style="height:380px"><canvas id="vgChartAcc"></canvas></div>';
     h += '</div>';
 
     /* RIGHT-TOP: Posições Abertas + Distância */
@@ -213,7 +213,7 @@
     if (abertas.length === 0) {
       h += '<div style="color:' + C_MUTED + ';font-size:.72rem;padding:12px 0">Nenhuma posição aberta</div>';
     } else {
-      abertas.forEach(function(op) {
+      abertas.forEach(function(op, idx) {
         var asset  = (op.ativo||'?').toUpperCase();
         var tipo   = (op.tipo||'CALL').toUpperCase();
         var cot    = parseFloat(op.cotacao_atual || 0);
@@ -229,79 +229,30 @@
             : corr === 'BYBIT'
             ? '<span class="vg-badge" style="background:rgba(6,182,212,.15);color:#06b6d4;border:1px solid rgba(6,182,212,.35)" title="Bybit">BB</span>'
             : '<span class="vg-badge" style="background:rgba(148,163,184,.12);color:#94a3b8;border:1px solid rgba(148,163,184,.3)" title="'+corr+'">'+corr+'</span>';
-        h += '<div class="vg-op-row" data-op-id="' + (op.id || '') + '" style="border-left:3px solid ' + acol + ';cursor:pointer">';
+        var activeClass = idx === 0 ? ' vg-op-active' : '';
+        h += '<div class="vg-op-row' + activeClass + '" data-op-id="' + (op.id || '') + '" data-strike="' + strike + '" data-cotacao="' + cot + '" data-tipo="' + tipo + '" style="border-left:3px solid ' + acol + ';cursor:pointer">';
         h += '<span style="font-family:var(--syne,Syne),sans-serif;font-size:.8rem;font-weight:700;min-width:30px;color:'+bcol+'">'+asset+'</span>';
         h += '<span class="vg-badge" style="background:rgba(59,130,246,.1);color:#3b82f6;border:1px solid rgba(59,130,246,.26)">'+tipo+'</span>';
         h += corrBadge;
         if (isEx) h += '<span class="vg-badge" style="background:rgba(249,115,22,.1);color:#f97316;border:1px solid rgba(249,115,22,.26)">Poss. Exercício</span>';
         h += '<div style="flex:1;font-size:.72rem;color:' + C_MUTED + '">Strike ' + fmtK(strike) + ' &middot; Cot. ' + fmtK(cot) + '</div>';
         h += '<div style="font-size:.72rem;color:' + C_MUTED + '">Dist. <span style="color:' + (isEx?'#f97316':'#22c55e') + '">' + fmtP(Math.abs(dist)) + '</span></div>';
-        h += '<span style="font-family:monospace;font-size:.78rem;font-weight:700;color:#22c55e">+' + fmt(premio) + '</span>';
+        h += '<span style="font-size:.68rem;color:' + C_MUTED + ';margin-right:2px">Prêmio Recebido:</span><span style="font-family:monospace;font-size:.78rem;font-weight:700;color:#22c55e">+' + fmt(premio) + '</span>';
+        h += '<span class="vg-op-detail-btn" data-op-id="' + (op.id || '') + '" title="Ver detalhes"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>';
         h += '</div>';
       });
     }
-    /* Bullet Chart — Distância ao Strike */
-    h += '<div style="margin-top:12px">';
-    h += '<div class="vg-card-title" style="margin-bottom:8px">Distância ao Strike — Bullet Chart</div>';
-    abertas.forEach(function(op) {
-      var asset   = (op.ativo||'?').toUpperCase();
-      var tipo    = (op.tipo||'CALL').toUpperCase();
-      var cot     = parseFloat(op.cotacao_atual || 0);
-      var strike  = parseFloat(op.strike || 0);
-      // dist positivo = cot acima do strike (OTM para CALL) → seguro
-      // dist negativo = cot abaixo do strike (ITM para CALL) → risco
-      var dist    = strike > 0 && cot > 0 ? ((cot - strike) / strike * 100) : 0;
-      var corr    = (op.corretora || 'BINANCE').toUpperCase();
-      // Cor baseada em tipo + direção:
-      // PUT  vendida: OTM = cot > strike (dist>0). Verde se >+5%, amarelo se 0~+5%, vermelho se <0 (ITM)
-      // CALL vendida: OTM = cot < strike (dist<0). Verde se <-5%, amarelo se -5~0%, vermelho se >0 (ITM)
-      var col;
-      if (tipo === 'PUT') {
-        col = dist > 5 ? '#27c078' : dist >= 0 ? '#e8a020' : '#e05c5c';
-      } else { // CALL
-        col = dist < -5 ? '#27c078' : dist <= 0 ? '#e8a020' : '#e05c5c';
-      }
-      var acol    = asset === 'BTC' ? '#f59e0b' : '#06b6d4';
-      // Range visual: -10% (deep ITM) → 0% (Strike) → +10% (OTM seguro)
-      // Strike fixo em 50% da barra. Fill proporcional à cotação nesse range.
-      var RANGE   = 10; // % de cada lado
-      var cotPct  = Math.max(2, Math.min(97, 50 + (dist / RANGE) * 50));
-      var strikePct = 50;
-      var corrStyle = corr === 'BINANCE'
-        ? 'background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.35)'
-        : corr === 'BYBIT'
-        ? 'background:rgba(6,182,212,.15);color:#06b6d4;border:1px solid rgba(6,182,212,.35)'
-        : 'background:rgba(148,163,184,.12);color:#94a3b8;border:1px solid rgba(148,163,184,.3)';
-      var corrLabel = corr === 'BINANCE' ? 'BNC' : corr === 'BYBIT' ? 'BB' : corr;
-      h += '<div style="padding:6px 0;border-bottom:1px solid rgba(42,48,80,.4)">';
-      h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">';
-      h += '<div style="display:flex;align-items:center;gap:5px">';
-      h += '<span style="font-family:var(--syne,Syne),sans-serif;font-size:.75rem;font-weight:700;color:'+acol+'">'+asset+'</span>';
-      h += '<span style="padding:2px 5px;border-radius:4px;font-size:.72rem;font-weight:500;background:rgba(59,130,246,.1);color:#3b82f6;border:1px solid rgba(59,130,246,.26)">'+tipo+'</span>';
-      h += '<span style="padding:2px 5px;border-radius:4px;font-size:.72rem;font-weight:500;'+corrStyle+'">'+corrLabel+'</span>';
-      h += '</div>';
-      h += '<span style="font-size:.75rem;font-weight:600;color:'+col+'">' + fmtP(dist) + '</span>';
-      h += '</div>';
-      // Barra: zona vermelha (0–50%), zona verde (50–100%), marcador Strike, círculo cotação
-      h += '<div style="background:#252c40;height:16px;border-radius:4px;position:relative;overflow:hidden">';
-      h += '<div style="position:absolute;left:0;top:0;width:50%;height:100%;background:rgba(224,92,92,.10)"></div>';
-      h += '<div style="position:absolute;left:50%;top:0;width:50%;height:100%;background:rgba(39,192,120,.10)"></div>';
-      h += '<span style="position:absolute;left:6px;top:50%;transform:translateY(-50%);font-size:11px;color:rgba(255,255,255,.35)">ITM</span>';
-      h += '<span style="position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:11px;color:rgba(255,255,255,.35)">OTM</span>';
-      h += '</div>';
-      // Overlay: marcador Strike + dot cotação (overflow:visible no container)
-      h += '<div style="position:relative;height:0;margin-top:-16px;margin-bottom:16px">';
-      h += '<div style="position:absolute;left:'+strikePct+'%;top:-18px;bottom:-2px;width:2px;background:#c9a227;z-index:2"></div>';
-      h += '<span style="position:absolute;left:'+(strikePct+1)+'%;top:-14px;transform:translateY(-50%);font-size:11px;color:#c9a227;z-index:3">Strike</span>';
-      h += '<div style="position:absolute;left:'+cotPct+'%;top:-8px;width:14px;height:14px;border-radius:50%;background:'+col+';border:2px solid #0d1117;transform:translateX(-50%);z-index:4;box-shadow:0 0 6px '+col+'88"></div>';
-      h += '</div>';
-      h += '<div style="display:flex;justify-content:space-between;font-size:.72rem;color:'+C_MUTED+';margin-top:4px">';
-      h += '<span>Strike ' + fmtK(strike) + '</span>';
-      h += '<span>Cot. ' + fmtK(cot) + '</span>';
-      h += '</div>';
-      h += '</div>';
-    });
-    h += '</div>';
+    /* Termômetro Duplo — accordion aberto por padrão */
+    h += '<div class="vg-thermometer-wrap" id="vgThermometerWrap">';
+    h += '<div class="vg-thermo-accordion">';
+    h += '<button class="vg-thermo-acc-btn" id="vgThermoAccBtn" type="button" aria-expanded="true">';
+    h += '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
+    h += ' Strike vs Cotação</button>';
+    h += '<div class="vg-thermo-acc-body" id="vgThermoAccBody">';
+    h += '<svg id="vgThermometerSvg" class="vg-thermo-svg" viewBox="0 0 400 230" width="100%" height="210"></svg>';
+    h += '<div id="vgThermoPill"></div>';
+    h += '<div class="vg-thermo-diff-row" id="vgThermoDiff"></div>';
+    h += '</div></div></div>';
     h += '</div>';
     h += '</div>'; /* end top grid */
 
@@ -428,6 +379,145 @@
     document.head.appendChild(s);
   }
 
+  /* ─ Termômetro Duplo SVG — Semáforo Interno ─ */
+  function buildThermometer(s, q, tipo) {
+    var svg = document.getElementById('vgThermometerSvg');
+    var pillEl = document.getElementById('vgThermoPill');
+    var diffEl = document.getElementById('vgThermoDiff');
+    if (!svg) return;
+
+    if (!s || !q) {
+      svg.innerHTML = '';
+      if (pillEl) pillEl.innerHTML = '<div class="vg-thermo-empty">Selecione uma operação para visualizar</div>';
+      if (diffEl) diffEl.innerHTML = '';
+      return;
+    }
+
+    // Range dinâmico
+    var spread = Math.abs(q - s);
+    var margin = Math.max(spread * 1.5, Math.max(s, q) * 0.08);
+    var MIN = Math.max(0, Math.min(s, q) - margin);
+    var MAX = Math.max(s, q) + margin;
+
+    var clamp = function(v) { return Math.max(0, Math.min(1, (v - MIN) / (MAX - MIN))); };
+    var totalH = 175, barW = 46, y0 = 28;
+    var sx = 140, qx = 250;
+
+    var sh = clamp(s) * totalH;
+    var qh = clamp(q) * totalH;
+    var sy0 = y0 + totalH - sh;
+    var qy0 = y0 + totalH - qh;
+
+    // Status
+    var st = thermoStatus(s, q, tipo);
+    var statusColor = st.cls === 'itm' ? '#22c55e' : st.cls === 'otm' ? '#ef4444' : '#eab308';
+    var cotBarColor = statusColor;
+
+    var zoneH = totalH / 3;
+    var zoneColors = ['#991b1b', '#a16207', '#166534']; // baixo->alto (vermelho/amarelo/verde)
+
+    var h = '';
+
+    // Grade horizontal nas laterais
+    for (var i = 0; i <= 8; i++) {
+      var gy = y0 + totalH - (i / 8) * totalH;
+      var val = MIN + (MAX - MIN) / 8 * i;
+      var label = val >= 1000 ? (val/1000).toFixed(1) + 'k' : val.toFixed(0);
+      h += '<line x1="70" y1="' + gy + '" x2="330" y2="' + gy + '" stroke="#334d6e" stroke-width="1"/>';
+      h += '<text x="62" y="' + (gy + 4) + '" fill="#8aa4c0" font-size="10" text-anchor="end">' + label + '</text>';
+      h += '<text x="338" y="' + (gy + 4) + '" fill="#8aa4c0" font-size="10">' + label + '</text>';
+    }
+
+    // Função tubo (zonas coloridas — opacidade aumentada)
+    function tube(cx) {
+      var t = '';
+      for (var z = 0; z < 3; z++) {
+        var zy = y0 + totalH - (z + 1) * zoneH;
+        t += '<rect x="' + (cx - barW/2) + '" y="' + zy + '" width="' + barW + '" height="' + zoneH + '" fill="' + zoneColors[z] + '" opacity=".6" rx="2"/>';
+      }
+      t += '<rect x="' + (cx - barW/2) + '" y="' + y0 + '" width="' + barW + '" height="' + totalH + '" fill="none" stroke="#334155" stroke-width="1.5" rx="8"/>';
+      return t;
+    }
+
+    h += tube(sx);
+    h += tube(qx);
+
+    // Fill strike (azul nítido)
+    h += '<rect x="' + (sx - barW/2 + 3) + '" y="' + sy0 + '" width="' + (barW - 6) + '" height="' + sh + '" fill="#60a5fa" rx="5"/>';
+    h += '<circle cx="' + sx + '" cy="' + sy0 + '" r="6" fill="#93c5fd"/>';
+
+    // Fill cotação (cor do status, sem blur)
+    h += '<rect x="' + (qx - barW/2 + 3) + '" y="' + qy0 + '" width="' + (barW - 6) + '" height="' + qh + '" fill="' + cotBarColor + '" rx="5"/>';
+    h += '<circle cx="' + qx + '" cy="' + qy0 + '" r="6" fill="' + cotBarColor + '"/>';
+
+    // Linha tracejada conectando os topos
+    h += '<line x1="' + sx + '" y1="' + sy0 + '" x2="' + qx + '" y2="' + qy0 + '" stroke="' + statusColor + '" stroke-width="2" stroke-dasharray="5,4" opacity=".8"/>';
+
+    // Seta de diferença no meio — cores mais vivas
+    var midX = (sx + qx) / 2;
+    var arrowY = Math.min(sy0, qy0) - 20;
+    var diff = q - s;
+    var sign = diff > 0 ? '\u25B2' : diff < 0 ? '\u25BC' : '=';
+    var diffCol = diff > 0 ? '#22c55e' : diff < 0 ? '#ef4444' : '#eab308';
+    h += '<text x="' + midX + '" y="' + arrowY + '" fill="' + diffCol + '" font-size="18" text-anchor="middle">' + sign + '</text>';
+    h += '<text x="' + midX + '" y="' + (arrowY + 17) + '" fill="' + diffCol + '" font-size="13" text-anchor="middle" font-weight="700">' + (diff > 0 ? '+' : '') + fmtShort(diff) + '</text>';
+
+    // Labels "Strike" e "Cotação" no TOPO fixo do termômetro
+    h += '<text x="' + sx + '" y="' + (y0 - 8) + '" fill="#60a5fa" font-size="13" text-anchor="middle" font-weight="700">Strike</text>';
+    h += '<text x="' + qx + '" y="' + (y0 - 8) + '" fill="' + cotBarColor + '" font-size="13" text-anchor="middle" font-weight="700">Cotação</text>';
+
+    // Valores abaixo dos tubos — cores nítidas
+    var sLabel = fmtK(s);
+    var qLabel = fmtK(q);
+    h += '<text x="' + sx + '" y="' + (y0 + totalH + 24) + '" fill="#60a5fa" font-size="13" text-anchor="middle" font-weight="700">' + sLabel + '</text>';
+    h += '<text x="' + qx + '" y="' + (y0 + totalH + 24) + '" fill="' + cotBarColor + '" font-size="13" text-anchor="middle" font-weight="700">' + qLabel + '</text>';
+
+    svg.innerHTML = h;
+
+    // Pill de status
+    if (pillEl) {
+      var pctSign = parseFloat(st.pct) > 0 ? '+' : '';
+      pillEl.innerHTML = '<div class="vg-thermo-pill ' + st.cls + '"><div class="pill-dot"></div>' + st.label + ' &nbsp;<strong>' + pctSign + st.pct + '%</strong></div>';
+    }
+
+    // Diff row + PoP
+    if (diffEl) {
+      var diffVal = (q - s);
+      var diffSign2 = diffVal > 0 ? '+' : '';
+      // Calcular PoP heurístico baseado na distância
+      var distPct = s > 0 ? Math.abs(diffVal) / s * 100 : 0;
+      var isCall = (tipo || '').toUpperCase() === 'CALL';
+      var isITM = isCall ? (diffVal > 0) : (diffVal < 0);
+      var popEst = isITM ? Math.max(5, 50 - distPct * 4) : Math.min(95, 50 + distPct * 4);
+      var popColor = popEst >= 65 ? '#22c55e' : popEst >= 50 ? '#eab308' : '#ef4444';
+      // var popColor = '#56a5fa';
+      diffEl.innerHTML = '<span>Strike: <span>' + fmtK(s) + '</span></span>' +
+                         '<span>Cotação: <span>' + fmtK(q) + '</span></span>' +
+                         '<span>Diferença: <span style="color:' + diffCol + '">' + diffSign2 + fmtShort(diffVal) + '</span></span>' +
+                         '<span>PoP: <span style="color:' + popColor + ';font-weight:700">' + popEst.toFixed(0) + '%</span></span>';
+    }
+  }
+
+  function thermoStatus(s, q, tipo) {
+    var diff = q - s;
+    var pct  = s > 0 ? (diff / s * 100).toFixed(2) : '0.00';
+    var absPct = Math.abs(parseFloat(pct));
+    // ATM: diferença menor que 1%
+    if (absPct < 1) return { cls: 'atm', label: 'ATM — No Preço', pct: pct };
+    // Para CALL vendida: cot > strike = ITM (perigoso), cot < strike = OTM (seguro)
+    // Para PUT vendida:  cot < strike = ITM (perigoso), cot > strike = OTM (seguro)
+    var isCall = (tipo || '').toUpperCase() === 'CALL';
+    var isITM = isCall ? (diff > 0) : (diff < 0);
+    if (isITM) return { cls: 'otm', label: 'ITM — Risco de Exercício', pct: pct };
+    return { cls: 'itm', label: 'OTM — Fora do Dinheiro', pct: pct };
+  }
+
+  function fmtShort(n) {
+    var abs = Math.abs(n);
+    if (abs >= 1000) return (n/1000).toFixed(2) + 'k';
+    return n.toFixed(2);
+  }
+
   /* ─ Render principal ─ */
   function render() {
     var container = document.getElementById('vgContainer');
@@ -439,17 +529,51 @@
     }
     injectVGStyles();
     container.innerHTML = renderVG(ops);
-    /* Listeners: clique na linha de posição aberta → abre modal de análise */
+    /* Listeners: clique na linha de posição aberta → atualiza termômetro */
     container.querySelectorAll('.vg-op-row[data-op-id]').forEach(function(el) {
-      var opId = el.getAttribute('data-op-id');
-      if (!opId) return;
-      el.addEventListener('click', function() {
-        if (window.ModalAnaliseCrypto && typeof window.ModalAnaliseCrypto.open === 'function') {
+      el.addEventListener('click', function(e) {
+        // Se clicou na lupa, não faz nada (a lupa tem seu próprio handler)
+        if (e.target.closest('.vg-op-detail-btn')) return;
+        var strike  = parseFloat(el.getAttribute('data-strike') || 0);
+        var cotacao = parseFloat(el.getAttribute('data-cotacao') || 0);
+        var tipo    = el.getAttribute('data-tipo') || 'PUT';
+        // Destaca a row ativa
+        container.querySelectorAll('.vg-op-row').forEach(function(r) { r.classList.remove('vg-op-active'); });
+        el.classList.add('vg-op-active');
+        // Atualiza termômetro
+        buildThermometer(strike, cotacao, tipo);
+      });
+    });
+    /* Listeners: clique na lupa → abre modal de análise */
+    container.querySelectorAll('.vg-op-detail-btn[data-op-id]').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var opId = btn.getAttribute('data-op-id');
+        if (opId && window.ModalAnaliseCrypto && typeof window.ModalAnaliseCrypto.open === 'function') {
           window.ModalAnaliseCrypto.open(opId);
         }
       });
     });
-    setTimeout(function() { buildVGCharts(ops); }, 50);
+    /* Accordion toggle do termômetro */
+    var accBtn = document.getElementById('vgThermoAccBtn');
+    var accBody = document.getElementById('vgThermoAccBody');
+    if (accBtn && accBody) {
+      accBtn.addEventListener('click', function() {
+        var expanded = accBtn.getAttribute('aria-expanded') === 'true';
+        accBtn.setAttribute('aria-expanded', String(!expanded));
+        accBody.style.display = expanded ? 'none' : 'block';
+        accBtn.classList.toggle('collapsed', expanded);
+      });
+    }
+    setTimeout(function() {
+      buildVGCharts(ops);
+      // Inicializa termômetro com a primeira operação aberta
+      var abertasOps = computeAbertasInfo(ops);
+      if (abertasOps.length > 0) {
+        var firstOp = abertasOps[0];
+        buildThermometer(parseFloat(firstOp.strike || 0), parseFloat(firstOp.cotacao_atual || 0), (firstOp.tipo || 'PUT'));
+      }
+    }, 50);
   }
 
   /* ─ Escuta quando a aba é ativada (Bootstrap tabs) ─ */

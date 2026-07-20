@@ -77,11 +77,11 @@
 
 /* Icones dos cards */
 .card-body svg {
-    opacity: 0.6;
+    opacity: 1.0;
 }
 
 [data-bs-theme="dark"] .card-body svg {
-    opacity: 0.4;
+    opacity: 1.0;
 }
 
 /* Tabela crypto */
@@ -343,4 +343,185 @@
 .badge.bg-azure {
     background-color: #4299e1 !important;
     color: #fff !important;
+}
+
+
+/* =========================================
+   Termômetro Duplo — Strike vs Cotação
+   ========================================= */
+.vg-thermometer-wrap {
+    margin-top: 16px;
+    padding: 16px 12px;
+    background: #111827;
+    border: 1px solid rgba(255,255,255,.07);
+    border-radius: 12px;
+    text-align: center;
+}
+
+[data-bs-theme="light"] .vg-thermometer-wrap {
+    background: rgba(0,0,0,.025);
+    border-color: rgba(0,0,0,.10);
+}
+
+.vg-thermo-title {
+    font-size: .62rem;
+    font-weight: 600;
+    color: #7890b0;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    margin-bottom: 8px;
+}
+
+[data-bs-theme="light"] .vg-thermo-title {
+    color: #6c757d;
+}
+
+/* Accordion do Termômetro */
+.vg-thermo-accordion {
+    width: 100%;
+}
+
+.vg-thermo-acc-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    padding: 0 0 10px 0;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(255,255,255,.07);
+    color: #7890b0;
+    font-size: .68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    cursor: pointer;
+    transition: color .15s;
+}
+
+.vg-thermo-acc-btn:hover {
+    color: #a0b8d8;
+}
+
+.vg-thermo-acc-btn svg {
+    transition: transform .2s;
+}
+
+.vg-thermo-acc-btn.collapsed svg {
+    transform: rotate(-90deg);
+}
+
+[data-bs-theme="light"] .vg-thermo-acc-btn {
+    color: #6c757d;
+    border-bottom-color: rgba(0,0,0,.08);
+}
+
+.vg-thermo-acc-body {
+    padding-top: 8px;
+}
+
+.vg-thermo-svg {
+    display: block;
+    margin: 0 auto;
+}
+
+.vg-thermo-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 16px;
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-top: 14px;
+}
+
+.vg-thermo-pill .pill-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.vg-thermo-pill.itm {
+    background: rgba(34,197,94,.18);
+    color: #22c55e;
+    border: 1px solid #166534;
+}
+
+.vg-thermo-pill.otm {
+    background: rgba(239,68,68,.18);
+    color: #ef4444;
+    border: 1px solid #7f1d1d;
+}
+
+.vg-thermo-pill.atm {
+    background: rgba(234,179,8,.18);
+    color: #eab308;
+    border: 1px solid #713f12;
+}
+
+.vg-thermo-pill.itm .pill-dot { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
+.vg-thermo-pill.otm .pill-dot { background: #ef4444; box-shadow: 0 0 6px #ef4444; }
+.vg-thermo-pill.atm .pill-dot { background: #eab308; box-shadow: 0 0 6px #eab308; }
+
+.vg-thermo-diff-row {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 10px;
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+.vg-thermo-diff-row span {
+    color: #cbd5e1;
+    font-weight: 600;
+}
+
+.vg-thermo-empty {
+    color: #7890b0;
+    font-size: .72rem;
+    padding: 20px 0;
+}
+
+[data-bs-theme="light"] .vg-thermo-empty {
+    color: #6c757d;
+}
+
+/* Botão lupa nas operações abertas */
+.vg-op-detail-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    background: rgba(59,130,246,.1);
+    border: 1px solid rgba(59,130,246,.26);
+    color: #3b82f6;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background .15s, border-color .15s;
+}
+
+.vg-op-detail-btn:hover {
+    background: rgba(59,130,246,.2);
+    border-color: rgba(59,130,246,.5);
+}
+
+.vg-op-detail-btn svg {
+    width: 14px;
+    height: 14px;
+    opacity: 1 !important;
+}
+
+/* Operação ativa / selecionada */
+.vg-op-row.vg-op-active {
+    background: rgba(59,130,246,.08);
+    border-color: rgba(59,130,246,.3);
+}
+
+[data-bs-theme="light"] .vg-op-row.vg-op-active {
+    background: rgba(59,130,246,.06);
+    border-color: rgba(59,130,246,.2);
 }
