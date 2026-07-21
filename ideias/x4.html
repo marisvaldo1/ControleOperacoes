@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Sinalização de Exercício — CALL vs PUT</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: #0a0e1a;
+  color: #e2e8f0;
+  min-height: 100vh;
+  padding: 28px 24px 60px;
+}
+
+h1 { text-align: center; font-size: 22px; color: #60a5fa; letter-spacing: 1.5px; margin-bottom: 4px; }
+.subtitle {
+  text-align: center; color: #64748b; font-size: 13px; margin-bottom: 10px;
+  max-width: 720px; margin-left: auto; margin-right: auto; line-height: 1.6;
+}
+.warning {
+  max-width: 720px; margin: 0 auto 26px; background: #1c1305; border: 1px solid #713f12;
+  color: #fbbf24; font-size: 12.5px; padding: 12px 16px; border-radius: 12px; line-height: 1.6;
+}
+.warning b { color: #fde68a; }
+
+.controls {
+  position: sticky; top: 10px; z-index: 50;
+  display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;
+  margin-bottom: 34px; background: rgba(10,14,26,.94); backdrop-filter: blur(6px);
+  padding: 14px; border-radius: 16px;
+}
+.ctrl-card {
+  background: #111827; border: 1px solid #1e2d45; border-radius: 14px;
+  padding: 14px 24px; min-width: 190px; text-align: center;
+}
+.ctrl-card label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #64748b; display: block; margin-bottom: 8px; }
+.ctrl-card .big-val { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+.ctrl-card input[type="range"] {
+  width: 100%; -webkit-appearance: none; appearance: none; height: 4px; border-radius: 2px; outline: none; cursor: pointer;
+}
+#sRange { background: linear-gradient(to right, #1d4ed8, #3b82f6); }
+#qRange { background: linear-gradient(to right, #15803d, #22c55e); }
+.ctrl-card input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none; width: 16px; height: 16px; border-radius: 50%;
+  border: 3px solid #0a0e1a; cursor: pointer;
+}
+#sRange::-webkit-slider-thumb { background: #3b82f6; }
+#qRange::-webkit-slider-thumb { background: #22c55e; }
+
+.type-toggle { display: flex; gap: 8px; }
+.type-btn {
+  flex: 1; padding: 12px 18px; border-radius: 12px; border: 2px solid #1e2d45; background: #0d1424;
+  color: #64748b; font-weight: 700; font-size: 14px; cursor: pointer; transition: all .15s;
+}
+.type-btn.active.call { border-color: #22c55e; color: #4ade80; background: #0f1f14; }
+.type-btn.active.put { border-color: #f87171; color: #f87171; background: #1f1210; }
+
+.presets { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: center; }
+.presets button {
+  background: #111827; border: 1px solid #1e2d45; color: #94a3b8; font-size: 12px;
+  padding: 8px 14px; border-radius: 10px; cursor: pointer; transition: all .15s;
+}
+.presets button:hover { border-color: #3b82f6; color: #e2e8f0; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 22px; max-width: 1440px; margin: 0 auto; }
+.card {
+  background: #111827; border: 1px solid #1e2d45; border-radius: 18px; padding: 22px 20px 20px;
+  position: relative; overflow: hidden; transition: border-color .3s, transform .3s;
+}
+.card:hover { transform: translateY(-3px); }
+.card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #1d4ed8, #22c55e); }
+.card-title { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #475569; margin-bottom: 3px; }
+.card-name { font-size: 16px; font-weight: 700; color: #e2e8f0; margin-bottom: 4px; }
+.card-idea { font-size: 12px; color: #64748b; margin-bottom: 16px; line-height: 1.5; }
+.card-idea b { color: #94a3b8; }
+.viz { display: flex; justify-content: center; align-items: center; min-height: 60px; }
+.diff-row {
+  display: flex; justify-content: space-between; margin-top: 14px; font-size: 12px; color: #64748b;
+  border-top: 1px dashed #1e2d45; padding-top: 10px;
+}
+.diff-row span { color: #94a3b8; font-weight: 600; }
+
+@keyframes pulseGlow { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+.pulse { animation: pulseGlow 1s ease-in-out infinite; }
+</style>
+</head>
+<body>
+
+<h1>⚖️ Sinalização de Exercício — CALL vs PUT</h1>
+<p class="subtitle">
+  6 ideias de representação para o card "Strike vs Cotação", agora considerando corretamente a direção do risco
+  conforme o tipo da operação (venda de CALL ou venda de PUT).
+</p>
+<div class="warning">
+  ⚠️ <b>Ponto importante sobre o gráfico atual:</b> hoje a zona verde/vermelha parece fixa em relação à escala de preço
+  (verde acima do strike, vermelho abaixo), o que funciona pra <b>CALL</b>, mas é <b>invertido</b> pra <b>PUT</b>.
+  No seu exemplo (PUT, strike 1.925 / cotação 1.915,84), a planilha já marca <b>Exercício: SIM</b> — porque numa PUT
+  vendida, cotação <b>abaixo</b> do strike é a zona de risco — mas o gráfico atual mostrou "ATM" em amarelo, sem deixar
+  isso claro. As ideias abaixo corrigem isso automaticamente conforme o tipo escolhido.
+</div>
+
+<div class="controls">
+  <div class="ctrl-card">
+    <label>Tipo da Operação</label>
+    <div class="type-toggle">
+      <button class="type-btn call" id="btnCall" onclick="setType('CALL')">📈 CALL</button>
+      <button class="type-btn put" id="btnPut" onclick="setType('PUT')">📉 PUT</button>
+    </div>
+  </div>
+  <div class="ctrl-card">
+    <label>🎯 Strike</label>
+    <div class="big-val" style="color:#3b82f6">US$ <span id="sVal">1925</span></div>
+    <input type="range" id="sRange" min="1700" max="2100" value="1925" step="1">
+  </div>
+  <div class="ctrl-card">
+    <label>📍 Cotação Atual</label>
+    <div class="big-val" style="color:#22c55e">US$ <span id="qVal">1915.84</span></div>
+    <input type="range" id="qRange" min="1700" max="2100" value="1915.84" step="0.01">
+  </div>
+  <div class="ctrl-card presets">
+    <button data-t="PUT" data-s="1925" data-q="1915.84">Exemplo real (PUT, em exercício)</button>
+    <button data-t="PUT" data-s="1925" data-q="1980">PUT segura</button>
+    <button data-t="CALL" data-s="1850" data-q="1900">CALL em exercício</button>
+    <button data-t="CALL" data-s="1850" data-q="1770">CALL segura</button>
+    <button data-t="CALL" data-s="1850" data-q="1848">CALL — atenção (ATM)</button>
+  </div>
+</div>
+
+<div class="grid">
+
+  <div class="card">
+    <div class="card-title">Ideia 01</div>
+    <div class="card-name">🚦 Termômetro Adaptativo</div>
+    <div class="card-idea"><b>Como funciona:</b> as zonas coloridas dentro do tubo (que você já curtiu) agora <b>invertem automaticamente</b> conforme CALL ou PUT. Uma seta grande no topo (⬆️/⬇️) mostra pra que lado está "o perigo" nessa operação específica.</div>
+    <div class="viz"><svg id="g1" viewBox="0 0 340 260" width="340" height="260"></svg></div>
+    <div class="diff-row" id="d1"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Ideia 02</div>
+    <div class="card-name">🧾 Estilo Planilha</div>
+    <div class="card-idea"><b>Como funciona:</b> reproduz a formatação condicional que você já usa na planilha — célula do Strike fica vermelha quando em risco, badge <b>"Exercício: SIM/NÃO"</b> igual à coluna P. É a leitura mais direta pra quem já está acostumado com a planilha.</div>
+    <div class="viz"><div id="g2" style="width:100%"></div></div>
+    <div class="diff-row" id="d2"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Ideia 03</div>
+    <div class="card-name">🚥 Farol + Seta de Risco</div>
+    <div class="card-idea"><b>Como funciona:</b> o farol físico (3 luzes) fica ao lado dos tubos, e a luz que acende já considera o tipo. Um ícone de seta menor ao lado do tipo (CALL ⬆️ / PUT ⬇️) serve de lembrete permanente de qual direção é perigosa, mesmo sem olhar pros números.</div>
+    <div class="viz"><svg id="g3" viewBox="0 0 340 260" width="340" height="260"></svg></div>
+    <div class="diff-row" id="d3"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Ideia 04</div>
+    <div class="card-name">↔️ Régua com Zona de Perigo Sombreada</div>
+    <div class="card-idea"><b>Como funciona:</b> uma régua horizontal com <b>metade sombreada de vermelho</b> (lado de risco) e metade de verde (lado seguro) — a metade que fica vermelha troca de lado sozinha dependendo do tipo. Bom pra colocar várias operações empilhadas e comparar de relance.</div>
+    <div class="viz"><svg id="g4" viewBox="0 0 340 170" width="340" height="170"></svg></div>
+    <div class="diff-row" id="d4"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Ideia 05</div>
+    <div class="card-name">🔴 Selo Central "Em Exercício"</div>
+    <div class="card-idea"><b>Como funciona:</b> versão resumo executivo — um selo circular gigante dominando o card com o veredito final (SEGURA / ATENÇÃO / EM EXERCÍCIO) e o tipo logo abaixo. Pensado pra digitalizar 10+ operações abertas numa tela sem precisar ler número nenhum.</div>
+    <div class="viz"><svg id="g5" viewBox="0 0 340 230" width="340" height="230"></svg></div>
+    <div class="diff-row" id="d5"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Ideia 06</div>
+    <div class="card-name">🪞 Termômetro Espelhado (Normalizado)</div>
+    <div class="card-idea"><b>Como funciona:</b> em vez de inverter a cor, o próprio gráfico é <b>espelhado verticalmente quando é PUT</b> — então "seguro" sempre aparece embaixo/verde e "risco" sempre em cima/vermelho, <b>na mesma posição visual</b> pra CALL e PUT. Você nunca mais precisa "traduzir" o tipo mentalmente: a leitura é sempre igual.</div>
+    <div class="viz"><svg id="g6" viewBox="0 0 340 260" width="340" height="260"></svg></div>
+    <div class="diff-row" id="d6"></div>
+  </div>
+
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const MIN = 1700, MAX = 2100;
+const clamp = v => Math.max(0, Math.min(1, (v - MIN) / (MAX - MIN)));
+let currentType = 'PUT';
+
+function setType(t) {
+  currentType = t;
+  $('btnCall').classList.toggle('active', t === 'CALL');
+  $('btnPut').classList.toggle('active', t === 'PUT');
+  render();
+}
+
+// riskPct > 0  => em zona de risco de exercicio (ruim pro vendedor)
+// riskPct < 0  => seguro (seller mantém o prêmio)
+function statusOf(type, s, q) {
+  const diff = q - s;
+  const pct = diff / s * 100;
+  const riskPct = type === 'CALL' ? pct : -pct;
+
+  let cls, label, emoji, color, glow;
+  if (Math.abs(riskPct) < 1) {
+    cls = 'atm'; label = 'ATENÇÃO — perto do strike'; emoji = '🟡'; color = '#facc15'; glow = 'rgba(234,179,8,.35)';
+  } else if (riskPct >= 1) {
+    cls = 'risk'; label = 'EM EXERCÍCIO'; emoji = '🔴'; color = '#f87171'; glow = 'rgba(239,68,68,.35)';
+  } else {
+    cls = 'safe'; label = 'SEGURA — fora do exercício'; emoji = '🟢'; color = '#4ade80'; glow = 'rgba(34,197,94,.35)';
+  }
+  return { diff, pct, riskPct, cls, label, emoji, color, glow };
+}
+
+function setDiff(id, s, q) {
+  const diff = (q - s).toFixed(2);
+  const sign = diff > 0 ? '+' : '';
+  $(id).innerHTML = `<span>Strike: <span>US$ ${s.toFixed(2)}</span></span>
+                     <span>Cotação: <span>US$ ${q.toFixed(2)}</span></span>
+                     <span>Diferença: <span>${sign}${diff}</span></span>`;
+}
+
+/* ============================================================
+   1 — Termômetro adaptativo (zonas invertem por tipo + seta)
+============================================================= */
+function g1(type, s, q) {
+  const svg = $('g1');
+  const st = statusOf(type, s, q);
+  const totalH = 150, barW = 40, y0 = 40;
+  const sx = 110, qx = 230;
+  const sh = clamp(s) * totalH, qh = clamp(q) * totalH;
+  const sy0 = y0 + totalH - sh, qy0 = y0 + totalH - qh;
+  const zoneH = totalH / 3;
+
+  // topo do tubo = risco pra CALL (preço alto), seguro pra PUT; ordem de cor muda
+  const colorsTopDown = type === 'CALL'
+    ? ['#7f1d1d', '#713f12', '#14532d'] // topo(risco vermelho) -> base(seguro verde) : indices 0..2 topo->base
+    : ['#14532d', '#713f12', '#7f1d1d'];
+
+  let h = `<text x="170" y="14" text-anchor="middle" font-size="18">${type === 'CALL' ? '⬆️' : '⬇️'}</text>`;
+  h += `<text x="170" y="30" text-anchor="middle" font-size="12" fill="${st.color}" font-weight="700">${st.emoji} ${st.label}</text>`;
+
+  function tube(cx) {
+    let t = '';
+    for (let i = 0; i < 3; i++) {
+      const zy = y0 + i * zoneH;
+      t += `<rect x="${cx-barW/2}" y="${zy}" width="${barW}" height="${zoneH}" fill="${colorsTopDown[i]}" opacity=".35"/>`;
+    }
+    t += `<rect x="${cx-barW/2}" y="${y0}" width="${barW}" height="${totalH}" fill="none" stroke="#1e293b" stroke-width="1.5" rx="8"/>`;
+    return t;
+  }
+  h += tube(sx);
+  h += tube(qx);
+
+  h += `<defs><filter id="gl1"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`;
+  h += `<rect x="${sx-barW/2+3}" y="${sy0}" width="${barW-6}" height="${sh}" fill="#3b82f6" rx="5" opacity=".9"/>`;
+  h += `<rect x="${qx-barW/2+3}" y="${qy0}" width="${barW-6}" height="${qh}" fill="${st.color}" rx="5" filter="url(#gl1)"/>`;
+
+  h += `<text x="${sx}" y="${sy0-10}" fill="#93c5fd" font-size="12" text-anchor="middle" font-weight="700">${s.toFixed(2)}</text>`;
+  h += `<text x="${qx}" y="${qy0-10}" fill="${st.color}" font-size="12" text-anchor="middle" font-weight="700">${q.toFixed(2)}</text>`;
+  h += `<text x="${sx}" y="${y0+totalH+20}" fill="#64748b" font-size="11" text-anchor="middle">🎯 Strike</text>`;
+  h += `<text x="${qx}" y="${y0+totalH+20}" fill="#64748b" font-size="11" text-anchor="middle">📍 Cotação</text>`;
+  h += `<text x="170" y="${y0+totalH+40}" fill="#475569" font-size="10" text-anchor="middle">${type} vendida</text>`;
+
+  svg.innerHTML = h;
+  setDiff('d1', s, q);
+}
+
+/* ============================================================
+   2 — Estilo planilha (HTML puro)
+============================================================= */
+function g2(type, s, q) {
+  const st = statusOf(type, s, q);
+  const exercicio = st.cls === 'safe' ? 'NÃO' : (st.cls === 'atm' ? 'ATENÇÃO' : 'SIM');
+  const bg = st.color + '22';
+
+  const html = `
+  <div style="font-family: 'Segoe UI', sans-serif;">
+    <div style="display:flex; gap:10px; margin-bottom:12px;">
+      <div style="flex:1; background:#0d1424; border:1px solid #1e2d45; border-radius:10px; padding:10px; text-align:center;">
+        <div style="font-size:10px; color:#64748b; letter-spacing:1px;">TIPO</div>
+        <div style="font-size:16px; font-weight:800; color:${type==='CALL' ? '#4ade80' : '#f87171'};">${type === 'CALL' ? '📈 CALL' : '📉 PUT'}</div>
+      </div>
+      <div style="flex:1; background:${bg}; border:1px solid ${st.color}; border-radius:10px; padding:10px; text-align:center;">
+        <div style="font-size:10px; color:#64748b; letter-spacing:1px;">STRIKE</div>
+        <div style="font-size:16px; font-weight:800; color:${st.color};">US$ ${s.toFixed(2)}</div>
+      </div>
+      <div style="flex:1; background:#0d1424; border:1px solid #1e2d45; border-radius:10px; padding:10px; text-align:center;">
+        <div style="font-size:10px; color:#64748b; letter-spacing:1px;">COTAÇÃO</div>
+        <div style="font-size:16px; font-weight:800; color:#e2e8f0;">US$ ${q.toFixed(2)}</div>
+      </div>
+    </div>
+    <div style="display:flex; gap:10px; align-items:center;">
+      <div style="flex:1; background:#0d1424; border:1px solid #1e2d45; border-radius:10px; padding:8px 12px; text-align:center; font-size:12px; color:#94a3b8;">
+        Distância: <b style="color:${st.color}">${st.pct >= 0 ? '+' : ''}${st.pct.toFixed(2)}%</b>
+      </div>
+      <div style="flex:1.4; background:${bg}; border:2px solid ${st.color}; border-radius:10px; padding:8px 12px; text-align:center;">
+        <span style="font-size:12px; color:#64748b; letter-spacing:1px;">EXERCÍCIO:</span>
+        <span style="font-size:14px; font-weight:800; color:${st.color}; margin-left:6px;">${st.emoji} ${exercicio}</span>
+      </div>
+    </div>
+  </div>`;
+  $('g2').innerHTML = html;
+  setDiff('d2', s, q);
+}
+
+/* ============================================================
+   3 — Farol + seta de risco
+============================================================= */
+function g3(type, s, q) {
+  const svg = $('g3');
+  const st = statusOf(type, s, q);
+  const totalH = 150, barW = 36, y0 = 40;
+  const sx = 90, qx = 200;
+  const sh = clamp(s) * totalH, qh = clamp(q) * totalH;
+  const sy0 = y0 + totalH - sh, qy0 = y0 + totalH - qh;
+
+  let h = `<text x="145" y="16" text-anchor="middle" font-size="12" font-weight="700" fill="${type==='CALL' ? '#4ade80' : '#f87171'}">${type === 'CALL' ? '📈 CALL ⬆️ risco' : '📉 PUT ⬇️ risco'}</text>`;
+  h += `<defs><filter id="gl3"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`;
+
+  [sx, qx].forEach(cx => {
+    h += `<rect x="${cx-barW/2}" y="${y0}" width="${barW}" height="${totalH}" fill="#0d1424" rx="7" stroke="#1e293b" stroke-width="1.5"/>`;
+  });
+  h += `<rect x="${sx-barW/2+3}" y="${sy0}" width="${barW-6}" height="${sh}" fill="#3b82f6" rx="4" opacity=".9"/>`;
+  h += `<rect x="${qx-barW/2+3}" y="${qy0}" width="${barW-6}" height="${qh}" fill="${st.color}" rx="4" filter="url(#gl3)"/>`;
+
+  h += `<text x="${sx}" y="${sy0-8}" fill="#93c5fd" font-size="11" text-anchor="middle" font-weight="700">${s.toFixed(2)}</text>`;
+  h += `<text x="${qx}" y="${qy0-8}" fill="${st.color}" font-size="11" text-anchor="middle" font-weight="700">${q.toFixed(2)}</text>`;
+  h += `<text x="${sx}" y="${y0+totalH+20}" fill="#64748b" font-size="10" text-anchor="middle">🎯 Strike</text>`;
+  h += `<text x="${qx}" y="${y0+totalH+20}" fill="#64748b" font-size="10" text-anchor="middle">📍 Cotação</text>`;
+
+  const fx = 290, r = 15, gap = 8;
+  const lights = [
+    { c: '#f87171', on: st.cls === 'risk', y: y0 + 0 },
+    { c: '#facc15', on: st.cls === 'atm', y: y0 + (r*2+gap) },
+    { c: '#4ade80', on: st.cls === 'safe', y: y0 + (r*2+gap)*2 },
+  ];
+  h += `<rect x="${fx-r-8}" y="${y0-10}" width="${r*2+16}" height="${(r*2+gap)*2 + r*2 + 20}" rx="14" fill="#0d1424" stroke="#1e293b" stroke-width="1.5"/>`;
+  lights.forEach(l => {
+    h += `<circle cx="${fx}" cy="${l.y+r}" r="${r}" fill="${l.c}" opacity="${l.on ? 1 : .12}" ${l.on ? 'filter="url(#gl3)"' : ''}/>`;
+  });
+  h += `<text x="${fx}" y="${y0+totalH+20}" fill="#64748b" font-size="10" text-anchor="middle">Status</text>`;
+
+  svg.innerHTML = h;
+  setDiff('d3', s, q);
+}
+
+/* ============================================================
+   4 — Régua com zona de perigo sombreada
+============================================================= */
+function g4(type, s, q) {
+  const svg = $('g4');
+  const st = statusOf(type, s, q);
+  const x0 = 40, x1 = 300, y = 80;
+  const sx = x0 + clamp(s) * (x1 - x0);
+  const qx = x0 + clamp(q) * (x1 - x0);
+  const strikePosX = sx;
+
+  let h = `<text x="170" y="16" text-anchor="middle" font-size="12" font-weight="700" fill="${st.color}">${type === 'CALL' ? '📈' : '📉'} ${st.emoji} ${st.label}</text>`;
+
+  // fundo dividido em duas metades: lado de risco (vermelho) e lado seguro (verde), a partir do strike
+  if (type === 'CALL') {
+    h += `<rect x="${strikePosX}" y="${y-10}" width="${x1-strikePosX}" height="20" fill="#7f1d1d" opacity=".3" rx="4"/>`;
+    h += `<rect x="${x0}" y="${y-10}" width="${strikePosX-x0}" height="20" fill="#14532d" opacity=".3" rx="4"/>`;
+  } else {
+    h += `<rect x="${x0}" y="${y-10}" width="${strikePosX-x0}" height="20" fill="#7f1d1d" opacity=".3" rx="4"/>`;
+    h += `<rect x="${strikePosX}" y="${y-10}" width="${x1-strikePosX}" height="20" fill="#14532d" opacity=".3" rx="4"/>`;
+  }
+  h += `<rect x="${x0}" y="${y-1.5}" width="${x1-x0}" height="3" fill="#1e293b"/>`;
+
+  h += `<line x1="${sx}" y1="${y-24}" x2="${sx}" y2="${y+24}" stroke="#3b82f6" stroke-width="3"/>`;
+  h += `<text x="${sx}" y="${y-30}" fill="#3b82f6" font-size="11" text-anchor="middle" font-weight="700">🎯 ${s.toFixed(0)}</text>`;
+
+  h += `<defs><filter id="gl4"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`;
+  h += `<circle cx="${qx}" cy="${y}" r="9" fill="${st.color}" stroke="#0a0e1a" stroke-width="2" filter="url(#gl4)"/>`;
+  h += `<text x="${qx}" y="${y+34}" fill="${st.color}" font-size="11" text-anchor="middle" font-weight="700">📍 ${q.toFixed(0)}</text>`;
+
+  svg.innerHTML = h;
+  setDiff('d4', s, q);
+}
+
+/* ============================================================
+   5 — Selo central "Em Exercício"
+============================================================= */
+function g5(type, s, q) {
+  const svg = $('g5');
+  const st = statusOf(type, s, q);
+  const cx = 170, cy = 95, r = 68;
+  const sign = st.pct >= 0 ? '+' : '';
+
+  let h = `<defs><filter id="gl5"><feGaussianBlur stdDeviation="8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`;
+  h += `<circle cx="${cx}" cy="${cy}" r="${r+10}" fill="${st.color}" opacity=".15" filter="url(#gl5)"/>`;
+  h += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="#0d1424" stroke="${st.color}" stroke-width="5" ${st.cls==='risk' ? 'class="pulse"' : ''}/>`;
+  h += `<text x="${cx}" y="${cy-22}" text-anchor="middle" font-size="24">${st.emoji}</text>`;
+  h += `<text x="${cx}" y="${cy+4}" text-anchor="middle" font-size="15" font-weight="800" fill="${st.color}">${st.label.split(' — ')[0]}</text>`;
+  h += `<text x="${cx}" y="${cy+24}" text-anchor="middle" font-size="16" font-weight="800" fill="${st.color}">${sign}${st.pct.toFixed(2)}%</text>`;
+  h += `<text x="${cx}" y="${cy+r+22}" text-anchor="middle" font-size="12" fill="#94a3b8" font-weight="700">${type === 'CALL' ? '📈 CALL' : '📉 PUT'} vendida</text>`;
+  h += `<text x="${cx-100}" y="${cy+r+44}" fill="#93c5fd" font-size="11" text-anchor="middle">🎯 ${s.toFixed(0)}</text>`;
+  h += `<text x="${cx+100}" y="${cy+r+44}" fill="${st.color}" font-size="11" text-anchor="middle">📍 ${q.toFixed(0)}</text>`;
+
+  svg.innerHTML = h;
+  setDiff('d5', s, q);
+}
+
+/* ============================================================
+   6 — Termômetro espelhado (normalizado: seguro sempre embaixo)
+============================================================= */
+function g6(type, s, q) {
+  const svg = $('g6');
+  const st = statusOf(type, s, q);
+  const totalH = 150, barW = 40, y0 = 40;
+  const sx = 110, qx = 230;
+
+  // normaliza: usamos "posição segura" sempre como base do tubo (0) e "risco" sempre no topo (1),
+  // isto é, espelhamos o eixo verticalmente quando for PUT
+  const sPosRaw = clamp(s), qPosRaw = clamp(q);
+  const sPos = type === 'CALL' ? sPosRaw : (1 - sPosRaw);
+  const qPos = type === 'CALL' ? qPosRaw : (1 - qPosRaw);
+
+  const sh = sPos * totalH, qh = qPos * totalH;
+  const sy0 = y0 + totalH - sh, qy0 = y0 + totalH - qh;
+  const zoneH = totalH / 3;
+  const colorsTopDown = ['#7f1d1d', '#713f12', '#14532d']; // sempre igual: topo=risco, base=seguro
+
+  let h = `<text x="170" y="14" text-anchor="middle" font-size="11" fill="#64748b">eixo normalizado — topo = risco, base = seguro (sempre)</text>`;
+  h += `<text x="170" y="30" text-anchor="middle" font-size="12" fill="${st.color}" font-weight="700">${st.emoji} ${st.label}</text>`;
+
+  function tube(cx) {
+    let t = '';
+    for (let i = 0; i < 3; i++) {
+      const zy = y0 + i * zoneH;
+      t += `<rect x="${cx-barW/2}" y="${zy}" width="${barW}" height="${zoneH}" fill="${colorsTopDown[i]}" opacity=".35"/>`;
+    }
+    t += `<rect x="${cx-barW/2}" y="${y0}" width="${barW}" height="${totalH}" fill="none" stroke="#1e293b" stroke-width="1.5" rx="8"/>`;
+    return t;
+  }
+  h += tube(sx);
+  h += tube(qx);
+
+  h += `<defs><filter id="gl6"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`;
+  h += `<rect x="${sx-barW/2+3}" y="${sy0}" width="${barW-6}" height="${sh}" fill="#3b82f6" rx="5" opacity=".9"/>`;
+  h += `<rect x="${qx-barW/2+3}" y="${qy0}" width="${barW-6}" height="${qh}" fill="${st.color}" rx="5" filter="url(#gl6)"/>`;
+
+  h += `<text x="${sx}" y="${sy0-10}" fill="#93c5fd" font-size="12" text-anchor="middle" font-weight="700">${s.toFixed(2)}</text>`;
+  h += `<text x="${qx}" y="${qy0-10}" fill="${st.color}" font-size="12" text-anchor="middle" font-weight="700">${q.toFixed(2)}</text>`;
+  h += `<text x="${sx}" y="${y0+totalH+20}" fill="#64748b" font-size="11" text-anchor="middle">🎯 Strike</text>`;
+  h += `<text x="${qx}" y="${y0+totalH+20}" fill="#64748b" font-size="11" text-anchor="middle">📍 Cotação</text>`;
+  h += `<text x="170" y="${y0+totalH+40}" fill="#475569" font-size="10" text-anchor="middle">${type} vendida</text>`;
+
+  svg.innerHTML = h;
+  setDiff('d6', s, q);
+}
+
+function render() {
+  const s = parseFloat($('sRange').value);
+  const q = parseFloat($('qRange').value);
+  $('sVal').textContent = s.toFixed(2);
+  $('qVal').textContent = q.toFixed(2);
+  g1(currentType, s, q); g2(currentType, s, q); g3(currentType, s, q);
+  g4(currentType, s, q); g5(currentType, s, q); g6(currentType, s, q);
+
+  const st = statusOf(currentType, s, q);
+  document.querySelectorAll('.card').forEach(c => { c.style.borderColor = st.color + '55'; });
+}
+
+$('sRange').addEventListener('input', render);
+$('qRange').addEventListener('input', render);
+document.querySelectorAll('.presets button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    $('sRange').value = btn.dataset.s;
+    $('qRange').value = btn.dataset.q;
+    setType(btn.dataset.t);
+  });
+});
+
+setType('PUT');
+</script>
+</body>
+</html>

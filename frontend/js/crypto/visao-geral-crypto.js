@@ -235,8 +235,7 @@
         h += '<span class="vg-badge" style="background:rgba(59,130,246,.1);color:#3b82f6;border:1px solid rgba(59,130,246,.26)">'+tipo+'</span>';
         h += corrBadge;
         if (isEx) h += '<span class="vg-badge" style="background:rgba(249,115,22,.1);color:#f97316;border:1px solid rgba(249,115,22,.26)">Poss. Exercício</span>';
-        h += '<div style="flex:1;font-size:.72rem;color:' + C_MUTED + '">Strike ' + fmtK(strike) + ' &middot; Cot. ' + fmtK(cot) + '</div>';
-        h += '<div style="font-size:.72rem;color:' + C_MUTED + '">Dist. <span style="color:' + (isEx?'#f97316':'#22c55e') + '">' + fmtP(Math.abs(dist)) + '</span></div>';
+        h += '<div style="flex:1"></div>';
         h += '<span style="font-size:.68rem;color:' + C_MUTED + ';margin-right:2px">Prêmio Recebido:</span><span style="font-family:monospace;font-size:.78rem;font-weight:700;color:#22c55e">+' + fmt(premio) + '</span>';
         h += '<span class="vg-op-detail-btn" data-op-id="' + (op.id || '') + '" title="Ver detalhes"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>';
         h += '</div>';
@@ -249,8 +248,12 @@
     h += '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
     h += ' Strike vs Cotação</button>';
     h += '<div class="vg-thermo-acc-body" id="vgThermoAccBody">';
-    h += '<svg id="vgThermometerSvg" class="vg-thermo-svg" viewBox="0 0 400 230" width="100%" height="210"></svg>';
-    h += '<div id="vgThermoPill"></div>';
+    h += '<div class="vg-thermo-layout">';
+    h += '<div class="vg-thermo-left">';
+    h += '<svg id="vgThermometerSvg" class="vg-thermo-svg" viewBox="0 0 400 250" width="100%" height="250"></svg>';
+    h += '</div>';
+    h += '<div class="vg-thermo-right" id="vgSealContainer"></div>';
+    h += '</div>';
     h += '<div class="vg-thermo-diff-row" id="vgThermoDiff"></div>';
     h += '</div></div></div>';
     h += '</div>';
@@ -382,13 +385,11 @@
   /* ─ Termômetro Duplo SVG — Semáforo Interno ─ */
   function buildThermometer(s, q, tipo) {
     var svg = document.getElementById('vgThermometerSvg');
-    var pillEl = document.getElementById('vgThermoPill');
     var diffEl = document.getElementById('vgThermoDiff');
     if (!svg) return;
 
     if (!s || !q) {
       svg.innerHTML = '';
-      if (pillEl) pillEl.innerHTML = '<div class="vg-thermo-empty">Selecione uma operação para visualizar</div>';
       if (diffEl) diffEl.innerHTML = '';
       return;
     }
@@ -410,7 +411,7 @@
 
     // Status
     var st = thermoStatus(s, q, tipo);
-    var statusColor = st.cls === 'itm' ? '#22c55e' : st.cls === 'otm' ? '#ef4444' : '#eab308';
+    var statusColor = st.cls === 'itm' ? '#22c55e' : '#ef4444';
     var cotBarColor = statusColor;
 
     var zoneH = totalH / 3;
@@ -458,7 +459,7 @@
     var arrowY = Math.min(sy0, qy0) - 20;
     var diff = q - s;
     var sign = diff > 0 ? '\u25B2' : diff < 0 ? '\u25BC' : '=';
-    var diffCol = diff > 0 ? '#22c55e' : diff < 0 ? '#ef4444' : '#eab308';
+    var diffCol = statusColor;
     h += '<text x="' + midX + '" y="' + arrowY + '" fill="' + diffCol + '" font-size="18" text-anchor="middle">' + sign + '</text>';
     h += '<text x="' + midX + '" y="' + (arrowY + 17) + '" fill="' + diffCol + '" font-size="13" text-anchor="middle" font-weight="700">' + (diff > 0 ? '+' : '') + fmtShort(diff) + '</text>';
 
@@ -473,12 +474,6 @@
     h += '<text x="' + qx + '" y="' + (y0 + totalH + 24) + '" fill="' + cotBarColor + '" font-size="13" text-anchor="middle" font-weight="700">' + qLabel + '</text>';
 
     svg.innerHTML = h;
-
-    // Pill de status
-    if (pillEl) {
-      var pctSign = parseFloat(st.pct) > 0 ? '+' : '';
-      pillEl.innerHTML = '<div class="vg-thermo-pill ' + st.cls + '"><div class="pill-dot"></div>' + st.label + ' &nbsp;<strong>' + pctSign + st.pct + '%</strong></div>';
-    }
 
     // Diff row + PoP
     if (diffEl) {
@@ -497,16 +492,63 @@
     }
   }
 
+  /* ─ Selo Central de Status ─ */
+  function buildSeal(s, q, tipo) {
+    var container = document.getElementById('vgSealContainer');
+    if (!container) return;
+
+    if (!s || !q) {
+      container.innerHTML = '';
+      return;
+    }
+
+    var st = thermoStatus(s, q, tipo);
+    var diff = q - s;
+    var pct = s > 0 ? (diff / s * 100) : 0;
+    var pctSign = pct >= 0 ? '+' : '';
+
+    // Cores do selo baseadas no status (apenas vermelho ou verde)
+    var sealColor, sealLabel;
+    if (st.cls === 'otm') {
+      // ITM / Risco de exercício → vermelho
+      sealColor = '#ef4444';
+      sealLabel = 'EM EXERCÍCIO';
+    } else {
+      // OTM / Seguro → verde
+      sealColor = '#22c55e';
+      sealLabel = 'SEGURA';
+    }
+
+    var tipoLabel = (tipo || 'PUT').toUpperCase() === 'CALL' ? '📈 CALL vendida' : '📉 PUT vendida';
+
+    var html = '<svg class="vg-seal-svg" viewBox="0 0 200 200" width="100%" height="180">';
+    // Glow externo
+    html += '<circle cx="100" cy="85" r="72" fill="' + sealColor + '" opacity=".12"/>';
+    // Circulo principal
+    html += '<circle cx="100" cy="85" r="60" fill="#0d1424" stroke="' + sealColor + '" stroke-width="4"';
+    if (st.cls === 'otm') html += ' class="vg-seal-pulse"';
+    html += '/>';
+    // Emoji
+    var emoji = st.cls === 'otm' ? '🔴' : '🟢';
+    html += '<text x="100" y="65" text-anchor="middle" font-size="20">' + emoji + '</text>';
+    // Label status
+    html += '<text x="100" y="88" text-anchor="middle" font-size="13" font-weight="800" fill="' + sealColor + '">' + sealLabel + '</text>';
+    // Percentual
+    html += '<text x="100" y="108" text-anchor="middle" font-size="14" font-weight="800" fill="' + sealColor + '">' + pctSign + pct.toFixed(2) + '%</text>';
+    // Tipo abaixo
+    html += '<text x="100" y="168" text-anchor="middle" font-size="12" fill="#94a3b8" font-weight="600">' + tipoLabel + '</text>';
+    html += '</svg>';
+
+    container.innerHTML = html;
+  }
+
   function thermoStatus(s, q, tipo) {
     var diff = q - s;
     var pct  = s > 0 ? (diff / s * 100).toFixed(2) : '0.00';
-    var absPct = Math.abs(parseFloat(pct));
-    // ATM: diferença menor que 1%
-    if (absPct < 1) return { cls: 'atm', label: 'ATM — No Preço', pct: pct };
     // Para CALL vendida: cot > strike = ITM (perigoso), cot < strike = OTM (seguro)
     // Para PUT vendida:  cot < strike = ITM (perigoso), cot > strike = OTM (seguro)
     var isCall = (tipo || '').toUpperCase() === 'CALL';
-    var isITM = isCall ? (diff > 0) : (diff < 0);
+    var isITM = isCall ? (diff >= 0) : (diff <= 0);
     if (isITM) return { cls: 'otm', label: 'ITM — Risco de Exercício', pct: pct };
     return { cls: 'itm', label: 'OTM — Fora do Dinheiro', pct: pct };
   }
@@ -539,8 +581,9 @@
         // Destaca a row ativa
         container.querySelectorAll('.vg-op-row').forEach(function(r) { r.classList.remove('vg-op-active'); });
         el.classList.add('vg-op-active');
-        // Atualiza termômetro
+        // Atualiza termômetro e selo
         buildThermometer(strike, cotacao, tipo);
+        buildSeal(strike, cotacao, tipo);
       });
     });
     /* Listeners: clique na lupa → abre modal de análise */
@@ -571,6 +614,7 @@
       if (abertasOps.length > 0) {
         var firstOp = abertasOps[0];
         buildThermometer(parseFloat(firstOp.strike || 0), parseFloat(firstOp.cotacao_atual || 0), (firstOp.tipo || 'PUT'));
+        buildSeal(parseFloat(firstOp.strike || 0), parseFloat(firstOp.cotacao_atual || 0), (firstOp.tipo || 'PUT'));
       }
     }, 50);
   }

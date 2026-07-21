@@ -525,3 +525,37 @@
     background: rgba(59,130,246,.06);
     border-color: rgba(59,130,246,.2);
 }
+
+
+/* Layout flex: Termômetro + Selo lado a lado */
+.vg-thermo-layout {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.vg-thermo-left {
+    flex: 1;
+    min-width: 0;
+}
+
+.vg-thermo-right {
+    flex: 0 0 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Selo circular SVG */
+.vg-seal-svg {
+    display: block;
+}
+
+@keyframes vgSealPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .5; }
+}
+
+.vg-seal-pulse {
+    animation: vgSealPulse 1.5s ease-in-out infinite;
+}
