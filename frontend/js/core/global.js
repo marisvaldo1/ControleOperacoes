@@ -431,22 +431,10 @@ function calcularExercicio(tipoOpcao, spotPrice, strike) {
  * @returns {string} - HTML do badge
  */
 function gerarBadgeExercicio(exercida, status = 'ABERTA') {
-    const statusUpper = String(status || 'ABERTA').toUpperCase();
-    
-    if (statusUpper === 'ABERTA') {
-        // Para operações abertas, mostrar "Possível exercício" em amarelo se ITM
-        if (exercida) {
-            return '<span class="badge bg-yellow text-yellow-fg">Possível Exercício</span>';
-        } else {
-            return '<span class="badge bg-green text-green-fg">Sem Exercício</span>';
-        }
+    if (exercida) {
+        return '<span class="badge bg-red text-red-fg">SIM</span>';
     } else {
-        // Para operações fechadas, mostrar Sim ou Não
-        if (exercida) {
-            return '<span class="badge bg-red text-red-fg">SIM</span>';
-        } else {
-            return '<span class="badge bg-green text-green-fg">NÃO</span>';
-        }
+        return '<span class="badge bg-green text-green-fg">NÃO</span>';
     }
 }
 

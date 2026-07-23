@@ -311,15 +311,15 @@
         let c1emoji, c1label, c1val, c2emoji, c2label, c2val;
         const premioFmt = premio ? '+' + fmtUsd(premio) : (tae ? tae.toFixed(2) + '% aa' : '—');
         if (tipo === 'CALL') {
-            c1emoji = '✅'; c1label = 'BTC fica abaixo do Strike';
+            c1emoji = '✅'; c1label = 'Ativo fica abaixo do Strike';
             c1val   = premioFmt + ' de prêmio em USDT';
-            c2emoji = '🔄'; c2label = 'BTC sobe acima do Strike';
+            c2emoji = '🔄'; c2label = 'Ativo sobe acima do Strike';
             c2val   = 'Recebe USD ou vende pelo valor do strike';
         } else {
-            c1emoji = '✅'; c1label = 'BTC permanece acima do Strike';
+            c1emoji = '✅'; c1label = 'Ativo permanece acima do Strike';
             c1val   = premioFmt + ' de prêmio em USDT';
-            c2emoji = '🔄'; c2label = 'BTC cai abaixo do Strike';
-            c2val   = 'Recebe BTC ao preço do strike (custo médio reduzido)';
+            c2emoji = '🔄'; c2label = 'Ativo cai abaixo do Strike';
+            c2val   = 'Recebe Ativo ao preço do strike (custo médio reduzido)';
         }
 
         const resultadoColor = (parseFloat(op.resultado) || 0) >= 0 ? '#47b96c' : '#e85d4a';

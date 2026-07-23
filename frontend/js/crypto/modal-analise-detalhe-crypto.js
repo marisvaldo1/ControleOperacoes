@@ -520,9 +520,12 @@
             return;
         }
 
-        const callsExercidas = ops.filter(o => window.CryptoExerciseStatus?.isExercised
-            ? window.CryptoExerciseStatus.isExercised(o, 'CALL')
-            : false);
+        const callsExercidas = ops.filter(o => {
+            if ((o.status || '').toUpperCase() === 'ABERTA') return false;
+            return window.CryptoExerciseStatus?.isExercised
+                ? window.CryptoExerciseStatus.isExercised(o, 'CALL')
+                : false;
+        });
         const ultimoExercicio = callsExercidas.length
             ? [...callsExercidas].sort((a, b) => {
                 const aTime = window.CryptoExerciseStatus?.getOperationDate?.(a)?.getTime?.() || 0;
@@ -561,7 +564,7 @@
         if (title) title.textContent = `${icone} PREÇO MÉDIO ${par}`;
 
         body.innerHTML = `
-            <div class="sim-pm-val" style="color:${acCor}">$${pm.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+            <div class="sim-pm-val" style="color:${acCor};cursor:pointer;text-decoration:underline dotted ${acCor}80;text-underline-offset:6px" onclick="ModalPrecoMedioAtivo.openModal('${par}')" title="Clique para detalhes do cálculo">$${pm.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
             <div class="sim-pm-row"><span class="sim-pm-key">● Último Exercício</span><span class="sim-pm-v" style="color:var(--tblr-warning)">$${strikeExercida.toLocaleString('en-US',{minimumFractionDigits:2})}</span></div>
             <div class="sim-pm-row"><span class="sim-pm-key">− Prêmios</span><span class="sim-pm-v" style="color:#3fb950">−$${totalPremios.toLocaleString('en-US',{minimumFractionDigits:2})}</span></div>
             ${cot ? `<div class="sim-pm-row"><span class="sim-pm-key">● Cotação</span><span class="sim-pm-v" style="${pctColor}">$${cot.toLocaleString('en-US',{minimumFractionDigits:2})}</span></div>` : ''}
@@ -755,15 +758,15 @@
         let c1emoji, c1label, c1val, c2emoji, c2label, c2val;
         const premioFmt = premio ? '+' + fmtUsd(premio) : (tae ? tae.toFixed(2) + '% aa' : '—');
         if (tipo === 'CALL') {
-            c1emoji = '✅'; c1label = 'BTC fica abaixo do Strike';
+            c1emoji = '✅'; c1label = 'Ativo fica abaixo do Strike';
             c1val   = premioFmt + ' de prêmio em USDT';
-            c2emoji = '🔄'; c2label = 'BTC sobe acima do Strike';
+            c2emoji = '🔄'; c2label = 'Ativo sobe acima do Strike';
             c2val   = 'Recebe USD ou vende pelo valor do strike';
         } else {
-            c1emoji = '✅'; c1label = 'BTC permanece acima do Strike';
+            c1emoji = '✅'; c1label = 'Ativo permanece acima do Strike';
             c1val   = premioFmt + ' de prêmio em USDT';
-            c2emoji = '🔄'; c2label = 'BTC cai abaixo do Strike';
-            c2val   = 'Recebe BTC ao preço do strike (custo médio reduzido)';
+            c2emoji = '🔄'; c2label = 'Ativo cai abaixo do Strike';
+            c2val   = 'Recebe Ativo ao preço do strike (custo médio reduzido)';
         }
 
         const probLucro = op.pop != null ? op.pop + '%'

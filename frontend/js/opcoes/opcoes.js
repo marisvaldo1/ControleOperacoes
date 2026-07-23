@@ -349,6 +349,7 @@ function initDataTables() {
             }
         },
         pageLength: 10,
+        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Todos"]],
         responsive: false,
         scrollX: true,
         order: [[11, 'desc']],
@@ -807,7 +808,7 @@ async function populateTable(dt, data, showActions = true, updatePrices = false,
         }
         
         const rowNode = dt.row.add([
-            op.ativo_base ? `<span class="badge bg-azure text-azure-fg" style="cursor:pointer" title="Ver detalhes" onclick="window.ModalDetalhesOpcoes&&window.ModalDetalhesOpcoes.show('${op.id}')">${op.ativo_base}</span>` : '-',
+            op.ativo_base ? `<span class="badge bg-azure text-azure-fg" stylever="cursor:pointer" title="Ver detalhes" onclick="window.ModalDetalhesOpcoes&&window.ModalDetalhesOpcoes.show('${op.id}')">${op.ativo_base}</span>` : '-',
                 op.ativo_base ? `<span class="badge bg-azure text-azure-fg show-detalhe-modal" style="cursor:pointer" title="Ver detalhes" data-op-id="${op.id}">${op.ativo_base}</span>` : '-',
             op.ativo,
             `<span class="badge ${op.tipo === 'CALL' ? 'bg-green text-green-fg' : 'bg-red text-red-fg'}">${op.tipo}</span>`,

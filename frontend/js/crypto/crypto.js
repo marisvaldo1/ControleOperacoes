@@ -168,6 +168,13 @@ window.addEventListener("pageshow", function (e) {
 function setupEventListeners() {
     document.getElementById("btnNovaOperacao")?.addEventListener("click", openNewModal);
     document.getElementById("btnSaveOperacao")?.addEventListener("click", saveOperacao);
+    document.getElementById("btnAtualizarCotacaoOp")?.addEventListener("click", buscarCotacaoOperacao);
+    document.getElementById("inputAtivo")?.addEventListener("change", function() {
+        // Em nova operação, atualiza cotação ao trocar o ativo
+        if (!document.getElementById("operacaoId").value) {
+            buscarCotacaoNovaOperacao();
+        }
+    });
     document.getElementById("btnSaveConfigCrypto")?.addEventListener("click", saveConfig);
     document.getElementById("btnSimularCrypto")?.addEventListener("click", openSimuladorModal);
     document.getElementById("btnCalcularSim")?.addEventListener("click", calcularSimulador);
@@ -560,6 +567,7 @@ function initDataTables() {
     const dtConfig = {
         language: { url: "https://cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json" },
         pageLength: 10,
+        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Todos"]],
         responsive: false,
         scrollX: true,
         autoWidth: false,
@@ -1396,16 +1404,22 @@ function showCryptoMonthOps(year, monthKey) {
 function openNewModal() {
     notifyRecoveryLossContext('Nova operação');
     document.getElementById("modalOperacaoTitle").textContent = "Nova Operacao";
+    var btnCotOp = document.getElementById("btnAtualizarCotacaoOp");
+    if (btnCotOp) btnCotOp.style.display = "";
     document.getElementById("formOperacao").reset();
     document.getElementById("operacaoId").value = "";
     document.getElementById("inputDataOperacao").value = getCurrentDate();
     new bootstrap.Modal(document.getElementById("modalOperacao")).show();
+    // Buscar cotação ao vivo e preencher Abertura + Cotação Atual
+    buscarCotacaoNovaOperacao();
 }
 
 function editOperacao(id) {
     const op = allOperacoes.find(o => o.id === id);
     if (!op) return;
     document.getElementById("modalOperacaoTitle").textContent = "Editar Operacao";
+    var btnCotOp = document.getElementById("btnAtualizarCotacaoOp");
+    if (btnCotOp) btnCotOp.style.display = "none";
     document.getElementById("operacaoId").value              = op.id;
     document.getElementById("inputAtivo").value              = op.ativo || "BTC";
     document.getElementById("inputTipo").value               = op.tipo || "CALL";
@@ -1426,8 +1440,9 @@ function editOperacao(id) {
     document.getElementById("inputPrazo").value              = op.prazo || "";
     document.getElementById("inputExercicio").value          = op.exercicio || "";
     document.getElementById("inputCotacaoAtual").value       = op.cotacao_atual || "";
+    var cotAbEl = document.getElementById("inputCotacaoAbertura"); if (cotAbEl) cotAbEl.value = op.abertura || op.cotacao_atual || "";
     document.getElementById("inputDistancia").value          = op.distancia || "";
-    document.getElementById("inputDias").value               = op.dias || "";
+    var diasEl = document.getElementById("inputDias"); if (diasEl) diasEl.value = op.dias || "";
     document.getElementById("inputPremioUs").value           = op.premio_us || "";
     document.getElementById("inputCrypto").value             = op.crypto || "";
     document.getElementById("inputResultado").value          = op.resultado || "";
@@ -1459,8 +1474,8 @@ async function saveOperacao() {
         status: document.getElementById("inputStatus").value,
         data_operacao:    document.getElementById("inputDataOperacao").value,
         cotacao_atual:    parseFloat(document.getElementById("inputCotacaoAtual").value) || null,
-        // abertura = preço da crypto na abertura (cotação), não o valor investido
-        abertura:         parseFloat(document.getElementById("inputCotacaoAtual").value) || null,
+        // abertura = cotação do ativo no momento da abertura
+        abertura:         parseFloat((document.getElementById("inputCotacaoAbertura") || {}).value) || parseFloat(document.getElementById("inputCotacaoAtual").value) || null,
         tae:              parseFloat(document.getElementById("inputTae").value)          || null,
         strike:           parseFloat(document.getElementById("inputStrike").value)       || null,
         distancia:        parseFloat(document.getElementById("inputDistancia").value)    || null,
@@ -1469,7 +1484,7 @@ async function saveOperacao() {
         premio_us:        parseFloat(document.getElementById("inputPremioUs").value)     || null,
         resultado:        parseFloat(document.getElementById("inputResultado").value)    || null,
         exercicio:        document.getElementById("inputExercicio").value                || null,
-        dias:             parseInt(document.getElementById("inputDias").value)           || null,
+        dias:             (function(){ var e = document.getElementById("inputDias"); return e ? parseInt(e.value) || null : null; })(),
         exercicio_status: document.getElementById("inputExercicioStatus").value,
         observacoes:      document.getElementById("inputObservacoes").value              || null,
         corretora:        (document.getElementById("inputCorretora")?.value || 'BINANCE')
@@ -1690,6 +1705,56 @@ function simUpdateCallRecovery(parNorm, strikeSim, todayEnd) {
         <span class="ssh-val" style="color:${valColor}">${totalFmt}</span>
     `;
     alertEl.className = cls;
+}
+
+// Busca cotação ao vivo e preenche Abertura + Cotação Atual ao abrir Nova Operação
+async function buscarCotacaoNovaOperacao() {
+    const par = document.getElementById("inputAtivo")?.value || "BTC";
+    try {
+        const sym = par + "USDT";
+        const res = await fetch(API_BASE + "/api/proxy/crypto/" + sym);
+        const data = await res.json();
+        if (data.price) {
+            const price = parseFloat(data.price).toFixed(2);
+            var aberturaEl = document.getElementById("inputCotacaoAbertura");
+            var cotAtualEl = document.getElementById("inputCotacaoAtual");
+            if (aberturaEl) aberturaEl.value = price;
+            if (cotAtualEl) cotAtualEl.value = price;
+        }
+    } catch { /* silencioso — cotação será preenchida manualmente se a API falhar */ }
+}
+
+// Busca cotação ao vivo para o campo de Nova/Editar Operação (apenas Cotação Atual)
+async function buscarCotacaoOperacao() {
+    const par = document.getElementById("inputAtivo")?.value || "BTC";
+    const btn = document.getElementById("btnAtualizarCotacaoOp");
+    const cotEl = document.getElementById("inputCotacaoAtual");
+    if (btn) { btn.disabled = true; btn.innerHTML = "<span class='spinner-border spinner-border-sm' style='width:14px;height:14px'></span>"; }
+    try {
+        const sym = par + "USDT";
+        const res = await fetch(API_BASE + "/api/proxy/crypto/" + sym);
+        const data = await res.json();
+        if (data.price && cotEl) {
+            cotEl.value = parseFloat(data.price).toFixed(2);
+            // Recalcular distância se strike preenchido
+            const strikeEl = document.getElementById("inputStrike");
+            const distEl = document.getElementById("inputDistancia");
+            if (strikeEl && distEl && strikeEl.value) {
+                const strike = parseFloat(strikeEl.value);
+                const cot = parseFloat(cotEl.value);
+                if (strike > 0 && cot > 0) {
+                    distEl.value = ((cot - strike) / strike * 100).toFixed(2);
+                }
+            }
+        }
+    } catch {
+        if (window.iziToast) iziToast.error({ title: "Erro", message: "Erro ao buscar cotação." });
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = "<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8'/><path d='M3 3v5h5'/><path d='M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16'/><path d='M16 16h5v5'/></svg>";
+        }
+    }
 }
 
 // Busca cotação ao vivo para o campo de simulação
@@ -1931,7 +1996,11 @@ function simRenderPmCard(par, cotacaoInput) {
     }
 
     // Encontra última CALL exercida (strike exercida = PM base)
-    const callsExercidas = ops.filter(o => isTypeExercised(o, 'CALL'));
+    // Apenas operações fechadas são consideradas; operações abertas não têm exercício real
+    const callsExercidas = ops.filter(o => {
+        if ((o.status || '').toUpperCase() === 'ABERTA') return false;
+        return isTypeExercised(o, 'CALL');
+    });
     const ultimoExercicio = callsExercidas.length
         ? [...callsExercidas].sort((a, b) => {
             const aTime = window.CryptoExerciseStatus?.getOperationDate?.(a)?.getTime?.() || 0;
@@ -1969,7 +2038,7 @@ function simRenderPmCard(par, cotacaoInput) {
     if (title) title.textContent = `${icone} PREÇO MÉDIO ${par}`;
 
     body.innerHTML = `
-        <div class="sim-pm-val" style="color:${acCor}">$${pm.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+        <div class="sim-pm-val" style="color:${acCor};cursor:pointer;text-decoration:underline dotted ${acCor}80;text-underline-offset:6px" data-par="${par}" title="Clique para detalhes do cálculo" onclick="ModalPrecoMedioAtivo.openModal('${par}')">$${pm.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
         <div class="sim-pm-row"><span class="sim-pm-key">● Último Exercício</span><span class="sim-pm-v" style="color:var(--tblr-warning)">$${strikeExercida.toLocaleString('en-US',{minimumFractionDigits:2})}</span></div>
         <div class="sim-pm-row"><span class="sim-pm-key">− Prêmios</span><span class="sim-pm-v" style="color:#3fb950">−$${totalPremios.toLocaleString('en-US',{minimumFractionDigits:2})}</span></div>
         ${cotacao ? `<div class="sim-pm-row"><span class="sim-pm-key">● Cotação</span><span class="sim-pm-v" style="${pctColor}">$${cotacao.toLocaleString('en-US',{minimumFractionDigits:2})}</span></div>` : ''}

@@ -3,7 +3,7 @@
     'use strict';
 
     let currentOps = [];
-    let activePeriod = 'today';
+    let activePeriod = 'mes';
     let activeFilter = null;
     let activeTipo = null;
     let activeAsset = null;
@@ -240,10 +240,9 @@
     }
 
     function getExercicioLabel(op) {
-        const status = (op.exercicio_status || '').toUpperCase();
-        if (status === 'SIM') return '<span class="badge bg-danger">Exercida</span>';
-        if (status === 'POSSIVEL' || status === 'POSSÍVEL') return '<span class="badge bg-warning text-dark">Possível Exercício</span>';
-        return '<span class="badge bg-success">Sem Exercício</span>';
+        const isEx = isExercised(op);
+        if (isEx) return '<span class="badge bg-red text-red-fg">SIM</span>';
+        return '<span class="badge bg-green text-green-fg">NÃO</span>';
     }
 
     function getCorretoraBadge(op) {
@@ -290,6 +289,7 @@
             <td>${vencimento}</td>
             <td>${prazo}</td>
             <td>${statusBadge}</td>
+            <td>${getExercicioLabel(op)}</td>
         </tr>`;
     }
 
@@ -297,38 +297,41 @@
         const tbody = document.getElementById('tocOpsTbody');
         if (!tbody) return;
 
-        // Destrói instância DataTable anterior
+        // Destrói instância DataTable anterior (por referência e por verificação do DOM)
+        const table = tbody.closest('table');
         if (_dtTable) {
             try { _dtTable.destroy(); } catch (e) {}
             _dtTable = null;
         }
+        if (table && typeof $ !== 'undefined' && $.fn && $.fn.DataTable && $.fn.DataTable.isDataTable(table)) {
+            try { $(table).DataTable().destroy(); } catch (e) {}
+        }
 
-        // Filtra exercidas a partir dos ops já filtrados pelos controles do header
-        const exercidas = (filteredOps || []).filter(op => isExercised(op) && inExercisePeriod(op));
-        exercidas.sort((a, b) => {
+        // Mostra todas as operações filtradas (respeitando o filtro do header)
+        const opsToShow = (filteredOps || []).slice().sort((a, b) => {
             const da = a.exercicio ? new Date(a.exercicio) : (getOpDate(a) || new Date(0));
             const db = b.exercicio ? new Date(b.exercicio) : (getOpDate(b) || new Date(0));
             return db - da;
         });
 
-        if (!exercidas.length) {
-            tbody.innerHTML = '<tr><td colspan="11" class="text-center text-muted py-3">Nenhuma operação exercida no período filtrado</td></tr>';
+        if (!opsToShow.length) {
+            tbody.innerHTML = '<tr><td colspan="12" class="text-center text-muted py-3">Nenhuma operação encontrada no período filtrado</td></tr>';
             return;
         }
 
-        tbody.innerHTML = exercidas.map(op => buildOpRow(op)).join('');
+        tbody.innerHTML = opsToShow.map(op => buildOpRow(op)).join('');
 
         // Inicializa DataTable (jQuery + DataTables já carregados via libs.js)
         if (typeof $ !== 'undefined' && $.fn && $.fn.DataTable) {
-            const table = tbody.closest('table');
             if (table) {
                 try {
                     _dtTable = $(table).DataTable({
-                        pageLength: 15,
+                        pageLength: 10,
+                        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Todos"]],
                         order: [[8, 'desc']],
                         language: { url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json' },
                         dom: '<"toc-dt-top"f>rtip',
-                        columnDefs: [{ orderable: false, targets: [0, 1, 2, 10] }],
+                        columnDefs: [{ orderable: false, targets: [0, 1, 2, 10, 11] }],
                     });
                 } catch (e) {
                     console.warn('[TOC] DataTable init error', e);
@@ -378,7 +381,7 @@
         const cardOps = document.getElementById('tocCardOps');
         const cardWinRate = document.getElementById('tocCardWinRate');
         if (cardResultado) cardResultado.textContent = fmtUsd(stats.totalPremio);
-        if (cardAcumulado) cardAcumulado.textContent = fmtUsd(stats.totalPremio);
+        if (cardAcumulado) cardAcumulado.textContent = stats.totalOps > 0 ? fmtUsd(stats.totalPremio / stats.totalOps) : '$0.00';
         if (cardOps) cardOps.textContent = `${stats.totalOps}`;
         if (cardWinRate) cardWinRate.textContent = fmtPct(stats.winRate);
     }
@@ -419,7 +422,7 @@
         _header = window.CryptoModalHeader.mount('#tocModalHeader', {
             title:         'Total de Operações Crypto',
             icon:          '📊',
-            defaultPeriod: 'today',
+            defaultPeriod: 'semana',
             closeModalId:  'modalTotalOperacoesCrypto',
             defaultState: {
                 statusList: ['aberta', 'fechada', 'exercida', 'nao_exercida'],

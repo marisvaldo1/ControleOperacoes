@@ -18,6 +18,7 @@
     <link rel="stylesheet" href="../css/shared/modal-analise.css?v=1.1.0">
     <link rel="stylesheet" href="../css/shared/modal-resultados.css?v=1.0.0">
     <link rel="stylesheet" href="../css/crypto/crypto-shared.css?v=1.0.0">
+    <link rel="stylesheet" href="../css/crypto/modal-preco-medio-ativo.css?v=1.0.0">
 </head>
 
 <body data-bs-theme="dark">
@@ -357,13 +358,12 @@
                         <div class="row">
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">Valor Investido</label>
-                                <div class="btn-group btn-group-sm mb-1 w-100" id="investidoToggle" role="group">
-                                    <button type="button" class="btn btn-primary active" id="btnInvestidoUsd" >US$</button>
-                                    <button type="button" class="btn btn-outline-secondary" id="btnInvestidoCrypto" >Crypto</button>
-                                </div>
                                 <div class="input-group">
                                     <input type="number" step="0.01" class="form-control" id="inputAbertura" placeholder="Ex: 5000">
-                                    <span class="input-group-text" id="investidoUnit" style="min-width:50px;justify-content:center">USD</span>
+                                    <div class="d-flex flex-column" id="investidoToggle" role="group">
+                                        <button type="button" class="btn btn-sm btn-primary" id="btnInvestidoUsd" style="border-radius:0 4px 0 0;padding:2px 8px;font-size:.7rem">US$</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="btnInvestidoCrypto" style="border-radius:0 0 4px 0;padding:2px 8px;font-size:.7rem">Crypto</button>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-md-3 mb-3">
@@ -385,16 +385,21 @@
                                 <input type="date" class="form-control" id="inputExercicio">
                             </div>
                             <div class="col-md-3 mb-3">
+                                <label class="form-label">Abertura (US$)</label>
+                                <input type="number" step="0.01" class="form-control" id="inputCotacaoAbertura">
+                            </div>
+                            <div class="col-md-3 mb-3">
                                 <label class="form-label">Cotação Atual (US$)</label>
-                                <input type="number" step="0.01" class="form-control" id="inputCotacaoAtual">
+                                <div class="input-group">
+                                    <input type="number" step="0.01" class="form-control" id="inputCotacaoAtual">
+                                    <button class="btn btn-outline-secondary" type="button" id="btnAtualizarCotacaoOp" title="Buscar cotação ao vivo">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+                                    </button>
+                                </div>
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">Distância (%)</label>
                                 <input type="number" step="0.01" class="form-control" id="inputDistancia">
-                            </div>
-                            <div class="col-md-3 mb-3">
-                                <label class="form-label">Dias</label>
-                                <input type="number" class="form-control" id="inputDias">
                             </div>
                         </div>
                         <div class="row">
@@ -919,6 +924,7 @@
     <div id="modalTotalOperacoesCryptoContainer"></div>
     <div id="modalDashboardCryptoContainer"></div>
     <div id="modalSaldoMedioCryptoContainer"></div>
+    <div id="modalPrecoMedioAtivoContainer"></div>
     
     <!-- Nova Modal Resultado Total Crypto (v2) -->
     <div id="modalResultadoTotalCryptoContainer">
@@ -1151,6 +1157,7 @@
     <script src="../js/core/modal-header.js?v=1.0.0"></script>
     <script src="../js/shared/technical-analysis.js?v=1.1.5"></script>
     <script src="../js/shared/modal-analise.js?v=1.5.1"></script>
+    <script src="../js/crypto/modal-preco-medio-ativo.js?v=1.0.0"></script>
     <script src="../js/crypto/analise-tecnica-crypto.js?v=1.0.0"></script>
     <script src="../js/crypto/modal-resultados-crypto-compact.js?v=1.0.0"></script>
     <script src="../js/crypto/modal-resultados-crypto.js?v=1.0.0"></script>
@@ -1159,7 +1166,7 @@
     <script src="../js/crypto/modal-resultado-total-crypto.js?v=1.3.0"></script>
     <script src="../js/crypto/modal-saldo-medio-crypto.js?v=1.1.0"></script>
     <script src="../js/crypto/modal-dashboard-crypto.js?v=1.0.1"></script>
-    <script src="../js/crypto/modal-total-operacoes-crypto.js?v=1.3.0"></script>
+    <script src="../js/crypto/modal-total-operacoes-crypto.js?v=1.4.0"></script>
     <script src="../js/crypto/modal-detalhe-crypto.js?v=3.1.3"></script>
     <script src="../js/crypto/modal-analise-detalhe-crypto.js?v=1.0.0"></script>
     <script src="../js/crypto/crypto.js?v=1.6.7"></script>

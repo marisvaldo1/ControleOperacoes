@@ -116,30 +116,18 @@
     }
 
     function resolveDisplayLabel(op) {
-        const status = String(op?.status || 'ABERTA').trim().toUpperCase();
         const displayStatus = resolveDisplayStatus(op);
-
-        if (status === 'ABERTA') {
-            return displayStatus === 'SIM' ? 'Possível Exercício' : 'Sem Exercício';
-        }
         return displayStatus === 'SIM' ? 'SIM' : 'NÃO';
     }
 
     function renderBadgeHtml(op, classMap) {
-        const status = String(op?.status || 'ABERTA').trim().toUpperCase();
         const displayStatus = resolveDisplayStatus(op);
         const label = resolveDisplayLabel(op);
         const classes = classMap || {};
 
-        if (status === 'ABERTA') {
-            return displayStatus === 'SIM'
-                ? `<span class="badge ${classes.openPositive || 'bg-warning text-dark'}">${label}</span>`
-                : `<span class="badge ${classes.openNegative || 'bg-success text-white'}">${label}</span>`;
-        }
-
         return displayStatus === 'SIM'
-            ? `<span class="badge ${classes.closedPositive || 'bg-warning text-dark'}">${label}</span>`
-            : `<span class="badge ${classes.closedNegative || 'bg-secondary text-white'}">${label}</span>`;
+            ? `<span class="badge ${classes.closedPositive || 'bg-red text-red-fg'}">${label}</span>`
+            : `<span class="badge ${classes.closedNegative || 'bg-green text-green-fg'}">${label}</span>`;
     }
 
     function isExercised(op, expectedType) {

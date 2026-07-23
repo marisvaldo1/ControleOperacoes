@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modal — Raio-X do Preço Médio</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161c28; --panel2:#1c2438; --line:rgba(255,255,255,.08);
+    --txt:#e6edf3; --mut:#7890b0; --mut2:#94a3b8;
+    --blue:#60a5fa; --green:#22c55e; --amber:#f59e0b; --red:#ef4444; --cyan:#06b6d4;
+    --mono:'SFMono-Regular',ui-monospace,'Cascadia Code',Consolas,monospace;
+    --sans:'Syne','Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font-family:var(--sans);
+       min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+
+  /* ---- gatilho (simula o valor clicável do PM na sua tela) ---- */
+  .demo-pm{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+           padding:22px 26px;text-align:center}
+  .demo-pm .lbl{font-size:.62rem;letter-spacing:1px;color:var(--mut);text-transform:uppercase}
+  .demo-pm .val{font-family:var(--mono);font-size:2rem;font-weight:800;color:var(--blue);
+                cursor:pointer;text-decoration:underline dotted rgba(96,165,250,.5);
+                text-underline-offset:6px;transition:.15s}
+  .demo-pm .val:hover{color:#93c5fd}
+  .demo-pm .hint{font-size:.66rem;color:var(--mut2);margin-top:6px}
+
+  /* ---- overlay + modal ---- */
+  .pm-overlay{position:fixed;inset:0;background:rgba(3,6,12,.72);backdrop-filter:blur(4px);
+              display:none;align-items:flex-start;justify-content:center;z-index:1000;
+              padding:32px 16px;overflow:auto}
+  .pm-overlay.open{display:flex}
+  .pm-modal{width:min(960px,100%);background:var(--panel);border:1px solid var(--line);
+            border-radius:16px;box-shadow:0 30px 80px rgba(0,0,0,.6);
+            animation:pop .22s cubic-bezier(.2,.8,.2,1)}
+  @keyframes pop{from{transform:translateY(14px) scale(.98);opacity:0}to{transform:none;opacity:1}}
+  .pm-head{display:flex;align-items:center;gap:12px;padding:18px 22px;border-bottom:1px solid var(--line)}
+  .pm-head h2{margin:0;font-size:1rem;font-weight:800;letter-spacing:.3px}
+  .pm-head .sub{font-size:.66rem;color:var(--mut);margin-top:2px}
+  .pm-head .ico{font-size:1.2rem}
+  .pm-x{margin-left:auto;background:var(--panel2);border:1px solid var(--line);color:var(--mut2);
+        width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:1rem;line-height:1}
+  .pm-x:hover{color:#fff;border-color:rgba(255,255,255,.25)}
+  .pm-body{padding:20px 22px 24px;display:flex;flex-direction:column;gap:20px}
+
+  /* ---- fórmula destaque ---- */
+  .pm-formula{background:linear-gradient(180deg,rgba(96,165,250,.08),rgba(96,165,250,.02));
+              border:1px solid rgba(96,165,250,.25);border-radius:12px;padding:16px 18px;
+              display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;
+              font-family:var(--mono);font-size:.95rem}
+  .pm-formula .r{color:var(--amber);font-weight:800;font-size:1.15rem}
+  .pm-formula .op{color:var(--mut)}
+  .pm-formula .neg{color:var(--green)}
+  .pm-formula .pos{color:var(--blue)}
+
+  .grid2{display:grid;grid-template-columns:1.25fr .75fr;gap:18px}
+  @media(max-width:760px){.grid2{grid-template-columns:1fr}}
+
+  .card{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .card-t{font-size:.62rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;
+          color:var(--mut);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+
+  /* ---- waterfall ---- */
+  .wf{position:relative;height:240px;margin:6px 0 4px 38px}
+  .wf-grid{position:absolute;inset:0 0 0 -38px}
+  .wf-gl{position:absolute;left:0;right:38px;border-top:1px dashed rgba(255,255,255,.06)}
+  .wf-gl span{position:absolute;left:0;transform:translateY(-50%);font-size:.58rem;
+              color:var(--mut);font-family:var(--mono);width:32px;text-align:right}
+  .wf-cols{position:absolute;inset:0;display:flex;gap:6px}
+  .wf-col{flex:1;position:relative;display:flex;flex-direction:column;justify-content:flex-end}
+  .wf-bar{position:absolute;left:14%;right:14%;border-radius:5px 5px 3px 3px;
+          transition:.3s;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+  .wf-bar.total-in{background:linear-gradient(180deg,#93c5fd,#3b82f6)}
+  .wf-bar.down{background:linear-gradient(180deg,#4ade80,#16a34a)}
+  .wf-bar.total-out{background:linear-gradient(180deg,#fcd34d,#f59e0b);
+                    box-shadow:0 0 0 1px rgba(245,158,11,.4),0 2px 10px rgba(245,158,11,.25)}
+  .wf-v{position:absolute;left:0;right:0;text-align:center;font-family:var(--mono);
+        font-size:.6rem;font-weight:700;white-space:nowrap}
+  .wf-lbl{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:6px;
+          font-size:.55rem;color:var(--mut2);text-align:center;width:130%;line-height:1.2}
+
+  /* ---- passos ---- */
+  .steps{list-style:none;margin:0;padding:0;counter-reset:s}
+  .steps li{counter-increment:s;position:relative;padding:7px 0 7px 30px;
+            border-left:1px solid var(--line);margin-left:9px;font-size:.74rem}
+  .steps li:last-child{border-left-color:transparent}
+  .steps li::before{content:counter(s);position:absolute;left:-10px;top:6px;width:19px;height:19px;
+            border-radius:50%;background:var(--panel);border:1px solid var(--line);
+            font-size:.6rem;font-weight:700;color:var(--mut2);display:flex;
+            align-items:center;justify-content:center;font-family:var(--mono)}
+  .steps li.fin::before{background:var(--amber);color:#1a1205;border-color:var(--amber)}
+  .steps .nm{color:var(--txt)}
+  .steps .vv{float:right;font-family:var(--mono);font-weight:700}
+  .steps .vv.neg{color:var(--green)} .steps .vv.pos{color:var(--blue)} .steps .vv.fin{color:var(--amber)}
+
+  /* ---- leitura atual ---- */
+  .read{display:flex;justify-content:space-between;font-size:.74rem;padding:6px 0;
+        border-bottom:1px dashed var(--line)}
+  .read:last-child{border-bottom:0}
+  .read .k{color:var(--mut2)} .read .v{font-family:var(--mono);font-weight:700}
+
+  /* ---- régua próximo strike ---- */
+  .ruler{position:relative;height:54px;margin:18px 4px 30px;border-radius:8px;overflow:visible}
+  .ruler .track{position:absolute;left:0;right:0;top:24px;height:8px;border-radius:6px;
+        background:linear-gradient(90deg,rgba(239,68,68,.35) 0%,rgba(239,68,68,.35) var(--pmPct),
+        rgba(34,197,94,.30) var(--pmPct),rgba(34,197,94,.30) 100%)}
+  .ruler .mk{position:absolute;top:0;transform:translateX(-50%);text-align:center}
+  .ruler .mk .ln{width:2px;height:32px;margin:8px auto 0;border-radius:2px}
+  .ruler .mk .t{font-size:.56rem;color:var(--mut2);white-space:nowrap}
+  .ruler .mk .vv{font-family:var(--mono);font-size:.66rem;font-weight:800;white-space:nowrap}
+  .ruler .zoneL,.ruler .zoneR{position:absolute;top:38px;font-size:.54rem;font-weight:700;letter-spacing:.5px}
+  .ruler .zoneL{left:6px;color:var(--red)} .ruler .zoneR{right:6px;color:var(--green)}
+
+  /* ---- calculadora ---- */
+  .calc{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  @media(max-width:520px){.calc{grid-template-columns:1fr}}
+  .calc label{font-size:.6rem;color:var(--mut);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+  .calc input,.calc select{width:100%;background:var(--bg);border:1px solid var(--line);
+        color:var(--txt);border-radius:8px;padding:9px 10px;font-family:var(--mono);font-size:.82rem}
+  .calc input:focus,.calc select:focus{outline:none;border-color:var(--blue)}
+  .calc-out{margin-top:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .co{background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:9px 10px;text-align:center}
+  .co .t{font-size:.55rem;color:var(--mut2);text-transform:uppercase;letter-spacing:.5px}
+  .co .v{font-family:var(--mono);font-weight:800;font-size:.92rem;margin-top:3px}
+  .verdict{margin-top:10px;padding:10px 12px;border-radius:9px;font-size:.74rem;font-weight:600;
+           border:1px solid var(--line);display:flex;align-items:center;gap:8px}
+
+  /* ---- tabela cenários ---- */
+  table{width:100%;border-collapse:collapse;font-size:.72rem}
+  th,td{padding:7px 8px;text-align:right;font-family:var(--mono);border-bottom:1px solid var(--line)}
+  th{color:var(--mut);font-weight:700;text-transform:uppercase;font-size:.56rem;letter-spacing:.5px;font-family:var(--sans)}
+  th:first-child,td:first-child{text-align:left}
+  td.tag{font-weight:700}
+  .ok{color:var(--green)} .warn{color:var(--amber)} .bad{color:var(--red)}
+  tr.cur{background:rgba(96,165,250,.07)}
+  .note{font-size:.64rem;color:var(--mut2);line-height:1.5;margin-top:8px}
+</style>
+</head>
+<body>
+
+<!-- gatilho: na sua app, este clique = clique sobre o valor "$1.196,44" -->
+<div class="demo-pm">
+  <div class="lbl">Preço Médio ETH</div>
+  <div class="val" id="openBtn">US$ 1.196,44</div>
+  <div class="hint">▲ clique para abrir o Raio‑X do cálculo</div>
+</div>
+
+<!-- ============ MODAL ============ -->
+<div class="pm-overlay" id="pmOverlay" role="dialog" aria-modal="true" aria-labelledby="pmTitle">
+  <div class="pm-modal">
+    <div class="pm-head">
+      <span class="ico">🧮</span>
+      <div>
+        <h2 id="pmTitle">Raio‑X do Preço Médio</h2>
+        <div class="sub">Como chegamos em <b id="hdPm" style="color:var(--amber)"></b> e qual o próximo strike seguro</div>
+      </div>
+      <button class="pm-x" id="pmClose" aria-label="Fechar">✕</button>
+    </div>
+    <div class="pm-body" id="pmBody"><!-- preenchido por JS --></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   DADOS — no seu projeto, substitua por valores reais vindos
+   das operações (computeStats / computeProjecao). O array
+   `premios` é o histórico de prêmios que amortizaram o custo.
+   ============================================================ */
+const DATA = {
+  ativo: 'ETH',
+  ultimoExercicio: 1825.00,        // strike da PUT exercida = preço de entrada
+  premios: [                       // prêmios recebidos DEPOIS (calls vendidas)
+    {rot:'Prêmio CALL #1', v:215.40},
+    {rot:'Prêmio CALL #2', v:188.20},
+    {rot:'Prêmio CALL #3', v:142.30},
+    {rot:'Prêmio CALL #4', v: 82.66},
+  ],
+  cotacao: 1879.33,
+  strikeAberto: 1950.00,
+  tipoAberto: 'CALL'
+};
+
+/* ---------- helpers ---------- */
+const usd = n => 'US$ ' + Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const sgn = n => (n>=0?'+':'−') + usd(n);
+const pct = n => (n>=0?'+':'') + n.toFixed(2) + '%';
+const somaPremios = DATA.premios.reduce((s,p)=>s+p.v,0);
+const PM = DATA.ultimoExercicio - somaPremios;          // ← o número mágico
+const vsPm = (DATA.cotacao - PM)/PM*100;
+const resExerc = DATA.strikeAberto - PM;
+const dist = (DATA.cotacao - DATA.strikeAberto)/DATA.strikeAberto*100;
+
+/* ---------- abre / fecha ---------- */
+const overlay = document.getElementById('pmOverlay');
+function openModal(){ build(); overlay.classList.add('open'); }
+function closeModal(){ overlay.classList.remove('open'); }
+document.getElementById('openBtn').onclick = openModal;
+document.getElementById('pmClose').onclick = closeModal;
+overlay.onclick = e => { if(e.target===overlay) closeModal(); };
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeModal(); });
+
+/* ---------- constrói o conteúdo ---------- */
+function build(){
+  document.getElementById('hdPm').textContent = usd(PM);
+
+  /* passos acumulados para o waterfall + lista */
+  let run = DATA.ultimoExercicio;
+  const steps = [{rot:'Preço de entrada (PUT exercida)', v:DATA.ultimoExercicio, type:'in', before:0, after:DATA.ultimoExercicio}];
+  DATA.premios.forEach(p=>{ const b=run; run-=p.v; steps.push({rot:p.rot, v:p.v, type:'down', before:b, after:run}); });
+  steps.push({rot:'PREÇO MÉDIO ATUAL', v:PM, type:'out', before:0, after:PM});
+
+  const body = document.getElementById('pmBody');
+  body.innerHTML = `
+    <!-- FÓRMULA -->
+    <div class="pm-formula">
+      <span class="r">${usd(PM)}</span><span class="op">=</span>
+      <span class="pos">${usd(DATA.ultimoExercicio)}</span><span class="op">+</span>
+      <span class="neg">(−${usd(somaPremios)})</span>
+      <span class="op" style="margin-left:auto;font-family:var(--sans);font-size:.66rem;color:var(--mut)">
+        entrada − prêmios acumulados</span>
+    </div>
+
+    <div class="grid2">
+      <!-- WATERFALL -->
+      <div class="card">
+        <div class="card-t">📊 Evolução do custo (waterfall)</div>
+        <div class="wf" id="wf"></div>
+      </div>
+      <!-- PASSOS -->
+      <div class="card">
+        <div class="card-t">📝 Passo a passo do cálculo</div>
+        <ol class="steps" id="steps"></ol>
+      </div>
+    </div>
+
+    <!-- LEITURA ATUAL -->
+    <div class="card">
+      <div class="card-t"> Leitura da operação aberta (${DATA.tipoAberto} ${usd(DATA.strikeAberto)})</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+        ${readBox('Cotação', usd(DATA.cotacao), 'var(--blue)')}
+        ${readBox('vs PM', pct(vsPm), 'var(--green)')}
+        ${readBox('Resultado se exercido', sgn(resExerc), resExerc>=0?'var(--green)':'var(--red)')}
+        ${readBox('Distância strike', pct(dist), 'var(--amber)')}
+      </div>
+    </div>
+
+    <!-- PRÓXIMO STRIKE -->
+    <div class="card">
+      <div class="card-t">🎯 Próximo strike sem prejuízo</div>
+      <p class="note" style="margin-top:0">
+        Seu PM (<b style="color:var(--amber)">${usd(PM)}</b>) é o <b>piso de lucro</b>.
+        Numa <b>CALL</b> vendida, o resultado se exercida é <i>strike − PM</i>; logo qualquer
+        strike <b>≥ PM</b> garante resultado ≥ 0 (zona verde). Numa <b>PUT</b>, não existe
+        strike que zere o risco: o seu <i>breakeven</i> é <b>strike − prêmio</b> (preço abaixo
+        do qual a marcação fica no vermelho). Use a calculadora para simular.
+      </p>
+      <div class="ruler" id="ruler"></div>
+
+      <div class="calc">
+        <div><label>Tipo</label>
+          <select id="cTipo"><option value="CALL">CALL vendida</option><option value="PUT">PUT vendida</option></select></div>
+        <div><label>Strike simulado</label><input id="cStrike" type="number" step="0.01" value="1973.00"></div>
+        <div><label>Prêmio estimado</label><input id="cPrem" type="number" step="0.01" value="60.00"></div>
+      </div>
+      <div class="calc-out" id="cOut"></div>
+      <div class="verdict" id="cVerdict"></div>
+    </div>
+
+    <!-- CENÁRIOS -->
+    <div class="card">
+      <div class="card-t">🧪 Tabela de cenários (prêmio estimado = 3% do strike)</div>
+      <table id="cenTable"></table>
+      <div class="note">Linhas em azul = strike da operação atual. "Sem prejuízo (CALL)" exige strike ≥ PM (${usd(PM)}).</div>
+    </div>`;
+
+  drawWaterfall(steps);
+  drawSteps(steps);
+  drawRuler();
+  bindCalc();
+  drawCenarios();
+}
+
+const readBox = (k,v,c)=>`<div class="co"><div class="t">${k}</div><div class="v" style="color:${c}">${v}</div></div>`;
+
+/* ---------- waterfall ---------- */
+function drawWaterfall(steps){
+  const AXIS = 2000, H = 240;
+  const y = v => H*(1 - v/AXIS);
+  let grid='';
+  [0,500,1000,1500,2000].forEach(g=>{ grid+=`<div class="wf-gl" style="top:${y(g)}px"><span>${g}</span></div>`; });
+  let cols='';
+  steps.forEach(s=>{
+    let top,h,cls,vtxt,vtop;
+    if(s.type==='in'){ cls='total-in'; top=y(s.after); h=H-y(s.after); vtxt=usd(s.v); vtop=top-15; }
+    else if(s.type==='down'){ cls='down'; top=y(s.before); h=y(s.after)-y(s.before); vtxt='−'+usd(s.v); vtop=top-15; }
+    else { cls='total-out'; top=y(s.after); h=H-y(s.after); vtxt=usd(s.v); vtop=top-15; }
+    cols += `<div class="wf-col">
+      <div class="wf-bar ${cls}" style="top:${top}px;height:${Math.max(h,2)}px"></div>
+      <div class="wf-v" style="top:${vtop}px;color:${s.type==='down'?'var(--green)':s.type==='out'?'var(--amber)':'var(--blue)'}">${vtxt}</div>
+      <div class="wf-lbl">${s.rot}</div></div>`;
+  });
+  document.getElementById('wf').innerHTML = `<div class="wf-grid">${grid}</div><div class="wf-cols">${cols}</div>`;
+}
+
+/* ---------- lista de passos ---------- */
+function drawSteps(steps){
+  let acc = 0, html='';
+  steps.forEach((s,i)=>{
+    let vv, cls='';
+    if(s.type==='in'){ vv=`<span class="vv pos">${usd(s.v)}</span>`; }
+    else if(s.type==='down'){ acc+=s.v; vv=`<span class="vv neg">−${usd(s.v)}</span>`; }
+    else { vv=`<span class="vv fin">${usd(s.v)}</span>`; cls='fin'; }
+    html += `<li class="${cls}"><span class="nm">${s.rot}</span>${vv}</li>`;
+  });
+  document.getElementById('steps').innerHTML = html;
+}
+
+/* ---------- régua de zona segura ---------- */
+function drawRuler(){
+  const MIN=1000, MAX=2100;
+  const pos = v => ((v-MIN)/(MAX-MIN)*100);
+  const pmP = pos(PM);
+  const r = document.getElementById('ruler');
+  r.style.setProperty('--pmPct', pmP+'%');
+  const mk = (v,t,c,dash)=>`<div class="mk" style="left:${pos(v)}%">
+      <div class="t">${t}</div><div class="ln" style="background:${c};${dash?'opacity:.6':''}"></div>
+      <div class="vv" style="color:${c}">${usd(v)}</div></div>`;
+  r.innerHTML = `<div class="track"></div>
+    <div class="zoneL">⛔ PREJUÍZO (CALL &lt; PM)</div>
+    <div class="zoneR">✅ SEM PREJUÍZO (CALL ≥ PM)</div>
+    ${mk(PM,'PM (piso)','var(--amber)',true)}
+    ${mk(DATA.cotacao,'Cotação','var(--blue)',false)}
+    ${mk(DATA.strikeAberto,'Strike atual','var(--green)',false)}`;
+}
+
+/* ---------- calculadora interativa ---------- */
+function bindCalc(){
+  const t=document.getElementById('cTipo'), s=document.getElementById('cStrike'), p=document.getElementById('cPrem');
+  [t,s,p].forEach(el=>el.addEventListener('input',calc));
+  calc();
+}
+function calc(){
+  const tipo=document.getElementById('cTipo').value;
+  const K=parseFloat(document.getElementById('cStrike').value)||0;
+  const P=parseFloat(document.getElementById('cPrem').value)||0;
+  const out=document.getElementById('cOut'), v=document.getElementById('cVerdict');
+  const distOtm = (DATA.cotacao-K)/DATA.cotacao*100;   // >0 = OTM (seguro p/ call)
+  let res, be, txt, color, icon;
+
+  if(tipo==='CALL'){
+    res = K - PM;                       // resultado se exercida
+    be  = PM;                           // breakeven = PM
+    const safe = res >= 0;
+    color = safe ? (distOtm>0?'var(--green)':'var(--amber)') : 'var(--red)';
+    icon  = safe ? (distOtm>0?'✅':'⚠️') : '⛔';
+    txt = safe
+      ? (distOtm>0
+        ? `Strike OTM e acima do PM → lucro garantido se exercida, e você ainda coleta o prêmio se não for.`
+        : `Strike acima do PM (sem prejuízo), mas ITM: alta chance de exercício — você vende o ativo com lucro ${usd(res)}.`)
+      : `Strike ABAIXO do PM → vender aqui realiza prejuízo de ${usd(Math.abs(res))} se exercida.`;
+    out.innerHTML =
+      co('Resultado se exercida', sgn(res), res>=0?'var(--green)':'var(--red)') +
+      co('Breakeven (piso)', usd(be), 'var(--amber)') +
+      co('Distância OTM', pct(distOtm), distOtm>0?'var(--green)':'var(--red)');
+  } else {
+    be  = K - P;                        // breakeven da put
+    res = PM - be;                      // quanto a compra efetiva fica abaixo do seu PM
+    const otm = distOtm>0;              // p/ put, cotação>strike = OTM
+    const ok  = be <= PM;               // mesmo exercida, compra efetiva ≤ seu PM histórico
+    color = ok ? 'var(--green)' : (otm?'var(--amber)':'var(--red)');
+    icon  = ok ? '✅' : (otm?'⚠️':'⛔');
+    txt = ok
+      ? `Mesmo se exercida, sua compra efetiva (${usd(be)}) fica abaixo do PM → nunca paga mais que seu custo histórico.`
+      : `Se exercida, compra efetiva ${usd(be)} fica acima do PM. Só compense se o prêmio e a distância OTM justificarem o risco.`;
+    out.innerHTML =
+      co('Breakeven da PUT', usd(be), 'var(--amber)') +
+      co('Compra efetiva vs PM', sgn(res), res>=0?'var(--green)':'var(--red)') +
+      co('Distância OTM', pct(distOtm), otm?'var(--green)':'var(--red)');
+  }
+  v.style.borderColor = color; v.style.color = color;
+  v.style.background = color.replace(')', ',.08)').replace('var(','rgba(').replace('--green','34,197,94').replace('--amber','245,158,11').replace('--red','239,68,68');
+  v.style.background = 'rgba(255,255,255,.02)';
+  v.innerHTML = `<span style="font-size:1.1rem">${icon}</span><span>${txt}</span>`;
+}
+const co = (t,v,c)=>`<div class="co"><div class="t">${t}</div><div class="v" style="color:${c}">${v}</div></div>`;
+
+/* ---------- tabela de cenários ---------- */
+function drawCenarios(){
+  const factors=[0.95,0.97,1.00,1.03,1.05];
+  let rows='';
+  factors.forEach(f=>{
+    const K = +(DATA.cotacao*f).toFixed(2);
+    const P = +(K*0.03).toFixed(2);
+    const resCall = K - PM;
+    const bePut = K - P;
+    const distOtm = (DATA.cotacao-K)/DATA.cotacao*100;
+    const cur = Math.abs(K-DATA.strikeAberto) < 1;
+    const clsCall = resCall>=0 ? (distOtm>0?'ok':'warn') : 'bad';
+    const clsPut  = bePut<=PM ? 'ok' : (distOtm>0?'warn':'bad');
+    rows += `<tr class="${cur?'cur':''}">
+      <td>${usd(K)}${cur?' ◀':''}</td>
+      <td>${usd(P)}</td>
+      <td class="tag ${clsCall}">${sgn(resCall)}</td>
+      <td class="${distOtm>0?'ok':'bad'}">${pct(distOtm)}</td>
+      <td class="tag ${clsPut}">${usd(bePut)}</td>
+      <td class="${clsPut}">${bePut<=PM?'sim':'não'}</td></tr>`;
+  });
+  document.getElementById('cenTable').innerHTML =
+    `<thead><tr><th>Strike</th><th>Prêmio 3%</th><th>CALL: result.</th><th>Dist.OTM</th><th>PUT: breakeven</th><th>≤ PM?</th></tr></thead><tbody>${rows}</tbody>`;
+}
+</script>
+</body>
+</html>
