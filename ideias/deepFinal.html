@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard · Performance da Carteira ETH</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #070b14;
+            color: #eef2f8;
+            padding: 24px 18px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1360px;
+            margin: 0 auto;
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 40px; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+
+        .text-green { color: #4ade80; }
+        .text-red { color: #f87171; }
+        .text-orange { color: #fb923c; }
+        .text-blue { color: #60a5fa; }
+        .text-gold { color: #fbbf24; }
+        .text-purple { color: #a78bfa; }
+        .text-cyan { color: #22d3ee; }
+        .text-muted { color: #94a3b8; }
+
+        .bg-green-dark { background: #0a1f12; }
+        .bg-red-dark { background: #1f0a0a; }
+        .bg-gold-dark { background: #1f170a; }
+
+        /* ===== HEADER ===== */
+        .main-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 28px;
+            border-bottom: 1px solid #1e293b;
+            padding-bottom: 20px;
+        }
+
+        .main-header h1 {
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            background: linear-gradient(135deg, #f0f5ff, #7aa9ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .main-header .sub { color: #94a3b8; font-size: 14px; margin-top: 4px; }
+
+        .header-stats {
+            display: flex;
+            gap: 16px 24px;
+            flex-wrap: wrap;
+            background: #0f172a;
+            padding: 10px 22px;
+            border-radius: 16px;
+            border: 1px solid #1e293b;
+        }
+
+        .header-stats .hs-item {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            font-size: 13px;
+        }
+        .header-stats .hs-item .label { color: #94a3b8; }
+        .header-stats .hs-item .value { font-weight: 600; font-size: 15px; }
+
+        /* ===== DASHBOARD PRINCIPAL ===== */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .dash-card {
+            background: #0f172a;
+            border-radius: 20px;
+            border: 1px solid #1e293b;
+            padding: 20px 22px;
+            transition: 0.2s;
+        }
+
+        .dash-card:hover { border-color: #334155; }
+
+        .dash-card .card-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dash-card .card-value {
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        .dash-card .card-sub {
+            font-size: 14px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+
+        .dash-card .card-change {
+            font-size: 15px;
+            font-weight: 600;
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* ===== GRÁFICO DE PERFORMANCE ===== */
+        .chart-container {
+            background: #0f172a;
+            border-radius: 20px;
+            border: 1px solid #1e293b;
+            padding: 22px 24px 28px;
+            margin-bottom: 24px;
+        }
+
+        .chart-container .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .chart-container .chart-title .badge {
+            background: #1e293b;
+            padding: 2px 12px;
+            border-radius: 40px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        /* Gráfico SVG */
+        .chart-svg-wrap {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .chart-svg-wrap svg {
+            width: 100%;
+            min-width: 600px;
+            height: auto;
+        }
+
+        /* ===== PARECER ESTRATÉGICO ===== */
+        .parecer-container {
+            background: #0f172a;
+            border-radius: 20px;
+            border: 1px solid #1e293b;
+            padding: 24px 28px;
+            margin-top: 24px;
+        }
+
+        .parecer-container .parecer-title {
+            font-size: 18px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .parecer-container .parecer-title .status-badge {
+            padding: 4px 18px;
+            border-radius: 40px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .status-badge.profit {
+            background: #0a1f12;
+            color: #4ade80;
+            border: 1px solid #1a4a2a;
+        }
+
+        .status-badge.loss {
+            background: #1f0a0a;
+            color: #f87171;
+            border: 1px solid #4a1a1a;
+        }
+
+        .status-badge.neutral {
+            background: #1f170a;
+            color: #fbbf24;
+            border: 1px solid #4a3a1a;
+        }
+
+        .parecer-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .parecer-item {
+            background: #0a0f1e;
+            border-radius: 14px;
+            padding: 16px 18px;
+            border: 1px solid #1a2332;
+        }
+
+        .parecer-item .pi-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #94a3b8;
+            letter-spacing: 0.3px;
+        }
+
+        .parecer-item .pi-value {
+            font-size: 22px;
+            font-weight: 700;
+            margin-top: 4px;
+        }
+
+        .parecer-item .pi-desc {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+
+        .parecer-item .pi-bar {
+            height: 6px;
+            background: #1a2332;
+            border-radius: 40px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .parecer-item .pi-bar .fill {
+            height: 100%;
+            border-radius: 40px;
+            transition: width 0.6s;
+        }
+
+        .parecer-item .pi-bar .fill.profit { background: #4ade80; }
+        .parecer-item .pi-bar .fill.loss { background: #f87171; }
+        .parecer-item .pi-bar .fill.neutral { background: #fbbf24; }
+
+        /* ===== RECOMENDAÇÕES ===== */
+        .recomendacoes {
+            margin-top: 16px;
+            background: #0a1220;
+            border-radius: 14px;
+            padding: 16px 20px;
+            border: 1px solid #1a2332;
+        }
+
+        .recomendacoes .rec-title {
+            font-weight: 600;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .recomendacoes ul {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .recomendacoes ul li {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #c8d6f0;
+            padding: 4px 0;
+        }
+
+        .recomendacoes ul li .rec-emoji { font-size: 18px; flex-shrink: 0; }
+        .recomendacoes ul li .rec-text { flex: 1; }
+        .recomendacoes ul li .rec-text strong { color: #eef2f8; }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 900px) {
+            .dashboard-grid { grid-template-columns: 1fr; }
+            .parecer-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 700px) {
+            body { padding: 12px; }
+            .main-header { flex-direction: column; }
+            .header-stats { width: 100%; justify-content: space-around; }
+            .dash-card .card-value { font-size: 24px; }
+            .chart-svg-wrap svg { min-width: 400px; }
+        }
+
+        @media (max-width: 480px) {
+            .parecer-container { padding: 16px; }
+            .chart-container { padding: 16px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- HEADER -->
+    <div class="main-header">
+        <div>
+            <h1>
+                <span>📊</span> Performance da Carteira · ETH
+            </h1>
+            <div class="sub">
+                Análise completa de <strong>82 operações</strong> · Período: <strong>Julho 2026</strong>
+            </div>
+        </div>
+        <div class="header-stats">
+            <div class="hs-item"><span class="label">📈 Total ops</span><span class="value text-blue">82</span></div>
+            <div class="hs-item"><span class="label">🟢 Abertas</span><span class="value text-cyan">1</span></div>
+            <div class="hs-item"><span class="label">💰 Prêmio total</span><span class="value text-gold">US$ 661,77</span></div>
+            <div class="hs-item"><span class="label">📊 PM atual</span><span class="value text-blue">US$ 1.836,56</span></div>
+        </div>
+    </div>
+
+    <!-- DASHBOARD PRINCIPAL -->
+    <div class="dashboard-grid">
+        <!-- Investimento Inicial -->
+        <div class="dash-card">
+            <div class="card-title">💼 Investimento Inicial</div>
+            <div class="card-value text-blue">US$ 1.925,00</div>
+            <div class="card-sub">Entrada PUT · US$ 1.925,00</div>
+            <div class="card-change text-muted">📅 20/07/2026</div>
+        </div>
+
+        <!-- Valor Final (Atual) -->
+        <div class="dash-card">
+            <div class="card-title">📈 Valor Final (Atual)</div>
+            <div class="card-value text-gold">US$ 1.836,56</div>
+            <div class="card-sub">Preço Médio atual · 26/07/2026</div>
+            <div class="card-change text-red">▼ -US$ 88,44 (-4,59%)</div>
+        </div>
+
+        <!-- Resultado Bruto -->
+        <div class="dash-card" style="border-color: #2a3a2a;">
+            <div class="card-title">💰 Resultado Bruto (Prêmios)</div>
+            <div class="card-value text-green">+US$ 197,59</div>
+            <div class="card-sub">Prêmios acumulados em julho</div>
+            <div class="card-change text-green">▲ +10,26% sobre o inicial</div>
+        </div>
+
+        <!-- Resultado Líquido -->
+        <div class="dash-card" style="border-color: #3a2a2a;">
+            <div class="card-title">📊 Resultado Líquido (PM)</div>
+            <div class="card-value" style="color: #f87171;">-US$ 88,44</div>
+            <div class="card-sub">Variação do Preço Médio</div>
+            <div class="card-change text-red">▼ -4,59% do investimento inicial</div>
+        </div>
+    </div>
+
+    <!-- GRÁFICO DE PERFORMANCE -->
+    <div class="chart-container">
+        <div class="chart-title">
+            📈 Evolução da Performance da Carteira
+            <span class="badge">Julho 2026</span>
+            <span class="badge" style="background:#2a1a15; border-color:#5a3a1a;">🔥 PUT exercida</span>
+        </div>
+        <div class="chart-svg-wrap">
+            <svg viewBox="0 0 800 280" xmlns="http://www.w3.org/2000/svg">
+                <!-- Fundo -->
+                <rect x="0" y="0" width="800" height="280" fill="#0a0f1e" rx="12"/>
+
+                <!-- Grade horizontal -->
+                <line x1="60" y1="40" x2="760" y2="40" stroke="#1a2332" stroke-width="1" stroke-dasharray="4,4"/>
+                <line x1="60" y1="90" x2="760" y2="90" stroke="#1a2332" stroke-width="1" stroke-dasharray="4,4"/>
+                <line x1="60" y1="140" x2="760" y2="140" stroke="#1a2332" stroke-width="1" stroke-dasharray="4,4"/>
+                <line x1="60" y1="190" x2="760" y2="190" stroke="#1a2332" stroke-width="1" stroke-dasharray="4,4"/>
+                <line x1="60" y1="240" x2="760" y2="240" stroke="#1a2332" stroke-width="1" stroke-dasharray="4,4"/>
+
+                <!-- Eixos -->
+                <line x1="60" y1="20" x2="60" y2="260" stroke="#334155" stroke-width="1.5"/>
+                <line x1="60" y1="260" x2="760" y2="260" stroke="#334155" stroke-width="1.5"/>
+
+                <!-- Labels Y -->
+                <text x="50" y="45" fill="#94a3b8" font-size="10" text-anchor="end">+US$ 200</text>
+                <text x="50" y="95" fill="#94a3b8" font-size="10" text-anchor="end">+US$ 100</text>
+                <text x="50" y="145" fill="#94a3b8" font-size="10" text-anchor="end">US$ 0</text>
+                <text x="50" y="195" fill="#94a3b8" font-size="10" text-anchor="end">-US$ 100</text>
+                <text x="50" y="245" fill="#94a3b8" font-size="10" text-anchor="end">-US$ 200</text>
+
+                <!-- Linha de base (zero) -->
+                <line x1="60" y1="140" x2="760" y2="140" stroke="#475569" stroke-width="1.5" stroke-dasharray="6,4"/>
+
+                <!-- Área de lucro (verde) -->
+                <polygon points="60,140 170,130 280,115 390,95 500,80 610,65 720,45 760,40 760,140 60,140"
+                         fill="rgba(74,222,128,0.15)"/>
+
+                <!-- Área de prejuízo (vermelho) -->
+                <polygon points="60,140 170,130 280,115 390,95 500,80 610,65 720,45 760,40 760,260 60,260"
+                         fill="rgba(248,113,113,0.05)" display="none"/>
+
+                <!-- Linha de Performance (lucro acumulado) -->
+                <polyline points="60,230 170,180 280,140 390,100 500,70 610,50 720,30 760,20"
+                          fill="none" stroke="#4ade80" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+
+                <!-- Pontos de dados -->
+                <circle cx="60" cy="230" r="6" fill="#4ade80" stroke="#0a0f1e" stroke-width="2"/>
+                <circle cx="170" cy="180" r="6" fill="#4ade80" stroke="#0a0f1e" stroke-width="2"/>
+                <circle cx="280" cy="140" r="6" fill="#fbbf24" stroke="#0a0f1e" stroke-width="2"/>
+                <circle cx="390" cy="100" r="6" fill="#4ade80" stroke="#0a0f1e" stroke-width="2"/>
+                <circle cx="500" cy="70" r="6" fill="#4ade80" stroke="#0a0f1e" stroke-width="2"/>
+                <circle cx="610" cy="50" r="6" fill="#4ade80" stroke="#0a0f1e" stroke-width="2"/>
+                <circle cx="720" cy="30" r="6" fill="#4ade80" stroke="#0a0f1e" stroke-width="2"/>
+                <circle cx="760" cy="20" r="8" fill="#fbbf24" stroke="#0a0f1e" stroke-width="3"/>
+
+                <!-- Labels dos pontos -->
+                <text x="60" y="248" fill="#94a3b8" font-size="9" text-anchor="middle">02/07</text>
+                <text x="170" y="198" fill="#94a3b8" font-size="9" text-anchor="middle">05/07</text>
+                <text x="280" y="158" fill="#94a3b8" font-size="9" text-anchor="middle">08/07</text>
+                <text x="390" y="118" fill="#94a3b8" font-size="9" text-anchor="middle">12/07</text>
+                <text x="500" y="88" fill="#94a3b8" font-size="9" text-anchor="middle">15/07 ⭐</text>
+                <text x="610" y="68" fill="#94a3b8" font-size="9" text-anchor="middle">20/07</text>
+                <text x="720" y="48" fill="#94a3b8" font-size="9" text-anchor="middle">23/07</text>
+                <text x="760" y="38" fill="#fbbf24" font-size="9" text-anchor="middle">26/07</text>
+
+                <!-- Valor atual no ponto final -->
+                <text x="760" y="12" fill="#fbbf24" font-size="11" font-weight="700" text-anchor="middle">+US$ 197,59</text>
+
+                <!-- Legenda -->
+                <rect x="580" y="250" width="12" height="12" rx="3" fill="#4ade80"/>
+                <text x="596" y="261" fill="#94a3b8" font-size="10">Lucro acumulado</text>
+                <circle cx="640" cy="256" r="4" fill="#fbbf24"/>
+                <text x="648" y="261" fill="#94a3b8" font-size="10">Ponto atual</text>
+            </svg>
+        </div>
+
+        <!-- Resumo do gráfico -->
+        <div style="display:flex; flex-wrap:wrap; gap:16px 30px; margin-top:14px; padding-top:14px; border-top:1px solid #1a2332; font-size:13px; color:#94a3b8;">
+            <span>📊 <strong class="text-green">Lucro acumulado:</strong> +US$ 197,59</span>
+            <span>📉 <strong class="text-red">Prejuízo no PM:</strong> -US$ 88,44</span>
+            <span>📈 <strong class="text-gold">Resultado líquido:</strong> +US$ 109,15</span>
+            <span>⭐ <strong class="text-gold">Melhor ponto:</strong> 15/07 (PUT exercida)</span>
+        </div>
+    </div>
+
+    <!-- PARECER ESTRATÉGICO -->
+    <div class="parecer-container">
+        <div class="parecer-title">
+            🧠 Parecer Estratégico
+            <span class="status-badge neutral">🟡 Em recuperação</span>
+        </div>
+
+        <div class="parecer-grid">
+            <!-- Análise de Performance -->
+            <div class="parecer-item">
+                <div class="pi-label">📊 Performance Geral</div>
+                <div class="pi-value" style="color:#fbbf24;">+US$ 109,15</div>
+                <div class="pi-desc">Resultado líquido considerando prêmios e PM</div>
+                <div class="pi-bar"><div class="fill profit" style="width:55%;"></div></div>
+                <div style="display:flex; justify-content:space-between; font-size:12px; color:#94a3b8; margin-top:4px;">
+                    <span>Prejuízo</span>
+                    <span>Lucro</span>
+                </div>
+            </div>
+
+            <!-- Análise de Risco -->
+            <div class="parecer-item">
+                <div class="pi-label">⚠️ Nível de Risco</div>
+                <div class="pi-value" style="color:#fb923c;">Médio-Alto</div>
+                <div class="pi-desc">Strike a -0,51% do PM · margem reduzida</div>
+                <div class="pi-bar"><div class="fill loss" style="width:72%;"></div></div>
+                <div style="display:flex; justify-content:space-between; font-size:12px; color:#94a3b8; margin-top:4px;">
+                    <span>Baixo</span>
+                    <span>Alto</span>
+                </div>
+            </div>
+
+            <!-- Análise de Eficiência -->
+            <div class="parecer-item">
+                <div class="pi-label">🎯 Taxa de Acerto</div>
+                <div class="pi-value" style="color:#4ade80;">47%</div>
+                <div class="pi-desc">8 operações lucrativas em 17 realizadas</div>
+                <div class="pi-bar"><div class="fill profit" style="width:47%;"></div></div>
+                <div style="display:flex; justify-content:space-between; font-size:12px; color:#94a3b8; margin-top:4px;">
+                    <span>0%</span>
+                    <span>100%</span>
+                </div>
+            </div>
+
+            <!-- Análise de Recuperação -->
+            <div class="parecer-item">
+                <div class="pi-label">🔄 Potencial de Recuperação</div>
+                <div class="pi-value" style="color:#60a5fa;">+US$ 113,44</div>
+                <div class="pi-desc">Resultado se exercido no strike atual</div>
+                <div class="pi-bar"><div class="fill neutral" style="width:65%;"></div></div>
+                <div style="display:flex; justify-content:space-between; font-size:12px; color:#94a3b8; margin-top:4px;">
+                    <span>Baixo</span>
+                    <span>Alto</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recomendações Estratégicas -->
+        <div class="recomendacoes">
+            <div class="rec-title">
+                💡 Recomendações Estratégicas
+                <span class="badge" style="background:#1e293b; padding:2px 12px; border-radius:40px; font-size:11px; color:#94a3b8;">Otimização</span>
+            </div>
+            <ul>
+                <li>
+                    <span class="rec-emoji">📊</span>
+                    <span class="rec-text"><strong>Aumentar volume de CALLs:</strong> As operações de CALL têm mostrado melhor taxa de acerto (60%) e maior lucro médio por operação (+US$ 18,50). Recomenda-se aumentar a frequência de CALLs para acelerar a redução do preço médio.</span>
+                </li>
+                <li>
+                    <span class="rec-emoji">🎯</span>
+                    <span class="rec-text"><strong>Reduzir exposição a PUTs exercidas:</strong> As PUTs exercidas representam 35% das operações e geram impacto negativo no PM. Considere ajustar o strike para níveis mais conservadores (US$ 1.880-1.900) para reduzir o risco de exercício.</span>
+                </li>
+                <li>
+                    <span class="rec-emoji">📈</span>
+                    <span class="rec-text"><strong>Otimizar ponto de entrada:</strong> As operações realizadas entre 12-15/07 apresentaram os melhores resultados (média de +US$ 21,00). Concentre as operações nesse padrão de mercado para maximizar os ganhos.</span>
+                </li>
+                <li>
+                    <span class="rec-emoji">💰</span>
+                    <span class="rec-text"><strong>Diversificar estratégia:</strong> Atualmente 100% das operações são em ETH. Considere alocar uma pequena parcela (10-15%) em outras criptomoedas para reduzir o risco concentrado e aproveitar oportunidades em diferentes mercados.</span>
+                </li>
+                <li>
+                    <span class="rec-emoji">⚠️</span>
+                    <span class="rec-text"><strong>Gerenciar risco de strike:</strong> Com o strike atual a -0,51% do PM, o risco de exercício é elevado. Recomenda-se manter um buffer mínimo de -3% e ajustar o strike para US$ 1.880-1.900 para reduzir a pressão sobre o preço médio.</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Resumo Final -->
+        <div style="margin-top:16px; display:flex; flex-wrap:wrap; gap:12px 24px; padding:14px 18px; background:#0a1220; border-radius:14px; border:1px solid #1a2332; font-size:14px;">
+            <span>📊 <strong>Resumo:</strong> Carteira com <strong class="text-gold">+US$ 109,15</strong> de resultado líquido</span>
+            <span>📈 <strong>Taxa de acerto:</strong> <span class="text-green">47%</span> (8/17)</span>
+            <span>⚠️ <strong>Risco:</strong> <span class="text-orange">Médio-Alto</span> (strike próximo)</span>
+            <span>🎯 <strong>Próximo objetivo:</strong> <span class="text-blue">US$ 1.880</span> (redução adicional de 2,4%)</span>
+        </div>
+    </div>
+
+    <!-- rodapé -->
+    <div style="margin-top:32px; border-top:1px solid #1e293b; padding-top:18px; font-size:13px; color:#64748b; display:flex; justify-content:space-between; flex-wrap:wrap;">
+        <span>📊 Dashboard de Performance · ETH v1.0</span>
+        <span>Dados simulados · 82 operações · Julho 2026</span>
+    </div>
+</div>
+
+<script>
+    console.log('📊 Dashboard de Performance carregado com sucesso!');
+
+    // Anima as barras de progresso ao carregar
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.pi-bar .fill').forEach(bar => {
+            const width = bar.style.width;
+            bar.style.width = '0%';
+            setTimeout(() => {
+                bar.style.width = width;
+            }, 200);
+        });
+    });
+</script>
+</body>
+</html>

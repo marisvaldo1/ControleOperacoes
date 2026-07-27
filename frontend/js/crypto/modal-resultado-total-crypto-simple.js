@@ -580,7 +580,9 @@
       var strike = parseFloat(op.strike       || 0);
       var cot    = parseFloat(op.cotacao_atual || 0);
       var dist   = strike && cot
-        ? ((tipo === 'CALL' ? (strike - cot) / cot : (cot - strike) / strike) * 100).toFixed(2)
+        ? (window.CryptoUtils
+            ? window.CryptoUtils.calcDistancia(tipo, strike, cot).toFixed(2)
+            : ((tipo === 'CALL' ? (strike - cot) / cot : (cot - strike) / strike) * 100).toFixed(2))
         : '?';
       var premio = parseFloat(op.premio_us || 0);
       var tae    = parseFloat(op.tae       || 0);

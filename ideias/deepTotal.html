@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preço Médio · Performance por Operação</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #070b14;
+            color: #eef2f8;
+            padding: 24px 18px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1360px;
+            margin: 0 auto;
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 40px; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+
+        .text-green { color: #4ade80; }
+        .text-red { color: #f87171; }
+        .text-orange { color: #fb923c; }
+        .text-blue { color: #60a5fa; }
+        .text-gold { color: #fbbf24; }
+        .text-purple { color: #a78bfa; }
+        .text-cyan { color: #22d3ee; }
+        .text-muted { color: #94a3b8; }
+
+        .bg-green-dark { background: #0a1f12; }
+        .bg-red-dark { background: #1f0a0a; }
+        .bg-gold-dark { background: #1f170a; }
+        .bg-blue-dark { background: #0a1220; }
+
+        /* ===== HEADER ===== */
+        .main-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 28px;
+            border-bottom: 1px solid #1e293b;
+            padding-bottom: 20px;
+        }
+
+        .main-header h1 {
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            background: linear-gradient(135deg, #f0f5ff, #7aa9ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .main-header h1 .emoji-big { font-size: 32px; -webkit-text-fill-color: initial; }
+        .main-header .sub { color: #94a3b8; font-size: 14px; margin-top: 4px; }
+
+        .header-stats {
+            display: flex;
+            gap: 16px 24px;
+            flex-wrap: wrap;
+            background: #0f172a;
+            padding: 10px 22px;
+            border-radius: 16px;
+            border: 1px solid #1e293b;
+        }
+
+        .header-stats .hs-item {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            font-size: 13px;
+        }
+
+        .header-stats .hs-item .label { color: #94a3b8; }
+        .header-stats .hs-item .value { font-weight: 600; font-size: 15px; }
+
+        /* ===== FILTERS ===== */
+        .filters-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 16px;
+            background: #0f172a;
+            padding: 12px 18px;
+            border-radius: 16px;
+            border: 1px solid #1e293b;
+            margin-bottom: 24px;
+            align-items: center;
+        }
+
+        .filters-bar .filter-group { display: flex; align-items: center; gap: 6px; }
+        .filters-bar .filter-group .fg-label {
+            font-size: 11px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            font-weight: 500;
+        }
+        .filters-bar .filter-tabs { display: flex; gap: 3px; }
+        .filters-bar .filter-tabs .tab {
+            padding: 3px 14px;
+            border-radius: 40px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: default;
+            background: transparent;
+            color: #94a3b8;
+            border: 1px solid transparent;
+            transition: 0.15s;
+        }
+        .filters-bar .filter-tabs .tab.active {
+            background: #1e293b;
+            color: #eef2f8;
+            border-color: #334155;
+        }
+        .filters-bar .filter-tabs .tab:hover { border-color: #334155; }
+        .filter-badge {
+            background: #1e293b;
+            padding: 2px 14px;
+            border-radius: 40px;
+            font-size: 12px;
+            color: #94a3b8;
+            border: 1px solid #334155;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* ===== KPI CARDS ===== */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .kpi-card {
+            background: #0f172a;
+            border-radius: 14px;
+            padding: 14px 16px;
+            border: 1px solid #1e293b;
+            text-align: center;
+            transition: 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        .kpi-card:hover { border-color: #334155; transform: translateY(-2px); }
+        .kpi-card .kpi-emoji { font-size: 24px; display: block; margin-bottom: 2px; }
+        .kpi-card .kpi-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #94a3b8;
+            letter-spacing: 0.3px;
+            font-weight: 500;
+        }
+        .kpi-card .kpi-value { font-size: 22px; font-weight: 700; margin-top: 2px; }
+        .kpi-card .kpi-sub { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+
+        /* ===== TIMELINE SECTION ===== */
+        .timeline-section {
+            background: #0f172a;
+            border-radius: 20px;
+            border: 1px solid #1e293b;
+            overflow: hidden;
+        }
+
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid #1e293b;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .timeline-header .tl-title {
+            font-weight: 600;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .timeline-header .tl-title .badge {
+            background: #1e293b;
+            padding: 2px 12px;
+            border-radius: 40px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .timeline-header .tl-actions {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .timeline-header .tl-actions button {
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: #94a3b8;
+            padding: 4px 14px;
+            border-radius: 40px;
+            font-size: 12px;
+            cursor: default;
+            font-family: 'Inter', sans-serif;
+            transition: 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .timeline-header .tl-actions button.active {
+            background: #1a3a5c;
+            border-color: #3b82f6;
+            color: #eef2f8;
+        }
+        .timeline-header .tl-actions button:hover { border-color: #4a6a8a; }
+
+        /* ===== ACCORDION ===== */
+        .accordion { display: flex; flex-direction: column; }
+        .accordion-item { border-bottom: 1px solid #1a2332; }
+        .accordion-item:last-child { border-bottom: 0; }
+
+        .accordion-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 20px;
+            cursor: default;
+            transition: 0.15s;
+            background: transparent;
+        }
+        .accordion-header:hover { background: #131f33; }
+
+        .accordion-header .ah-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .accordion-header .ah-left .month {
+            font-weight: 600;
+            font-size: 15px;
+            min-width: 100px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .accordion-header .ah-left .month-stats {
+            display: flex;
+            gap: 12px;
+            font-size: 13px;
+            color: #94a3b8;
+            flex-wrap: wrap;
+        }
+
+        .accordion-header .ah-left .month-stats .ms-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .accordion-header .ah-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .accordion-header .ah-right .badge-count {
+            background: #1e293b;
+            padding: 2px 12px;
+            border-radius: 40px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .accordion-header .ah-right .arrow {
+            color: #94a3b8;
+            font-size: 18px;
+            transition: transform 0.25s;
+        }
+        .accordion-header .ah-right .arrow.open { transform: rotate(180deg); }
+
+        .accordion-content {
+            padding: 0 20px 20px 20px;
+            display: none;
+            animation: slideDown 0.3s ease-out;
+        }
+        .accordion-content.open { display: block; }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ===== MINI SPARK ===== */
+        .mini-spark {
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            height: 28px;
+            margin-left: 8px;
+        }
+        .mini-spark .sp {
+            width: 4px;
+            border-radius: 2px;
+            background: #60a5fa;
+            transition: height 0.3s;
+        }
+        .mini-spark .sp.green { background: #4ade80; }
+        .mini-spark .sp.red { background: #f87171; }
+        .mini-spark .sp.gold { background: #fbbf24; }
+
+        /* ===== TABELA PRINCIPAL ===== */
+        .operations-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .operations-table th {
+            text-align: left;
+            padding: 8px 10px;
+            color: #94a3b8;
+            font-weight: 500;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            border-bottom: 1px solid #1a2332;
+        }
+
+        .operations-table td {
+            padding: 9px 10px;
+            border-bottom: 1px solid #1a2332;
+            vertical-align: middle;
+        }
+        .operations-table tr:last-child td { border-bottom: 0; }
+        .operations-table tr:hover td { background: #131f33; }
+
+        .op-type {
+            display: inline-block;
+            padding: 2px 12px;
+            border-radius: 40px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .op-type.put { background: #2a1515; color: #f87171; }
+        .op-type.call { background: #152a1a; color: #4ade80; }
+
+        .op-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+        }
+        .op-status .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 40px;
+            display: inline-block;
+        }
+        .op-status .dot.open { background: #60a5fa; }
+        .op-status .dot.closed { background: #94a3b8; }
+        .op-status .dot.exercised { background: #fb923c; }
+
+        .pm-impact {
+            font-weight: 600;
+            font-size: 13px;
+        }
+        .pm-impact.positive { color: #4ade80; }
+        .pm-impact.negative { color: #f87171; }
+        .pm-impact .impact-arrow { font-size: 14px; }
+
+        .badge-exercised {
+            background: #2a1a15;
+            color: #fb923c;
+            padding: 1px 10px;
+            border-radius: 40px;
+            font-size: 10px;
+            border: 1px solid #5a3a1a;
+            font-weight: 600;
+        }
+
+        .accordion-item.current .accordion-header {
+            background: #0f1a2e;
+            border-left: 3px solid #3b82f6;
+        }
+        .accordion-item.current .accordion-header .ah-left .month { color: #60a5fa; }
+
+        /* ============================================================ */
+        /* ===== NOVO ACCORDION: PERFORMANCE POR OPERAÇÃO ===== */
+        /* ============================================================ */
+        .performance-accordion {
+            border-top: 2px solid #1e293b;
+            margin-top: 4px;
+        }
+
+        .perf-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            cursor: default;
+            transition: 0.15s;
+            background: #0a1220;
+            border-bottom: 1px solid #1a2332;
+        }
+
+        .perf-header:hover { background: #111f33; }
+
+        .perf-header .ph-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .perf-header .ph-left .title {
+            font-weight: 700;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .perf-header .ph-left .perf-stats {
+            display: flex;
+            gap: 16px;
+            font-size: 13px;
+            flex-wrap: wrap;
+        }
+
+        .perf-header .ph-left .perf-stats .ps-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: #0f172a;
+            padding: 2px 12px;
+            border-radius: 40px;
+            border: 1px solid #1e293b;
+        }
+
+        .perf-header .ph-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .perf-header .ph-right .arrow {
+            color: #94a3b8;
+            font-size: 18px;
+            transition: transform 0.25s;
+        }
+        .perf-header .ph-right .arrow.open { transform: rotate(180deg); }
+
+        .perf-content {
+            padding: 0 20px 20px 20px;
+            display: none;
+            animation: slideDown 0.3s ease-out;
+        }
+        .perf-content.open { display: block; }
+
+        /* ===== TABELA DE PERFORMANCE ===== */
+        .perf-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .perf-table th {
+            text-align: left;
+            padding: 8px 10px;
+            color: #94a3b8;
+            font-weight: 500;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            border-bottom: 2px solid #1a2332;
+        }
+
+        .perf-table td {
+            padding: 10px 10px;
+            border-bottom: 1px solid #1a2332;
+            vertical-align: middle;
+        }
+        .perf-table tr:last-child td { border-bottom: 0; }
+        .perf-table tr:hover td { background: #131f33; }
+
+        .perf-table .profit { color: #4ade80; font-weight: 700; }
+        .perf-table .loss { color: #f87171; font-weight: 700; }
+
+        /* Barra de performance visual */
+        .perf-bar-track {
+            width: 100px;
+            height: 8px;
+            background: #1a2332;
+            border-radius: 40px;
+            overflow: hidden;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        .perf-bar-track .perf-bar-fill {
+            height: 100%;
+            border-radius: 40px;
+            transition: width 0.5s;
+        }
+
+        .perf-bar-fill.profit { background: #4ade80; }
+        .perf-bar-fill.loss { background: #f87171; }
+        .perf-bar-fill.neutral { background: #fbbf24; }
+
+        /* Mini gráfico de barras por operação */
+        .perf-mini-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            height: 30px;
+            padding: 2px 0;
+        }
+
+        .perf-mini-chart .bar {
+            width: 6px;
+            border-radius: 2px;
+            transition: height 0.3s;
+        }
+
+        .perf-mini-chart .bar.profit { background: #4ade80; }
+        .perf-mini-chart .bar.loss { background: #f87171; }
+        .perf-mini-chart .bar.neutral { background: #fbbf24; }
+
+        /* Badge de performance */
+        .perf-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 12px;
+            border-radius: 40px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .perf-badge.profit {
+            background: #0a1f12;
+            color: #4ade80;
+            border: 1px solid #1a4a2a;
+        }
+
+        .perf-badge.loss {
+            background: #1f0a0a;
+            color: #f87171;
+            border: 1px solid #4a1a1a;
+        }
+
+        .perf-badge.neutral {
+            background: #1f170a;
+            color: #fbbf24;
+            border: 1px solid #4a3a1a;
+        }
+
+        /* Card de resumo da operação */
+        .perf-summary-card {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 8px;
+            margin-top: 12px;
+            padding: 12px 16px;
+            background: #0a0f1e;
+            border-radius: 12px;
+            border: 1px solid #1a2332;
+        }
+
+        .perf-summary-card .psc-item {
+            text-align: center;
+            padding: 6px;
+        }
+
+        .perf-summary-card .psc-item .psc-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            color: #94a3b8;
+            letter-spacing: 0.3px;
+        }
+
+        .perf-summary-card .psc-item .psc-value {
+            font-size: 18px;
+            font-weight: 700;
+            margin-top: 2px;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 700px) {
+            body { padding: 12px; }
+            .main-header { flex-direction: column; }
+            .filters-bar { flex-direction: column; align-items: stretch; }
+            .filters-bar .filter-group { flex-wrap: wrap; }
+            .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+            .accordion-header { flex-direction: column; align-items: stretch; gap: 8px; }
+            .accordion-header .ah-left { flex-direction: column; align-items: flex-start; }
+            .accordion-header .ah-left .month-stats { flex-wrap: wrap; }
+            .operations-table { font-size: 11px; }
+            .operations-table th, .operations-table td { padding: 5px 6px; }
+            .perf-table { font-size: 11px; }
+            .perf-table th, .perf-table td { padding: 5px 6px; }
+            .header-stats { width: 100%; justify-content: space-around; }
+            .perf-header { flex-direction: column; align-items: stretch; gap: 8px; }
+            .perf-header .ph-left { flex-direction: column; align-items: flex-start; }
+            .perf-bar-track { width: 60px; }
+            .perf-mini-chart { height: 20px; }
+            .perf-mini-chart .bar { width: 4px; }
+        }
+
+        @media (max-width: 480px) {
+            .kpi-grid { grid-template-columns: 1fr 1fr; }
+            .operations-table td:nth-child(4),
+            .operations-table th:nth-child(4) { display: none; }
+            .perf-table td:nth-child(2),
+            .perf-table th:nth-child(2) { display: none; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- HEADER -->
+    <div class="main-header">
+        <div>
+            <h1>
+                <span class="emoji-big">📊</span> Raio-X do Preço Médio · ETH
+            </h1>
+            <div class="sub">
+                Evolução do preço médio com <strong>82 operações</strong> · Último PM: <strong class="text-blue">US$ 1.836,56</strong>
+            </div>
+        </div>
+        <div class="header-stats">
+            <div class="hs-item"><span class="label">📈 Total</span><span class="value text-blue">82 ops</span></div>
+            <div class="hs-item"><span class="label">🟢 Abertas</span><span class="value text-cyan">1</span></div>
+            <div class="hs-item"><span class="label">🔵 Fechadas</span><span class="value text-muted">81</span></div>
+            <div class="hs-item"><span class="label">💰 Prêmio</span><span class="value text-gold">US$ 661,77</span></div>
+        </div>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="filters-bar">
+        <div class="filter-group">
+            <span class="fg-label">📅 Período</span>
+            <div class="filter-tabs">
+                <span class="tab">Todos</span>
+                <span class="tab">Hoje</span>
+                <span class="tab active">Semana</span>
+                <span class="tab">Mês</span>
+                <span class="tab">Período</span>
+            </div>
+        </div>
+        <div class="filter-group">
+            <span class="fg-label">Status</span>
+            <div class="filter-tabs">
+                <span class="tab active">Todas</span>
+                <span class="tab">A</span>
+                <span class="tab">F</span>
+                <span class="tab">E</span>
+                <span class="tab">N</span>
+            </div>
+        </div>
+        <div class="filter-group">
+            <span class="fg-label">Tipo</span>
+            <div class="filter-tabs">
+                <span class="tab active">Todas</span>
+                <span class="tab">C</span>
+                <span class="tab">P</span>
+            </div>
+        </div>
+        <div class="filter-group">
+            <span class="fg-label">Moeda</span>
+            <span class="filter-badge">🪙 ETH</span>
+        </div>
+        <div class="filter-group">
+            <span class="fg-label">Corretora</span>
+            <span class="filter-badge">🏛️ Todas</span>
+        </div>
+    </div>
+
+    <!-- KPI CARDS -->
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <span class="kpi-emoji">📊</span>
+            <div class="kpi-label">Preço Médio</div>
+            <div class="kpi-value text-blue">US$ 1.836,56</div>
+            <div class="kpi-sub">Entrada PUT US$ 1.925</div>
+        </div>
+        <div class="kpi-card">
+            <span class="kpi-emoji">💰</span>
+            <div class="kpi-label">Prêmios Acumulados</div>
+            <div class="kpi-value text-orange">-US$ 88,44</div>
+            <div class="kpi-sub">6 operações no mês</div>
+        </div>
+        <div class="kpi-card">
+            <span class="kpi-emoji">🎯</span>
+            <div class="kpi-label">Resultado se Exercido</div>
+            <div class="kpi-value text-gold">+US$ 113,44</div>
+            <div class="kpi-sub">+5,64% vs PM</div>
+        </div>
+        <div class="kpi-card">
+            <span class="kpi-emoji">⚠️</span>
+            <div class="kpi-label">Próximo Strike</div>
+            <div class="kpi-value text-red">US$ 1.950</div>
+            <div class="kpi-sub">-0,51% de distância</div>
+        </div>
+    </div>
+
+    <!-- TIMELINE SECTION -->
+    <div class="timeline-section">
+
+        <!-- HEADER TIMELINE -->
+        <div class="timeline-header">
+            <div class="tl-title">
+                📅 Timeline de Lançamentos
+                <span class="badge">17 operações em julho</span>
+                <span class="badge" style="background:#2a1a15; border-color:#5a3a1a;">🔥 PUT exercida</span>
+            </div>
+            <div class="tl-actions">
+                <button class="active">📊 Por mês</button>
+                <button>📈 Por ativo</button>
+                <button>📉 Por tipo</button>
+                <button>🏷️ Por status</button>
+            </div>
+        </div>
+
+        <!-- ACCORDION 1: Timeline de Lançamentos -->
+        <div class="accordion">
+
+            <!-- JULHO 2026 -->
+            <div class="accordion-item current">
+                <div class="accordion-header" onclick="toggleAccordion(this)">
+                    <div class="ah-left">
+                        <span class="month">📅 Julho 2026</span>
+                        <div class="month-stats">
+                            <span class="ms-item">📊 <span class="text-blue">17 ops</span></span>
+                            <span class="ms-item">💰 <span class="text-orange">+US$ 197,59</span></span>
+                            <span class="ms-item">📈 PM <span class="text-green">US$ 1.836,56</span></span>
+                        </div>
+                        <div class="mini-spark">
+                            <div class="sp red" style="height:6px;"></div>
+                            <div class="sp red" style="height:8px;"></div>
+                            <div class="sp orange" style="height:12px;"></div>
+                            <div class="sp gold" style="height:16px;"></div>
+                            <div class="sp green" style="height:20px;"></div>
+                            <div class="sp green" style="height:24px;"></div>
+                            <div class="sp green" style="height:28px;"></div>
+                            <div class="sp gold" style="height:22px;"></div>
+                            <div class="sp orange" style="height:18px;"></div>
+                            <div class="sp red" style="height:14px;"></div>
+                            <div class="sp green" style="height:26px;"></div>
+                            <div class="sp green" style="height:30px;"></div>
+                            <div class="sp blue" style="height:20px; background:#60a5fa;"></div>
+                        </div>
+                    </div>
+                    <div class="ah-right">
+                        <span class="badge-count">17 lançamentos</span>
+                        <span class="arrow open">▼</span>
+                    </div>
+                </div>
+                <div class="accordion-content open">
+                    <table class="operations-table">
+                        <thead>
+                            <tr>
+                                <th>📅 Data</th>
+                                <th>🔄 Operação</th>
+                                <th>🏷️ Tipo</th>
+                                <th>📌 Status</th>
+                                <th>💲 Entrada</th>
+                                <th>💰 Prêmio</th>
+                                <th>📊 Impacto PM</th>
+                                <th>📈 Saldo PM</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>26/07</strong> <span style="font-size:11px; color:#94a3b8;">hoje</span></td>
+                                <td>PUT ETH</td>
+                                <td><span class="op-type put">PUT</span></td>
+                                <td class="op-status"><span class="dot open"></span> Aberta</td>
+                                <td>US$ 1.950,00</td>
+                                <td class="text-green">+US$ 23,88</td>
+                                <td class="pm-impact negative"><span class="impact-arrow">▼</span> -US$ 23,88</td>
+                                <td><strong class="text-blue">US$ 1.836,56</strong></td>
+                            </tr>
+                            <tr>
+                                <td><strong>23/07</strong></td>
+                                <td>CALL ETH</td>
+                                <td><span class="op-type call">CALL</span></td>
+                                <td class="op-status"><span class="dot exercised"></span> Exercida <span class="badge-exercised">EXERCIDA</span></td>
+                                <td>US$ 1.950,00</td>
+                                <td class="text-green">+US$ 9,33</td>
+                                <td class="pm-impact negative"><span class="impact-arrow">▼</span> -US$ 9,33</td>
+                                <td>US$ 1.860,44</td>
+                            </tr>
+                            <tr>
+                                <td><strong>22/07</strong></td>
+                                <td>CALL ETH</td>
+                                <td><span class="op-type call">CALL</span></td>
+                                <td class="op-status"><span class="dot closed"></span> Fechada</td>
+                                <td>US$ 1.950,00</td>
+                                <td class="text-green">+US$ 13,25</td>
+                                <td class="pm-impact negative"><span class="impact-arrow">▼</span> -US$ 13,25</td>
+                                <td>US$ 1.869,77</td>
+                            </tr>
+                            <tr>
+                                <td><strong>21/07</strong></td>
+                                <td>CALL ETH</td>
+                                <td><span class="op-type call">CALL</span></td>
+                                <td class="op-status"><span class="dot closed"></span> Fechada</td>
+                                <td>US$ 1.925,00</td>
+                                <td class="text-green">+US$ 23,95</td>
+                                <td class="pm-impact negative"><span class="impact-arrow">▼</span> -US$ 23,95</td>
+                                <td>US$ 1.883,02</td>
+                            </tr>
+                            <tr>
+                                <td><strong>20/07</strong></td>
+                                <td>PUT ETH</td>
+                                <td><span class="op-type put">PUT</span></td>
+                                <td class="op-status"><span class="dot exercised"></span> Exercida <span class="badge-exercised">EXERCIDA</span></td>
+                                <td>US$ 1.925,00</td>
+                                <td class="text-green">+US$ 18,03</td>
+                                <td class="pm-impact negative"><span class="impact-arrow">▼</span> -US$ 18,03</td>
+                                <td>US$ 1.906,97</td>
+                            </tr>
+                            <tr>
+                                <td><strong>19/07</strong></td>
+                                <td>CALL ETH</td>
+                                <td><span class="op-type call">CALL</span></td>
+                                <td class="op-status"><span class="dot closed"></span> Fechada</td>
+                                <td>US$ 1.875,00</td>
+                                <td class="text-green">+US$ 18,59</td>
+                                <td class="pm-impact negative"><span class="impact-arrow">▼</span> -US$ 18,59</td>
+                                <td>US$ 1.818,49</td>
+                            </tr>
+                            <tr>
+                                <td><strong>16/07</strong></td>
+                                <td>CALL ETH</td>
+                                <td><span class="op-type call">CALL</span></td>
+                                <td class="op-status"><span class="dot closed"></span> Fechada</td>
+                                <td>US$ 1.875,00</td>
+                                <td class="text-green">+US$ 16,51</td>
+                                <td class="pm-impact negative"><span class="impact-arrow">▼</span> -US$ 16,51</td>
+                                <td>US$ 1.837,08</td>
+                            </tr>
+                            <tr style="background: rgba(251,146,60,0.05);">
+                                <td><strong>15/07</strong> ⭐</td>
+                                <td>PUT ETH</td>
+                                <td><span class="op-type put">PUT</span></td>
+                                <td class="op-status"><span class="dot exercised"></span> Exercida <span class="badge-exercised">EXERCIDA</span></td>
+                                <td>US$ 1.875,00</td>
+                                <td class="text-green">+US$ 21,41</td>
+                                <td class="pm-impact negative"><span class="impact-arrow">▼</span> -US$ 21,41</td>
+                                <td><strong class="text-gold">US$ 1.853,59</strong></td>
+                            </tr>
+                            <tr>
+                                <td><strong>14/07</strong></td>
+                                <td>PUT ETH</td>
+                                <td><span class="op-type put">PUT</span></td>
+                                <td class="op-status"><span class="dot closed"></span> Fechada</td>
+                                <td>US$ 1.875,00</td>
+                                <td class="text-green">+US$ 19,01</td>
+                                <td class="pm-impact negative"><span class="impact-arrow">▼</span> -US$ 19,01</td>
+                                <td>US$ 1.732,30</td>
+                            </tr>
+                            <tr>
+                                <td><strong>13/07</strong></td>
+                                <td>CALL ETH</td>
+                                <td><span class="op-type call">CALL</span></td>
+                                <td class="op-status"><span class="dot exercised"></span> Exercida</td>
+                                <td>US$ 1.825,00</td>
+                                <td class="text-green">+US$ 11,47</td>
+                                <td class="pm-impact negative"><span class="impact-arrow">▼</span> -US$ 11,47</td>
+                                <td>US$ 1.751,31</td>
+                            </tr>
+                            <tr>
+                                <td><strong>12/07</strong></td>
+                                <td>CALL ETH</td>
+                                <td><span class="op-type call">CALL</span></td>
+                                <td class="op-status"><span class="dot closed"></span> Fechada</td>
+                                <td>US$ 1.825,00</td>
+                                <td class="text-green">+US$ 5,01</td>
+                                <td class="pm-impact negative"><span class="impact-arrow">▼</span> -US$ 5,01</td>
+                                <td>US$ 1.762,78</td>
+                            </tr>
+                            <tr>
+                                <td><strong>09/07</strong></td>
+                                <td>CALL ETH</td>
+                                <td><span class="op-type call">CALL</span></td>
+                                <td class="op-status"><span class="dot closed"></span> Fechada</td>
+                                <td>US$ 1.850,00</td>
+                                <td class="text-green">+US$ 9,40</td>
+                                <td class="pm-impact negative"><span class="impact-arrow">▼</span> -US$ 9,40</td>
+                                <td>US$ 1.767,79</td>
+                            </tr>
+                            <tr>
+                                <td><strong>08/07</strong></td>
+                                <td>CALL ETH</td>
+                                <td><span class="op-type call">CALL</span></td>
+                                <td class="op-status"><span class="dot closed"></span> Fechada</td>
+                                <td>US$ 1.825,00</td>
+                                <td class="text-green">+US$ 1,67</td>
+                                <td class="pm-impact negative"><span class="impact-arrow">▼</span> -US$ 1,67</td>
+                                <td>US$ 1.777,19</td>
+                            </tr>
+                            <tr>
+                                <td><strong>07/07</strong></td>
+                                <td>CALL ETH</td>
+                                <td><span class="op-type call">CALL</span></td>
+                                <td class="op-status"><span class="dot closed"></span> Fechada</td>
+                                <td>US$ 1.825,00</td>
+                                <td class="text-green">+US$ 1,39</td>
+                                <td class="pm-impact negative"><span class="impact-arrow">▼</span> -US$ 1,39</td>
+                                <td>US$ 1.778,86</td>
+                            </tr>
+                            <tr>
+                                <td><strong>06/07</strong></td>
+                                <td>CALL ETH</td>
+                                <td><span class="op-type call">CALL</span></td>
+                                <td class="op-status"><span class="dot closed"></span> Fechada</td>
+                                <td>US$ 1.850,00</td>
+                                <td class="text-green">+US$ 1,46</td>
+                                <td class="pm-impact negative"><span class="impact-arrow">▼</span> -US$ 1,46</td>
+                                <td>US$ 1.780,25</td>
+                            </tr>
+                            <tr>
+                                <td><strong>05/07</strong></td>
+                                <td>CALL ETH</td>
+                                <td><span class="op-type call">CALL</span></td>
+                                <td class="op-status"><span class="dot closed"></span> Fechada</td>
+                                <td>US$ 1.850,00</td>
+                                <td class="text-green">+US$ 1,09</td>
+                                <td class="pm-impact negative"><span class="impact-arrow">▼</span> -US$ 1,09</td>
+                                <td>US$ 1.781,71</td>
+                            </tr>
+                            <tr>
+                                <td><strong>02/07</strong></td>
+                                <td>CALL ETH</td>
+                                <td><span class="op-type call">CALL</span></td>
+                                <td class="op-status"><span class="dot closed"></span> Fechada</td>
+                                <td>US$ 1.850,00</td>
+                                <td class="text-green">+US$ 2,13</td>
+                                <td class="pm-impact negative"><span class="impact-arrow">▼</span> -US$ 2,13</td>
+                                <td>US$ 1.782,80</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- NOVO ACCORDION: ANÁLISE DE PERFORMANCE POR OPERAÇÃO -->
+        <!-- ============================================================ -->
+        <div class="performance-accordion">
+            <div class="perf-header" onclick="togglePerfAccordion(this)">
+                <div class="ph-left">
+                    <div class="title">
+                        📈 Análise de Performance por Operação
+                        <span class="badge" style="background:#1e293b; padding:2px 12px; border-radius:40px; font-size:12px; color:#94a3b8;">17 ops analisadas</span>
+                    </div>
+                    <div class="perf-stats">
+                        <span class="ps-item">🟢 <span class="text-green">8 lucros</span></span>
+                        <span class="ps-item">🔴 <span class="text-red">5 prejuízos</span></span>
+                        <span class="ps-item">🟡 <span class="text-gold">4 neutras</span></span>
+                        <span class="ps-item">💰 Total: <span class="text-gold">+US$ 197,59</span></span>
+                    </div>
+                </div>
+                <div class="ph-right">
+                    <span class="badge-count" style="background:#1e293b; padding:2px 12px; border-radius:40px; font-size:12px; color:#94a3b8;">⭐ 3 exercidas</span>
+                    <span class="arrow open">▼</span>
+                </div>
+            </div>
+
+            <div class="perf-content open">
+                <!-- Tabela de Performance -->
+                <table class="perf-table">
+                    <thead>
+                        <tr>
+                            <th>📅 Data</th>
+                            <th>🔄 Operação</th>
+                            <th>🏷️ Tipo</th>
+                            <th>📌 Status</th>
+                            <th>💲 Entrada</th>
+                            <th>📊 PM Antes</th>
+                            <th>📈 PM Depois</th>
+                            <th>📉 Variação</th>
+                            <th>📊 Resultado</th>
+                            <th>📊 Performance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- 26/07 - PUT Aberta (neutra) -->
+                        <tr>
+                            <td><strong>26/07</strong></td>
+                            <td>PUT ETH</td>
+                            <td><span class="op-type put">PUT</span></td>
+                            <td class="op-status"><span class="dot open"></span> Aberta</td>
+                            <td>US$ 1.950,00</td>
+                            <td>US$ 1.860,44</td>
+                            <td><strong class="text-blue">US$ 1.836,56</strong></td>
+                            <td class="pm-impact negative"><span class="impact-arrow">▼</span> -US$ 23,88</td>
+                            <td><span class="perf-badge neutral">⬡ Neutro</span></td>
+                            <td>
+                                <div class="perf-bar-track"><div class="perf-bar-fill neutral" style="width:30%;"></div></div>
+                                <span style="font-size:12px; color:#94a3b8;">-0,7%</span>
+                            </td>
+                        </tr>
+                        <!-- 23/07 - CALL Exercida (lucro) -->
+                        <tr>
+                            <td><strong>23/07</strong></td>
+                            <td>CALL ETH</td>
+                            <td><span class="op-type call">CALL</span></td>
+                            <td class="op-status"><span class="dot exercised"></span> Exercida</td>
+                            <td>US$ 1.950,00</td>
+                            <td>US$ 1.869,77</td>
+                            <td><strong class="text-blue">US$ 1.860,44</strong></td>
+                            <td class="pm-impact negative"><span class="impact-arrow">▼</span> -US$ 9,33</td>
+                            <td><span class="perf-badge profit">✅ Lucro</span></td>
+                            <td>
+                                <div class="perf-bar-track"><div class="perf-bar-fill profit" style="width:65%;"></div></div>
+                                <span style="font-size:12px; color:#4ade80;">+US$ 5,20</span>
+                            </td>
+                        </tr>
+                        <!-- 22/07 - CALL Fechada (lucro) -->
+                        <tr>
+                            <td><strong>22/07</strong></td>
+                            <td>CALL ETH</td>
+                            <td><span class="op-type call">CALL</span></td>
+                            <td class="op-status"><span class="dot closed"></span> Fechada</td>
+                            <td>US$ 1.950,00</td>
+                            <td>US$ 1.883,02</td>
+                            <td><strong class="text-blue">US$ 1.869,77</strong></td>
+                            <td class="pm-impact negative"><span class="impact-arrow">▼</span> -US$ 13,25</td>
+                            <td><span class="perf-badge profit">✅ Lucro</span></td>
+                            <td>
+                                <div class="perf-bar-track"><div class="perf-bar-fill profit" style="width:72%;"></div></div>
+                                <span style="font-size:12px; color:#4ade80;">+US$ 8,40</span>
+                            </td>
+                        </tr>
+                        <!-- 21/07 - CALL Fechada (lucro) -->
+                        <tr>
+                            <td><strong>21/07</strong></td>
+                            <td>CALL ETH</td>
+                            <td><span class="op-type call">CALL</span></td>
+                            <td class="op-status"><span class="dot closed"></span> Fechada</td>
+                            <td>US$ 1.925,00</td>
+                            <td>US$ 1.906,97</td>
+                            <td><strong class="text-blue">US$ 1.883,02</strong></td>
+                            <td class="pm-impact negative"><span class="impact-arrow">▼</span> -US$ 23,95</td>
+                            <td><span class="perf-badge profit">✅ Lucro</span></td>
+                            <td>
+                                <div class="perf-bar-track"><div class="perf-bar-fill profit" style="width:85%;"></div></div>
+                                <span style="font-size:12px; color:#4ade80;">+US$ 15,20</span>
+                            </td>
+                        </tr>
+                        <!-- 20/07 - PUT Exercida (lucro) -->
+                        <tr>
+                            <td><strong>20/07</strong></td>
+                            <td>PUT ETH</td>
+                            <td><span class="op-type put">PUT</span></td>
+                            <td class="op-status"><span class="dot exercised"></span> Exercida</td>
+                            <td>US$ 1.925,00</td>
+                            <td>US$ 1.925,00</td>
+                            <td><strong class="text-blue">US$ 1.906,97</strong></td>
+                            <td class="pm-impact negative"><span class="impact-arrow">▼</span> -US$ 18,03</td>
+                            <td><span class="perf-badge profit">✅ Lucro</span></td>
+                            <td>
+                                <div class="perf-bar-track"><div class="perf-bar-fill profit" style="width:78%;"></div></div>
+                                <span style="font-size:12px; color:#4ade80;">+US$ 11,20</span>
+                            </td>
+                        </tr>
+                        <!-- 19/07 - CALL Fechada (prejuízo) -->
+                        <tr>
+                            <td><strong>19/07</strong></td>
+                            <td>CALL ETH</td>
+                            <td><span class="op-type call">CALL</span></td>
+                            <td class="op-status"><span class="dot closed"></span> Fechada</td>
+                            <td>US$ 1.875,00</td>
+                            <td>US$ 1.837,08</td>
+                            <td><strong class="text-blue">US$ 1.818,49</strong></td>
+                            <td class="pm-impact negative"><span class="impact-arrow">▼</span> -US$ 18,59</td>
+                            <td><span class="perf-badge loss">❌ Prejuízo</span></td>
+                            <td>
+                                <div class="perf-bar-track"><div class="perf-bar-fill loss" style="width:45%;"></div></div>
+                                <span style="font-size:12px; color:#f87171;">-US$ 8,90</span>
+                            </td>
+                        </tr>
+                        <!-- 16/07 - CALL Fechada (prejuízo) -->
+                        <tr>
+                            <td><strong>16/07</strong></td>
+                            <td>CALL ETH</td>
+                            <td><span class="op-type call">CALL</span></td>
+                            <td class="op-status"><span class="dot closed"></span> Fechada</td>
+                            <td>US$ 1.875,00</td>
+                            <td>US$ 1.853,59</td>
+                            <td><strong class="text-blue">US$ 1.837,08</strong></td>
+                            <td class="pm-impact negative"><span class="impact-arrow">▼</span> -US$ 16,51</td>
+                            <td><span class="perf-badge loss">❌ Prejuízo</span></td>
+                            <td>
+                                <div class="perf-bar-track"><div class="perf-bar-fill loss" style="width:35%;"></div></div>
+                                <span style="font-size:12px; color:#f87171;">-US$ 7,20</span>
+                            </td>
+                        </tr>
+                        <!-- 15/07 - PUT Exercida (lucro alto) - DESTAQUE -->
+                        <tr style="background: rgba(74,222,128,0.05);">
+                            <td><strong>15/07</strong> ⭐</td>
+                            <td>PUT ETH</td>
+                            <td><span class="op-type put">PUT</span></td>
+                            <td class="op-status"><span class="dot exercised"></span> Exercida</td>
+                            <td>US$ 1.875,00</td>
+                            <td>US$ 1.875,00</td>
+                            <td><strong class="text-gold">US$ 1.853,59</strong></td>
+                            <td class="pm-impact negative"><span class="impact-arrow">▼</span> -US$ 21,41</td>
+                            <td><span class="perf-badge profit" style="background:#0a2a1a; border-color:#2a5a3a;">⭐ Lucro Alto</span></td>
+                            <td>
+                                <div class="perf-bar-track"><div class="perf-bar-fill profit" style="width:95%;"></div></div>
+                                <span style="font-size:12px; color:#4ade80; font-weight:700;">+US$ 28,60</span>
+                            </td>
+                        </tr>
+                        <!-- 14/07 - PUT Fechada (neutra) -->
+                        <tr>
+                            <td><strong>14/07</strong></td>
+                            <td>PUT ETH</td>
+                            <td><span class="op-type put">PUT</span></td>
+                            <td class="op-status"><span class="dot closed"></span> Fechada</td>
+                            <td>US$ 1.875,00</td>
+                            <td>US$ 1.751,31</td>
+                            <td><strong class="text-blue">US$ 1.732,30</strong></td>
+                            <td class="pm-impact negative"><span class="impact-arrow">▼</span> -US$ 19,01</td>
+                            <td><span class="perf-badge neutral">⬡ Neutro</span></td>
+                            <td>
+                                <div class="perf-bar-track"><div class="perf-bar-fill neutral" style="width:25%;"></div></div>
+                                <span style="font-size:12px; color:#94a3b8;">-US$ 0,80</span>
+                            </td>
+                        </tr>
+                        <!-- 13/07 - CALL Exercida (prejuízo) -->
+                        <tr>
+                            <td><strong>13/07</strong></td>
+                            <td>CALL ETH</td>
+                            <td><span class="op-type call">CALL</span></td>
+                            <td class="op-status"><span class="dot exercised"></span> Exercida</td>
+                            <td>US$ 1.825,00</td>
+                            <td>US$ 1.762,78</td>
+                            <td><strong class="text-blue">US$ 1.751,31</strong></td>
+                            <td class="pm-impact negative"><span class="impact-arrow">▼</span> -US$ 11,47</td>
+                            <td><span class="perf-badge loss">❌ Prejuízo</span></td>
+                            <td>
+                                <div class="perf-bar-track"><div class="perf-bar-fill loss" style="width:28%;"></div></div>
+                                <span style="font-size:12px; color:#f87171;">-US$ 5,30</span>
+                            </td>
+                        </tr>
+                        <!-- 12/07 - CALL Fechada (prejuízo) -->
+                        <tr>
+                            <td><strong>12/07</strong></td>
+                            <td>CALL ETH</td>
+                            <td><span class="op-type call">CALL</span></td>
+                            <td class="op-status"><span class="dot closed"></span> Fechada</td>
+                            <td>US$ 1.825,00</td>
+                            <td>US$ 1.767,79</td>
+                            <td><strong class="text-blue">US$ 1.762,78</strong></td>
+                            <td class="pm-impact negative"><span class="impact-arrow">▼</span> -US$ 5,01</td>
+                            <td><span class="perf-badge loss">❌ Prejuízo</span></td>
+                            <td>
+                                <div class="perf-bar-track"><div class="perf-bar-fill loss" style="width:15%;"></div></div>
+                                <span style="font-size:12px; color:#f87171;">-US$ 2,10</span>
+                            </td>
+                        </tr>
+                        <!-- 09/07 - CALL Fechada (neutra) -->
+                        <tr>
+                            <td><strong>09/07</strong></td>
+                            <td>CALL ETH</td>
+                            <td><span class="op-type call">CALL</span></td>
+                            <td class="op-status"><span class="dot closed"></span> Fechada</td>
+                            <td>US$ 1.850,00</td>
+                            <td>US$ 1.777,19</td>
+                            <td><strong class="text-blue">US$ 1.767,79</strong></td>
+                            <td class="pm-impact negative"><span class="impact-arrow">▼</span> -US$ 9,40</td>
+                            <td><span class="perf-badge neutral">⬡ Neutro</span></td>
+                            <td>
+                                <div class="perf-bar-track"><div class="perf-bar-fill neutral" style="width:20%;"></div></div>
+                                <span style="font-size:12px; color:#94a3b8;">+US$ 0,30</span>
+                            </td>
+                        </tr>
+                        <!-- 08/07 - CALL Fechada (lucro pequeno) -->
+                        <tr>
+                            <td><strong>08/07</strong></td>
+                            <td>CALL ETH</td>
+                            <td><span class="op-type call">CALL</span></td>
+                            <td class="op-status"><span class="dot closed"></span> Fechada</td>
+                            <td>US$ 1.825,00</td>
+                            <td>US$ 1.778,86</td>
+                            <td><strong class="text-blue">US$ 1.777,19</strong></td>
+                            <td class="pm-impact negative"><span class="impact-arrow">▼</span> -US$ 1,67</td>
+                            <td><span class="perf-badge profit">✅ Lucro</span></td>
+                            <td>
+                                <div class="perf-bar-track"><div class="perf-bar-fill profit" style="width:12%;"></div></div>
+                                <span style="font-size:12px; color:#4ade80;">+US$ 0,80</span>
+                            </td>
+                        </tr>
+                        <!-- 07/07 - CALL Fechada (neutra) -->
+                        <tr>
+                            <td><strong>07/07</strong></td>
+                            <td>CALL ETH</td>
+                            <td><span class="op-type call">CALL</span></td>
+                            <td class="op-status"><span class="dot closed"></span> Fechada</td>
+                            <td>US$ 1.825,00</td>
+                            <td>US$ 1.780,25</td>
+                            <td><strong class="text-blue">US$ 1.778,86</strong></td>
+                            <td class="pm-impact negative"><span class="impact-arrow">▼</span> -US$ 1,39</td>
+                            <td><span class="perf-badge neutral">⬡ Neutro</span></td>
+                            <td>
+                                <div class="perf-bar-track"><div class="perf-bar-fill neutral" style="width:10%;"></div></div>
+                                <span style="font-size:12px; color:#94a3b8;">-US$ 0,20</span>
+                            </td>
+                        </tr>
+                        <!-- 06/07 - CALL Fechada (lucro) -->
+                        <tr>
+                            <td><strong>06/07</strong></td>
+                            <td>CALL ETH</td>
+                            <td><span class="op-type call">CALL</span></td>
+                            <td class="op-status"><span class="dot closed"></span> Fechada</td>
+                            <td>US$ 1.850,00</td>
+                            <td>US$ 1.781,71</td>
+                            <td><strong class="text-blue">US$ 1.780,25</strong></td>
+                            <td class="pm-impact negative"><span class="impact-arrow">▼</span> -US$ 1,46</td>
+                            <td><span class="perf-badge profit">✅ Lucro</span></td>
+                            <td>
+                                <div class="perf-bar-track"><div class="perf-bar-fill profit" style="width:10%;"></div></div>
+                                <span style="font-size:12px; color:#4ade80;">+US$ 0,60</span>
+                            </td>
+                        </tr>
+                        <!-- 05/07 - CALL Fechada (lucro pequeno) -->
+                        <tr>
+                            <td><strong>05/07</strong></td>
+                            <td>CALL ETH</td>
+                            <td><span class="op-type call">CALL</span></td>
+                            <td class="op-status"><span class="dot closed"></span> Fechada</td>
+                            <td>US$ 1.850,00</td>
+                            <td>US$ 1.782,80</td>
+                            <td><strong class="text-blue">US$ 1.781,71</strong></td>
+                            <td class="pm-impact negative"><span class="impact-arrow">▼</span> -US$ 1,09</td>
+                            <td><span class="perf-badge profit">✅ Lucro</span></td>
+                            <td>
+                                <div class="perf-bar-track"><div class="perf-bar-fill profit" style="width:8%;"></div></div>
+                                <span style="font-size:12px; color:#4ade80;">+US$ 0,40</span>
+                            </td>
+                        </tr>
+                        <!-- 02/07 - CALL Fechada (neutra) -->
+                        <tr>
+                            <td><strong>02/07</strong></td>
+                            <td>CALL ETH</td>
+                            <td><span class="op-type call">CALL</span></td>
+                            <td class="op-status"><span class="dot closed"></span> Fechada</td>
+                            <td>US$ 1.850,00</td>
+                            <td>US$ 1.784,93</td>
+                            <td><strong class="text-blue">US$ 1.782,80</strong></td>
+                            <td class="pm-impact negative"><span class="impact-arrow">▼</span> -US$ 2,13</td>
+                            <td><span class="perf-badge neutral">⬡ Neutro</span></td>
+                            <td>
+                                <div class="perf-bar-track"><div class="perf-bar-fill neutral" style="width:15%;"></div></div>
+                                <span style="font-size:12px; color:#94a3b8;">-US$ 0,50</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- Gráfico de Resumo de Performance -->
+                <div style="margin-top:16px; padding:14px 16px; background:#0a0f1e; border-radius:14px; border:1px solid #1a2332;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
+                        <span style="font-weight:600; font-size:14px; display:flex; align-items:center; gap:8px;">
+                            📊 Resumo de Performance - Julho 2026
+                            <span class="badge" style="background:#1e293b; padding:2px 12px; border-radius:40px; font-size:11px; color:#94a3b8;">17 operações</span>
+                        </span>
+                        <div style="display:flex; gap:12px; font-size:13px;">
+                            <span>🟢 Lucros: <strong class="text-green">8</strong></span>
+                            <span>🔴 Prejuízos: <strong class="text-red">5</strong></span>
+                            <span>🟡 Neutras: <strong class="text-gold">4</strong></span>
+                            <span>💰 Total: <strong class="text-gold">+US$ 197,59</strong></span>
+                        </div>
+                    </div>
+
+                    <!-- Mini gráfico de barras de performance -->
+                    <div style="display:flex; gap:4px; align-items:flex-end; height:40px; padding:4px 0;">
+                        <div style="display:flex; gap:2px; align-items:flex-end; height:100%;">
+                            <div class="bar profit" style="height:28px; width:8px; border-radius:3px; background:#4ade80;"></div>
+                            <div class="bar profit" style="height:34px; width:8px; border-radius:3px; background:#4ade80;"></div>
+                            <div class="bar profit" style="height:38px; width:8px; border-radius:3px; background:#4ade80;"></div>
+                            <div class="bar profit" style="height:42px; width:8px; border-radius:3px; background:#4ade80;"></div>
+                            <div class="bar profit" style="height:46px; width:8px; border-radius:3px; background:#4ade80;"></div>
+                            <div class="bar loss" style="height:30px; width:8px; border-radius:3px; background:#f87171;"></div>
+                            <div class="bar loss" style="height:24px; width:8px; border-radius:3px; background:#f87171;"></div>
+                            <div class="bar profit" style="height:50px; width:8px; border-radius:3px; background:#4ade80;"></div>
+                            <div class="bar neutral" style="height:18px; width:8px; border-radius:3px; background:#fbbf24;"></div>
+                            <div class="bar loss" style="height:22px; width:8px; border-radius:3px; background:#f87171;"></div>
+                            <div class="bar loss" style="height:16px; width:8px; border-radius:3px; background:#f87171;"></div>
+                            <div class="bar neutral" style="height:14px; width:8px; border-radius:3px; background:#fbbf24;"></div>
+                            <div class="bar profit" style="height:12px; width:8px; border-radius:3px; background:#4ade80;"></div>
+                            <div class="bar neutral" style="height:10px; width:8px; border-radius:3px; background:#fbbf24;"></div>
+                            <div class="bar profit" style="height:10px; width:8px; border-radius:3px; background:#4ade80;"></div>
+                            <div class="bar profit" style="height:8px; width:8px; border-radius:3px; background:#4ade80;"></div>
+                            <div class="bar neutral" style="height:12px; width:8px; border-radius:3px; background:#fbbf24;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Legenda do gráfico -->
+                    <div style="display:flex; gap:16px; flex-wrap:wrap; font-size:12px; color:#94a3b8; margin-top:8px; border-top:1px solid #1a2332; padding-top:10px;">
+                        <span>📌 <strong class="text-green">Barras verdes</strong> = lucro</span>
+                        <span>📌 <strong class="text-red">Barras vermelhas</strong> = prejuízo</span>
+                        <span>📌 <strong class="text-gold">Barras amarelas</strong> = neutro</span>
+                        <span>📊 Altura da barra = magnitude do resultado</span>
+                        <span>⭐ <strong class="text-gold">15/07</strong> maior lucro: +US$ 28,60</span>
+                    </div>
+                </div>
+
+                <!-- Cards de Resumo por Tipo -->
+                <div class="perf-summary-card">
+                    <div class="psc-item" style="border-right:1px solid #1a2332;">
+                        <div class="psc-label">📊 PUT Exercidas</div>
+                        <div class="psc-value text-gold">3</div>
+                        <div style="font-size:12px; color:#4ade80;">+US$ 61,20</div>
+                    </div>
+                    <div class="psc-item" style="border-right:1px solid #1a2332;">
+                        <div class="psc-label">📈 CALL Exercidas</div>
+                        <div class="psc-value text-blue">2</div>
+                        <div style="font-size:12px; color:#4ade80;">+US$ 16,50</div>
+                    </div>
+                    <div class="psc-item" style="border-right:1px solid #1a2332;">
+                        <div class="psc-label">🔄 CALL Fechadas</div>
+                        <div class="psc-value text-cyan">9</div>
+                        <div style="font-size:12px; color:#fbbf24;">+US$ 75,89</div>
+                    </div>
+                    <div class="psc-item">
+                        <div class="psc-label">📉 PUT Fechadas</div>
+                        <div class="psc-value text-purple">3</div>
+                        <div style="font-size:12px; color:#fb923c;">+US$ 44,00</div>
+                    </div>
+                </div>
+
+                <!-- Destaque de Performance -->
+                <div style="margin-top:12px; display:flex; flex-wrap:wrap; gap:8px 20px; padding:10px 16px; background:#0a1220; border-radius:12px; border:1px solid #1a2332; font-size:13px; color:#94a3b8;">
+                    <span>⭐ <strong class="text-gold">Melhor operação:</strong> PUT exercida em 15/07 com <strong class="text-green">+US$ 28,60</strong></span>
+                    <span>⚠️ <strong class="text-red">Pior operação:</strong> CALL em 19/07 com <strong class="text-red">-US$ 8,90</strong></span>
+                    <span>📊 <strong class="text-blue">Taxa de acerto:</strong> 47% (8/17)</span>
+                    <span>💰 <strong class="text-gold">Resultado líquido:</strong> +US$ 197,59</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- FOOTER -->
+        <div class="tl-footer" style="padding:14px 20px; border-top:1px solid #1e293b; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px 20px; font-size:13px; color:#94a3b8;">
+            <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                <span>⭐ <strong class="text-gold">Destaque:</strong> PUT exercida em 15/07 com lucro de <strong class="text-green">+US$ 28,60</strong></span>
+                <span class="tag" style="background:#1e293b; padding:2px 14px; border-radius:40px; border:1px solid #334155;">🔄 Próximas: CALLs para diminuir PM</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                <span class="tag" style="background:#1e293b; padding:2px 14px; border-radius:40px; border:1px solid #334155;">🎯 Strike: <strong class="text-red">US$ 1.925</strong> (-1,9%)</span>
+                <span class="tag" style="background:#1e293b; padding:2px 14px; border-radius:40px; border:1px solid #334155;">📊 Total: <strong class="text-blue">82 ops</strong></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- rodapé geral -->
+    <div style="margin-top:32px; border-top:1px solid #1e293b; padding-top:18px; font-size:13px; color:#64748b; display:flex; justify-content:space-between; flex-wrap:wrap;">
+        <span>📊 Raio-X ETH · Performance por Operação v4.0</span>
+        <span>Dados simulados · 82 operações · PM US$ 1.836,56</span>
+    </div>
+</div>
+
+<script>
+    // Accordion 1: Timeline de Lançamentos
+    function toggleAccordion(header) {
+        const item = header.closest('.accordion-item');
+        const content = item.querySelector('.accordion-content');
+        const arrow = header.querySelector('.arrow');
+
+        document.querySelectorAll('.accordion-item .accordion-content').forEach(el => {
+            if (el !== content) {
+                el.classList.remove('open');
+                const parentArrow = el.closest('.accordion-item').querySelector('.arrow');
+                if (parentArrow) parentArrow.classList.remove('open');
+                el.closest('.accordion-item').classList.remove('current');
+            }
+        });
+
+        content.classList.toggle('open');
+        if (arrow) arrow.classList.toggle('open');
+        if (content.classList.contains('open')) {
+            item.classList.add('current');
+        } else {
+            item.classList.remove('current');
+        }
+    }
+
+    // Accordion 2: Performance por Operação
+    function togglePerfAccordion(header) {
+        const content = header.nextElementSibling;
+        const arrow = header.querySelector('.arrow');
+
+        content.classList.toggle('open');
+        if (arrow) arrow.classList.toggle('open');
+    }
+
+    // Abre o primeiro accordion de timeline por padrão
+    document.querySelectorAll('.accordion-item').forEach((item, index) => {
+        const content = item.querySelector('.accordion-content');
+        const arrow = item.querySelector('.arrow');
+        if (index === 0) {
+            content.classList.add('open');
+            if (arrow) arrow.classList.add('open');
+            item.classList.add('current');
+        } else {
+            content.classList.remove('open');
+            if (arrow) arrow.classList.remove('open');
+            item.classList.remove('current');
+        }
+    });
+
+    // Performance accordion já está aberto por padrão (classe open no conteúdo e seta)
+    // Garantir que a seta do perf esteja aberta
+    document.querySelector('.performance-accordion .arrow')?.classList.add('open');
+
+    // Filtros interativos
+    document.querySelectorAll('.filter-tabs .tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            const parent = this.closest('.filter-tabs');
+            parent.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+
+    document.querySelectorAll('.tl-actions button').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.tl-actions button').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+
+    console.log('📊 Performance por Operação carregada com sucesso!');
+</script>
+</body>
+</html>

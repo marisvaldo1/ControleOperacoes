@@ -77,19 +77,14 @@
         return d > 0 ? d + 'd ' + hms : hms;
     }
 
-    // ─── Gauge SVG ───────────────────────────────────────────────────────────
+    // ─── Gauge SVG (delega para CryptoUtils.buildGaugeSVG) ───────────────────
     function buildGaugeSVG(distRaw, tipo) {
+        if (window.CryptoUtils) return window.CryptoUtils.buildGaugeSVG(distRaw);
+        // Fallback binário
         const dist = parseFloat(distRaw) || 0;
         let zoneColor, zoneLabel, zoneEmoji;
-        if (dist < 0) {
-            zoneColor = '#e85d4a'; zoneLabel = 'ITM — Exercício Provável'; zoneEmoji = '🔴';
-        } else if (dist < 2) {
-            zoneColor = '#f59f00'; zoneLabel = 'Zona de Atenção'; zoneEmoji = '🟡';
-        } else if (dist < 5) {
-            zoneColor = '#4da6ff'; zoneLabel = 'Moderadamente Seguro'; zoneEmoji = '🔵';
-        } else {
-            zoneColor = '#47b96c'; zoneLabel = 'OTM — Seguro'; zoneEmoji = '🟢';
-        }
+        if (dist < 0) { zoneColor = '#e85d4a'; zoneLabel = 'ITM — Exercício Provável'; zoneEmoji = '🔴'; }
+        else          { zoneColor = '#47b96c'; zoneLabel = 'OTM — Seguro';                zoneEmoji = '🟢'; }
         const cx = 100, cy = 100, r = 78;
         const START_DEG = 200, ARC = 140, RANGE = 20;
         function toRad(deg) { return deg * Math.PI / 180; }
@@ -105,10 +100,8 @@
         }
         return `
 <svg viewBox="0 0 200 125" xmlns="http://www.w3.org/2000/svg" class="mdc-gauge-svg">
-  ${arcSeg(200, 223, '#e85d4a')}
-  ${arcSeg(223, 252, '#f59f00')}
-  ${arcSeg(252, 288, '#4da6ff')}
-  ${arcSeg(288, 340, '#47b96c')}
+  ${arcSeg(200, 270, '#e85d4a')}
+  ${arcSeg(270, 340, '#47b96c')}
   <path d="M ${pt(200).x.toFixed(2)} ${pt(200).y.toFixed(2)} A ${r} ${r} 0 0 1 ${pt(340).x.toFixed(2)} ${pt(340).y.toFixed(2)}"
     stroke="rgba(255,255,255,0.06)" stroke-width="12" fill="none" stroke-linecap="round"/>
   <line x1="${cx}" y1="${cy}" x2="${np.x.toFixed(2)}" y2="${np.y.toFixed(2)}"
@@ -122,12 +115,11 @@
 <div class="mdc-gauge-label" style="color:${zoneColor}">${zoneEmoji}&nbsp;${zoneLabel}</div>`;
     }
 
-    // ─── Risk level ──────────────────────────────────────────────────────────
+    // ─── Risk level (delega para CryptoUtils.getRisk) ────────────────────────
     function getRisk(distNum) {
+        if (window.CryptoUtils) return window.CryptoUtils.getRisk(distNum);
         if (distNum < 0)  return { color: '#e85d4a', bg: 'rgba(232,93,74,0.12)',   label: 'ITM — EXERCÍCIO PROVÁVEL',    level: 'danger'  };
-        if (distNum < 2)  return { color: '#f59f00', bg: 'rgba(245,159,0,0.12)',   label: 'ATENÇÃO — PRÓXIMO DO STRIKE', level: 'warning' };
-        if (distNum < 5)  return { color: '#4da6ff', bg: 'rgba(77,166,255,0.12)',  label: 'MODERADO — MONITORAR',        level: 'info'    };
-        return              { color: '#47b96c', bg: 'rgba(71,185,108,0.12)', label: 'SEGURO — OTM CONFORTÁVEL',    level: 'success' };
+        return              { color: '#47b96c', bg: 'rgba(71,185,108,0.12)', label: 'SEGURO — OTM',    level: 'success' };
     }
 
     // ─── Timestamp do header do modal ────────────────────────────────────────
@@ -193,9 +185,11 @@
                 const tipo   = (op.tipo || '').toUpperCase();
                 const strike = parseFloat(op.strike) || 0;
                 if (strike) {
-                    op._liveDist = tipo === 'CALL'
-                        ? ((strike - op._livePrice) / op._livePrice) * 100
-                        : ((op._livePrice - strike) / strike) * 100;
+                    op._liveDist = window.CryptoUtils
+                        ? window.CryptoUtils.calcLiveDist(tipo, strike, op._liveDist !== undefined ? op._livePrice : op._livePrice)
+                        : (tipo === 'CALL'
+                            ? ((strike - op._livePrice) / op._livePrice) * 100
+                            : ((op._livePrice - strike) / strike) * 100);
                 }
                 // Atualiza apenas os 3 campos dinâmicos
                 const dist2    = op._liveDist !== undefined ? op._liveDist : op.distancia;
@@ -295,15 +289,15 @@
             ? "<span class='badge crypto-badge-high ms-1'>▲ HIGH (CALL)</span>"
             : "<span class='badge crypto-badge-low ms-1'>▼ LOW (PUT)</span>";
 
-        // Semáforo de 3 dots baseado na distância
-        const isRed = distNum < 2;
-        const isAmb = distNum >= 2 && distNum < 5;
-        const isGrn = distNum >= 5;
+        // Semáforo de 3 dots binário: vermelho (ITM) ou verde (OTM)
+        const isRed = distNum < 0;
+        const isAmb = false;
+        const isGrn = distNum >= 0;
         const semaforoHTML = `
 <div class="mdc-semaforo" title="Semáforo de Distância ao Strike · Atual: ${distNum.toFixed(1)}%">
-  <div class="mdc-sema-dot" title="🔴 Perigo — distância < 2%: preço muito próximo ao strike, risco elevado de exercício" style="background:#e85d4a;box-shadow:${isRed ? '0 0 10px #e85d4a' : 'none'};opacity:${isRed ? '1' : '0.2'}"></div>
-  <div class="mdc-sema-dot" title="🟡 Atenção — distância entre 2% e 5%: monitorar de perto" style="background:#f59f00;box-shadow:${isAmb ? '0 0 10px #f59f00' : 'none'};opacity:${isAmb ? '1' : '0.2'}"></div>
-  <div class="mdc-sema-dot" title="🟢 Seguro — distância ≥ 5%: baixo risco de exercício" style="background:#47b96c;box-shadow:${isGrn ? '0 0 10px #47b96c' : 'none'};opacity:${isGrn ? '1' : '0.2'}"></div>
+  <div class="mdc-sema-dot" title="🔴 ITM — exercício provável" style="background:#e85d4a;box-shadow:${isRed ? '0 0 10px #e85d4a' : 'none'};opacity:${isRed ? '1' : '0.2'}"></div>
+  <div class="mdc-sema-dot" title="🟡 Atenção" style="background:#f59f00;box-shadow:none;opacity:0.2"></div>
+  <div class="mdc-sema-dot" title="🟢 OTM — seguro, sem exercício" style="background:#47b96c;box-shadow:${isGrn ? '0 0 10px #47b96c' : 'none'};opacity:${isGrn ? '1' : '0.2'}"></div>
 </div>`;
 
         // Cenários

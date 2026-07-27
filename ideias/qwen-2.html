@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Raio-X do Preço Médio</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#080b14; --card:#0d1424; --card2:#111a2e; --border:#1e2a42;
+    --muted:#7890b0; --text:#e8eef8;
+    --green:#22c55e; --orange:#f59e0b; --red:#ef4444; --blue:#3b82f6; --cyan:#06b6d4;
+    --mono:'SFMono-Regular',Consolas,'Roboto Mono',monospace;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:24px 16px 60px;}
+  .wrap{max-width:980px;margin:0 auto;}
+
+  .modal{ background:var(--card); border:1px solid var(--border); border-radius:18px; overflow:hidden; }
+  .modal-head{ display:flex; align-items:flex-start; justify-content:space-between; padding:20px 24px; border-bottom:1px solid var(--border); }
+  .modal-head h2{ font-size:1.05rem; margin:0 0 4px; }
+  .modal-head p{ font-size:.76rem; color:var(--muted); margin:0; }
+  .close{ width:32px;height:32px;border-radius:9px;background:var(--card2);border:1px solid var(--border);color:var(--muted);font-size:.9rem; }
+
+  /* ── Equação SEMPRE visível, em qualquer aba ── */
+  .eq-row{
+    margin:18px 24px; background:var(--card2); border:1px solid var(--border); border-radius:12px;
+    padding:14px 18px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:space-between;
+  }
+  .eq-row .eq-main{ display:flex; align-items:baseline; gap:10px; font-family:var(--mono); font-weight:800; flex-wrap:wrap; }
+  .eq-row .eq-main .r1{ color:var(--orange); font-size:1.2rem; }
+  .eq-row .eq-main .r2{ color:var(--blue); font-size:1rem; }
+  .eq-row .eq-main .r3{ color:var(--green); font-size:1rem; }
+  .eq-row .eq-tag{ font-size:.68rem; color:var(--muted); }
+
+  /* ── Abas internas (sem navegação entre arquivos) ── */
+  .tabbar{ display:flex; gap:8px; margin:0 24px 4px; border-bottom:1px solid var(--border); }
+  .tab{
+    font-size:.74rem; font-weight:700; color:var(--muted); background:none; border:none;
+    padding:10px 4px; cursor:pointer; position:relative; margin-right:14px;
+  }
+  .tab.active{ color:var(--cyan); }
+  .tab.active::after{ content:''; position:absolute; left:0; right:0; bottom:-1px; height:2px; background:var(--cyan); border-radius:2px; }
+  .tab:hover{ color:var(--text); }
+
+  .view{ display:none; }
+  .view.active{ display:block; }
+
+  .panel{ margin:16px 24px 20px; background:var(--card2); border:1px solid var(--border); border-radius:14px; padding:16px 18px; }
+  .panel-title{ font-size:.72rem; font-weight:800; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin:0 0 10px; display:flex; align-items:center; justify-content:space-between; }
+  .panel-title .note{ text-transform:none; font-weight:600; color:var(--muted); font-size:.66rem; }
+  .chart-wrap{ height:220px; }
+
+  .mode-tabs{ display:flex; gap:6px; margin-bottom:12px; }
+  .mode-tab{ font-size:.66rem; font-weight:700; color:var(--muted); background:var(--card); border:1px solid var(--border); padding:6px 12px; border-radius:8px; cursor:pointer; }
+  .mode-tab.active{ color:var(--bg); background:var(--cyan); border-color:var(--cyan); }
+
+  .filter-bar{ margin:16px 24px 0; padding:12px 14px; background:var(--card2); border:1px solid var(--border); border-radius:12px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .fb-group{ display:flex; align-items:center; gap:6px; }
+  .fb-label{ font-size:.6rem; font-weight:800; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; margin-right:2px; }
+  .fb-pill{ font-size:.68rem; font-weight:700; padding:5px 11px; border-radius:8px; background:var(--card); border:1px solid var(--border); color:var(--muted); cursor:pointer; white-space:nowrap; }
+  .fb-pill.active{ color:var(--bg); background:var(--cyan); border-color:var(--cyan); }
+  .fb-pill.multi.active{ color:var(--bg); background:var(--green); border-color:var(--green); }
+  .fb-select{ font-size:.68rem; font-weight:700; padding:5px 10px; border-radius:8px; background:var(--card); border:1px solid var(--border); color:var(--text); cursor:pointer; }
+  .fb-search{ flex:1; min-width:140px; font-size:.7rem; padding:6px 12px; border-radius:8px; background:var(--card); border:1px solid var(--border); color:var(--text); outline:none; }
+  .fb-search::placeholder{ color:var(--muted); }
+  .fb-divider{ width:1px; height:20px; background:var(--border); margin:0 2px; }
+
+  .summary-row{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:16px 24px; }
+  .stat-box{ background:var(--card2); border:1px solid var(--border); border-radius:12px; padding:12px 14px; }
+  .stat-box .lbl{ font-size:.6rem; color:var(--muted); font-weight:700; text-transform:uppercase; margin-bottom:5px; }
+  .stat-box .val{ font-family:var(--mono); font-size:1rem; font-weight:800; }
+  .stat-box.g .val{ color:var(--green); }
+  .stat-box.o .val{ color:var(--orange); }
+
+  .ledger{ width:100%; border-collapse:collapse; }
+  .ledger th{ text-align:left; font-size:.6rem; color:var(--muted); font-weight:700; text-transform:uppercase; padding:6px 8px; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--card2); }
+  .ledger td{ padding:8px 8px; font-size:.74rem; border-bottom:1px solid rgba(255,255,255,.03); }
+  .ledger .badge{ font-size:.58rem; font-weight:800; padding:2px 7px; border-radius:6px; }
+  .badge.call{ background:rgba(59,130,246,.14); color:var(--blue); }
+  .badge.put{ background:rgba(167,139,250,.14); color:#a78bfa; }
+  .badge.aberta{ background:rgba(245,158,11,.14); color:var(--orange); }
+  .badge.fechada{ background:rgba(34,197,94,.14); color:var(--green); }
+  .ledger .amount{ font-family:var(--mono); font-weight:700; color:var(--green); }
+  .ledger .amount.aberta-amt{ color:var(--orange); }
+  .final-row td{ background:rgba(245,158,11,.06); font-weight:800; }
+  .empty-row td{ text-align:center; color:var(--muted); padding:24px; font-size:.76rem; }
+
+  .pagination{ display:flex; align-items:center; justify-content:space-between; margin-top:10px; font-size:.68rem; color:var(--muted); }
+  .page-btns{ display:flex; gap:6px; }
+  .page-btn{ width:26px; height:26px; border-radius:7px; background:var(--card); border:1px solid var(--border); color:var(--muted); font-size:.68rem; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .page-btn.active{ color:var(--bg); background:var(--cyan); border-color:var(--cyan); }
+  .page-btn:disabled{ opacity:.35; cursor:default; }
+
+  /* ── Agrupado por mês ── */
+  .groups{ display:flex; flex-direction:column; gap:10px; }
+  .group{ background:var(--card); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+  .group-head{ display:flex; align-items:center; gap:12px; padding:13px 16px; cursor:pointer; user-select:none; }
+  .group-head .chev{ font-size:.7rem; color:var(--muted); transition:transform .15s ease; width:14px; }
+  .group.open .group-head .chev{ transform:rotate(90deg); }
+  .group-head .month-name{ font-size:.84rem; font-weight:800; flex-shrink:0; width:130px; }
+  .group-head .mini-bar-bg{ flex:1; height:8px; border-radius:4px; background:#1c2740; overflow:hidden; }
+  .group-head .mini-bar-fill{ height:100%; border-radius:4px; background:linear-gradient(90deg,#22c55e,#06b6d4); }
+  .group-head .g-stat{ font-size:.66rem; color:var(--muted); white-space:nowrap; }
+  .group-head .g-total-wrap{ text-align:right; min-width:150px; }
+  .group-head .g-total{ font-family:var(--mono); font-weight:800; color:var(--green); white-space:nowrap; display:block; }
+  .group-head .g-total-label{ font-size:.58rem; color:var(--muted); display:block; }
+  .group-body{ display:none; border-top:1px solid var(--border); }
+  .group.open .group-body{ display:block; }
+  .group-body .scroll-area{ max-height:180px; overflow-y:auto; } /* ≈5 linhas visíveis, resto rola */
+
+  .foot-note{ margin:0 24px 4px; font-size:.68rem; color:var(--muted); line-height:1.6; }
+
+  /* ── Gráfico + lista lado a lado (aba simples) ── */
+  .chart-ledger-grid{ display:grid; grid-template-columns:1.1fr 1fr; gap:16px; align-items:start; }
+  .ledger-scroll{ max-height:230px; overflow-y:auto; border:1px solid var(--border); border-radius:10px; }
+  .ledger-scroll table{ margin:0; }
+  .ledger-scroll thead th{ position:sticky; top:0; background:var(--card2); z-index:1; }
+
+  /* ── Fórmulas + calculadora (aba simples) ── */
+  .formula-list{ display:flex; flex-direction:column; gap:12px; }
+  .formula-item{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; font-size:.76rem; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:10px 12px; }
+  .formula-item code{ font-family:var(--mono); font-weight:700; color:var(--text); background:rgba(255,255,255,.03); padding:3px 8px; border-radius:6px; }
+  .formula-item .f-note{ flex-basis:100%; font-size:.68rem; color:var(--muted); }
+  .f-tag{ font-size:.6rem; font-weight:800; padding:3px 9px; border-radius:999px; white-space:nowrap; }
+  .f-tag.call{ background:rgba(59,130,246,.14); color:var(--blue); }
+  .f-tag.safe{ background:rgba(34,197,94,.14); color:var(--green); }
+  .f-tag.exercida{ background:rgba(245,158,11,.16); color:var(--orange); }
+  .f-tag.put{ background:rgba(167,139,250,.14); color:#a78bfa; }
+
+  .calc-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:14px; }
+  .field{ background:var(--card); border:1px solid var(--border); border-radius:10px; padding:10px 12px; }
+  .field label{ display:block; font-size:.62rem; color:var(--muted); font-weight:700; text-transform:uppercase; margin-bottom:6px; }
+  .field input{ width:100%; background:transparent; border:none; color:var(--text); font-family:var(--mono); font-size:.92rem; font-weight:700; outline:none; }
+  .calc-out{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+  .co-item{ background:var(--card); border:1px solid var(--border); border-radius:10px; padding:11px 13px; }
+  .co-item .lbl{ font-size:.6rem; color:var(--muted); font-weight:700; text-transform:uppercase; margin-bottom:5px; }
+  .co-item .val{ font-family:var(--mono); font-weight:800; font-size:.95rem; }
+  .co-item.verdict{ grid-column:1/-1; display:flex; align-items:center; gap:8px; }
+  .co-item.verdict .dot{ width:9px; height:9px; border-radius:50%; }
+  .co-item.verdict.ok{ color:var(--green); } .co-item.verdict.ok .dot{ background:var(--green); }
+  .co-item.verdict.bad{ color:var(--red); } .co-item.verdict.bad .dot{ background:var(--red); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h2>🌈 Raio-X do Preço Médio</h2>
+        <p>Como chegamos em <b style="color:var(--orange)">US$ 1.196,44</b> e qual o próximo strike seguro</p>
+      </div>
+      <button class="close">✕</button>
+    </div>
+
+    <!-- fixo em qualquer aba -->
+    <div class="eq-row">
+      <div class="eq-main">
+        <span class="r1">US$ 1.196,44</span> <span style="color:var(--muted)">=</span>
+        <span class="r2">US$ 1.825,00</span> <span style="color:var(--muted)">−</span>
+        <span class="r3">(US$ 628,56)</span>
+      </div>
+      <div class="eq-tag">entrada − prêmios acumulados</div>
+    </div>
+
+    <div class="tabbar">
+      <button class="tab active" data-tab="simples">🧾 Extrato simples</button>
+      <button class="tab" data-tab="filtros">🔎 Extrato + Filtros</button>
+      <button class="tab" data-tab="agrupado">🗓️ Agrupado por mês</button>
+    </div>
+
+    <!-- ══════════ ABA 1 · SIMPLES ══════════ -->
+    <div class="view active" id="view-simples">
+      <div class="panel">
+        <p class="panel-title">
+          <span>📉 Evolução do custo × 🧾 Lançamentos do ciclo atual</span>
+          <span class="note" id="cycleNote"></span>
+        </p>
+        <div class="mode-tabs" id="chartModeTabs">
+          <div class="mode-tab active" data-chartmode="waterfall">📊 Waterfall clássico</div>
+          <div class="mode-tab" data-chartmode="linha">📉 Linha do PM</div>
+          <div class="mode-tab" data-chartmode="combo">🧱 Combo (impacto + linha)</div>
+          <div class="mode-tab" data-chartmode="horizontal">➡️ Waterfall horizontal</div>
+        </div>
+        <div class="chart-ledger-grid">
+          <div class="chart-wrap"><canvas id="chart-simples"></canvas></div>
+          <div class="ledger-scroll" id="simplesLedgerWrap">
+            <table class="ledger" id="simplesLedgerTable">
+              <thead><tr><th>Data</th><th>Operação</th><th>Tipo</th><th>Valor</th><th>Saldo (PM)</th></tr></thead>
+              <tbody id="simplesLedgerBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <p class="panel-title">
+          <span>🧮 Calculadora — próxima operação</span>
+          <span class="note">simule antes de abrir</span>
+        </p>
+        <div class="mode-tabs">
+          <div class="mode-tab active" data-calcmode="call">📤 Tenho o ativo → vender CALL</div>
+          <div class="mode-tab" data-calcmode="put">💵 Tenho USDT → comprar PUT</div>
+        </div>
+
+        <div id="calc-call" class="calc-block">
+          <div class="calc-grid">
+            <div class="field"><label>PM atual</label><input type="number" id="ccPM" value="1196.44" step="0.01"></div>
+            <div class="field"><label>Strike da nova CALL</label><input type="number" id="ccStrike" value="1250.00" step="0.01"></div>
+            <div class="field"><label>Prêmio estimado desta operação</label><input type="number" id="ccPremio" value="35.00" step="0.01"></div>
+          </div>
+          <div class="calc-out" id="ccOut"></div>
+        </div>
+
+        <div id="calc-put" class="calc-block" style="display:none">
+          <div class="calc-grid">
+            <div class="field"><label>Cotação atual</label><input type="number" id="cpCot" value="1879.33" step="0.01"></div>
+            <div class="field"><label>Strike da nova PUT</label><input type="number" id="cpStrike" value="1700.00" step="0.01"></div>
+            <div class="field"><label>Prêmio/yield estimado</label><input type="number" id="cpPremio" value="28.00" step="0.01"></div>
+          </div>
+          <div class="calc-out" id="cpOut"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ ABA 2 · FILTROS ══════════ -->
+    <div class="view" id="view-filtros">
+      <div class="filter-bar">
+        <div class="fb-group" id="periodPills">
+          <div class="fb-pill" data-period="hoje">Hoje</div>
+          <div class="fb-pill" data-period="semana">Semana</div>
+          <div class="fb-pill active" data-period="mes">Mês</div>
+          <div class="fb-pill" data-period="todos">📅 Todos</div>
+        </div>
+        <div class="fb-divider"></div>
+        <div class="fb-group"><span class="fb-label">Status</span>
+          <div class="fb-pill multi active" data-status="ABERTA">A</div>
+          <div class="fb-pill multi active" data-status="FECHADA">F</div>
+        </div>
+        <div class="fb-divider"></div>
+        <div class="fb-group"><span class="fb-label">Tipo</span>
+          <div class="fb-pill multi active" data-tipo="CALL">C</div>
+          <div class="fb-pill multi active" data-tipo="PUT">P</div>
+        </div>
+        <div class="fb-divider"></div>
+        <select class="fb-select" id="selMoeda"><option value="">Moeda: Todas</option><option value="ETH">ETH</option><option value="BTC">BTC</option></select>
+        <select class="fb-select" id="selCorretora"><option value="">Corretora: Todas</option><option value="BINANCE">Binance</option><option value="BYBIT">Bybit</option><option value="DERIBIT">Deribit</option></select>
+        <input class="fb-search" id="search" placeholder="🔍 buscar...">
+      </div>
+
+      <div class="summary-row" id="summaryRow"></div>
+
+      <div class="panel">
+        <p class="panel-title"><span>📉 Custo acumulado no período filtrado</span><span class="note">dados de exemplo, ilustrativos</span></p>
+        <div class="chart-wrap" style="height:130px"><canvas id="spark-filtros"></canvas></div>
+      </div>
+
+      <div class="panel">
+        <p class="panel-title"><span>🧾 Lançamentos</span><span class="note" id="tableCount"></span></p>
+        <div style="max-height:280px;overflow-y:auto">
+          <table class="ledger"><thead><tr><th>Data</th><th>Ativo</th><th>Tipo</th><th>Status</th><th>Corretora</th><th>Prêmio</th></tr></thead><tbody id="ledgerBody"></tbody></table>
+        </div>
+        <div class="pagination"><span id="pageInfo"></span><div class="page-btns" id="pageBtns"></div></div>
+      </div>
+    </div>
+
+    <!-- ══════════ ABA 3 · AGRUPADO ══════════ -->
+    <div class="view" id="view-agrupado">
+      <div class="filter-bar">
+        <div class="fb-group"><span class="fb-label">Status</span>
+          <div class="fb-pill multi active" data-status2="ABERTA">A</div>
+          <div class="fb-pill multi active" data-status2="FECHADA">F</div>
+        </div>
+        <div class="fb-divider"></div>
+        <div class="fb-group"><span class="fb-label">Tipo</span>
+          <div class="fb-pill multi active" data-tipo2="CALL">C</div>
+          <div class="fb-pill multi active" data-tipo2="PUT">P</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <p class="panel-title">
+          <span>🎯 Como o preço médio evoluiu</span>
+          <span class="note">foco no cálculo do PM, não em total por mês</span>
+        </p>
+        <div class="mode-tabs">
+          <div class="mode-tab active" data-mode="waterfall">📊 Waterfall compacto</div>
+          <div class="mode-tab" data-mode="linha">📉 Linha do tempo do PM</div>
+        </div>
+        <div class="chart-wrap"><canvas id="chart-agrupado"></canvas></div>
+      </div>
+
+      <p class="foot-note">💡 Cada mês mostra <b style="color:var(--text)">quantos lançamentos</b> e <b style="color:var(--green)">quanto esse mês abateu do custo</b> — clique para ver o detalhe (mostra 5 linhas por vez, o resto rola dentro do card, a modal não cresce).</p>
+
+      <div class="groups" id="groups"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  /* ═══ Dataset sintético compartilhado (simula muitos lançamentos) ═══ */
+  var ATIVOS = ['ETH','BTC'], TIPOS = ['CALL','PUT'], CORRETORAS = ['BINANCE','BYBIT','DERIBIT'];
+  var MLBL = {1:'Jan',2:'Fev',3:'Mar',4:'Abr',5:'Mai',6:'Jun',7:'Jul',8:'Ago',9:'Set',10:'Out',11:'Nov',12:'Dez'};
+  var ops = [];
+  (function seed(){
+    var start = new Date('2026-02-01'), end = new Date('2026-07-24'), d = new Date(start), id = 1;
+    while(d <= end){
+      if(Math.random() < 0.5){
+        var n = Math.random() < 0.2 ? 2 : 1;
+        for(var k=0;k<n;k++){
+          var ativo = ATIVOS[Math.random() < 0.65 ? 0 : 1];
+          var tipo = TIPOS[Math.random() < 0.75 ? 0 : 1];
+          var isOpen = d > new Date(end.getTime() - 6*86400000) && Math.random() < 0.4;
+          var premio = ativo==='ETH' ? (30 + Math.random()*200) : (60 + Math.random()*400);
+          ops.push({ id:id++, date:new Date(d), ativo:ativo, tipo:tipo, status:isOpen?'ABERTA':'FECHADA', corretora:CORRETORAS[Math.floor(Math.random()*CORRETORAS.length)], premio:parseFloat(premio.toFixed(2)) });
+        }
+      }
+      d.setDate(d.getDate()+1);
+    }
+  })();
+
+  function fmtUS(n){ var neg=n<0; return (neg?'-':'')+'US$ ' + Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function fmtDate(d){ return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0'); }
+  function fmtDateFull(d){ return fmtDate(d) + '/' + d.getFullYear(); }
+  function monthKey(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'); }
+
+  /* ─────────────── Tabs ─────────────── */
+  document.querySelectorAll('.tab').forEach(function(t){
+    t.addEventListener('click', function(){
+      document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active');});
+      document.querySelectorAll('.view').forEach(function(x){x.classList.remove('active');});
+      t.classList.add('active');
+      document.getElementById('view-' + t.getAttribute('data-tab')).classList.add('active');
+    });
+  });
+
+  /* ─────────────── Aba 1: simples — filtra pelo ciclo atual ─────────────── */
+  // Histórico completo (inclui um ciclo anterior só para provar que o filtro funciona)
+  var historicoCompleto = [
+    { date:new Date('2026-07-01'), label:'Preço de entrada (PUT exercida) — ciclo anterior', tipo:'PUT', isEntrada:true, valor:1050.00 },
+    { date:new Date('2026-07-10'), label:'Prêmio CALL — ciclo anterior', tipo:'CALL', valor:-45.00 },
+    { date:new Date('2026-07-15'), label:'Prêmio CALL — EXERCIDA (fechou o ciclo anterior)', tipo:'CALL', valor:-30.00 },
+    { date:new Date('2026-07-20'), label:'Preço de entrada (PUT exercida)', tipo:'PUT', isEntrada:true, valor:1825.00 },
+    { date:new Date('2026-07-21'), label:'Prêmio CALL #1', tipo:'CALL', valor:-215.40 },
+    { date:new Date('2026-07-22'), label:'Prêmio CALL #2', tipo:'CALL', valor:-188.20 },
+    { date:new Date('2026-07-23'), label:'Prêmio CALL #3', tipo:'CALL', valor:-142.30 },
+    { date:new Date('2026-07-24'), label:'Prêmio CALL #4', tipo:'CALL', valor:-82.66 }
+  ];
+
+  function cicloAtual(historico){
+    var ordenado = historico.slice().sort(function(a,b){ return a.date - b.date; });
+    var lastEntradaIdx = -1;
+    ordenado.forEach(function(item, i){ if(item.isEntrada) lastEntradaIdx = i; });
+    return { itens: ordenado.slice(lastEntradaIdx), escondidos: lastEntradaIdx };
+  }
+
+  var cicloInfo = cicloAtual(historicoCompleto);
+  var itensCiclo = cicloInfo.itens;
+
+  document.getElementById('cycleNote').textContent = cicloInfo.escondidos > 0
+    ? cicloInfo.escondidos + ' lançamento(s) de um ciclo anterior (encerrado) foram ocultados'
+    : 'nenhum ciclo anterior a ocultar';
+
+  // saldo (PM) acumulado a partir da entrada deste ciclo
+  var saldoSimples = 0;
+  var linhasTabela = itensCiclo.map(function(item){
+    saldoSimples += item.valor;
+    return {
+      data: String(item.date.getDate()).padStart(2,'0') + '/' + String(item.date.getMonth()+1).padStart(2,'0'),
+      label: item.label,
+      tipo: item.tipo,
+      valor: item.valor,
+      saldo: saldoSimples,
+      isEntrada: !!item.isEntrada
+    };
+  });
+
+  var simplesTbody = document.getElementById('simplesLedgerBody');
+  simplesTbody.innerHTML = linhasTabela.map(function(l, i){
+    var isLast = i === linhasTabela.length - 1;
+    return '<tr class="'+(isLast?'final-row':'')+'">' +
+      '<td>'+l.data+'</td>' +
+      '<td>'+l.label+'</td>' +
+      '<td><span class="badge '+(l.isEntrada?'put':'call')+'">'+(l.isEntrada?'Entrada':'Prêmio')+'</span></td>' +
+      '<td class="amount '+(l.isEntrada?'aberta-amt':'')+'">'+fmtUS(l.valor)+'</td>' +
+      '<td'+(isLast?' style="color:var(--orange)"':'')+'>'+fmtUS(l.saldo)+'</td>' +
+    '</tr>';
+  }).join('');
+
+  var chartSimplesRef = null;
+
+  function renderChartSimples(mode){
+    var ctx = document.getElementById('chart-simples').getContext('2d');
+    if(chartSimplesRef) chartSimplesRef.destroy();
+
+    if(mode === 'linha'){
+      chartSimplesRef = new Chart(ctx, {
+        type:'line',
+        data:{ labels: linhasTabela.map(function(l){ return l.isEntrada ? 'Entrada' : l.data; }),
+          datasets:[{ data: linhasTabela.map(function(l){return l.saldo;}), borderColor:'#f59e0b', backgroundColor:'rgba(245,158,11,.08)', borderWidth:2.5, fill:true, tension:.35, pointRadius:4,
+            pointBackgroundColor:function(c){ return c.dataIndex === linhasTabela.length-1 ? '#f59e0b' : '#22c55e'; } }] },
+        options:{ responsive:true, maintainAspectRatio:false,
+          plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:function(c){ return 'US$ '+c.parsed.y.toFixed(2); } } } },
+          scales:{ x:{ ticks:{color:'#7890b0',font:{size:10}}, grid:{display:false} }, y:{ ticks:{color:'#7890b0',font:{size:10},callback:function(v){return '$'+v;}}, grid:{color:'rgba(255,255,255,.04)'} } } }
+      });
+
+    } else if(mode === 'combo'){
+      var labels = linhasTabela.map(function(l){ return l.isEntrada ? 'Entrada' : l.data; });
+      var impacto = linhasTabela.map(function(l){ return l.isEntrada ? 0 : Math.abs(l.valor); });
+      var saldoLine = linhasTabela.map(function(l){ return l.saldo; });
+      chartSimplesRef = new Chart(ctx, {
+        data:{ labels:labels, datasets:[
+          { type:'bar', label:'Impacto do lançamento', data:impacto, backgroundColor:'#22c55eaa', borderRadius:5, yAxisID:'y1', order:2 },
+          { type:'line', label:'Saldo (PM)', data:saldoLine, borderColor:'#f59e0b', backgroundColor:'rgba(245,158,11,.08)', borderWidth:2.5, fill:true, tension:.3, pointRadius:4, yAxisID:'y', order:1,
+            pointBackgroundColor:function(c){ return c.dataIndex === labels.length-1 ? '#f59e0b' : '#3b82f6'; } }
+        ]},
+        options:{ responsive:true, maintainAspectRatio:false,
+          plugins:{ legend:{ display:true, labels:{ color:'#7890b0', font:{size:10} } }, tooltip:{ callbacks:{ label:function(c){ return c.dataset.label+': US$ '+c.parsed.y.toFixed(2); } } } },
+          scales:{
+            x:{ ticks:{color:'#7890b0',font:{size:10}}, grid:{display:false} },
+            y:{ position:'left', ticks:{color:'#f59e0b',font:{size:9},callback:function(v){return '$'+v;}}, grid:{color:'rgba(255,255,255,.04)'} },
+            y1:{ position:'right', ticks:{color:'#22c55e',font:{size:9},callback:function(v){return '$'+v;}}, grid:{display:false} }
+          } }
+      });
+
+    } else if(mode === 'horizontal'){
+      var wf = buildWaterfallBars();
+      chartSimplesRef = new Chart(ctx, {
+        type:'bar',
+        data:{ labels:wf.labels, datasets:[{ data:wf.data, backgroundColor:wf.colors, borderRadius:5, barThickness:22 }] },
+        options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
+          plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:function(c){ var v=c.raw; return 'US$ '+(Array.isArray(v)?(v[1]-v[0]):v).toFixed(2); } } } },
+          scales:{ x:{ ticks:{color:'#7890b0',font:{size:9},callback:function(v){return '$'+v;}}, grid:{color:'rgba(255,255,255,.04)'} }, y:{ ticks:{color:'#7890b0',font:{size:10}}, grid:{display:false} } } }
+      });
+
+    } else { // waterfall clássico (padrão)
+      var w = buildWaterfallBars();
+      chartSimplesRef = new Chart(ctx, {
+        type:'bar',
+        data:{ labels:w.labels, datasets:[{ data:w.data, backgroundColor:w.colors, borderRadius:6, barThickness:38 }] },
+        options:{ responsive:true, maintainAspectRatio:false,
+          plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:function(c){ var v=c.raw; return 'US$ '+(Array.isArray(v)?(v[1]-v[0]):v).toFixed(2); } } } },
+          scales:{ x:{ ticks:{color:'#7890b0',font:{size:9}}, grid:{display:false} }, y:{ ticks:{color:'#7890b0',font:{size:9},callback:function(v){return '$'+v;}}, grid:{color:'rgba(255,255,255,.04)'} } } }
+      });
+    }
+  }
+
+  function buildWaterfallBars(){
+    var labels = [], data = [], colors = [];
+    linhasTabela.forEach(function(l, i){
+      if(l.isEntrada){
+        labels.push('Entrada'); data.push([0, l.saldo]); colors.push('#3b82f6');
+      } else {
+        var prevSaldo = linhasTabela[i-1].saldo;
+        labels.push(l.data); data.push([l.saldo, prevSaldo]); colors.push('#22c55e');
+      }
+    });
+    var lastSaldo = linhasTabela[linhasTabela.length-1].saldo;
+    labels.push('PM ATUAL'); data.push([0, lastSaldo]); colors.push('#f59e0b');
+    return { labels:labels, data:data, colors:colors };
+  }
+
+  document.getElementById('chartModeTabs').querySelectorAll('.mode-tab').forEach(function(m){
+    m.addEventListener('click', function(){
+      document.getElementById('chartModeTabs').querySelectorAll('.mode-tab').forEach(function(x){x.classList.remove('active');});
+      m.classList.add('active');
+      renderChartSimples(m.getAttribute('data-chartmode'));
+    });
+  });
+
+  renderChartSimples('waterfall');
+
+  /* ─────────────── Calculadora Call/Put (aba simples) ─────────────── */
+  document.querySelectorAll('#view-simples .mode-tab').forEach(function(m){
+    m.addEventListener('click', function(){
+      document.querySelectorAll('#view-simples .mode-tab').forEach(function(x){x.classList.remove('active');});
+      m.classList.add('active');
+      var mode = m.getAttribute('data-calcmode');
+      document.getElementById('calc-call').style.display = mode==='call' ? 'block' : 'none';
+      document.getElementById('calc-put').style.display  = mode==='put'  ? 'block' : 'none';
+    });
+  });
+
+  function calcCall(){
+    var pm = parseFloat(document.getElementById('ccPM').value) || 0;
+    var strike = parseFloat(document.getElementById('ccStrike').value) || 0;
+    var premio = parseFloat(document.getElementById('ccPremio').value) || 0;
+    var safe = strike >= pm;
+    var pmSeNaoExercida = pm - premio;
+    // resultado CORRIGIDO: inclui o prêmio desta própria operação
+    var resultadoSeExercida = (strike - pm) + premio;
+
+    document.getElementById('ccOut').innerHTML =
+      '<div class="co-item"><div class="lbl">Novo PM se NÃO exercida</div><div class="val" style="color:var(--cyan)">'+fmtUS(pmSeNaoExercida)+'</div></div>' +
+      '<div class="co-item"><div class="lbl">Resultado se EXERCIDA (com prêmio)</div><div class="val" style="color:var(--green)">'+fmtUS(resultadoSeExercida)+'</div></div>' +
+      '<div class="co-item"><div class="lbl">Margem do strike sobre o PM</div><div class="val" style="color:var(--orange)">'+(pm>0?((strike-pm)/pm*100).toFixed(1):'0')+'%</div></div>' +
+      '<div class="co-item verdict '+(safe?'ok':'bad')+'"><span class="dot"></span>'+(safe?'Strike ≥ PM — sem risco de prejuízo se exercida.':'Atenção: strike abaixo do PM — exercício geraria prejuízo.')+'</div>';
+  }
+  function calcPut(){
+    var cot = parseFloat(document.getElementById('cpCot').value) || 0;
+    var strike = parseFloat(document.getElementById('cpStrike').value) || 0;
+    var premio = parseFloat(document.getElementById('cpPremio').value) || 0;
+    var dist = cot>0 ? ((cot-strike)/cot*100) : 0;
+    var custoSeExercida = strike; // novo PM caso exercida (compra ao strike); prêmio já é ganho à parte
+    document.getElementById('cpOut').innerHTML =
+      '<div class="co-item"><div class="lbl">Distância abaixo da cotação</div><div class="val" style="color:var(--orange)">'+dist.toFixed(1)+'%</div></div>' +
+      '<div class="co-item"><div class="lbl">Novo PM se EXERCIDA (compra)</div><div class="val" style="color:var(--cyan)">'+fmtUS(custoSeExercida)+'</div></div>' +
+      '<div class="co-item"><div class="lbl">Ganho garantido se NÃO exercida</div><div class="val" style="color:var(--green)">'+fmtUS(premio)+'</div></div>';
+  }
+  ['ccPM','ccStrike','ccPremio'].forEach(function(id){ document.getElementById(id).addEventListener('input', calcCall); });
+  ['cpCot','cpStrike','cpPremio'].forEach(function(id){ document.getElementById(id).addEventListener('input', calcPut); });
+  calcCall(); calcPut();
+
+  /* ─────────────── Aba 2: filtros ─────────────── */
+  var stateF = { period:'mes', status:['ABERTA','FECHADA'], tipo:['CALL','PUT'], moeda:'', corretora:'', search:'', page:1 };
+  var PAGE_SIZE = 10, sparkFiltros = null;
+
+  function inPeriod(d, period){
+    var now = new Date('2026-07-24');
+    if(period === 'hoje') return d.toDateString() === now.toDateString();
+    if(period === 'semana'){ var wk=new Date(now); wk.setDate(now.getDate()-7); return d>=wk && d<=now; }
+    if(period === 'mes'){ var mo=new Date(now); mo.setDate(now.getDate()-30); return d>=mo && d<=now; }
+    return true;
+  }
+  function filteredF(){
+    var s = stateF.search.trim().toLowerCase();
+    return ops.filter(function(o){
+      if(!inPeriod(o.date, stateF.period)) return false;
+      if(stateF.status.indexOf(o.status)===-1) return false;
+      if(stateF.tipo.indexOf(o.tipo)===-1) return false;
+      if(stateF.moeda && o.ativo!==stateF.moeda) return false;
+      if(stateF.corretora && o.corretora!==stateF.corretora) return false;
+      if(s){ var hay=(o.tipo+' '+o.ativo+' '+o.status+' '+o.corretora+' '+fmtDateFull(o.date)).toLowerCase(); if(hay.indexOf(s)===-1) return false; }
+      return true;
+    }).sort(function(a,b){ return a.date-b.date; });
+  }
+  function renderFiltros(){
+    var list = filteredF();
+    var total = list.reduce(function(s,o){return s+o.premio;},0);
+    var abertas = list.filter(function(o){return o.status==='ABERTA';}).length;
+    document.getElementById('summaryRow').innerHTML =
+      '<div class="stat-box"><div class="lbl">Operações no filtro</div><div class="val">'+list.length+'</div></div>' +
+      '<div class="stat-box g"><div class="lbl">Prêmios acumulados</div><div class="val">'+fmtUS(total)+'</div></div>' +
+      '<div class="stat-box o"><div class="lbl">Abertas</div><div class="val">'+abertas+'</div></div>' +
+      '<div class="stat-box"><div class="lbl">Fechadas</div><div class="val">'+(list.length-abertas)+'</div></div>';
+    document.getElementById('tableCount').textContent = list.length + ' resultados';
+
+    var acc = 0;
+    var chartData = list.map(function(o){ acc+=o.premio; return {x:fmtDate(o.date), y:parseFloat(acc.toFixed(2))}; });
+    var ctx = document.getElementById('spark-filtros').getContext('2d');
+    if(sparkFiltros) sparkFiltros.destroy();
+    sparkFiltros = new Chart(ctx, { type:'line', data:{ labels:chartData.map(function(p){return p.x;}), datasets:[{ data:chartData.map(function(p){return p.y;}), borderColor:'#22c55e', backgroundColor:'rgba(34,197,94,.08)', borderWidth:2, fill:true, tension:.3, pointRadius:0 }] },
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:{callbacks:{label:function(c){return 'US$ '+c.parsed.y.toFixed(2);}}}},
+      scales:{ x:{ ticks:{color:'#7890b0',font:{size:9},maxTicksLimit:8}, grid:{display:false} }, y:{ ticks:{color:'#7890b0',font:{size:9},callback:function(v){return '$'+v;}}, grid:{color:'rgba(255,255,255,.04)'} } } } });
+
+    var totalPages = Math.max(1, Math.ceil(list.length/PAGE_SIZE));
+    if(stateF.page > totalPages) stateF.page = totalPages;
+    var startIdx = (stateF.page-1)*PAGE_SIZE;
+    var pageItems = list.slice(startIdx, startIdx+PAGE_SIZE);
+    var tbody = document.getElementById('ledgerBody');
+    tbody.innerHTML = pageItems.length===0 ? '<tr class="empty-row"><td colspan="6">Nenhum lançamento encontrado.</td></tr>' :
+      pageItems.map(function(o){
+        return '<tr><td>'+fmtDateFull(o.date)+'</td><td>'+o.ativo+'</td><td><span class="badge '+o.tipo.toLowerCase()+'">'+o.tipo+'</span></td>' +
+          '<td><span class="badge '+o.status.toLowerCase()+'">'+(o.status==='ABERTA'?'Aberta':'Fechada')+'</span></td><td>'+o.corretora+'</td>' +
+          '<td class="amount '+(o.status==='ABERTA'?'aberta-amt':'')+'">'+(o.status==='ABERTA'?'':'-')+fmtUS(Math.abs(o.premio))+'</td></tr>';
+      }).join('');
+
+    document.getElementById('pageInfo').textContent = list.length ? ('Página '+stateF.page+' de '+totalPages) : '';
+    var btns = '<button class="page-btn" '+(stateF.page<=1?'disabled':'')+' data-go="prev">‹</button>';
+    for(var p=1;p<=totalPages;p++){ btns += '<button class="page-btn '+(p===stateF.page?'active':'')+'" data-go="'+p+'">'+p+'</button>'; }
+    btns += '<button class="page-btn" '+(stateF.page>=totalPages?'disabled':'')+' data-go="next">›</button>';
+    document.getElementById('pageBtns').innerHTML = btns;
+    document.getElementById('pageBtns').querySelectorAll('.page-btn').forEach(function(b){
+      b.addEventListener('click', function(){
+        var go=b.getAttribute('data-go');
+        if(go==='prev') stateF.page=Math.max(1,stateF.page-1);
+        else if(go==='next') stateF.page=Math.min(totalPages,stateF.page+1);
+        else stateF.page=parseInt(go,10);
+        renderFiltros();
+      });
+    });
+  }
+  document.getElementById('periodPills').querySelectorAll('.fb-pill').forEach(function(p){
+    p.addEventListener('click', function(){
+      document.getElementById('periodPills').querySelectorAll('.fb-pill').forEach(function(x){x.classList.remove('active');});
+      p.classList.add('active'); stateF.period=p.getAttribute('data-period'); stateF.page=1; renderFiltros();
+    });
+  });
+  document.querySelectorAll('#view-filtros .fb-pill.multi[data-status]').forEach(function(p){
+    p.addEventListener('click', function(){
+      var v=p.getAttribute('data-status'), idx=stateF.status.indexOf(v);
+      if(idx>-1){ if(stateF.status.length>1){ stateF.status.splice(idx,1); p.classList.remove('active'); } }
+      else{ stateF.status.push(v); p.classList.add('active'); }
+      stateF.page=1; renderFiltros();
+    });
+  });
+  document.querySelectorAll('#view-filtros .fb-pill.multi[data-tipo]').forEach(function(p){
+    p.addEventListener('click', function(){
+      var v=p.getAttribute('data-tipo'), idx=stateF.tipo.indexOf(v);
+      if(idx>-1){ if(stateF.tipo.length>1){ stateF.tipo.splice(idx,1); p.classList.remove('active'); } }
+      else{ stateF.tipo.push(v); p.classList.add('active'); }
+      stateF.page=1; renderFiltros();
+    });
+  });
+  document.getElementById('selMoeda').addEventListener('change', function(e){ stateF.moeda=e.target.value; stateF.page=1; renderFiltros(); });
+  document.getElementById('selCorretora').addEventListener('change', function(e){ stateF.corretora=e.target.value; stateF.page=1; renderFiltros(); });
+  document.getElementById('search').addEventListener('input', function(e){ stateF.search=e.target.value; stateF.page=1; renderFiltros(); });
+  renderFiltros();
+
+  /* ─────────────── Aba 3: agrupado ─────────────── */
+  var stateA = { status:['ABERTA','FECHADA'], tipo:['CALL','PUT'], mode:'waterfall' };
+  var openGroups = {}, chartAgrupado = null;
+
+  function filteredA(){
+    return ops.filter(function(o){ return stateA.status.indexOf(o.status)>-1 && stateA.tipo.indexOf(o.tipo)>-1; });
+  }
+  function groupByMonth(list){
+    var map = {};
+    list.forEach(function(o){
+      var k = monthKey(o.date);
+      if(!map[k]) map[k] = { key:k, month:o.date.getMonth()+1, year:o.date.getFullYear(), items:[], total:0 };
+      map[k].items.push(o); map[k].total += o.premio;
+    });
+    return Object.keys(map).sort().reverse().map(function(k){ map[k].items.sort(function(a,b){return b.date-a.date;}); return map[k]; });
+  }
+
+  function renderChartAgrupado(list){
+    var ctx = document.getElementById('chart-agrupado').getContext('2d');
+    var chronological = list.slice().sort(function(a,b){return a.date-b.date;});
+    if(chartAgrupado) chartAgrupado.destroy();
+
+    if(stateA.mode === 'linha'){
+      var acc = 1825.00;
+      var pts = chronological.map(function(o){ acc -= o.premio; return { x: fmtDate(o.date), y: parseFloat(acc.toFixed(2)) }; });
+      chartAgrupado = new Chart(ctx, { type:'line',
+        data:{ labels: pts.map(function(p){return p.x;}), datasets:[{ label:'Preço médio ao longo do tempo', data: pts.map(function(p){return p.y;}), borderColor:'#f59e0b', backgroundColor:'rgba(245,158,11,.08)', borderWidth:2, fill:true, tension:.25, pointRadius:0 }] },
+        options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:{callbacks:{label:function(c){return 'PM: US$ '+c.parsed.y.toFixed(2);}}}},
+          scales:{ x:{ ticks:{color:'#7890b0',font:{size:9},maxTicksLimit:10}, grid:{display:false} }, y:{ ticks:{color:'#7890b0',font:{size:9},callback:function(v){return '$'+v;}}, grid:{color:'rgba(255,255,255,.04)'} } } } });
+    } else {
+      // waterfall compacto: entrada + top 5 maiores prêmios + "outras operações" agrupadas
+      var sorted = chronological.slice().sort(function(a,b){return b.premio-a.premio;});
+      var top = sorted.slice(0,5), rest = sorted.slice(5);
+      var restSum = rest.reduce(function(s,o){return s+o.premio;},0);
+      var labels = ['Entrada'].concat(top.map(function(o){return o.tipo+' '+fmtDate(o.date);}));
+      var values = [1825.00].concat(top.map(function(o){return -o.premio;}));
+      if(rest.length){ labels.push('Outras '+rest.length+' op.'); values.push(-restSum); }
+      var colors = ['#3b82f6'].concat(top.map(function(){return '#22c55e';})).concat(rest.length?['#16a34a']:[]);
+      chartAgrupado = new Chart(ctx, { type:'bar',
+        data:{ labels:labels, datasets:[{ data:values.map(function(v){return v.toFixed(2);}), backgroundColor:colors, borderRadius:6 }] },
+        options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:{callbacks:{label:function(c){return 'US$ '+c.parsed.y.toFixed(2);}}}},
+          scales:{ x:{ ticks:{color:'#7890b0',font:{size:9}}, grid:{display:false} }, y:{ ticks:{color:'#7890b0',font:{size:9},callback:function(v){return '$'+v;}}, grid:{color:'rgba(255,255,255,.04)'} } } } });
+    }
+  }
+
+  function renderAgrupado(){
+    var list = filteredA();
+    renderChartAgrupado(list);
+    var groups = groupByMonth(list);
+    var maxTotal = Math.max.apply(null, groups.map(function(g){return g.total;}).concat([1]));
+    var groupsEl = document.getElementById('groups');
+
+    if(groups.length === 0){ groupsEl.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:.78rem;padding:24px">Nenhum lançamento com esses filtros.</div>'; return; }
+
+    groupsEl.innerHTML = groups.map(function(g){
+      var isOpen = !!openGroups[g.key];
+      var barPct = (g.total/maxTotal*100).toFixed(1);
+      var rows = g.items.map(function(o){
+        return '<tr><td>'+fmtDate(o.date)+'</td><td>'+o.ativo+'</td><td><span class="badge '+o.tipo.toLowerCase()+'">'+o.tipo+'</span></td>' +
+          '<td><span class="badge '+o.status.toLowerCase()+'">'+(o.status==='ABERTA'?'Aberta':'Fechada')+'</span></td><td>'+o.corretora+'</td>' +
+          '<td class="amount '+(o.status==='ABERTA'?'aberta-amt':'')+'">'+(o.status==='ABERTA'?'':'-')+fmtUS(Math.abs(o.premio))+'</td></tr>';
+      }).join('');
+      return '<div class="group '+(isOpen?'open':'')+'" data-key="'+g.key+'">' +
+        '<div class="group-head">' +
+          '<span class="chev">▶</span>' +
+          '<span class="month-name">🗓️ '+MLBL[g.month]+'/'+g.year+'</span>' +
+          '<div class="mini-bar-bg"><div class="mini-bar-fill" style="width:'+barPct+'%"></div></div>' +
+          '<span class="g-stat">'+g.items.length+' lanç.</span>' +
+          '<div class="g-total-wrap"><span class="g-total">'+fmtUS(g.total)+'</span><span class="g-total-label">abatido no mês</span></div>' +
+        '</div>' +
+        '<div class="group-body"><div class="scroll-area">' +
+          '<table class="ledger"><thead><tr><th>Data</th><th>Ativo</th><th>Tipo</th><th>Status</th><th>Corretora</th><th>Prêmio</th></tr></thead><tbody>'+rows+'</tbody></table>' +
+        '</div></div>' +
+      '</div>';
+    }).join('');
+
+    groupsEl.querySelectorAll('.group-head').forEach(function(h){
+      h.addEventListener('click', function(){ var key=h.closest('.group').getAttribute('data-key'); openGroups[key]=!openGroups[key]; renderAgrupado(); });
+    });
+  }
+
+  document.querySelectorAll('.mode-tab').forEach(function(m){
+    m.addEventListener('click', function(){
+      document.querySelectorAll('.mode-tab').forEach(function(x){x.classList.remove('active');});
+      m.classList.add('active'); stateA.mode = m.getAttribute('data-mode'); renderAgrupado();
+    });
+  });
+  document.querySelectorAll('#view-agrupado .fb-pill.multi[data-status2]').forEach(function(p){
+    p.addEventListener('click', function(){
+      var v=p.getAttribute('data-status2'), idx=stateA.status.indexOf(v);
+      if(idx>-1){ if(stateA.status.length>1){ stateA.status.splice(idx,1); p.classList.remove('active'); } }
+      else{ stateA.status.push(v); p.classList.add('active'); }
+      renderAgrupado();
+    });
+  });
+  document.querySelectorAll('#view-agrupado .fb-pill.multi[data-tipo2]').forEach(function(p){
+    p.addEventListener('click', function(){
+      var v=p.getAttribute('data-tipo2'), idx=stateA.tipo.indexOf(v);
+      if(idx>-1){ if(stateA.tipo.length>1){ stateA.tipo.splice(idx,1); p.classList.remove('active'); } }
+      else{ stateA.tipo.push(v); p.classList.add('active'); }
+      renderAgrupado();
+    });
+  });
+
+  var initGroups = groupByMonth(filteredA());
+  if(initGroups[0]) openGroups[initGroups[0].key] = true;
+  renderAgrupado();
+})();
+</script>
+</body>
+</html>

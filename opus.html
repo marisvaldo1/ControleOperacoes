@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timeline de Lançamentos - Opus</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tabler-icons@latest/tabler-icons.min.css">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Inter',-apple-system,sans-serif;background:#0f1219;color:#e0e0e0;padding:24px;max-width:900px;margin:0 auto}
+
+        .tl-page-header{margin-bottom:16px}
+        .tl-page-title{font-size:1.1rem;font-weight:800;display:flex;align-items:center;gap:8px}
+        .tl-page-title i{color:#f59e0b}
+        .tl-page-sub{font-size:.75rem;color:rgba(255,255,255,.45);margin-top:4px}
+
+        .tl-filters{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+        .tl-filter{display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);color:rgba(255,255,255,.5);font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s}
+        .tl-filter:hover{background:rgba(255,255,255,.06);color:#e0e0e0}
+        .tl-filter.active{background:#f59e0b;border-color:#f59e0b;color:#fff}
+        .tl-filter i{font-size:.85rem}
+
+        .tl-month{border:1px solid rgba(255,255,255,.07);border-radius:12px;margin-bottom:10px;overflow:hidden;background:rgba(255,255,255,.015)}
+        .tl-month-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;cursor:pointer;transition:background .15s;user-select:none}
+        .tl-month-header:hover{background:rgba(255,255,255,.03)}
+        .tl-month-left{display:flex;align-items:center;gap:10px}
+        .tl-month-icon{font-size:1.3rem}
+        .tl-month-name{font-size:.9rem;font-weight:700}
+        .tl-month-meta{display:flex;gap:6px;margin-top:4px;flex-wrap:wrap}
+        .tl-month-right{display:flex;align-items:center;gap:10px}
+        .tl-month-count{font-size:.68rem;color:rgba(255,255,255,.4);background:rgba(255,255,255,.06);padding:3px 8px;border-radius:10px}
+        .tl-chevron{font-size:.7rem;color:rgba(255,255,255,.35);transition:transform .2s}
+        .tl-month.open .tl-chevron{transform:rotate(180deg)}
+
+        .tl-pill{display:inline-flex;align-items:center;gap:4px;font-size:.68rem;font-weight:600;padding:2px 8px;border-radius:10px;white-space:nowrap}
+        .tl-pill i{font-size:.72rem}
+        .tl-pill-ops{background:rgba(255,255,255,.06);color:rgba(255,255,255,.55)}
+        .tl-pill-green{background:rgba(34,197,94,.12);color:#4ade80}
+        .tl-pill-pm{background:rgba(245,158,11,.12);color:#fbbf24}
+        .tl-pill-fire{background:rgba(239,68,68,.12);color:#f87171}
+
+        .tl-month-body{padding:0 16px 12px}
+        .tl-th{display:grid;grid-template-columns:85px 100px 60px 120px 100px 90px 100px 100px;gap:4px;padding:6px 8px;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:rgba(255,255,255,.35);border-bottom:1px solid rgba(255,255,255,.08)}
+        .tl-th i{font-size:.7rem;margin-right:3px}
+        .tl-tr{display:grid;grid-template-columns:85px 100px 60px 120px 100px 90px 100px 100px;gap:4px;padding:7px 8px;font-size:.78rem;border-bottom:1px solid rgba(255,255,255,.03);align-items:center;transition:background .1s}
+        .tl-tr:hover{background:rgba(255,255,255,.025)}
+        .tl-tr-put-ex{background:rgba(239,68,68,.06);border-left:3px solid #ef4444}
+        .tl-tr-put-ex:hover{background:rgba(239,68,68,.1)}
+        .tl-tr-today{background:rgba(59,130,246,.06);border-left:3px solid #3b82f6}
+        .tl-tr-star{border-left:3px solid #f59e0b!important;background:rgba(245,158,11,.05)!important}
+
+        .tl-entry-highlight{font-weight:800;font-size:.82rem;color:#f59e0b!important;text-decoration:underline dotted #f59e0b50;text-underline-offset:3px}
+
+        .tl-badge{display:inline-block;font-size:.6rem;font-weight:700;padding:2px 6px;border-radius:4px;text-transform:uppercase}
+        .tl-badge-call{background:rgba(26,111,196,.25);color:#5ba3e6}
+        .tl-badge-put{background:rgba(214,57,57,.25);color:#f87171}
+        .tl-badge-sm{display:inline-block;font-size:.55rem;font-weight:700;padding:1px 5px;border-radius:3px;margin-left:5px}
+        .tl-badge-exercida{background:rgba(239,68,68,.2);color:#ef4444}
+
+        .tl-status-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:4px;vertical-align:middle}
+        .tl-st-ex{background:#ef4444}
+        .tl-st-open{background:#22c55e}
+        .tl-st-closed{background:#6b7280}
+
+        .tl-today-label{font-size:.6rem;font-weight:600;color:#3b82f6;background:rgba(59,130,246,.12);padding:1px 5px;border-radius:4px;margin-left:4px}
+
+        .tl-positive{color:#4ade80}
+        .tl-negative{color:#f87171}
+        .tl-saldo-pm{color:#60a5fa;font-weight:700}
+
+        .tl-footer{display:flex;flex-wrap:wrap;gap:8px;padding:10px 8px;margin-top:6px;border-top:1px solid rgba(255,255,255,.07);align-items:center}
+        .tl-footer-insight{font-size:.72rem;color:rgba(255,255,255,.5);display:flex;align-items:center;gap:4px}
+        .tl-footer-insight strong{color:#e0e0e0}
+        .tl-footer-icon{font-size:.8rem}
+        .tl-footer-summary{margin-left:auto;display:flex;gap:6px}
+
+        .tl-global-footer{margin-top:16px;padding:14px 16px;border:1px solid rgba(255,255,255,.07);border-radius:12px;background:rgba(255,255,255,.015);display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+        .tl-gf-item{font-size:.72rem;color:rgba(255,255,255,.5);display:flex;align-items:center;gap:4px}
+        .tl-gf-item strong{color:#e0e0e0}
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+    <script>
+        const MOCK=[
+            {data:'2026-07-26',tipo:'PUT',ativo:'ETH',status:'ABERTA',strike:1950,premio:23.88},
+            {data:'2026-07-23',tipo:'CALL',ativo:'ETH',status:'FECHADA',strike:1950,premio:9.33},
+            {data:'2026-07-22',tipo:'CALL',ativo:'ETH',status:'FECHADA',strike:1950,premio:13.25},
+            {data:'2026-07-21',tipo:'CALL',ativo:'ETH',status:'FECHADA',strike:1925,premio:23.95},
+            {data:'2026-07-20',tipo:'PUT',ativo:'ETH',status:'EXERCIDA',strike:1925,premio:18.03},
+            {data:'2026-07-19',tipo:'CALL',ativo:'ETH',status:'FECHADA',strike:1875,premio:18.59},
+            {data:'2026-07-16',tipo:'CALL',ativo:'ETH',status:'FECHADA',strike:1875,premio:16.51},
+            {data:'2026-07-15',tipo:'PUT',ativo:'ETH',status:'EXERCIDA',strike:1875,premio:21.41},
+            {data:'2026-07-14',tipo:'PUT',ativo:'ETH',status:'FECHADA',strike:1875,premio:19.01},
+            {data:'2026-07-13',tipo:'CALL',ativo:'ETH',status:'EXERCIDA',strike:1825,premio:11.47},
+            {data:'2026-07-12',tipo:'CALL',ativo:'ETH',status:'FECHADA',strike:1825,premio:5.01},
+            {data:'2026-07-09',tipo:'CALL',ativo:'ETH',status:'FECHADA',strike:1850,premio:9.40},
+            {data:'2026-07-08',tipo:'CALL',ativo:'ETH',status:'FECHADA',strike:1825,premio:1.67},
+            {data:'2026-07-07',tipo:'CALL',ativo:'ETH',status:'FECHADA',strike:1825,premio:1.39},
+            {data:'2026-07-06',tipo:'CALL',ativo:'ETH',status:'FECHADA',strike:1850,premio:1.46},
+            {data:'2026-07-05',tipo:'CALL',ativo:'ETH',status:'FECHADA',strike:1850,premio:1.09},
+            {data:'2026-07-02',tipo:'CALL',ativo:'ETH',status:'FECHADA',strike:1850,premio:2.13},
+            {data:'2026-06-16',tipo:'CALL',ativo:'ETH',status:'FECHADA',strike:1875,premio:12.24},
+            {data:'2026-06-15',tipo:'PUT',ativo:'ETH',status:'EXERCIDA',strike:1900,premio:15.80},
+            {data:'2026-06-10',tipo:'CALL',ativo:'ETH',status:'FECHADA',strike:1850,premio:8.50},
+            {data:'2026-06-05',tipo:'CALL',ativo:'ETH',status:'FECHADA',strike:1825,premio:6.30},
+            {data:'2026-06-03',tipo:'PUT',ativo:'ETH',status:'EXERCIDA',strike:1925,premio:20.10},
+            {data:'2026-06-02',tipo:'CALL',ativo:'ETH',status:'FECHADA',strike:1800,premio:4.20},
+            {data:'2026-06-01',tipo:'CALL',ativo:'ETH',status:'FECHADA',strike:1780,premio:3.80},
+            {data:'2026-05-28',tipo:'CALL',ativo:'ETH',status:'FECHADA',strike:1800,premio:7.60},
+            {data:'2026-05-25',tipo:'PUT',ativo:'ETH',status:'EXERCIDA',strike:1850,premio:14.20},
+            {data:'2026-05-20',tipo:'CALL',ativo:'ETH',status:'FECHADA',strike:1750,premio:5.40},
+            {data:'2026-05-15',tipo:'CALL',ativo:'ETH',status:'FECHADA',strike:1725,premio:4.80},
+            {data:'2026-05-10',tipo:'PUT',ativo:'ETH',status:'EXERCIDA',strike:1800,premio:12.60},
+            {data:'2026-05-05',tipo:'CALL',ativo:'ETH',status:'FECHADA',strike:1700,premio:3.20},
+            {data:'2026-05-02',tipo:'CALL',ativo:'ETH',status:'FECHADA',strike:1680,premio:2.90},
+        ];
+
+        function fmtUsd(v){return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(v||0)}
+        function fmtDate(d){
+            const dt=new Date(d+'T00:00:00'),today=new Date();today.setHours(0,0,0,0);
+            const diff=Math.floor((today-dt)/86400000);
+            let lbl=diff===0?' <span class="tl-today-label">hoje</span>':diff===1?' <span class="tl-today-label">ontem</span>':'';
+            return dt.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+lbl;
+        }
+        function isEx(o){return(o.status||'').toUpperCase()==='EXERCIDA'}
+        function isToday(d){const dt=new Date(d+'T00:00:00'),t=new Date();t.setHours(0,0,0,0);return dt.getTime()===t.getTime()}
+
+        function sparkline(vals,color){
+            if(!vals.length)return'';
+            const w=80,h=24,p=2,mn=Math.min(...vals),mx=Math.max(...vals),r=mx-mn||1;
+            const pts=vals.map((v,i)=>{const x=p+(i/(vals.length-1))*(w-p*2);const y=h-p-((v-mn)/r)*(h-p*2);return x.toFixed(1)+','+y.toFixed(1)});
+            const ly=h-p-((vals[vals.length-1]-mn)/r)*(h-p*2);
+            return'<svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'"><polyline points="'+pts.join(' ')+'" fill="none" stroke="'+color+'" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="'+pts[pts.length-1].split(',')[0]+'" cy="'+ly.toFixed(1)+'" r="2.5" fill="'+color+'"/></svg>';
+        }
+
+        function miniBars(vals){
+            if(!vals.length)return'';
+            const mx=Math.max(...vals)||1;
+            return'<div style="display:flex;align-items:flex-end;gap:2px;height:24px">'+vals.map(v=>{
+                const bh=Math.max(3,(v/mx)*20);
+                return'<div style="width:4px;height:'+bh+'px;background:'+(v>=0?'#22c55e':'#ef4444')+';border-radius:2px;align-self:flex-end"></div>';
+            }).join('')+'</div>';
+        }
+
+        function computeTimeline(ops){
+            const s=[...ops].sort((a,b)=>a.data.localeCompare(b.data));
+            let pm=0,ls=0;
+            return s.map(o=>{
+                const st=o.strike||0,pr=o.premio||0,ex=isEx(o);
+                if(o.tipo==='PUT'&&ex&&st>0){pm=st-Math.abs(pr);ls=st}
+                else{pm=pm-Math.abs(pr)}
+                return{...o,pm,lastStrike:ls}
+            }).reverse();
+        }
+
+        function toggleMonth(id,el){
+            const b=document.getElementById(id);if(!b)return;
+            const open=b.style.display!=='none';
+            b.style.display=open?'none':'block';
+            el.parentElement.classList.toggle('open',!open);
+        }
+
+        function render(){
+            const enriched=computeTimeline(MOCK);
+            const totalOps=enriched.length;
+            const lastPM=enriched[enriched.length-1]?.pm||0;
+            const lastStrike=enriched[enriched.length-1]?.lastStrike||0;
+            const cotacao=1940.12;
+            const dist=lastStrike>0?((lastStrike-cotacao)/cotacao*100).toFixed(1):'?';
+            const totalPremio=MOCK.reduce((s,o)=>s+(o.premio||0),0);
+
+            const months=new Map();
+            enriched.forEach(o=>{
+                const k=o.data.substring(0,7);
+                if(!months.has(k))months.set(k,{key:k,ops:[]});
+                months.get(k).ops.push(o);
+            });
+
+            const mNames={'2026-07':'Julho 2026','2026-06':'Junho 2026','2026-05':'Maio 2026'};
+            let html='';
+            let first=true;
+
+            html+='<div class="tl-page-header"><div class="tl-page-title"><i class="ti ti-chart-line"></i> Timeline de Lançamentos</div><div class="tl-page-sub">'+totalOps+' operações · PM '+fmtUsd(lastPM)+'</div></div>';
+            html+='<div class="tl-filters"><button class="tl-filter active"><i class="ti ti-calendar"></i> Por mês</button><button class="tl-filter"><i class="ti ti-coins"></i> Por ativo</button><button class="tl-filter"><i class="ti ti-arrows-right-left"></i> Por tipo</button><button class="tl-filter"><i class="ti ti-circle-check"></i> Por status</button></div>';
+
+            months.forEach((m,k)=>{
+                const ops=m.ops;
+                const tp=ops.reduce((s,o)=>s+(o.premio||0),0);
+                const lo=ops[ops.length-1];
+                const pm=lo?.pm||0;
+                const hasPut=ops.some(o=>o.tipo==='PUT'&&isEx(o));
+                const label=mNames[k]||k;
+                const pmV=[...ops].reverse().map(o=>o.pm);
+                const prV=[...ops].reverse().map(o=>o.premio||0);
+                const cid='tl_'+k;
+                const isOpen=first;first=false;
+
+                html+='<div class="tl-month'+(isOpen?' open':'')+'">';
+                html+='<div class="tl-month-header" onclick="toggleMonth(\''+cid+'\',this)">';
+                html+='<div class="tl-month-left"><span class="tl-month-icon">📅</span><div>';
+                html+='<div class="tl-month-name">'+label+'</div>';
+                html+='<div class="tl-month-meta">';
+                html+='<span class="tl-pill tl-pill-ops"><i class="ti ti-chart-bar"></i> '+ops.length+' ops</span>';
+                html+='<span class="tl-pill tl-pill-green"><i class="ti ti-trending-up"></i> '+(tp>=0?'+':'')+fmtUsd(tp)+'</span>';
+                html+='<span class="tl-pill tl-pill-pm"><i class="ti ti-receipt"></i> PM '+fmtUsd(pm)+'</span>';
+                if(hasPut)html+='<span class="tl-pill tl-pill-fire">🔥 PUT exercida</span>';
+                html+='</div></div></div>';
+                html+='<div class="tl-month-right">'+sparkline(pmV,'#f59e0b')+miniBars(prV)+'<span class="tl-month-count">'+ops.length+' lançamentos</span><i class="ti ti-chevron-down tl-chevron"></i></div></div>';
+
+                html+='<div id="'+cid+'" class="tl-month-body" style="'+(isOpen?'':'display:none')+'">';
+                html+='<div class="tl-th"><div class="tl-td"><i class="ti ti-calendar"></i> DATA</div><div class="tl-td"><i class="ti ti-arrow-right-left"></i> OPERAÇÃO</div><div class="tl-td"><i class="ti ti-tag"></i> TIPO</div><div class="tl-td"><i class="ti ti-circle-check"></i> STATUS</div><div class="tl-td"><i class="ti ti-cash"></i> $ ENTRADA</div><div class="tl-td"><i class="ti ti-coins"></i> 💰 PRÊMIO</div><div class="tl-td"><i class="ti ti-chart-dots-2"></i> 📊 IMPACTO PM</div><div class="tl-td"><i class="ti ti-wallet"></i> 📋 SALDO PM</div></div>';
+
+                ops.forEach(op=>{
+                    const pex=op.tipo==='PUT'&&isEx(op);
+                    const td=isToday(op.data);
+                    const prev=enriched[enriched.indexOf(op)+1];
+                    const imp=prev?op.pm-prev.pm:0;
+                    const best=pex&&ops.filter(o=>o.tipo==='PUT'&&isEx(o)).every(o=>(o.pm||0)>=(op.pm||0));
+                    let cls='tl-tr';
+                    if(pex)cls+=' tl-tr-put-ex';
+                    if(td)cls+=' tl-tr-today';
+                    if(best)cls+=' tl-tr-star';
+
+                    const tb=op.tipo==='CALL'?'<span class="tl-badge tl-badge-call">CALL</span>':'<span class="tl-badge tl-badge-put">PUT</span>';
+                    let sh;
+                    if(isEx(op))sh='<span class="tl-status-dot tl-st-ex"></span> Exercida<span class="tl-badge-sm tl-badge-exercida">EXERCIDA</span>';
+                    else if((op.status||'').toUpperCase()==='ABERTA')sh='<span class="tl-status-dot tl-st-open"></span> Aberta';
+                    else sh='<span class="tl-status-dot tl-st-closed"></span> Fechada';
+
+                    html+='<div class="'+cls+'">';
+                    html+='<div class="tl-td">'+fmtDate(op.data)+(best?' ⭐':'')+'</div>';
+                    html+='<div class="tl-td">'+op.tipo+' '+op.ativo+'</div>';
+                    html+='<div class="tl-td">'+tb+'</div>';
+                    html+='<div class="tl-td">'+sh+'</div>';
+                    html+='<div class="tl-td'+(pex?' tl-entry-highlight':'')+'">'+(op.strike>0?fmtUsd(op.strike):'—')+'</div>';
+                    html+='<div class="tl-td tl-positive">+'+fmtUsd(op.premio||0)+'</div>';
+                    html+='<div class="tl-td tl-negative">▼ -'+fmtUsd(Math.abs(imp))+'</div>';
+                    html+='<div class="tl-td tl-saldo-pm">'+fmtUsd(op.pm)+'</div>';
+                    html+='</div>';
+                });
+
+                const bp=ops.filter(o=>o.tipo==='PUT'&&isEx(o)).sort((a,b)=>(b.pm||0)-(a.pm||0))[0];
+                const ls2=lo?.lastStrike||0;
+                const d2=ls2>0?((ls2-cotacao)/cotacao*100).toFixed(1):'?';
+
+                html+='<div class="tl-footer">';
+                if(bp)html+='<div class="tl-footer-insight"><span class="tl-footer-icon">⭐</span> Destaque: PUT exercida em '+bp.data.substring(8,10)+'/'+bp.data.substring(5,7)+' reduziu PM para <strong>'+fmtUsd(bp.pm)+'</strong></div>';
+                html+='<div class="tl-footer-insight"><span class="tl-footer-icon">🔮</span> Próximas operações: <strong style="color:#5ba3e6">CALLs</strong> para diminuir preço médio</div>';
+                html+='<div class="tl-footer-insight"><span class="tl-footer-icon">🎯</span> Strike atual: <strong style="color:#f59e0b">'+fmtUsd(ls2)+'</strong> (<span style="color:'+(parseFloat(d2)<0?'#22c55e':'#ef4444')+'">'+d2+'%</span>)</div>';
+                html+='<div class="tl-footer-summary"><span class="tl-pill tl-pill-ops"><i class="ti ti-chart-bar"></i> '+ops.length+' ops</span><span class="tl-pill tl-pill-green"><i class="ti ti-trending-up"></i> '+(tp>=0?'+':'')+fmtUsd(tp)+'</span></div>';
+                html+='</div></div></div>';
+            });
+
+            html+='<div class="tl-global-footer">';
+            html+='<div class="tl-gf-item"><span class="tl-footer-icon">⭐</span> Destaque: PUT exercida em 15/07 reduziu PM para <strong>'+fmtUsd(1853.59)+'</strong></div>';
+            html+='<div class="tl-gf-item"><span class="tl-footer-icon">🔮</span> Próximas: CALLs para continuar diminuindo o PM</div>';
+            html+='<div class="tl-gf-item"><span class="tl-footer-icon">🎯</span> Strike atual: <strong style="color:#f59e0b">'+fmtUsd(lastStrike)+'</strong> (<span style="color:'+(parseFloat(dist)<0?'#22c55e':'#ef4444')+'">'+dist+'%</span>)</div>';
+            html+='<div class="tl-gf-item" style="margin-left:auto"><span class="tl-pill tl-pill-ops"><i class="ti ti-chart-bar"></i> Total: '+totalOps+' ops</span></div>';
+            html+='</div>';
+
+            document.getElementById('app').innerHTML=html;
+        }
+
+        render();
+    </script>
+</body>
+</html>

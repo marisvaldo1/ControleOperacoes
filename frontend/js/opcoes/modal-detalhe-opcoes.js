@@ -155,9 +155,7 @@
 
     function getRisk(distNum) {
         if (distNum < 0)  return { color: '#e85d4a', bg: 'rgba(232,93,74,0.12)',   label: 'ITM — EXERCÍCIO PROVÁVEL',    level: 'danger'  };
-        if (distNum < 2)  return { color: '#f59f00', bg: 'rgba(245,159,0,0.12)',   label: 'ATENÇÃO — PRÓXIMO DO STRIKE', level: 'warning' };
-        if (distNum < 5)  return { color: '#4da6ff', bg: 'rgba(77,166,255,0.12)',  label: 'MODERADO — MONITORAR',        level: 'info'    };
-        return              { color: '#47b96c', bg: 'rgba(71,185,108,0.12)', label: 'SEGURO — OTM CONFORTÁVEL',    level: 'success' };
+        return              { color: '#47b96c', bg: 'rgba(71,185,108,0.12)', label: 'SEGURO — OTM',    level: 'success' };
     }
 
     // ─── Timestamp do header do modal ────────────────────────────────────────

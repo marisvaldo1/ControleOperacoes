@@ -68,11 +68,11 @@
     }
 
     // ─── Risk level ──────────────────────────────────────────────────────────
+    // Delega para CryptoUtils.getRisk (global)
     function getRisk(distNum) {
+        if (window.CryptoUtils) return window.CryptoUtils.getRisk(distNum);
         if (distNum < 0)  return { color: '#e85d4a', bg: 'rgba(232,93,74,0.12)',   label: 'ITM — EXERCÍCIO PROVÁVEL',    level: 'danger'  };
-        if (distNum < 2)  return { color: '#f59f00', bg: 'rgba(245,159,0,0.12)',   label: 'ATENÇÃO — PRÓXIMO DO STRIKE', level: 'warning' };
-        if (distNum < 5)  return { color: '#4da6ff', bg: 'rgba(77,166,255,0.12)',  label: 'MODERADO — MONITORAR',        level: 'info'    };
-        return              { color: '#47b96c', bg: 'rgba(71,185,108,0.12)', label: 'SEGURO — OTM CONFORTÁVEL',    level: 'success' };
+        return              { color: '#47b96c', bg: 'rgba(71,185,108,0.12)', label: 'SEGURO — OTM',    level: 'success' };
     }
 
     function assetPulseClass(ativo) {
@@ -84,14 +84,14 @@
         return 'mdc-pulse-xrp';
     }
 
-    // ─── Gauge SVG (mesma lógica do modal-detalhe-crypto.js) ─────────────────
+    // ─── Gauge SVG (delega para CryptoUtils.buildGaugeSVG) ──────────────────
     function buildGaugeSVG(distRaw, tipo) {
+        if (window.CryptoUtils) return window.CryptoUtils.buildGaugeSVG(distRaw);
+        // Fallback binário
         const dist = parseFloat(distRaw) || 0;
         let zoneColor, zoneLabel, zoneEmoji;
-        if (dist < 0)      { zoneColor = '#e85d4a'; zoneLabel = 'ITM — Exercício Provável';    zoneEmoji = '🔴'; }
-        else if (dist < 2) { zoneColor = '#f59f00'; zoneLabel = 'Zona de Atenção';             zoneEmoji = '🟡'; }
-        else if (dist < 5) { zoneColor = '#4da6ff'; zoneLabel = 'Moderadamente Seguro';        zoneEmoji = '🔵'; }
-        else               { zoneColor = '#47b96c'; zoneLabel = 'OTM — Seguro';                zoneEmoji = '🟢'; }
+        if (dist < 0) { zoneColor = '#e85d4a'; zoneLabel = 'ITM — Exercício Provável'; zoneEmoji = '🔴'; }
+        else          { zoneColor = '#47b96c'; zoneLabel = 'OTM — Seguro';                zoneEmoji = '🟢'; }
 
         const cx = 100, cy = 100, r = 78;
         const START_DEG = 200, ARC = 140, RANGE = 20;
@@ -140,9 +140,11 @@
     // ─── Cálculo POP ─────────────────────────────────────────────────────────
     function calcPOP(tipo, cotacao, strike) {
         if (!cotacao || !strike) return null;
-        const dist = tipo === 'CALL'
-            ? (cotacao - strike) / strike * 100
-            : (strike - cotacao) / cotacao * 100;
+        const dist = window.CryptoUtils
+            ? window.CryptoUtils.calcDistancia(tipo, strike, cotacao)
+            : (tipo === 'CALL'
+                ? (cotacao - strike) / strike * 100
+                : (strike - cotacao) / cotacao * 100);
         return Math.max(5, Math.min(95, 50 + dist * 2.5));
     }
 
@@ -155,9 +157,11 @@
 
         if (!strike || !price) return null;
 
-        const favorDist = tipo === 'CALL'
-            ? ((price - strike) / strike) * 100
-            : ((strike - price) / price) * 100;
+        const favorDist = window.CryptoUtils
+            ? window.CryptoUtils.calcDistancia(tipo, strike, price)
+            : (tipo === 'CALL'
+                ? ((price - strike) / strike) * 100
+                : ((strike - price) / price) * 100);
 
         const diffAbs = price - strike;
         const diffPctStrike = ((price - strike) / strike) * 100;
@@ -356,9 +360,11 @@
         const colateral  = strike > 0 && qty > 0 ? strike * qty : valor;
         const roi        = colateral > 0 && premioReal > 0 ? (premioReal / colateral) * 100 : 0;
         const distancia = (cotacao && strike)
-            ? (tipo === 'CALL'
-                ? ((strike - cotacao) / cotacao) * 100
-                : ((cotacao - strike) / strike) * 100)
+            ? (window.CryptoUtils
+                ? window.CryptoUtils.calcDistancia(tipo, strike, cotacao)
+                : (tipo === 'CALL'
+                    ? ((strike - cotacao) / cotacao) * 100
+                    : ((cotacao - strike) / strike) * 100))
             : null;
 
         // Prêmio — valor real recebido na operação
@@ -520,14 +526,14 @@
             return;
         }
 
-        const callsExercidas = ops.filter(o => {
+        const putsExercidas = ops.filter(o => {
             if ((o.status || '').toUpperCase() === 'ABERTA') return false;
             return window.CryptoExerciseStatus?.isExercised
-                ? window.CryptoExerciseStatus.isExercised(o, 'CALL')
+                ? window.CryptoExerciseStatus.isExercised(o, 'PUT')
                 : false;
         });
-        const ultimoExercicio = callsExercidas.length
-            ? [...callsExercidas].sort((a, b) => {
+        const ultimoExercicio = putsExercidas.length
+            ? [...putsExercidas].sort((a, b) => {
                 const aTime = window.CryptoExerciseStatus?.getOperationDate?.(a)?.getTime?.() || 0;
                 const bTime = window.CryptoExerciseStatus?.getOperationDate?.(b)?.getTime?.() || 0;
                 return bTime - aTime;
@@ -537,7 +543,13 @@
             ? parseFloat(ultimoExercicio.strike || 0)
             : parseFloat(ops.reduce((max, o) => parseFloat(o.strike||0) > parseFloat(max.strike||0) ? o : max, ops[0])?.strike || 0);
 
-        const totalPremios = ops.reduce((s, o) => s + (parseFloat(o.premio_us)||0), 0);
+        const cicloDate = ultimoExercicio ? (ultimoExercicio.exercicio || ultimoExercicio.data_operacao || '') : '';
+        const totalPremios = ops.reduce((s, o) => {
+            if (!cicloDate) return s + (parseFloat(o.premio_us)||0);
+            const d = o.exercicio || o.data_operacao || '';
+            if (d >= cicloDate) return s + (parseFloat(o.premio_us)||0);
+            return s;
+        }, 0);
         const pm = strikeExercida - totalPremios;
         const cot = cotacao || parseFloat(ops.find(o => parseFloat(o.cotacao_atual||0) > 0)?.cotacao_atual || 0);
         const strikeAtual = parseFloat(op.strike) || 0;
@@ -564,7 +576,7 @@
         if (title) title.textContent = `${icone} PREÇO MÉDIO ${par}`;
 
         body.innerHTML = `
-            <div class="sim-pm-val" style="color:${acCor};cursor:pointer;text-decoration:underline dotted ${acCor}80;text-underline-offset:6px" onclick="ModalPrecoMedioAtivo.openModal('${par}')" title="Clique para detalhes do cálculo">$${pm.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+            ${CryptoUtils.renderPmLink(par, pm)}
             <div class="sim-pm-row"><span class="sim-pm-key">● Último Exercício</span><span class="sim-pm-v" style="color:var(--tblr-warning)">$${strikeExercida.toLocaleString('en-US',{minimumFractionDigits:2})}</span></div>
             <div class="sim-pm-row"><span class="sim-pm-key">− Prêmios</span><span class="sim-pm-v" style="color:#3fb950">−$${totalPremios.toLocaleString('en-US',{minimumFractionDigits:2})}</span></div>
             ${cot ? `<div class="sim-pm-row"><span class="sim-pm-key">● Cotação</span><span class="sim-pm-v" style="${pctColor}">$${cot.toLocaleString('en-US',{minimumFractionDigits:2})}</span></div>` : ''}
@@ -586,25 +598,25 @@
             return;
         }
 
-        const dist = tipo === 'CALL'
-            ? (cotacao - strike) / strike * 100
-            : (strike - cotacao) / cotacao * 100;
-        const absDist = Math.abs(dist);
+        const dist = window.CryptoUtils
+            ? window.CryptoUtils.calcDistancia(tipo, strike, cotacao)
+            : (tipo === 'CALL'
+                ? (strike - cotacao) / cotacao * 100
+                : (cotacao - strike) / strike * 100);
 
         let riskClass, riskLabel, riskMsg;
-        if (absDist < 1) {
+        if (dist < 0) {
+            // ITM - exercício provável
             riskClass = 'danger'; riskLabel = '🔴 RISCO ALTO';
-            riskMsg = 'Strike muito próximo da cotação. Exercício imediato possível.';
-        } else if (absDist < 5) {
+            riskMsg = 'Operação ITM — exercício provável no momento.';
+        } else if (dist < 2) {
+            // OTM mas perto do strike
             riskClass = 'warn'; riskLabel = '🟡 RISCO MÉDIO';
-            riskMsg = dist > 0
-                ? 'Cotação favorável ao exercício. Monitorar de perto.'
-                : 'Margem moderada de segurança. Atenção ao movimento.';
+            riskMsg = 'Operação OTM mas próxima ao strike. Monitorar.';
         } else {
+            // OTM seguro
             riskClass = 'safe'; riskLabel = '🟢 RISCO BAIXO';
-            riskMsg = dist > 0
-                ? 'Boa probabilidade de exercício — retorno em ' + (tipo === 'CALL' ? 'BTC' : 'USDT') + ' esperado.'
-                : 'Baixa probabilidade de exercício — retorno em ' + (tipo === 'CALL' ? 'USDT' : 'BTC') + ' esperado.';
+            riskMsg = 'Operação OTM — baixa probabilidade de exercício.';
         }
 
         const distSign  = dist > 0 ? '+' : '';
@@ -723,9 +735,11 @@
 
         const dist     = op._liveDist !== undefined ? op._liveDist
             : (cotacao && op.strike
-                ? ((op.tipo||'').toUpperCase() === 'CALL'
-                    ? ((parseFloat(op.strike) - cotacao) / cotacao) * 100
-                    : ((cotacao - parseFloat(op.strike)) / parseFloat(op.strike)) * 100)
+                ? (window.CryptoUtils
+                    ? window.CryptoUtils.calcDistancia((op.tipo||'').toUpperCase(), op.strike, cotacao)
+                    : ((op.tipo||'').toUpperCase() === 'CALL'
+                        ? ((parseFloat(op.strike) - cotacao) / cotacao) * 100
+                        : ((cotacao - parseFloat(op.strike)) / parseFloat(op.strike)) * 100))
                 : op.distancia);
         const isClosed = (op.status || 'ABERTA') === 'FECHADA';
         const isLive   = !!cotacao;
@@ -747,12 +761,13 @@
             ? "<span class='badge crypto-badge-high ms-1'>▲ HIGH (CALL)</span>"
             : "<span class='badge crypto-badge-low ms-1'>▼ LOW (PUT)</span>";
 
-        const isRed = distNum < 2, isAmb = distNum >= 2 && distNum < 5, isGrn = distNum >= 5;
+        // Semáforo binário: vermelho (ITM) ou verde (OTM)
+        const isRed = distNum < 0, isAmb = false, isGrn = distNum >= 0;
         const semaforoHTML = `
 <div class="mdc-semaforo">
-  <div class="mdc-sema-dot" style="background:#e85d4a;box-shadow:${isRed?'0 0 10px #e85d4a':'none'};opacity:${isRed?'1':'0.2'}"></div>
-  <div class="mdc-sema-dot" style="background:#f59f00;box-shadow:${isAmb?'0 0 10px #f59f00':'none'};opacity:${isAmb?'1':'0.2'}"></div>
-  <div class="mdc-sema-dot" style="background:#47b96c;box-shadow:${isGrn?'0 0 10px #47b96c':'none'};opacity:${isGrn?'1':'0.2'}"></div>
+  <div class="mdc-sema-dot" title="🔴 ITM — exercício provável" style="background:#e85d4a;box-shadow:${isRed?'0 0 10px #e85d4a':'none'};opacity:${isRed?'1':'0.2'}"></div>
+  <div class="mdc-sema-dot" title="🟡 Atenção" style="background:#f59f00;box-shadow:none;opacity:0.2"></div>
+  <div class="mdc-sema-dot" title="🟢 OTM — seguro, sem exercício" style="background:#47b96c;box-shadow:${isGrn?'0 0 10px #47b96c':'none'};opacity:${isGrn?'1':'0.2'}"></div>
 </div>`;
 
         let c1emoji, c1label, c1val, c2emoji, c2label, c2val;
@@ -894,9 +909,11 @@ ${op.observacoes ? `<div class="mdc-info-row" style="flex-direction:column;align
             const tipo   = (op.tipo || 'PUT').toUpperCase();
             const strike = parseFloat(op.strike) || 0;
             if (strike) {
-                op._liveDist = tipo === 'CALL'
-                    ? ((strike - price) / price) * 100
-                    : ((price - strike) / strike) * 100;
+                op._liveDist = window.CryptoUtils
+                    ? window.CryptoUtils.calcLiveDist(tipo, strike, price)
+                    : (tipo === 'CALL'
+                        ? ((strike - price) / price) * 100
+                        : ((price - strike) / strike) * 100);
             }
             return price;
         } catch (e) {
@@ -906,18 +923,9 @@ ${op.observacoes ? `<div class="mdc-info-row" style="flex-direction:column;align
     }
 
     // ─── Renderiza todo o conteúdo do modal ───────────────────────────────────
-    async function _renderAll(op) {
-        const skeleton = document.getElementById('macBodySkeleton');
-        const content  = document.getElementById('macBodyContent');
-
-        if (skeleton) skeleton.style.display = '';
-        if (content)  content.style.display  = 'none';
-
+    async function _renderAll(op, skipSkeleton) {
         const cotacao = await _fetchLivePrice(op);
         _updateTs();
-
-        if (skeleton) skeleton.style.display = 'none';
-        if (content)  content.style.display  = '';
 
         _renderDetalhesPanel(op, cotacao);
         _renderKPIs(op, cotacao);
@@ -954,8 +962,7 @@ ${op.observacoes ? `<div class="mdc-info-row" style="flex-direction:column;align
             if (tsEl) tsEl.textContent = 'Atualizando...';
 
             try {
-                // Re-render completo com skeleton para garantir atualização de todos os componentes.
-                await _renderAll(op);
+                await _renderAll(op, true);
             } catch(e) {
                 console.error('[macRefresh]', e);
                 _updateTs();

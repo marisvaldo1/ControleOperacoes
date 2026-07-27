@@ -83,6 +83,16 @@
 
     function calculateCurrentStatus(op) {
         if (!op) return 'NAO';
+        const status = String(op.status || 'ABERTA').trim().toUpperCase();
+        // Para operações ABERTAS: sempre recalcular pelo preço atual vs strike
+        // (não confiar no valor do backend, pois a cotação muda em tempo real)
+        if (status === 'ABERTA') {
+            return calculateCurrentStatusFromValues(
+                op.tipo,
+                op.cotacao_atual ?? op.preco_atual ?? op.preco,
+                op.strike
+            );
+        }
         const provided = normalizeStatus(op.exercicio_status_atual);
         if (provided) return provided;
         return calculateCurrentStatusFromValues(
@@ -95,12 +105,10 @@
     function resolveDisplayStatus(op) {
         if (!op) return 'NAO';
 
-        const explicitDisplay = normalizeStatus(op.exercicio_status_exibicao);
-        if (explicitDisplay) return explicitDisplay;
-
         const status = String(op.status || 'ABERTA').trim().toUpperCase();
 
-        // Para operações ABERTAS: calcular pelo preço atual vs strike (ITM/OTM em tempo real)
+        // Para operações ABERTAS: sempre recalcular pelo preço atual vs strike
+        // (não confiar no valor do backend, pois a cotação muda em tempo real)
         if (status === 'ABERTA') {
             return calculateCurrentStatus(op);
         }

@@ -1,8 +1,8 @@
 """Regras unificadas de exercício para operações crypto.
 
 Para este módulo, a regra de negócio é:
-  - CALL: exercício quando a cotação atual está abaixo ou igual ao strike
-  - PUT:  exercício quando a cotação atual está acima ou igual ao strike
+  - CALL: exercício quando a cotação atual está acima ou igual ao strike
+  - PUT:  exercício quando a cotação atual está abaixo ou igual ao strike
 
 Operações abertas devem sempre refletir o estado atual com base na cotação.
 Operações fechadas preservam o status persistido, quando disponível.
@@ -27,10 +27,12 @@ def calculate_crypto_exercicio_status(tipo, cotacao_atual, strike):
         return 'NAO'
 
     tipo_normalizado = str(tipo or '').strip().upper()
+    # CALL: exercício quando cotação SOBE acima do strike (comprador exerce para comprar mais barato)
     if tipo_normalizado == 'CALL':
-        return 'SIM' if cot <= strike_value else 'NAO'
-    if tipo_normalizado == 'PUT':
         return 'SIM' if cot >= strike_value else 'NAO'
+    # PUT: exercício quando cotação CAI abaixo do strike (comprador exerce para vender mais caro)
+    if tipo_normalizado == 'PUT':
+        return 'SIM' if cot <= strike_value else 'NAO'
     return 'NAO'
 
 

@@ -76,6 +76,36 @@
              mLabels: mLabels, mVals: mVals, mBtcVals: mBtcVals, mEthVals: mEthVals, mAccVals: mAccVals };
   }
 
+  function computePM(allOps, par) {
+    var ops = (allOps || []).filter(function(o) {
+      return (o.ativo || '').toUpperCase().replace('USDT','').replace('/','').trim() === par.toUpperCase();
+    });
+    if (!ops.length) return 0;
+    var putsExercidas = ops.filter(function(o) {
+      if ((o.status || '').toUpperCase() === 'ABERTA') return false;
+      return window.CryptoExerciseStatus && window.CryptoExerciseStatus.isExercised
+        ? window.CryptoExerciseStatus.isExercised(o, 'PUT') : false;
+    });
+    var ultimoExercicio = putsExercidas.length
+      ? putsExercidas.sort(function(a, b) {
+          var aT = window.CryptoExerciseStatus && window.CryptoExerciseStatus.getOperationDate ? window.CryptoExerciseStatus.getOperationDate(a) : null;
+          var bT = window.CryptoExerciseStatus && window.CryptoExerciseStatus.getOperationDate ? window.CryptoExerciseStatus.getOperationDate(b) : null;
+          return (bT && bT.getTime ? bT.getTime() : 0) - (aT && aT.getTime ? aT.getTime() : 0);
+        })[0]
+      : null;
+    var strikeBase = ultimoExercicio
+      ? parseFloat(ultimoExercicio.strike || 0)
+      : parseFloat(ops.reduce(function(max, o) { return parseFloat(o.strike||0) > parseFloat(max.strike||0) ? o : max; }, ops[0]).strike || 0);
+    var cicloDate = ultimoExercicio ? (ultimoExercicio.exercicio || ultimoExercicio.data_operacao || '') : '';
+    var totalPremios = ops.reduce(function(s, o) {
+      if (!cicloDate) return s + (parseFloat(o.premio_us) || 0);
+      var d = o.exercicio || o.data_operacao || '';
+      if (d >= cicloDate) return s + (parseFloat(o.premio_us) || 0);
+      return s;
+    }, 0);
+    return strikeBase - totalPremios;
+  }
+
   function computeAbertasInfo(ops) {
     return ops.filter(function(o) { return (o.status||'').toUpperCase() === 'ABERTA'; });
   }
@@ -230,7 +260,7 @@
             ? '<span class="vg-badge" style="background:rgba(6,182,212,.15);color:#06b6d4;border:1px solid rgba(6,182,212,.35)" title="Bybit">BB</span>'
             : '<span class="vg-badge" style="background:rgba(148,163,184,.12);color:#94a3b8;border:1px solid rgba(148,163,184,.3)" title="'+corr+'">'+corr+'</span>';
         var activeClass = idx === 0 ? ' vg-op-active' : '';
-        h += '<div class="vg-op-row' + activeClass + '" data-op-id="' + (op.id || '') + '" data-strike="' + strike + '" data-cotacao="' + cot + '" data-tipo="' + tipo + '" style="border-left:3px solid ' + acol + ';cursor:pointer">';
+        h += '<div class="vg-op-row' + activeClass + '" data-op-id="' + (op.id || '') + '" data-par="' + asset + '" data-strike="' + strike + '" data-cotacao="' + cot + '" data-tipo="' + tipo + '" style="border-left:3px solid ' + acol + ';cursor:pointer">';
         h += '<span style="font-family:var(--syne,Syne),sans-serif;font-size:.8rem;font-weight:700;min-width:30px;color:'+bcol+'">'+asset+'</span>';
         h += '<span class="vg-badge" style="background:rgba(59,130,246,.1);color:#3b82f6;border:1px solid rgba(59,130,246,.26)">'+tipo+'</span>';
         h += corrBadge;
@@ -238,6 +268,7 @@
         h += '<div style="flex:1"></div>';
         h += '<span style="font-size:.68rem;color:' + C_MUTED + ';margin-right:2px">Prêmio Recebido:</span><span style="font-family:monospace;font-size:.78rem;font-weight:700;color:#22c55e">+' + fmt(premio) + '</span>';
         h += '<span class="vg-op-detail-btn" data-op-id="' + (op.id || '') + '" title="Ver detalhes"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>';
+        h += '<span class="vg-refresh-cot-btn" data-par="' + asset + '" title="Atualizar cotação"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg></span>';
         h += '</div>';
       });
     }
@@ -369,6 +400,9 @@
       '.vg-cf-val{font-family:monospace;font-size:.64rem;font-weight:600}',
       '.vg-cf-arrow{font-size:1rem;color:#3a4f6a;flex-shrink:0;margin:0 -4px;align-self:center;padding-bottom:20px}',
       '.vg-fc-row{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:7px;background:#1c2438;border:1px solid rgba(255,255,255,.07);margin-bottom:6px}',
+      '.vg-thermo-layout{display:flex;align-items:flex-start;gap:16px}',
+      '.vg-thermo-left{flex:1;min-width:0}',
+      '.vg-thermo-right{width:180px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:8px}',
       /* LIGHT THEME */
       '[data-bs-theme="light"] .vg-card{background:var(--bs-body-bg,#fff);border-color:rgba(0,0,0,.10)}',
       '[data-bs-theme="light"] .vg-card-title{color:#6c757d}',
@@ -383,7 +417,7 @@
   }
 
   /* ─ Termômetro Duplo SVG — Semáforo Interno ─ */
-  function buildThermometer(s, q, tipo) {
+  function buildThermometer(s, q, tipo, pm, par) {
     var svg = document.getElementById('vgThermometerSvg');
     var diffEl = document.getElementById('vgThermoDiff');
     if (!svg) return;
@@ -485,10 +519,9 @@
       var isITM = isCall ? (diffVal > 0) : (diffVal < 0);
       var popEst = isITM ? Math.max(5, 50 - distPct * 4) : Math.min(95, 50 + distPct * 4);
       var popColor = popEst >= 65 ? '#22c55e' : popEst >= 50 ? '#eab308' : '#ef4444';
-      diffEl.innerHTML = '<span>Strike: <span>' + fmtK(s) + '</span></span>' +
-                         '<span>Cotação: <span>' + fmtK(q) + '</span></span>' +
-                         '<span>Diferença: <span style="color:' + diffCol + '">' + diffSign2 + fmtShort(diffVal) + '</span></span>' +
-                         '<span>PoP: <span style="color:' + popColor + ';font-weight:700">' + popEst.toFixed(0) + '%</span></span>';
+      diffEl.innerHTML = '<span>Diferença: <span style="color:' + diffCol + '">' + diffSign2 + fmtShort(diffVal) + '</span></span>' +
+                         '<span>PoP: <span style="color:' + popColor + ';font-weight:700">' + popEst.toFixed(0) + '%</span></span>' +
+                         (pm ? '<span>Preço Médio: ' + CryptoUtils.renderPmLink(par || 'BTC', pm) + '</span>' : '');
     }
   }
 
@@ -519,25 +552,25 @@
       sealLabel = 'SEGURA';
     }
 
-    var tipoLabel = (tipo || 'PUT').toUpperCase() === 'CALL' ? '📈 CALL vendida' : '📉 PUT vendida';
+    var tipoLabel = (tipo || 'PUT').toUpperCase() === 'CALL' ? '📉 CALL vendida' : '📉 PUT vendida';
 
-    var html = '<svg class="vg-seal-svg" viewBox="0 0 200 200" width="100%" height="180">';
-    // Glow externo
-    html += '<circle cx="100" cy="85" r="72" fill="' + sealColor + '" opacity=".12"/>';
-    // Circulo principal
-    html += '<circle cx="100" cy="85" r="60" fill="#0d1424" stroke="' + sealColor + '" stroke-width="4"';
+    // Container centralizado com tudo em coluna
+    var html = '<div style="display:flex;flex-direction:column;align-items:center;width:100%">';
+    // SVG círculo grande do selo
+    html += '<svg class="vg-seal-svg" viewBox="0 0 200 200" width="160" height="160">';
+    html += '<circle cx="100" cy="100" r="80" fill="' + sealColor + '" opacity=".12"/>';
+    html += '<circle cx="100" cy="100" r="68" fill="#0d1424" stroke="' + sealColor + '" stroke-width="4"';
     if (st.cls === 'otm') html += ' class="vg-seal-pulse"';
     html += '/>';
-    // Emoji
     var emoji = st.cls === 'otm' ? '🔴' : '🟢';
-    html += '<text x="100" y="65" text-anchor="middle" font-size="20">' + emoji + '</text>';
-    // Label status
-    html += '<text x="100" y="88" text-anchor="middle" font-size="13" font-weight="800" fill="' + sealColor + '">' + sealLabel + '</text>';
-    // Percentual
-    html += '<text x="100" y="108" text-anchor="middle" font-size="14" font-weight="800" fill="' + sealColor + '">' + pctSign + pct.toFixed(2) + '%</text>';
-    // Tipo abaixo
-    html += '<text x="100" y="168" text-anchor="middle" font-size="12" fill="#94a3b8" font-weight="600">' + tipoLabel + '</text>';
+    html += '<text x="100" y="82" text-anchor="middle" font-size="22">' + emoji + '</text>';
+    html += '<text x="100" y="106" text-anchor="middle" font-size="14" font-weight="800" fill="' + sealColor + '">' + sealLabel + '</text>';
+    html += '<text x="100" y="126" text-anchor="middle" font-size="15" font-weight="800" fill="' + sealColor + '">' + pctSign + pct.toFixed(2) + '%</text>';
     html += '</svg>';
+    // Textos abaixo do círculo
+    html += '<div style="text-align:center;margin-top:6px">';
+    html += '<div style="font-size:12px;color:#94a3b8;font-weight:600">' + tipoLabel + '</div>';
+    html += '</div></div>';
 
     container.innerHTML = html;
   }
@@ -559,6 +592,25 @@
     return n.toFixed(2);
   }
 
+  /* ─ Atualiza cotação ao vivo ─ */
+  async function atualizarCotacoesVG(par) {
+    try {
+      var sym = par + 'USDT';
+      var res = await fetch(API_BASE + '/api/proxy/crypto/' + sym);
+      var data = await res.json();
+      if (data && data.price) {
+        var price = parseFloat(data.price);
+        (window.cryptoOperacoes || []).forEach(function(op) {
+          var a = (op.ativo || '').toUpperCase().replace('USDT', '').replace('/', '').trim();
+          if (a === par.toUpperCase()) op.cotacao_atual = price;
+        });
+        document.dispatchEvent(new CustomEvent('cryptoDataUpdated'));
+      }
+    } catch (e) {
+      if (window.iziToast) iziToast.error({ title: 'Erro', message: 'Erro ao atualizar cotação de ' + par });
+    }
+  }
+
   /* ─ Render principal ─ */
   function render() {
     var container = document.getElementById('vgContainer');
@@ -578,12 +630,14 @@
         var strike  = parseFloat(el.getAttribute('data-strike') || 0);
         var cotacao = parseFloat(el.getAttribute('data-cotacao') || 0);
         var tipo    = el.getAttribute('data-tipo') || 'PUT';
+        var clickPar = el.getAttribute('data-par') || 'BTC';
         // Destaca a row ativa
         container.querySelectorAll('.vg-op-row').forEach(function(r) { r.classList.remove('vg-op-active'); });
         el.classList.add('vg-op-active');
         // Atualiza termômetro e selo
-        buildThermometer(strike, cotacao, tipo);
-        buildSeal(strike, cotacao, tipo);
+        var pmVal = computePM(ops, clickPar);
+        buildThermometer(strike, cotacao, tipo, pmVal, clickPar);
+        buildSeal(strike, cotacao, tipo, pmVal, clickPar);
       });
     });
     /* Listeners: clique na lupa → abre modal de análise */
@@ -594,6 +648,14 @@
         if (opId && window.ModalAnaliseCrypto && typeof window.ModalAnaliseCrypto.open === 'function') {
           window.ModalAnaliseCrypto.open(opId);
         }
+      });
+    });
+    /* Listeners: refresh cotação */
+    container.querySelectorAll('.vg-refresh-cot-btn[data-par]').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var par = btn.getAttribute('data-par');
+        if (par) atualizarCotacoesVG(par);
       });
     });
     /* Accordion toggle do termômetro */
@@ -613,8 +675,10 @@
       var abertasOps = computeAbertasInfo(ops);
       if (abertasOps.length > 0) {
         var firstOp = abertasOps[0];
-        buildThermometer(parseFloat(firstOp.strike || 0), parseFloat(firstOp.cotacao_atual || 0), (firstOp.tipo || 'PUT'));
-        buildSeal(parseFloat(firstOp.strike || 0), parseFloat(firstOp.cotacao_atual || 0), (firstOp.tipo || 'PUT'));
+        var initPar = (firstOp.ativo || 'BTC').toUpperCase().replace('USDT','').replace('/','').trim();
+        var pmInit = computePM(ops, initPar);
+        buildThermometer(parseFloat(firstOp.strike || 0), parseFloat(firstOp.cotacao_atual || 0), (firstOp.tipo || 'PUT'), pmInit, initPar);
+        buildSeal(parseFloat(firstOp.strike || 0), parseFloat(firstOp.cotacao_atual || 0), (firstOp.tipo || 'PUT'), pmInit, initPar);
       }
     }, 50);
   }

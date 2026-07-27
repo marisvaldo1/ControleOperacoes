@@ -4,10 +4,16 @@
     var usd = function (n) {
         return 'US$ ' + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     };
+    var pct = function (n) {
+        return (n >= 0 ? '+' : '') + n.toFixed(2) + '%';
+    };
+    var sgn = function (n) {
+        return (n >= 0 ? '+' : '−') + usd(n);
+    };
 
     var modalData = null;
     var closeHandler = null;
-    var activeYear = '';
+    var chartRef = null;
 
     function getOps(par) {
         return (window.cryptoOperacoes || []).filter(function (o) {
@@ -16,9 +22,9 @@
         });
     }
 
-    function isExercisedCall(op) {
+    function isExercisedPut(op) {
         if ((op.status || '').toUpperCase() === 'ABERTA') return false;
-        if ((op.tipo || '').toUpperCase() !== 'CALL') return false;
+        if ((op.tipo || '').toUpperCase() !== 'PUT') return false;
         var st = window.CryptoExerciseStatus
             ? window.CryptoExerciseStatus.resolveDisplayStatus(op)
             : (op.exercicio_status || '').toUpperCase();
@@ -27,22 +33,27 @@
 
     function computeData(par, cotacaoOverride) {
         var ops = getOps(par);
-        var callsExercidas = ops.filter(isExercisedCall);
-        var ultimoExercicio = callsExercidas.length
-            ? callsExercidas.sort(function (a, b) {
+
+        var putsExercidas = ops.filter(isExercisedPut);
+        var ultimaPut = putsExercidas.length
+            ? putsExercidas.sort(function (a, b) {
                 var aTime = window.CryptoExerciseStatus?.getOperationDate?.(a)?.getTime?.() || 0;
                 var bTime = window.CryptoExerciseStatus?.getOperationDate?.(b)?.getTime?.() || 0;
                 return bTime - aTime;
             })[0]
             : null;
 
-        var strikeBase = ultimoExercicio
-            ? parseFloat(ultimoExercicio.strike || 0)
+        var strikeBase = ultimaPut
+            ? parseFloat(ultimaPut.strike || 0)
             : parseFloat(ops.reduce(function (max, o) {
                 return parseFloat(o.strike || 0) > parseFloat(max.strike || 0) ? o : max;
             }, ops[0])?.strike || 0);
 
-        var premios = ops.map(function (o) {
+        var cicloDate = ultimaPut
+            ? (ultimaPut.exercicio || ultimaPut.data_operacao || '')
+            : '';
+
+        var allPremios = ops.map(function (o) {
             return {
                 rot: (o.tipo || '') + ' ' + (o.ativo || '') + ' — ' + (o.status || ''),
                 v: parseFloat(o.premio_us || 0),
@@ -52,12 +63,22 @@
             return (b.data || '').localeCompare(a.data || '');
         });
 
+        var premios = cicloDate
+            ? allPremios.filter(function (p) {
+                return p.data >= cicloDate;
+            })
+            : allPremios;
+
         var totalPremios = premios.reduce(function (s, p) { return s + p.v; }, 0);
         var pm = strikeBase - totalPremios;
 
         var cotacao = cotacaoOverride || parseFloat(ops.find(function (o) {
             return parseFloat(o.cotacao_atual || 0) > 0;
         })?.cotacao_atual || 0);
+
+        var openOp = ops.find(function (o) { return (o.status || '').toUpperCase() === 'ABERTA'; });
+        var strikeAberto = openOp ? parseFloat(openOp.strike || 0) : 0;
+        var tipoAberto = openOp ? (openOp.tipo || 'CALL').toUpperCase() : 'CALL';
 
         return {
             ativo: par,
@@ -66,6 +87,9 @@
             totalPremios: totalPremios,
             pm: pm,
             cotacao: cotacao,
+            strikeAberto: strikeAberto,
+            tipoAberto: tipoAberto,
+            hasOpenOp: !!openOp,
         };
     }
 
@@ -80,6 +104,7 @@
     }
 
     function closeModal() {
+        if (chartRef) { try { chartRef.destroy(); } catch (e) {} chartRef = null; }
         var overlay = document.getElementById('pmOverlay');
         if (overlay) overlay.classList.remove('open');
         document.body.style.overflow = '';
@@ -96,7 +121,7 @@
         document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeModal(); });
     }
 
-    function buildSteps(d, filterYear) {
+    function buildSteps(d) {
         var run = d.ultimoExercicio;
         var steps = [{
             rot: 'Preço de entrada (PUT exercida)',
@@ -119,115 +144,173 @@
             });
         });
         steps.push({ rot: 'PREÇO MÉDIO ATUAL', v: d.pm, type: 'out', before: 0, after: d.pm, data: '' });
-
-        if (filterYear) {
-            steps = steps.filter(function (s) {
-                if (s.type === 'in' || s.type === 'out') return true;
-                return s.data && s.data.substring(0, 4) === filterYear;
-            });
-        }
         return steps;
     }
 
-    function getYears(d) {
-        var years = {};
-        d.premios.forEach(function (p) {
-            var y = (p.data || '').substring(0, 4);
-            if (y) years[y] = true;
-        });
-        return Object.keys(years).sort();
-    }
+    function drawChart(steps) {
+        var canvas = document.getElementById('pmChart');
+        if (!canvas) return;
+        if (chartRef) { try { chartRef.destroy(); } catch (e) {} chartRef = null; }
+        if (typeof Chart === 'undefined') return;
 
-    function drawWaterfall(steps) {
-        var AXIS = steps.length > 0
-            ? Math.max.apply(null, steps.map(function (s) { return Math.max(s.before, s.after); })) * 1.15
-            : 2000;
-        var H = 240;
-        var y = function (v) { return H * (1 - v / AXIS); };
-        var tickCount = 5;
-        var tickStep = AXIS / tickCount;
-        var grid = '';
-        for (var i = 0; i <= tickCount; i++) {
-            var val = tickStep * i;
-            grid += '<div class="pm-wf-gl" style="top:' + y(val) + 'px"><span>' + Math.round(val) + '</span></div>';
-        }
+        var labels = [];
+        var pmValues = [];
+        var impactValues = [];
 
-        var cols = '';
-        steps.forEach(function (s, idx) {
-            var top, h, cls, vtxt, vtop, color;
+        steps.forEach(function (s, i) {
             if (s.type === 'in') {
-                cls = 'total-in';
-                top = y(s.after);
-                h = H - y(s.after);
-                vtxt = usd(s.v);
-                vtop = top - 12;
-                color = 'var(--pm-blue)';
+                labels.push('Entrada');
+                pmValues.push(s.after);
+                impactValues.push(0);
             } else if (s.type === 'down') {
-                cls = 'down';
-                top = y(s.before);
-                h = Math.max(y(s.after) - y(s.before), 2);
-                vtxt = '−' + usd(s.v);
-                vtop = top - 12;
-                color = 'var(--pm-green)';
+                var lbl = s.data ? s.data.substring(8, 10) + '/' + s.data.substring(5, 7) : '#' + i;
+                labels.push(lbl);
+                pmValues.push(s.after);
+                impactValues.push(s.v);
             } else {
-                cls = 'total-out';
-                top = y(s.after);
-                h = H - y(s.after);
-                vtxt = usd(s.v);
-                vtop = top - 12;
-                color = 'var(--pm-amber)';
+                labels.push('PM Atual');
+                pmValues.push(s.after);
+                impactValues.push(0);
             }
-            var short = s.type === 'in' ? 'entrada'
-                : s.type === 'out' ? 'PM final'
-                : '#' + (idx);
-            var dateHtml = s.data ? '<div class="pm-wf-dt">' + s.data.substring(0, 7) + '</div>' : '';
-            cols += '<div class="pm-wf-col">' +
-                '<div class="pm-wf-bar ' + cls + '" style="top:' + top + 'px;height:' + h + 'px"></div>' +
-                '<div class="pm-wf-v" style="top:' + vtop + 'px;color:' + color + '">' + vtxt + '</div>' +
-                '<div class="pm-wf-lbl" title="' + s.rot.replace(/"/g, '&quot;') + '">' + short + '</div>' +
-                dateHtml +
-                '</div>';
         });
 
-        var wrap = document.getElementById('pmWfWrap');
-        if (wrap) {
-            wrap.innerHTML = '<div class="pm-wf" id="pmWf">' +
-                '<div class="pm-wf-grid">' + grid + '</div>' +
-                '<div class="pm-wf-cols">' + cols + '</div></div>';
-        }
+        chartRef = new Chart(canvas, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Impacto do lançamento',
+                        data: impactValues,
+                        backgroundColor: 'rgba(34,197,94,.55)',
+                        borderColor: 'rgba(34,197,94,.8)',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        barPercentage: 0.55,
+                        yAxisID: 'yImpact',
+                        order: 2,
+                    },
+                    {
+                        label: 'Saldo (PM)',
+                        data: pmValues,
+                        type: 'line',
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(245,158,11,.12)',
+                        pointBackgroundColor: '#f59e0b',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                        pointHoverRadius: 7,
+                        borderWidth: 2.5,
+                        tension: 0.3,
+                        fill: false,
+                        yAxisID: 'yPm',
+                        order: 1,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            color: '#7890b0',
+                            font: { size: 10, weight: '600' },
+                            boxWidth: 14,
+                            boxHeight: 10,
+                            padding: 14,
+                            usePointStyle: true,
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(13,17,23,.92)',
+                        titleColor: '#e6edf3',
+                        bodyColor: '#e6edf3',
+                        borderColor: 'rgba(255,255,255,.1)',
+                        borderWidth: 1,
+                        padding: 10,
+                        callbacks: {
+                            label: function (c) {
+                                if (c.dataset.label === 'Saldo (PM)') {
+                                    return 'Saldo: US$ ' + c.raw.toFixed(2);
+                                }
+                                return c.raw > 0 ? 'Impacto: −US$ ' + c.raw.toFixed(2) : '';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: '#7890b0', font: { size: 10 } },
+                        grid: { display: false }
+                    },
+                    yPm: {
+                        position: 'left',
+                        title: { display: true, text: 'Saldo (PM)', color: '#f59e0b', font: { size: 10, weight: '600' } },
+                        ticks: {
+                            color: '#f59e0b',
+                            font: { size: 9 },
+                            callback: function (v) { return '$' + v.toFixed(0); }
+                        },
+                        grid: { color: 'rgba(255,255,255,.04)' }
+                    },
+                    yImpact: {
+                        position: 'right',
+                        title: { display: true, text: 'Impacto', color: '#22c55e', font: { size: 10, weight: '600' } },
+                        ticks: {
+                            color: '#22c55e',
+                            font: { size: 9 },
+                            callback: function (v) { return '$' + v.toFixed(0); }
+                        },
+                        grid: { drawOnChartArea: false }
+                    }
+                }
+            }
+        });
     }
 
-    function drawSteps(steps) {
+    function drawLedger(steps) {
         var html = '';
         steps.forEach(function (s) {
-            var vv, cls = '';
+            var isLast = s.type === 'out';
+            var dataStr = s.data ? s.data.substring(8, 10) + '/' + s.data.substring(5, 7) : '';
+            var valorStr, saldoStr = usd(s.after);
+
+            var opHtml;
             if (s.type === 'in') {
-                vv = '<span class="vv pos">' + usd(s.v) + '</span>';
-            } else if (s.type === 'down') {
-                vv = '<span class="vv neg">−' + usd(s.v) + '</span>';
+                opHtml = '<span class="pm-badge put">Entrada</span> <span class="pm-op-asset">PUT</span>';
+                valorStr = '';
+            } else if (s.type === 'out') {
+                opHtml = '<span class="pm-badge final">Preço Médio final</span>';
+                valorStr = '';
             } else {
-                vv = '<span class="vv fin">' + usd(s.v) + '</span>';
-                cls = 'fin';
+                var parts = s.rot.split(' — ');
+                var left = parts[0] || s.rot;
+                var statusStr = parts[1] || '';
+                var sp = left.indexOf(' ');
+                var tipo = sp > 0 ? left.substring(0, sp) : '';
+                var ativo = sp > 0 ? left.substring(sp + 1) : left;
+                var tipoBadge = tipo === 'PUT' ? 'put' : 'call';
+                var statusBadge = statusStr === 'ABERTA' ? 'aberta' : 'fechada';
+                opHtml = '<span class="pm-badge ' + tipoBadge + '">' + tipo + '</span> ' +
+                    '<span class="pm-op-asset">' + ativo + '</span> ' +
+                    (statusStr ? '<span class="pm-badge pm-badge-sm ' + statusBadge + '">' + statusStr + '</span>' : '');
+                valorStr = '−' + usd(s.v);
             }
-            var dateHtml = s.data ? '<span class="dt">' + s.data.substring(0, 10) + '</span>' : '';
-            html += '<li class="' + cls + '">' + dateHtml + '<span class="nm">' + s.rot + '</span>' + vv + '</li>';
+
+            html += '<tr class="' + (isLast ? 'pm-final-row' : '') + '">' +
+                '<td>' + dataStr + '</td>' +
+                '<td>' + opHtml + '</td>' +
+                '<td class="pm-valor">' + valorStr + '</td>' +
+                '<td class="pm-saldo"' + (s.type === 'in' ? ' style="color:#3b82f6;font-weight:700"' : '') + '>' + saldoStr + '</td>' +
+                '</tr>';
         });
-        var el = document.getElementById('pmSteps');
+        var el = document.getElementById('pmLedgerBody');
         if (el) el.innerHTML = html;
-    }
-
-    function handleFilterChange() {
-        var sel = document.getElementById('pmYearFilter');
-        activeYear = sel ? sel.value : '';
-        rebuild();
-    }
-
-    function rebuild() {
-        var d = modalData;
-        if (!d) return;
-        var steps = buildSteps(d, activeYear);
-        drawWaterfall(steps);
-        drawSteps(steps);
     }
 
     function build() {
@@ -237,45 +320,50 @@
 
         var hdPm = document.getElementById('hdPm');
         if (hdPm) hdPm.textContent = usd(d.pm);
+        var hdAsset = document.getElementById('hdAsset');
+        if (hdAsset) hdAsset.textContent = d.ativo;
+        var hdTitleAsset = document.getElementById('hdTitleAsset');
+        if (hdTitleAsset) hdTitleAsset.textContent = '· ' + d.ativo;
 
-        var years = getYears(d);
-        var filterOpts = '<option value="">Todos os anos</option>';
-        years.forEach(function (y) {
-            filterOpts += '<option value="' + y + '"' + (activeYear === y ? ' selected' : '') + '>' + y + '</option>';
-        });
+        var steps = buildSteps(d);
+        var vsPm = d.cotacao && d.pm ? ((d.cotacao - d.pm) / d.pm) * 100 : null;
+        var resExerc = d.strikeAberto && d.pm ? d.strikeAberto - d.pm : null;
+        var dist = d.cotacao && d.strikeAberto ? ((d.cotacao - d.strikeAberto) / d.strikeAberto) * 100 : null;
 
         var body = document.getElementById('pmBody');
         if (!body) return;
 
         body.innerHTML =
-            '<div class="pm-formula">' +
-                '<span class="r">' + usd(d.pm) + '</span><span class="op"> = </span>' +
-                '<span class="pos">' + usd(d.ultimoExercicio) + '</span><span class="op"> − </span>' +
-                '<span class="neg">(' + usd(d.totalPremios) + ')</span>' +
-                '<span class="op" style="margin-left:auto;font-family:var(--pm-sans);font-size:.66rem;color:var(--pm-mut)">entrada − prêmios acumulados</span>' +
+            '<div class="pm-summary-row">' +
+                '<div class="pm-stat-box"><div class="lbl">Preço Médio</div><div class="val" style="color:var(--pm-amber)">' + usd(d.pm) + '</div></div>' +
+                '<div class="pm-stat-box"><div class="lbl">Entrada (PUT)</div><div class="val" style="color:var(--pm-blue)">' + usd(d.ultimoExercicio) + '</div></div>' +
+                '<div class="pm-stat-box"><div class="lbl">Prêmios acumulados</div><div class="val" style="color:var(--pm-green)">−' + usd(d.totalPremios) + '</div></div>' +
             '</div>' +
-            '<div class="pm-grid2">' +
-                '<div class="pm-card">' +
-                    '<div class="pm-card-t">Evolução do custo (waterfall)</div>' +
-                    '<div class="pm-wf-scroll" id="pmWfWrap"></div>' +
+            '<div class="pm-panel">' +
+                '<div class="pm-panel-title">' +
+                    '<span>' + (d.hasOpenOp ? 'Evolução do custo × Lançamentos (aberto: ' + d.tipoAberto + ' ' + usd(d.strikeAberto) + ')' : 'Evolução do custo × Lançamentos') + '</span>' +
                 '</div>' +
-                '<div class="pm-card pm-steps-card">' +
-                    '<div class="pm-card-t">' +
-                        'Passo a passo do cálculo' +
-                        '<select class="pm-filter" id="pmYearFilter">' + filterOpts + '</select>' +
-                    '</div>' +
-                    '<div class="pm-steps-scroll">' +
-                        '<ol class="pm-steps" id="pmSteps"></ol>' +
+                '<div class="pm-chart-ledger-grid">' +
+                    '<div class="pm-chart-wrap"><canvas id="pmChart"></canvas></div>' +
+                    '<div class="pm-ledger-scroll">' +
+                        '<table class="pm-ledger">' +
+                            '<thead><tr><th>Data</th><th>Operação</th><th>Valor</th><th>Saldo (PM)</th></tr></thead>' +
+                            '<tbody id="pmLedgerBody"></tbody>' +
+                        '</table>' +
                     '</div>' +
                 '</div>' +
+            '</div>' +
+            '<div class="pm-summary-row">' +
+                '<div class="pm-stat-box"><div class="lbl">Cotação</div><div class="val" style="color:var(--pm-blue)">' + usd(d.cotacao) + '</div></div>' +
+                '<div class="pm-stat-box ' + (vsPm !== null && vsPm >= 0 ? 'g' : '') + '"><div class="lbl">vs PM</div><div class="val">' + (vsPm !== null ? pct(vsPm) : '—') + '</div></div>' +
+                '<div class="pm-stat-box ' + (resExerc !== null && resExerc >= 0 ? 'g' : '') + '"><div class="lbl">Resultado se exercido</div><div class="val">' + (resExerc !== null ? sgn(resExerc) : '—') + '</div></div>' +
+                '<div class="pm-stat-box"><div class="lbl">Distância strike</div><div class="val">' + (dist !== null ? pct(dist) : '—') + '</div></div>' +
             '</div>';
 
-        var sel = document.getElementById('pmYearFilter');
-        if (sel) sel.onchange = handleFilterChange;
-
-        var steps = buildSteps(d, activeYear);
-        drawWaterfall(steps);
-        drawSteps(steps);
+        drawLedger(steps);
+        if (typeof Chart !== 'undefined') {
+            drawChart(steps);
+        }
     }
 
     function init() {

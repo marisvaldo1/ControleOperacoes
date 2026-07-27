@@ -1766,13 +1766,6 @@ async function buscarCotacaoSimLive() {
     if (btn) { btn.disabled = true; btn.innerHTML = "<span class='spinner-border spinner-border-sm'></span>"; }
     if (headerBtn)  headerBtn.disabled = true;
     if (headerIcon) headerIcon.classList.add("sim-spin");
-    // Loading nos KPIs e cards do painel direito
-    const _spinSm = '<span class="spinner-border" style="width:.55rem;height:.55rem;border-width:1px"></span>';
-    ['simPremioEstimado','simRoi','simDistancia','simTaeAnual'].forEach(id => {
-        const el = document.getElementById(id); if (el) el.innerHTML = _spinSm;
-    });
-    const cotEl = document.getElementById('simCotacao');
-    if (cotEl) { cotEl.readOnly = true; cotEl.style.opacity = '.5'; }
     try {
         const sym  = par + "USDT";
         const res  = await fetch(API_BASE + "/api/proxy/crypto/" + sym);
@@ -1795,8 +1788,6 @@ async function buscarCotacaoSimLive() {
         if (btn) { btn.disabled = false; btn.innerHTML = "<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8'/><path d='M3 3v5h5'/><path d='M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16'/><path d='M16 16h5v5'/></svg>"; }
         if (headerBtn)  headerBtn.disabled = false;
         if (headerIcon) headerIcon.classList.remove("sim-spin");
-        const cotEl2 = document.getElementById('simCotacao');
-        if (cotEl2) { cotEl2.readOnly = false; cotEl2.style.opacity = ''; }
         onSimInput(); // atualiza painel direito após atualizar cotação
     }
 }
@@ -1931,7 +1922,11 @@ function simAtualizar() {
         document.getElementById("simRoi").textContent = roi.toFixed(4) + "%";
         document.getElementById("simTaeAnual").textContent = tae.toFixed(2) + "% a.a.";
         // Preenche _lastSimData para Calcular/Aplicar (retrocompat)
-        const distanciaVal = (cotacao && strike) ? ((strike - cotacao) / cotacao) * 100 : 0;
+        const distanciaVal = (cotacao && strike)
+            ? (window.CryptoUtils
+                ? window.CryptoUtils.calcDistancia(tipo, strike, cotacao)
+                : ((strike - cotacao) / cotacao) * 100)
+            : 0;
         _lastSimData = { ativo: par, tipo, abertura: valor, tae, prazo, strike, cotacao_atual: cotacao || null,
                          premio_us: premioEstimado, distancia: distanciaVal || null, data_operacao: getCurrentDate() };
         document.getElementById("btnAplicarSim").disabled = false;
@@ -1943,7 +1938,9 @@ function simAtualizar() {
 
     // Distância
     if (cotacao && strike) {
-        const distanciaVal = ((strike - cotacao) / cotacao) * 100;
+        const distanciaVal = window.CryptoUtils
+            ? window.CryptoUtils.calcDistancia(tipo, strike, cotacao)
+            : ((strike - cotacao) / cotacao) * 100;
         const sign = distanciaVal > 0 ? "+" : "";
         const cls  = distanciaVal > 0 ? "text-success" : "text-danger";
         document.getElementById("simDistancia").innerHTML =
@@ -1995,25 +1992,31 @@ function simRenderPmCard(par, cotacaoInput) {
         return;
     }
 
-    // Encontra última CALL exercida (strike exercida = PM base)
-    // Apenas operações fechadas são consideradas; operações abertas não têm exercício real
-    const callsExercidas = ops.filter(o => {
+    // Encontra última PUT exercida (novo custo-base = início do ciclo)
+    // Filtra prêmios apenas do ciclo atual
+    const putsExercidas = ops.filter(o => {
         if ((o.status || '').toUpperCase() === 'ABERTA') return false;
-        return isTypeExercised(o, 'CALL');
+        return isTypeExercised(o, 'PUT');
     });
-    const ultimoExercicio = callsExercidas.length
-        ? [...callsExercidas].sort((a, b) => {
+    const ultimaPut = putsExercidas.length
+        ? [...putsExercidas].sort((a, b) => {
             const aTime = window.CryptoExerciseStatus?.getOperationDate?.(a)?.getTime?.() || 0;
             const bTime = window.CryptoExerciseStatus?.getOperationDate?.(b)?.getTime?.() || 0;
             return bTime - aTime;
         })[0]
         : null;
-    const strikeExercida = ultimoExercicio
-        ? parseFloat(ultimoExercicio.strike || 0)
+    const strikeExercida = ultimaPut
+        ? parseFloat(ultimaPut.strike || 0)
         : parseFloat(ops.reduce((max, o) => parseFloat(o.strike||0) > parseFloat(max.strike||0) ? o : max, ops[0])?.strike || 0);
 
-    // Soma todos os prêmios do ativo
-    const totalPremios = ops.reduce((s, o) => s + (parseFloat(o.premio_us)||0), 0);
+    // Filtra prêmios posteriores à última PUT exercida
+    const cicloDate = ultimaPut ? (ultimaPut.exercicio || ultimaPut.data_operacao || '') : '';
+    const totalPremios = ops.reduce((s, o) => {
+        if (!cicloDate) return s + (parseFloat(o.premio_us)||0);
+        const d = o.exercicio || o.data_operacao || '';
+        if (d >= cicloDate) return s + (parseFloat(o.premio_us)||0);
+        return s;
+    }, 0);
     const pm = strikeExercida - totalPremios;
     const cotacao = cotacaoInput || parseFloat(ops.find(o => parseFloat(o.cotacao_atual||0) > 0)?.cotacao_atual || 0);
     const pctVsPm = cotacao && pm ? ((cotacao - pm) / pm) * 100 : null;
@@ -2038,7 +2041,7 @@ function simRenderPmCard(par, cotacaoInput) {
     if (title) title.textContent = `${icone} PREÇO MÉDIO ${par}`;
 
     body.innerHTML = `
-        <div class="sim-pm-val" style="color:${acCor};cursor:pointer;text-decoration:underline dotted ${acCor}80;text-underline-offset:6px" data-par="${par}" title="Clique para detalhes do cálculo" onclick="ModalPrecoMedioAtivo.openModal('${par}')">$${pm.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+        ${CryptoUtils.renderPmLink(par, pm)}
         <div class="sim-pm-row"><span class="sim-pm-key">● Último Exercício</span><span class="sim-pm-v" style="color:var(--tblr-warning)">$${strikeExercida.toLocaleString('en-US',{minimumFractionDigits:2})}</span></div>
         <div class="sim-pm-row"><span class="sim-pm-key">− Prêmios</span><span class="sim-pm-v" style="color:#3fb950">−$${totalPremios.toLocaleString('en-US',{minimumFractionDigits:2})}</span></div>
         ${cotacao ? `<div class="sim-pm-row"><span class="sim-pm-key">● Cotação</span><span class="sim-pm-v" style="${pctColor}">$${cotacao.toLocaleString('en-US',{minimumFractionDigits:2})}</span></div>` : ''}
@@ -2432,7 +2435,11 @@ function calcularSimulador() {
         });
     }
     const roi = (premioEstimado / valor) * 100;
-    const distanciaVal = (cotacao && strike) ? ((strike - cotacao) / cotacao) * 100 : 0;
+    const distanciaVal = (cotacao && strike)
+        ? (window.CryptoUtils
+            ? window.CryptoUtils.calcDistancia(tipo, strike, cotacao)
+            : ((strike - cotacao) / cotacao) * 100)
+        : 0;
 
     // compat retroativa com cenários (hidden)
     const cenarioWin     = tipo === "CALL" ? "Preço acima do Strike (" + fmtUsd(strike) + ")" : "Preço abaixo do Strike (" + fmtUsd(strike) + ")";
@@ -2631,7 +2638,10 @@ async function refreshCryptoCotacoes() {
             op._livePrice    = priceMap[op.ativo];
             op.cotacao_atual = priceMap[op.ativo];
             if (op.strike) {
-                const dist = ((parseFloat(op.strike) - priceMap[op.ativo]) / priceMap[op.ativo]) * 100;
+                const tipo = (op.tipo || 'PUT').toUpperCase();
+                const dist = window.CryptoUtils
+                    ? window.CryptoUtils.calcLiveDist(tipo, op.strike, priceMap[op.ativo])
+                    : ((parseFloat(op.strike) - priceMap[op.ativo]) / priceMap[op.ativo]) * 100;
                 op._liveDist = dist;
             }
         }
