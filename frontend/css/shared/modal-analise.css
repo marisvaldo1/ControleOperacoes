@@ -1655,3 +1655,230 @@
     border: 2px solid rgba(0,0,0,0.12);
     border-top-color: #4d9de0;
 }
+
+/* =====================================================================
+   DEEP FINAL — Dashboard Cards, Chart, Parecer, Recomendações
+   ===================================================================== */
+
+.ma-deep-dashboard {
+    padding: 0 1rem 0.75rem;
+}
+
+.ma-deep-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+}
+
+.ma-deep-card {
+    background: #0f172a;
+    border-radius: 14px;
+    border: 1px solid #1e293b;
+    padding: 14px 16px;
+    transition: 0.2s;
+}
+
+.ma-deep-card:hover { border-color: #334155; transform: translateY(-1px); }
+
+.ma-deep-card-green { border-color: #2a3a2a; }
+.ma-deep-card-red { border-color: #3a2a2a; }
+
+.ma-deep-card-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #94a3b8;
+    margin-bottom: 4px;
+}
+
+.ma-deep-card-value {
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.ma-deep-card-sub {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 2px;
+}
+
+.ma-deep-card-change {
+    font-size: 13px;
+    font-weight: 600;
+    margin-top: 4px;
+}
+
+/* Chart */
+.ma-deep-chart {
+    margin: 0 1rem 0.75rem;
+    background: #0f172a;
+    border-radius: 16px;
+    border: 1px solid #1e293b;
+    padding: 16px 18px 18px;
+}
+
+.ma-deep-chart-title {
+    font-size: 15px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.ma-deep-badge {
+    background: #1e293b;
+    padding: 2px 10px;
+    border-radius: 40px;
+    font-size: 11px;
+    color: #94a3b8;
+}
+
+.ma-deep-chart-svg-wrap {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.ma-deep-chart-svg-wrap svg {
+    width: 100%;
+    min-width: 500px;
+    height: auto;
+}
+
+.ma-deep-chart-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px 28px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #1a2332;
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+/* Parecer */
+.ma-deep-parecer {
+    margin: 0 1rem 0.75rem;
+    background: #0f172a;
+    border-radius: 16px;
+    border: 1px solid #1e293b;
+    padding: 18px 20px;
+}
+
+.ma-deep-parecer-title {
+    font-size: 16px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.ma-deep-status-badge {
+    padding: 3px 14px;
+    border-radius: 40px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.ma-deep-status-badge.profit { background: #0a1f12; color: #4ade80; border: 1px solid #1a4a2a; }
+.ma-deep-status-badge.loss { background: #1f0a0a; color: #f87171; border: 1px solid #4a1a1a; }
+.ma-deep-status-badge.neutral { background: #1f170a; color: #fbbf24; border: 1px solid #4a3a1a; }
+
+.ma-deep-parecer-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.ma-deep-parecer-item {
+    background: #0a0f1e;
+    border-radius: 12px;
+    padding: 14px 16px;
+    border: 1px solid #1a2332;
+}
+
+.ma-deep-pi-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    color: #94a3b8;
+    letter-spacing: 0.3px;
+    margin-bottom: 4px;
+}
+
+.ma-deep-pi-value {
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.ma-deep-pi-desc {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 2px;
+}
+
+.ma-deep-pi-bar {
+    height: 5px;
+    background: #1a2332;
+    border-radius: 40px;
+    margin-top: 8px;
+    overflow: hidden;
+}
+
+.ma-deep-pi-fill {
+    height: 100%;
+    border-radius: 40px;
+    transition: width 0.6s;
+}
+
+/* Recomendações */
+.ma-deep-recomendacoes {
+    background: #0a1220;
+    border-radius: 12px;
+    padding: 14px 18px;
+    border: 1px solid #1a2332;
+    margin-bottom: 12px;
+}
+
+.ma-deep-rec-title {
+    font-weight: 600;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.ma-deep-recomendacoes ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.ma-deep-recomendacoes li {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #c8d6f0;
+    padding: 3px 0;
+}
+
+.ma-deep-recomendacoes li strong { color: #eef2f8; }
+
+/* Resumo final */
+.ma-deep-resumo-final {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 20px;
+    padding: 12px 16px;
+    background: #0a1220;
+    border-radius: 12px;
+    border: 1px solid #1a2332;
+    font-size: 13px;
+    color: #94a3b8;
+}

@@ -262,7 +262,7 @@ function setupEventListeners() {
     }
     document.getElementById("btnAnaliseCrypto")?.addEventListener("click", async () => {
         if (!window.ModalAnalise) {
-            iziToast.warning({ title: "Aviso", message: "Modal de analise nao carregado." });
+            iziToast.warning({ title: "Aviso", message: "Modal de analise não carregado." });
             return;
         }
 

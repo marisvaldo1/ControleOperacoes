@@ -469,8 +469,8 @@
             let resultType = 'neutral';
 
             if (tipo === 'CALL' && isEx && lastStrike > 0) {
-                resultado = pmBefore - strike;
-                resultadoPct = pmBefore > 0 ? ((pmBefore - strike) / pmBefore) * 100 : 0;
+                resultado = strike - lastStrike;
+                resultadoPct = lastStrike > 0 ? ((strike - lastStrike) / lastStrike) * 100 : 0;
                 resultType = resultado > 0 ? 'profit' : resultado < 0 ? 'loss' : 'neutral';
             } else if (tipo === 'PUT' && isEx) {
                 resultado = 0;
