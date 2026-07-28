@@ -584,6 +584,9 @@
         setEl('maMelhorTrade', stats.bestResult > 0 ? '+' + fmtAmountShort(stats.bestResult) : fmtAmountShort(stats.bestResult));
         setEl('maTicketMedioFooter', fmtAmountShort(stats.ticketMedio));
         setEl('maRoiFooter', roiStr);
+
+        /* Deep sections (Dashboard Cards, Chart, Parecer) */
+        renderDeep(stats, opsToRender);
     }
 
     function setEl(id, val) {
@@ -2021,6 +2024,216 @@
         if (btn) {
             btn.addEventListener('click', openModal);
         }
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Render Deep – Dashboard Cards, Chart, Parecer                       */
+    /* ------------------------------------------------------------------ */
+    function renderDeep(stats, ops) {
+        const isCrypto = state.apiEndpoint.includes('/crypto');
+        const resultField = isCrypto ? ['premio_us', 'resultado'] : ['resultado', 'resultado_total'];
+
+        /* ── Dashboard Cards ── */
+        const investInicial = isCrypto ? getSaldoCryptoConfig() : getSaldoCorretora();
+        const investSub = isCrypto ? 'saldo configurado' : 'saldo corretora';
+        setEl('maDeepInvestInicial', investInicial > 0 ? fmtAmountShort(investInicial) : '-');
+        setEl('maDeepInvestSub', investSub);
+
+        const valorFinal = investInicial + stats.totalResult;
+        setEl('maDeepValorFinal', fmtAmountShort(valorFinal));
+        const valorChange = investInicial > 0 ? ((valorFinal - investInicial) / investInicial * 100) : 0;
+        const valorChangeEl = document.getElementById('maDeepValorChange');
+        if (valorChangeEl) {
+            valorChangeEl.textContent = (valorChange >= 0 ? '+' : '') + valorChange.toFixed(1) + '% vs inicial';
+            valorChangeEl.style.color = valorChange >= 0 ? '#4ade80' : '#f87171';
+        }
+        const valorSub = isCrypto ? 'US$ ' + valorFinal.toFixed(2) : fmtAmount(valorFinal);
+        setEl('maDeepValorSub', valorSub);
+
+        const totalPremios = ops.reduce((s, op) => s + Math.abs(getNumber(op, resultField)), 0);
+        setEl('maDeepResultadoBruto', fmtAmountShort(totalPremios));
+        setEl('maDeepBrutoSub', stats.totalOps + ' operaç' + (stats.totalOps === 1 ? 'ão' : 'ões'));
+        const brutoChangeEl = document.getElementById('maDeepBrutoChange');
+        if (brutoChangeEl) {
+            brutoChangeEl.textContent = 'Ticket médio: ' + fmtAmountShort(stats.ticketMedio);
+        }
+
+        setEl('maDeepResultadoLiq', fmtAmountShort(stats.totalResult));
+        setEl('maDeepLiqSub', 'liquido period');
+        const liqChangeEl = document.getElementById('maDeepLiqChange');
+        if (liqChangeEl) {
+            liqChangeEl.textContent = stats.totalResult >= 0 ? 'acima do investimento' : 'abaixo do investimento';
+            liqChangeEl.style.color = stats.totalResult >= 0 ? '#4ade80' : '#f87171';
+        }
+
+        /* ── SVG Chart ── */
+        renderDeepChart(ops, stats, resultField);
+
+        /* ── Parecer Estratégico ── */
+        renderDeepParecer(stats, ops, investInicial, resultField);
+    }
+
+    function renderDeepChart(ops, stats, resultField) {
+        const lineEl = document.getElementById('maDeepChartLine');
+        const areaEl = document.getElementById('maDeepChartArea');
+        const dotEl = document.getElementById('maDeepChartDot');
+        const valEl = document.getElementById('maDeepChartVal');
+        const badgeEl = document.getElementById('maDeepChartBadge');
+        if (!lineEl || !areaEl) return;
+
+        const sorted = [...ops].filter(op => {
+            const d = op.data_operacao || op.data || op.dt;
+            return d;
+        }).sort((a, b) => {
+            const da = new Date(a.data_operacao || a.data || a.dt);
+            const db = new Date(b.data_operacao || b.data || b.dt);
+            return da - db;
+        });
+
+        if (sorted.length < 2) {
+            setEl('maDeepSumLucro', '-');
+            setEl('maDeepSumPrej', '-');
+            setEl('maDeepSumLiq', fmtAmountShort(stats.totalResult));
+            if (badgeEl) badgeEl.textContent = stats.totalResult >= 0 ? 'LUCRO' : 'PREJUIZO';
+            return;
+        }
+
+        let cumulative = 0;
+        const points = [];
+        sorted.forEach(op => {
+            cumulative += getNumber(op, resultField);
+            points.push(cumulative);
+        });
+
+        const minX = 60, maxX = 760, minY = 30, maxY = 250;
+        const rangeY = Math.max(Math.abs(Math.min(...points)), Math.abs(Math.max(...points)), 1);
+        const baseline = (minY + maxY) / 2;
+
+        const coords = points.map((p, i) => {
+            const x = minX + (i / (points.length - 1)) * (maxX - minX);
+            const y = baseline - (p / rangeY) * (baseline - minY);
+            return { x, y: Math.max(minY, Math.min(maxY, y)) };
+        });
+
+        const linePoints = coords.map(c => c.x.toFixed(1) + ',' + c.y.toFixed(1)).join(' ');
+        lineEl.setAttribute('points', linePoints);
+
+        const lastCoord = coords[coords.length - 1];
+        const firstCoord = coords[0];
+        const areaPoints = linePoints + ' ' + lastCoord.x + ',' + maxY + ' ' + firstCoord.x + ',' + maxY;
+        areaEl.setAttribute('points', areaPoints);
+        areaEl.setAttribute('fill', stats.totalResult >= 0 ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)');
+
+        dotEl.setAttribute('cx', lastCoord.x);
+        dotEl.setAttribute('cy', lastCoord.y);
+        dotEl.setAttribute('fill', stats.totalResult >= 0 ? '#4ade80' : '#f87171');
+
+        if (valEl) {
+            valEl.setAttribute('x', lastCoord.x);
+            valEl.textContent = fmtAmountShort(stats.totalResult);
+            valEl.setAttribute('fill', stats.totalResult >= 0 ? '#4ade80' : '#f87171');
+        }
+
+        if (badgeEl) {
+            badgeEl.textContent = stats.totalResult >= 0 ? 'LUCRO' : 'PREJUIZO';
+            badgeEl.className = 'ma-deep-badge ' + (stats.totalResult >= 0 ? 'ma-deep-badge-profit' : 'ma-deep-badge-loss');
+        }
+
+        const lucros = points.filter(p => p > 0);
+        const prejs = points.filter(p => p < 0);
+        setEl('maDeepSumLucro', lucros.length ? fmtAmountShort(Math.max(...points)) : '-');
+        setEl('maDeepSumPrej', prejs.length ? fmtAmountShort(Math.min(...points)) : '-');
+        setEl('maDeepSumLiq', fmtAmountShort(stats.totalResult));
+    }
+
+    function renderDeepParecer(stats, ops, investInicial, resultField) {
+        const badgeEl = document.getElementById('maDeepStatusBadge');
+        if (badgeEl) {
+            if (stats.totalResult > 0) {
+                badgeEl.textContent = 'LUCRO';
+                badgeEl.className = 'ma-deep-status-badge profit';
+            } else if (stats.totalResult < 0) {
+                badgeEl.textContent = 'PREJUIZO';
+                badgeEl.className = 'ma-deep-status-badge loss';
+            } else {
+                badgeEl.textContent = 'NEUTRO';
+                badgeEl.className = 'ma-deep-status-badge neutral';
+            }
+        }
+
+        setEl('maDeepPiPerf', fmtAmountShort(stats.totalResult));
+        const perfBar = document.getElementById('maDeepPiPerfBar');
+        if (perfBar) {
+            const perfPct = Math.min(100, Math.abs(stats.totalResult) / Math.max(investInicial, 1) * 100 * 10);
+            perfBar.style.width = perfPct + '%';
+            perfBar.style.background = stats.totalResult >= 0 ? '#4ade80' : '#f87171';
+        }
+
+        const exercidas = ops.filter(op => {
+            const st = (op.status || '').toUpperCase();
+            return st === 'EXERCIDA' || st === 'EXERCISED';
+        });
+        const exercCount = exercidas.length;
+        const riscoEl = document.getElementById('maDeepPiRisco');
+        const riscoDesc = document.getElementById('maDeepPiRiscoDesc');
+        const riscoBar = document.getElementById('maDeepPiRiscoBar');
+        if (riscoEl) {
+            const riscoPct = stats.totalOps > 0 ? (exercCount / stats.totalOps * 100) : 0;
+            riscoEl.textContent = riscoPct.toFixed(0) + '%';
+            if (riscoDesc) riscoDesc.textContent = exercCount + ' de ' + stats.totalOps + ' operações exercidas';
+            if (riscoBar) {
+                riscoBar.style.width = Math.min(100, riscoPct) + '%';
+                riscoBar.style.background = riscoPct > 50 ? '#f87171' : riscoPct > 25 ? '#fb923c' : '#4ade80';
+            }
+        }
+
+        const acertoEl = document.getElementById('maDeepPiAcerto');
+        const acertoDesc = document.getElementById('maDeepPiAcertoDesc');
+        const acertoBar = document.getElementById('maDeepPiAcertoBar');
+        if (acertoEl) {
+            acertoEl.textContent = stats.winRate.toFixed(0) + '%';
+            if (acertoDesc) acertoDesc.textContent = stats.wins + ' de ' + stats.totalOps + ' operações lucrativas';
+            if (acertoBar) {
+                acertoBar.style.width = Math.min(100, stats.winRate) + '%';
+                acertoBar.style.background = stats.winRate >= 50 ? '#4ade80' : '#f87171';
+            }
+        }
+
+        const recupEl = document.getElementById('maDeepPiRecup');
+        const recupDesc = document.getElementById('maDeepPiRecupDesc');
+        const recupBar = document.getElementById('maDeepPiRecupBar');
+        if (recupEl) {
+            const recupPct = investInicial > 0 ? Math.min(100, Math.abs(stats.totalResult) / investInicial * 100) : 0;
+            recupEl.textContent = recupPct.toFixed(1) + '%';
+            if (recupDesc) recupDesc.textContent = stats.totalResult >= 0 ? 'Carteira acima do investimento' : 'Necessita ' + fmtAmountShort(Math.abs(stats.totalResult)) + ' para recuperar';
+            if (recupBar) {
+                recupBar.style.width = Math.min(100, recupPct) + '%';
+                recupBar.style.background = recupPct >= 100 ? '#4ade80' : '#fbbf24';
+            }
+        }
+
+        const recList = document.getElementById('maDeepRecList');
+        if (recList) {
+            const recs = [];
+            if (stats.winRate < 50) recs.push('<strong style="color:#f87171">Taxa de acerto abaixo de 50%</strong> — revise critérios de entrada');
+            if (stats.totalResult < 0) recs.push('<strong style="color:#f87171">Resultado negativo</strong> — considere reduzir exposição ou ajustar strikes');
+            if (exercCount > stats.totalOps * 0.5) recs.push('<strong style="color:#fb923c">Muitas exercidas</strong> — ajuste strikes para OTM');
+            if (stats.winRate >= 70) recs.push('<strong style="color:#4ade80">Boa taxa de acerto</strong> — mantenha a estratégia atual');
+            if (stats.totalResult > 0 && stats.winRate >= 50) recs.push('<strong style="color:#4ade80">Performance positiva</strong> — considere aumentar position sizing gradualmente');
+            if (recs.length === 0) recs.push('<strong style="color:#94a3b8">Performance within expected parameters</strong>');
+            recList.innerHTML = recs.map(r => '<li>' + r + '</li>').join('');
+        }
+
+        const resumoText = document.getElementById('maDeepResumoText');
+        const resumoAcerto = document.getElementById('maDeepResumoAcerto');
+        const resumoRisco = document.getElementById('maDeepResumoRisco');
+        if (resumoText) {
+            resumoText.textContent = stats.totalResult >= 0
+                ? 'Carteira com performance positiva no período'
+                : 'Carteira com prejuízo — revisar estratégia';
+        }
+        if (resumoAcerto) resumoAcerto.textContent = stats.winRate.toFixed(0) + '%';
+        if (resumoRisco) resumoRisco.textContent = (exercCount > 0 ? exercCount + ' exercidas' : 'nenhuma exercida');
     }
 
     /* ------------------------------------------------------------------ */

@@ -473,9 +473,9 @@
                 resultadoPct = lastStrike > 0 ? ((strike - lastStrike) / lastStrike) * 100 : 0;
                 resultType = resultado > 0 ? 'profit' : resultado < 0 ? 'loss' : 'neutral';
             } else if (tipo === 'PUT' && isEx) {
-                resultado = 0;
-                resultadoPct = 0;
-                resultType = 'neutral';
+                resultado = Math.abs(premio);
+                resultadoPct = pmBefore > 0 ? (Math.abs(premio) / Math.abs(pmBefore)) * 100 : 0;
+                resultType = resultado > 0 ? 'profit' : 'neutral';
             } else if (tipo === 'CALL' && !isEx) {
                 resultado = premio;
                 resultadoPct = pmBefore > 0 ? (premio / Math.abs(pmBefore)) * 100 : 0;
@@ -508,9 +508,9 @@
         html += `<div class="toc-perf-header">`;
         html += `<div class="toc-perf-title">📈 Análise de Performance por Operação</div>`;
         html += `<div class="toc-perf-stats">`;
-        html += `<span class="toc-perf-stat"><span style="color:#4ade80">🟢</span> <span style="color:#4ade80">${profits.length} lucros</span></span>`;
-        html += `<span class="toc-perf-stat"><span style="color:#f87171">🔴</span> <span style="color:#f87171">${losses.length} prejuízos</span></span>`;
-        html += `<span class="toc-perf-stat"><span style="color:#fbbf24">🟡</span> <span style="color:#fbbf24">${neutrals.length} neutras</span></span>`;
+        if (profits.length > 0) html += `<span class="toc-perf-stat"><span style="color:#4ade80">🟢</span> <span style="color:#4ade80">${profits.length} lucros</span></span>`;
+        if (losses.length > 0) html += `<span class="toc-perf-stat"><span style="color:#f87171">🔴</span> <span style="color:#f87171">${losses.length} prejuízos</span></span>`;
+        if (neutrals.length > 0) html += `<span class="toc-perf-stat"><span style="color:#fbbf24">🟡</span> <span style="color:#fbbf24">${neutrals.length} neutras</span></span>`;
         html += `<span class="toc-perf-stat">💰 Total: <strong style="color:${totalResultado >= 0 ? '#4ade80' : '#f87171'}">${totalResultado >= 0 ? '+' : ''}${fmtUsd(totalResultado)}</strong></span>`;
         html += `</div>`;
         html += `</div>`;
@@ -522,7 +522,7 @@
         html += `<th>🔄 Operação</th>`;
         html += `<th>🏷️ Tipo</th>`;
         html += `<th>📌 Status</th>`;
-        html += `<th>💲 Entrada</th>`;
+        html += `                <th>💲 Strike</th>`;
         html += `<th>📊 PM Antes</th>`;
         html += `<th>📈 PM Depois</th>`;
         html += `<th>📉 Variação</th>`;

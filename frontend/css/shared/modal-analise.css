@@ -1733,6 +1733,9 @@
     color: #94a3b8;
 }
 
+.ma-deep-badge-profit { background: #0a1f12; color: #4ade80; border: 1px solid #1a4a2a; }
+.ma-deep-badge-loss { background: #1f0a0a; color: #f87171; border: 1px solid #4a1a1a; }
+
 .ma-deep-chart-svg-wrap {
     width: 100%;
     overflow-x: auto;

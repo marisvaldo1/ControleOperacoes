@@ -557,6 +557,22 @@
     background: rgba(255,255,255,.03);
 }
 
+/* Numeric columns right-aligned */
+.toc-perf-table th:nth-child(5),
+.toc-perf-table th:nth-child(6),
+.toc-perf-table th:nth-child(7),
+.toc-perf-table th:nth-child(8),
+.toc-perf-table th:nth-child(9),
+.toc-perf-table th:nth-child(10),
+.toc-perf-table td:nth-child(5),
+.toc-perf-table td:nth-child(6),
+.toc-perf-table td:nth-child(7),
+.toc-perf-table td:nth-child(8),
+.toc-perf-table td:nth-child(9),
+.toc-perf-table td:nth-child(10) {
+    text-align: right;
+}
+
 /* Type badges */
 .toc-perf-type {
     display: inline-block;

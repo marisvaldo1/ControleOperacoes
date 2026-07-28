@@ -178,6 +178,108 @@
 
                 </div><!-- /ma-main -->
 
+                <!-- ===== DASHBOARD CARDS ===== -->
+                <div class="ma-deep-dashboard" id="maDeepDashboard">
+                    <div class="ma-deep-grid">
+                        <div class="ma-deep-card">
+                            <div class="ma-deep-card-title"> Investimento Inicial</div>
+                            <div class="ma-deep-card-value" id="maDeepInvestInicial" style="color:#60a5fa">-</div>
+                            <div class="ma-deep-card-sub" id="maDeepInvestSub">-</div>
+                        </div>
+                        <div class="ma-deep-card">
+                            <div class="ma-deep-card-title"> Valor Final (Atual)</div>
+                            <div class="ma-deep-card-value" id="maDeepValorFinal" style="color:#fbbf24">-</div>
+                            <div class="ma-deep-card-sub" id="maDeepValorSub">-</div>
+                            <div class="ma-deep-card-change" id="maDeepValorChange">-</div>
+                        </div>
+                        <div class="ma-deep-card ma-deep-card-green">
+                            <div class="ma-deep-card-title"> Resultado Bruto (Premios)</div>
+                            <div class="ma-deep-card-value" id="maDeepResultadoBruto" style="color:#4ade80">-</div>
+                            <div class="ma-deep-card-sub" id="maDeepBrutoSub">-</div>
+                            <div class="ma-deep-card-change" id="maDeepBrutoChange" style="color:#4ade80">-</div>
+                        </div>
+                        <div class="ma-deep-card ma-deep-card-red">
+                            <div class="ma-deep-card-title"> Resultado Liquido (PM)</div>
+                            <div class="ma-deep-card-value" id="maDeepResultadoLiq" style="color:#f87171">-</div>
+                            <div class="ma-deep-card-sub" id="maDeepLiqSub">-</div>
+                            <div class="ma-deep-card-change" id="maDeepLiqChange" style="color:#f87171">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== GRAFICO DE PERFORMANCE ===== -->
+                <div class="ma-deep-chart" id="maDeepChart">
+                    <div class="ma-deep-chart-title">
+                        Evolucao da Performance da Carteira
+                        <span class="ma-deep-badge" id="maDeepChartBadge">-</span>
+                    </div>
+                    <div class="ma-deep-chart-svg-wrap">
+                        <svg viewBox="0 0 800 280" xmlns="http://www.w3.org/2000/svg" id="maDeepChartSvg">
+                            <rect x="0" y="0" width="800" height="280" fill="#0a0f1e" rx="12"/>
+                            <line x1="60" y1="40" x2="760" y2="40" stroke="#1a2332" stroke-width="1" stroke-dasharray="4,4"/>
+                            <line x1="60" y1="90" x2="760" y2="90" stroke="#1a2332" stroke-width="1" stroke-dasharray="4,4"/>
+                            <line x1="60" y1="140" x2="760" y2="140" stroke="#1a2332" stroke-width="1" stroke-dasharray="4,4"/>
+                            <line x1="60" y1="190" x2="760" y2="190" stroke="#1a2332" stroke-width="1" stroke-dasharray="4,4"/>
+                            <line x1="60" y1="240" x2="760" y2="240" stroke="#1a2332" stroke-width="1" stroke-dasharray="4,4"/>
+                            <line x1="60" y1="20" x2="60" y2="260" stroke="#334155" stroke-width="1.5"/>
+                            <line x1="60" y1="260" x2="760" y2="260" stroke="#334155" stroke-width="1.5"/>
+                            <line x1="60" y1="140" x2="760" y2="140" stroke="#475569" stroke-width="1.5" stroke-dasharray="6,4"/>
+                            <polygon id="maDeepChartArea" points="60,140 760,140 760,140 60,140" fill="rgba(74,222,128,0.15)"/>
+                            <polyline id="maDeepChartLine" points="60,140 760,140" fill="none" stroke="#4ade80" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                            <circle id="maDeepChartDot" cx="760" cy="140" r="8" fill="#fbbf24" stroke="#0a0f1e" stroke-width="3"/>
+                            <text id="maDeepChartVal" x="760" y="12" fill="#fbbf24" font-size="11" font-weight="700" text-anchor="middle">-</text>
+                        </svg>
+                    </div>
+                    <div class="ma-deep-chart-summary" id="maDeepChartSummary">
+                        <span> <strong style="color:#4ade80">Lucro acumulado:</strong> <span id="maDeepSumLucro">-</span></span>
+                        <span> <strong style="color:#f87171">Prejuizo no PM:</strong> <span id="maDeepSumPrej">-</span></span>
+                        <span> <strong style="color:#fbbf24">Resultado liquido:</strong> <span id="maDeepSumLiq">-</span></span>
+                    </div>
+                </div>
+
+                <!-- ===== PARECER ESTRATEGICO ===== -->
+                <div class="ma-deep-parecer" id="maDeepParecer">
+                    <div class="ma-deep-parecer-title">
+                        Parecer Estrategico
+                        <span class="ma-deep-status-badge" id="maDeepStatusBadge">-</span>
+                    </div>
+                    <div class="ma-deep-parecer-grid">
+                        <div class="ma-deep-parecer-item">
+                            <div class="ma-deep-pi-label">Performance Geral</div>
+                            <div class="ma-deep-pi-value" id="maDeepPiPerf" style="color:#fbbf24">-</div>
+                            <div class="ma-deep-pi-desc">Resultado liquido considerando premios e PM</div>
+                            <div class="ma-deep-pi-bar"><div class="ma-deep-pi-fill" id="maDeepPiPerfBar" style="width:0%;background:#4ade80"></div></div>
+                        </div>
+                        <div class="ma-deep-parecer-item">
+                            <div class="ma-deep-pi-label">Nivel de Risco</div>
+                            <div class="ma-deep-pi-value" id="maDeepPiRisco" style="color:#fb923c">-</div>
+                            <div class="ma-deep-pi-desc" id="maDeepPiRiscoDesc">-</div>
+                            <div class="ma-deep-pi-bar"><div class="ma-deep-pi-fill" id="maDeepPiRiscoBar" style="width:0%;background:#f87171"></div></div>
+                        </div>
+                        <div class="ma-deep-parecer-item">
+                            <div class="ma-deep-pi-label">Taxa de Acerto</div>
+                            <div class="ma-deep-pi-value" id="maDeepPiAcerto" style="color:#4ade80">-</div>
+                            <div class="ma-deep-pi-desc" id="maDeepPiAcertoDesc">-</div>
+                            <div class="ma-deep-pi-bar"><div class="ma-deep-pi-fill" id="maDeepPiAcertoBar" style="width:0%;background:#4ade80"></div></div>
+                        </div>
+                        <div class="ma-deep-parecer-item">
+                            <div class="ma-deep-pi-label">Potencial de Recuperacao</div>
+                            <div class="ma-deep-pi-value" id="maDeepPiRecup" style="color:#60a5fa">-</div>
+                            <div class="ma-deep-pi-desc" id="maDeepPiRecupDesc">-</div>
+                            <div class="ma-deep-pi-bar"><div class="ma-deep-pi-fill" id="maDeepPiRecupBar" style="width:0%;background:#fbbf24"></div></div>
+                        </div>
+                    </div>
+                    <div class="ma-deep-recomendacoes" id="maDeepRecomendacoes">
+                        <div class="ma-deep-rec-title">Recomendacoes Estrategicas</div>
+                        <ul id="maDeepRecList"></ul>
+                    </div>
+                    <div class="ma-deep-resumo-final" id="maDeepResumoFinal">
+                        <span> <strong>Resumo:</strong> <span id="maDeepResumoText">-</span></span>
+                        <span> <strong>Taxa de acerto:</strong> <span id="maDeepResumoAcerto" style="color:#4ade80">-</span></span>
+                        <span> <strong>Risco:</strong> <span id="maDeepResumoRisco" style="color:#fb923c">-</span></span>
+                    </div>
+                </div>
+
                 </div><!-- /maTabPane-desempenho -->
 
                 <!-- Tab: Posições Abertas -->
