@@ -269,6 +269,7 @@
         h += '<span style="font-size:.68rem;color:' + C_MUTED + ';margin-right:2px">Prêmio Recebido:</span><span style="font-family:monospace;font-size:.78rem;font-weight:700;color:#22c55e">+' + fmt(premio) + '</span>';
         h += '<span class="vg-op-detail-btn" data-op-id="' + (op.id || '') + '" title="Ver detalhes"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>';
         h += '<span class="vg-refresh-cot-btn" data-par="' + asset + '" title="Atualizar cotação"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg></span>';
+        h += '<span class="vg-chart-btn" data-par="' + asset + '" data-strike="' + strike + '" data-cotacao="' + cot + '" data-tipo="' + tipo + '" title="Gráfico TradingView"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>';
         h += '</div>';
       });
     }
@@ -625,8 +626,8 @@
     /* Listeners: clique na linha de posição aberta → atualiza termômetro */
     container.querySelectorAll('.vg-op-row[data-op-id]').forEach(function(el) {
       el.addEventListener('click', function(e) {
-        // Se clicou na lupa, não faz nada (a lupa tem seu próprio handler)
-        if (e.target.closest('.vg-op-detail-btn')) return;
+        // Se clicou em botão de ação, não faz nada (cada botão tem seu próprio handler)
+        if (e.target.closest('.vg-op-detail-btn') || e.target.closest('.vg-refresh-cot-btn') || e.target.closest('.vg-chart-btn')) return;
         var strike  = parseFloat(el.getAttribute('data-strike') || 0);
         var cotacao = parseFloat(el.getAttribute('data-cotacao') || 0);
         var tipo    = el.getAttribute('data-tipo') || 'PUT';
@@ -656,6 +657,24 @@
         e.stopPropagation();
         var par = btn.getAttribute('data-par');
         if (par) atualizarCotacoesVG(par);
+      });
+    });
+    /* Listeners: gráfico TradingView */
+    container.querySelectorAll('.vg-chart-btn[data-par]').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var par = btn.getAttribute('data-par');
+        var strike = parseFloat(btn.getAttribute('data-strike') || 0);
+        var cotacao = parseFloat(btn.getAttribute('data-cotacao') || 0);
+        var tipo = btn.getAttribute('data-tipo') || '';
+        if (par && window.CryptoTechnicalAnalysis && typeof window.CryptoTechnicalAnalysis.open === 'function') {
+          window.CryptoTechnicalAnalysis.open({
+            ticker: par,
+            strike: strike || null,
+            currentPrice: cotacao || null,
+            operationType: tipo || null
+          });
+        }
       });
     });
     /* Accordion toggle do termômetro */
