@@ -124,6 +124,40 @@
     };
   }
 
+  function filterOperations(ops, filters) {
+    return ops.filter(function (op) {
+      var type = (op.tipo || '').toUpperCase();
+      if (filters.tipo !== 'ALL' && type !== filters.tipo) return false;
+      if (filters.exercida === 'EXERCISED' && !isExercised(op)) return false;
+      if (filters.exercida === 'NOT_EXERCISED' && isExercised(op)) return false;
+      return true;
+    });
+  }
+
+  function escapeHtml(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function formatOperationValue(value) {
+    var number = parseFloat(value || 0);
+    return number > 0 ? fmtPrice(number) : '—';
+  }
+
+  function formatOperationDate(value) {
+    if (!value) return '—';
+    var date = new Date(String(value).split('T')[0] + 'T00:00:00');
+    return isNaN(date.getTime()) ? '—' : fmtDate(date);
+  }
+
+  function getExerciseLabel(op) {
+    return isExercised(op) ? 'EXERCIDA' : 'NÃO EXERCIDA';
+  }
+
   // ─── Agrupa operações por dia do ano ───
   function groupByDay(ops) {
     var dayOpsMap = {}; // { date, ops, total }
@@ -174,8 +208,11 @@
   }
 
   // ─── Render Heatmap ───
-  function renderHeatmap(ops, allOpsAtivo, year) {
-    var groupData = groupByDay(ops);
+  function renderHeatmap(ops, allOpsAtivo, year, filters) {
+    var activeFilters = filters || { tipo: 'ALL', exercida: 'ALL' };
+    var filteredOps = filterOperations(ops, activeFilters);
+    var filteredAllOps = filterOperations(allOpsAtivo, activeFilters);
+    var groupData = groupByDay(filteredOps);
     _dayOpsMap = groupData.dayOpsMap;
     var maxAbs = groupData.maxAbs;
 
@@ -242,6 +279,29 @@
     var ttHead = document.getElementById('pmTtHead');
     var ttBody = document.getElementById('pmTtBody');
 
+    document.querySelectorAll('.pm-filter-button').forEach(function (button) {
+      var isActive = button.getAttribute('data-filter-group') === 'tipo'
+        ? button.getAttribute('data-filter-value') === activeFilters.tipo
+        : button.getAttribute('data-filter-value') === activeFilters.exercida;
+      button.classList.toggle('pm-filter-active', isActive);
+      button.setAttribute('aria-pressed', String(isActive));
+      button.onclick = function () {
+        var nextFilters = {
+          tipo: activeFilters.tipo,
+          exercida: activeFilters.exercida,
+        };
+        nextFilters[button.getAttribute('data-filter-group')] = button.getAttribute('data-filter-value');
+
+        var filteredForCards = filterOperations(ops, nextFilters);
+        var filteredHistory = filterOperations(allOpsAtivo, nextFilters);
+        setPeriodLabel(null);
+        renderKPIs(calcStats(filteredForCards, filteredHistory));
+        closeDayDetail();
+        tooltip.style.display = 'none';
+        renderHeatmap(ops, allOpsAtivo, year, nextFilters);
+      };
+    });
+
     var resetMonth = document.getElementById('pmResetMonth');
     if (resetMonth) {
       resetMonth.onclick = function () {
@@ -284,10 +344,11 @@
         var multi = c.getAttribute('data-multi') === 'true';
         var date = c.getAttribute('data-date');
         var info = _dayOpsMap[c.getAttribute('data-id')];
-        var operationState = getOperationState(info && info.ops[0]);
+        var operation = info && info.ops[0];
+        var operationState = getOperationState(operation);
 
         ttHead.className = 'pm-tt-head pm-' + tipo.toLowerCase();
-        ttHead.innerHTML = (tipo === 'PUT' ? '🔵' : '🔷') + ' Operação ' + tipo;
+        ttHead.innerHTML = (tipo === 'PUT' ? '🔵' : '🔷') + ' Operação ' + tipo + ' — ' + escapeHtml((operation && operation.ativo || _currentAtivo).toUpperCase());
 
         ttBody.innerHTML = 
           '<div class="pm-tt-line"><span class="pm-tt-k">📅 Data</span><span class="pm-tt-v">' + date + '</span></div>' +
@@ -326,14 +387,32 @@
 
         document.getElementById('pmDdOps').innerHTML = info.ops.map(function(o) {
           var tipo = (o.tipo || '').toUpperCase();
+          var asset = (o.ativo || _currentAtivo).toUpperCase();
           var exercida = isExercised(o);
           var operationState = getOperationState(o);
           var valor = getPremio(o);
+          var dataEntrada = formatOperationDate(o.data_abertura || o.data_operacao);
+          var dataFechamento = formatOperationDate(o.data_fechamento || o.exercicio);
+          var strike = formatOperationValue(o.strike);
+          var cotacao = formatOperationValue(o.cotacao_atual);
+          var strategy = escapeHtml(o.tipo_estrategia || '—');
+          var broker = escapeHtml(o.corretora || '—');
           return '<div class="pm-dd-op">' +
-            '<span class="pm-dd-tipo-badge pm-' + tipo.toLowerCase() + '">' + (tipo === 'PUT' ? '🔵' : '🔷') + ' ' + tipo + '</span>' +
-            '<span class="pm-dd-operation-state ' + operationState.className + '">' + operationState.label + '</span>' +
-            '<span class="pm-dd-status ' + (exercida ? 'pm-ex' : 'pm-nex') + '">' + (exercida ? 'EXERCIDA' : 'NÃO EXERCIDA') + '</span>' +
-            '<span class="pm-dd-valor ' + (valor >= 0 ? 'pm-pos' : 'pm-neg') + '">' + fmtUS(valor) + '</span>' +
+            '<div class="pm-dd-op-main">' +
+              '<span class="pm-dd-asset">' + escapeHtml(asset) + '</span>' +
+              '<span class="pm-dd-tipo-badge pm-' + tipo.toLowerCase() + '">' + (tipo === 'PUT' ? '🔵' : '🔷') + ' ' + escapeHtml(tipo) + '</span>' +
+              '<span class="pm-dd-operation-state ' + operationState.className + '">' + operationState.label + '</span>' +
+              '<span class="pm-dd-status ' + (exercida ? 'pm-ex' : 'pm-nex') + '">' + getExerciseLabel(o) + '</span>' +
+              '<span class="pm-dd-valor ' + (valor >= 0 ? 'pm-pos' : 'pm-neg') + '">Prêmio ' + fmtUS(valor) + '</span>' +
+            '</div>' +
+            '<div class="pm-dd-op-meta">' +
+              '<span><small>Entrada</small><b>' + dataEntrada + '</b></span>' +
+              '<span><small>Fechamento</small><b>' + dataFechamento + '</b></span>' +
+              '<span><small>Strike</small><b>' + strike + '</b></span>' +
+              '<span><small>Cotação</small><b>' + cotacao + '</b></span>' +
+              '<span><small>Estratégia</small><b>' + strategy + '</b></span>' +
+              '<span><small>Corretora</small><b>' + broker + '</b></span>' +
+            '</div>' +
           '</div>';
         }).join('');
 

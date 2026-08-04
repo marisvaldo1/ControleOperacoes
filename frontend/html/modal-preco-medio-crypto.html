@@ -66,6 +66,20 @@
             <span class="pm-heat-toolbar-label">Selecione um mês para filtrar os cards</span>
             <button type="button" class="pm-period-reset" id="pmResetMonth">↺ Todos os meses</button>
         </div>
+        <div class="pm-heat-filters" role="group" aria-label="Filtros do mapa de calor">
+            <div class="pm-filter-group" role="group" aria-label="Filtrar por tipo">
+                <span class="pm-filter-label">TIPO</span>
+                <button type="button" class="pm-filter-button pm-filter-active" data-filter-group="tipo" data-filter-value="ALL" aria-pressed="true">Todas</button>
+                <button type="button" class="pm-filter-button" data-filter-group="tipo" data-filter-value="PUT" aria-pressed="false">PUT</button>
+                <button type="button" class="pm-filter-button" data-filter-group="tipo" data-filter-value="CALL" aria-pressed="false">CALL</button>
+            </div>
+            <div class="pm-filter-group" role="group" aria-label="Filtrar por status de exercício">
+                <span class="pm-filter-label">STATUS</span>
+                <button type="button" class="pm-filter-button pm-filter-active" data-filter-group="exercida" data-filter-value="ALL" aria-pressed="true">Todas</button>
+                <button type="button" class="pm-filter-button" data-filter-group="exercida" data-filter-value="EXERCISED" aria-pressed="false">Exercida</button>
+                <button type="button" class="pm-filter-button" data-filter-group="exercida" data-filter-value="NOT_EXERCISED" aria-pressed="false">Não exercida</button>
+            </div>
+        </div>
         <div class="pm-heat-wrap" id="pmHeatWrap"></div>
 
         <!-- Day Detail Panel (footer) -->
