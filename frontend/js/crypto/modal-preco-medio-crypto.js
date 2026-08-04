@@ -51,35 +51,11 @@
 
     var winRate = totalOps > 0 ? (wins / totalOps * 100) : 0;
 
-    // Preço médio: busca do cache ou fallback local
+    // Preço médio: usa o cálculo oficial do ModalPrecoMedioAtivo
     var precoMedio = 0;
-    // 1) Cache do backend
-    var putData = null;
-    if (window.VisaoGeralCrypto && window.VisaoGeralCrypto._cachedPutExercida) {
-      putData = window.VisaoGeralCrypto._cachedPutExercida[_currentAtivo] || null;
-    }
-    // 2) Fallback: busca no array local
-    if (!putData) {
-      var putsEx = (allOpsAtivo || ops).filter(function(op) {
-        if ((op.status || '').toUpperCase() === 'ABERTA') return false;
-        return (op.tipo || '').toUpperCase() === 'PUT' && (op.exercicio_status || '').toUpperCase() === 'SIM';
-      }).sort(function(a, b) {
-        return (b.exercicio || b.data_operacao || '').localeCompare(a.exercicio || a.data_operacao || '');
-      });
-      putData = putsEx.length ? putsEx[0] : null;
-    }
-    if (putData) {
-      var putStrike = parseFloat(putData.strike || 0);
-      var putDate = putData.exercicio || putData.data_operacao || '';
-      if (putStrike > 0) {
-        var premiosDesde = 0;
-        (allOpsAtivo || ops).forEach(function(op) {
-          var opDate = op.data_operacao || op.exercicio || '';
-          if (opDate >= putDate) premiosDesde += getPremio(op);
-        });
-        precoMedio = putStrike - premiosDesde;
-        if (precoMedio < 0) precoMedio = 0;
-      }
+    if (window.ModalPrecoMedioAtivo && typeof window.ModalPrecoMedioAtivo.computeData === 'function') {
+      var pmData = window.ModalPrecoMedioAtivo.computeData(_currentAtivo);
+      if (pmData && pmData.pm > 0) precoMedio = pmData.pm;
     }
 
     return { totalOps: totalOps, totalPremio: totalPremio, winRate: winRate, precoMedio: precoMedio };
@@ -134,8 +110,30 @@
     if (wrEl) wrEl.textContent = stats.winRate.toFixed(0) + '%';
     if (gaugeEl) gaugeEl.style.setProperty('--pm-wr', stats.winRate.toFixed(0));
     if (pmEl) {
-      pmEl.textContent = stats.precoMedio > 0 ? fmtUsd(stats.precoMedio) : '—';
-      // Torna o card de preço médio clicável para abrir modal saldo médio
+      if (stats.precoMedio > 0) {
+        // Usa renderPmLink para exibir o valor como link clicável (mesmo estilo do termômetro)
+        if (window.CryptoUtils && window.CryptoUtils.renderPmLink) {
+          pmEl.innerHTML = window.CryptoUtils.renderPmLink(_currentAtivo, stats.precoMedio);
+          // Sobrescreve o onclick do link para fechar o modal atual antes de abrir o Raio-X
+          var pmLink = pmEl.querySelector('.crypto-pm-link');
+          if (pmLink) {
+            pmLink.onclick = function(e) {
+              e.stopPropagation();
+              if (_modalInstance) _modalInstance.hide();
+              setTimeout(function() {
+                if (window.ModalPrecoMedioAtivo && typeof window.ModalPrecoMedioAtivo.openModal === 'function') {
+                  window.ModalPrecoMedioAtivo.openModal(_currentAtivo);
+                }
+              }, 300);
+            };
+          }
+        } else {
+          pmEl.textContent = fmtUsd(stats.precoMedio);
+        }
+      } else {
+        pmEl.textContent = '—';
+      }
+      // Mantém o card clicável como fallback (clique fora do link)
       var pmCard = pmEl.closest('.pm-kpi');
       if (pmCard) {
         pmCard.style.cursor = 'pointer';
@@ -143,10 +141,10 @@
         pmCard.onclick = function() {
           // Fecha o modal atual
           if (_modalInstance) _modalInstance.hide();
-          // Abre modal de saldo médio
+          // Abre modal Raio-X do Preço Médio
           setTimeout(function() {
-            if (window.ModalSaldoMedioCrypto && typeof window.ModalSaldoMedioCrypto.openModal === 'function') {
-              window.ModalSaldoMedioCrypto.openModal();
+            if (window.ModalPrecoMedioAtivo && typeof window.ModalPrecoMedioAtivo.openModal === 'function') {
+              window.ModalPrecoMedioAtivo.openModal(_currentAtivo);
             }
           }, 300);
         };

@@ -1,0 +1,152 @@
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                  COMO ENCONTRAR O LINK DO PREÇO MÉDIO (PM)                   ║
+║                                                                               ║
+║                    Guia Visual para Usuários Finais                          ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+
+🎯 IMAGEM 1: Tela de Visão-Geral (Posições Abertas)
+═══════════════════════════════════════════════════════════════════════════════
+
+COMO ACHAR:
+
+1. Abra a tela "POSIÇÕES ABERTAS AGORA"
+
+2. Procure pelo painel "STRIKE VS COTAÇÃO" (a parte com o termômetro)
+
+3. Desça até o FINAL do painel
+
+4. Encontre a linha com: "Diferença" | "PoP" | "PM"
+
+5. 👉 AQUI ESTÁ O LINK:
+
+   ╔──────────────────────────────────────────────────────────────────────╗
+   │ Diferença: -77.71    PoP: 66%    PM: US$ 1,796.37                 │
+   │                                        ↑                            │
+   │                        🖱️ CLIQUE AQUI (texto em DOURADO)           │
+   ╚──────────────────────────────────────────────────────────────────────╝
+
+
+COMO RECONHECER O LINK:
+  ✓ Texto em cor DOURADA (#f2a900)
+  ✓ Tem um sublinhado PONTILHADO (···)
+  ✓ Cursor muda para MÃOZINHA quando passa mouse
+  ✓ Quando passa mouse, fica com sublinhado SÓLIDO
+
+O QUE ACONTECE AO CLICAR:
+  → Abre uma modal grande com título "Raio-X do Preço Médio"
+  → Mostra um gráfico com a evolução do PM
+  → Mostra uma tabela com cada prêmio recebido
+  → Explica o cálculo: Entrada - Prêmios = PM
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🎯 IMAGEM 2: Tela de Análise (Detalhes da Operação)
+═══════════════════════════════════════════════════════════════════════════════
+
+COMO ACHAR:
+
+1. Abra a tela de análise de uma operação (clicando em "análise")
+
+2. Procure na SEÇÃO INFERIOR DIREITA
+
+3. Encontre o card com o título "PREÇO MÉDIO ETH"
+
+4. 👉 AQUI ESTÁ O LINK:
+
+   ╔──────────────────────────────────────────────────────────────────────╗
+   │ ≡ PREÇO MÉDIO ETH                                                   │
+   │ ─────────────────────────────────────────────────────────────────── │
+   │                                                                      │
+   │ ░ PREÇO MÉDIO                                                       │
+   │   US$ 1,796.37                                                     │
+   │   ↑                                                                 │
+   │   🖱️ CLIQUE AQUI (texto em AZUL ou DOURADO)                        │
+   │                                                                      │
+   │ ░ Entrada (PUT)                                                     │
+   │   US$ 1,925.00                                                     │
+   │                                                                      │
+   │ ░ Prêmios                                                           │
+   │   US$ 1,871.16                                                     │
+   ╚──────────────────────────────────────────────────────────────────────╝
+
+
+COMO RECONHECER O LINK:
+  ✓ Texto em cor AZUL para ETH ou DOURADA para BTC
+  ✓ Tem um sublinhado PONTILHADO (···)
+  ✓ Cursor muda para MÃOZINHA quando passa mouse
+  ✓ Quando passa mouse, fica com sublinhado SÓLIDO
+
+O QUE ACONTECE AO CLICAR:
+  → Modal atual fecha
+  → Abre uma modal grande com título "Raio-X do Preço Médio"
+  → Mostra um gráfico com a evolução do PM
+  → Mostra uma tabela com cada prêmio recebido
+  → Explica o cálculo: Entrada - Prêmios = PM
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🌈 CORES DOS LINKS
+═══════════════════════════════════════════════════════════════════════════════
+
+BTC:  Dourada       #f59f00  (Imagens 1 e 2)
+ETH:  Azul Claro   #4da6ff  (Imagem 2)
+Outro: Verde        #3fb950  (Imagens 1 e 2)
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+❌ O QUE FOI REMOVIDO
+═══════════════════════════════════════════════════════════════════════════════
+
+ANTES: Havia um PM abaixo de "CALL vendida" no círculo redondo
+       ┌─────────────────┐
+       │ 🟢 SEGURA       │
+       │ -3.81%          │
+       │ ☐ CALL vendida  │
+       │ PM: US$ 1,796.37│  ← ESTE FOI REMOVIDO
+       └─────────────────┘
+
+DEPOIS: Apenas a informação de status
+        ┌─────────────────┐
+        │ 🟢 SEGURA       │
+        │ -3.81%          │
+        │ ☐ CALL vendida  │
+        └─────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+✅ RESUMO: ONDE ENCONTRAR OS LINKS
+═══════════════════════════════════════════════════════════════════════════════
+
+┌──────────┬────────────────────────────────┬──────────────┬──────────────┐
+│ Imagem # │ Localização                    │ Cor do Link  │ Container    │
+├──────────┼────────────────────────────────┼──────────────┼──────────────┤
+│    1     │ Linha "Diferença / PoP / PM"   │ Dourada      │ Painel inferior
+│          │ Painel inferior do termômetro  │              │ termômetro   │
+├──────────┼────────────────────────────────┼──────────────┼──────────────┤
+│    2     │ Card "PREÇO MÉDIO"             │ Azul (ETH)   │ Seção inferior
+│          │ Seção inferior direita         │ ou Dourada   │ direita modal │
+└──────────┴────────────────────────────────┴──────────────┴──────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🔑 DICA: Como testar os links funcionam
+
+1. Passe o mouse sobre o valor do PM
+2. Veja o cursor virar uma mãozinha (pointer)
+3. Veja o texto ficar com sublinhado sólido
+4. Clique!
+5. Pronto! A modal abre
+
+Se a modal não abrir:
+  • Verifique se JavaScript está habilitado
+  • Recarregue a página
+  • Tente novamente
+
+
+═══════════════════════════════════════════════════════════════════════════════

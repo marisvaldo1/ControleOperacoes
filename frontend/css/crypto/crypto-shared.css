@@ -187,3 +187,51 @@
     color: var(--bs-body-color, #212529);
     border: 1px solid rgba(0,0,0,0.12);
 }
+
+
+/* ══════════════════════════════════════════════════════════════════════
+   9. LINK CLICÁVEL DO PREÇO MÉDIO (.crypto-pm-link)
+      Aplicado em:
+      • Termômetro (visao-geral-crypto.js)
+      • Modal Preço Médio (modal-preco-medio-crypto.js)
+      • Modais de análise e detalhes
+   ══════════════════════════════════════════════════════════════════════ */
+.crypto-pm-link {
+    position: relative;
+    cursor: pointer;
+    font-weight: 700;
+    text-decoration: underline dotted;
+    text-underline-offset: 4px;
+    transition: all 0.15s ease-out;
+    display: inline-block;
+    padding: 2px 4px;
+    border-radius: 4px;
+    user-select: none;
+}
+
+.crypto-pm-link:hover {
+    opacity: 0.85;
+    text-decoration: underline solid !important;
+    transform: scale(1.04);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+}
+
+.crypto-pm-link:active {
+    transform: scale(0.98);
+    opacity: 0.95;
+}
+
+.crypto-pm-link:focus {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+}
+
+/* Light theme para crypto-pm-link */
+[data-bs-theme="light"] .crypto-pm-link {
+    text-decoration: underline dotted;
+}
+
+[data-bs-theme="light"] .crypto-pm-link:hover {
+    opacity: 0.9;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}

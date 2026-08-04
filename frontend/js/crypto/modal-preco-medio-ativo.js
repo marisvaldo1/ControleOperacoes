@@ -383,5 +383,5 @@
         init();
     }
 
-    window.ModalPrecoMedioAtivo = { openModal: openModal };
+    window.ModalPrecoMedioAtivo = { openModal: openModal, computeData: computeData };
 })();

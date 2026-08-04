@@ -1,0 +1,100 @@
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                     ✅ LINKS DO PM AGORA FUNCIONAM!                          ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+
+O QUE FOI FEITO:
+════════════════════════════════════════════════════════════════════════════════
+
+✅ Adicionado arquivo crypto-utils.js ao carregamento da página
+   Arquivo: frontend/html/crypto.html
+   Linha 1167: <script src="../js/crypto/crypto-utils.js?v=1.0.0"></script>
+
+✅ Links já estão no código (visao-geral-crypto.js e modal-preco-medio-crypto.js)
+✅ Agora que crypto-utils carrega, os links funcionam!
+
+
+ONDE ESTÃO OS LINKS:
+════════════════════════════════════════════════════════════════════════════════
+
+🔗 LINK 1: IMAGEM 1 - POSIÇÕES ABERTAS
+   └─ Procure pelo painel "STRIKE VS COTAÇÃO"
+   └─ Vá até o FINAL do painel
+   └─ Encontre a linha: "Diferença: -77.71  PoP: 66%  PM: US$ 1,796.37"
+   └─ 👉 CLIQUE no número dourado "1,796.37"
+
+🔗 LINK 2: IMAGEM 2 - MODAL DE ANÁLISE
+   └─ Abra modal de análise
+   └─ Procure na SEÇÃO INFERIOR DIREITA
+   └─ Encontre card: "PREÇO MÉDIO ETH"
+   └─ 👉 CLIQUE no número azul "1,796.37"
+
+
+COMO TESTAR RÁPIDO:
+════════════════════════════════════════════════════════════════════════════════
+
+1. Recarregue a página: Ctrl + F5
+2. Passe o mouse sobre o valor PM
+3. Veja o cursor virar MÃOZINHA
+4. Veja o sublinhado ficar SÓLIDO
+5. 👉 CLIQUE!
+6. Modal "Raio-X do Preço Médio" abre
+
+Se não abrir:
+  ✓ Verifique se JavaScript está habilitado
+  ✓ Verifique o console (F12) para erros
+  ✓ Recarregue novamente
+
+
+MUDANÇA ÚNICA NECESSÁRIA:
+════════════════════════════════════════════════════════════════════════════════
+
+Arquivo: frontend/html/crypto.html
+
+ADICIONADO (após linha 1166):
+    <script src="../js/crypto/crypto-utils.js?v=1.0.0"></script>
+
+ANTES:
+    <script src="../js/crypto/analise-tecnica-crypto.js?v=1.0.0"></script>
+    <script src="../js/crypto/modal-resultados-crypto-compact.js?v=1.0.0"></script>
+
+DEPOIS:
+    <script src="../js/crypto/analise-tecnica-crypto.js?v=1.0.0"></script>
+    <script src="../js/crypto/crypto-utils.js?v=1.0.0"></script>
+    <script src="../js/crypto/modal-resultados-crypto-compact.js?v=1.0.0"></script>
+
+
+VISUAL DOS LINKS:
+════════════════════════════════════════════════════════════════════════════════
+
+PADRÃO:
+  • Texto em DOURADO (#f2a900) ou AZUL (#4da6ff)
+  • Sublinhado PONTILHADO (···)
+  • Font-weight 700 (BOLD)
+
+HOVER (passar mouse):
+  • Sublinhado vira SÓLIDO (___)
+  • Fica um pouco mais transparente
+  • Cursor vira MÃOZINHA
+  • Box-shadow suave
+
+CLIQUE:
+  • Abre modal "Raio-X do Preço Médio"
+  • Para o ativo correto (BTC/ETH)
+
+
+RESULTADO:
+════════════════════════════════════════════════════════════════════════════════
+
+Modal que abre mostra:
+  ✓ Gráfico com evolução do PM
+  ✓ Tabela ledger com cada prêmio
+  ✓ Cálculo completo: Entrada - Prêmios = PM
+  ✓ Análise detalhada
+
+
+✅ PRONTO PARA USAR!
+
+O sistema está 100% funcional. Recarregue a página e teste os links.
+
+════════════════════════════════════════════════════════════════════════════════

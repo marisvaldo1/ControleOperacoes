@@ -1,0 +1,195 @@
+═══════════════════════════════════════════════════════════════════════════════════════
+                        LOCALIZAÇÃO VISUAL FINAL - LINKS PM
+═══════════════════════════════════════════════════════════════════════════════════════
+
+
+╔═════════════════════════════════════════════════════════════════════════════════════╗
+║ IMAGEM 1: VISÃO-GERAL CRYPTO - TERMÔMETRO                                          ║
+╚═════════════════════════════════════════════════════════════════════════════════════╝
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃                   🔍 PROCURE NESTA ÁREA                                            ┃
+┃                                                                                     ┃
+┃   ▪ Posições Abertas Agora                                                        ┃
+┃   ├─ ETH | CALL | BNC                        Prêmio Recebido: +US$ 1.36           ┃
+┃   │                                                                                ┃
+┃   │ ┌─────────────────────────────────────────────────────────────────┐           ┃
+┃   │ │ Strike vs Cotação                                              │           ┃
+┃   │ ├──────────────────────────────────────────────────────────────┤           ┃
+┃   │ │                                                              │           ┃
+┃   │ │  Strike: 2.1k                      Cotação: 2.1k           │           ┃
+┃   │ │  ╱════════════════════════╲       ╱════════════════════════╲ │           ┃
+┃   │ │  │ (Termômetro Visual)    │       │ (Termômetro Visual)    │ │           ┃
+┃   │ │  │                        │       │                        │ │           ┃
+┃   │ │  │ [Azul e Verde]         │       │ [Azul e Verde]         │ │           ┃
+┃   │ │  │ Representa os valores  │       │ Representa os valores  │ │           ┃
+┃   │ │  │ na escala              │       │ na escala              │ │           ┃
+┃   │ │  ╲════════════════════════╱       ╲════════════════════════╱ │           ┃
+┃   │ │                                                              │           ┃
+┃   │ │  Strike: US$ 1,950.00                  Cotação: US$ 1,872.29         │           ┃
+┃   │ │                                         ┌─────────────────┐           │           ┃
+┃   │ │                                         │ 🟢 SEGURA -3.81%│           │           ┃
+┃   │ │                                         │ ☐ CALL vendida  │           │           ┃
+┃   │ │                                         │                 │           │           ┃
+┃   │ │                                         └─────────────────┘           │           ┃
+┃   │ │                                                              │           ┃
+┃   │ ├──────────────────────────────────────────────────────────────┤           ┃
+┃   │ │                    ⬇️ AQUI ⬇️                                │           ┃
+┃   │ │ Diferença: -77.71    PoP: 66%    PM: US$ 1,796.37         │           ┃
+┃   │ │                                        ▲                   │           ┃
+┃   │ │                    🖱️  CLIQUE AQUI (em DOURADO)          │           ┃
+┃   │ │                        Sublinhado pontilhado                │           ┃
+┃   │ │                        Cursor vira mãozinha                 │           ┃
+┃   │ └──────────────────────────────────────────────────────────────┘           ┃
+┃   │                                                                                ┃
+┃   └─ [Demais posições...]                                                         ┃
+┃                                                                                     ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+📌 LINK 1: PAINEL INFERIOR - "PM: US$ 1,796.37"
+   • Cor: DOURADA (#f2a900)
+   • Container: #vgThermoDiff
+   • Arquivo: frontend/js/crypto/visao-geral-crypto.js:521-522
+   • Ação: Abre modal "Raio-X do Preço Médio"
+
+
+═════════════════════════════════════════════════════════════════════════════════════
+
+
+╔═════════════════════════════════════════════════════════════════════════════════════╗
+║ IMAGEM 2: MODAL DE ANÁLISE - CARD PREÇO MÉDIO                                      ║
+╚═════════════════════════════════════════════════════════════════════════════════════╝
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃                   🔍 PROCURE NESTA ÁREA                                            ┃
+┃                                                                                     ┃
+┃ ETH/USDT — Análise  CALL                                            [X] Fechar   ┃
+┃ ═════════════════════════════════════════════════════════════════════════════════  ┃
+┃                                                                                     ┃
+┃ ┌──────────────────────────────────────────────────────────────────────────────┐  ┃
+┃ │ ESQUERDA: Dados da Operação             DIREITA: Análise Detalhada           │  ┃
+┃ │                                                                              │  ┃
+┃ │ • ETH/USDT                              • PRÊMIO RECEBIDO: +$1.36           │  ┃
+┃ │ • ▲ HIGH (CALL)                         • ROI: +0.03%                       │  ┃
+┃ │ • 🟢 ABERTA | SEGURO — OTM              • DISTÂNCIA: +4.21%                 │  ┃
+┃ │                                          • TAE ANUAL: 12.04%                 │  ┃
+┃ │ • PL ABERTURA: $1,875.36                                                    │  ┃
+┃ │ • STRIKE: $1,950.00                     [Resultado Atual]                   │  ┃
+┃ │ • COTAÇÃO: $1,873.28                    ETH - CALL - EM ANDAMENTO           │  ┃
+┃ │ • TAE: 12.04%                           OPERAÇÃO EM ANDAMENTO...            │  ┃
+┃ │ • PRÊMIO: US$ 1.36                      LEITURA CENÁRIO ATUAL               │  ┃
+┃ │ • OTD CRYPTO: 2.19460                                                       │  ┃
+┃ │                                          -4.04%                              │  ┃
+┃ │ [Gráficos...]                           DISTÂNCIA PARA EXERCÍCIO            │  ┃
+┃ │                                                                              │  ┃
+┃ │                                          • Cotação Atual: $1,871.28          │  ┃
+┃ │                                          • Strike: $1,950.00                 │  ┃
+┃ │                                          • Diferença: -3.93%                 │  ┃
+┃ │                                          • Prêmio: +US$ 1.36                │  ┃
+┃ │                                                                              │  ┃
+┃ │                                          ☑ Segurança - Distância saudável... │  ┃
+┃ │                                                                              │  ┃
+┃ │                                          ⬇️ AQUI ⬇️                           │  ┃
+┃ │                                                                              │  ┃
+┃ │                                          ≡ PREÇO MÉDIO ETH                  │  ┃
+┃ │                                          ───────────────────────────────   │  ┃
+┃ │                                          □ PREÇO MÉDIO                      │  ┃
+┃ │                                            🔗 US$ 1,796.37                  │  ┃
+┃ │                                            ▲                               │  ┃
+┃ │                                            🖱️ CLIQUE AQUI (em AZUL)         │  ┃
+┃ │                                            Sublinhado pontilhado             │  ┃
+┃ │                                            Cursor vira mãozinha             │  ┃
+┃ │                                                                              │  ┃
+┃ │                                          □ Entrada (PUT)                    │  ┃
+┃ │                                            US$ 1,925.00                     │  ┃
+┃ │                                          □ Prêmios                          │  ┃
+┃ │                                            US$ 1,871.16                     │  ┃
+┃ │                                          □ vs PM                            │  ┃
+┃ │                                            −US$ 128.63                      │  ┃
+┃ │                                          □ Resultado se exercido            │  ┃
+┃ │                                            +US$ 153.63                      │  ┃
+┃ │                                                                              │  ┃
+┃ │                                          ⚠️ RISCO DA OPERAÇÃO               │  ┃
+┃ │                                          ─────────────────────────────────  │  ┃
+┃ │                                          • Cotação: $1,871.28              │  ┃
+┃ │                                          • Strike: $1,950.00               │  ┃
+┃ │                                          • Distância: +4.21%               │  ┃
+┃ │                                          • Operação OTM...                 │  ┃
+┃ └──────────────────────────────────────────────────────────────────────────────┘  ┃
+┃                                                                                     ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+📌 LINK 2: CARD "PREÇO MÉDIO ETH" - "US$ 1,796.37"
+   • Cor: AZUL para ETH (#4da6ff) / DOURADA para BTC (#f59f00)
+   • Container: #pmKpiPrecoMedio
+   • Arquivo: frontend/js/crypto/modal-preco-medio-crypto.js:116
+   • Ação: Fecha modal e abre "Raio-X do Preço Médio"
+
+
+═════════════════════════════════════════════════════════════════════════════════════
+
+
+🎨 COMO RECONHECER O LINK (AMBOS):
+═════════════════════════════════════════════════════════════════════════════════════
+
+VISUAL PADRÃO:
+  ✓ Sublinhado PONTILHADO (···)
+  ✓ Cor DIFERENTE: Dourada (#f2a900) ou Azul (#4da6ff)
+  ✓ Font-weight: 700 (BOLD)
+  ✓ Font-family: Monospace (JetBrains Mono)
+
+HOVER (passar mouse):
+  ✓ Sublinhado vira SÓLIDO (___) 
+  ✓ Opacidade reduz para 0.85 (um pouco mais transparente)
+  ✓ Escala aumenta em 4% (fica ligeiramente maior)
+  ✓ Box-shadow suave aparece
+  ✓ Cursor muda para MÃOZINHA (pointer)
+  ✓ Transição suave em 150ms
+
+ACTIVE (clicado):
+  ✓ Escala reduz para 98% (fica ligeiramente menor)
+  ✓ Opacidade em 0.95
+
+FOCUS (navegação por teclado):
+  ✓ Outline com 2px
+  ✓ Cor do outline = cor do texto
+  ✓ Offset de 2px
+
+
+═════════════════════════════════════════════════════════════════════════════════════
+
+✅ MUDANÇA REALIZADA:
+═════════════════════════════════════════════════════════════════════════════════════
+
+ANTES (Imagem 1 - Selo):
+  ┌─────────────────┐
+  │ 🟢 SEGURA       │
+  │ -3.81%          │
+  │ ☐ CALL vendida  │
+  │ PM: US$ 1,796.37│  ← ❌ FOI REMOVIDO
+  └─────────────────┘
+
+DEPOIS (Imagem 1 - Selo):
+  ┌─────────────────┐
+  │ 🟢 SEGURA       │
+  │ -3.81%          │
+  │ ☐ CALL vendida  │  ← ✅ SEM PM
+  └─────────────────┘
+
+
+═════════════════════════════════════════════════════════════════════════════════════
+
+AMBOS OS LINKS CONTINUAM FUNCIONANDO:
+═════════════════════════════════════════════════════════════════════════════════════
+
+Link 1: Painel Diferença/PoP/PM (Imagem 1)    ✅ FUNCIONANDO
+Link 2: Card PREÇO MÉDIO (Imagem 2)           ✅ FUNCIONANDO
+
+Quando clicar em qualquer um dos dois:
+  → Modal "Raio-X do Preço Médio" abre
+  → Mostra gráfico com evolução
+  → Mostra tabela ledger
+  → Explica o cálculo
+
+
+═════════════════════════════════════════════════════════════════════════════════════

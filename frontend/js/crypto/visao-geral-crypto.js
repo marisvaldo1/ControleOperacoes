@@ -77,42 +77,12 @@
   }
 
   function computePM(allOps, par) {
-    // 1) Tenta usar cache do backend
-    var putData = _cachedPutExercida[par.toUpperCase()] || null;
-
-    // 2) Fallback: busca no array local (window.cryptoOperacoes)
-    if (!putData) {
-      var allLocal = (allOps || window.cryptoOperacoes || []).filter(function(o) {
-        return (o.ativo || '').toUpperCase().replace('USDT','').replace('/','').trim() === par.toUpperCase();
-      });
-      var putsEx = allLocal.filter(function(o) {
-        if ((o.status || '').toUpperCase() === 'ABERTA') return false;
-        return (o.tipo || '').toUpperCase() === 'PUT' && (o.exercicio_status || '').toUpperCase() === 'SIM';
-      }).sort(function(a, b) {
-        return (b.exercicio || b.data_operacao || '').localeCompare(a.exercicio || a.data_operacao || '');
-      });
-      putData = putsEx.length ? putsEx[0] : null;
+    // Usa o cálculo oficial do ModalPrecoMedioAtivo (fonte da verdade)
+    if (window.ModalPrecoMedioAtivo && typeof window.ModalPrecoMedioAtivo.computeData === 'function') {
+      var data = window.ModalPrecoMedioAtivo.computeData(par);
+      return data && data.pm > 0 ? data.pm : 0;
     }
-
-    if (!putData) return 0;
-
-    var strikeBase = parseFloat(putData.strike || 0);
-    if (strikeBase <= 0) return 0;
-
-    var cicloDate = putData.exercicio || putData.data_operacao || '';
-    var ops = (allOps || []).filter(function(o) {
-      return (o.ativo || '').toUpperCase().replace('USDT','').replace('/','').trim() === par.toUpperCase();
-    });
-
-    // Soma prêmios desde a data da PUT exercida
-    var totalPremios = 0;
-    ops.forEach(function(o) {
-      var d = o.exercicio || o.data_operacao || '';
-      if (d >= cicloDate) totalPremios += parseFloat(o.premio_us || 0);
-    });
-
-    var pm = strikeBase - totalPremios;
-    return pm > 0 ? pm : 0;
+    return 0;
   }
 
   // Cache da última PUT exercida por ativo (carregada do backend)
@@ -562,7 +532,7 @@
   }
 
   /* ─ Selo Central de Status ─ */
-  function buildSeal(s, q, tipo) {
+  function buildSeal(s, q, tipo, pm, par) {
     var container = document.getElementById('vgSealContainer');
     if (!container) return;
 

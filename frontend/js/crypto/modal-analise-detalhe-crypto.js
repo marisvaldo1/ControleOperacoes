@@ -508,21 +508,33 @@
         `;
     }
 
-    // Função auxiliar: renderiza PM quando a PUT vem do backend
-    function _renderPmWithPut(body, title, par, ops, putData, cotacao, op) {
-        const strikeExercida = parseFloat(putData.strike || 0);
-        const cicloDate = putData.exercicio || putData.data_operacao || '';
-        const totalPremios = ops.reduce((s, o) => {
-            if (!cicloDate) return s + (parseFloat(o.premio_us)||0);
-            const d = o.exercicio || o.data_operacao || '';
-            if (d >= cicloDate) return s + (parseFloat(o.premio_us)||0);
-            return s;
-        }, 0);
-        const pm = strikeExercida - totalPremios;
-        const cot = cotacao || parseFloat(ops.find(o => parseFloat(o.cotacao_atual||0) > 0)?.cotacao_atual || 0);
+    // ─── Preço Médio do portfólio ─────────────────────────────────────────────
+    function _renderPmCard(op, cotacao) {
+        const body  = document.getElementById('macSimPmBody');
+        const title = document.getElementById('macSimPmCardTitle');
+        if (!body) return;
+
+        const par = (op.ativo || 'BTC').toUpperCase().replace('USDT','').replace('/','').trim();
+
+        // Usa o cálculo oficial do ModalPrecoMedioAtivo (fonte da verdade)
+        if (!window.ModalPrecoMedioAtivo || typeof window.ModalPrecoMedioAtivo.computeData !== 'function') {
+            body.innerHTML = `<div class="sim-empty-state" style="min-height:60px">Módulo PM não disponível</div>`;
+            if (title) title.textContent = `📊 Preço Médio ${par}`;
+            return;
+        }
+
+        const d = window.ModalPrecoMedioAtivo.computeData(par, cotacao);
+        if (!d || d.pm <= 0) {
+            body.innerHTML = `<div class="sim-empty-state" style="min-height:60px">Sem PUT exercida para ${par}</div>`;
+            if (title) title.textContent = `📊 Preço Médio ${par}`;
+            return;
+        }
+
+        const pm = d.pm;
+        const cot = d.cotacao || cotacao || 0;
         const strikeAtual = parseFloat(op.strike) || 0;
-        const pctVsPm = cot && pm > 0 ? ((cot - pm) / pm) * 100 : null;
-        const resultadoExercicio = strikeAtual && pm > 0 ? (strikeAtual - pm) : null;
+        const pctVsPm = cot && pm ? ((cot - pm) / pm) * 100 : null;
+        const resultadoExercicio = strikeAtual && pm ? (strikeAtual - pm) : null;
 
         const acCor = par === 'BTC' ? '#f59f00' : par === 'ETH' ? '#4da6ff' : '#3fb950';
         const icone = par === 'BTC' ? '₿' : par === 'ETH' ? 'Ξ' : '◎';
@@ -532,125 +544,14 @@
         const resultadoSign = resultadoExercicio === null ? '—' : (resultadoExercicio > 0 ? '+' : '') + '$' + Math.abs(resultadoExercicio).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
         if (title) title.textContent = `${icone} PREÇO MÉDIO ${par}`;
+
         body.innerHTML = `
-            <div class="sim-pm-val" style="color:${acCor}">$${pm > 0 ? pm.toLocaleString('en-US',{minimumFractionDigits:2}) : '—'}</div>
-            <div class="sim-pm-row"><span class="sim-pm-key">● Entrada (PUT)</span><span class="sim-pm-v" style="color:#f85149">$${strikeExercida.toLocaleString('en-US',{minimumFractionDigits:2})}</span></div>
-            <div class="sim-pm-row"><span class="sim-pm-key">● Prêmios acum.</span><span class="sim-pm-v" style="color:#3fb950">−$${totalPremios.toLocaleString('en-US',{minimumFractionDigits:2})}</span></div>
+            <div class="sim-pm-val">${window.CryptoUtils ? window.CryptoUtils.renderPmLink(par, pm, { fontSize: '1.4rem' }) : '<span style="color:' + acCor + ';font-size:1.4rem;font-weight:700">$' + pm.toLocaleString('en-US',{minimumFractionDigits:2}) + '</span>'}</div>
+            <div class="sim-pm-row"><span class="sim-pm-key">● Entrada (PUT)</span><span class="sim-pm-v" style="color:var(--tblr-warning)">$${d.ultimoExercicio.toLocaleString('en-US',{minimumFractionDigits:2})}</span></div>
+            <div class="sim-pm-row"><span class="sim-pm-key">− Prêmios</span><span class="sim-pm-v" style="color:#3fb950">−$${d.totalPremios.toLocaleString('en-US',{minimumFractionDigits:2})}</span></div>
             ${cot ? `<div class="sim-pm-row"><span class="sim-pm-key">● Cotação</span><span class="sim-pm-v" style="${pctColor}">$${cot.toLocaleString('en-US',{minimumFractionDigits:2})}</span></div>` : ''}
             ${pctVsPm !== null ? `<div class="sim-pm-row"><span class="sim-pm-key">● vs PM</span><span class="sim-pm-v" style="${pctColor}">${pctSign}</span></div>` : ''}
             ${resultadoExercicio !== null ? `<div class="sim-pm-row"><span class="sim-pm-key">● Resultado se exercido</span><span class="sim-pm-v" style="${resultadoColor}">${resultadoSign}</span></div>` : ''}
-        `;
-    }
-
-    // ─── Preço Médio do portfólio ─────────────────────────────────────────────
-    function _renderPmCard(op, cotacao) {
-        const body  = document.getElementById('macSimPmBody');
-        const title = document.getElementById('macSimPmCardTitle');
-        if (!body) return;
-
-        const par = (op.ativo || 'BTC').toUpperCase().replace('USDT','').replace('/','').trim();
-        const ops = (window.cryptoOperacoes || []).filter(o => {
-            const a = (o.ativo || '').toUpperCase().replace('USDT','').replace('/','').trim();
-            return a === par;
-        });
-
-        if (!ops.length) {
-            body.innerHTML = `<div class="sim-empty-state" style="min-height:60px">Sem operações de ${par} no portfólio</div>`;
-            if (title) title.textContent = `📊 Preço Médio ${par}`;
-            return;
-        }
-
-        const putsExercidas = ops.filter(o => {
-            if ((o.status || '').toUpperCase() === 'ABERTA') return false;
-            const tipoPut = (o.tipo || '').toUpperCase() === 'PUT';
-            const exStatus = (o.exercicio_status || '').toUpperCase() === 'SIM';
-            // Verifica via CryptoExerciseStatus OU diretamente pelo campo exercicio_status
-            if (window.CryptoExerciseStatus?.isExercised) {
-                return window.CryptoExerciseStatus.isExercised(o, 'PUT') || (tipoPut && exStatus);
-            }
-            return tipoPut && exStatus;
-        });
-        let ultimoExercicio = putsExercidas.length
-            ? [...putsExercidas].sort((a, b) => {
-                const aDate = a.exercicio || a.data_operacao || '';
-                const bDate = b.exercicio || b.data_operacao || '';
-                return bDate.localeCompare(aDate);
-            })[0]
-            : null;
-
-        // Fallback: se não achou PUT exercida, usa última PUT fechada
-        if (!ultimoExercicio) {
-            const putsFechadas = ops.filter(o => {
-                return (o.tipo || '').toUpperCase() === 'PUT' && (o.status || '').toUpperCase() !== 'ABERTA';
-            }).sort((a, b) => {
-                return (b.exercicio || b.data_operacao || '').localeCompare(a.exercicio || a.data_operacao || '');
-            });
-            ultimoExercicio = putsFechadas.length ? putsFechadas[0] : null;
-        }
-
-        // Se ainda não encontrou, busca do backend e re-renderiza
-        if (!ultimoExercicio) {
-            const apiBase = window.API_BASE || '';
-            fetch(apiBase + '/api/crypto/ultima-put-exercida?ativo=' + par)
-                .then(r => r.json())
-                .then(data => {
-                    if (data && data.strike) {
-                        _renderPmWithPut(body, title, par, ops, data, cotacao, op);
-                    } else {
-                        if (title) title.textContent = `📊 Preço Médio ${par}`;
-                        body.innerHTML = `<div class="sim-empty-state" style="min-height:60px">Sem PUT exercida para calcular PM</div>`;
-                    }
-                })
-                .catch(() => {
-                    if (title) title.textContent = `📊 Preço Médio ${par}`;
-                    body.innerHTML = `<div class="sim-empty-state" style="min-height:60px">Erro ao buscar PM</div>`;
-                });
-            return;
-        }
-
-        const strikeExercida = ultimoExercicio
-            ? parseFloat(ultimoExercicio.strike || 0)
-            : 0;
-
-        const cicloDate = ultimoExercicio ? (ultimoExercicio.exercicio || ultimoExercicio.data_operacao || '') : '';
-        const totalPremios = ops.reduce((s, o) => {
-            if (!cicloDate) return s + (parseFloat(o.premio_us)||0);
-            const d = o.exercicio || o.data_operacao || '';
-            if (d >= cicloDate) return s + (parseFloat(o.premio_us)||0);
-            return s;
-        }, 0);
-        const pm = strikeExercida - totalPremios;
-        const cot = cotacao || parseFloat(ops.find(o => parseFloat(o.cotacao_atual||0) > 0)?.cotacao_atual || 0);
-        const strikeAtual = parseFloat(op.strike) || 0;
-        const pctVsPm = cot && pm ? ((cot - pm) / pm) * 100 : null;
-        /* Resultado se exercido = strike da CALL atual vs custo médio real (PM)
-           Positivo = vende acima do PM → lucro; Negativo = vende abaixo → prejuízo */
-        const resultadoExercicio = strikeAtual && pm ? (strikeAtual - pm) : null;
-
-        const acCor = par === 'BTC' ? '#f59f00' : par === 'ETH' ? '#4da6ff' : '#3fb950';
-        const icone = par === 'BTC' ? '₿' : par === 'ETH' ? 'Ξ' : '◎';
-        const pctColor = pctVsPm === null ? '' : pctVsPm >= 0 ? 'color:#3fb950' : pctVsPm > -3 ? 'color:#f59f00' : 'color:#f85149';
-        const pctSign  = pctVsPm === null ? '?' : (pctVsPm >= 0 ? '+' : '') + pctVsPm.toFixed(2) + '%';
-        const resultadoColor = resultadoExercicio === null
-            ? ''
-            : resultadoExercicio > 0
-                ? 'color:#3fb950'
-                : resultadoExercicio < 0
-                    ? 'color:#f85149'
-                    : 'color:#c9d1d9';
-        const resultadoSign = resultadoExercicio === null
-            ? '—'
-            : (resultadoExercicio > 0 ? '+' : '') + '$' + resultadoExercicio.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-        if (title) title.textContent = `${icone} PREÇO MÉDIO ${par}`;
-
-        body.innerHTML = `
-            ${CryptoUtils.renderPmLink(par, pm)}
-            <div class="sim-pm-row"><span class="sim-pm-key">● Último Exercício</span><span class="sim-pm-v" style="color:var(--tblr-warning)">$${strikeExercida.toLocaleString('en-US',{minimumFractionDigits:2})}</span></div>
-            <div class="sim-pm-row"><span class="sim-pm-key">− Prêmios</span><span class="sim-pm-v" style="color:#3fb950">−$${totalPremios.toLocaleString('en-US',{minimumFractionDigits:2})}</span></div>
-            ${cot ? `<div class="sim-pm-row"><span class="sim-pm-key">● Cotação</span><span class="sim-pm-v" style="${pctColor}">$${cot.toLocaleString('en-US',{minimumFractionDigits:2})}</span></div>` : ''}
-            ${pctVsPm !== null ? `<div class="sim-pm-row"><span class="sim-pm-key">● vs PM</span><span class="sim-pm-v" style="${pctColor}">${pctSign}</span></div>` : ''}
-            ${resultadoExercicio !== null ? `<div class="sim-pm-row"><span class="sim-pm-key">● Resultado se exercido</span><span class="sim-pm-v" style="${resultadoColor}" title="Strike CALL vs Preço Médio Real">${resultadoSign}</span></div>` : ''}
         `;
     }
 

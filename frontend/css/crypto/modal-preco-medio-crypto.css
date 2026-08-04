@@ -440,6 +440,39 @@
     transform: translateY(-2px);
 }
 
+/* Link do Preço Médio — Melhorado para ser mais clicável */
+.crypto-pm-link {
+    position: relative;
+    cursor: pointer;
+    font-weight: 700;
+    text-decoration: underline dotted;
+    text-underline-offset: 4px;
+    transition: all .15s ease-out;
+    display: inline-block;
+    padding: 2px 4px;
+    border-radius: 4px;
+}
+
+.crypto-pm-link:hover {
+    opacity: 0.85;
+    text-decoration: underline solid !important;
+    transform: scale(1.04);
+}
+
+.crypto-pm-link:active {
+    transform: scale(0.98);
+    opacity: 0.95;
+}
+
+/* Light theme */
+[data-bs-theme="light"] .crypto-pm-link {
+    text-decoration: underline dotted;
+}
+
+[data-bs-theme="light"] .crypto-pm-link:hover {
+    opacity: 0.9;
+}
+
 
 /* ─── Custom Tooltip ─── */
 .pm-custom-tooltip {

@@ -107,8 +107,11 @@
         const fontSize = (opts && opts.fontSize) || 'inherit';
         return '<span class="crypto-pm-link" ' +
             'style="color:' + cor + ';cursor:pointer;text-decoration:underline dotted ' + cor + '80;text-underline-offset:4px;font-weight:700;font-size:' + fontSize + '" ' +
-            'title="Clique para detalhes do cálculo" ' +
-            'onclick="ModalPrecoMedioAtivo.openModal(\'' + par + '\')">' +
+            'title="Clique para ver detalhes do cálculo do preço médio e evolução de prêmios" ' +
+            'role="button" ' +
+            'tabindex="0" ' +
+            'onclick="if (window.ModalPrecoMedioAtivo && typeof window.ModalPrecoMedioAtivo.openModal === \'function\') { event.preventDefault(); event.stopPropagation(); ModalPrecoMedioAtivo.openModal(\'' + par + '\'); }" ' +
+            'onkeydown="if (event.key === \'Enter\' || event.key === \' \') { event.preventDefault(); if (window.ModalPrecoMedioAtivo && typeof window.ModalPrecoMedioAtivo.openModal === \'function\') { ModalPrecoMedioAtivo.openModal(\'' + par + '\'); } }">' +
             formatted + '</span>';
     }
 
