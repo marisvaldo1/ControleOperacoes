@@ -2556,17 +2556,40 @@ function loadConfig() {
     if (cfg.saldoCrypto && el("cfgSaldoCrypto")) el("cfgSaldoCrypto").value = cfg.saldoCrypto;
     if (cfg.meta && el("cfgMetaCrypto"))           el("cfgMetaCrypto").value = cfg.meta;
     if (cfg.parPadrao && el("cfgParPadrao"))       el("cfgParPadrao").value  = cfg.parPadrao;
+    if (cfg.navbarAtivos && el("cfgNavbarAtivos")) el("cfgNavbarAtivos").value = cfg.navbarAtivos;
+    // Sincroniza do backend
+    fetch(API_BASE + '/api/config').then(function(r) { return r.json(); }).then(function(backendCfg) {
+        if (backendCfg.navbarAtivos) {
+            var localCfg = loadLocalConfig();
+            localCfg.navbarAtivos = backendCfg.navbarAtivos;
+            localStorage.setItem(CRYPTO_CFG_KEY, JSON.stringify(localCfg));
+            if (el("cfgNavbarAtivos")) el("cfgNavbarAtivos").value = backendCfg.navbarAtivos;
+        }
+    }).catch(function() {});
 }
 
 function saveConfig() {
+    const rawAtivos = (document.getElementById("cfgNavbarAtivos")?.value || '').toUpperCase();
+    const ativos = rawAtivos.split(',').map(s => s.trim()).filter(Boolean).slice(0, 5).join(',');
     const cfg = {
-        saldoCrypto: parseFloat(document.getElementById("cfgSaldoCrypto")?.value) || 0,
-        meta:        parseFloat(document.getElementById("cfgMetaCrypto")?.value)  || 0,
-        parPadrao:   document.getElementById("cfgParPadrao")?.value || "BTC"
+        saldoCrypto:  parseFloat(document.getElementById("cfgSaldoCrypto")?.value) || 0,
+        meta:         parseFloat(document.getElementById("cfgMetaCrypto")?.value)  || 0,
+        parPadrao:    document.getElementById("cfgParPadrao")?.value || "BTC",
+        navbarAtivos: ativos
     };
     localStorage.setItem(CRYPTO_CFG_KEY, JSON.stringify(cfg));
+    // Salva também no backend para persistência
+    fetch(API_BASE + '/api/config', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ saldoCrypto: cfg.saldoCrypto, metaCrypto: cfg.meta, parPadrao: cfg.parPadrao, navbarAtivos: cfg.navbarAtivos })
+    }).catch(function() {});
     iziToast.success({ title: "Configuracoes salvas!", message: "Saldo e metas atualizados." });
     updateUI();
+    // Atualiza navbar com novos ativos
+    if (window.CryptoNavbar && typeof window.CryptoNavbar.refresh === 'function') {
+        window.CryptoNavbar.refresh();
+    }
 }
 
 function showRefreshLoading() {
@@ -2595,7 +2618,7 @@ async function refreshQuotes() {
     const btn = document.getElementById("btnRefresh");
     if (btn) { btn.disabled = true; btn.classList.add("spin-anim"); }
     showRefreshLoading();
-    iziToast.info({ title: "Atualizando", message: "Verificando posições e buscando cotações..." });
+
     try {
         // 1. Chama backend refresh (auto-fecha operações com data passada)
         await fetch(API_BASE + "/api/crypto/refresh", { method: "POST" });
@@ -2653,20 +2676,52 @@ async function refreshCryptoCotacoes() {
     }
 }
 
-// Atualiza badge de mercado no navbar com cotação BTC
+// Atualiza cotações no navbar para todos os ativos configurados
 async function updateCryptoMarketStatus() {
+    var container = document.getElementById("navbarCryptoPrices");
+    if (!container) return;
+    var cfg = {};
+    try { cfg = JSON.parse(localStorage.getItem(CRYPTO_CFG_KEY) || '{}'); } catch {}
+    var ativosStr = cfg.navbarAtivos || 'BTC';
+    var ativos = ativosStr.split(',').map(function(s) { return s.trim().toUpperCase(); }).filter(Boolean).slice(0, 5);
+    if (!ativos.length) ativos = ['BTC'];
+
+    var COLORS_MAP = { BTC: '#f7931a', ETH: '#627eea', BNB: '#f3ba2f', SOL: '#9945ff', ADA: '#0033ad' };
+    var DEFAULT_COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'];
+
     try {
-        const res  = await fetch(API_BASE + "/api/proxy/crypto/BTCUSDT");
-        const data = await res.json();
-        if (!data.price) return;
-        const badge = document.getElementById("navbarMarketStatus");
-        if (!badge) return;
-        const price = parseFloat(data.price);
-        badge.textContent = "BTC US$" + price.toLocaleString("pt-BR", { maximumFractionDigits: 0 });
-        badge.className   = "badge bg-success-lt ms-2";
-        badge.style.display = "";
+        var results = await Promise.allSettled(ativos.map(function(ativo) {
+            var sym = ativo + 'USDT';
+            return fetch(API_BASE + '/api/proxy/crypto/' + sym).then(function(r) { return r.json(); });
+        }));
+
+        var html = '';
+        ativos.forEach(function(ativo, i) {
+            var result = results[i];
+            var price = 0;
+            if (result.status === 'fulfilled' && result.value && result.value.price) {
+                price = parseFloat(result.value.price);
+            }
+            var color = COLORS_MAP[ativo] || DEFAULT_COLORS[i % DEFAULT_COLORS.length];
+            var formatted = price > 0 ? 'US$' + price.toLocaleString('en-US', { maximumFractionDigits: 2 }) : '—';
+            html += '<span class="badge crypto-nav-badge" style="background:' + color + '22;color:' + color + ';border:1px solid ' + color + '55;font-size:.78rem;cursor:pointer;padding:4px 10px;" data-nav-ativo="' + ativo + '">' + ativo + ' ' + formatted + '</span>';
+        });
+        container.innerHTML = html;
+
+        // Adiciona click nos badges para abrir modal preço médio
+        container.querySelectorAll('[data-nav-ativo]').forEach(function(badge) {
+            badge.addEventListener('click', function() {
+                var ativo = badge.getAttribute('data-nav-ativo');
+                if (window.ModalPrecoMedio && typeof window.ModalPrecoMedio.open === 'function') {
+                    window.ModalPrecoMedio.open(ativo);
+                }
+            });
+        });
     } catch {}
 }
+
+// Namespace para navbar crypto
+window.CryptoNavbar = { refresh: updateCryptoMarketStatus };
 
 // Mostra modal de detalhes de uma operação
 // showDetalhes() movida para modal-detalhe-crypto.js (v1.0.0)

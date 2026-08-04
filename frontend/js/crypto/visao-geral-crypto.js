@@ -77,33 +77,57 @@
   }
 
   function computePM(allOps, par) {
+    // 1) Tenta usar cache do backend
+    var putData = _cachedPutExercida[par.toUpperCase()] || null;
+
+    // 2) Fallback: busca no array local (window.cryptoOperacoes)
+    if (!putData) {
+      var allLocal = (allOps || window.cryptoOperacoes || []).filter(function(o) {
+        return (o.ativo || '').toUpperCase().replace('USDT','').replace('/','').trim() === par.toUpperCase();
+      });
+      var putsEx = allLocal.filter(function(o) {
+        if ((o.status || '').toUpperCase() === 'ABERTA') return false;
+        return (o.tipo || '').toUpperCase() === 'PUT' && (o.exercicio_status || '').toUpperCase() === 'SIM';
+      }).sort(function(a, b) {
+        return (b.exercicio || b.data_operacao || '').localeCompare(a.exercicio || a.data_operacao || '');
+      });
+      putData = putsEx.length ? putsEx[0] : null;
+    }
+
+    if (!putData) return 0;
+
+    var strikeBase = parseFloat(putData.strike || 0);
+    if (strikeBase <= 0) return 0;
+
+    var cicloDate = putData.exercicio || putData.data_operacao || '';
     var ops = (allOps || []).filter(function(o) {
       return (o.ativo || '').toUpperCase().replace('USDT','').replace('/','').trim() === par.toUpperCase();
     });
-    if (!ops.length) return 0;
-    var putsExercidas = ops.filter(function(o) {
-      if ((o.status || '').toUpperCase() === 'ABERTA') return false;
-      return window.CryptoExerciseStatus && window.CryptoExerciseStatus.isExercised
-        ? window.CryptoExerciseStatus.isExercised(o, 'PUT') : false;
-    });
-    var ultimoExercicio = putsExercidas.length
-      ? putsExercidas.sort(function(a, b) {
-          var aT = window.CryptoExerciseStatus && window.CryptoExerciseStatus.getOperationDate ? window.CryptoExerciseStatus.getOperationDate(a) : null;
-          var bT = window.CryptoExerciseStatus && window.CryptoExerciseStatus.getOperationDate ? window.CryptoExerciseStatus.getOperationDate(b) : null;
-          return (bT && bT.getTime ? bT.getTime() : 0) - (aT && aT.getTime ? aT.getTime() : 0);
-        })[0]
-      : null;
-    var strikeBase = ultimoExercicio
-      ? parseFloat(ultimoExercicio.strike || 0)
-      : parseFloat(ops.reduce(function(max, o) { return parseFloat(o.strike||0) > parseFloat(max.strike||0) ? o : max; }, ops[0]).strike || 0);
-    var cicloDate = ultimoExercicio ? (ultimoExercicio.exercicio || ultimoExercicio.data_operacao || '') : '';
-    var totalPremios = ops.reduce(function(s, o) {
-      if (!cicloDate) return s + (parseFloat(o.premio_us) || 0);
+
+    // Soma prêmios desde a data da PUT exercida
+    var totalPremios = 0;
+    ops.forEach(function(o) {
       var d = o.exercicio || o.data_operacao || '';
-      if (d >= cicloDate) return s + (parseFloat(o.premio_us) || 0);
-      return s;
-    }, 0);
-    return strikeBase - totalPremios;
+      if (d >= cicloDate) totalPremios += parseFloat(o.premio_us || 0);
+    });
+
+    var pm = strikeBase - totalPremios;
+    return pm > 0 ? pm : 0;
+  }
+
+  // Cache da última PUT exercida por ativo (carregada do backend)
+  var _cachedPutExercida = {};
+
+  function loadUltimaPutExercida() {
+    var API_BASE = window.API_BASE || '';
+    fetch(API_BASE + '/api/crypto/ultima-put-exercida')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data && typeof data === 'object') {
+          _cachedPutExercida = data;
+        }
+      })
+      .catch(function() {});
   }
 
   function computeAbertasInfo(ops) {
@@ -510,7 +534,7 @@
 
     svg.innerHTML = h;
 
-    // Diff row + PoP
+    // Diff row + PoP + Preço Médio
     if (diffEl) {
       var diffVal = (q - s);
       var diffSign2 = diffVal > 0 ? '+' : '';
@@ -519,10 +543,21 @@
       var isCall = (tipo || '').toUpperCase() === 'CALL';
       var isITM = isCall ? (diffVal > 0) : (diffVal < 0);
       var popEst = isITM ? Math.max(5, 50 - distPct * 4) : Math.min(95, 50 + distPct * 4);
-      var popColor = popEst >= 65 ? '#22c55e' : popEst >= 50 ? '#eab308' : '#ef4444';
+      var popColor = popEst >= 50 ? '#22c55e' : '#ef4444';
+
+      var pmHtml = '';
+      if (pm && pm > 0) {
+        var pmFmt = 'US$ ' + pm.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+        if (window.CryptoUtils && window.CryptoUtils.renderPmLink) {
+          pmHtml = '<span>PM: ' + window.CryptoUtils.renderPmLink(par || 'BTC', pm) + '</span>';
+        } else {
+          pmHtml = '<span>PM: <span style="color:#f2a900;font-weight:700">' + pmFmt + '</span></span>';
+        }
+      }
+
       diffEl.innerHTML = '<span>Diferença: <span style="color:' + diffCol + '">' + diffSign2 + fmtShort(diffVal) + '</span></span>' +
                          '<span>PoP: <span style="color:' + popColor + ';font-weight:700">' + popEst.toFixed(0) + '%</span></span>' +
-                         (pm ? '<span>Preço Médio: ' + CryptoUtils.renderPmLink(par || 'BTC', pm) + '</span>' : '');
+                         pmHtml;
     }
   }
 
@@ -704,6 +739,9 @@
 
   /* ─ Escuta quando a aba é ativada (Bootstrap tabs) ─ */
   function init() {
+    // Carrega última PUT exercida do backend
+    loadUltimaPutExercida();
+
     // Tenta renderizar assim que houver dados
     var attempts = 0;
     var timer = setInterval(function() {
@@ -743,6 +781,6 @@
     init();
   }
 
-  window.VisaoGeralCrypto = { render: render };
+  window.VisaoGeralCrypto = { render: render, _cachedPutExercida: _cachedPutExercida };
 
 })();

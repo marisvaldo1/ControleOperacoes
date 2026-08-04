@@ -163,486 +163,23 @@
         }).join('');
     }
 
-    function renderTimeline(ops) {
-        const container = document.getElementById('tocTimelineContainer');
+    function renderTimeline(rows) {
+        const container = document.getElementById('tocTimeline');
         if (!container) return;
-        if (!ops.length) {
-            container.innerHTML = '<div class="text-center text-muted py-3">Sem dados</div>';
+        if (!rows.length) {
+            container.innerHTML = '<div class="toc-timeline-item"><span class="toc-timeline-dot"></span><div class="fw-bold">Sem dados</div><div class="text-muted" style="font-size:.75rem;">Nenhum mês disponível</div></div>';
             return;
         }
-
-        // Sort ALL ops by date ascending to compute running PM globally
-        const allSorted = [...ops].filter(op => getOpDate(op)).sort((a, b) => {
-            const da = getOpDate(a), db = getOpDate(b);
-            return da - db;
-        });
-
-        // Compute running PM for each operation
-        let runningPM = 0;
-        let lastStrike = 0;
-        const opPMMap = new Map();
-        allSorted.forEach(op => {
-            const tipo = (op.tipo || '').toUpperCase();
-            const strike = parseFloat(op.strike || 0);
-            const premio = getPremio(op);
-            const isEx = isExercised(op);
-            if (tipo === 'PUT' && isEx && strike > 0) {
-                runningPM = strike - Math.abs(premio);
-                lastStrike = strike;
-            } else {
-                if (runningPM === 0 && premio < 0) {
-                    runningPM = -Math.abs(premio);
-                } else {
-                    runningPM = runningPM - Math.abs(premio);
-                }
-            }
-            opPMMap.set(op, { pm: runningPM, strike: lastStrike });
-        });
-
-        // Group ops by month (descending for display)
-        const monthMap = new Map();
-        allSorted.forEach(op => {
-            const d = getOpDate(op);
-            const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-            if (!monthMap.has(key)) {
-                monthMap.set(key, { key, date: new Date(d.getFullYear(), d.getMonth(), 1), ops: [] });
-            }
-            monthMap.get(key).ops.push(op);
-        });
-        const months = Array.from(monthMap.values()).sort((a, b) => b.date - a.date);
-
-        const globalLastStrike = lastStrike;
-        const globalLastCotacao = parseFloat(allSorted[allSorted.length - 1]?.cotacao_atual || 0);
-        const globalTotalPremio = ops.reduce((s, op) => s + getPremio(op), 0);
-
-        // Sparkline helper
-        function buildSparkline(values, color) {
-            if (!values.length) return '';
-            const w = 80, h = 24, pad = 2;
-            const mn = Math.min(...values), mx = Math.max(...values);
-            const range = mx - mn || 1;
-            const pts = values.map((v, i) => {
-                const x = pad + (i / (values.length - 1)) * (w - pad * 2);
-                const y = h - pad - ((v - mn) / range) * (h - pad * 2);
-                return x.toFixed(1) + ',' + y.toFixed(1);
-            });
-            const lastY = h - pad - ((values[values.length - 1] - mn) / range) * (h - pad * 2);
-            return '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '">' +
-                '<polyline points="' + pts.join(' ') + '" fill="none" stroke="' + color + '" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>' +
-                '<circle cx="' + pts[pts.length - 1].split(',')[0] + '" cy="' + lastY.toFixed(1) + '" r="2.5" fill="' + color + '"/></svg>';
-        }
-
-        function buildMiniBars(values) {
-            if (!values.length) return '';
-            const mx = Math.max(...values) || 1;
-            return '<div style="display:flex;align-items:flex-end;gap:2px;height:24px">' +
-                values.map(v => {
-                    const bh = Math.max(3, (v / mx) * 20);
-                    return '<div style="width:4px;height:' + bh + 'px;background:' + (v >= 0 ? '#22c55e' : '#ef4444') + ';border-radius:2px;align-self:flex-end"></div>';
-                }).join('') + '</div>';
-        }
-
-        function isTodayDate(d) {
-            const dt = new Date(d);
-            const now = new Date();
-            return dt.getFullYear() === now.getFullYear() && dt.getMonth() === now.getMonth() && dt.getDate() === now.getDate();
-        }
-
-        function fmtDateLabel(d) {
-            const dt = new Date(d);
-            const now = new Date(); now.setHours(0, 0, 0, 0);
-            const dtOnly = new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
-            const diff = Math.floor((now - dtOnly) / 86400000);
-            const label = diff === 0 ? ' <span class="toc-tl-today-label">hoje</span>' : diff === 1 ? ' <span class="toc-tl-today-label">ontem</span>' : '';
-            return dt.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + label;
-        }
-
-        // Build HTML
-        let html = '';
-        let isFirst = true;
-
-        months.forEach(m => {
-            const mesLabel = m.date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-            const totalPremio = m.ops.reduce((s, op) => s + getPremio(op), 0);
-            const opsCount = m.ops.length;
-            const lastOp = m.ops[m.ops.length - 1];
-            const pm = opPMMap.get(lastOp)?.pm || 0;
-            const putExercida = m.ops.find(op => (op.tipo || '').toUpperCase() === 'PUT' && isExercised(op));
-            const collapseId = `tocTl_${m.key}`;
-
-            const pmValues = [...m.ops].reverse().map(op => opPMMap.get(op)?.pm || 0);
-            const premioValues = [...m.ops].reverse().map(op => Math.abs(getPremio(op)));
-
-            const isOpen = isFirst;
-            isFirst = false;
-
-            html += `<div class="toc-tl-month${isOpen ? ' toc-tl-open' : ''}">`;
-            html += `<div class="toc-tl-header" onclick="document.getElementById('${collapseId}').style.display=document.getElementById('${collapseId}').style.display==='none'?'block':'none';this.parentElement.classList.toggle('toc-tl-open')">`;
-            html += `<div class="toc-tl-header-left">`;
-            html += `<span class="toc-tl-month-icon">📅</span>`;
-            html += `<div>`;
-            html += `<div class="toc-tl-month-name">${mesLabel}</div>`;
-            html += `<div class="toc-tl-month-meta">`;
-            html += `<span class="toc-tl-pill toc-tl-pill-ops"><i class="ti ti-chart-bar"></i> ${opsCount} ops</span>`;
-            html += `<span class="toc-tl-pill toc-tl-pill-green"><i class="ti ti-trending-up"></i> ${totalPremio >= 0 ? '+' : ''}${fmtUsd(totalPremio)}</span>`;
-            html += `<span class="toc-tl-pill toc-tl-pill-pm"><i class="ti ti-receipt"></i> PM ${fmtUsd(pm)}</span>`;
-            if (putExercida) html += `<span class="toc-tl-pill toc-tl-pill-fire">🔥 PUT exercida</span>`;
-            html += `</div>`;
-            html += `</div>`;
-            html += `</div>`;
-            html += `<div class="toc-tl-header-right">`;
-            html += buildSparkline(pmValues, '#f59e0b');
-            html += buildMiniBars(premioValues);
-            html += `<span class="toc-tl-count">${opsCount} lançamentos</span>`;
-            html += `<span class="toc-tl-chevron">▼</span>`;
-            html += `</div>`;
-            html += `</div>`;
-
-            html += `<div id="${collapseId}" class="toc-tl-body" style="${isOpen ? '' : 'display:none'}">`;
-
-            // Table header with icons
-            html += `<div class="toc-tl-table-header">`;
-            html += `<div class="toc-tl-col-data"><i class="ti ti-calendar"></i> DATA</div>`;
-            html += `<div class="toc-tl-col-op"><i class="ti ti-arrow-right-left"></i> OPERAÇÃO</div>`;
-            html += `<div class="toc-tl-col-tipo"><i class="ti ti-tag"></i> TIPO</div>`;
-            html += `<div class="toc-tl-col-status"><i class="ti ti-circle-check"></i> STATUS</div>`;
-            html += `<div class="toc-tl-col-valor"><i class="ti ti-cash"></i> $ ENTRADA</div>`;
-            html += `<div class="toc-tl-col-premio"><i class="ti ti-coins"></i> 💰 PRÊMIO</div>`;
-            html += `<div class="toc-tl-col-impacto"><i class="ti ti-chart-dots-2"></i> 📊 IMPACTO PM</div>`;
-            html += `<div class="toc-tl-col-saldo"><i class="ti ti-wallet"></i> 📋 SALDO PM</div>`;
-            html += `<div class="toc-tl-col-trend"><i class="ti ti-trending-up"></i> TENDÊNCIA</div>`;
-            html += `<div class="toc-tl-col-dist"><i class="ti ti-target-arrow"></i> 🎯 DIST.</div>`;
-            html += `</div>`;
-
-            // Ops sorted descending for display
-            const sortedOps = [...m.ops].sort((a, b) => {
-                const da = getOpDate(a), db = getOpDate(b);
-                return (db && da) ? db - da : 0;
-            });
-
-            sortedOps.forEach(op => {
-                const d = getOpDate(op);
-                const dataStr = d ? fmtDateLabel(d) : '-';
-                const tipo = (op.tipo || '').toUpperCase();
-                const ativo = (op.ativo || '').toUpperCase().replace('USDT', '');
-                const isEx = isExercised(op);
-                const status = (op.status || 'ABERTA').toUpperCase();
-                const strike = parseFloat(op.strike || 0);
-                const premio = getPremio(op);
-                const pmData = opPMMap.get(op);
-                const saldoPM = pmData?.pm || 0;
-                const prevOp = allSorted[allSorted.indexOf(op) + 1];
-                const prevPM = prevOp ? (opPMMap.get(prevOp)?.pm || 0) : 0;
-                const impacto = saldoPM - prevPM;
-
-                const isPutEx = tipo === 'PUT' && isEx;
-                const isBestPut = isPutEx && m.ops.filter(o => (o.tipo || '').toUpperCase() === 'PUT' && isExercised(o))
-                    .every(o => (opPMMap.get(o)?.pm || 0) >= (opPMMap.get(op)?.pm || 0));
-                const today = d && isTodayDate(d);
-
-                const tipoBadge = tipo === 'CALL'
-                    ? '<span class="toc-tl-badge toc-tl-badge-call">CALL</span>'
-                    : '<span class="toc-tl-badge toc-tl-badge-put">PUT</span>';
-
-                let statusHtml;
-                if (isEx) {
-                    statusHtml = '<span class="toc-tl-status-dot toc-tl-ex"></span> Exercida<span class="toc-tl-badge-sm toc-tl-badge-exercida">EXERCIDA</span>';
-                } else if (status === 'ABERTA') {
-                    statusHtml = '<span class="toc-tl-status-dot toc-tl-aberta"></span> Aberta';
-                } else {
-                    statusHtml = '<span class="toc-tl-status-dot toc-tl-fechada"></span> Fechada';
-                }
-
-                let rowClass = 'toc-tl-row';
-                if (isPutEx) rowClass += ' toc-tl-row-highlight';
-                if (today) rowClass += ' toc-tl-row-today';
-                if (isBestPut) rowClass += ' toc-tl-row-star';
-
-                const valorDisplay = isPutEx
-                    ? `<span class="toc-tl-entry-price">${fmtUsd(strike)}</span>`
-                    : (strike > 0 ? fmtUsd(strike) : '—');
-
-                html += `<div class="${rowClass}">`;
-                html += `<div class="toc-tl-col-data">${dataStr}${isBestPut ? ' ⭐' : ''}</div>`;
-                html += `<div class="toc-tl-col-op">${tipo} ${ativo}</div>`;
-                html += `<div class="toc-tl-col-tipo">${tipoBadge}</div>`;
-                html += `<div class="toc-tl-col-status">${statusHtml}</div>`;
-                html += `<div class="toc-tl-col-valor">${valorDisplay}</div>`;
-                html += `<div class="toc-tl-col-premio toc-tl-positive">${premio !== 0 ? '+' + fmtUsd(premio) : '—'}</div>`;
-                const impactoAbs = Math.abs(impacto);
-                const impactoIcon = impacto > 0 ? '▲' : impacto < 0 ? '▼' : '—';
-                const impactoColor = impacto > 0 ? 'toc-tl-positive' : 'toc-tl-negative';
-                html += `<div class="toc-tl-col-impacto ${impactoColor}">${impactoIcon} ${impacto !== 0 ? (impacto > 0 ? '+' : '-') + fmtUsd(impactoAbs) : '—'}</div>`;
-                html += `<div class="toc-tl-col-saldo toc-tl-saldo-pm">${fmtUsd(saldoPM)}</div>`;
-                // Trend: up/down arrow comparing to previous PM
-                const trendDir = impacto > 0 ? 'up' : impacto < 0 ? 'down' : 'flat';
-                const trendIcon = trendDir === 'up'
-                    ? '<span class="toc-tl-trend-up"><i class="ti ti-trending-up"></i> +</span>'
-                    : trendDir === 'down'
-                        ? '<span class="toc-tl-trend-down"><i class="ti ti-trending-down"></i> −</span>'
-                        : '<span class="toc-tl-trend-flat">—</span>';
-                html += `<div class="toc-tl-col-trend">${trendIcon}</div>`;
-                // Distance: how far from strike (live cotacao if ABERTA, else 0)
-                const cotacao = parseFloat(op.cotacao_atual || 0);
-                const distNum = cotacao > 0 && strike > 0 ? CryptoUtils.calcDistancia(tipo, strike, cotacao) : 0;
-                const distClass = distNum < 0 ? 'toc-tl-dist-itm' : distNum === 0 ? 'toc-tl-dist-atm' : 'toc-tl-dist-otm';
-                const distLabel = distNum > 0 ? `+${distNum.toFixed(1)}%` : `${distNum.toFixed(1)}%`;
-                html += `<div class="toc-tl-col-dist"><span class="${distClass}">${distLabel}</span></div>`;
-                html += `</div>`;
-            });
-
-            // Footer with insights
-            html += `<div class="toc-tl-footer">`;
-            if (putExercida) {
-                const exDate = getOpDate(putExercida);
-                const exDateStr = exDate ? exDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : '';
-                const exPM = opPMMap.get(putExercida)?.pm || 0;
-                html += `<div class="toc-tl-insight"><span class="toc-tl-footer-icon">⭐</span> Destaque: PUT exercida em ${exDateStr} reduziu PM para <strong>${fmtUsd(exPM)}</strong></div>`;
-            }
-            html += `<div class="toc-tl-insight"><span class="toc-tl-footer-icon">🔮</span> Próximas operações: <strong style="color:#5ba3e6">CALLs</strong> para diminuir preço médio</div>`;
-            if (globalLastStrike > 0) {
-                const dist = globalLastCotacao > 0 ? ((globalLastStrike - globalLastCotacao) / globalLastCotacao * 100).toFixed(1) : '?';
-                html += `<div class="toc-tl-insight"><span class="toc-tl-footer-icon">🎯</span> Strike atual: <strong style="color:#f59e0b">${fmtUsd(globalLastStrike)}</strong> (<span style="color:${parseFloat(dist) < 0 ? '#22c55e' : '#ef4444'}">${dist}%</span>)</div>`;
-            }
-            html += `<div class="toc-tl-footer-summary"><span class="toc-tl-pill toc-tl-pill-ops"><i class="ti ti-chart-bar"></i> ${opsCount} ops</span><span class="toc-tl-pill toc-tl-pill-green"><i class="ti ti-trending-up"></i> ${totalPremio >= 0 ? '+' : ''}${fmtUsd(totalPremio)}</span></div>`;
-            html += `</div>`;
-
-            html += `</div></div>`;
-        });
-
-        // Global footer
-        html += `<div class="toc-tl-global-footer">`;
-        html += `<div class="toc-tl-insight"><span class="toc-tl-footer-icon">⭐</span> Destaque: PUT exercida em 15/07 reduziu PM para <strong>${fmtUsd(1853.59)}</strong></div>`;
-        html += `<div class="toc-tl-insight"><span class="toc-tl-footer-icon">🔮</span> Próximas: CALLs para continuar diminuindo o PM</div>`;
-        if (globalLastStrike > 0) {
-            const dist = globalLastCotacao > 0 ? ((globalLastStrike - globalLastCotacao) / globalLastCotacao * 100).toFixed(1) : '?';
-            html += `<div class="toc-tl-insight"><span class="toc-tl-footer-icon">🎯</span> Strike atual: <strong style="color:#f59e0b">${fmtUsd(globalLastStrike)}</strong> (<span style="color:${parseFloat(dist) < 0 ? '#22c55e' : '#ef4444'}">${dist}%</span>)</div>`;
-        }
-        html += `<div class="toc-tl-insight" style="margin-left:auto"><span class="toc-tl-pill toc-tl-pill-ops"><i class="ti ti-chart-bar"></i> Total: ${ops.length} ops</span></div>`;
-        html += `</div>`;
-
-        container.innerHTML = html;
-    }
-
-    function renderPerformance(ops) {
-        const container = document.getElementById('tocPerfContainer');
-        if (!container) return;
-        if (!ops.length) {
-            container.innerHTML = '<div class="text-center text-muted py-3">Sem dados para análise</div>';
-            return;
-        }
-
-        // Sort ascending by date
-        const allSorted = [...ops].filter(op => getOpDate(op)).sort((a, b) => {
-            const da = getOpDate(a), db = getOpDate(b);
-            return da - db;
-        });
-
-        // Compute running PM + PM antes/depois for each op
-        let runningPM = 0;
-        let lastStrike = 0;
-        const perfRows = [];
-
-        allSorted.forEach((op, idx) => {
-            const tipo = (op.tipo || '').toUpperCase();
-            const strike = parseFloat(op.strike || 0);
-            const premio = getPremio(op);
-            const isEx = isExercised(op);
-            const pmBefore = runningPM;
-
-            if (tipo === 'PUT' && isEx && strike > 0) {
-                runningPM = strike - Math.abs(premio);
-                lastStrike = strike;
-            } else {
-                if (runningPM === 0 && premio < 0) {
-                    runningPM = -Math.abs(premio);
-                } else {
-                    runningPM = runningPM - Math.abs(premio);
-                }
-            }
-
-            const pmAfter = runningPM;
-            const variation = pmAfter - pmBefore;
-
-            let resultado = 0;
-            let resultadoPct = 0;
-            let resultType = 'neutral';
-
-            if (tipo === 'CALL' && isEx && lastStrike > 0) {
-                resultado = strike - lastStrike;
-                resultadoPct = lastStrike > 0 ? ((strike - lastStrike) / lastStrike) * 100 : 0;
-                resultType = resultado > 0 ? 'profit' : resultado < 0 ? 'loss' : 'neutral';
-            } else if (tipo === 'PUT' && isEx) {
-                resultado = Math.abs(premio);
-                resultadoPct = pmBefore > 0 ? (Math.abs(premio) / Math.abs(pmBefore)) * 100 : 0;
-                resultType = resultado > 0 ? 'profit' : 'neutral';
-            } else if (tipo === 'CALL' && !isEx) {
-                resultado = premio;
-                resultadoPct = pmBefore > 0 ? (premio / Math.abs(pmBefore)) * 100 : 0;
-                resultType = premio > 0 ? 'profit' : premio < 0 ? 'loss' : 'neutral';
-            } else {
-                resultado = premio;
-                resultadoPct = pmBefore > 0 ? (premio / Math.abs(pmBefore)) * 100 : 0;
-                resultType = premio > 0 ? 'profit' : premio < 0 ? 'loss' : 'neutral';
-            }
-
-            perfRows.push({
-                op, tipo, strike, premio, isEx,
-                pmBefore, pmAfter, variation,
-                resultado, resultadoPct, resultType,
-                date: getOpDate(op)
-            });
-        });
-
-        const profits = perfRows.filter(r => r.resultType === 'profit');
-        const losses = perfRows.filter(r => r.resultType === 'loss');
-        const neutrals = perfRows.filter(r => r.resultType === 'neutral');
-        const totalResultado = perfRows.reduce((s, r) => s + r.resultado, 0);
-        const bestOp = profits.length ? profits.reduce((a, b) => a.resultado > b.resultado ? a : b) : null;
-        const worstOp = losses.length ? losses.reduce((a, b) => a.resultado < b.resultado ? a : b) : null;
-        const hitRate = perfRows.length > 0 ? (profits.length / perfRows.length * 100) : 0;
-        const maxResultado = Math.max(...perfRows.map(r => Math.abs(r.resultado)), 1);
-
-        let html = '';
-
-        html += `<div class="toc-perf-header">`;
-        html += `<div class="toc-perf-title">📈 Análise de Performance por Operação</div>`;
-        html += `<div class="toc-perf-stats">`;
-        if (profits.length > 0) html += `<span class="toc-perf-stat"><span style="color:#4ade80">🟢</span> <span style="color:#4ade80">${profits.length} lucros</span></span>`;
-        if (losses.length > 0) html += `<span class="toc-perf-stat"><span style="color:#f87171">🔴</span> <span style="color:#f87171">${losses.length} prejuízos</span></span>`;
-        if (neutrals.length > 0) html += `<span class="toc-perf-stat"><span style="color:#fbbf24">🟡</span> <span style="color:#fbbf24">${neutrals.length} neutras</span></span>`;
-        html += `<span class="toc-perf-stat">💰 Total: <strong style="color:${totalResultado >= 0 ? '#4ade80' : '#f87171'}">${totalResultado >= 0 ? '+' : ''}${fmtUsd(totalResultado)}</strong></span>`;
-        html += `</div>`;
-        html += `</div>`;
-
-        html += `<div class="toc-perf-table-wrap">`;
-        html += `<table class="toc-perf-table">`;
-        html += `<thead><tr>`;
-        html += `<th>📅 Data</th>`;
-        html += `<th>🔄 Operação</th>`;
-        html += `<th>🏷️ Tipo</th>`;
-        html += `<th>📌 Status</th>`;
-        html += `                <th>💲 Strike</th>`;
-        html += `<th>📊 PM Antes</th>`;
-        html += `<th>📈 PM Depois</th>`;
-        html += `<th>📉 Variação</th>`;
-        html += `<th>📊 Resultado</th>`;
-        html += `<th>📊 Performance</th>`;
-        html += `</tr></thead>`;
-        html += `<tbody>`;
-
-        const displayRows = [...perfRows].reverse();
-        displayRows.forEach(r => {
-            const d = r.date;
-            const dataStr = d ? d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : '-';
-            const ativo = (r.op.ativo || '').toUpperCase().replace('USDT', '');
-            const tipoBadge = r.tipo === 'CALL'
-                ? '<span class="toc-perf-type toc-perf-type-call">CALL</span>'
-                : '<span class="toc-perf-type toc-perf-type-put">PUT</span>';
-
-            let statusHtml;
-            if (r.isEx) {
-                statusHtml = '<span class="toc-perf-dot toc-perf-dot-ex"></span> Exercida<span class="toc-perf-badge-ex">EXERCIDA</span>';
-            } else if ((r.op.status || 'ABERTA').toUpperCase() === 'ABERTA') {
-                statusHtml = '<span class="toc-perf-dot toc-perf-dot-open"></span> Aberta';
-            } else {
-                statusHtml = '<span class="toc-perf-dot toc-perf-dot-closed"></span> Fechada';
-            }
-
-            const variacaoCls = r.variation > 0 ? 'toc-perf-positive' : r.variation < 0 ? 'toc-perf-negative' : '';
-            const variacaoIcon = r.variation > 0 ? '▲' : r.variation < 0 ? '▼' : '—';
-
-            let resultBadge;
-            if (r.resultType === 'profit') {
-                resultBadge = r.resultado > 10
-                    ? '<span class="toc-perf-badge toc-perf-badge-profit" style="background:#0a2a1a;border-color:#2a5a3a;">⭐ Lucro Alto</span>'
-                    : '<span class="toc-perf-badge toc-perf-badge-profit">✅ Lucro</span>';
-            } else if (r.resultType === 'loss') {
-                resultBadge = '<span class="toc-perf-badge toc-perf-badge-loss">❌ Prejuízo</span>';
-            } else {
-                resultBadge = '<span class="toc-perf-badge toc-perf-badge-neutral">⬡ Neutro</span>';
-            }
-
-            const barPct = Math.max(5, Math.min(95, (Math.abs(r.resultado) / maxResultado) * 100));
-            const barCls = r.resultType === 'profit' ? 'toc-perf-bar-profit' : r.resultType === 'loss' ? 'toc-perf-bar-loss' : 'toc-perf-bar-neutral';
-            const resultadoVal = r.resultado !== 0
-                ? `<span style="font-size:12px;color:${r.resultType === 'profit' ? '#4ade80' : r.resultType === 'loss' ? '#f87171' : '#94a3b8'};">${r.resultado >= 0 ? '+' : ''}${fmtUsd(r.resultado)}</span>`
-                : '<span style="font-size:12px;color:#94a3b8;">—</span>';
-
-            let rowStyle = '';
-            if (r.isEx && r.tipo === 'PUT') rowStyle = 'background:rgba(251,146,60,0.05);';
-            if (bestOp && r === bestOp) rowStyle = 'background:rgba(74,222,128,0.05);';
-
-            html += `<tr style="${rowStyle}">`;
-            html += `<td><strong>${dataStr}</strong>${bestOp && r === bestOp ? ' ⭐' : ''}</td>`;
-            html += `<td>${r.tipo} ${ativo}</td>`;
-            html += `<td>${tipoBadge}</td>`;
-            html += `<td>${statusHtml}</td>`;
-            html += `<td>${r.strike > 0 ? fmtUsd(r.strike) : '—'}</td>`;
-            html += `<td>${r.pmBefore > 0 ? fmtUsd(r.pmBefore) : '—'}</td>`;
-            html += `<td><strong style="color:#60a5fa">${r.pmAfter > 0 ? fmtUsd(r.pmAfter) : '—'}</strong></td>`;
-            html += `<td class="${variacaoCls}">${variacaoIcon} ${r.variation !== 0 ? fmtUsd(Math.abs(r.variation)) : '—'}</td>`;
-            html += `<td>${resultBadge}</td>`;
-            html += `<td><div class="toc-perf-bar-track"><div class="toc-perf-bar-fill ${barCls}" style="width:${barPct}%"></div></div>${resultadoVal}</td>`;
-            html += `</tr>`;
-        });
-
-        html += `</tbody></table>`;
-        html += `</div>`;
-
-        // Summary chart
-        html += `<div class="toc-perf-summary-chart">`;
-        html += `<div class="toc-perf-chart-header">`;
-        html += `<span class="toc-perf-chart-title">📊 Resumo de Performance</span>`;
-        html += `<span class="toc-perf-chart-badge">${perfRows.length} operações</span>`;
-        html += `</div>`;
-
-        html += `<div class="toc-perf-mini-bars">`;
-        displayRows.forEach(r => {
-            const bh = Math.max(4, (Math.abs(r.resultado) / maxResultado) * 36);
-            const cls = r.resultType === 'profit' ? 'toc-perf-mbar-profit' : r.resultType === 'loss' ? 'toc-perf-mbar-loss' : 'toc-perf-mbar-neutral';
-            html += `<div class="toc-perf-mbar ${cls}" style="height:${bh}px" title="${r.date ? r.date.toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit'}) : ''}: ${r.resultado >= 0 ? '+' : ''}${fmtUsd(r.resultado)}"></div>`;
-        });
-        html += `</div>`;
-
-        html += `<div class="toc-perf-chart-legend">`;
-        html += `<span>📌 <strong style="color:#4ade80">Barras verdes</strong> = lucro</span>`;
-        html += `<span>📌 <strong style="color:#f87171">Barras vermelhas</strong> = prejuízo</span>`;
-        html += `<span>📌 <strong style="color:#fbbf24">Barras amarelas</strong> = neutro</span>`;
-        html += `<span>📊 Altura = magnitude</span>`;
-        if (bestOp) {
-            const bestDate = bestOp.date ? bestOp.date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : '';
-            html += `<span>⭐ <strong style="color:#fbbf24">Maior lucro:</strong> ${bestDate} ${fmtUsd(bestOp.resultado)}</span>`;
-        }
-        html += `</div>`;
-        html += `</div>`;
-
-        const putExercised = perfRows.filter(r => r.tipo === 'PUT' && r.isEx);
-        const callExercised = perfRows.filter(r => r.tipo === 'CALL' && r.isEx);
-        const callClosed = perfRows.filter(r => r.tipo === 'CALL' && !r.isEx);
-        const putClosed = perfRows.filter(r => r.tipo === 'PUT' && !r.isEx);
-
-        html += `<div class="toc-perf-summary-cards">`;
-        html += `<div class="toc-perf-scard"><div class="toc-perf-scard-icon">📊</div><div class="toc-perf-scard-label">PUT Exercidas</div><div class="toc-perf-scard-value" style="color:#fbbf24">${putExercised.length}</div></div>`;
-        html += `<div class="toc-perf-scard"><div class="toc-perf-scard-icon">📈</div><div class="toc-perf-scard-label">CALL Exercidas</div><div class="toc-perf-scard-value" style="color:#60a5fa">${callExercised.length}</div></div>`;
-        html += `<div class="toc-perf-scard"><div class="toc-perf-scard-icon">🔄</div><div class="toc-perf-scard-label">CALL Fechadas</div><div class="toc-perf-scard-value" style="color:#22d3ee">${callClosed.length}</div></div>`;
-        html += `<div class="toc-perf-scard"><div class="toc-perf-scard-icon">📉</div><div class="toc-perf-scard-label">PUT Fechadas</div><div class="toc-perf-scard-value" style="color:#a78bfa">${putClosed.length}</div></div>`;
-        html += `</div>`;
-
-        html += `<div class="toc-perf-highlights">`;
-        if (bestOp) {
-            const bestDate = bestOp.date ? bestOp.date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : '';
-            html += `<span>⭐ <strong style="color:#fbbf24">Melhor operação:</strong> ${bestOp.tipo} em ${bestDate} com <strong style="color:#4ade80">+${fmtUsd(bestOp.resultado)}</strong></span>`;
-        }
-        if (worstOp) {
-            const worstDate = worstOp.date ? worstOp.date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : '';
-            html += `<span>⚠️ <strong style="color:#f87171">Pior operação:</strong> ${worstOp.tipo} em ${worstDate} com <strong style="color:#f87171">${fmtUsd(worstOp.resultado)}</strong></span>`;
-        }
-        html += `<span>📊 <strong style="color:#60a5fa">Taxa de acerto:</strong> ${hitRate.toFixed(0)}% (${profits.length}/${perfRows.length})</span>`;
-        html += `<span>💰 <strong style="color:${totalResultado >= 0 ? '#4ade80' : '#f87171'}">Resultado líquido:</strong> ${totalResultado >= 0 ? '+' : ''}${fmtUsd(totalResultado)}</span>`;
-        html += `</div>`;
-
-        container.innerHTML = html;
+        container.innerHTML = rows.map(r => {
+            const mes = r.date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+            const roi = r.saldoMedio ? fmtPct(r.roi) : 'ROI N/A';
+            const cls = r.premio < 0 ? 'toc-timeline-item toc-timeline-neg' : 'toc-timeline-item';
+            return `<div class="${cls}">
+                <span class="toc-timeline-dot"></span>
+                <div class="fw-bold">${mes}</div>
+                <div class="text-muted" style="font-size:.75rem;">${fmtUsd(r.premio)} · ${roi}</div>
+            </div>`;
+        }).join('');
     }
 
     // Verifica se a data de exercício (vencimento) da op está no período ativo
@@ -703,9 +240,10 @@
     }
 
     function getExercicioLabel(op) {
-        const isEx = isExercised(op);
-        if (isEx) return '<span class="badge bg-red text-red-fg">SIM</span>';
-        return '<span class="badge bg-green text-green-fg">NÃO</span>';
+        const status = (op.exercicio_status || '').toUpperCase();
+        if (status === 'SIM') return '<span class="badge bg-danger">Exercida</span>';
+        if (status === 'POSSIVEL' || status === 'POSSÍVEL') return '<span class="badge bg-warning text-dark">Possível Exercício</span>';
+        return '<span class="badge bg-success">Sem Exercício</span>';
     }
 
     function getCorretoraBadge(op) {
@@ -760,14 +298,10 @@
         const tbody = document.getElementById('tocOpsTbody');
         if (!tbody) return;
 
-        // Destrói instância DataTable anterior (por referência e por verificação do DOM)
-        const table = tbody.closest('table');
+        // Destrói instância DataTable anterior
         if (_dtTable) {
             try { _dtTable.destroy(); } catch (e) {}
             _dtTable = null;
-        }
-        if (table && typeof $ !== 'undefined' && $.fn && $.fn.DataTable && $.fn.DataTable.isDataTable(table)) {
-            try { $(table).DataTable().destroy(); } catch (e) {}
         }
 
         // Mostra todas as operações filtradas (respeitando o filtro do header)
@@ -786,11 +320,11 @@
 
         // Inicializa DataTable (jQuery + DataTables já carregados via libs.js)
         if (typeof $ !== 'undefined' && $.fn && $.fn.DataTable) {
+            const table = tbody.closest('table');
             if (table) {
                 try {
                     _dtTable = $(table).DataTable({
-                        pageLength: 10,
-                        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Todos"]],
+                        pageLength: 15,
                         order: [[8, 'desc']],
                         language: { url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json' },
                         dom: '<"toc-dt-top"f>rtip',
@@ -854,8 +388,7 @@
         const monthlyRows = groupByMonth(ops);
         renderSummary(stats, monthlyRows);
         renderMonthly(monthlyRows);
-        renderTimeline(ops);
-        renderPerformance(ops);
+        renderTimeline(monthlyRows);
         renderOpsTable(ops);
         renderMeta(stats, monthlyRows);
     }
@@ -886,7 +419,7 @@
         _header = window.CryptoModalHeader.mount('#tocModalHeader', {
             title:         'Total de Operações Crypto',
             icon:          '📊',
-            defaultPeriod: 'semana',
+            defaultPeriod: 'mes',
             closeModalId:  'modalTotalOperacoesCrypto',
             defaultState: {
                 statusList: ['aberta', 'fechada', 'exercida', 'nao_exercida'],

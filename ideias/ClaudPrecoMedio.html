@@ -1,0 +1,1567 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Double Investment · Painel de Operações</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+/* ============================================================
+   TOKENS
+   ============================================================ */
+:root {
+  --bg:#0a0d14;
+  --surface:#121826;
+  --surface-2:#1a2233;
+  --border:#242c3d;
+  --border-soft:#1b2230;
+  --text:#eef1f7;
+  --text-muted:#8993a8;
+  --gold:#f2a900;
+  --gold-soft:rgba(242,169,0,.14);
+  --green:#22c55e;
+  --green-soft:rgba(34,197,94,.14);
+  --red:#f0435f;
+  --red-soft:rgba(240,67,95,.14);
+  --blue:#3aa7ff;
+  --radius-lg:22px;
+  --radius-md:16px;
+  --radius-sm:10px;
+  --font-display:'Space Grotesk', 'Segoe UI', sans-serif;
+  --font-body:'Inter', 'Segoe UI', sans-serif;
+  --font-mono:'IBM Plex Mono', 'Consolas', monospace;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  display:flex; justify-content:center; align-items:center;
+  min-height:100vh;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration:.001ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;
+  }
+}
+
+:focus-visible { outline:2px solid var(--gold); outline-offset:2px; border-radius:4px; }
+
+/* ============================================================
+   BOTÃO DE ABERTURA
+   ============================================================ */
+.btn-open {
+  background: linear-gradient(135deg, var(--gold), #ffcf4d);
+  border:none; color:#171208; font-weight:700; font-family:var(--font-display);
+  font-size:1.05rem; padding:16px 34px; border-radius:50px; cursor:pointer;
+  display:inline-flex; align-items:center; gap:10px;
+  transition:transform .2s, box-shadow .2s;
+  box-shadow:0 0 24px rgba(242,169,0,.25);
+}
+.btn-open:hover { transform:scale(1.04); box-shadow:0 0 42px rgba(242,169,0,.42); }
+
+/* ============================================================
+   MODAL PRINCIPAL
+   ============================================================ */
+.modal-overlay {
+  display:none; position:fixed; inset:0; background:rgba(4,6,10,.86);
+  backdrop-filter:blur(6px); z-index:999; justify-content:center; align-items:center;
+  animation:fadeIn .3s ease-out; padding:16px;
+}
+.modal-overlay.active { display:flex; }
+@keyframes fadeIn { from{opacity:0; transform:scale(.96);} to{opacity:1; transform:scale(1);} }
+
+.modal-content {
+  background:var(--surface); border-radius:var(--radius-lg); padding:30px;
+  max-width:1120px; width:100%; max-height:92vh; overflow-y:auto;
+  border:1px solid var(--border); box-shadow:0 20px 60px rgba(0,0,0,.8);
+}
+.modal-content::-webkit-scrollbar { width:6px; }
+.modal-content::-webkit-scrollbar-track { background:var(--bg); }
+.modal-content::-webkit-scrollbar-thumb { background:var(--border); border-radius:10px; }
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+.modal-header {
+  display:flex; justify-content:space-between; align-items:flex-start;
+  border-bottom:1px solid var(--border); padding-bottom:18px; margin-bottom:18px;
+  flex-wrap:wrap; gap:12px;
+}
+.modal-header h2 {
+  font-family:var(--font-display); font-size:1.7rem; font-weight:700;
+  background:linear-gradient(135deg, var(--gold), #ffe4a3);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  display:flex; align-items:center; gap:10px;
+}
+.modal-header .subtitle {
+  font-size:.85rem; color:var(--text-muted); margin-top:4px;
+  display:flex; align-items:center; gap:8px; font-family:var(--font-mono);
+}
+.period-tag {
+  background:var(--surface-2); border:1px solid var(--border); color:var(--gold);
+  border-radius:20px; padding:2px 10px; font-size:.75rem; font-weight:600;
+}
+.btn-close {
+  background:none; border:none; color:var(--text-muted); font-size:2rem; cursor:pointer;
+  transition:color .2s, transform .2s; line-height:1;
+}
+.btn-close:hover { color:var(--red); transform:rotate(90deg); }
+
+/* ============================================================
+   BREADCRUMB
+   ============================================================ */
+.breadcrumb {
+  display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:20px;
+  padding:10px 16px; background:var(--bg); border-radius:12px; border:1px solid var(--border-soft);
+}
+.breadcrumb span { color:var(--text-muted); font-size:.85rem; }
+.breadcrumb .crumb-link { color:var(--gold); cursor:pointer; font-weight:600; transition:color .2s; }
+.breadcrumb .crumb-link:hover { color:var(--blue); text-decoration:underline; }
+.breadcrumb .crumb-current { color:var(--text); font-weight:600; }
+
+/* ============================================================
+   KPI HERO + MINI GRID
+   ============================================================ */
+.kpi-row { display:flex; gap:14px; margin-bottom:22px; flex-wrap:wrap; }
+
+.root-selector { display:inline-flex; background:var(--bg); border:1px solid var(--border); border-radius:999px; padding:3px; gap:2px; margin-bottom:16px; }
+.root-btn {
+  border:none; background:transparent; color:var(--text-muted); font-family:var(--font-body);
+  font-size:.8rem; font-weight:600; padding:8px 16px; border-radius:999px; cursor:pointer;
+  transition:background .15s, color .15s; display:inline-flex; align-items:center; gap:6px;
+}
+.root-btn.active { background:var(--gold); color:#171208; }
+.root-btn:not(.active):hover { color:var(--text); }
+
+.mini-cards-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(230px,1fr)); gap:14px; }
+.mini-card {
+  background:var(--bg); border:1px solid var(--border-soft); border-radius:16px; padding:16px 18px;
+  cursor:pointer; transition:transform .2s, border-color .2s, box-shadow .2s; position:relative; overflow:hidden;
+}
+.mini-card:hover { border-color:var(--gold); transform:translateY(-3px); box-shadow:0 8px 25px rgba(242,169,0,.1); }
+.mini-card .mc-eyebrow { font-size:.68rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; }
+.mini-card .mc-title { font-family:var(--font-display); font-size:1.05rem; margin-top:4px; }
+.mini-card .mc-stats { display:flex; gap:14px; margin-top:10px; font-size:.78rem; color:var(--text-muted); }
+.mini-card .mc-stats .v { color:var(--text); font-weight:700; font-family:var(--font-mono); }
+.mini-card .mc-pnl { margin-top:10px; padding-top:10px; border-top:1px solid var(--border-soft); font-weight:700; font-family:var(--font-mono); }
+.mini-card .mc-badge { position:absolute; top:12px; right:14px; font-size:.62rem; font-weight:800; padding:3px 9px; border-radius:20px; }
+.mini-card .mc-badge.open { background:var(--gold-soft); color:var(--gold); border:1px solid rgba(242,169,0,.4); }
+.mini-card .mc-badge.closed { background:var(--green-soft); color:var(--green); border:1px solid rgba(34,197,94,.35); }
+.gauge-ring {
+  position:relative; width:52px; height:52px; border-radius:50%; margin:6px auto 0;
+  background:conic-gradient(var(--gold) calc(var(--wr)*1%), var(--border) 0);
+}
+.gauge-ring span {
+  position:absolute; inset:6px; background:var(--surface-2); border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--font-mono); font-weight:700; font-size:.72rem; color:var(--text);
+}
+
+.heatmap-legend { display:flex; align-items:center; gap:8px; font-size:.72rem; color:var(--text-muted); margin-bottom:16px; }
+.heatmap-legend .scale { display:flex; gap:2px; }
+.heatmap-legend .scale span { width:14px; height:14px; border-radius:3px; }
+.heatmap-month { margin-bottom:14px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.heatmap-month-label { font-size:.75rem; color:var(--text-muted); font-family:var(--font-mono); width:64px; flex:0 0 64px; }
+.heatmap-weeks { display:flex; gap:9px; flex-wrap:wrap; }
+.heatmap-week-group { display:inline-flex; gap:3px; }
+.heatmap-cell {
+  width:22px; height:22px; border-radius:5px; cursor:pointer;
+  transition:transform .15s, outline .15s;
+}
+.heatmap-cell:hover { transform:scale(1.18); outline:1px solid var(--gold); }
+
+.type-radar-wrapper { position:relative; height:260px; margin-bottom:18px; }
+.mini-card.type-call { border-left:4px solid var(--green); }
+.mini-card.type-put { border-left:4px solid var(--red); }
+.kpi-hero {
+  flex:1 1 240px; position:relative; overflow:hidden;
+  background:linear-gradient(160deg, var(--surface-2), var(--surface));
+  border:1px solid var(--border); border-radius:var(--radius-md); padding:18px 20px;
+}
+.kpi-hero .label { font-size:.72rem; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); }
+.kpi-hero .value {
+  font-family:var(--font-mono); font-size:2rem; font-weight:700; margin-top:6px;
+}
+.kpi-hero .value.green { color:var(--green); }
+.kpi-hero .value.red { color:var(--red); }
+.kpi-hero .value.gold { color:var(--gold); }
+.kpi-hero .hint { font-size:.72rem; color:var(--text-muted); margin-top:4px; }
+
+.kpi-mini-grid {
+  flex:1 1 320px; display:grid; grid-template-columns:repeat(3,1fr); gap:10px;
+}
+.kpi-mini {
+  background:var(--surface-2); border:1px solid var(--border); border-radius:var(--radius-sm);
+  padding:12px 10px; text-align:center;
+}
+.kpi-mini .label { font-size:.65rem; text-transform:uppercase; letter-spacing:.04em; color:var(--text-muted); }
+.kpi-mini .value { font-family:var(--font-mono); font-size:1.25rem; font-weight:700; margin-top:4px; }
+
+/* ============================================================
+   CHART HEADING + TOGGLE
+   ============================================================ */
+.chart-heading {
+  display:flex; justify-content:space-between; align-items:flex-end; gap:12px;
+  margin-bottom:10px; flex-wrap:wrap;
+}
+.chart-heading h3 { font-family:var(--font-display); font-size:1.05rem; font-weight:600; }
+.chart-heading .chart-sub { font-size:.78rem; color:var(--text-muted); margin-top:2px; }
+.info-icon { cursor:help; color:var(--text-muted); font-size:.8rem; }
+
+.view-toggle { display:inline-flex; background:var(--bg); border:1px solid var(--border); border-radius:999px; padding:3px; gap:2px; }
+.toggle-btn {
+  border:none; background:transparent; color:var(--text-muted); font-family:var(--font-body);
+  font-size:.78rem; font-weight:600; padding:7px 14px; border-radius:999px; cursor:pointer;
+  transition:background .15s, color .15s;
+}
+.toggle-btn.active { background:var(--gold); color:#171208; }
+.toggle-btn:not(.active):hover { color:var(--text); }
+
+/* ============================================================
+   CHART WRAPPER + ORB DE ASSINATURA
+   ============================================================ */
+.chart-wrapper { position:relative; height:340px; margin-top:4px; }
+.chart-wrapper canvas { position:relative; z-index:1; width:100% !important; height:100% !important; }
+.chart-orb {
+  position:absolute; inset:16%; border-radius:50%; z-index:0; pointer-events:none;
+  background:radial-gradient(circle, var(--gold-soft), transparent 70%);
+  filter:blur(2px); animation:orbPulse 5s ease-in-out infinite;
+}
+.chart-wrapper.mode-comparison .chart-orb { opacity:.18; }
+@keyframes orbPulse { 0%,100%{opacity:.45; transform:scale(1);} 50%{opacity:.85; transform:scale(1.06);} }
+
+.chart-wrapper.compact { height:220px; }
+
+.empty-state { text-align:center; padding:50px 20px; color:var(--text-muted); }
+.empty-state .icon { font-size:2rem; margin-bottom:10px; }
+.empty-state .title { color:var(--text); font-weight:600; margin-bottom:4px; }
+.empty-state .desc { font-size:.85rem; }
+
+/* ============================================================
+   LISTA DE OPERAÇÕES (SEMANA)
+   ============================================================ */
+.week-panel-heading { margin:22px 0 12px; }
+.week-panel-heading h3 { font-family:var(--font-display); font-size:1.05rem; font-weight:600; color:var(--text-muted); }
+.week-panel-heading h3 strong { color:var(--text); }
+
+.operations-list {
+  display:grid; grid-template-columns:repeat(auto-fill, minmax(280px,1fr)); gap:16px;
+  max-height:420px; overflow-y:auto; padding-right:8px;
+}
+.operations-list::-webkit-scrollbar { width:4px; }
+.operations-list::-webkit-scrollbar-thumb { background:var(--border); border-radius:10px; }
+
+.operation-card {
+  position:relative; overflow:hidden; background:var(--bg); border:1px solid var(--border-soft);
+  border-left:4px solid transparent; border-radius:16px; padding:16px 18px; cursor:pointer;
+  transition:transform .2s, box-shadow .2s, border-color .3s;
+}
+.operation-card.pnl-positive { border-left-color:var(--green); }
+.operation-card.pnl-negative { border-left-color:var(--red); }
+.operation-card.cycle-closed { border-left-color:var(--gold); }
+.operation-card:hover { border-color:var(--gold); transform:translateY(-3px); box-shadow:0 8px 25px rgba(242,169,0,.1); }
+.operation-card.flash { box-shadow:0 0 0 3px var(--gold); }
+
+.cycle-ribbon {
+  position:absolute; top:11px; right:-30px; transform:rotate(35deg);
+  background:var(--gold); color:#171208; font-size:.58rem; font-weight:800;
+  padding:2px 32px; letter-spacing:.04em;
+}
+
+.operation-card .day { font-size:.82rem; color:var(--text-muted); margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+.operation-card .day strong { color:var(--text); font-family:var(--font-display); }
+
+.type-badge { display:inline-flex; align-items:center; gap:5px; padding:4px 11px; border-radius:20px; font-size:.72rem; font-weight:700; margin-right:8px; }
+.type-badge.call { background:var(--green-soft); color:var(--green); border:1px solid rgba(34,197,94,.35); }
+.type-badge.put { background:var(--red-soft); color:var(--red); border:1px solid rgba(240,67,95,.35); }
+.type-badge.exercida { background:var(--gold-soft); color:var(--gold); border:1px solid rgba(242,169,0,.4); }
+
+.operation-card .details { margin-top:10px; font-size:.82rem; color:var(--text-muted); }
+.operation-card .details span { display:inline-block; margin-right:16px; }
+.operation-card .details .value { color:var(--text); font-weight:600; font-family:var(--font-mono); }
+
+.operation-card .profit {
+  margin-top:10px; padding-top:10px; border-top:1px solid var(--border-soft);
+  font-weight:700; font-family:var(--font-mono);
+}
+.profit.positive { color:var(--green); }
+.profit.negative { color:var(--red); }
+.profit.neutral { color:var(--gold); }
+
+.operation-card .click-hint {
+  position:absolute; bottom:12px; right:16px; font-size:.63rem; color:var(--border);
+  opacity:0; transition:opacity .3s;
+}
+.operation-card:hover .click-hint { opacity:1; }
+
+/* ============================================================
+   MODAL DE DETALHES
+   ============================================================ */
+.detail-modal-overlay {
+  display:none; position:fixed; inset:0; background:rgba(4,6,10,.92); backdrop-filter:blur(8px);
+  z-index:1000; justify-content:center; align-items:center; animation:fadeIn .3s ease-out; padding:16px;
+}
+.detail-modal-overlay.active { display:flex; }
+.detail-modal-content {
+  background:var(--surface); border-radius:var(--radius-lg); padding:32px; max-width:600px; width:100%;
+  border:1px solid var(--border); box-shadow:0 20px 60px rgba(0,0,0,.9); animation:slideUp .3s ease-out;
+}
+@keyframes slideUp { from{transform:translateY(26px); opacity:0;} to{transform:translateY(0); opacity:1;} }
+
+.detail-modal-header {
+  display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;
+  padding-bottom:16px; border-bottom:1px solid var(--border);
+}
+.detail-modal-header h3 { font-family:var(--font-display); font-size:1.3rem; display:flex; align-items:center; gap:8px; }
+.detail-close { background:none; border:none; color:var(--text-muted); font-size:1.8rem; cursor:pointer; transition:color .2s; }
+.detail-close:hover { color:var(--red); }
+
+.flow-row {
+  display:flex; align-items:center; justify-content:center; gap:14px; margin-bottom:18px;
+  background:var(--bg); border:1px solid var(--border-soft); border-radius:14px; padding:16px;
+}
+.flow-row .flow-step { text-align:center; }
+.flow-row .flow-step .flow-label { font-size:.65rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:.04em; }
+.flow-row .flow-step .flow-value { font-family:var(--font-mono); font-weight:700; font-size:1.05rem; margin-top:3px; }
+.flow-row .flow-arrow { color:var(--gold); font-size:1.3rem; }
+
+.detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.detail-item { background:var(--bg); border-radius:12px; padding:13px 15px; border:1px solid var(--border-soft); }
+.detail-item .label { font-size:.68rem; text-transform:uppercase; color:var(--text-muted); letter-spacing:.04em; }
+.detail-item .value { font-size:1.1rem; font-weight:700; margin-top:4px; font-family:var(--font-mono); }
+.detail-item .value.green { color:var(--green); }
+.detail-item .value.red { color:var(--red); }
+.detail-item .value.gold { color:var(--gold); }
+.detail-item.full { grid-column:1/-1; }
+
+.resultado-box { margin-top:8px; padding:12px; border-radius:8px; text-align:center; font-size:1.05rem; font-weight:700; font-family:var(--font-mono); }
+.resultado-box.lucro { background:var(--green-soft); border:1px solid rgba(34,197,94,.3); color:var(--green); }
+.resultado-box.prejuizo { background:var(--red-soft); border:1px solid rgba(240,67,95,.3); color:var(--red); }
+.resultado-box.neutro { background:var(--gold-soft); border:1px solid rgba(242,169,0,.3); color:var(--gold); }
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+.modal-footer {
+  margin-top:22px; padding-top:16px; border-top:1px solid var(--border-soft);
+  display:flex; justify-content:space-between; align-items:center; font-size:.78rem;
+  color:var(--text-muted); flex-wrap:wrap; gap:10px;
+}
+.modal-footer .legend-color { display:inline-block; width:11px; height:11px; border-radius:4px; margin-right:4px; }
+.hidden { display:none !important; }
+
+@media (max-width:700px) {
+  .modal-content { padding:20px 16px 28px; }
+  .modal-header h2 { font-size:1.25rem; }
+  .chart-wrapper { height:260px; }
+  .kpi-mini-grid { grid-template-columns:repeat(3,1fr); }
+  .detail-grid { grid-template-columns:1fr; }
+  .detail-item.full { grid-column:1; }
+  .flow-row { flex-wrap:wrap; }
+}
+</style>
+</head>
+<body>
+
+<button class="btn-open" id="openModalBtn">📊 Abrir painel de operações</button>
+
+<!-- ===== MODAL PRINCIPAL ===== -->
+<div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="mainTitle">
+  <div class="modal-content">
+
+    <div class="modal-header">
+      <div>
+        <h2 id="mainTitle">📈 Double Investment</h2>
+        <div class="subtitle">BTC/ETH · estratégia de prêmios <span class="period-tag" id="periodTag">2026</span></div>
+      </div>
+      <button class="btn-close" id="closeModalBtn" aria-label="Fechar painel">✕</button>
+    </div>
+
+    <div class="root-selector" id="rootSelector">
+      <button type="button" class="root-btn active" data-root="calendar">📅 Calendário</button>
+      <button type="button" class="root-btn" data-root="cycles">🔄 Ciclos</button>
+      <button type="button" class="root-btn" data-root="type">📊 Tipo</button>
+      <button type="button" class="root-btn" data-root="heatmap">🔥 Calor</button>
+    </div>
+
+    <div class="breadcrumb" id="breadcrumb">
+      <span>📍</span>
+      <span class="crumb-link" data-level="year">📅 2026</span>
+      <span>›</span>
+      <span class="crumb-current" id="currentLevelLabel">Visão anual</span>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi-hero">
+        <div class="label">P&amp;L do período</div>
+        <div class="value gold" id="kpiPnl">R$ 0</div>
+        <div class="hint" id="kpiPnlHint">Some os resultados de cada operação do período selecionado.</div>
+      </div>
+      <div class="kpi-mini-grid">
+        <div class="kpi-mini"><div class="label">Operações</div><div class="value" id="kpiTotal">0</div></div>
+        <div class="kpi-mini"><div class="label">Taxa de acerto</div><div class="gauge-ring" id="winRateGauge" style="--wr:0"><span id="kpiWinRate">0%</span></div></div>
+        <div class="kpi-mini"><div class="label">Strike médio</div><div class="value" id="kpiStrike">R$ 0</div></div>
+      </div>
+    </div>
+
+    <!-- ===== GRÁFICO (ANO / MÊS / SEMANA) ===== -->
+    <div id="chartSection">
+      <div class="chart-heading">
+        <div>
+          <h3 id="chartTitle">Meses do ano</h3>
+          <p class="chart-sub" id="chartSubtitle">Clique em um mês para detalhar</p>
+        </div>
+        <div class="view-toggle" id="viewToggle">
+          <button type="button" class="toggle-btn" data-mode="proportion">🍕 Proporção</button>
+          <button type="button" class="toggle-btn" data-mode="comparison">📊 Comparação</button>
+          <button type="button" class="toggle-btn" data-mode="cumulative">📈 Acumulado</button>
+        </div>
+      </div>
+      <div class="chart-wrapper" id="chartWrapper">
+        <div class="chart-orb" aria-hidden="true"></div>
+        <canvas id="mainChart"></canvas>
+      </div>
+    </div>
+
+    <!-- ===== PAINEL DE OPERAÇÕES (NÍVEL SEMANA) ===== -->
+    <div id="operationsContainer" class="hidden">
+      <div class="chart-heading">
+        <div>
+          <h3>Dias da semana</h3>
+          <p class="chart-sub">O tamanho da fatia representa o prêmio recebido em cada dia</p>
+        </div>
+      </div>
+      <div class="chart-wrapper compact" id="weekChartWrapper">
+        <div class="chart-orb" aria-hidden="true"></div>
+        <canvas id="weekChart"></canvas>
+      </div>
+
+      <div class="week-panel-heading">
+        <h3>📋 Operações da semana — <strong id="weekLabel"></strong></h3>
+      </div>
+      <div class="operations-list" id="operationsList"></div>
+    </div>
+
+    <!-- ===== TRILHA "CICLOS" — LISTA DE CICLOS ===== -->
+    <div id="cyclesRootContainer" class="hidden">
+      <div class="chart-heading">
+        <div>
+          <h3>Ciclos de custódia</h3>
+          <p class="chart-sub">Cada ciclo vai da abertura da posição até o exercício da call que a encerra</p>
+        </div>
+      </div>
+      <div class="mini-cards-grid" id="cyclesGrid"></div>
+    </div>
+
+    <!-- ===== TRILHA "CICLOS" — SEMANAS DENTRO DE UM CICLO ===== -->
+    <div id="cycleWeeksContainer" class="hidden">
+      <div class="chart-heading">
+        <div>
+          <h3 id="cycleWeeksTitle">Semanas do ciclo</h3>
+          <p class="chart-sub">Clique em uma semana para ver os dias e as operações</p>
+        </div>
+      </div>
+      <div class="mini-cards-grid" id="cycleWeeksGrid"></div>
+    </div>
+
+    <!-- ===== TRILHA "TIPO" — CALL x PUT ===== -->
+    <div id="typeRootContainer" class="hidden">
+      <div class="chart-heading">
+        <div>
+          <h3>Por tipo de operação</h3>
+          <p class="chart-sub">Clique em Call ou Put para ver a performance daquela perna da estratégia</p>
+        </div>
+      </div>
+      <div class="type-radar-wrapper">
+        <canvas id="typeRadarChart"></canvas>
+      </div>
+      <div class="mini-cards-grid" id="typeRootGrid"></div>
+    </div>
+
+    <!-- ===== TRILHA "TIPO" — MESES DE UM TIPO ===== -->
+    <div id="typeMonthsContainer" class="hidden">
+      <div class="chart-heading">
+        <div>
+          <h3 id="typeMonthsTitle">Meses</h3>
+          <p class="chart-sub">Clique em um mês para ver as operações daquele tipo</p>
+        </div>
+      </div>
+      <div class="mini-cards-grid" id="typeMonthsGrid"></div>
+    </div>
+
+    <!-- ===== TRILHA "TIPO" — OPERAÇÕES DE UM TIPO EM UM MÊS ===== -->
+    <div id="typeOpsContainer" class="hidden">
+      <div class="week-panel-heading">
+        <h3>📋 Operações — <strong id="typeOpsLabel"></strong></h3>
+      </div>
+      <div class="operations-list" id="typeOpsList"></div>
+    </div>
+
+    <!-- ===== TRILHA "MAPA DE CALOR" ===== -->
+    <div id="heatmapRootContainer" class="hidden">
+      <div class="chart-heading">
+        <div>
+          <h3>Mapa de calor anual</h3>
+          <p class="chart-sub">Cada célula é um dia · cor e intensidade = P&amp;L daquele dia. Clique para ver o detalhe.</p>
+        </div>
+      </div>
+      <div class="heatmap-legend">
+        <span>Prejuízo</span>
+        <span class="scale" id="heatmapLegendScale"></span>
+        <span>Lucro</span>
+      </div>
+      <div id="heatmapGrid"></div>
+    </div>
+
+    <div class="modal-footer">
+      <div>
+        <span><span class="legend-color" style="background:var(--green);"></span> Call</span>
+        <span style="margin-left:16px;"><span class="legend-color" style="background:var(--red);"></span> Put</span>
+        <span style="margin-left:16px;"><span class="legend-color" style="background:var(--gold);"></span> Ciclo fechado</span>
+      </div>
+      <div>💡 Clique nos gráficos ou nas operações para navegar</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== MODAL DE DETALHES DA OPERAÇÃO ===== -->
+<div class="detail-modal-overlay" id="detailModal" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+  <div class="detail-modal-content">
+    <div class="detail-modal-header">
+      <h3 id="detailTitle">📊 Detalhes da operação</h3>
+      <button class="detail-close" id="detailCloseBtn" aria-label="Fechar detalhes">✕</button>
+    </div>
+    <div class="flow-row" id="flowRow"></div>
+    <div class="detail-grid" id="detailGrid"></div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// 1. DADOS
+// ============================================================
+const DATA = {
+    '2026': {
+        'Janeiro': {
+            'Semana 1': {
+                'Segunda': { tipo:'call', strike:58200, premio:1200, quantidade:1, pm_anterior:60000, pm_novo:58800, resultado:'lucro', valor_resultado:1200 },
+                'Terça': { tipo:'call', strike:58400, premio:900, quantidade:1, pm_anterior:58800, pm_novo:57900, resultado:'lucro', valor_resultado:900 },
+                'Quarta': { tipo:'put', strike:57900, premio:1500, quantidade:1, pm_anterior:0, pm_novo:57900, resultado:'lucro', valor_resultado:1500 },
+                'Quinta': { tipo:'call', strike:58100, premio:1100, quantidade:1, pm_anterior:57900, pm_novo:56800, resultado:'lucro', valor_resultado:1100 },
+                'Sexta': { tipo:'call', strike:58000, premio:800, quantidade:1, pm_anterior:56800, pm_novo:56000, resultado:'lucro', valor_resultado:800 }
+            },
+            'Semana 2': {
+                'Segunda': { tipo:'call', strike:57600, premio:1400, quantidade:1, pm_anterior:56000, pm_novo:54600, resultado:'lucro', valor_resultado:1400 },
+                'Terça': { tipo:'put', strike:57800, premio:1600, quantidade:1, pm_anterior:0, pm_novo:57800, resultado:'lucro', valor_resultado:1600 },
+                'Quarta': { tipo:'call', strike:58000, premio:950, quantidade:1, pm_anterior:57800, pm_novo:56850, resultado:'lucro', valor_resultado:950 },
+                'Quinta': { tipo:'call', strike:57700, premio:700, quantidade:1, pm_anterior:56850, pm_novo:56150, resultado:'lucro', valor_resultado:700 },
+                'Sexta': { tipo:'call', strike:57500, premio:650, quantidade:1, pm_anterior:56150, pm_novo:55500, resultado:'lucro', valor_resultado:650 }
+            },
+            'Semana 3': {
+                'Segunda': { tipo:'call', strike:59000, premio:1800, quantidade:1, pm_anterior:55500, pm_novo:53700, resultado:'lucro', valor_resultado:1800 },
+                'Terça': { tipo:'call', strike:59200, premio:2100, quantidade:1, pm_anterior:53700, pm_novo:51600, resultado:'lucro', valor_resultado:2100 },
+                'Quarta': { tipo:'put', strike:59500, premio:2200, quantidade:1, pm_anterior:0, pm_novo:59500, resultado:'lucro', valor_resultado:2200 },
+                'Quinta': { tipo:'call', strike:58800, premio:1300, quantidade:1, pm_anterior:59500, pm_novo:58200, resultado:'lucro', valor_resultado:1300 },
+                'Sexta': { tipo:'call_exercida', strike:59300, premio:1500, quantidade:1, pm_anterior:58200, pm_novo:0, resultado:'lucro', valor_resultado:1100 }
+            },
+            'Semana 4': {
+                'Segunda': { tipo:'put', strike:60100, premio:1900, quantidade:1, pm_anterior:0, pm_novo:60100, resultado:'lucro', valor_resultado:1900 },
+                'Terça': { tipo:'call', strike:60300, premio:1700, quantidade:1, pm_anterior:60100, pm_novo:58400, resultado:'lucro', valor_resultado:1700 },
+                'Quarta': { tipo:'call', strike:59900, premio:1600, quantidade:1, pm_anterior:58400, pm_novo:56800, resultado:'lucro', valor_resultado:1600 },
+                'Quinta': { tipo:'call', strike:60200, premio:1400, quantidade:1, pm_anterior:56800, pm_novo:55400, resultado:'lucro', valor_resultado:1400 },
+                'Sexta': { tipo:'call_exercida', strike:60000, premio:1200, quantidade:1, pm_anterior:55400, pm_novo:0, resultado:'lucro', valor_resultado:4600 }
+            }
+        },
+        'Fevereiro': {
+            'Semana 5': {
+                'Segunda': { tipo:'put', strike:61200, premio:2100, quantidade:1, pm_anterior:0, pm_novo:61200, resultado:'lucro', valor_resultado:2100 },
+                'Terça': { tipo:'call', strike:61500, premio:1800, quantidade:1, pm_anterior:61200, pm_novo:59400, resultado:'lucro', valor_resultado:1800 },
+                'Quarta': { tipo:'call', strike:61800, premio:2000, quantidade:1, pm_anterior:59400, pm_novo:57400, resultado:'lucro', valor_resultado:2000 },
+                'Quinta': { tipo:'put', strike:61000, premio:1600, quantidade:1, pm_anterior:0, pm_novo:61000, resultado:'lucro', valor_resultado:1600 },
+                'Sexta': { tipo:'call', strike:61400, premio:1500, quantidade:1, pm_anterior:61000, pm_novo:59500, resultado:'lucro', valor_resultado:1500 }
+            },
+            'Semana 6': {
+                'Segunda': { tipo:'call', strike:62500, premio:2300, quantidade:1, pm_anterior:59500, pm_novo:57200, resultado:'lucro', valor_resultado:2300 },
+                'Terça': { tipo:'call', strike:62800, premio:2500, quantidade:1, pm_anterior:57200, pm_novo:54700, resultado:'lucro', valor_resultado:2500 },
+                'Quarta': { tipo:'call_exercida', strike:63000, premio:2800, quantidade:1, pm_anterior:54700, pm_novo:0, resultado:'lucro', valor_resultado:8300 },
+                'Quinta': { tipo:'put', strike:62200, premio:1700, quantidade:1, pm_anterior:0, pm_novo:62200, resultado:'lucro', valor_resultado:1700 },
+                'Sexta': { tipo:'call', strike:62700, premio:1900, quantidade:1, pm_anterior:62200, pm_novo:60300, resultado:'lucro', valor_resultado:1900 }
+            }
+        },
+        'Março': {
+            'Semana 9': {
+                'Segunda': { tipo:'call', strike:63500, premio:2600, quantidade:1, pm_anterior:60300, pm_novo:57700, resultado:'lucro', valor_resultado:2600 },
+                'Terça': { tipo:'call', strike:64000, premio:2400, quantidade:1, pm_anterior:57700, pm_novo:55300, resultado:'lucro', valor_resultado:2400 },
+                'Quarta': { tipo:'put', strike:63800, premio:2000, quantidade:1, pm_anterior:0, pm_novo:63800, resultado:'lucro', valor_resultado:2000 },
+                'Quinta': { tipo:'call', strike:63200, premio:1800, quantidade:1, pm_anterior:63800, pm_novo:62000, resultado:'lucro', valor_resultado:1800 },
+                'Sexta': { tipo:'call_exercida', strike:64500, premio:3000, quantidade:1, pm_anterior:62000, pm_novo:0, resultado:'lucro', valor_resultado:2500 }
+            },
+            'Semana 10': {
+                'Segunda': { tipo:'call', strike:65000, premio:3200, quantidade:1, pm_anterior:0, pm_novo:65000, resultado:'lucro', valor_resultado:3200 },
+                'Terça': { tipo:'call', strike:65500, premio:2900, quantidade:1, pm_anterior:65000, pm_novo:62100, resultado:'lucro', valor_resultado:2900 },
+                'Quarta': { tipo:'put', strike:64800, premio:2200, quantidade:1, pm_anterior:0, pm_novo:64800, resultado:'lucro', valor_resultado:2200 },
+                'Quinta': { tipo:'call_exercida', strike:66000, premio:3500, quantidade:1, pm_anterior:64800, pm_novo:0, resultado:'lucro', valor_resultado:1200 },
+                'Sexta': { tipo:'call', strike:64200, premio:1600, quantidade:1, pm_anterior:0, pm_novo:64200, resultado:'lucro', valor_resultado:1600 }
+            }
+        },
+        'Julho': {
+            'Semana 28': {
+                'Segunda': { tipo:'call', strike:64000, premio:2800, quantidade:1, pm_anterior:64200, pm_novo:61400, resultado:'lucro', valor_resultado:2800 },
+                'Terça': { tipo:'call', strike:64500, premio:2600, quantidade:1, pm_anterior:61400, pm_novo:58800, resultado:'lucro', valor_resultado:2600 },
+                'Quarta': { tipo:'put', strike:64200, premio:2400, quantidade:1, pm_anterior:0, pm_novo:64200, resultado:'lucro', valor_resultado:2400 },
+                'Quinta': { tipo:'call', strike:63800, premio:2100, quantidade:1, pm_anterior:64200, pm_novo:62100, resultado:'lucro', valor_resultado:2100 },
+                'Sexta': { tipo:'call_exercida', strike:65000, premio:3300, quantidade:1, pm_anterior:62100, pm_novo:0, resultado:'lucro', valor_resultado:2900 }
+            },
+            'Semana 29': {
+                'Segunda': { tipo:'put', strike:65500, premio:2700, quantidade:1, pm_anterior:0, pm_novo:65500, resultado:'lucro', valor_resultado:2700 },
+                'Terça': { tipo:'call', strike:66000, premio:3000, quantidade:1, pm_anterior:65500, pm_novo:62500, resultado:'lucro', valor_resultado:3000 },
+                'Quarta': { tipo:'call', strike:65200, premio:2500, quantidade:1, pm_anterior:62500, pm_novo:60000, resultado:'lucro', valor_resultado:2500 },
+                'Quinta': { tipo:'call_exercida', strike:66500, premio:3800, quantidade:1, pm_anterior:60000, pm_novo:0, resultado:'lucro', valor_resultado:6500 },
+                'Sexta': { tipo:'put', strike:64800, premio:2200, quantidade:1, pm_anterior:0, pm_novo:64800, resultado:'lucro', valor_resultado:2200 }
+            },
+            'Semana 30': {
+                'Segunda': { tipo:'call', strike:67000, premio:4000, quantidade:1, pm_anterior:64800, pm_novo:60800, resultado:'lucro', valor_resultado:4000 },
+                'Terça': { tipo:'call', strike:67200, premio:3800, quantidade:1, pm_anterior:60800, pm_novo:57000, resultado:'lucro', valor_resultado:3800 },
+                'Quarta': { tipo:'put', strike:66800, premio:3200, quantidade:1, pm_anterior:0, pm_novo:66800, resultado:'lucro', valor_resultado:3200 },
+                'Quinta': { tipo:'call', strike:67500, premio:4200, quantidade:1, pm_anterior:66800, pm_novo:62600, resultado:'lucro', valor_resultado:4200 },
+                'Sexta': { tipo:'call_exercida', strike:66500, premio:3500, quantidade:1, pm_anterior:62600, pm_novo:0, resultado:'lucro', valor_resultado:3900 }
+            }
+        }
+    }
+};
+
+// ============================================================
+// 2. ESTADO
+// ============================================================
+let currentLevel = 'year';
+let currentYear = '2026';
+let currentMonth = 'Julho';
+let currentWeek = 'Semana 30';
+let chartInstance = null;
+let rootMode = 'calendar';
+let currentCycleObj = null;
+let currentType = null;
+let currentTypeMonth = null;
+let typeRadarChartInstance = null;
+let weekChartInstance = null;
+const chartModeByLevel = { year:'proportion', month:'comparison' };
+
+const PALETTE = ['#22c55e','#f0435f','#f2a900','#3aa7ff','#a855f7','#34d399','#fb923c','#f472b6','#60a5fa','#fbbf24'];
+const COLORS = {
+  call:'#22c55e', callBg:'rgba(34,197,94,.2)',
+  put:'#f0435f', putBg:'rgba(240,67,95,.2)',
+  gold:'#f2a900', goldBg:'rgba(242,169,0,.2)'
+};
+
+// ============================================================
+// 3. HELPERS
+// ============================================================
+const $ = id => document.getElementById(id);
+
+function formatCurrency(v) {
+  const sign = v < 0 ? '-' : '';
+  return sign + 'R$ ' + Math.abs(Math.round(v)).toLocaleString('pt-BR');
+}
+
+function opPnL(op) {
+  if (op.resultado === 'prejuizo') return -Math.abs(op.valor_resultado || 0);
+  if (op.resultado === 'lucro') return Math.abs(op.valor_resultado || 0);
+  return 0;
+}
+
+function typeMeta(tipo) {
+  if (tipo === 'call') return { label:'CALL', icon:'📈', cls:'call' };
+  if (tipo === 'put') return { label:'PUT', icon:'📉', cls:'put' };
+  if (tipo === 'call_exercida') return { label:'CALL EXERCIDA', icon:'🎯', cls:'call exercida' };
+  return { label:(tipo||'').toUpperCase(), icon:'❔', cls:'' };
+}
+
+function collectMonthOps(monthData) {
+  const ops = [];
+  for (const week in monthData) {
+    for (const day in monthData[week]) ops.push({ week, day, op:monthData[week][day] });
+  }
+  return ops;
+}
+function collectWeekOps(weekData) {
+  return Object.keys(weekData).map(day => ({ day, op:weekData[day] }));
+}
+
+function aggregate(opsList) {
+  let calls=0, puts=0, totalStrike=0, strikeCount=0, pnl=0, wins=0;
+  opsList.forEach(item => {
+    const op = item.op;
+    if (op.tipo==='call' || op.tipo==='call_exercida') calls++; else if (op.tipo==='put') puts++;
+    if (op.strike) { totalStrike += op.strike; strikeCount++; }
+    pnl += opPnL(op);
+    if (op.resultado==='lucro') wins++;
+  });
+  const total = calls+puts;
+  return {
+    calls, puts, total,
+    avgStrike: strikeCount ? Math.round(totalStrike/strikeCount) : 0,
+    pnl,
+    winRate: total ? Math.round((wins/total)*100) : 0
+  };
+}
+
+function updateKPI(stats) {
+  const pnlEl = $('kpiPnl');
+  pnlEl.textContent = formatCurrency(stats.pnl);
+  pnlEl.classList.remove('green','red','gold');
+  pnlEl.classList.add(stats.pnl > 0 ? 'green' : stats.pnl < 0 ? 'red' : 'gold');
+  $('kpiTotal').textContent = stats.total || 0;
+  $('kpiWinRate').textContent = (stats.winRate || 0) + '%';
+  $('winRateGauge').style.setProperty('--wr', stats.winRate || 0);
+  $('kpiStrike').textContent = 'R$ ' + (stats.avgStrike || 0).toLocaleString('pt-BR');
+}
+
+function showEmptyState(container, title, desc) {
+  container.innerHTML = `<div class="empty-state"><div class="icon">🌙</div><div class="title">${title}</div><div class="desc">${desc}</div></div>`;
+}
+
+// ============================================================
+// 4. PLUGIN: TEXTO CENTRAL EM ROSCA/PIZZA
+// ============================================================
+const centerTextPlugin = {
+  id: 'centerText',
+  afterDraw(chart) {
+    if (!chart.$centerText) return;
+    if (chart.config.type !== 'doughnut' && chart.config.type !== 'pie') return;
+    const { ctx, chartArea } = chart;
+    if (!chartArea) return;
+    const cx = (chartArea.left + chartArea.right) / 2;
+    const cy = (chartArea.top + chartArea.bottom) / 2;
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = "700 22px 'IBM Plex Mono', monospace";
+    ctx.fillStyle = chart.$centerText.color || '#eef1f7';
+    ctx.fillText(chart.$centerText.value, cx, cy - 10);
+    ctx.font = "600 11px 'Inter', sans-serif";
+    ctx.fillStyle = '#8993a8';
+    ctx.fillText(chart.$centerText.label, cx, cy + 14);
+    ctx.restore();
+  }
+};
+Chart.register(centerTextPlugin);
+
+// ============================================================
+// 5. CONSTRUÇÃO DOS GRÁFICOS (ANO / MÊS)
+// ============================================================
+function getLevelSeries(level, year, month) {
+  const labels = [], callsData = [], putsData = [], pnlData = [];
+  if (level === 'year') {
+    const yearData = DATA[year];
+    if (!yearData) return null;
+    for (const m in yearData) {
+      const stats = aggregate(collectMonthOps(yearData[m]));
+      labels.push(m); callsData.push(stats.calls); putsData.push(stats.puts); pnlData.push(stats.pnl);
+    }
+  } else if (level === 'month') {
+    const monthData = DATA[year]?.[month];
+    if (!monthData) return null;
+    for (const w in monthData) {
+      const stats = aggregate(collectWeekOps(monthData[w]));
+      labels.push(w.replace('Semana ', 'S')); callsData.push(stats.calls); putsData.push(stats.puts); pnlData.push(stats.pnl);
+    }
+  }
+  return { labels, callsData, putsData, pnlData };
+}
+
+function buildComparisonConfig(level, series) {
+  return {
+    type: 'bar',
+    data: {
+      labels: series.labels,
+      datasets: [
+        { type:'bar', label:'Calls', data:series.callsData, backgroundColor:COLORS.callBg, borderColor:COLORS.call, borderWidth:2, borderRadius:6, yAxisID:'y' },
+        { type:'bar', label:'Puts', data:series.putsData, backgroundColor:COLORS.putBg, borderColor:COLORS.put, borderWidth:2, borderRadius:6, yAxisID:'y' },
+        { type:'line', label:'P&L (R$)', data:series.pnlData, borderColor:COLORS.gold, backgroundColor:COLORS.goldBg, borderWidth:2, tension:.35, pointRadius:3, pointBackgroundColor:COLORS.gold, yAxisID:'y1' }
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      interaction:{ mode:'index', intersect:false },
+      plugins:{
+        legend:{ labels:{ color:'#e8ecf3', font:{ family:'Inter', size:12 } } },
+        tooltip:{ callbacks:{ label(ctx){
+          if (ctx.dataset.label === 'P&L (R$)') return 'P&L: ' + formatCurrency(ctx.raw);
+          return ctx.dataset.label + ': ' + ctx.raw + ' ops';
+        } } }
+      },
+      onClick(e, elements) {
+        if (elements.length) handleDrillDown(level, series.labels[elements[0].index]);
+      },
+      scales: {
+        x: { ticks:{ color:'#8993a8', font:{ family:'IBM Plex Mono', size:11 } }, grid:{ color:'#1c2330' } },
+        y: { position:'left', beginAtZero:true, ticks:{ color:'#8993a8', stepSize:1 }, grid:{ color:'#1c2330' } },
+        y1: { position:'right', ticks:{ color:'#f2a900', callback:v=>'R$ '+Math.round(v/1000)+'k' }, grid:{ drawOnChartArea:false } }
+      }
+    }
+  };
+}
+
+function buildProportionConfig(level, series) {
+  const chartType = level === 'year' ? 'doughnut' : 'pie';
+  const totals = series.labels.map((_,i) => series.callsData[i] + series.putsData[i]);
+  return {
+    type: chartType,
+    data: {
+      labels: series.labels,
+      datasets: [{
+        data: totals,
+        backgroundColor: series.labels.map((_,i) => PALETTE[i % PALETTE.length]),
+        borderColor: '#121826',
+        borderWidth: 3,
+        hoverOffset: 10
+      }]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{ position:'bottom', labels:{ color:'#e8ecf3', boxWidth:10, font:{ size:11 } } },
+        tooltip:{ callbacks:{ label(ctx){
+          const i = ctx.dataIndex;
+          return `${ctx.label}: ${totals[i]} ops · ${formatCurrency(series.pnlData[i])}`;
+        } } }
+      },
+      onClick(e, elements) {
+        if (elements.length) handleDrillDown(level, series.labels[elements[0].index]);
+      }
+    }
+  };
+}
+
+function buildCumulativeConfig(level, series) {
+  let running = 0;
+  const cumData = series.pnlData.map(v => running += v);
+  return {
+    type: 'line',
+    data: {
+      labels: series.labels,
+      datasets: [{
+        label:'P&L acumulado', data:cumData, borderColor:COLORS.gold, backgroundColor:COLORS.goldBg,
+        fill:true, tension:.35, borderWidth:2.5, pointRadius:4, pointBackgroundColor:COLORS.gold
+      }]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{ display:false },
+        tooltip:{ callbacks:{ label(ctx){ return 'Acumulado: ' + formatCurrency(ctx.raw); } } }
+      },
+      onClick(e, elements) {
+        if (elements.length) handleDrillDown(level, series.labels[elements[0].index]);
+      },
+      scales: {
+        x: { ticks:{ color:'#8993a8', font:{ family:'IBM Plex Mono', size:11 } }, grid:{ color:'#1c2330' } },
+        y: { ticks:{ color:'#8993a8', callback:v=>'R$ '+Math.round(v/1000)+'k' }, grid:{ color:'#1c2330' } }
+      }
+    }
+  };
+}
+
+function renderLevelChart(level, year, month) {
+  const series = getLevelSeries(level, year, month);
+  const wrapper = $('chartWrapper');
+  const canvas = $('mainChart');
+  if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+
+  if (!series || series.labels.length === 0) {
+    wrapper.classList.add('hidden');
+    showEmptyState($('chartSection'), 'Nenhuma operação neste período', 'Escolha outro item na trilha acima para continuar explorando.');
+    updateKPI({ calls:0, puts:0, total:0, avgStrike:0, pnl:0, winRate:0 });
+    return;
+  }
+  wrapper.classList.remove('hidden');
+
+  const stats = aggregate(
+    level === 'year'
+      ? Object.keys(DATA[year]).flatMap(m => collectMonthOps(DATA[year][m]))
+      : collectMonthOps(DATA[year][month])
+  );
+  updateKPI(stats);
+
+  const mode = chartModeByLevel[level];
+  wrapper.classList.toggle('mode-comparison', mode !== 'proportion');
+  const config = mode === 'comparison' ? buildComparisonConfig(level, series)
+    : mode === 'cumulative' ? buildCumulativeConfig(level, series)
+    : buildProportionConfig(level, series);
+
+  chartInstance = new Chart(canvas.getContext('2d'), config);
+  if (config.type === 'doughnut' || config.type === 'pie') {
+    chartInstance.$centerText = {
+      value: formatCurrency(stats.pnl),
+      label: level === 'year' ? 'P&L do ano' : 'P&L do mês',
+      color: stats.pnl >= 0 ? '#22c55e' : '#f0435f'
+    };
+    chartInstance.update('none');
+  }
+}
+
+// ============================================================
+// 6. GRÁFICO DA SEMANA (ROSCA COMPACTA POR DIA)
+// ============================================================
+function renderWeekDonut(weekData, weekStats) {
+  const canvas = $('weekChart');
+  if (weekChartInstance) { weekChartInstance.destroy(); weekChartInstance = null; }
+  const days = Object.keys(weekData);
+  const premios = days.map(d => weekData[d].premio || 0);
+  const colors = days.map(d => {
+    const t = weekData[d].tipo;
+    return t === 'put' ? COLORS.put : t === 'call_exercida' ? COLORS.gold : COLORS.call;
+  });
+
+  weekChartInstance = new Chart(canvas.getContext('2d'), {
+    type: 'doughnut',
+    data: { labels:days, datasets:[{ data:premios, backgroundColor:colors, borderColor:'#0a0d14', borderWidth:3, hoverOffset:10 }] },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins: {
+        legend:{ position:'bottom', labels:{ color:'#e8ecf3', boxWidth:10, font:{ size:11 } } },
+        tooltip:{ callbacks:{ label(ctx){
+          const day = ctx.label, op = weekData[day], meta = typeMeta(op.tipo);
+          return `${day} · ${meta.label}: prêmio ${formatCurrency(op.premio)} · P&L ${formatCurrency(opPnL(op))}`;
+        } } }
+      },
+      onClick(e, elements) {
+        if (elements.length) highlightDayCard(days[elements[0].index]);
+      }
+    }
+  });
+  weekChartInstance.$centerText = {
+    value: formatCurrency(weekStats.pnl),
+    label: 'P&L da semana',
+    color: weekStats.pnl >= 0 ? '#22c55e' : '#f0435f'
+  };
+  weekChartInstance.update('none');
+}
+
+function highlightDayCard(day) {
+  const card = document.querySelector(`.operation-card[data-day="${CSS.escape(day)}"]`);
+  if (!card) return;
+  card.scrollIntoView({ behavior:'smooth', block:'center' });
+  card.classList.add('flash');
+  setTimeout(() => card.classList.remove('flash'), 1200);
+}
+
+// ============================================================
+// 7. LISTA DE OPERAÇÕES (SEMANA)
+// ============================================================
+function renderOperationsList(year, month, week) {
+  const weekData = DATA[year]?.[month]?.[week];
+  const list = $('operationsList');
+  if (!weekData) {
+    showEmptyState(list, 'Nenhuma operação nesta semana', 'Volte à trilha acima e escolha outra semana do mês.');
+    return;
+  }
+  $('weekLabel').textContent = `${month} · ${week}`;
+  list.innerHTML = '';
+
+  Object.keys(weekData).forEach(day => {
+    const op = weekData[day];
+    const meta = typeMeta(op.tipo);
+    const pnl = opPnL(op);
+    const isCycleClosed = op.tipo === 'call_exercida';
+
+    const card = document.createElement('div');
+    card.className = 'operation-card ' + (isCycleClosed ? 'cycle-closed' : pnl >= 0 ? 'pnl-positive' : 'pnl-negative');
+    card.dataset.day = day;
+
+    let profitText, profitClass;
+    if (op.resultado === 'lucro') { profitText = '+' + formatCurrency(op.valor_resultado); profitClass = 'positive'; }
+    else if (op.resultado === 'prejuizo') { profitText = formatCurrency(-Math.abs(op.valor_resultado)); profitClass = 'negative'; }
+    else { profitText = 'R$ 0'; profitClass = 'neutral'; }
+
+    card.innerHTML = `
+      ${isCycleClosed ? '<div class="cycle-ribbon">CICLO FECHADO</div>' : ''}
+      <div class="day">${meta.icon} <strong>${day}</strong></div>
+      <div>
+        <span class="type-badge ${meta.cls}">${meta.label}</span>
+        <span style="color:var(--text-muted);font-size:.82rem;">Strike: R$ ${op.strike.toLocaleString('pt-BR')}</span>
+      </div>
+      <div class="details">
+        <span>💰 Prêmio: <span class="value">R$ ${op.premio.toLocaleString('pt-BR')}</span></span>
+        <span>📦 Qtd: <span class="value">${op.quantidade}</span></span>
+      </div>
+      <div class="details">
+        <span>📉 PM ant.: <span class="value">R$ ${op.pm_anterior.toLocaleString('pt-BR')}</span></span>
+        <span>📈 PM novo: <span class="value">${op.pm_novo === 0 ? 'Zerado' : 'R$ ' + op.pm_novo.toLocaleString('pt-BR')}</span></span>
+      </div>
+      <div class="profit ${profitClass}">${profitText}</div>
+      <div class="click-hint">👆 Clique para detalhes</div>
+    `;
+    card.addEventListener('click', () => showDetailModal(day, op, year, month, week));
+    list.appendChild(card);
+  });
+}
+
+// ============================================================
+// 8. MODAL DE DETALHES DA OPERAÇÃO
+// ============================================================
+function showDetailModal(day, op, year, month, week) {
+  const meta = typeMeta(op.tipo);
+  const grid = $('detailGrid');
+  const flow = $('flowRow');
+  $('detailTitle').innerHTML = `${meta.icon} ${day} · ${meta.label}`;
+
+  flow.innerHTML = `
+    <div class="flow-step"><div class="flow-label">PM anterior</div><div class="flow-value">R$ ${op.pm_anterior.toLocaleString('pt-BR')}</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><div class="flow-label">Novo PM</div><div class="flow-value" style="color:${op.pm_novo===0?'var(--gold)':'var(--green)'}">${op.pm_novo===0?'Zerado':'R$ '+op.pm_novo.toLocaleString('pt-BR')}</div></div>
+  `;
+
+  let resultadoClass = 'neutro', resultadoText = '⚖️ Neutro';
+  if (op.resultado === 'lucro') { resultadoClass = 'lucro'; resultadoText = `✅ Lucro: ${formatCurrency(op.valor_resultado)}`; }
+  else if (op.resultado === 'prejuizo') { resultadoClass = 'prejuizo'; resultadoText = `❌ Prejuízo: ${formatCurrency(-Math.abs(op.valor_resultado))}`; }
+
+  grid.innerHTML = `
+    <div class="detail-item"><div class="label">Data</div><div class="value">${day}</div></div>
+    <div class="detail-item"><div class="label">Tipo</div><div class="value ${meta.cls==='put'?'red':'green'}">${meta.label}</div></div>
+    <div class="detail-item"><div class="label">Strike</div><div class="value gold">R$ ${op.strike.toLocaleString('pt-BR')}</div></div>
+    <div class="detail-item"><div class="label">Prêmio</div><div class="value gold">R$ ${op.premio.toLocaleString('pt-BR')}</div></div>
+    <div class="detail-item"><div class="label">Quantidade</div><div class="value">${op.quantidade} BTC</div></div>
+    <div class="detail-item"><div class="label">Período</div><div class="value" style="font-size:.9rem;">${month} · ${week}</div></div>
+    <div class="detail-item full">
+      <div class="label">Resultado da operação</div>
+      <div class="resultado-box ${resultadoClass}">${resultadoText}</div>
+    </div>
+  `;
+  $('detailModal').classList.add('active');
+}
+
+// ============================================================
+// 9. BREADCRUMB (3 TRILHAS)
+// ============================================================
+function renderBreadcrumb() {
+  const bread = $('breadcrumb');
+  let html = `<span>📍</span>`;
+
+  if (rootMode === 'calendar') {
+    html += `<span class="crumb-link" data-nav="calendar-year">📅 ${currentYear}</span>`;
+    if (currentLevel === 'month' || currentLevel === 'week') html += ` <span>›</span> <span class="crumb-link" data-nav="calendar-month">📆 ${currentMonth}</span>`;
+    if (currentLevel === 'week') html += ` <span>›</span> <span class="crumb-link" data-nav="calendar-week">🗓️ ${currentWeek}</span>`;
+    const levelNames = { year:'Visão anual', month:'Visão mensal', week:'Operações da semana' };
+    html += ` <span>›</span> <span class="crumb-current">${levelNames[currentLevel] || ''}</span>`;
+
+  } else if (rootMode === 'cycles') {
+    html += `<span class="crumb-link" data-nav="cycles-root">🔄 Ciclos</span>`;
+    if (currentCycleObj) html += ` <span>›</span> <span class="crumb-link" data-nav="cycles-cycle">Ciclo #${currentCycleObj.index}</span>`;
+    if (currentCycleObj && currentLevel === 'week') html += ` <span>›</span> <span class="crumb-current">${currentMonth} · ${currentWeek}</span>`;
+    else if (currentCycleObj) html += ` <span>›</span> <span class="crumb-current">Semanas do ciclo</span>`;
+    else html += ` <span>›</span> <span class="crumb-current">Visão geral</span>`;
+
+  } else if (rootMode === 'type') {
+    html += `<span class="crumb-link" data-nav="type-root">📊 Tipo</span>`;
+    if (currentType) html += ` <span>›</span> <span class="crumb-link" data-nav="type-type">${currentType === 'call' ? '📈 Calls' : '📉 Puts'}</span>`;
+    if (currentType && currentTypeMonth) html += ` <span>›</span> <span class="crumb-current">${currentTypeMonth}</span>`;
+    else if (currentType) html += ` <span>›</span> <span class="crumb-current">Meses</span>`;
+    else html += ` <span>›</span> <span class="crumb-current">Visão geral</span>`;
+
+  } else if (rootMode === 'heatmap') {
+    html += `<span class="crumb-current">🔥 Mapa de calor · ${currentYear}</span>`;
+  }
+
+  bread.innerHTML = html;
+  bread.querySelectorAll('.crumb-link').forEach(el => {
+    el.addEventListener('click', function () {
+      const nav = this.dataset.nav;
+      if (nav === 'calendar-year') renderView('year', currentYear, null, null);
+      else if (nav === 'calendar-month') renderView('month', currentYear, currentMonth, null);
+      else if (nav === 'calendar-week') renderWeekLevel(currentYear, currentMonth, currentWeek);
+      else if (nav === 'cycles-root') renderCyclesRoot();
+      else if (nav === 'cycles-cycle') renderCycleWeeks(currentCycleObj);
+      else if (nav === 'type-root') renderTypeRoot();
+      else if (nav === 'type-type') renderTypeMonths(currentType);
+    });
+  });
+}
+
+function updateRootSelectorUI() {
+  document.querySelectorAll('.root-btn').forEach(b => b.classList.toggle('active', b.dataset.root === rootMode));
+}
+
+function hideAllContainers() {
+  ['chartSection','operationsContainer','cyclesRootContainer','cycleWeeksContainer','typeRootContainer','typeMonthsContainer','typeOpsContainer','heatmapRootContainer']
+    .forEach(id => $(id).classList.add('hidden'));
+}
+
+// ============================================================
+// 10. ALTERNÂNCIA DE MODO (PROPORÇÃO / COMPARAÇÃO) — só na trilha calendário
+// ============================================================
+function updateToggleUI(level) {
+  const toggle = $('viewToggle');
+  if (level !== 'year' && level !== 'month') { toggle.classList.add('hidden'); return; }
+  toggle.classList.remove('hidden');
+  const mode = chartModeByLevel[level];
+  toggle.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.mode === mode));
+
+  $('chartTitle').textContent = level === 'year' ? 'Meses do ano' : 'Semanas do mês';
+  $('chartSubtitle').textContent = level === 'year' ? 'Clique em um mês para detalhar' : 'Clique em uma semana para detalhar';
+}
+
+$('viewToggle').querySelectorAll('.toggle-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (rootMode !== 'calendar' || currentLevel === 'week' || !currentLevel) return;
+    chartModeByLevel[currentLevel] = btn.dataset.mode;
+    updateToggleUI(currentLevel);
+    renderLevelChart(currentLevel, currentYear, currentMonth);
+  });
+});
+
+// ============================================================
+// 11. DRILL-DOWN
+// ============================================================
+function handleDrillDown(level, label) {
+  if (level === 'year') {
+    const monthData = DATA[currentYear][label];
+    const weeks = monthData ? Object.keys(monthData) : [];
+    renderView('month', currentYear, label, weeks[0] || null);
+  } else if (level === 'month') {
+    const weekNum = label.replace('S', '');
+    renderView('week', currentYear, currentMonth, 'Semana ' + weekNum);
+  }
+}
+
+// ============================================================
+// 12. TRILHA "CALENDÁRIO" (ANO → MÊS → SEMANA)
+// ============================================================
+function renderView(level, year, month, week) {
+  rootMode = 'calendar';
+  currentLevel = level;
+  currentYear = year;
+  if (month) currentMonth = month;
+  if (week) currentWeek = week;
+
+  $('periodTag').textContent = year;
+  updateRootSelectorUI();
+
+  if (level === 'week') {
+    renderWeekLevel(year, currentMonth, currentWeek);
+    return;
+  }
+
+  hideAllContainers();
+  $('chartSection').classList.remove('hidden');
+  renderBreadcrumb();
+  updateToggleUI(level);
+  renderLevelChart(level, year, currentMonth);
+}
+
+// Nível "semana" — reutilizado pela trilha calendário e pela trilha ciclos.
+function renderWeekLevel(year, month, week) {
+  currentYear = year; currentMonth = month; currentWeek = week; currentLevel = 'week';
+  updateRootSelectorUI();
+  hideAllContainers();
+  $('operationsContainer').classList.remove('hidden');
+  renderBreadcrumb();
+  updateToggleUI(null);
+
+  const weekData = DATA[year]?.[month]?.[week];
+  if (!weekData) {
+    showEmptyState($('weekChartWrapper'), 'Semana sem dados', 'Escolha outra semana na trilha acima.');
+    updateKPI({ calls:0, puts:0, total:0, avgStrike:0, pnl:0, winRate:0 });
+    renderOperationsList(year, month, week);
+    return;
+  }
+  const stats = aggregate(collectWeekOps(weekData));
+  updateKPI(stats);
+  renderWeekDonut(weekData, stats);
+  renderOperationsList(year, month, week);
+}
+
+// ============================================================
+// 13. TRILHA "CICLOS" (CICLO → SEMANAS DO CICLO → SEMANA)
+// ============================================================
+function computeCycles(year) {
+  const yearData = DATA[year];
+  if (!yearData) return [];
+  const weekdayOrder = ['Segunda','Terça','Quarta','Quinta','Sexta'];
+  const flat = [];
+  Object.keys(yearData).forEach(month => {
+    Object.keys(yearData[month]).forEach(week => {
+      weekdayOrder.forEach(day => {
+        const op = yearData[month][week][day];
+        if (op) flat.push({ month, week, day, op });
+      });
+    });
+  });
+
+  const buckets = [];
+  let bucket = [];
+  flat.forEach(item => {
+    bucket.push(item);
+    if (item.op.tipo === 'call_exercida') { buckets.push(bucket); bucket = []; }
+  });
+  if (bucket.length) buckets.push(bucket);
+
+  return buckets.map((ops, i) => {
+    const first = ops[0], last = ops[ops.length - 1];
+    const isOpen = last.op.tipo !== 'call_exercida';
+    const weeksSeen = new Set();
+    const weeksList = [];
+    ops.forEach(o => {
+      const key = o.month + '|' + o.week;
+      if (!weeksSeen.has(key)) { weeksSeen.add(key); weeksList.push({ month:o.month, week:o.week }); }
+    });
+    return {
+      index: i + 1,
+      ops,
+      isOpen,
+      weeksSpan: weeksList.length,
+      totalPremium: ops.reduce((s,o) => s + (o.op.premio || 0), 0),
+      totalPnL: ops.reduce((s,o) => s + opPnL(o.op), 0),
+      startLabel: `${first.month} · ${first.week.replace('Semana ', 'S')}`,
+      endLabel: `${last.month} · ${last.week.replace('Semana ', 'S')}`,
+      weeksList
+    };
+  });
+}
+
+function renderCyclesRoot() {
+  rootMode = 'cycles'; currentCycleObj = null; currentLevel = null;
+  updateRootSelectorUI();
+  hideAllContainers();
+  $('cyclesRootContainer').classList.remove('hidden');
+  updateToggleUI(null);
+  renderBreadcrumb();
+
+  const overallStats = aggregate(Object.keys(DATA[currentYear]).flatMap(m => collectMonthOps(DATA[currentYear][m])));
+  updateKPI(overallStats);
+
+  const cycles = computeCycles(currentYear);
+  const grid = $('cyclesGrid');
+  grid.innerHTML = '';
+  if (!cycles.length) {
+    showEmptyState(grid, 'Nenhum ciclo encontrado', 'Não há operações suficientes neste ano para formar um ciclo completo.');
+    return;
+  }
+  cycles.forEach(cycle => {
+    const card = document.createElement('div');
+    card.className = 'mini-card';
+    card.innerHTML = `
+      <div class="mc-badge ${cycle.isOpen ? 'open' : 'closed'}">${cycle.isOpen ? 'ATIVO' : 'FECHADO'}</div>
+      <div class="mc-eyebrow">Ciclo #${cycle.index}</div>
+      <div class="mc-title">${cycle.startLabel} → ${cycle.endLabel}</div>
+      <div class="mc-stats">
+        <span>⏳ <span class="v">${cycle.weeksSpan}</span> sem.</span>
+        <span>💰 <span class="v">${formatCurrency(cycle.totalPremium)}</span></span>
+      </div>
+      <div class="mc-pnl" style="color:${cycle.totalPnL >= 0 ? 'var(--green)' : 'var(--red)'}">${formatCurrency(cycle.totalPnL)}</div>
+    `;
+    card.addEventListener('click', () => renderCycleWeeks(cycle));
+    grid.appendChild(card);
+  });
+}
+
+function renderCycleWeeks(cycle) {
+  rootMode = 'cycles'; currentCycleObj = cycle; currentLevel = null;
+  updateRootSelectorUI();
+  hideAllContainers();
+  $('cycleWeeksContainer').classList.remove('hidden');
+  $('cycleWeeksTitle').textContent = `Ciclo #${cycle.index} · ${cycle.weeksSpan} semana${cycle.weeksSpan > 1 ? 's' : ''}`;
+  updateToggleUI(null);
+  renderBreadcrumb();
+  updateKPI(aggregate(cycle.ops));
+
+  const grid = $('cycleWeeksGrid');
+  grid.innerHTML = '';
+  cycle.weeksList.forEach(({ month, week }) => {
+    const weekStats = aggregate(collectWeekOps(DATA[currentYear][month][week]));
+    const card = document.createElement('div');
+    card.className = 'mini-card';
+    card.innerHTML = `
+      <div class="mc-eyebrow">${month}</div>
+      <div class="mc-title">🗓️ ${week}</div>
+      <div class="mc-stats"><span>📦 <span class="v">${weekStats.total}</span> operações</span></div>
+      <div class="mc-pnl" style="color:${weekStats.pnl >= 0 ? 'var(--green)' : 'var(--red)'}">${formatCurrency(weekStats.pnl)}</div>
+    `;
+    card.addEventListener('click', () => renderWeekLevel(currentYear, month, week));
+    grid.appendChild(card);
+  });
+}
+
+// ============================================================
+// 14. TRILHA "TIPO" (CALL/PUT → MESES → OPERAÇÕES)
+// ============================================================
+function renderTypeRoot() {
+  rootMode = 'type'; currentType = null; currentTypeMonth = null; currentLevel = null;
+  updateRootSelectorUI();
+  hideAllContainers();
+  $('typeRootContainer').classList.remove('hidden');
+  updateToggleUI(null);
+  renderBreadcrumb();
+
+  const allOps = Object.keys(DATA[currentYear]).flatMap(m => collectMonthOps(DATA[currentYear][m]));
+  updateKPI(aggregate(allOps));
+
+  const callOps = allOps.filter(o => o.op.tipo === 'call' || o.op.tipo === 'call_exercida');
+  const putOps = allOps.filter(o => o.op.tipo === 'put');
+  const callStats = aggregate(callOps);
+  const putStats = aggregate(putOps);
+  renderTypeRadar(callStats, putStats);
+
+  const grid = $('typeRootGrid');
+  grid.innerHTML = '';
+  [{ label:'Calls', icon:'📈', type:'call', ops:callOps }, { label:'Puts', icon:'📉', type:'put', ops:putOps }].forEach(g => {
+    const stats = aggregate(g.ops);
+    const card = document.createElement('div');
+    card.className = 'mini-card type-' + g.type;
+    card.innerHTML = `
+      <div class="mc-eyebrow">${g.icon} ${g.label}</div>
+      <div class="mc-title">${stats.total} operações</div>
+      <div class="mc-stats"><span>🎯 <span class="v">${stats.winRate}%</span> acerto</span></div>
+      <div class="mc-pnl" style="color:${stats.pnl >= 0 ? 'var(--green)' : 'var(--red)'}">${formatCurrency(stats.pnl)}</div>
+    `;
+    card.addEventListener('click', () => renderTypeMonths(g.type));
+    grid.appendChild(card);
+  });
+}
+
+// Radar comparando Calls x Puts em 4 eixos normalizados (0-100 relativo ao maior dos dois).
+function renderTypeRadar(callStats, putStats) {
+  const canvas = $('typeRadarChart');
+  if (typeRadarChartInstance) { typeRadarChartInstance.destroy(); typeRadarChartInstance = null; }
+
+  const callAvgPremium = callStats.total ? (callStats.pnl / callStats.total) : 0;
+  const putAvgPremium = putStats.total ? (putStats.pnl / putStats.total) : 0;
+
+  const metrics = [
+    { label:'Taxa de acerto', call:callStats.winRate, put:putStats.winRate },
+    { label:'P&L médio/op.', call:Math.abs(callAvgPremium), put:Math.abs(putAvgPremium) },
+    { label:'Strike médio', call:callStats.avgStrike, put:putStats.avgStrike },
+    { label:'Qtd. operações', call:callStats.total, put:putStats.total }
+  ];
+  const norm = (a,b) => { const max = Math.max(a,b) || 1; return [Math.round(a/max*100), Math.round(b/max*100)]; };
+
+  const callData = [], putData = [];
+  metrics.forEach(m => { const [c,p] = norm(m.call, m.put); callData.push(c); putData.push(p); });
+
+  typeRadarChartInstance = new Chart(canvas.getContext('2d'), {
+    type:'radar',
+    data:{
+      labels: metrics.map(m => m.label),
+      datasets:[
+        { label:'Calls', data:callData, borderColor:COLORS.call, backgroundColor:'rgba(34,197,94,.18)', pointBackgroundColor:COLORS.call, borderWidth:2 },
+        { label:'Puts', data:putData, borderColor:COLORS.put, backgroundColor:'rgba(240,67,95,.18)', pointBackgroundColor:COLORS.put, borderWidth:2 }
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ labels:{ color:'#e8ecf3', font:{ size:11 } } } },
+      scales:{ r:{
+        ticks:{ display:false }, grid:{ color:'#1c2330' }, angleLines:{ color:'#1c2330' },
+        pointLabels:{ color:'#8993a8', font:{ size:10 } }
+      } }
+    }
+  });
+}
+
+function renderTypeMonths(type) {
+  rootMode = 'type'; currentType = type; currentTypeMonth = null; currentLevel = null;
+  updateRootSelectorUI();
+  hideAllContainers();
+  $('typeMonthsContainer').classList.remove('hidden');
+  $('typeMonthsTitle').textContent = (type === 'call' ? '📈 Calls' : '📉 Puts') + ' por mês';
+  updateToggleUI(null);
+  renderBreadcrumb();
+
+  const matches = op => type === 'call' ? (op.tipo === 'call' || op.tipo === 'call_exercida') : op.tipo === 'put';
+  const months = Object.keys(DATA[currentYear]);
+  const allTypeOps = months.flatMap(m => collectMonthOps(DATA[currentYear][m])).filter(o => matches(o.op));
+  updateKPI(aggregate(allTypeOps));
+
+  const grid = $('typeMonthsGrid');
+  grid.innerHTML = '';
+  let any = false;
+  months.forEach(month => {
+    const ops = collectMonthOps(DATA[currentYear][month]).filter(o => matches(o.op));
+    if (!ops.length) return;
+    any = true;
+    const stats = aggregate(ops);
+    const card = document.createElement('div');
+    card.className = 'mini-card type-' + type;
+    card.innerHTML = `
+      <div class="mc-eyebrow">${month}</div>
+      <div class="mc-title">${stats.total} operações</div>
+      <div class="mc-stats"><span>🎯 <span class="v">${stats.winRate}%</span> acerto</span></div>
+      <div class="mc-pnl" style="color:${stats.pnl >= 0 ? 'var(--green)' : 'var(--red)'}">${formatCurrency(stats.pnl)}</div>
+    `;
+    card.addEventListener('click', () => renderTypeOperations(type, month));
+    grid.appendChild(card);
+  });
+  if (!any) showEmptyState(grid, 'Nenhuma operação deste tipo', 'Escolha o outro tipo na trilha acima.');
+}
+
+function renderTypeOperations(type, month) {
+  rootMode = 'type'; currentType = type; currentTypeMonth = month; currentLevel = null;
+  updateRootSelectorUI();
+  hideAllContainers();
+  $('typeOpsContainer').classList.remove('hidden');
+  $('typeOpsLabel').textContent = `${month} · ${type === 'call' ? 'Calls' : 'Puts'}`;
+  updateToggleUI(null);
+  renderBreadcrumb();
+
+  const matches = op => type === 'call' ? (op.tipo === 'call' || op.tipo === 'call_exercida') : op.tipo === 'put';
+  const ops = collectMonthOps(DATA[currentYear][month]).filter(o => matches(o.op));
+  updateKPI(aggregate(ops));
+
+  const list = $('typeOpsList');
+  list.innerHTML = '';
+  if (!ops.length) { showEmptyState(list, 'Nenhuma operação', 'Volte e escolha outro mês.'); return; }
+
+  ops.forEach(({ week, day, op }) => {
+    const meta = typeMeta(op.tipo);
+    const pnl = opPnL(op);
+    const isCycleClosed = op.tipo === 'call_exercida';
+    const card = document.createElement('div');
+    card.className = 'operation-card ' + (isCycleClosed ? 'cycle-closed' : pnl >= 0 ? 'pnl-positive' : 'pnl-negative');
+
+    let profitText, profitClass;
+    if (op.resultado === 'lucro') { profitText = '+' + formatCurrency(op.valor_resultado); profitClass = 'positive'; }
+    else if (op.resultado === 'prejuizo') { profitText = formatCurrency(-Math.abs(op.valor_resultado)); profitClass = 'negative'; }
+    else { profitText = 'R$ 0'; profitClass = 'neutral'; }
+
+    card.innerHTML = `
+      ${isCycleClosed ? '<div class="cycle-ribbon">CICLO FECHADO</div>' : ''}
+      <div class="day">${meta.icon} <strong>${week} · ${day}</strong></div>
+      <div>
+        <span class="type-badge ${meta.cls}">${meta.label}</span>
+        <span style="color:var(--text-muted);font-size:.82rem;">Strike: R$ ${op.strike.toLocaleString('pt-BR')}</span>
+      </div>
+      <div class="details">
+        <span>💰 Prêmio: <span class="value">R$ ${op.premio.toLocaleString('pt-BR')}</span></span>
+        <span>📦 Qtd: <span class="value">${op.quantidade}</span></span>
+      </div>
+      <div class="profit ${profitClass}">${profitText}</div>
+      <div class="click-hint">👆 Clique para detalhes</div>
+    `;
+    card.addEventListener('click', () => showDetailModal(day, op, currentYear, month, week));
+    list.appendChild(card);
+  });
+}
+
+// ============================================================
+// 14.5 TRILHA "MAPA DE CALOR" (ANO INTEIRO → DETALHE DIRETO)
+// ============================================================
+function pnlColor(pnl, maxAbs) {
+  if (!maxAbs) maxAbs = 1;
+  const intensity = Math.min(1, Math.abs(pnl) / maxAbs);
+  const alpha = (0.22 + intensity * 0.7).toFixed(2);
+  return pnl >= 0 ? `rgba(34,197,94,${alpha})` : `rgba(240,67,95,${alpha})`;
+}
+
+function renderHeatmapLegend(maxAbs) {
+  const scale = $('heatmapLegendScale');
+  scale.innerHTML = '';
+  const steps = [-1, -.6, -.25, 0, .25, .6, 1];
+  steps.forEach(s => {
+    const sw = document.createElement('span');
+    sw.style.background = pnlColor(s * maxAbs, maxAbs);
+    scale.appendChild(sw);
+  });
+}
+
+function renderHeatmapRoot() {
+  rootMode = 'heatmap'; currentLevel = null;
+  updateRootSelectorUI();
+  hideAllContainers();
+  $('heatmapRootContainer').classList.remove('hidden');
+  updateToggleUI(null);
+  renderBreadcrumb();
+
+  const yearData = DATA[currentYear];
+  const allOps = Object.keys(yearData).flatMap(m => collectMonthOps(yearData[m]));
+  updateKPI(aggregate(allOps));
+
+  const maxAbs = allOps.reduce((max, o) => Math.max(max, Math.abs(opPnL(o.op))), 1);
+  renderHeatmapLegend(maxAbs);
+
+  const weekdayOrder = ['Segunda','Terça','Quarta','Quinta','Sexta'];
+  const container = $('heatmapGrid');
+  container.innerHTML = '';
+
+  Object.keys(yearData).forEach(month => {
+    const row = document.createElement('div');
+    row.className = 'heatmap-month';
+    row.innerHTML = `<div class="heatmap-month-label">${month}</div>`;
+    const weeksWrap = document.createElement('div');
+    weeksWrap.className = 'heatmap-weeks';
+
+    Object.keys(yearData[month]).forEach(week => {
+      const group = document.createElement('div');
+      group.className = 'heatmap-week-group';
+      weekdayOrder.forEach(day => {
+        const op = yearData[month][week][day];
+        const cell = document.createElement('div');
+        cell.className = 'heatmap-cell';
+        if (op) {
+          const pnl = opPnL(op);
+          cell.style.background = pnlColor(pnl, maxAbs);
+          cell.title = `${month} · ${week} · ${day} — ${typeMeta(op.tipo).label} — ${formatCurrency(pnl)}`;
+          cell.addEventListener('click', () => showDetailModal(day, op, currentYear, month, week));
+        } else {
+          cell.style.background = 'var(--border-soft)';
+          cell.style.cursor = 'default';
+        }
+        group.appendChild(cell);
+      });
+      weeksWrap.appendChild(group);
+    });
+
+    row.appendChild(weeksWrap);
+    container.appendChild(row);
+  });
+}
+
+// ============================================================
+// 15. SELETOR DE TRILHA (RAIZ)
+// ============================================================
+document.querySelectorAll('.root-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const root = btn.dataset.root;
+    if (root === 'calendar') renderView('year', currentYear, null, null);
+    else if (root === 'cycles') renderCyclesRoot();
+    else if (root === 'type') renderTypeRoot();
+    else if (root === 'heatmap') renderHeatmapRoot();
+  });
+});
+
+// ============================================================
+// 13. ABRIR / FECHAR MODAIS
+// ============================================================
+const modal = $('modalOverlay');
+const detailModal = $('detailModal');
+
+$('openModalBtn').addEventListener('click', () => {
+  modal.classList.add('active');
+  renderView('year', currentYear, null, null);
+  $('closeModalBtn').focus();
+});
+$('closeModalBtn').addEventListener('click', () => modal.classList.remove('active'));
+modal.addEventListener('mousedown', e => { if (e.target === modal) modal.classList.remove('active'); });
+
+$('detailCloseBtn').addEventListener('click', () => detailModal.classList.remove('active'));
+detailModal.addEventListener('mousedown', e => { if (e.target === detailModal) detailModal.classList.remove('active'); });
+
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if (detailModal.classList.contains('active')) detailModal.classList.remove('active');
+  else if (modal.classList.contains('active')) modal.classList.remove('active');
+});
+
+console.log('📊 Double Investment · painel carregado.');
+</script>
+</body>
+</html>

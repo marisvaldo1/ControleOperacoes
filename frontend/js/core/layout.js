@@ -19,7 +19,7 @@ document.addEventListener('libsLoaded', function() {
             </h1>
             <div class="navbar-nav flex-row order-md-last">
                 <div class="nav-item d-none d-md-flex me-3">
-                    <span id="navbarMarketStatus" class="badge" style="font-size: 0.9rem;"></span>
+                    <div id="navbarCryptoPrices" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;"></div>
                 </div>
                 <div class="nav-item d-none d-md-flex me-3">
                     <button class="btn btn-ghost-primary" id="btnRefresh" title="Atualizar Cotacoes">
@@ -93,6 +93,11 @@ document.addEventListener('libsLoaded', function() {
             <div class="mb-3">
                 <label class="form-label">Saldo em Crypto (USD)</label>
                 <input type="number" step="0.01" class="form-control" id="configSaldoCrypto" placeholder="0.00">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Ativos para Cotação (Navbar)</label>
+                <input type="text" class="form-control" id="configNavbarAtivos" placeholder="Ex: BTC,ETH,BNB">
+                <div class="form-text">Até 5 ativos separados por vírgula</div>
             </div>
             <hr class="my-4">
             <div class="mb-3">
@@ -173,6 +178,7 @@ document.addEventListener('libsLoaded', function() {
     if (savedConfig.meta) document.getElementById('configMeta').value = savedConfig.meta;
     if (savedConfig.saldoAcoes) document.getElementById('configSaldoAcoes').value = savedConfig.saldoAcoes;
     if (savedConfig.saldoCrypto) document.getElementById('configSaldoCrypto').value = savedConfig.saldoCrypto;
+    if (savedConfig.navbarAtivos) document.getElementById('configNavbarAtivos').value = savedConfig.navbarAtivos;
     
     // Carregar IAs disponíveis
     loadAvailableAIsInOffcanvas();
@@ -187,6 +193,7 @@ document.addEventListener('libsLoaded', function() {
             if (config.meta) document.getElementById('configMeta').value = config.meta;
             if (config.saldoAcoes) document.getElementById('configSaldoAcoes').value = config.saldoAcoes;
             if (config.saldoCrypto) document.getElementById('configSaldoCrypto').value = config.saldoCrypto;
+            if (config.navbarAtivos) document.getElementById('configNavbarAtivos').value = config.navbarAtivos;
             if (config.selected_ai && document.getElementById('configSelectedAI').options.length > 1) {
                 document.getElementById('configSelectedAI').value = config.selected_ai;
             }
@@ -205,18 +212,24 @@ document.addEventListener('libsLoaded', function() {
             binanceSecret: document.getElementById('configBinanceSecret').value,
             meta: document.getElementById('configMeta').value,
             saldoAcoes: document.getElementById('configSaldoAcoes').value,
-            saldoCrypto: document.getElementById('configSaldoCrypto').value
+            saldoCrypto: document.getElementById('configSaldoCrypto').value,
+            navbarAtivos: (document.getElementById('configNavbarAtivos').value || '').toUpperCase().split(',').map(function(s){return s.trim();}).filter(Boolean).slice(0,5).join(',')
         };
         localStorage.setItem('appConfig', JSON.stringify(config));
 
-        // Sincronizar saldoCrypto com cryptoConfig (página crypto usa essa chave)
+        // Sincronizar saldoCrypto e navbarAtivos com cryptoConfig (página crypto usa essa chave)
         try {
             const cryptoCfg = JSON.parse(localStorage.getItem('cryptoConfig') || '{}');
             if (config.saldoCrypto) cryptoCfg.saldoCrypto = config.saldoCrypto;
+            if (config.navbarAtivos) cryptoCfg.navbarAtivos = config.navbarAtivos;
             localStorage.setItem('cryptoConfig', JSON.stringify(cryptoCfg));
         } catch (_) {}
         // Notifica a página crypto para atualizar UI instantaneamente
         window.dispatchEvent(new CustomEvent('cryptoConfigUpdated', { detail: config }));
+        // Atualiza navbar com novos ativos
+        if (window.CryptoNavbar && typeof window.CryptoNavbar.refresh === 'function') {
+            window.CryptoNavbar.refresh();
+        }
         
         try {
             // Salvar configurações gerais

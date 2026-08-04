@@ -1,0 +1,482 @@
+/* =========================================
+   modal-preco-medio-crypto.css v1.0.0
+   Estilos do Modal Preco Medio com Mapa de Calor
+   ========================================= */
+
+/* Modal content */
+.pm-modal-content {
+    background: #121826;
+    border: 1px solid #242c3d;
+}
+
+.pm-header {
+    border-bottom: 1px solid #242c3d;
+    padding: 18px 24px;
+}
+
+.pm-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #f2a900;
+}
+
+.pm-body {
+    padding: 20px 24px;
+}
+
+/* ─── KPI Row ─── */
+.pm-kpi-row {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+
+.pm-kpi {
+    flex: 1 1 140px;
+    background: #1a2233;
+    border: 1px solid #242c3d;
+    border-radius: 12px;
+    padding: 14px 16px;
+    text-align: center;
+}
+
+.pm-kpi-hero {
+    flex: 1 1 220px;
+    background: linear-gradient(160deg, #1a2233, #121826);
+    border: 1px solid #242c3d;
+    text-align: left;
+}
+
+.pm-kpi-label {
+    font-size: .68rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #8993a8;
+    margin-bottom: 6px;
+}
+
+.pm-kpi-value {
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #eef1f7;
+}
+
+.pm-kpi-hero .pm-kpi-value {
+    font-size: 1.8rem;
+}
+
+.pm-kpi-gold {
+    color: #f2a900;
+}
+
+.pm-kpi-hint {
+    font-size: .7rem;
+    color: #8993a8;
+    margin-top: 4px;
+}
+
+/* Gauge ring */
+.pm-kpi-gauge {
+    position: relative;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    margin: 6px auto 0;
+    background: conic-gradient(#f2a900 calc(var(--pm-wr, 0) * 1%), #242c3d 0);
+}
+
+.pm-kpi-gauge span {
+    position: absolute;
+    inset: 6px;
+    background: #1a2233;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: .72rem;
+    color: #eef1f7;
+}
+
+/* ─── Heatmap Section ─── */
+.pm-heatmap-section {
+    margin-bottom: 20px;
+}
+
+.pm-heatmap-title {
+    font-size: .9rem;
+    font-weight: 700;
+    color: #eef1f7;
+    margin-bottom: 4px;
+}
+
+.pm-heatmap-subtitle {
+    font-size: .75rem;
+    color: #8993a8;
+    margin-bottom: 14px;
+}
+
+/* Legend */
+.pm-heatmap-legend {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: .72rem;
+    color: #8993a8;
+    margin-bottom: 16px;
+}
+
+.pm-legend-scale {
+    display: flex;
+    gap: 2px;
+}
+
+.pm-legend-scale span {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+}
+
+/* Grid */
+.pm-heatmap-grid {
+    padding-right: 4px;
+}
+
+.pm-heatmap-grid::-webkit-scrollbar {
+    width: 4px;
+}
+
+.pm-heatmap-grid::-webkit-scrollbar-thumb {
+    background: #242c3d;
+    border-radius: 4px;
+}
+
+.pm-heatmap-month {
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pm-heatmap-month-label {
+    font-size: .72rem;
+    color: #8993a8;
+    font-family: 'JetBrains Mono', monospace;
+    width: 68px;
+    flex: 0 0 68px;
+}
+
+.pm-heatmap-weeks {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.pm-heatmap-week-group {
+    display: inline-flex;
+    gap: 3px;
+}
+
+.pm-heatmap-cell {
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: transform .15s, outline .15s;
+}
+
+.pm-heatmap-cell:hover {
+    transform: scale(1.2);
+    outline: 1px solid #f2a900;
+}
+
+.pm-heatmap-cell.empty {
+    background: transparent;
+    cursor: default;
+    width: 0;
+    height: 0;
+    padding: 0;
+    margin: 0;
+    display: none;
+}
+
+.pm-heatmap-cell.empty:hover {
+    transform: none;
+    outline: none;
+}
+
+/* ─── Footer Legend ─── */
+.pm-footer-legend {
+    padding-top: 14px;
+    border-top: 1px solid #1b2230;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: .75rem;
+    color: #8993a8;
+    flex-wrap: wrap;
+}
+
+.pm-legend-dot {
+    display: inline-block;
+    width: 11px;
+    height: 11px;
+    border-radius: 4px;
+    margin-right: 4px;
+    vertical-align: middle;
+}
+
+.pm-footer-hint {
+    margin-left: auto;
+    color: #5a6478;
+}
+
+/* ─── Light Theme ─── */
+[data-bs-theme="light"] .pm-modal-content {
+    background: #fff;
+    border-color: rgba(0,0,0,.1);
+}
+
+[data-bs-theme="light"] .pm-header {
+    border-bottom-color: rgba(0,0,0,.08);
+}
+
+[data-bs-theme="light"] .pm-kpi {
+    background: #f8f9fa;
+    border-color: rgba(0,0,0,.08);
+}
+
+[data-bs-theme="light"] .pm-kpi-hero {
+    background: linear-gradient(160deg, #f8f9fa, #fff);
+}
+
+[data-bs-theme="light"] .pm-kpi-label {
+    color: #6c757d;
+}
+
+[data-bs-theme="light"] .pm-kpi-value {
+    color: #212529;
+}
+
+[data-bs-theme="light"] .pm-kpi-gauge span {
+    background: #f8f9fa;
+    color: #212529;
+}
+
+[data-bs-theme="light"] .pm-heatmap-title {
+    color: #212529;
+}
+
+[data-bs-theme="light"] .pm-heatmap-subtitle,
+[data-bs-theme="light"] .pm-heatmap-legend,
+[data-bs-theme="light"] .pm-heatmap-month-label {
+    color: #6c757d;
+}
+
+[data-bs-theme="light"] .pm-heatmap-cell.empty {
+    background: rgba(0,0,0,.04);
+}
+
+[data-bs-theme="light"] .pm-footer-legend {
+    border-top-color: rgba(0,0,0,.06);
+    color: #6c757d;
+}
+
+
+/* ─── Detail Overlay (click na cell) ─── */
+.pm-detail-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(4,6,10,.88);
+    backdrop-filter: blur(6px);
+    z-index: 10050;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 16px;
+    animation: pmFadeIn .2s ease-out;
+}
+
+@keyframes pmFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.pm-detail-content {
+    background: #121826;
+    border: 1px solid #242c3d;
+    border-radius: 18px;
+    padding: 24px;
+    max-width: 480px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0,0,0,.8);
+    animation: pmSlideUp .25s ease-out;
+}
+
+@keyframes pmSlideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.pm-detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #242c3d;
+}
+
+.pm-detail-header h5 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #eef1f7;
+    margin: 0;
+}
+
+.pm-detail-close {
+    background: none;
+    border: none;
+    color: #8993a8;
+    font-size: 1.8rem;
+    cursor: pointer;
+    transition: color .2s;
+    line-height: 1;
+}
+
+.pm-detail-close:hover {
+    color: #f0435f;
+}
+
+.pm-detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.pm-detail-item {
+    background: #0a0d14;
+    border: 1px solid #1b2230;
+    border-radius: 10px;
+    padding: 12px 14px;
+}
+
+.pm-detail-label {
+    font-size: .65rem;
+    text-transform: uppercase;
+    color: #8993a8;
+    letter-spacing: .04em;
+    margin-bottom: 4px;
+}
+
+.pm-detail-value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #eef1f7;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.pm-detail-resultado {
+    text-align: center;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.pm-detail-resultado.lucro {
+    background: rgba(34,197,94,.12);
+    border: 1px solid rgba(34,197,94,.3);
+    color: #22c55e;
+}
+
+.pm-detail-resultado.prejuizo {
+    background: rgba(240,67,95,.12);
+    border: 1px solid rgba(240,67,95,.3);
+    color: #f0435f;
+}
+
+[data-bs-theme="light"] .pm-detail-overlay {
+    background: rgba(0,0,0,.5);
+}
+
+[data-bs-theme="light"] .pm-detail-content {
+    background: #fff;
+    border-color: rgba(0,0,0,.1);
+}
+
+[data-bs-theme="light"] .pm-detail-header {
+    border-bottom-color: rgba(0,0,0,.08);
+}
+
+[data-bs-theme="light"] .pm-detail-header h5 {
+    color: #212529;
+}
+
+[data-bs-theme="light"] .pm-detail-item {
+    background: #f8f9fa;
+    border-color: rgba(0,0,0,.06);
+}
+
+[data-bs-theme="light"] .pm-detail-value {
+    color: #212529;
+}
+
+
+/* Card Preço Médio clicável */
+.pm-kpi:has(#pmKpiPrecoMedio) {
+    transition: border-color .2s, transform .15s;
+}
+
+.pm-kpi:has(#pmKpiPrecoMedio):hover {
+    border-color: #f2a900;
+    transform: translateY(-2px);
+}
+
+
+/* ─── Custom Tooltip ─── */
+.pm-custom-tooltip {
+    display: none;
+    position: fixed;
+    z-index: 99999;
+    background: #1a2233;
+    border: 1px solid #3a4a6a;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: .75rem;
+    color: #eef1f7;
+    white-space: pre-line;
+    pointer-events: none;
+    transform: translate(-50%, -100%);
+    box-shadow: 0 4px 16px rgba(0,0,0,.6);
+    max-width: 220px;
+    line-height: 1.4;
+}
+
+.pm-custom-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: #3a4a6a;
+}
+
+[data-bs-theme="light"] .pm-custom-tooltip {
+    background: #fff;
+    border-color: rgba(0,0,0,.15);
+    color: #212529;
+    box-shadow: 0 4px 16px rgba(0,0,0,.15);
+}
+
+[data-bs-theme="light"] .pm-custom-tooltip::after {
+    border-top-color: rgba(0,0,0,.15);
+}

@@ -248,6 +248,47 @@ def get_dual_investment():
     }), 200  # 200 para o frontend processar o JSON normalmente
 
 
+# ─── Última PUT exercida por ativo (base para cálculo de Preço Médio) ────────
+@crypto_bp.route('/ultima-put-exercida', methods=['GET'])
+def get_ultima_put_exercida():
+    """Retorna a última PUT exercida de cada ativo para cálculo do Preço Médio.
+    Query params: ?ativo=BTC (opcional, filtra por ativo)
+    """
+    ativo = request.args.get('ativo', '').upper()
+    conn = db.get_db()
+    if ativo:
+        row = conn.execute('''
+            SELECT * FROM operacoes_crypto
+            WHERE tipo = 'PUT'
+              AND exercicio_status = 'SIM'
+              AND exercicio <= date('now')
+              AND UPPER(ativo) = ?
+            ORDER BY exercicio DESC
+            LIMIT 1
+        ''', (ativo,)).fetchone()
+        conn.close()
+        if row:
+            return jsonify(serialize_crypto_operation(row))
+        return jsonify(None)
+    else:
+        # Retorna a última PUT exercida para cada ativo distinto
+        rows = conn.execute('''
+            SELECT * FROM operacoes_crypto
+            WHERE tipo = 'PUT'
+              AND exercicio_status = 'SIM'
+              AND exercicio <= date('now')
+            ORDER BY exercicio DESC
+        ''').fetchall()
+        conn.close()
+        # Agrupa por ativo, mantendo apenas a mais recente de cada
+        result = {}
+        for row in rows:
+            a = (_row_value(row, 'ativo') or '').upper()
+            if a and a not in result:
+                result[a] = serialize_crypto_operation(row)
+        return jsonify(result)
+
+
 # ─── Listar todas ────────────────────────────────────────────────────────────
 @crypto_bp.route('', methods=['GET'])
 def get_crypto():

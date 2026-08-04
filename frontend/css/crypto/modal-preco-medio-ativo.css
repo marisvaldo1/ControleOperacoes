@@ -133,13 +133,13 @@
 @media (max-width: 760px) { .pm-chart-ledger-grid { grid-template-columns: 1fr; } }
 
 .pm-chart-wrap {
-  height: 250px;
+  height: 275px;
   min-width: 0;
 }
 
 /* ── Ledger table ── */
 .pm-ledger-scroll {
-  max-height: 295px;
+  max-height: 320px;
   overflow-y: auto;
   border: 1px solid var(--pm-line);
   border-radius: 10px;
