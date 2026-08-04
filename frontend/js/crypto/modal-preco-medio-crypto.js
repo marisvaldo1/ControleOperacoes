@@ -1,24 +1,56 @@
-// modal-preco-medio-crypto.js v1.0.0
-// Modal Preco Medio com Mapa de Calor por Ativo
+// modal-preco-medio-crypto.js v3.0.0
+// Modal Preço Médio com Mapa de Calor por Ativo — Redesenhado 2025
+// Design baseado em: ideias/ClaudPrecoMedioCalor.html
 (function () {
   'use strict';
 
-  var _modalInstance = null;
+  var _modalOverlay = null;
   var _currentAtivo = null;
+  var _dayOpsMap = {}; // id da célula -> { date, ops, total }
 
-  var MONTH_NAMES = ['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  var MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
+               'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+  var TIPOS = ['PUT', 'CALL'];
 
-  function fmtUsd(v) {
-    return 'US$ ' + Math.abs(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  function fmtUS(n) {
+    var neg = n < 0;
+    return (neg ? '-' : '+') + 'US$ ' + Math.abs(n).toFixed(2);
   }
 
-  function pnlColor(pnl, maxAbs) {
-    if (!maxAbs) maxAbs = 1;
-    var intensity = Math.min(1, Math.abs(pnl) / maxAbs);
-    var alpha = (0.25 + intensity * 0.7).toFixed(2);
-    return pnl >= 0 ? 'rgba(34,197,94,' + alpha + ')' : 'rgba(240,67,95,' + alpha + ')';
+  function fmtPrice(n) {
+    return 'US$ ' + Math.abs(n).toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
   }
 
+  function fmtDate(d) {
+    return String(d.getDate()).padStart(2, '0') + '/' + 
+           String(d.getMonth() + 1).padStart(2, '0') + '/' + 
+           d.getFullYear();
+  }
+
+  function colorForPnl(pnl, maxAbs) {
+    if (pnl === null || maxAbs === 0) return '#141d33';
+    var t = Math.min(1, Math.abs(pnl) / maxAbs);
+    if (pnl >= 0) {
+      // verde: escuro → claro
+      var g1 = [22, 101, 52], g2 = [74, 222, 128];
+      var r = Math.round(g1[0] + (g2[0] - g1[0]) * t),
+          g = Math.round(g1[1] + (g2[1] - g1[1]) * t),
+          b = Math.round(g1[2] + (g2[2] - g1[2]) * t);
+      return 'rgb(' + r + ',' + g + ',' + b + ')';
+    } else {
+      // vermelho: escuro → claro
+      var r1 = [127, 29, 43], r2 = [239, 68, 68];
+      var rr = Math.round(r1[0] + (r2[0] - r1[0]) * t),
+          rg = Math.round(r1[1] + (r2[1] - r1[1]) * t),
+          rb = Math.round(r1[2] + (r2[2] - r1[2]) * t);
+      return 'rgb(' + rr + ',' + rg + ',' + rb + ')';
+    }
+  }
+
+  // ─── Extrai data da operação ───
   function getOpDate(op) {
     var raw = op.data_operacao || op.data_abertura || op.exercicio || '';
     if (!raw) return null;
@@ -26,10 +58,12 @@
     return isNaN(d.getTime()) ? null : d;
   }
 
+  // ─── Obtém prêmio/resultado da operação ───
   function getPremio(op) {
     return parseFloat(op.premio_us || 0);
   }
 
+  // ─── Verifica se operação foi exercida ───
   function isExercised(op) {
     if (window.CryptoExerciseStatus && window.CryptoExerciseStatus.isActuallyExercised) {
       return window.CryptoExerciseStatus.isActuallyExercised(op);
@@ -38,7 +72,7 @@
   }
 
   // ─── Calcula estatísticas ───
-  function calcStats(ops, allOpsAtivo) {
+  function calcStats(ops, priceOps) {
     var totalOps = ops.length;
     var totalPremio = 0;
     var wins = 0;
@@ -51,352 +85,354 @@
 
     var winRate = totalOps > 0 ? (wins / totalOps * 100) : 0;
 
-    // Preço médio: usa o cálculo oficial do ModalPrecoMedioAtivo
+    // Preço médio: usa o cálculo oficial, opcionalmente limitado ao mês selecionado
     var precoMedio = 0;
     if (window.ModalPrecoMedioAtivo && typeof window.ModalPrecoMedioAtivo.computeData === 'function') {
-      var pmData = window.ModalPrecoMedioAtivo.computeData(_currentAtivo);
+      var pmData = window.ModalPrecoMedioAtivo.computeData(_currentAtivo, undefined, priceOps);
       if (pmData && pmData.pm > 0) precoMedio = pmData.pm;
     }
 
     return { totalOps: totalOps, totalPremio: totalPremio, winRate: winRate, precoMedio: precoMedio };
   }
 
-  // ─── Agrupa operacoes por mes/semana/dia ───
-  function groupByMonthWeekDay(ops) {
-    var months = {};
+  function getMonthOps(ops, monthIndex) {
+    return ops.filter(function (op) {
+      var date = getOpDate(op);
+      return date && date.getMonth() === monthIndex;
+    });
+  }
+
+  function setPeriodLabel(monthIndex) {
+    var label = document.getElementById('pmKpiPeriodLabel');
+    if (label) label.textContent = monthIndex === null ? 'P&L do Período' : 'P&L de ' + MESES[monthIndex];
+  }
+
+  function getPriceOpsAtMonthClose(allOps, year, monthIndex) {
+    var monthEnd = new Date(year, monthIndex + 1, 0, 23, 59, 59, 999);
+    return allOps.filter(function (op) {
+      var date = getOpDate(op);
+      return date && date <= monthEnd;
+    });
+  }
+
+  function getOperationState(op) {
+    var status = String(op && op.status || '').toUpperCase();
+    var isOpen = status === 'ABERTA' || status === 'ABERTO';
+    return {
+      label: isOpen ? 'ABERTA' : 'FECHADA',
+      className: isOpen ? 'pm-operation-open' : 'pm-operation-closed',
+    };
+  }
+
+  // ─── Agrupa operações por dia do ano ───
+  function groupByDay(ops) {
+    var dayOpsMap = {}; // { date, ops, total }
+    var allPnls = [];
+
     ops.forEach(function (op) {
       var d = getOpDate(op);
       if (!d) return;
+      
       var mIdx = d.getMonth();
-      var mKey = MONTH_NAMES[mIdx];
-      if (!months[mKey]) months[mKey] = { index: mIdx, weeks: {} };
-
-      // Calcula semana ISO (simplificado: semana do ano)
-      var startOfYear = new Date(d.getFullYear(), 0, 1);
-      var dayOfYear = Math.floor((d - startOfYear) / 86400000) + 1;
-      var weekNum = Math.ceil(dayOfYear / 7);
-      var wKey = 'S' + weekNum;
-      if (!months[mKey].weeks[wKey]) months[mKey].weeks[wKey] = {};
-
-      var dayOfWeek = d.getDay(); // 0=dom, 1=seg...
-      var dayKey = dayOfWeek + '_' + d.getDate();
-      if (!months[mKey].weeks[wKey][dayKey]) {
-        months[mKey].weeks[wKey][dayKey] = { pnl: 0, ops: [], tipo: null };
+      var cellId = 'm' + mIdx + 'd' + d.getDate();
+      
+      if (!dayOpsMap[cellId]) {
+        dayOpsMap[cellId] = { date: d, ops: [], total: 0 };
       }
-      var cell = months[mKey].weeks[wKey][dayKey];
-      cell.pnl += getPremio(op);
-      cell.ops.push(op);
-      cell.tipo = (op.tipo || '').toLowerCase();
+      
+      var premio = getPremio(op);
+      dayOpsMap[cellId].ops.push(op);
+      dayOpsMap[cellId].total += premio;
+      allPnls.push(Math.abs(dayOpsMap[cellId].total));
     });
-    return months;
+
+    var maxAbs = Math.max.apply(null, allPnls.concat([1]));
+    return { dayOpsMap: dayOpsMap, maxAbs: maxAbs };
   }
 
   // ─── Render KPIs ───
   function renderKPIs(stats) {
     var el = function (id) { return document.getElementById(id); };
-    var pnlEl = el('pmKpiPnl');
-    var opsEl = el('pmKpiOps');
-    var wrEl = el('pmKpiWinRate');
-    var gaugeEl = el('pmKpiGauge');
-    var pmEl = el('pmKpiPrecoMedio');
+    
+    el('pmKpiPnl').textContent = (stats.totalPremio >= 0 ? '' : '-') + fmtUS(stats.totalPremio);
+    el('pmKpiOps').textContent = String(stats.totalOps);
+    el('pmKpiWinRate').textContent = stats.winRate.toFixed(0) + '%';
 
-    if (pnlEl) {
-      var sign = stats.totalPremio >= 0 ? '' : '-';
-      pnlEl.textContent = sign + fmtUsd(stats.totalPremio);
-      pnlEl.className = 'pm-kpi-value ' + (stats.totalPremio >= 0 ? 'pm-kpi-gold' : '');
-      pnlEl.style.color = stats.totalPremio >= 0 ? '#f2a900' : '#f0435f';
-    }
-    if (opsEl) opsEl.textContent = String(stats.totalOps);
-    if (wrEl) wrEl.textContent = stats.winRate.toFixed(0) + '%';
-    if (gaugeEl) gaugeEl.style.setProperty('--pm-wr', stats.winRate.toFixed(0));
-    if (pmEl) {
-      if (stats.precoMedio > 0) {
-        // Usa renderPmLink para exibir o valor como link clicável (mesmo estilo do termômetro)
-        if (window.CryptoUtils && window.CryptoUtils.renderPmLink) {
-          pmEl.innerHTML = window.CryptoUtils.renderPmLink(_currentAtivo, stats.precoMedio);
-          // Sobrescreve o onclick do link para fechar o modal atual antes de abrir o Raio-X
-          var pmLink = pmEl.querySelector('.crypto-pm-link');
-          if (pmLink) {
-            pmLink.onclick = function(e) {
-              e.stopPropagation();
-              if (_modalInstance) _modalInstance.hide();
-              setTimeout(function() {
-                if (window.ModalPrecoMedioAtivo && typeof window.ModalPrecoMedioAtivo.openModal === 'function') {
-                  window.ModalPrecoMedioAtivo.openModal(_currentAtivo);
-                }
-              }, 300);
-            };
+    var pmLink = el('pmPriceMedioLink');
+    if (pmLink) {
+      pmLink.textContent = fmtPrice(stats.precoMedio);
+      pmLink.onclick = function(e) {
+        e.stopPropagation();
+        closeModal();
+        setTimeout(function() {
+          if (window.ModalPrecoMedioAtivo && typeof window.ModalPrecoMedioAtivo.openModal === 'function') {
+            window.ModalPrecoMedioAtivo.openModal(_currentAtivo);
           }
-        } else {
-          pmEl.textContent = fmtUsd(stats.precoMedio);
-        }
-      } else {
-        pmEl.textContent = '—';
-      }
-      // Mantém o card clicável como fallback (clique fora do link)
-      var pmCard = pmEl.closest('.pm-kpi');
-      if (pmCard) {
-        pmCard.style.cursor = 'pointer';
-        pmCard.title = 'Clique para ver detalhes do preco medio';
-        pmCard.onclick = function() {
-          // Fecha o modal atual
-          if (_modalInstance) _modalInstance.hide();
-          // Abre modal Raio-X do Preço Médio
-          setTimeout(function() {
-            if (window.ModalPrecoMedioAtivo && typeof window.ModalPrecoMedioAtivo.openModal === 'function') {
-              window.ModalPrecoMedioAtivo.openModal(_currentAtivo);
-            }
-          }, 300);
-        };
-      }
+        }, 300);
+      };
     }
-  }
-
-  // ─── Render Legend ───
-  function renderLegend(maxAbs) {
-    var scale = document.getElementById('pmLegendScale');
-    if (!scale) return;
-    scale.innerHTML = '';
-    var steps = [-1, -0.6, -0.25, 0, 0.25, 0.6, 1];
-    steps.forEach(function (s) {
-      var sp = document.createElement('span');
-      sp.style.background = pnlColor(s * maxAbs, maxAbs);
-      scale.appendChild(sp);
-    });
   }
 
   // ─── Render Heatmap ───
-  function renderHeatmap(ops) {
-    var container = document.getElementById('pmHeatmapGrid');
-    if (!container) return;
-    container.innerHTML = '';
+  function renderHeatmap(ops, allOpsAtivo, year) {
+    var groupData = groupByDay(ops);
+    _dayOpsMap = groupData.dayOpsMap;
+    var maxAbs = groupData.maxAbs;
 
-    var months = groupByMonthWeekDay(ops);
-    // Calcula maxAbs para escala de cor
-    var maxAbs = 1;
-    Object.keys(months).forEach(function (mKey) {
-      var m = months[mKey];
-      Object.keys(m.weeks).forEach(function (wKey) {
-        Object.keys(m.weeks[wKey]).forEach(function (dKey) {
-          var pnl = Math.abs(m.weeks[wKey][dKey].pnl);
-          if (pnl > maxAbs) maxAbs = pnl;
+    var heatWrap = document.getElementById('pmHeatWrap');
+    if (!heatWrap) return;
+
+    // Agrupa por mês
+    var monthsData = {};
+    Object.keys(_dayOpsMap).forEach(function (cellId) {
+      var info = _dayOpsMap[cellId];
+      var mIdx = info.date.getMonth();
+      var mName = MESES[mIdx];
+      
+      if (!monthsData[mName]) {
+        monthsData[mName] = { mIdx: mIdx, cells: [] };
+      }
+      
+      var tipo = info.ops[0] && (info.ops[0].tipo || '').toUpperCase();
+      var exercida = info.ops[0] && isExercised(info.ops[0]);
+      var multi = info.ops.length > 1;
+      
+      monthsData[mName].cells.push({
+        id: cellId,
+        date: info.date,
+        pnl: info.total,
+        tipo: tipo || 'PUT',
+        exercida: exercida,
+        multi: multi
+      });
+    });
+
+    // Ordena meses do mais recente para o mais antigo
+    var sortedMonths = Object.keys(monthsData).sort(function (a, b) {
+      return monthsData[b].mIdx - monthsData[a].mIdx;
+    });
+
+    heatWrap.innerHTML = sortedMonths.map(function (mName) {
+      var m = monthsData[mName];
+      var cells = m.cells.map(function (c) {
+        var bg = colorForPnl(c.pnl, maxAbs);
+        var ringClass = c.exercida ? (c.tipo === 'PUT' ? 'pm-exercida-put' : 'pm-exercida-call') : '';
+        var multiClass = c.multi ? 'pm-multi' : '';
+        
+        return '<div class="pm-cell ' + ringClass + ' ' + multiClass + '" ' +
+          'style="background:' + bg + '" ' +
+          'data-id="' + c.id + '" ' +
+          'data-date="' + fmtDate(c.date) + '" ' +
+          'data-tipo="' + c.tipo + '" ' +
+          'data-exercida="' + c.exercida + '" ' +
+          'data-pnl="' + c.pnl + '" ' +
+          'data-multi="' + c.multi + '"></div>';
+      }).join('');
+      
+      return '<div class="pm-heat-month" data-month="' + m.mIdx + '">' +
+        '<button type="button" class="pm-month-name" data-month="' + m.mIdx + '" aria-pressed="false" title="Filtrar por ' + mName + '">' +
+          '<span>' + mName + '</span><span class="pm-month-link-icon" aria-hidden="true">↗</span>' +
+        '</button>' +
+        '<div class="pm-heat-cells">' + cells + '</div>' +
+      '</div>';
+    }).join('');
+
+    // Attach event listeners
+    var tooltip = document.getElementById('pm-tooltip');
+    var ttHead = document.getElementById('pmTtHead');
+    var ttBody = document.getElementById('pmTtBody');
+
+    var resetMonth = document.getElementById('pmResetMonth');
+    if (resetMonth) {
+      resetMonth.onclick = function () {
+        heatWrap.querySelectorAll('.pm-month-name.pm-selected').forEach(function (selected) {
+          selected.classList.remove('pm-selected');
+          selected.setAttribute('aria-pressed', 'false');
         });
-      });
-    });
-
-    renderLegend(maxAbs);
-
-    // Ordena meses em ordem decrescente (mais recente primeiro)
-    var sortedMonths = Object.keys(months).sort(function (a, b) {
-      return months[b].index - months[a].index;
-    });
-
-    if (!sortedMonths.length) {
-      container.innerHTML = '<div style="text-align:center;color:#8993a8;padding:30px 0;">Nenhuma operacao encontrada para este ativo.</div>';
-      return;
+        setPeriodLabel(null);
+        renderKPIs(calcStats(ops));
+        closeDayDetail();
+        tooltip.style.display = 'none';
+      };
     }
 
-    sortedMonths.forEach(function (mKey) {
-      var m = months[mKey];
-      var row = document.createElement('div');
-      row.className = 'pm-heatmap-month';
+    heatWrap.querySelectorAll('.pm-month-name').forEach(function (monthEl) {
+      monthEl.addEventListener('click', function () {
+        var monthIndex = parseInt(monthEl.getAttribute('data-month'), 10);
+        var monthOps = getMonthOps(ops, monthIndex);
+        var monthCloseOps = getPriceOpsAtMonthClose(allOpsAtivo, year, monthIndex);
 
-      var label = document.createElement('div');
-      label.className = 'pm-heatmap-month-label';
-      label.textContent = mKey;
-      row.appendChild(label);
+        heatWrap.querySelectorAll('.pm-month-name.pm-selected').forEach(function (selected) {
+          selected.classList.remove('pm-selected');
+          selected.setAttribute('aria-pressed', 'false');
+        });
+        monthEl.classList.add('pm-selected');
+        monthEl.setAttribute('aria-pressed', 'true');
 
-      var weeksWrap = document.createElement('div');
-      weeksWrap.className = 'pm-heatmap-weeks';
+        setPeriodLabel(monthIndex);
+        renderKPIs(calcStats(monthOps, monthCloseOps));
+        closeDayDetail();
+        tooltip.style.display = 'none';
+      });
+    });
 
-      // Ordena semanas
-      var sortedWeeks = Object.keys(m.weeks).sort(function (a, b) {
-        return parseInt(a.replace('S', '')) - parseInt(b.replace('S', ''));
+    heatWrap.querySelectorAll('.pm-cell:not(.pm-empty)').forEach(function (c) {
+      c.addEventListener('mousemove', function(e) {
+        var tipo = c.getAttribute('data-tipo');
+        var exercida = c.getAttribute('data-exercida') === 'true';
+        var pnl = parseFloat(c.getAttribute('data-pnl'));
+        var multi = c.getAttribute('data-multi') === 'true';
+        var date = c.getAttribute('data-date');
+        var info = _dayOpsMap[c.getAttribute('data-id')];
+        var operationState = getOperationState(info && info.ops[0]);
+
+        ttHead.className = 'pm-tt-head pm-' + tipo.toLowerCase();
+        ttHead.innerHTML = (tipo === 'PUT' ? '🔵' : '🔷') + ' Operação ' + tipo;
+
+        ttBody.innerHTML = 
+          '<div class="pm-tt-line"><span class="pm-tt-k">📅 Data</span><span class="pm-tt-v">' + date + '</span></div>' +
+          '<div class="pm-tt-line"><span class="pm-tt-k">🏷️ Tipo</span><span class="pm-tt-v">' + tipo + '</span></div>' +
+          '<div class="pm-tt-line"><span class="pm-tt-k">📌 Situação</span><span class="pm-tt-badge ' + operationState.className + '">' + operationState.label + '</span></div>' +
+          '<div class="pm-tt-line"><span class="pm-tt-k">⚙️ Status</span><span class="pm-tt-badge ' + (exercida ? 'pm-exercida' : 'pm-nao') + '">' + (exercida ? 'EXERCIDA' : 'NÃO EXERCIDA') + '</span></div>' +
+          (multi ? '<div class="pm-tt-line"><span class="pm-tt-k">📦 Operações</span><span class="pm-tt-v">2+</span></div>' : '') +
+          '<div class="pm-tt-line"><span class="pm-tt-k">💰 Resultado</span><span class="pm-tt-v ' + (pnl >= 0 ? 'pm-pos' : 'pm-neg') + '">' + fmtUS(pnl) + '</span></div>';
+
+        tooltip.style.display = 'block';
+        var x = e.clientX + 16, y = e.clientY + 16;
+        if (x + 230 > window.innerWidth) x = e.clientX - 230;
+        tooltip.style.left = x + 'px';
+        tooltip.style.top = y + 'px';
       });
 
-      sortedWeeks.forEach(function (wKey) {
-        var group = document.createElement('div');
-        group.className = 'pm-heatmap-week-group';
-
-        // Renderiza apenas dias com operações (sem cells vazias)
-        for (var dow = 0; dow < 7; dow++) {
-          var found = null;
-          Object.keys(m.weeks[wKey]).forEach(function (dKey) {
-            if (parseInt(dKey.split('_')[0]) === dow) found = m.weeks[wKey][dKey];
-          });
-
-          if (!found) continue; // pula dias sem operação
-
-          var cell = document.createElement('div');
-          cell.className = 'pm-heatmap-cell';
-          // Cor de fundo = intensidade do P&L (verde lucro / vermelho prejuízo)
-          cell.style.background = pnlColor(found.pnl, maxAbs);
-          // Borda dourada para operações exercidas
-          var op0 = found.ops[0];
-          var exercida = op0 && (op0.exercicio_status || '').toUpperCase() === 'SIM';
-          if (exercida) {
-            cell.style.outline = '2px solid #f2a900';
-            cell.style.outlineOffset = '-1px';
-            cell.style.zIndex = '1';
-          }
-          // Tooltip customizado (data-* attributes para CSS tooltip)
-          var tipoLabel = found.tipo === 'call' ? 'CALL' : found.tipo === 'put' ? 'PUT' : (found.tipo || '').toUpperCase();
-          var opDate = op0 ? (op0.data_operacao || op0.exercicio || '') : '';
-          var dateStr = '';
-          if (opDate) {
-            var parts = opDate.split('-');
-            dateStr = parts.length === 3 ? parts[2] + '/' + parts[1] + '/' + parts[0] : opDate;
-          }
-          var exLabel = exercida ? ' • EXERCIDA' : '';
-          var tooltipText = dateStr + ' • ' + tipoLabel + exLabel + '\n' + (found.pnl >= 0 ? '+' : '') + fmtUsd(found.pnl);
-          cell.setAttribute('data-pm-tip', tooltipText);
-          cell.addEventListener('mouseenter', showTooltip);
-          cell.addEventListener('mouseleave', hideTooltip);
-          (function(cellData, monthName, weekKey) {
-            cell.addEventListener('click', function() { showCellDetail(cellData, monthName, weekKey); });
-          })(found, mKey, wKey);
-          group.appendChild(cell);
-        }
-        weeksWrap.appendChild(group);
+      c.addEventListener('mouseleave', function() {
+        tooltip.style.display = 'none';
       });
 
-      row.appendChild(weeksWrap);
-      container.appendChild(row);
+      c.addEventListener('click', function() {
+        var id = c.getAttribute('data-id');
+        var info = _dayOpsMap[id];
+        if (!info) return;
+
+        // Remove seleção anterior
+        heatWrap.querySelectorAll('.pm-cell.pm-selected').forEach(function(x) {
+          x.classList.remove('pm-selected');
+        });
+        c.classList.add('pm-selected');
+
+        document.getElementById('pmDdDate').textContent = fmtDate(info.date);
+        var totalEl = document.getElementById('pmDdTotal');
+        totalEl.textContent = 'Total do dia: ' + fmtUS(info.total);
+        totalEl.className = 'pm-dd-total ' + (info.total >= 0 ? 'pm-pos' : 'pm-neg');
+
+        document.getElementById('pmDdOps').innerHTML = info.ops.map(function(o) {
+          var tipo = (o.tipo || '').toUpperCase();
+          var exercida = isExercised(o);
+          var operationState = getOperationState(o);
+          var valor = getPremio(o);
+          return '<div class="pm-dd-op">' +
+            '<span class="pm-dd-tipo-badge pm-' + tipo.toLowerCase() + '">' + (tipo === 'PUT' ? '🔵' : '🔷') + ' ' + tipo + '</span>' +
+            '<span class="pm-dd-operation-state ' + operationState.className + '">' + operationState.label + '</span>' +
+            '<span class="pm-dd-status ' + (exercida ? 'pm-ex' : 'pm-nex') + '">' + (exercida ? 'EXERCIDA' : 'NÃO EXERCIDA') + '</span>' +
+            '<span class="pm-dd-valor ' + (valor >= 0 ? 'pm-pos' : 'pm-neg') + '">' + fmtUS(valor) + '</span>' +
+          '</div>';
+        }).join('');
+
+        document.getElementById('pmDayDetail').classList.add('pm-open');
+        tooltip.style.display = 'none';
+      });
     });
   }
 
-  // ─── Tooltip customizado ───
-  var _tooltipEl = null;
-
-  function showTooltip(e) {
-    var text = e.target.getAttribute('data-pm-tip');
-    if (!text) return;
-    if (!_tooltipEl) {
-      _tooltipEl = document.createElement('div');
-      _tooltipEl.className = 'pm-custom-tooltip';
-      document.body.appendChild(_tooltipEl);
+  // ─── Close day detail ───
+  function closeDayDetail() {
+    var dayDetail = document.getElementById('pmDayDetail');
+    if (dayDetail) {
+      dayDetail.classList.remove('pm-open');
+      var heatWrap = document.getElementById('pmHeatWrap');
+      if (heatWrap) {
+        heatWrap.querySelectorAll('.pm-cell.pm-selected').forEach(function(x) {
+          x.classList.remove('pm-selected');
+        });
+      }
     }
-    _tooltipEl.textContent = text;
-    _tooltipEl.style.display = 'block';
-    positionTooltip(e);
   }
 
-  function hideTooltip() {
-    if (_tooltipEl) _tooltipEl.style.display = 'none';
-  }
-
-  function positionTooltip(e) {
-    if (!_tooltipEl) return;
-    var rect = e.target.getBoundingClientRect();
-    _tooltipEl.style.left = (rect.left + rect.width / 2) + 'px';
-    _tooltipEl.style.top = (rect.top - 8) + 'px';
-  }
-
-  // ─── Detalhe ao clicar na cell ───
-  function showCellDetail(cellData, monthName, weekKey) {
-    if (!cellData || !cellData.ops || !cellData.ops.length) return;
-    var op = cellData.ops[0]; // primeira operação do dia
-    var tipo = (op.tipo || '').toUpperCase();
-    var strike = parseFloat(op.strike || 0);
-    var premio = getPremio(op);
-    var exercido = isExercised(op);
-    var tipoLabel = tipo === 'CALL' && exercido ? 'CALL EXERCIDA' : tipo === 'PUT' && exercido ? 'PUT EXERCIDA' : tipo;
-    var d = getOpDate(op);
-    var dataStr = d ? d.toLocaleDateString('pt-BR') : '—';
-    var pnl = cellData.pnl;
-    var pnlClass = pnl >= 0 ? 'lucro' : 'prejuizo';
-    var pnlLabel = pnl >= 0 ? 'Lucro' : 'Prejuizo';
-    var pnlSign = pnl >= 0 ? '+' : '-';
-
-    var html = '<div class="pm-detail-overlay" id="pmDetailOverlay">';
-    html += '<div class="pm-detail-content">';
-    html += '<div class="pm-detail-header"><h5>' + dataStr + ' &middot; ' + tipoLabel + '</h5><button class="pm-detail-close" id="pmDetailClose">&times;</button></div>';
-    html += '<div class="pm-detail-grid">';
-    html += '<div class="pm-detail-item"><div class="pm-detail-label">Data</div><div class="pm-detail-value">' + dataStr + '</div></div>';
-    html += '<div class="pm-detail-item"><div class="pm-detail-label">Tipo</div><div class="pm-detail-value" style="color:' + (tipo === 'CALL' ? '#22c55e' : '#f0435f') + '">' + tipoLabel + '</div></div>';
-    html += '<div class="pm-detail-item"><div class="pm-detail-label">Strike</div><div class="pm-detail-value" style="color:#f2a900">' + fmtUsd(strike) + '</div></div>';
-    html += '<div class="pm-detail-item"><div class="pm-detail-label">Premio</div><div class="pm-detail-value" style="color:#22c55e">' + fmtUsd(premio) + '</div></div>';
-    html += '<div class="pm-detail-item"><div class="pm-detail-label">Periodo</div><div class="pm-detail-value">' + monthName + ' &middot; ' + weekKey + '</div></div>';
-    html += '<div class="pm-detail-item"><div class="pm-detail-label">Exercicio</div><div class="pm-detail-value">' + (exercido ? '<span style="color:#f0435f">SIM</span>' : '<span style="color:#22c55e">NAO</span>') + '</div></div>';
-    html += '</div>';
-    html += '<div class="pm-detail-resultado ' + pnlClass + '">' + pnlLabel + ': ' + pnlSign + fmtUsd(pnl) + '</div>';
-    html += '</div></div>';
-
-    // Remove overlay anterior se existir
-    var old = document.getElementById('pmDetailOverlay');
-    if (old) old.remove();
-
-    document.body.insertAdjacentHTML('beforeend', html);
-    document.getElementById('pmDetailClose').addEventListener('click', function() {
-      document.getElementById('pmDetailOverlay').remove();
-    });
-    document.getElementById('pmDetailOverlay').addEventListener('click', function(e) {
-      if (e.target === this) this.remove();
-    });
-  }
-
-  // ─── Open ───
-  function open(ativo) {
+  // ─── Open Modal ───
+  function openModal(ativo) {
     _currentAtivo = (ativo || 'BTC').toUpperCase();
 
-    // Titulo
-    var titleEl = document.getElementById('pmModalTitle');
-    if (titleEl) titleEl.textContent = _currentAtivo;
-
-    // Busca última PUT exercida do backend se não estiver no cache
-    var cache = (window.VisaoGeralCrypto && window.VisaoGeralCrypto._cachedPutExercida) || {};
-    if (!cache[_currentAtivo]) {
-      var apiBase = window.API_BASE || '';
-      fetch(apiBase + '/api/crypto/ultima-put-exercida?ativo=' + _currentAtivo)
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-          if (data) {
-            if (!window.VisaoGeralCrypto) window.VisaoGeralCrypto = {};
-            if (!window.VisaoGeralCrypto._cachedPutExercida) window.VisaoGeralCrypto._cachedPutExercida = {};
-            window.VisaoGeralCrypto._cachedPutExercida[_currentAtivo] = data;
-          }
-          _renderModal();
+    // Cria overlay se não existir
+    if (!_modalOverlay) {
+      var container = document.getElementById('pmModalContainer');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'pmModalContainer';
+        document.body.appendChild(container);
+      }
+      
+      // Carrega HTML da modal
+      fetch('../html/modal-preco-medio-crypto.html', { cache: 'no-store' })
+        .then(function(r) { return r.text(); })
+        .then(function(html) {
+          container.innerHTML = html;
+          _modalOverlay = document.getElementById('pmModalOverlay');
+          _attachEventListeners();
+          _render();
         })
-        .catch(function() { _renderModal(); });
+        .catch(function() {
+          console.error('Erro ao carregar modal');
+        });
     } else {
-      _renderModal();
+      _render();
     }
 
-    function _renderModal() {
+    function _render() {
+      // Título
+      document.getElementById('pmModalTitle').textContent = '🗓️ Mapa de calor anual — ' + _currentAtivo;
+
+      // Operações do ano
       var allOpsAtivo = (window.cryptoOperacoes || []).filter(function (op) {
         return (op.ativo || '').toUpperCase() === _currentAtivo;
       });
+      
       var year = new Date().getFullYear();
       var ops = allOpsAtivo.filter(function (op) {
         var d = getOpDate(op);
         return d && d.getFullYear() === year;
       });
-      var stats = calcStats(ops, allOpsAtivo);
-      renderKPIs(stats);
-      renderHeatmap(ops);
 
-      var modalEl = document.getElementById('modalPrecoMedioCrypto');
-      if (modalEl && window.bootstrap) {
-        if (!_modalInstance) {
-          _modalInstance = new bootstrap.Modal(modalEl);
-        }
-        _modalInstance.show();
-      }
+      var stats = calcStats(ops);
+      setPeriodLabel(null);
+      renderKPIs(stats);
+      renderHeatmap(ops, allOpsAtivo, year);
+
+      _modalOverlay.style.display = 'flex';
     }
+  }
+
+  // ─── Close Modal ───
+  function closeModal() {
+    closeDayDetail();
+    if (_modalOverlay) {
+      _modalOverlay.style.display = 'none';
+    }
+  }
+
+  // ─── Attach Event Listeners ───
+  function _attachEventListeners() {
+    if (!_modalOverlay) return;
+
+    document.getElementById('pmModalClose').onclick = closeModal;
+    document.getElementById('pmDdClose').onclick = closeDayDetail;
+
+    _modalOverlay.onclick = function(e) {
+      if (e.target === _modalOverlay) closeModal();
+    };
   }
 
   // ─── Init ───
   function init() {
-    // Carrega HTML do modal se nao estiver no DOM
-    var modalEl = document.getElementById('modalPrecoMedioCrypto');
-    if (!modalEl) {
-      var container = document.getElementById('modalPrecoMedioCryptoContainer');
-      if (container) {
-        fetch('modal-preco-medio-crypto.html', { cache: 'no-store' })
-          .then(function (r) { return r.text(); })
-          .then(function (html) { container.innerHTML = html; });
-      }
-    }
+    // Nada a fazer no init, tudo é carregado sob demanda
   }
 
   if (document.readyState === 'loading') {
@@ -405,6 +441,6 @@
     init();
   }
 
-  window.ModalPrecoMedio = { open: open };
+  window.ModalPrecoMedio = { open: openModal, close: closeModal };
 
 })();

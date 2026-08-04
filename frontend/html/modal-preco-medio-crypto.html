@@ -1,59 +1,90 @@
-<div class="modal modal-blur fade" id="modalPrecoMedioCrypto" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content pm-modal-content">
-            <!-- Header -->
-            <div class="modal-header pm-header">
-                <div class="pm-header-left">
-                    <h5 class="modal-title pm-title" id="pmModalTitle">BTC</h5>
-                </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+<div class="pm-modal-overlay" id="pmModalOverlay" style="display: none;">
+    <div class="pm-modal-content">
+        <!-- Header -->
+        <div class="pm-modal-head">
+            <h2 id="pmModalTitle">BTC</h2>
+            <button type="button" class="pm-modal-close" id="pmModalClose">✕</button>
+        </div>
+
+        <!-- KPI Row -->
+        <div class="pm-kpi-row">
+            <div class="pm-kpi">
+                <div class="pm-kpi-label" id="pmKpiPeriodLabel">P&L do Período</div>
+                <div class="pm-kpi-value" id="pmKpiPnl">US$ 0,00</div>
+                <div class="pm-kpi-desc">Soma dos resultados de cada operação do período.</div>
             </div>
-
-            <!-- Body -->
-            <div class="modal-body pm-body">
-                <!-- KPI Row -->
-                <div class="pm-kpi-row">
-                    <div class="pm-kpi pm-kpi-hero">
-                        <div class="pm-kpi-label">P&L do Periodo</div>
-                        <div class="pm-kpi-value pm-kpi-gold" id="pmKpiPnl">US$ 0.00</div>
-                        <div class="pm-kpi-hint">Soma dos resultados de cada operacao do periodo.</div>
-                    </div>
-                    <div class="pm-kpi">
-                        <div class="pm-kpi-label">Operacoes</div>
-                        <div class="pm-kpi-value" id="pmKpiOps">0</div>
-                    </div>
-                    <div class="pm-kpi">
-                        <div class="pm-kpi-label">Taxa de Acerto</div>
-                        <div class="pm-kpi-gauge" id="pmKpiGauge">
-                            <span id="pmKpiWinRate">0%</span>
-                        </div>
-                    </div>
-                    <div class="pm-kpi">
-                        <div class="pm-kpi-label">Preco Medio</div>
-                        <div class="pm-kpi-value" id="pmKpiPrecoMedio">US$ 0.00</div>
-                    </div>
-                </div>
-
-                <!-- Heatmap -->
-                <div class="pm-heatmap-section">
-                    <div class="pm-heatmap-title">Mapa de calor anual</div>
-                    <div class="pm-heatmap-subtitle">Cada celula e um dia. Cor e intensidade = P&L daquele dia. Clique para ver o detalhe.</div>
-                    <div class="pm-heatmap-legend">
-                        <span>Prejuizo</span>
-                        <span class="pm-legend-scale" id="pmLegendScale"></span>
-                        <span>Lucro</span>
-                    </div>
-                    <div id="pmHeatmapGrid" class="pm-heatmap-grid"></div>
-                </div>
-
-                <!-- Footer legend -->
-                <div class="pm-footer-legend">
-                    <span><span class="pm-legend-dot" style="background:#22c55e"></span> Lucro</span>
-                    <span><span class="pm-legend-dot" style="background:#f0435f"></span> Prejuizo</span>
-                    <span><span class="pm-legend-dot" style="background:#1a2233;outline:2px solid #f2a900;outline-offset:-1px"></span> Exercida</span>
-                    <span class="pm-footer-hint">Passe o mouse para detalhes • Clique para expandir</span>
+            <div class="pm-kpi pm-kpi-center">
+                <div class="pm-kpi-label">Operações</div>
+                <div class="pm-kpi-value" id="pmKpiOps" style="color: var(--pm-text);">0</div>
+            </div>
+            <div class="pm-kpi pm-kpi-center">
+                <div class="pm-kpi-label">Taxa de Acerto</div>
+                <div class="pm-kpi-value" id="pmKpiWinRate" style="color: var(--pm-green);">0%</div>
+            </div>
+            <div class="pm-kpi pm-kpi-center pm-kpi-price">
+                <div class="pm-kpi-label">Preço Médio</div>
+                <div class="pm-kpi-value">
+                    <span class="pm-price-link" id="pmPriceMedioLink">US$ 0.00</span>
                 </div>
             </div>
         </div>
+
+        <!-- Legend Box -->
+        <div class="pm-legend-box">
+            <div class="pm-legend-row">
+                <span class="pm-legend-title">P&L (cor de fundo)</span>
+                <div class="pm-legend-item">
+                    <div class="pm-legend-grad"></div>
+                </div>
+                <span>Prejuízo forte → Prejuízo leve → sem operação → Lucro leve → Lucro forte</span>
+            </div>
+            <div class="pm-legend-row">
+                <span class="pm-legend-title">Tipo (anel)</span>
+                <div class="pm-legend-item">
+                    <div class="pm-legend-ring" style="border-color: var(--pm-put);"></div>
+                    PUT exercida
+                </div>
+                <div class="pm-legend-item">
+                    <div class="pm-legend-ring" style="border-color: var(--pm-call);"></div>
+                    CALL exercida
+                </div>
+                <div class="pm-legend-item">
+                    <div class="pm-legend-swatch" style="background: #166534;"></div>
+                    Sem anel = não exercida
+                </div>
+            </div>
+            <div class="pm-legend-row">
+                <span class="pm-legend-title">Outros</span>
+                <div class="pm-legend-item">
+                    <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--pm-orange); display: inline-block; border: 1px solid var(--pm-bg);"></span>
+                    Múltiplas operações no dia
+                </div>
+            </div>
+        </div>
+
+        <div class="pm-heat-toolbar">
+            <span class="pm-heat-toolbar-label">Selecione um mês para filtrar os cards</span>
+            <button type="button" class="pm-period-reset" id="pmResetMonth">↺ Todos os meses</button>
+        </div>
+        <div class="pm-heat-wrap" id="pmHeatWrap"></div>
+
+        <!-- Day Detail Panel (footer) -->
+        <div class="pm-day-detail" id="pmDayDetail">
+            <div class="pm-dd-head">
+                <div>
+                    <div class="pm-dd-date" id="pmDdDate">—</div>
+                    <div class="pm-dd-total" id="pmDdTotal">—</div>
+                </div>
+                <button type="button" class="pm-dd-close" id="pmDdClose">✕</button>
+            </div>
+            <div class="pm-dd-ops" id="pmDdOps"></div>
+        </div>
+
     </div>
+</div>
+
+<!-- Custom Tooltip -->
+<div id="pm-tooltip">
+    <div class="pm-tt-head" id="pmTtHead"></div>
+    <div class="pm-tt-body" id="pmTtBody"></div>
 </div>

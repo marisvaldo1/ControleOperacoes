@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Mapa de Calor — Sugestões</title>
+<style>
+  :root{
+    --bg:#080b14; --card:#0d1424; --card2:#111a2e; --border:#1e2a42;
+    --muted:#7890b0; --text:#e8eef8;
+    --green:#22c55e; --red:#ef4444; --orange:#f59e0b;
+    --put:#3b82f6; --call:#06b6d4;
+    --mono:'SFMono-Regular',Consolas,'Roboto Mono',monospace;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:24px 16px 60px;}
+  .wrap{max-width:820px;margin:0 auto;}
+
+  .modal{ background:var(--card); border:1px solid var(--border); border-radius:18px; padding:22px 26px; }
+  .modal-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+  .modal-head h2{ margin:0; font-size:1.15rem; }
+  .close{ width:32px;height:32px;border-radius:9px;background:var(--card2);border:1px solid var(--border);color:var(--muted);font-size:.9rem; }
+
+  .kpi-row{ display:grid; grid-template-columns:1.3fr 1fr 1fr; gap:14px; margin-bottom:14px; }
+  .kpi{ background:var(--card2); border:1px solid var(--border); border-radius:12px; padding:14px 16px; }
+  .kpi .l{ font-size:.68rem; color:var(--muted); margin-bottom:6px; }
+  .kpi .v{ font-family:var(--mono); font-weight:800; font-size:1.4rem; color:var(--orange); }
+  .kpi .d{ font-size:.64rem; color:var(--muted); margin-top:4px; }
+  .kpi.center{ text-align:center; }
+  .kpi .v.center-v{ font-size:1.6rem; }
+
+  .pm-card{ background:var(--card2); border:1px solid var(--border); border-radius:12px; padding:14px 16px; text-align:center; margin-bottom:22px; }
+  .pm-card .l{ font-size:.68rem; color:var(--muted); margin-bottom:6px; }
+  .pm-card .v{ font-family:var(--mono); font-weight:800; font-size:1.3rem; color:var(--blue,#60a5fa); }
+
+  .section-title{ font-size:1rem; font-weight:800; margin:0 0 4px; }
+  .section-sub{ font-size:.72rem; color:var(--muted); margin:0 0 16px; }
+
+  /* ── Legenda nova ── */
+  .legend-box{ background:var(--card2); border:1px solid var(--border); border-radius:12px; padding:12px 16px; margin-bottom:18px; display:flex; flex-direction:column; gap:10px; }
+  .legend-row{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; font-size:.7rem; color:var(--muted); }
+  .legend-row .lr-title{ font-weight:800; color:var(--text); min-width:110px; }
+  .legend-item{ display:flex; align-items:center; gap:6px; }
+  .swatch{ width:16px; height:16px; border-radius:5px; flex-shrink:0; }
+  .ring-demo{ width:16px; height:16px; border-radius:5px; border:2.5px solid; background:#1c2740; flex-shrink:0; }
+  .grad-swatch{ width:70px; height:14px; border-radius:4px; background:linear-gradient(90deg,#7f1d2b,#b91c3c,#ef4444,#1c2740,#166534,#22c55e,#4ade80); }
+
+  /* ── Heatmap ── */
+  .heat-wrap{ background:var(--card2); border:1px solid var(--border); border-radius:14px; padding:16px 18px; }
+  .heat-month{ display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .heat-month .mname{ font-size:.7rem; color:var(--muted); width:60px; flex-shrink:0; }
+  .heat-cells{ display:flex; gap:5px; flex-wrap:wrap; }
+  .cell{
+    width:20px; height:20px; border-radius:5px; cursor:pointer; position:relative;
+    border:2.5px solid transparent; transition:transform .1s ease;
+  }
+  .cell:hover{ transform:scale(1.25); z-index:5; }
+  .cell.exercida-put{ border-color:var(--put); }
+  .cell.exercida-call{ border-color:var(--call); }
+  .cell.multi::after{
+    content:''; position:absolute; bottom:-3px; right:-3px; width:6px; height:6px; border-radius:50%;
+    background:#fff; border:1px solid var(--bg);
+  }
+  .cell.empty{ background:#141d33; cursor:default; }
+  .cell.empty:hover{ transform:none; }
+
+  .foot-row{ display:flex; justify-content:space-between; margin-top:12px; font-size:.68rem; color:var(--muted); }
+
+  /* ── Painel expandido do dia (ao clicar) ── */
+  .cell.selected{ outline:2px solid #fff; outline-offset:1px; }
+  .day-detail{
+    display:none; margin-top:16px; background:var(--card2); border:1px solid var(--border); border-radius:14px;
+    overflow:hidden; animation:ddIn .18s ease;
+  }
+  .day-detail.open{ display:block; }
+  @keyframes ddIn{ from{opacity:0; transform:translateY(-6px);} to{opacity:1; transform:translateY(0);} }
+  .dd-head{ display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:1px solid var(--border); }
+  .dd-date{ font-size:.9rem; font-weight:800; }
+  .dd-total{ font-family:var(--mono); font-size:.76rem; margin-top:3px; }
+  .dd-total.pos{ color:var(--green); } .dd-total.neg{ color:var(--red); }
+  .dd-close{ width:28px;height:28px;border-radius:8px;background:var(--card);border:1px solid var(--border);color:var(--muted);font-size:.8rem; }
+  .dd-ops{ padding:6px 18px 16px; display:flex; flex-direction:column; gap:8px; }
+  .dd-op{ display:flex; align-items:center; gap:10px; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:10px 14px; }
+  .dd-op .dd-tipo-badge{ font-size:.62rem; font-weight:800; padding:3px 9px; border-radius:6px; }
+  .dd-op .dd-tipo-badge.put{ background:rgba(59,130,246,.16); color:var(--put); }
+  .dd-op .dd-tipo-badge.call{ background:rgba(6,182,212,.16); color:var(--call); }
+  .dd-op .dd-status{ font-size:.6rem; font-weight:800; padding:3px 9px; border-radius:6px; }
+  .dd-op .dd-status.ex{ background:rgba(245,158,11,.16); color:var(--orange); }
+  .dd-op .dd-status.nex{ background:rgba(255,255,255,.06); color:var(--muted); }
+  .dd-op .dd-valor{ margin-left:auto; font-family:var(--mono); font-weight:800; }
+  .dd-op .dd-valor.pos{ color:var(--green); } .dd-op .dd-valor.neg{ color:var(--red); }
+
+  /* ── Tooltip customizado ── */
+  #tooltip{
+    position:fixed; z-index:200; display:none; min-width:210px;
+    background:var(--card); border:1px solid var(--border); border-radius:12px;
+    box-shadow:0 14px 34px rgba(0,0,0,.5); overflow:hidden; pointer-events:none;
+  }
+  #tooltip .tt-head{ padding:9px 14px; font-size:.72rem; font-weight:800; display:flex; align-items:center; gap:7px; }
+  #tooltip .tt-head.put{ background:rgba(59,130,246,.18); color:var(--put); }
+  #tooltip .tt-head.call{ background:rgba(6,182,212,.18); color:var(--call); }
+  #tooltip .tt-body{ padding:10px 14px; display:flex; flex-direction:column; gap:7px; }
+  .tt-line{ display:flex; justify-content:space-between; align-items:center; font-size:.72rem; gap:16px; }
+  .tt-line .k{ color:var(--muted); display:flex; align-items:center; gap:5px; }
+  .tt-line .v{ font-family:var(--mono); font-weight:700; }
+  .tt-line .v.pos{ color:var(--green); }
+  .tt-line .v.neg{ color:var(--red); }
+  .tt-badge{ font-size:.6rem; font-weight:800; padding:2px 7px; border-radius:6px; }
+  .tt-badge.exercida{ background:rgba(245,158,11,.16); color:var(--orange); }
+  .tt-badge.nao{ background:rgba(255,255,255,.06); color:var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="modal">
+    <div class="modal-head"><h2>ETH</h2><button class="close">✕</button></div>
+
+    <div class="kpi-row">
+      <div class="kpi"><div class="l">P&amp;L DO PERÍODO</div><div class="v">US$ 701,96</div><div class="d">Soma dos resultados de cada operação do período.</div></div>
+      <div class="kpi center"><div class="l">OPERAÇÕES</div><div class="v center-v" style="color:var(--text)">87</div></div>
+      <div class="kpi center"><div class="l">TAXA DE ACERTO</div><div class="v center-v" style="color:var(--green)">99%</div></div>
+    </div>
+    <div class="pm-card"><div class="l">PREÇO MÉDIO</div><div class="v" style="color:#60a5fa">$1.796,37</div></div>
+
+    <p class="section-title">🗓️ Mapa de calor anual</p>
+    <p class="section-sub">Cor de fundo = P&amp;L do dia · anel colorido = tipo da operação exercida · ponto branco = mais de uma operação no dia.</p>
+
+    <div class="legend-box">
+      <div class="legend-row">
+        <span class="lr-title">P&amp;L (cor de fundo)</span>
+        <div class="legend-item"><div class="grad-swatch"></div></div>
+        <span>Prejuízo forte → Prejuízo leve → sem operação → Lucro leve → Lucro forte</span>
+      </div>
+      <div class="legend-row">
+        <span class="lr-title">Tipo (anel)</span>
+        <div class="legend-item"><div class="ring-demo" style="border-color:var(--put)"></div>PUT exercida</div>
+        <div class="legend-item"><div class="ring-demo" style="border-color:var(--call)"></div>CALL exercida</div>
+        <div class="legend-item"><div class="swatch" style="background:#166534;border-radius:5px"></div>Sem anel = não exercida</div>
+      </div>
+      <div class="legend-row">
+        <span class="lr-title">Outros</span>
+        <div class="legend-item"><span style="width:6px;height:6px;border-radius:50%;background:#fff;display:inline-block;border:1px solid var(--muted)"></span>Múltiplas operações no dia</div>
+      </div>
+    </div>
+
+    <div class="heat-wrap" id="heatWrap"></div>
+
+    <div class="day-detail" id="dayDetail">
+      <div class="dd-head">
+        <div>
+          <div class="dd-date" id="ddDate">—</div>
+          <div class="dd-total" id="ddTotal">—</div>
+        </div>
+        <button class="dd-close" id="ddClose">✕</button>
+      </div>
+      <div class="dd-ops" id="ddOps"></div>
+    </div>
+
+    <div class="foot-row"><span>Passe o mouse para detalhes</span><span>Clique para expandir</span></div>
+  </div>
+
+</div>
+
+<div id="tooltip">
+  <div class="tt-head" id="ttHead"></div>
+  <div class="tt-body" id="ttBody"></div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var MESES = ['Março','Abril','Maio','Junho','Julho','Agosto'];
+  var TIPOS = ['PUT','CALL'];
+
+  function fmtUS(n){ var neg=n<0; return (neg?'-':'+')+'US$ '+Math.abs(n).toFixed(2); }
+  function fmtDate(d){ return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear(); }
+
+  function colorForPnl(pnl, maxAbs){
+    if(pnl === null) return '#141d33';
+    var t = Math.min(1, Math.abs(pnl)/maxAbs);
+    if(pnl >= 0){
+      // verde: escuro (pouco lucro) -> claro (muito lucro)
+      var g1=[22,101,52], g2=[74,222,128];
+      var r = Math.round(g1[0]+(g2[0]-g1[0])*t), g = Math.round(g1[1]+(g2[1]-g1[1])*t), b = Math.round(g1[2]+(g2[2]-g1[2])*t);
+      return 'rgb('+r+','+g+','+b+')';
+    } else {
+      var r1=[127,29,43], r2=[239,68,68];
+      var rr = Math.round(r1[0]+(r2[0]-r1[0])*t), rg = Math.round(r1[1]+(r2[1]-r1[1])*t), rb = Math.round(r1[2]+(r2[2]-r1[2])*t);
+      return 'rgb('+rr+','+rg+','+rb+')';
+    }
+  }
+
+  // gera dados sintéticos por mês (linhas = dias do mês), cada dia pode ter 1+ operações
+  var dayOpsMap = {}; // id da célula -> { date, ops:[{tipo,valor,exercida}], total }
+  var monthsData = MESES.map(function(m, mi){
+    var daysInMonth = [31,30,31,30,31,31][mi] || 30;
+    var days = [];
+    for(var d=1; d<=daysInMonth; d++){
+      var hasOp = Math.random() < 0.62;
+      if(!hasOp){ days.push(null); continue; }
+      var isMulti = Math.random() < 0.15;
+      var numOps = isMulti ? 2 : 1;
+      var ops = [];
+      for(var k=0;k<numOps;k++){
+        ops.push({
+          tipo: TIPOS[Math.random()<0.55?0:1],
+          valor: parseFloat(((Math.random()-0.25)*40).toFixed(2)),
+          exercida: Math.random() < 0.28
+        });
+      }
+      var total = ops.reduce(function(s,o){return s+o.valor;},0);
+      var cellId = 'm'+mi+'d'+d;
+      var date = new Date(2026, mi+2, d);
+      dayOpsMap[cellId] = { date:date, ops:ops, total:parseFloat(total.toFixed(2)) };
+      // pro heatmap: representa o dia pela operação de maior peso (exercida tem prioridade, senão maior |valor|)
+      var repr = ops.slice().sort(function(a,b){ return (b.exercida-a.exercida) || (Math.abs(b.valor)-Math.abs(a.valor)); })[0];
+      days.push({ id:cellId, date:date, pnl:total, tipo:repr.tipo, exercida:repr.exercida, multi:isMulti });
+    }
+    return { month:m, days:days };
+  });
+
+  var allPnls = [];
+  monthsData.forEach(function(m){ m.days.forEach(function(d){ if(d) allPnls.push(Math.abs(d.pnl)); }); });
+  var maxAbs = Math.max.apply(null, allPnls.concat([1]));
+
+  var heatWrap = document.getElementById('heatWrap');
+  heatWrap.innerHTML = monthsData.map(function(m){
+    var cells = m.days.map(function(d){
+      if(!d) return '<div class="cell empty"></div>';
+      var bg = colorForPnl(d.pnl, maxAbs);
+      var ringClass = d.exercida ? (d.tipo==='PUT' ? 'exercida-put' : 'exercida-call') : '';
+      var multiClass = d.multi ? 'multi' : '';
+      return '<div class="cell '+ringClass+' '+multiClass+'" style="background:'+bg+'" data-id="'+d.id+'" ' +
+        'data-date="'+fmtDate(d.date)+'" data-tipo="'+d.tipo+'" data-exercida="'+d.exercida+'" data-pnl="'+d.pnl+'" data-multi="'+d.multi+'"></div>';
+    }).join('');
+    return '<div class="heat-month"><span class="mname">'+m.month+'</span><div class="heat-cells">'+cells+'</div></div>';
+  }).join('');
+
+  var tooltip = document.getElementById('tooltip');
+  var ttHead = document.getElementById('ttHead');
+  var ttBody = document.getElementById('ttBody');
+
+  heatWrap.querySelectorAll('.cell:not(.empty)').forEach(function(c){
+    c.addEventListener('mousemove', function(e){
+      var tipo = c.getAttribute('data-tipo');
+      var exercida = c.getAttribute('data-exercida') === 'true';
+      var pnl = parseFloat(c.getAttribute('data-pnl'));
+      var multi = c.getAttribute('data-multi') === 'true';
+      var date = c.getAttribute('data-date');
+
+      ttHead.className = 'tt-head ' + tipo.toLowerCase();
+      ttHead.innerHTML = (tipo==='PUT' ? '🔵' : '🔷') + ' Operação ' + tipo;
+
+      ttBody.innerHTML =
+        '<div class="tt-line"><span class="k">📅 Data</span><span class="v">'+date+'</span></div>' +
+        '<div class="tt-line"><span class="k">🏷️ Tipo</span><span class="v">'+tipo+'</span></div>' +
+        '<div class="tt-line"><span class="k">⚙️ Status</span><span class="tt-badge '+(exercida?'exercida':'nao')+'">'+(exercida?'EXERCIDA':'NÃO EXERCIDA')+'</span></div>' +
+        (multi ? '<div class="tt-line"><span class="k">📦 Operações no dia</span><span class="v">2+</span></div>' : '') +
+        '<div class="tt-line"><span class="k">💰 Resultado</span><span class="v '+(pnl>=0?'pos':'neg')+'">'+fmtUS(pnl)+'</span></div>';
+
+      tooltip.style.display = 'block';
+      var x = e.clientX + 16, y = e.clientY + 16;
+      if(x + 230 > window.innerWidth) x = e.clientX - 230;
+      tooltip.style.left = x + 'px';
+      tooltip.style.top = y + 'px';
+    });
+    c.addEventListener('mouseleave', function(){ tooltip.style.display = 'none'; });
+
+    c.addEventListener('click', function(){
+      var id = c.getAttribute('data-id');
+      var info = dayOpsMap[id];
+      if(!info) return;
+
+      // destaca a célula selecionada
+      heatWrap.querySelectorAll('.cell.selected').forEach(function(x){ x.classList.remove('selected'); });
+      c.classList.add('selected');
+
+      document.getElementById('ddDate').textContent = fmtDate(info.date);
+      var totalEl = document.getElementById('ddTotal');
+      totalEl.textContent = 'Total do dia: ' + fmtUS(info.total);
+      totalEl.className = 'dd-total ' + (info.total >= 0 ? 'pos' : 'neg');
+
+      document.getElementById('ddOps').innerHTML = info.ops.map(function(o){
+        return '<div class="dd-op">' +
+          '<span class="dd-tipo-badge '+o.tipo.toLowerCase()+'">'+(o.tipo==='PUT'?'🔵':'🔷')+' '+o.tipo+'</span>' +
+          '<span class="dd-status '+(o.exercida?'ex':'nex')+'">'+(o.exercida?'EXERCIDA':'NÃO EXERCIDA')+'</span>' +
+          '<span class="dd-valor '+(o.valor>=0?'pos':'neg')+'">'+fmtUS(o.valor)+'</span>' +
+        '</div>';
+      }).join('');
+
+      document.getElementById('dayDetail').classList.add('open');
+      tooltip.style.display = 'none';
+    });
+  });
+
+  document.getElementById('ddClose').addEventListener('click', function(){
+    document.getElementById('dayDetail').classList.remove('open');
+    heatWrap.querySelectorAll('.cell.selected').forEach(function(x){ x.classList.remove('selected'); });
+  });
+})();
+</script>
+</body>
+</html>

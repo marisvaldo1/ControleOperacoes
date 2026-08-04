@@ -15,8 +15,9 @@
     var closeHandler = null;
     var chartRef = null;
 
-    function getOps(par) {
-        return (window.cryptoOperacoes || []).filter(function (o) {
+    function getOps(par, opsOverride) {
+        var source = Array.isArray(opsOverride) ? opsOverride : (window.cryptoOperacoes || []);
+        return source.filter(function (o) {
             var a = (o.ativo || '').toUpperCase().replace('USDT', '').replace('/', '').trim();
             return a === par.toUpperCase();
         });
@@ -31,8 +32,8 @@
         return st === 'SIM';
     }
 
-    function computeData(par, cotacaoOverride) {
-        var ops = getOps(par);
+    function computeData(par, cotacaoOverride, opsOverride) {
+        var ops = getOps(par, opsOverride);
 
         var putsExercidas = ops.filter(isExercisedPut);
         var ultimaPut = putsExercidas.length
