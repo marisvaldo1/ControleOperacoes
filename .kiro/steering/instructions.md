@@ -105,8 +105,3 @@ Se houver uma skill ou regra aplicável, ela deve orientar a resposta.
 5. Só criar documentos explicando as alterações se eu solicitar no prompt
 
 **Nunca encerrar uma tarefa com testes falhando.**
-
-copiar para a área de transferencia o conteúdo do último prompt 
-executar ./memoryIA/log_prompt.bat
-executar ./memoryIA/ia_update.bat
-executar ./ia_memory_update.bat
