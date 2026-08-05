@@ -260,90 +260,101 @@
    ═════════════════════════════════════════════════════════════════════════════ */
 
 .pm-heat-toolbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 10px;
+    display: none;
 }
 
 .pm-heat-toolbar-label {
-    color: var(--pm-muted);
-    font-size: 0.7rem;
+    display: none;
 }
 
 .pm-period-reset {
-    appearance: none;
-    border: 1px solid var(--pm-border);
-    border-radius: 7px;
-    background: var(--pm-card2);
-    color: var(--pm-muted);
-    padding: 5px 9px;
-    font: inherit;
-    font-size: 0.68rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
-}
-
-.pm-period-reset:hover,
-.pm-period-reset:focus-visible {
-    border-color: var(--pm-orange);
-    background: rgba(245, 158, 11, 0.12);
-    color: var(--pm-orange);
-    outline: none;
-}
-
-.pm-heat-filters {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px 10px;
-    margin-bottom: 10px;
-}
-
-.pm-filter-group {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 3px;
-    border: 1px solid var(--pm-border);
-    border-radius: 8px;
-    background: var(--pm-card2);
-}
-
-.pm-filter-label {
-    padding: 3px 7px;
-    color: var(--pm-text);
-    font-size: 0.62rem;
-    font-weight: 900;
-    letter-spacing: 0.04em;
-}
-
-.pm-filter-button {
     appearance: none;
     border: 1px solid transparent;
     border-radius: 6px;
     background: transparent;
     color: var(--pm-muted);
-    padding: 4px 8px;
+    min-height: 27px;
+    padding: 4px 10px;
     font: inherit;
     font-size: 0.64rem;
     font-weight: 700;
     cursor: pointer;
-    transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+    transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.pm-heat-filters {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.pm-filter-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 39px;
+    padding: 4px;
+    border: 1px solid var(--pm-border);
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--pm-card2), rgba(17, 26, 46, 0.72));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.pm-filter-label {
+    padding: 4px 7px 4px 8px;
+    color: var(--pm-text);
+    font-size: 0.62rem;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+}
+
+.pm-filter-options {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px;
+    border-radius: 7px;
+    background: rgba(8, 11, 20, 0.42);
+}
+
+.pm-filter-button,
+.pm-period-reset {
+    appearance: none;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--pm-muted);
+    min-height: 27px;
+    padding: 4px 10px;
+    font: inherit;
+    font-size: 0.64rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
 }
 
 .pm-filter-button:hover,
-.pm-filter-button:focus-visible {
+.pm-filter-button:focus-visible,
+.pm-period-reset:hover,
+.pm-period-reset:focus-visible {
     border-color: rgba(245, 158, 11, 0.5);
     color: var(--pm-orange);
     outline: none;
 }
 
-.pm-filter-button.pm-filter-active {
+.pm-filter-button.pm-filter-active,
+.pm-period-reset:active {
     border-color: var(--pm-orange);
     background: var(--pm-orange);
     color: #111827;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
+}
+
+.pm-filter-button:active,
+.pm-period-reset:active {
+    transform: translateY(1px);
 }
 
 .pm-heat-wrap {
@@ -364,40 +375,63 @@
     display: inline-flex;
     align-items: center;
     justify-content: space-between;
-    gap: 6px;
-    width: 82px;
-    min-height: 28px;
-    padding: 4px 8px;
+    gap: 8px;
+    width: 106px;
+    min-height: 32px;
+    padding: 5px 8px 5px 11px;
     flex-shrink: 0;
-    border: 1px solid rgba(96, 165, 250, 0.45);
-    border-radius: 7px;
-    background: rgba(59, 130, 246, 0.12);
-    color: #93c5fd;
+    border: 0;
+    border-left: 3px solid rgba(96, 165, 250, 0.75);
+    border-radius: 0 9px 9px 0;
+    background: rgba(59, 130, 246, 0.08);
+    color: #bfdbfe;
     font: inherit;
     font-size: 0.7rem;
-    font-weight: 700;
+    font-weight: 800;
     text-align: left;
-    text-decoration: underline;
-    text-underline-offset: 3px;
     cursor: pointer;
     user-select: none;
-    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.pm-month-link-label {
+    text-decoration: none;
+    letter-spacing: 0.01em;
 }
 
 .pm-heat-month .pm-month-name:hover,
-.pm-heat-month .pm-month-name:focus-visible,
+.pm-heat-month .pm-month-name:focus-visible {
+    border-left-color: #93c5fd;
+    background: rgba(59, 130, 246, 0.2);
+    color: #dbeafe;
+    outline: none;
+    transform: translateX(3px);
+    box-shadow: 0 3px 10px rgba(59, 130, 246, 0.16);
+}
+
 .pm-heat-month .pm-month-name.pm-selected {
-    border-color: var(--pm-orange);
-    background: rgba(245, 158, 11, 0.18);
+    border-left-color: var(--pm-orange);
+    background: rgba(245, 158, 11, 0.16);
     color: var(--pm-orange);
     outline: none;
-    transform: translateX(2px);
+    transform: translateX(3px);
+    box-shadow: 0 3px 10px rgba(245, 158, 11, 0.16);
 }
 
 .pm-month-link-icon {
-    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 21px;
+    height: 21px;
+    border: 1px solid currentColor;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.035);
+    font-size: 0.74rem;
     line-height: 1;
     text-decoration: none;
+    opacity: 0.92;
 }
 
 .pm-heat-cells {
@@ -812,6 +846,44 @@
 [data-bs-theme="light"] .pm-heat-wrap {
     background: #f8f9fa;
     border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-bs-theme="light"] .pm-heat-filters {
+    color: #212529;
+}
+
+[data-bs-theme="light"] .pm-filter-group {
+    background: linear-gradient(135deg, #fff, #f8f9fa);
+    border-color: rgba(0, 0, 0, 0.12);
+}
+
+[data-bs-theme="light"] .pm-filter-options {
+    background: rgba(0, 0, 0, 0.045);
+}
+
+[data-bs-theme="light"] .pm-filter-button.pm-filter-active,
+[data-bs-theme="light"] .pm-period-reset:active {
+    border-color: #d97706;
+    background: #f59e0b;
+    color: #212529;
+    box-shadow: 0 2px 8px rgba(217, 119, 6, 0.18);
+}
+
+[data-bs-theme="light"] .pm-filter-label {
+    color: #212529;
+}
+
+[data-bs-theme="light"] .pm-filter-button,
+[data-bs-theme="light"] .pm-period-reset {
+    color: #6c757d;
+}
+
+[data-bs-theme="light"] .pm-filter-button:hover,
+[data-bs-theme="light"] .pm-filter-button:focus-visible,
+[data-bs-theme="light"] .pm-period-reset:hover,
+[data-bs-theme="light"] .pm-period-reset:focus-visible {
+    border-color: rgba(217, 119, 6, 0.55);
+    color: #b45309;
 }
 
 [data-bs-theme="light"] .pm-heat-month .pm-month-name {

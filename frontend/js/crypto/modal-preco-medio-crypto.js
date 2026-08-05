@@ -72,7 +72,7 @@
   }
 
   // ─── Calcula estatísticas ───
-  function calcStats(ops, priceOps) {
+  function calcStats(ops, priceOps, basePriceOps) {
     var totalOps = ops.length;
     var totalPremio = 0;
     var wins = 0;
@@ -88,7 +88,7 @@
     // Preço médio: usa o cálculo oficial, opcionalmente limitado ao mês selecionado
     var precoMedio = 0;
     if (window.ModalPrecoMedioAtivo && typeof window.ModalPrecoMedioAtivo.computeData === 'function') {
-      var pmData = window.ModalPrecoMedioAtivo.computeData(_currentAtivo, undefined, priceOps);
+      var pmData = window.ModalPrecoMedioAtivo.computeData(_currentAtivo, undefined, priceOps, basePriceOps);
       if (pmData && pmData.pm > 0) precoMedio = pmData.pm;
     }
 
@@ -104,7 +104,7 @@
 
   function setPeriodLabel(monthIndex) {
     var label = document.getElementById('pmKpiPeriodLabel');
-    if (label) label.textContent = monthIndex === null ? 'P&L do Período' : 'P&L de ' + MESES[monthIndex];
+    if (label) label.textContent = monthIndex === null ? 'Total de Prêmios' : 'Prêmios de ' + MESES[monthIndex];
   }
 
   function getPriceOpsAtMonthClose(allOps, year, monthIndex) {
@@ -268,7 +268,7 @@
       
       return '<div class="pm-heat-month" data-month="' + m.mIdx + '">' +
         '<button type="button" class="pm-month-name" data-month="' + m.mIdx + '" aria-pressed="false" title="Filtrar por ' + mName + '">' +
-          '<span>' + mName + '</span><span class="pm-month-link-icon" aria-hidden="true">↗</span>' +
+          '<span class="pm-month-link-label">' + mName + '</span><span class="pm-month-link-icon" aria-hidden="true">↗</span>' +
         '</button>' +
         '<div class="pm-heat-cells">' + cells + '</div>' +
       '</div>';
@@ -279,7 +279,7 @@
     var ttHead = document.getElementById('pmTtHead');
     var ttBody = document.getElementById('pmTtBody');
 
-    document.querySelectorAll('.pm-filter-button').forEach(function (button) {
+    document.querySelectorAll('.pm-filter-button[data-filter-group]').forEach(function (button) {
       var isActive = button.getAttribute('data-filter-group') === 'tipo'
         ? button.getAttribute('data-filter-value') === activeFilters.tipo
         : button.getAttribute('data-filter-value') === activeFilters.exercida;
@@ -295,7 +295,7 @@
         var filteredForCards = filterOperations(ops, nextFilters);
         var filteredHistory = filterOperations(allOpsAtivo, nextFilters);
         setPeriodLabel(null);
-        renderKPIs(calcStats(filteredForCards, filteredHistory));
+        renderKPIs(calcStats(filteredForCards, filteredHistory, allOpsAtivo));
         closeDayDetail();
         tooltip.style.display = 'none';
         renderHeatmap(ops, allOpsAtivo, year, nextFilters);
@@ -310,7 +310,7 @@
           selected.setAttribute('aria-pressed', 'false');
         });
         setPeriodLabel(null);
-        renderKPIs(calcStats(ops));
+        renderKPIs(calcStats(filteredOps, filteredAllOps, allOpsAtivo));
         closeDayDetail();
         tooltip.style.display = 'none';
       };
@@ -319,8 +319,9 @@
     heatWrap.querySelectorAll('.pm-month-name').forEach(function (monthEl) {
       monthEl.addEventListener('click', function () {
         var monthIndex = parseInt(monthEl.getAttribute('data-month'), 10);
-        var monthOps = getMonthOps(ops, monthIndex);
-        var monthCloseOps = getPriceOpsAtMonthClose(allOpsAtivo, year, monthIndex);
+        var monthOps = getMonthOps(filteredOps, monthIndex);
+        var monthCloseOps = getPriceOpsAtMonthClose(filteredAllOps, year, monthIndex);
+        var monthBaseOps = getPriceOpsAtMonthClose(allOpsAtivo, year, monthIndex);
 
         heatWrap.querySelectorAll('.pm-month-name.pm-selected').forEach(function (selected) {
           selected.classList.remove('pm-selected');
@@ -330,7 +331,7 @@
         monthEl.setAttribute('aria-pressed', 'true');
 
         setPeriodLabel(monthIndex);
-        renderKPIs(calcStats(monthOps, monthCloseOps));
+        renderKPIs(calcStats(monthOps, monthCloseOps, monthBaseOps));
         closeDayDetail();
         tooltip.style.display = 'none';
       });

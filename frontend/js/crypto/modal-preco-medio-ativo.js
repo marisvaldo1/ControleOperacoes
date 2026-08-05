@@ -23,19 +23,31 @@
         });
     }
 
+    function isPositiveExerciseStatus(value) {
+        var normalized = String(value == null ? '' : value).toUpperCase().trim();
+        return ['SIM', 'S', 'YES', 'Y', 'TRUE', '1', 'EXERCIDA', 'EXERCIDO', 'EXERCISED'].indexOf(normalized) !== -1;
+    }
+
     function isExercisedPut(op) {
         if ((op.status || '').toUpperCase() === 'ABERTA') return false;
         if ((op.tipo || '').toUpperCase() !== 'PUT') return false;
-        var st = window.CryptoExerciseStatus
+
+        if (window.CryptoExerciseStatus && typeof window.CryptoExerciseStatus.isActuallyExercised === 'function') {
+            return window.CryptoExerciseStatus.isActuallyExercised(op);
+        }
+
+        var resolvedStatus = window.CryptoExerciseStatus && typeof window.CryptoExerciseStatus.resolveDisplayStatus === 'function'
             ? window.CryptoExerciseStatus.resolveDisplayStatus(op)
-            : (op.exercicio_status || '').toUpperCase();
-        return st === 'SIM';
+            : null;
+        return isPositiveExerciseStatus(resolvedStatus) || isPositiveExerciseStatus(op.exercicio_status);
     }
 
-    function computeData(par, cotacaoOverride, opsOverride) {
+    function computeData(par, cotacaoOverride, opsOverride, baseOpsOverride) {
         var ops = getOps(par, opsOverride);
+        var baseOps = getOps(par, baseOpsOverride);
+        if (!Array.isArray(baseOpsOverride)) baseOps = ops;
 
-        var putsExercidas = ops.filter(isExercisedPut);
+        var putsExercidas = baseOps.filter(isExercisedPut);
         var ultimaPut = putsExercidas.length
             ? putsExercidas.sort(function (a, b) {
                 var aTime = window.CryptoExerciseStatus?.getOperationDate?.(a)?.getTime?.() || 0;
@@ -46,9 +58,9 @@
 
         var strikeBase = ultimaPut
             ? parseFloat(ultimaPut.strike || 0)
-            : parseFloat(ops.reduce(function (max, o) {
+            : parseFloat(baseOps.reduce(function (max, o) {
                 return parseFloat(o.strike || 0) > parseFloat(max.strike || 0) ? o : max;
-            }, ops[0])?.strike || 0);
+            }, baseOps[0])?.strike || 0);
 
         var cicloDate = ultimaPut
             ? (ultimaPut.exercicio || ultimaPut.data_operacao || '')
