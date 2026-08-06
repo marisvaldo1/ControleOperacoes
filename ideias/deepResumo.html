@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>📊 Painel de Lucros · Prêmios + Ganhos de Capital</title>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
+    </script>
+    <!-- Font Awesome para ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <style>
+        /* ===== RESET & TEMA DARK ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #0d1117;
+            color: #e6edf3;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .btn-open {
+            background: linear-gradient(135deg, #00ff88, #00cc66);
+            border: none;
+            color: #0d1117;
+            font-weight: 700;
+            font-size: 1.2rem;
+            padding: 16px 40px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+        }
+        .btn-open:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 40px rgba(0, 255, 136, 0.5);
+        }
+
+        /* ===== MODAL ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(6px);
+            z-index: 999;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .modal-content {
+            background: #161b22;
+            border-radius: 28px;
+            padding: 28px 24px 32px;
+            max-width: 1300px;
+            width: 98%;
+            max-height: 92vh;
+            overflow-y: auto;
+            border: 1px solid #30363d;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+            position: relative;
+        }
+
+        .modal-content::-webkit-scrollbar {
+            width: 6px;
+        }
+        .modal-content::-webkit-scrollbar-track {
+            background: #0d1117;
+        }
+        .modal-content::-webkit-scrollbar-thumb {
+            background: #30363d;
+            border-radius: 10px;
+        }
+
+        /* ===== HEADER ===== */
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #30363d;
+            padding-bottom: 16px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .modal-header h2 {
+            font-size: 1.6rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #ffb800, #ff8800);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal-header h2 i {
+            -webkit-text-fill-color: initial;
+            color: #ffb800;
+        }
+
+        .modal-header .sub {
+            font-size: 0.9rem;
+            color: #8b949e;
+        }
+
+        .btn-close {
+            background: none;
+            border: none;
+            color: #8b949e;
+            font-size: 2rem;
+            cursor: pointer;
+            transition: color 0.2s, transform 0.2s;
+            line-height: 1;
+        }
+        .btn-close:hover {
+            color: #ff4466;
+            transform: rotate(90deg);
+        }
+
+        /* ===== TABS ===== */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+            background: #0d1117;
+            border-radius: 16px;
+            padding: 4px;
+            border: 1px solid #21262d;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: #8b949e;
+            padding: 10px 22px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tab-btn:hover {
+            color: #e6edf3;
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .tab-btn.active {
+            background: #00ff88;
+            color: #0d1117;
+            box-shadow: 0 4px 15px rgba(0, 255, 136, 0.25);
+        }
+
+        .tab-btn i {
+            font-size: 1rem;
+        }
+
+        /* ===== CONTEÚDO DAS TABS ===== */
+        .tab-content {
+            display: none;
+            animation: fadeSlide 0.3s ease-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeSlide {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ===== KPIs GLOBAIS ===== */
+        .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+
+        .kpi-card {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 16px;
+            padding: 16px 18px;
+            text-align: center;
+        }
+
+        .kpi-card .icon {
+            font-size: 1.8rem;
+            margin-bottom: 4px;
+        }
+
+        .kpi-card .label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #8b949e;
+        }
+
+        .kpi-card .value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-top: 2px;
+        }
+
+        .kpi-card .value.green {
+            color: #00ff88;
+        }
+        .kpi-card .value.gold {
+            color: #ffb800;
+        }
+        .kpi-card .value.blue {
+            color: #00ccff;
+        }
+        .kpi-card .value.pink {
+            color: #ff6b9d;
+        }
+
+        /* ===== GRÁFICOS E CARDS ===== */
+        .chart-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .chart-box {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 16px;
+            padding: 18px 16px 12px;
+        }
+
+        .chart-box .title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #8b949e;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chart-box .title i {
+            color: #ffb800;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 200px;
+        }
+
+        .chart-wrapper canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        /* ===== LISTA DE PRÊMIOS (diário/semanal) ===== */
+        .premium-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .premium-item {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 14px;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .premium-item:hover {
+            border-color: #30363d;
+        }
+
+        .premium-item .emoji {
+            font-size: 1.8rem;
+        }
+
+        .premium-item .info {
+            flex: 1;
+        }
+
+        .premium-item .info .period {
+            font-size: 0.7rem;
+            color: #8b949e;
+            text-transform: uppercase;
+        }
+
+        .premium-item .info .amount {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .premium-item .info .amount.green {
+            color: #00ff88;
+        }
+        .premium-item .info .amount.gold {
+            color: #ffb800;
+        }
+
+        .premium-item .badge {
+            font-size: 0.65rem;
+            background: rgba(255, 184, 0, 0.12);
+            color: #ffb800;
+            padding: 2px 10px;
+            border-radius: 30px;
+            border: 1px solid rgba(255, 184, 0, 0.2);
+        }
+
+        /* ===== TABELA DE RANKING ===== */
+        .rank-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            margin-top: 8px;
+        }
+
+        .rank-table th {
+            text-align: left;
+            padding: 10px 12px;
+            color: #8b949e;
+            font-weight: 600;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            border-bottom: 1px solid #21262d;
+        }
+
+        .rank-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #1c2128;
+        }
+
+        .rank-table tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .rank-table .rank-num {
+            font-weight: 700;
+            color: #8b949e;
+            width: 30px;
+        }
+
+        .rank-table .rank-num.gold {
+            color: #ffb800;
+        }
+        .rank-table .rank-num.silver {
+            color: #c0c0c0;
+        }
+        .rank-table .rank-num.bronze {
+            color: #cd7f32;
+        }
+
+        .rank-table .positive {
+            color: #00ff88;
+        }
+        .rank-table .negative {
+            color: #ff4466;
+        }
+
+        /* ===== RESPONSIVO ===== */
+        @media (max-width: 900px) {
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .modal-content {
+                padding: 16px 12px 20px;
+            }
+            .modal-header h2 {
+                font-size: 1.2rem;
+            }
+            .kpi-row {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+            .kpi-card .value {
+                font-size: 1.2rem;
+            }
+            .tab-btn {
+                padding: 6px 14px;
+                font-size: 0.75rem;
+            }
+            .tab-btn i {
+                font-size: 0.8rem;
+            }
+            .chart-wrapper {
+                height: 160px;
+            }
+            .premium-list {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ===== SCROLL SUAVE ===== */
+        .modal-content {
+            scroll-behavior: smooth;
+        }
+    </style>
+</head>
+<body>
+
+    <button class="btn-open" id="openModalBtn">
+        <i class="fas fa-chart-line"></i> Ver Painel de Lucros
+    </button>
+
+    <!-- ===== MODAL ===== -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-content">
+
+            <!-- HEADER -->
+            <div class="modal-header">
+                <div>
+                    <h2><i class="fas fa-coins"></i> Painel de Lucros</h2>
+                    <div class="sub">Prêmios + Ganhos de Capital · Double Investment</div>
+                </div>
+                <button class="btn-close" id="closeModalBtn">✕</button>
+            </div>
+
+            <!-- TABS -->
+            <div class="tabs" id="tabContainer">
+                <button class="tab-btn active" data-tab="dashboard">
+                    <i class="fas fa-th-large"></i> Dashboard
+                </button>
+                <button class="tab-btn" data-tab="anual">
+                    <i class="fas fa-calendar-alt"></i> Anual
+                </button>
+                <button class="tab-btn" data-tab="mensal">
+                    <i class="fas fa-calendar-week"></i> Mensal
+                </button>
+                <button class="tab-btn" data-tab="semanal">
+                    <i class="fas fa-clock"></i> Semanal
+                </button>
+                <button class="tab-btn" data-tab="diario">
+                    <i class="fas fa-sun"></i> Diário
+                </button>
+            </div>
+
+            <!-- ===== DASHBOARD ===== -->
+            <div class="tab-content active" id="tab-dashboard">
+                <!-- KPIs -->
+                <div class="kpi-row" id="kpiDashboard">
+                    <!-- preenchido por JS -->
+                </div>
+                <!-- Gráficos -->
+                <div class="chart-grid">
+                    <div class="chart-box">
+                        <div class="title"><i class="fas fa-chart-pie"></i> Distribuição de Lucros</div>
+                        <div class="chart-wrapper"><canvas id="dashPie"></canvas></div>
+                    </div>
+                    <div class="chart-box">
+                        <div class="title"><i class="fas fa-chart-bar"></i> Top 5 Meses</div>
+                        <div class="chart-wrapper"><canvas id="dashBar"></canvas></div>
+                    </div>
+                </div>
+                <!-- Ranking rápido -->
+                <div style="margin-top:8px;">
+                    <div class="title" style="color:#8b949e;font-size:0.85rem;margin-bottom:8px;">
+                        <i class="fas fa-trophy" style="color:#ffb800;"></i> Ranking de Prêmios por Mês
+                    </div>
+                    <table class="rank-table" id="rankTable">
+                        <!-- preenchido por JS -->
+                    </table>
+                </div>
+            </div>
+
+            <!-- ===== ANUAL ===== -->
+            <div class="tab-content" id="tab-anual">
+                <div class="kpi-row" id="kpiAnual"></div>
+                <div class="chart-grid">
+                    <div class="chart-box">
+                        <div class="title"><i class="fas fa-chart-line"></i> Evolução Anual (Prêmios + Ganhos)</div>
+                        <div class="chart-wrapper"><canvas id="anualLine"></canvas></div>
+                    </div>
+                    <div class="chart-box">
+                        <div class="title"><i class="fas fa-chart-bar"></i> Comparação Anual</div>
+                        <div class="chart-wrapper"><canvas id="anualBar"></canvas></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== MENSAL ===== -->
+            <div class="tab-content" id="tab-mensal">
+                <div class="kpi-row" id="kpiMensal"></div>
+                <div class="chart-grid">
+                    <div class="chart-box">
+                        <div class="title"><i class="fas fa-chart-bar"></i> Prêmios por Mês</div>
+                        <div class="chart-wrapper"><canvas id="mensalBar"></canvas></div>
+                    </div>
+                    <div class="chart-box">
+                        <div class="title"><i class="fas fa-chart-pie"></i> Distribuição Mensal</div>
+                        <div class="chart-wrapper"><canvas id="mensalPie"></canvas></div>
+                    </div>
+                </div>
+                <div class="premium-list" id="mensalList"></div>
+            </div>
+
+            <!-- ===== SEMANAL ===== -->
+            <div class="tab-content" id="tab-semanal">
+                <div class="kpi-row" id="kpiSemanal"></div>
+                <div class="chart-grid">
+                    <div class="chart-box">
+                        <div class="title"><i class="fas fa-chart-line"></i> Tendência Semanal</div>
+                        <div class="chart-wrapper"><canvas id="semanalLine"></canvas></div>
+                    </div>
+                    <div class="chart-box">
+                        <div class="title"><i class="fas fa-chart-bar"></i> Prêmios por Semana</div>
+                        <div class="chart-wrapper"><canvas id="semanalBar"></canvas></div>
+                    </div>
+                </div>
+                <div class="premium-list" id="semanalList"></div>
+            </div>
+
+            <!-- ===== DIÁRIO ===== -->
+            <div class="tab-content" id="tab-diario">
+                <div class="kpi-row" id="kpiDiario"></div>
+                <div class="chart-grid">
+                    <div class="chart-box">
+                        <div class="title"><i class="fas fa-chart-line"></i> Últimos 30 Dias</div>
+                        <div class="chart-wrapper"><canvas id="diarioLine"></canvas></div>
+                    </div>
+                    <div class="chart-box">
+                        <div class="title"><i class="fas fa-chart-area"></i> Acumulado Diário</div>
+                        <div class="chart-wrapper"><canvas id="diarioArea"></canvas></div>
+                    </div>
+                </div>
+                <div class="premium-list" id="diarioList"></div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        // 1. DADOS SIMULADOS
+        // ============================================================
+        const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+        const emojis = ['❄️', '💘', '🌸', '🌧️', '🌺', '☀️', '🏖️', '🌾', '🍂', '🎃', '🕯️', '🎄'];
+
+        // Gera dados de prêmios e ganhos de capital
+        function gerarDados() {
+            const premios = {};
+            const ganhos = {};
+            let totalPremios = 0,
+                totalGanhos = 0;
+
+            meses.forEach((m, i) => {
+                const premioMes = +(Math.random() * 300 + 50).toFixed(2);
+                const ganhoMes = +(Math.random() * 200 + 30).toFixed(2);
+                premios[m] = premioMes;
+                ganhos[m] = ganhoMes;
+                totalPremios += premioMes;
+                totalGanhos += ganhoMes;
+            });
+
+            // Dados semanais (últimas 8 semanas)
+            const semanas = [];
+            const premiosSemana = [];
+            const ganhosSemana = [];
+            for (let i = 0; i < 8; i++) {
+                semanas.push(`S${i+1}`);
+                premiosSemana.push(+(Math.random() * 80 + 15).toFixed(2));
+                ganhosSemana.push(+(Math.random() * 50 + 10).toFixed(2));
+            }
+
+            // Dados diários (últimos 30 dias)
+            const dias = [];
+            const premiosDia = [];
+            const ganhosDia = [];
+            for (let i = 29; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                dias.push(d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }));
+                premiosDia.push(+(Math.random() * 25 + 2).toFixed(2));
+                ganhosDia.push(+(Math.random() * 15 + 1).toFixed(2));
+            }
+
+            return {
+                premios,
+                ganhos,
+                totalPremios: +totalPremios.toFixed(2),
+                totalGanhos: +totalGanhos.toFixed(2),
+                premiosSemana,
+                ganhosSemana,
+                semanas,
+                premiosDia,
+                ganhosDia,
+                dias,
+                // Para ranking
+                mesesArray: meses,
+                premiosArray: Object.values(premios),
+                ganhosArray: Object.values(ganhos)
+            };
+        }
+
+        const data = gerarDados();
+
+        // ============================================================
+        // 2. FUNÇÕES AUXILIARES
+        // ============================================================
+        function formatCurrency(val) {
+            return (val >= 0 ? '+' : '') + 'US$ ' + val.toFixed(2);
+        }
+
+        function getColor(positive) {
+            return positive ? '#00ff88' : '#ff4466';
+        }
+
+        // ============================================================
+        // 3. RENDERIZAR KPIs
+        // ============================================================
+        function renderKPI(containerId, premio, ganho, label1 = 'Prêmios', label2 = 'Ganhos') {
+            const container = document.getElementById(containerId);
+            container.innerHTML = `
+                <div class="kpi-card">
+                    <div class="icon">💰</div>
+                    <div class="label">Total ${label1}</div>
+                    <div class="value green">${formatCurrency(premio)}</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="icon">📈</div>
+                    <div class="label">Total ${label2}</div>
+                    <div class="value blue">${formatCurrency(ganho)}</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="icon">🏆</div>
+                    <div class="label">Soma Total</div>
+                    <div class="value gold">${formatCurrency(premio + ganho)}</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="icon">📊</div>
+                    <div class="label">Relação ${label1}/${label2}</div>
+                    <div class="value pink">${(premio / (ganho || 1)).toFixed(1)}x</div>
+                </div>
+            `;
+        }
+
+        // ============================================================
+        // 4. RENDERIZAR RANKING
+        // ============================================================
+        function renderRanking() {
+            const ranked = meses.map((m, i) => ({
+                mes: m,
+                premio: data.premios[m],
+                ganho: data.ganhos[m],
+                total: data.premios[m] + data.ganhos[m]
+            }));
+            ranked.sort((a, b) => b.total - a.total);
+
+            const tbody = document.getElementById('rankTable');
+            let html = `
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Mês</th>
+                        <th>Prêmios</th>
+                        <th>Ganhos</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+            `;
+            ranked.forEach((item, idx) => {
+                const cls = idx === 0 ? 'gold' : (idx === 1 ? 'silver' : (idx === 2 ? 'bronze' : ''));
+                const medal = idx === 0 ? '🥇' : (idx === 1 ? '🥈' : (idx === 2 ? '🥉' : `#${idx+1}`));
+                html += `
+                    <tr>
+                        <td class="rank-num ${cls}">${medal}</td>
+                        <td><strong>${item.mes}</strong></td>
+                        <td class="positive">${formatCurrency(item.premio)}</td>
+                        <td class="blue" style="color:#00ccff;">${formatCurrency(item.ganho)}</td>
+                        <td class="gold">${formatCurrency(item.total)}</td>
+                    </tr>
+                `;
+            });
+            html += '</tbody>';
+            document.getElementById('rankTable').innerHTML = html;
+        }
+
+        // ============================================================
+        // 5. GRÁFICOS (usando Chart.js)
+        // ============================================================
+        let chartInstances = {};
+
+        function destroyChart(id) {
+            if (chartInstances[id]) {
+                chartInstances[id].destroy();
+                delete chartInstances[id];
+            }
+        }
+
+        function createChart(id, config) {
+            destroyChart(id);
+            const ctx = document.getElementById(id).getContext('2d');
+            chartInstances[id] = new Chart(ctx, config);
+            return chartInstances[id];
+        }
+
+        // ===== DASHBOARD =====
+        function renderDashboard() {
+            renderKPI('kpiDashboard', data.totalPremios, data.totalGanhos, 'Prêmios', 'Ganhos de Capital');
+
+            // Pie: distribuição entre prêmios e ganhos
+            createChart('dashPie', {
+                type: 'doughnut',
+                data: {
+                    labels: ['Prêmios', 'Ganhos de Capital'],
+                    datasets: [{
+                        data: [data.totalPremios, data.totalGanhos],
+                        backgroundColor: ['#00ff88', '#00ccff'],
+                        borderColor: '#161b22',
+                        borderWidth: 3,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#e6edf3', font: { size: 12 } }
+                        }
+                    }
+                }
+            });
+
+            // Bar: top 5 meses
+            const sorted = meses.map((m, i) => ({ mes: m, total: data.premios[m] + data.ganhos[m] }));
+            sorted.sort((a, b) => b.total - a.total);
+            const top5 = sorted.slice(0, 5);
+            createChart('dashBar', {
+                type: 'bar',
+                data: {
+                    labels: top5.map(d => d.mes),
+                    datasets: [{
+                        label: 'Total (Prêmios + Ganhos)',
+                        data: top5.map(d => d.total),
+                        backgroundColor: 'rgba(255, 184, 0, 0.25)',
+                        borderColor: '#ffb800',
+                        borderWidth: 2,
+                        borderRadius: 6,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#e6edf3', font: { size: 11 } } }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' } },
+                        y: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' }, beginAtZero: true }
+                    }
+                }
+            });
+
+            renderRanking();
+        }
+
+        // ===== ANUAL =====
+        function renderAnual() {
+            const totalP = data.premiosArray.reduce((a, b) => a + b, 0);
+            const totalG = data.ganhosArray.reduce((a, b) => a + b, 0);
+            renderKPI('kpiAnual', totalP, totalG, 'Prêmios', 'Ganhos');
+
+            // Linha: evolução anual
+            createChart('anualLine', {
+                type: 'line',
+                data: {
+                    labels: meses,
+                    datasets: [{
+                        label: 'Prêmios',
+                        data: data.premiosArray,
+                        borderColor: '#00ff88',
+                        backgroundColor: 'rgba(0,255,136,0.08)',
+                        fill: true,
+                        tension: 0.3,
+                        pointBackgroundColor: '#00ff88',
+                    }, {
+                        label: 'Ganhos de Capital',
+                        data: data.ganhosArray,
+                        borderColor: '#00ccff',
+                        backgroundColor: 'rgba(0,204,255,0.08)',
+                        fill: true,
+                        tension: 0.3,
+                        pointBackgroundColor: '#00ccff',
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#e6edf3', font: { size: 11 } } }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' } },
+                        y: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' }, beginAtZero: true }
+                    }
+                }
+            });
+
+            // Barra comparativa
+            createChart('anualBar', {
+                type: 'bar',
+                data: {
+                    labels: meses,
+                    datasets: [{
+                        label: 'Prêmios',
+                        data: data.premiosArray,
+                        backgroundColor: 'rgba(0,255,136,0.3)',
+                        borderColor: '#00ff88',
+                        borderWidth: 1,
+                    }, {
+                        label: 'Ganhos',
+                        data: data.ganhosArray,
+                        backgroundColor: 'rgba(0,204,255,0.3)',
+                        borderColor: '#00ccff',
+                        borderWidth: 1,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#e6edf3', font: { size: 11 } } }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' } },
+                        y: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' }, beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        // ===== MENSAL =====
+        function renderMensal() {
+            // KPI para o mês atual (exemplo: último mês)
+            const ultimoMes = meses[meses.length - 1];
+            const p = data.premios[ultimoMes];
+            const g = data.ganhos[ultimoMes];
+            renderKPI('kpiMensal', p, g, `Prêmios (${ultimoMes})`, `Ganhos (${ultimoMes})`);
+
+            // Barra mensal
+            createChart('mensalBar', {
+                type: 'bar',
+                data: {
+                    labels: meses,
+                    datasets: [{
+                        label: 'Prêmios',
+                        data: data.premiosArray,
+                        backgroundColor: 'rgba(0,255,136,0.25)',
+                        borderColor: '#00ff88',
+                        borderWidth: 2,
+                        borderRadius: 4,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#e6edf3', font: { size: 11 } } }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' } },
+                        y: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' }, beginAtZero: true }
+                    }
+                }
+            });
+
+            // Pizza: distribuição mensal dos prêmios
+            createChart('mensalPie', {
+                type: 'pie',
+                data: {
+                    labels: meses,
+                    datasets: [{
+                        data: data.premiosArray,
+                        backgroundColor: [
+                            '#00ff88', '#ff4466', '#ffb800', '#00ccff',
+                            '#a855f7', '#f472b6', '#34d399', '#fbbf24',
+                            '#fb923c', '#60a5fa', '#e879f9', '#2dd4bf'
+                        ],
+                        borderColor: '#161b22',
+                        borderWidth: 2,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#e6edf3', font: { size: 10 } },
+                            position: 'right'
+                        }
+                    }
+                }
+            });
+
+            // Lista de prêmios mensais
+            const list = document.getElementById('mensalList');
+            list.innerHTML = meses.map((m, i) => `
+                <div class="premium-item">
+                    <span class="emoji">${emojis[i]}</span>
+                    <div class="info">
+                        <div class="period">${m}</div>
+                        <div class="amount green">${formatCurrency(data.premios[m])}</div>
+                    </div>
+                    <span class="badge">+${data.ganhos[m].toFixed(2)}</span>
+                </div>
+            `).join('');
+        }
+
+        // ===== SEMANAL =====
+        function renderSemanal() {
+            const totalP = data.premiosSemana.reduce((a, b) => a + b, 0);
+            const totalG = data.ganhosSemana.reduce((a, b) => a + b, 0);
+            renderKPI('kpiSemanal', totalP, totalG, 'Prêmios (8 sem.)', 'Ganhos (8 sem.)');
+
+            createChart('semanalLine', {
+                type: 'line',
+                data: {
+                    labels: data.semanas,
+                    datasets: [{
+                        label: 'Prêmios',
+                        data: data.premiosSemana,
+                        borderColor: '#00ff88',
+                        backgroundColor: 'rgba(0,255,136,0.06)',
+                        fill: true,
+                        tension: 0.3,
+                        pointBackgroundColor: '#00ff88',
+                    }, {
+                        label: 'Ganhos',
+                        data: data.ganhosSemana,
+                        borderColor: '#00ccff',
+                        backgroundColor: 'rgba(0,204,255,0.06)',
+                        fill: true,
+                        tension: 0.3,
+                        pointBackgroundColor: '#00ccff',
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#e6edf3', font: { size: 11 } } }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' } },
+                        y: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' }, beginAtZero: true }
+                    }
+                }
+            });
+
+            createChart('semanalBar', {
+                type: 'bar',
+                data: {
+                    labels: data.semanas,
+                    datasets: [{
+                        label: 'Prêmios',
+                        data: data.premiosSemana,
+                        backgroundColor: 'rgba(255,184,0,0.2)',
+                        borderColor: '#ffb800',
+                        borderWidth: 2,
+                        borderRadius: 4,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#e6edf3', font: { size: 11 } } }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' } },
+                        y: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' }, beginAtZero: true }
+                    }
+                }
+            });
+
+            const list = document.getElementById('semanalList');
+            list.innerHTML = data.semanas.map((s, i) => `
+                <div class="premium-item">
+                    <span class="emoji">📅</span>
+                    <div class="info">
+                        <div class="period">${s}</div>
+                        <div class="amount green">${formatCurrency(data.premiosSemana[i])}</div>
+                    </div>
+                    <span class="badge">+${data.ganhosSemana[i].toFixed(2)}</span>
+                </div>
+            `).join('');
+        }
+
+        // ===== DIÁRIO =====
+        function renderDiario() {
+            const totalP = data.premiosDia.reduce((a, b) => a + b, 0);
+            const totalG = data.ganhosDia.reduce((a, b) => a + b, 0);
+            renderKPI('kpiDiario', totalP, totalG, 'Prêmios (30d)', 'Ganhos (30d)');
+
+            createChart('diarioLine', {
+                type: 'line',
+                data: {
+                    labels: data.dias,
+                    datasets: [{
+                        label: 'Prêmios Diários',
+                        data: data.premiosDia,
+                        borderColor: '#ffb800',
+                        backgroundColor: 'rgba(255,184,0,0.06)',
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#ffb800',
+                        pointRadius: 2,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#e6edf3', font: { size: 11 } } }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#8b949e', maxTicksLimit: 10 }, grid: { color: '#21262d' } },
+                        y: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' }, beginAtZero: true }
+                    }
+                }
+            });
+
+            // Área acumulada
+            let acumulado = 0;
+            const acumuladoData = data.premiosDia.map(v => {
+                acumulado += v;
+                return +acumulado.toFixed(2);
+            });
+            createChart('diarioArea', {
+                type: 'line',
+                data: {
+                    labels: data.dias,
+                    datasets: [{
+                        label: 'Acumulado de Prêmios',
+                        data: acumuladoData,
+                        borderColor: '#00ff88',
+                        backgroundColor: 'rgba(0,255,136,0.15)',
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 0,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#e6edf3', font: { size: 11 } } }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#8b949e', maxTicksLimit: 10 }, grid: { color: '#21262d' } },
+                        y: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' }, beginAtZero: true }
+                    }
+                }
+            });
+
+            const list = document.getElementById('diarioList');
+            // Mostra os últimos 7 dias
+            const ultimos7 = data.dias.slice(-7);
+            const premios7 = data.premiosDia.slice(-7);
+            const ganhos7 = data.ganhosDia.slice(-7);
+            list.innerHTML = ultimos7.map((d, i) => `
+                <div class="premium-item">
+                    <span class="emoji">📆</span>
+                    <div class="info">
+                        <div class="period">${d}</div>
+                        <div class="amount green">${formatCurrency(premios7[i])}</div>
+                    </div>
+                    <span class="badge">+${ganhos7[i].toFixed(2)}</span>
+                </div>
+            `).join('');
+        }
+
+        // ============================================================
+        // 6. NAVEGAÇÃO POR TABS
+        // ============================================================
+        function switchTab(tabId) {
+            // Esconde todas
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+            // Mostra a selecionada
+            const content = document.getElementById('tab-' + tabId);
+            if (content) content.classList.add('active');
+
+            const btn = document.querySelector(`.tab-btn[data-tab="${tabId}"]`);
+            if (btn) btn.classList.add('active');
+
+            // Renderiza o conteúdo da aba se necessário
+            switch (tabId) {
+                case 'dashboard':
+                    renderDashboard();
+                    break;
+                case 'anual':
+                    renderAnual();
+                    break;
+                case 'mensal':
+                    renderMensal();
+                    break;
+                case 'semanal':
+                    renderSemanal();
+                    break;
+                case 'diario':
+                    renderDiario();
+                    break;
+            }
+        }
+
+        // Eventos das tabs
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const tabId = this.dataset.tab;
+                switchTab(tabId);
+            });
+        });
+
+        // ============================================================
+        // 7. ABRIR/FECHAR MODAL
+        // ============================================================
+        const modal = document.getElementById('modalOverlay');
+        const openBtn = document.getElementById('openModalBtn');
+        const closeBtn = document.getElementById('closeModalBtn');
+
+        openBtn.addEventListener('click', function() {
+            modal.classList.add('active');
+            // Inicia com Dashboard
+            switchTab('dashboard');
+        });
+
+        closeBtn.addEventListener('click', function() {
+            modal.classList.remove('active');
+        });
+
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                modal.classList.remove('active');
+            }
+        });
+
+        // ============================================================
+        // 8. INICIALIZAÇÃO
+        // ============================================================
+        console.log('📊 Painel de Lucros carregado com sucesso!');
+        console.log(`💰 Prêmios totais: US$ ${data.totalPremios}, Ganhos: US$ ${data.totalGanhos}`);
+    </script>
+</body>
+</html>

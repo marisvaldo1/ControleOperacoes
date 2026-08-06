@@ -164,7 +164,7 @@
     }
 
     function renderTimeline(rows) {
-        const container = document.getElementById('tocTimeline');
+        const container = document.getElementById('tocTimelineContainer');
         if (!container) return;
         if (!rows.length) {
             container.innerHTML = '<div class="toc-timeline-item"><span class="toc-timeline-dot"></span><div class="fw-bold">Sem dados</div><div class="text-muted" style="font-size:.75rem;">Nenhum mês disponível</div></div>';
@@ -383,12 +383,89 @@
         if (cardWinRate) cardWinRate.textContent = fmtPct(stats.winRate);
     }
 
+    function escapeHtml(value) {
+        return String(value == null ? '' : value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function renderPerformance(ops) {
+        const container = document.getElementById('tocPerfContainer');
+        if (!container) return;
+
+        if (!ops.length) {
+            container.innerHTML = '<div class="text-center text-muted py-3">Nenhuma operação encontrada no período filtrado.</div>';
+            return;
+        }
+
+        const totalPremio = ops.reduce((sum, op) => sum + getPremio(op), 0);
+        const wins = ops.filter(op => getPremio(op) > 0).length;
+        const winRate = (wins / ops.length) * 100;
+        const avgPremio = totalPremio / ops.length;
+        const best = Math.max(...ops.map(getResultadoPct));
+        const worst = Math.min(...ops.map(getResultadoPct));
+
+        const summaryCards = [
+            ['📊', 'Operações', ops.length, 'var(--pm-text)'],
+            ['✅', 'Taxa de acerto', fmtPct(winRate), '#4ade80'],
+            ['💰', 'Prêmio médio', fmtUsd(avgPremio), '#fbbf24'],
+            ['📈', 'Melhor resultado', fmtPct(best), '#4ade80'],
+            ['📉', 'Pior resultado', fmtPct(worst), '#f87171'],
+        ].map(([icon, label, value, color]) => `<div class="toc-perf-scard">
+            <div class="toc-perf-scard-icon">${icon}</div>
+            <div class="toc-perf-scard-label">${label}</div>
+            <div class="toc-perf-scard-value" style="color:${color};">${value}</div>
+        </div>`).join('');
+
+        const rows = ops.slice().sort((a, b) => (getOpDate(b)?.getTime() || 0) - (getOpDate(a)?.getTime() || 0)).map(op => {
+            const tipo = (op.tipo || '—').toUpperCase();
+            const ativo = escapeHtml((op.ativo || '—').toUpperCase());
+            const status = (op.status || 'ABERTA').toUpperCase();
+            const premio = getPremio(op);
+            const resultado = getResultadoPct(op);
+            const exercida = isExercised(op);
+            const tipoClass = tipo === 'PUT' ? 'toc-perf-type-put' : 'toc-perf-type-call';
+            const statusClass = status === 'ABERTA' ? 'toc-perf-dot-open' : (exercida ? 'toc-perf-dot-ex' : 'toc-perf-dot-closed');
+            const resultClass = resultado > 0 ? 'toc-perf-positive' : resultado < 0 ? 'toc-perf-negative' : '';
+            const resultBadge = resultado > 0 ? 'toc-perf-badge-profit' : resultado < 0 ? 'toc-perf-badge-loss' : 'toc-perf-badge-neutral';
+            const date = formatDate(getOpDate(op));
+            const cotacao = getNumber(op, ['cotacao_atual', 'cotacao']);
+            const strike = getNumber(op, ['strike']);
+            const tae = getNumber(op, ['tae_pct', 'tae']);
+            const dist = getNumber(op, ['distancia']);
+            return `<tr>
+                <td><strong>${ativo}</strong><br><small class="text-muted">${date}</small></td>
+                <td><span class="toc-perf-type ${tipoClass}">${escapeHtml(tipo)}</span></td>
+                <td><span class="toc-perf-dot ${statusClass}"></span>${escapeHtml(status)}${exercida ? '<span class="toc-perf-badge-ex">EXERCIDA</span>' : ''}</td>
+                <td>${cotacao > 0 ? fmtUsd(cotacao) : '—'}</td>
+                <td>${strike > 0 ? fmtUsd(strike) : '—'}</td>
+                <td class="${premio >= 0 ? 'toc-perf-positive' : 'toc-perf-negative'}">${fmtUsd(premio)}</td>
+                <td class="${resultClass}">${fmtPct(resultado)}</td>
+                <td>${fmtPct(tae)}</td>
+                <td>${fmtPct(dist)}</td>
+                <td><span class="toc-perf-badge ${resultBadge}">${resultado > 0 ? 'Lucro' : resultado < 0 ? 'Prejuízo' : 'Neutro'}</span></td>
+            </tr>`;
+        }).join('');
+
+        container.innerHTML = `<div class="toc-perf-summary-cards">${summaryCards}</div>
+            <div class="toc-perf-table-wrap">
+                <table class="toc-perf-table">
+                    <thead><tr><th>Operação</th><th>Tipo</th><th>Status</th><th>Cotação</th><th>Strike</th><th>Prêmio</th><th>Resultado</th><th>TAE</th><th>Distância</th><th>Classificação</th></tr></thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>`;
+    }
+
     function renderAll(ops) {
         const stats = calcStats(ops);
         const monthlyRows = groupByMonth(ops);
         renderSummary(stats, monthlyRows);
         renderMonthly(monthlyRows);
         renderTimeline(monthlyRows);
+        renderPerformance(ops);
         renderOpsTable(ops);
         renderMeta(stats, monthlyRows);
     }
