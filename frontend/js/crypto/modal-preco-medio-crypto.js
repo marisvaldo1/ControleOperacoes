@@ -75,15 +75,12 @@
   function calcStats(ops, priceOps, basePriceOps) {
     var totalOps = ops.length;
     var totalPremio = 0;
-    var wins = 0;
 
     ops.forEach(function (op) {
-      var premio = getPremio(op);
-      totalPremio += premio;
-      if (premio > 0) wins++;
+      totalPremio += getPremio(op);
     });
 
-    var winRate = totalOps > 0 ? (wins / totalOps * 100) : 0;
+    var averagePremium = totalOps > 0 ? totalPremio / totalOps : 0;
 
     // Preço médio: usa o cálculo oficial, opcionalmente limitado ao mês selecionado
     var precoMedio = 0;
@@ -92,7 +89,7 @@
       if (pmData && pmData.pm > 0) precoMedio = pmData.pm;
     }
 
-    return { totalOps: totalOps, totalPremio: totalPremio, winRate: winRate, precoMedio: precoMedio };
+    return { totalOps: totalOps, totalPremio: totalPremio, averagePremium: averagePremium, precoMedio: precoMedio };
   }
 
   function getMonthOps(ops, monthIndex) {
@@ -190,7 +187,7 @@
     
     el('pmKpiPnl').textContent = (stats.totalPremio >= 0 ? '' : '-') + fmtUS(stats.totalPremio);
     el('pmKpiOps').textContent = String(stats.totalOps);
-    el('pmKpiWinRate').textContent = stats.winRate.toFixed(0) + '%';
+    el('pmKpiAveragePremium').textContent = fmtUS(stats.averagePremium);
 
     var pmLink = el('pmPriceMedioLink');
     if (pmLink) {
