@@ -366,6 +366,7 @@
 .pm-heat-month {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 10px;
     margin-bottom: 8px;
 }
@@ -495,6 +496,7 @@
 
 .pm-day-detail {
     display: none;
+    width: 100%;
     margin-top: 16px;
     background: var(--pm-card2);
     border: 1px solid var(--pm-border);

@@ -372,18 +372,16 @@
         var info = _dayOpsMap[id];
         if (!info) return;
 
-        // Remove seleção anterior
         heatWrap.querySelectorAll('.pm-cell.pm-selected').forEach(function(x) {
           x.classList.remove('pm-selected');
         });
         c.classList.add('pm-selected');
 
-        document.getElementById('pmDdDate').textContent = fmtDate(info.date);
-        var totalEl = document.getElementById('pmDdTotal');
-        totalEl.textContent = 'Total do dia: ' + fmtUS(info.total);
-        totalEl.className = 'pm-dd-total ' + (info.total >= 0 ? 'pm-pos' : 'pm-neg');
+        heatWrap.querySelectorAll('.pm-day-detail').forEach(function(d) {
+          d.remove();
+        });
 
-        document.getElementById('pmDdOps').innerHTML = info.ops.map(function(o) {
+        var opsHTML = info.ops.map(function(o) {
           var tipo = (o.tipo || '').toUpperCase();
           var asset = (o.ativo || _currentAtivo).toUpperCase();
           var exercida = isExercised(o);
@@ -414,7 +412,24 @@
           '</div>';
         }).join('');
 
-        document.getElementById('pmDayDetail').classList.add('pm-open');
+        var detailHTML = '<div class="pm-dd-head">' +
+          '<div>' +
+            '<div class="pm-dd-date">' + fmtDate(info.date) + '</div>' +
+            '<div class="pm-dd-total ' + (info.total >= 0 ? 'pm-pos' : 'pm-neg') + '">Total do dia: ' + fmtUS(info.total) + '</div>' +
+          '</div>' +
+          '<button type="button" class="pm-dd-close">✕</button>' +
+        '</div>' +
+        '<div class="pm-dd-ops">' + opsHTML + '</div>';
+
+        var detail = document.createElement('div');
+        detail.className = 'pm-day-detail pm-open';
+        detail.innerHTML = detailHTML;
+
+        var monthEl = c.closest('.pm-heat-month');
+        if (monthEl) {
+          monthEl.appendChild(detail);
+        }
+
         tooltip.style.display = 'none';
       });
     });
@@ -422,15 +437,14 @@
 
   // ─── Close day detail ───
   function closeDayDetail() {
-    var dayDetail = document.getElementById('pmDayDetail');
-    if (dayDetail) {
-      dayDetail.classList.remove('pm-open');
-      var heatWrap = document.getElementById('pmHeatWrap');
-      if (heatWrap) {
-        heatWrap.querySelectorAll('.pm-cell.pm-selected').forEach(function(x) {
-          x.classList.remove('pm-selected');
-        });
-      }
+    var heatWrap = document.getElementById('pmHeatWrap');
+    if (heatWrap) {
+      heatWrap.querySelectorAll('.pm-day-detail').forEach(function(d) {
+        d.remove();
+      });
+      heatWrap.querySelectorAll('.pm-cell.pm-selected').forEach(function(x) {
+        x.classList.remove('pm-selected');
+      });
     }
   }
 
@@ -500,7 +514,15 @@
     if (!_modalOverlay) return;
 
     document.getElementById('pmModalClose').onclick = closeModal;
-    document.getElementById('pmDdClose').onclick = closeDayDetail;
+
+    var heatWrap = document.getElementById('pmHeatWrap');
+    if (heatWrap) {
+      heatWrap.addEventListener('click', function(e) {
+        if (e.target.closest('.pm-dd-close')) {
+          closeDayDetail();
+        }
+      });
+    }
 
     _modalOverlay.onclick = function(e) {
       if (e.target === _modalOverlay) closeModal();
