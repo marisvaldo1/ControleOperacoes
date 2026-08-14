@@ -253,11 +253,22 @@
             : corr === 'BYBIT'
             ? '<span class="vg-badge" style="background:rgba(6,182,212,.15);color:#06b6d4;border:1px solid rgba(6,182,212,.35)" title="Bybit">BB</span>'
             : '<span class="vg-badge" style="background:rgba(148,163,184,.12);color:#94a3b8;border:1px solid rgba(148,163,184,.3)" title="'+corr+'">'+corr+'</span>';
+        // Seal badge inline
+        var sealSt = thermoStatus(strike, cot, tipo);
+        var sealColor = sealSt.cls === 'otm' ? '#ef4444' : '#22c55e';
+        var sealLabel = sealSt.cls === 'otm' ? 'EM EXERCÍCIO' : 'SEGURA';
+        var sealPct = strike > 0 ? ((cot - strike) / strike * 100) : 0;
+        var sealPctSign = sealPct >= 0 ? '+' : '';
+        var sealEmoji = sealSt.cls === 'otm' ? '🔴' : '🟢';
+        var sealBadge = '<span class="vg-badge" id="vgSealBadge" style="background:rgba(' + (sealSt.cls === 'otm' ? '239,68,68' : '34,197,94') + ',.15);color:' + sealColor + ';border:1px solid ' + sealColor + ';display:inline-flex;align-items:center;gap:4px" title="' + sealLabel + ' ' + sealPctSign + sealPct.toFixed(2) + '%">' +
+          '<span style="width:8px;height:8px;border-radius:50%;background:' + sealColor + ';display:inline-block;box-shadow:0 0 6px ' + sealColor + '"></span>' +
+          sealLabel + ' ' + sealPctSign + sealPct.toFixed(2) + '%</span>';
         var activeClass = idx === 0 ? ' vg-op-active' : '';
         h += '<div class="vg-op-row' + activeClass + '" data-op-id="' + (op.id || '') + '" data-par="' + asset + '" data-strike="' + strike + '" data-cotacao="' + cot + '" data-tipo="' + tipo + '" style="border-left:3px solid ' + acol + ';cursor:pointer">';
         h += '<span style="font-family:var(--syne,Syne),sans-serif;font-size:.8rem;font-weight:700;min-width:30px;color:'+bcol+'">'+asset+'</span>';
         h += '<span class="vg-badge" style="background:rgba(59,130,246,.1);color:#3b82f6;border:1px solid rgba(59,130,246,.26)">'+tipo+'</span>';
         h += corrBadge;
+        h += sealBadge;
         if (isEx) h += '<span class="vg-badge" style="background:rgba(249,115,22,.1);color:#f97316;border:1px solid rgba(249,115,22,.26)">Poss. Exercício</span>';
         h += '<div style="flex:1"></div>';
         h += '<span style="font-size:.68rem;color:' + C_MUTED + ';margin-right:2px">Prêmio Recebido:</span><span style="font-family:monospace;font-size:.78rem;font-weight:700;color:#22c55e">+' + fmt(premio) + '</span>';
@@ -278,7 +289,11 @@
     h += '<div class="vg-thermo-left">';
     h += '<svg id="vgThermometerSvg" class="vg-thermo-svg" viewBox="0 0 400 250" width="100%" height="250"></svg>';
     h += '</div>';
-    h += '<div class="vg-thermo-right" id="vgSealContainer"></div>';
+    h += '<div class="vg-thermo-right">';
+    h += '<div class="tradingview-widget-container" style="height:250px;width:100%">';
+    h += '<div id="vgMiniChartContainer"></div>';
+    h += '</div>';
+    h += '</div>';
     h += '</div>';
     h += '<div class="vg-thermo-diff-row" id="vgThermoDiff"></div>';
     h += '</div></div></div>';
@@ -395,9 +410,9 @@
       '.vg-cf-val{font-family:monospace;font-size:.64rem;font-weight:600}',
       '.vg-cf-arrow{font-size:1rem;color:#3a4f6a;flex-shrink:0;margin:0 -4px;align-self:center;padding-bottom:20px}',
       '.vg-fc-row{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:7px;background:#1c2438;border:1px solid rgba(255,255,255,.07);margin-bottom:6px}',
-      '.vg-thermo-layout{display:flex;align-items:flex-start;gap:16px}',
-      '.vg-thermo-left{flex:1;min-width:0}',
-      '.vg-thermo-right{width:180px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:8px}',
+      '.vg-thermo-layout{display:flex;align-items:center;gap:12px;width:100%}',
+      '.vg-thermo-left{flex:1 1 0;min-width:0}',
+      '.vg-thermo-right{flex:1 1 0;min-width:0}',
       /* LIGHT THEME */
       '[data-bs-theme="light"] .vg-card{background:var(--bs-body-bg,#fff);border-color:rgba(0,0,0,.10)}',
       '[data-bs-theme="light"] .vg-card-title{color:#6c757d}',
@@ -430,7 +445,7 @@
     var MAX = Math.max(s, q) + margin;
 
     var clamp = function(v) { return Math.max(0, Math.min(1, (v - MIN) / (MAX - MIN))); };
-    var totalH = 175, barW = 46, y0 = 28;
+    var totalH = 200, barW = 64, y0 = 24;
     var sx = 140, qx = 250;
 
     var sh = clamp(s) * totalH;
@@ -453,9 +468,9 @@
       var gy = y0 + totalH - (i / 8) * totalH;
       var val = MIN + (MAX - MIN) / 8 * i;
       var label = val >= 1000 ? (val/1000).toFixed(1) + 'k' : val.toFixed(0);
-      h += '<line x1="70" y1="' + gy + '" x2="330" y2="' + gy + '" stroke="#334d6e" stroke-width="1"/>';
-      h += '<text x="62" y="' + (gy + 4) + '" fill="#8aa4c0" font-size="10" text-anchor="end">' + label + '</text>';
-      h += '<text x="338" y="' + (gy + 4) + '" fill="#8aa4c0" font-size="10">' + label + '</text>';
+      h += '<line x1="56" y1="' + gy + '" x2="344" y2="' + gy + '" stroke="#334d6e" stroke-width="1"/>';
+      h += '<text x="48" y="' + (gy + 4) + '" fill="#8aa4c0" font-size="10" text-anchor="end">' + label + '</text>';
+      h += '<text x="352" y="' + (gy + 4) + '" fill="#8aa4c0" font-size="10">' + label + '</text>';
     }
 
     // Função tubo (zonas coloridas — opacidade aumentada)
@@ -531,54 +546,256 @@
     }
   }
 
-  /* ─ Selo Central de Status ─ */
-  function buildSeal(s, q, tipo, pm, par) {
-    var container = document.getElementById('vgSealContainer');
-    if (!container) return;
+  /* ─ Mini TradingView Chart (no selo — selo agora está no header do card) ─ */
+  var _currentSealPar = null;
+  var _currentSealStrike = null;
+  var _currentSealCot = null;
+  var _currentSealTipo = null;
 
-    if (!s || !q) {
-      container.innerHTML = '';
+  /* ─ Cotação em tempo real — usa o serviço global CryptoLive (crypto-live.js) ─ */
+  var _vgQuoteThrottle = 0;
+
+  function connectBinanceWs(par) {
+    // Delega ao serviço global (conexão única compartilhada por todo o sistema)
+    if (window.CryptoLive && par) {
+      window.CryptoLive.addAsset(par);
+    }
+  }
+
+  function disconnectBinanceWs() {
+    // Serviço global compartilhado — não desconecta; outros módulos também o usam
+  }
+
+  // Listener global: atualiza o termômetro somente quando o tick pertence ao par selecionado
+  window.addEventListener('cryptoLiveQuote', function (ev) {
+    var detail = ev.detail;
+    if (!detail || !detail.asset || !detail.price) return;
+    if (_currentSealPar && detail.asset.toUpperCase() === _currentSealPar.toUpperCase()) {
+      var now = Date.now();
+      if (now - _vgQuoteThrottle < 400) return; // throttle ~400ms
+      _vgQuoteThrottle = now;
+      updateThermoPrice(detail.price);
+    }
+  });
+
+  function updateThermoPrice(newPrice) {
+    if (!isFinite(newPrice) || newPrice <= 0 || !_currentSealPar) return;
+    _currentSealCot = newPrice;
+    var pmVal = computePM(window.cryptoOperacoes, _currentSealPar);
+    buildThermometer(_currentSealStrike, newPrice, _currentSealTipo, pmVal, _currentSealPar);
+    renderMiniStrikeOverlay(_currentSealStrike, newPrice, _currentSealTipo);
+    // Atualiza badge do selo no header
+    var badge = document.getElementById('vgSealBadge');
+    if (badge) {
+      var st = thermoStatus(_currentSealStrike, newPrice, _currentSealTipo);
+      var c = st.cls === 'otm' ? '#ef4444' : '#22c55e';
+      var l = st.cls === 'otm' ? 'EM EXERCÍCIO' : 'SEGURA';
+      var p = _currentSealStrike > 0 ? ((newPrice - _currentSealStrike) / _currentSealStrike * 100) : 0;
+      var ps = p >= 0 ? '+' : '';
+      badge.style.color = c;
+      badge.style.borderColor = c;
+      badge.style.background = 'rgba(' + (st.cls === 'otm' ? '239,68,68' : '34,197,94') + ',.15)';
+      badge.innerHTML = '<span style="width:8px;height:8px;border-radius:50%;background:' + c + ';display:inline-block;box-shadow:0 0 6px ' + c + '"></span>' + l + ' ' + ps + p.toFixed(2) + '%';
+      badge.title = l + ' ' + ps + p.toFixed(2) + '%';
+    }
+  }
+
+  function buildSeal(s, q, tipo, pm, par) {
+    _currentSealPar = par;
+    _currentSealStrike = s;
+    _currentSealCot = q;
+    _currentSealTipo = tipo;
+    loadMiniTradingViewChart(par);
+    renderMiniStrikeOverlay(s, q, tipo);
+    connectBinanceWs(par);
+  }
+
+  /* ─ Mini TradingView Chart ─ */
+  var _miniTvWidget = null;
+  var _miniTvCurrentTicker = null;
+  var _miniTvPendingTimeout = null;
+
+  function resolveMiniTickerSymbol(ticker) {
+    var base = String(ticker || '').trim().toUpperCase().replace('/USDT', '').replace('USDT', '').replace('/', '');
+    var cryptoSet = ['BTC', 'ETH', 'BNB', 'SOL', 'XRP', 'ADA', 'DOGE'];
+    if (cryptoSet.indexOf(base) !== -1) {
+      return 'BINANCE:' + base + 'USDT';
+    }
+    return 'BINANCE:' + base + 'USDT';
+  }
+
+  /* ─ Overlay do Strike no mini gráfico (igual à modal) ─ */
+  function formatStrikeLabel(value) {
+    var n = parseFloat(value);
+    if (!isFinite(n)) return '-';
+    return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function renderMiniStrikeOverlay(strike, currentPrice, tipo) {
+    var chartContainer = document.getElementById('vgMiniChartContainer');
+    var wrapper = chartContainer ? chartContainer.parentElement : null;
+    if (!chartContainer || !wrapper) return;
+
+    wrapper.style.position = 'relative';
+
+    var old = document.getElementById('vgMiniStrikeOverlay');
+    if (old) old.remove();
+
+    var s = parseFloat(strike);
+    var q = parseFloat(currentPrice);
+    if (!isFinite(s) || !isFinite(q) || s <= 0 || q <= 0) return;
+
+    var diffPct = Math.abs(((s - q) / q) * 100);
+    var strikeAboveCurrent = s > q;
+    var offsetRatio = Math.max(0.02, Math.min(0.4, diffPct / 12));
+    var topRatio = Math.min(0.92, Math.max(0.08, 0.5 + (strikeAboveCurrent ? -offsetRatio : offsetRatio)));
+    var topPercent = (topRatio * 100).toFixed(2);
+
+    // Cor igual ao selo "SEGURA"/"EM EXERCÍCIO" do cabeçalho do card
+    var sealCls = thermoStatus(s, q, tipo).cls;
+    // 'otm' no thermoStatus = ITM (risco) → EM EXERCÍCIO (vermelho); 'itm' = OTM (seguro) → SEGURA (verde)
+    var lineColor = sealCls === 'otm' ? '#ef4444' : '#22c55e';
+    var lineGlow = sealCls === 'otm' ? 'rgba(239,68,68,.28)' : 'rgba(34,197,94,.28)';
+
+    var overlay = document.createElement('div');
+    overlay.id = 'vgMiniStrikeOverlay';
+    overlay.style.position = 'absolute';
+    overlay.style.inset = '0';
+    overlay.style.pointerEvents = 'none';
+    overlay.style.zIndex = '5';
+    overlay.style.borderRadius = '8px';
+    overlay.innerHTML =
+      '<div id="vgMiniStrikeLine" style="position:absolute;left:10px;right:10px;top:' + topPercent + '%;border-top:2px solid ' + lineColor + ';box-shadow:0 0 14px ' + lineGlow + '"></div>' +
+      '<div id="vgMiniStrikeLabel" style="position:absolute;right:10px;top:calc(' + topPercent + '% - 13px);padding:2px 8px;border-radius:999px;background:rgba(15,23,42,.96);border:1px solid ' + lineGlow + ';color:' + lineColor + ';font-size:9px;font-weight:700;letter-spacing:.02em;box-shadow:0 8px 18px rgba(0,0,0,.26)"></div>';
+    var labelEl = overlay.querySelector('#vgMiniStrikeLabel');
+    if (labelEl) labelEl.textContent = 'Strike ' + formatStrikeLabel(s);
+    wrapper.appendChild(overlay);
+  }
+
+  function loadMiniTradingViewChart(ticker) {
+    var container = document.getElementById('vgMiniChartContainer');
+    if (!container) {
+      console.warn('[VG MiniChart] Container vgMiniChartContainer não encontrado');
       return;
     }
 
-    var st = thermoStatus(s, q, tipo);
-    var diff = q - s;
-    var pct = s > 0 ? (diff / s * 100) : 0;
-    var pctSign = pct >= 0 ? '+' : '';
+    // Cancel any pending schedule from a previous render call
+    if (_miniTvPendingTimeout) { clearTimeout(_miniTvPendingTimeout); _miniTvPendingTimeout = null; }
 
-    // Cores do selo baseadas no status (apenas vermelho ou verde)
-    var sealColor, sealLabel;
-    if (st.cls === 'otm') {
-      // ITM / Risco de exercício → vermelho
-      sealColor = '#ef4444';
-      sealLabel = 'EM EXERCÍCIO';
-    } else {
-      // OTM / Seguro → verde
-      sealColor = '#22c55e';
-      sealLabel = 'SEGURA';
+    // Don't reload if same ticker and widget exists
+    if (_miniTvCurrentTicker === ticker && _miniTvWidget) return;
+    _miniTvCurrentTicker = ticker;
+
+    // Clear container completely
+    container.innerHTML = '';
+
+    // Remove old widget if exists
+    if (_miniTvWidget) {
+      try {
+        if (typeof _miniTvWidget.remove === 'function') {
+          _miniTvWidget.remove();
+        }
+      } catch (e) {
+        console.warn('[VG MiniChart] Erro ao remover widget antigo:', e);
+      }
+      _miniTvWidget = null;
     }
 
-    var tipoLabel = (tipo || 'PUT').toUpperCase() === 'CALL' ? '📉 CALL vendida' : '📉 PUT vendida';
+    var symbol = resolveMiniTickerSymbol(ticker);
+    var isDarkMode = document.body.dataset.bsTheme === 'dark';
+    var theme = isDarkMode ? 'dark' : 'light';
 
-    // Container centralizado com tudo em coluna
-    var html = '<div style="display:flex;flex-direction:column;align-items:center;width:100%">';
-    // SVG círculo grande do selo
-    html += '<svg class="vg-seal-svg" viewBox="0 0 200 200" width="160" height="160">';
-    html += '<circle cx="100" cy="100" r="80" fill="' + sealColor + '" opacity=".12"/>';
-    html += '<circle cx="100" cy="100" r="68" fill="#0d1424" stroke="' + sealColor + '" stroke-width="4"';
-    if (st.cls === 'otm') html += ' class="vg-seal-pulse"';
-    html += '/>';
-    var emoji = st.cls === 'otm' ? '🔴' : '🟢';
-    html += '<text x="100" y="82" text-anchor="middle" font-size="22">' + emoji + '</text>';
-    html += '<text x="100" y="106" text-anchor="middle" font-size="14" font-weight="800" fill="' + sealColor + '">' + sealLabel + '</text>';
-    html += '<text x="100" y="126" text-anchor="middle" font-size="15" font-weight="800" fill="' + sealColor + '">' + pctSign + pct.toFixed(2) + '%</text>';
-    html += '</svg>';
-    // Textos abaixo do círculo
-    html += '<div style="text-align:center;margin-top:6px">';
-    html += '<div style="font-size:12px;color:#94a3b8;font-weight:600">' + tipoLabel + '</div>';
-    html += '</div></div>';
+    function createWidget() {
+      try {
+        if (!globalThis.TradingView) {
+          console.warn('[VG MiniChart] TradingView não disponível');
+          return;
+        }
+        _miniTvWidget = new (globalThis.TradingView).widget({
+          width: '100%',
+          height: 250,
+          symbol: symbol,
+          interval: 'D',
+          timezone: 'America/Sao_Paulo',
+          theme: theme,
+          style: '1',
+          locale: 'pt_BR',
+          toolbar_bg: theme === 'dark' ? '#111827' : '#f1f3f6',
+          enable_publishing: false,
+          allow_symbol_change: false,
+          hide_side_toolbar: true,
+          hide_top_toolbar: true,
+          hide_legend: true,
+          save_image: false,
+          container_id: 'vgMiniChartContainer',
+          studies_overrides: {},
+          overrides: {
+            'mainSeriesProperties.candleStyle.upColor': '#26a69a',
+            'mainSeriesProperties.candleStyle.downColor': '#ef5350',
+            'mainSeriesProperties.candleStyle.borderUpColor': '#26a69a',
+            'mainSeriesProperties.candleStyle.borderDownColor': '#ef5350',
+            'mainSeriesProperties.candleStyle.wickUpColor': '#26a69a',
+            'mainSeriesProperties.candleStyle.wickDownColor': '#ef5350'
+          }
+        });
+        console.log('[VG MiniChart] Widget criado para:', symbol);
+        // Override iframe background after load to match thermo area
+        setTimeout(function() {
+          var el = document.getElementById('vgMiniChartContainer');
+          if (!el) return;
+          el.style.backgroundColor = '#111827';
+          var iframe = el.querySelector('iframe');
+          if (iframe) {
+            iframe.style.backgroundColor = '#111827';
+            iframe.style.borderRadius = '8px';
+          }
+        }, 600);
+      } catch (error) {
+        console.error('[VG MiniChart] Erro ao criar widget:', error);
+      }
+    }
 
-    container.innerHTML = html;
+    // Wait for DOM and TradingView script
+    _miniTvPendingTimeout = setTimeout(function() {
+      _miniTvPendingTimeout = null;
+      if (!globalThis.TradingView) {
+        var existingScript = document.querySelector('script[src="https://s3.tradingview.com/tv.js"]');
+        if (existingScript && !existingScript.dataset.vgBound) {
+          existingScript.dataset.vgBound = 'true';
+          existingScript.addEventListener('load', function() {
+            if (_miniTvWidget) return;
+            createWidget();
+          });
+          existingScript.addEventListener('error', function() {
+            console.error('[VG MiniChart] Falha ao carregar script TradingView');
+          });
+        } else if (!existingScript) {
+          var script = document.createElement('script');
+          script.src = 'https://s3.tradingview.com/tv.js';
+          script.async = true;
+          script.onload = function() { createWidget(); };
+          script.onerror = function() {
+            console.error('[VG MiniChart] Falha ao carregar script TradingView');
+          };
+          document.head.appendChild(script);
+        }
+        return;
+      }
+      createWidget();
+    }, 150);
+  }
+
+  function reloadMiniChart() {
+    if (_miniTvPendingTimeout) { clearTimeout(_miniTvPendingTimeout); _miniTvPendingTimeout = null; }
+    _miniTvCurrentTicker = null;
+    if (_miniTvWidget) {
+      try { _miniTvWidget.remove(); } catch (e) {}
+      _miniTvWidget = null;
+    }
+    if (_currentSealPar) {
+      loadMiniTradingViewChart(_currentSealPar);
+      renderMiniStrikeOverlay(_currentSealStrike, _currentSealCot, _currentSealTipo);
+    }
   }
 
   function thermoStatus(s, q, tipo) {
@@ -601,11 +818,18 @@
   /* ─ Atualiza cotação ao vivo ─ */
   async function atualizarCotacoesVG(par) {
     try {
-      var sym = par + 'USDT';
-      var res = await fetch(API_BASE + '/api/proxy/crypto/' + sym);
-      var data = await res.json();
-      if (data && data.price) {
-        var price = parseFloat(data.price);
+      var price = null;
+      // Usa o cache do serviço global CryptoLive quando disponível
+      if (window.CryptoLive) {
+        price = window.CryptoLive.getPrice(par);
+      }
+      if (!price) {
+        var sym = par + 'USDT';
+        var res = await fetch(API_BASE + '/api/proxy/crypto/' + sym);
+        var data = await res.json();
+        if (data && data.price) price = parseFloat(data.price);
+      }
+      if (price) {
         (window.cryptoOperacoes || []).forEach(function(op) {
           var a = (op.ativo || '').toUpperCase().replace('USDT', '').replace('/', '').trim();
           if (a === par.toUpperCase()) op.cotacao_atual = price;
@@ -627,6 +851,11 @@
       return;
     }
     injectVGStyles();
+    // Reset mini chart state before rebuilding DOM (widget iframe is destroyed with innerHTML)
+    if (_miniTvPendingTimeout) { clearTimeout(_miniTvPendingTimeout); _miniTvPendingTimeout = null; }
+    _miniTvWidget = null;
+    _miniTvCurrentTicker = null;
+    disconnectBinanceWs();
     container.innerHTML = renderVG(ops);
     /* Listeners: clique na linha de posição aberta → atualiza termômetro */
     container.querySelectorAll('.vg-op-row[data-op-id]').forEach(function(el) {
@@ -661,7 +890,10 @@
       btn.addEventListener('click', function(e) {
         e.stopPropagation();
         var par = btn.getAttribute('data-par');
-        if (par) atualizarCotacoesVG(par);
+        if (par) {
+          atualizarCotacoesVG(par);
+          reloadMiniChart();
+        }
       });
     });
     /* Listeners: gráfico TradingView */
@@ -695,14 +927,14 @@
     }
     setTimeout(function() {
       buildVGCharts(ops);
-      // Inicializa termômetro com a primeira operação aberta
+      // Inicializa termômetro/selo com a primeira operação (aberta ou não)
       var abertasOps = computeAbertasInfo(ops);
-      if (abertasOps.length > 0) {
-        var firstOp = abertasOps[0];
-        var initPar = (firstOp.ativo || 'BTC').toUpperCase().replace('USDT','').replace('/','').trim();
+      var seedOp = abertasOps.length > 0 ? abertasOps[0] : (ops[0] || null);
+      if (seedOp) {
+        var initPar = (seedOp.ativo || 'BTC').toUpperCase().replace('USDT','').replace('/','').trim();
         var pmInit = computePM(ops, initPar);
-        buildThermometer(parseFloat(firstOp.strike || 0), parseFloat(firstOp.cotacao_atual || 0), (firstOp.tipo || 'PUT'), pmInit, initPar);
-        buildSeal(parseFloat(firstOp.strike || 0), parseFloat(firstOp.cotacao_atual || 0), (firstOp.tipo || 'PUT'), pmInit, initPar);
+        buildThermometer(parseFloat(seedOp.strike || 0), parseFloat(seedOp.cotacao_atual || 0), (seedOp.tipo || 'PUT'), pmInit, initPar);
+        buildSeal(parseFloat(seedOp.strike || 0), parseFloat(seedOp.cotacao_atual || 0), (seedOp.tipo || 'PUT'), pmInit, initPar);
       }
     }, 50);
   }

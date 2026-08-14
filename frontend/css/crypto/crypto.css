@@ -352,7 +352,6 @@
 .vg-thermometer-wrap {
     margin-top: 16px;
     padding: 16px 12px;
-    background: #111827;
     border: 1px solid rgba(255,255,255,.07);
     border-radius: 12px;
     text-align: center;
@@ -571,23 +570,22 @@
 }
 
 
-/* Layout flex: Termômetro + Selo lado a lado */
+/* Layout flex: Termômetro + Gráfico lado a lado */
 .vg-thermo-layout {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
+    width: 100%;
 }
 
 .vg-thermo-left {
-    flex: 1;
+    flex: 1 1 0;
     min-width: 0;
 }
 
 .vg-thermo-right {
-    flex: 0 0 180px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    flex: 1 1 0;
+    min-width: 0;
 }
 
 /* Selo circular SVG */
@@ -602,4 +600,15 @@
 
 .vg-seal-pulse {
     animation: vgSealPulse 1.5s ease-in-out infinite;
+}
+
+/* Mini chart background — matching thermo area */
+#vgMiniChartContainer,
+#vgMiniChartContainer iframe {
+    background-color: #111827 !important;
+    border-radius: 8px;
+}
+[data-bs-theme="light"] #vgMiniChartContainer,
+[data-bs-theme="light"] #vgMiniChartContainer iframe {
+    background-color: #ffffff !important;
 }

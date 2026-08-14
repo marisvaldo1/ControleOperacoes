@@ -867,11 +867,19 @@ ${op.observacoes ? `<div class="mdc-info-row" style="flex-direction:column;align
     async function _fetchLivePrice(op) {
         const sym = ((op.ativo || '') + 'USDT').replace(/USDTUSDT$/i, 'USDT');
         try {
-            const r = await fetch((window.API_BASE || '') + '/api/proxy/crypto/' + sym, { cache: 'no-store' });
-            if (!r.ok) throw new Error('HTTP ' + r.status);
-            const d = await r.json();
-            const rawPrice = d.price ?? d.lastPrice ?? d.last ?? d.c ?? d.close;
-            if (!rawPrice) throw new Error('Preço não retornado');
+            // Usa o serviço global CryptoLive (cache em tempo real) com fallback ao proxy HTTP
+            let rawPrice = null;
+            if (window.CryptoLive) {
+                const p = window.CryptoLive.getPrice(op.ativo);
+                if (p) rawPrice = p;
+            }
+            if (!rawPrice) {
+                const r = await fetch((window.API_BASE || '') + '/api/proxy/crypto/' + sym, { cache: 'no-store' });
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                const d = await r.json();
+                rawPrice = d.price ?? d.lastPrice ?? d.last ?? d.c ?? d.close;
+                if (!rawPrice) throw new Error('Preço não retornado');
+            }
             const price = parseFloat(rawPrice);
             op._livePrice    = price;
             op.cotacao_atual = price;

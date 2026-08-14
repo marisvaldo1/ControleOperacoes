@@ -97,10 +97,18 @@
         if (!context?.ticker) return;
 
         try {
-            const symbol = `${context.ticker}USDT`;
-            const response = await fetch((globalThis.API_BASE || '') + '/api/proxy/crypto/' + symbol, { cache: 'no-store' });
-            const payload = await response.json();
-            const livePrice = normalizeNumber(payload?.price);
+            // Usa o serviço global CryptoLive (cache em tempo real) com fallback ao proxy HTTP
+            let livePrice = null;
+            if (window.CryptoLive) {
+                const p = window.CryptoLive.getPrice(context.ticker);
+                if (p) livePrice = parseFloat(p);
+            }
+            if (livePrice === null) {
+                const symbol = `${context.ticker}USDT`;
+                const response = await fetch((globalThis.API_BASE || '') + '/api/proxy/crypto/' + symbol, { cache: 'no-store' });
+                const payload = await response.json();
+                livePrice = normalizeNumber(payload?.price);
+            }
 
             if (livePrice !== null && livePrice > 0) {
                 context.currentPrice = livePrice;

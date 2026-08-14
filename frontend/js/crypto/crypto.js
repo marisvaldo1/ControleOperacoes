@@ -165,6 +165,90 @@ window.addEventListener("pageshow", function (e) {
     }
 });
 
+/* ── Serviço global de cotação em tempo real (CryptoLive) ──────────────────── */
+
+// Registra no serviço global os ativos das operações abertas + navbar
+function registerLiveAssets() {
+    if (!window.CryptoLive) return;
+    const abertas = (allOperacoes || []).filter(o => (o.status || "ABERTA") === "ABERTA");
+    const ativos = [...new Set(abertas.map(o => o.ativo).filter(Boolean))];
+    try {
+        const cfg = JSON.parse(localStorage.getItem(CRYPTO_CFG_KEY) || '{}');
+        const navAtivos = (cfg.navbarAtivos || 'BTC').split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
+        navAtivos.forEach(a => ativos.push(a));
+    } catch {}
+    window.CryptoLive.ensureAssets(ativos);
+}
+
+// Aplica a cotação ao vivo apenas nas células correspondentes das DataTables (seletivo)
+function applyLiveQuoteToTables(asset, price) {
+    if (!asset || !isFinite(price) || price <= 0) return;
+    const upAsset = String(asset).toUpperCase();
+
+    // Atualiza dados em memória
+    (allOperacoes || []).forEach(op => {
+        const a = String(op.ativo || '').toUpperCase();
+        if (a === upAsset && (op.status || "ABERTA") === "ABERTA") {
+            op._livePrice = price;
+            op.cotacao_atual = price;
+            if (window.CryptoUtils && op.strike) {
+                op._liveDist = window.CryptoUtils.calcLiveDist((op.tipo || 'PUT').toUpperCase(), op.strike, price);
+            }
+        }
+    });
+
+    // Atualiza células das tabelas que exibem a cotação desse ativo
+    [tableMesAtual, tableHistorico].forEach(dt => {
+        if (!dt || !dt.rows) { try { dt?.draw(false); } catch(e) {} return; }
+        try {
+            dt.rows().every(function () {
+                const d = this.data();
+                if (!d || !d[1]) return;
+                const cellAsset = String(d[1]).replace(/<[^>]*>/g, '').trim().toUpperCase();
+                if (cellAsset !== upAsset) return;
+                const opAberta = String(d[15] || '').replace(/<[^>]*>/g, '').trim().toUpperCase() === 'ABERTA';
+                if (!opAberta) return;
+                const rowIdx = this.index();
+                if (d[3] !== undefined) dt.cell(rowIdx, 3).data(fmtUsd(price));
+                if (d[7] !== undefined) {
+                    const opLive = (allOperacoes || []).find(o => String(o.ativo || '').toUpperCase() === upAsset);
+                    if (opLive && opLive._liveDist !== undefined) {
+                        dt.cell(rowIdx, 7).data(parseFloat(opLive._liveDist).toFixed(2) + "%");
+                    }
+                }
+            });
+        } catch (e) {}
+        try { dt.draw(false); } catch (e) {}
+    });
+}
+
+// Listener global único: atualiza tabela + navbar com throttle suave
+let _cryptoLiveThrottle = 0;
+window.addEventListener("cryptoLiveQuote", function (ev) {
+    if (!window.CryptoLive) return;
+    const detail = ev.detail;
+    if (!detail || !detail.asset || !detail.price) return;
+    const now = Date.now();
+    if (now - _cryptoLiveThrottle < 250) return;
+    _cryptoLiveThrottle = now;
+    applyLiveQuoteToTables(detail.asset, detail.price);
+    refreshNavbarPrice(detail.asset, detail.price);
+});
+
+// Atualiza apenas o badge do navbar correspondente ao ativo (preserva ícone e handlers)
+function refreshNavbarPrice(asset, price) {
+    const upAsset = String(asset).toUpperCase();
+    const badges = document.querySelectorAll('#navbarCryptoPrices [data-nav-ativo]');
+    badges.forEach(badge => {
+        if (badge.getAttribute('data-nav-ativo').toUpperCase() === upAsset) {
+            // Preserva o ícone SVG existente (primeiro child) se houver
+            const icon = badge.querySelector('svg, i, .nav-icon');
+            const iconHtml = icon ? icon.outerHTML : '';
+            badge.innerHTML = iconHtml + upAsset + ' US$' + price.toLocaleString('en-US', { maximumFractionDigits: 2 });
+        }
+    });
+}
+
 function setupEventListeners() {
     document.getElementById("btnNovaOperacao")?.addEventListener("click", openNewModal);
     document.getElementById("btnSaveOperacao")?.addEventListener("click", saveOperacao);
@@ -600,6 +684,7 @@ async function loadOperacoes(attempt) {
         updateUI();
         refreshCryptoCotacoes();
         updateCryptoMarketStatus();
+        registerLiveAssets();
     } catch (e) {
         console.error("[crypto] Erro ao carregar (tentativa " + (attempt + 1) + "):", e);
         if (attempt < 3) {
@@ -2631,6 +2716,7 @@ async function refreshQuotes() {
         await refreshCryptoCotacoes();
         updateUI();
         updateCryptoMarketStatus();
+        registerLiveAssets();
         // iziToast.success({ title: "Atualizado", message: "Cotações e status atualizados." });
     } catch (e) {
         console.error("[refreshQuotes]", e);
@@ -2647,14 +2733,27 @@ async function refreshCryptoCotacoes() {
     const ativos  = [...new Set(abertas.map(o => o.ativo).filter(Boolean))];
     if (!ativos.length) return;
     const priceMap = {};
-    await Promise.allSettled(ativos.map(async ativo => {
-        try {
-            const sym = (ativo + "USDT").replace(/USDTUSDT$/, "USDT");
-            const res  = await fetch(API_BASE + "/api/proxy/crypto/" + sym);
-            const d    = await res.json();
-            if (d.price) priceMap[ativo] = parseFloat(d.price);
-        } catch {}
-    }));
+    const cached = {};
+    const pendentes = [];
+    ativos.forEach(ativo => {
+        // Prioriza o cache do serviço global CryptoLive (já atualizado em tempo real)
+        if (window.CryptoLive) {
+            const p = window.CryptoLive.getPrice(ativo);
+            if (p) { cached[ativo] = parseFloat(p); return; }
+        }
+        pendentes.push(ativo);
+    });
+    if (pendentes.length) {
+        await Promise.allSettled(pendentes.map(async ativo => {
+            try {
+                const sym = (ativo + "USDT").replace(/USDTUSDT$/, "USDT");
+                const res  = await fetch(API_BASE + "/api/proxy/crypto/" + sym);
+                const d    = await res.json();
+                if (d.price) priceMap[ativo] = parseFloat(d.price);
+            } catch {}
+        }));
+    }
+    Object.assign(priceMap, cached);
     // Injeta preço ao vivo em cada operação aberta
     abertas.forEach(op => {
         if (priceMap[op.ativo] !== undefined) {
@@ -2690,17 +2789,36 @@ async function updateCryptoMarketStatus() {
     var DEFAULT_COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'];
 
     try {
-        var results = await Promise.allSettled(ativos.map(function(ativo) {
-            var sym = ativo + 'USDT';
-            return fetch(API_BASE + '/api/proxy/crypto/' + sym).then(function(r) { return r.json(); });
-        }));
+        var pendentes = [];
+        ativos.forEach(function (ativo) {
+            if (window.CryptoLive) {
+                var p = window.CryptoLive.getPrice(ativo);
+                if (p) return; // vem do cache/serviço global
+            }
+            pendentes.push(ativo);
+        });
+
+        var results = pendentes.length
+            ? await Promise.allSettled(pendentes.map(function (ativo) {
+                var sym = ativo + 'USDT';
+                return fetch(API_BASE + '/api/proxy/crypto/' + sym).then(function (r) { return r.json(); });
+            }))
+            : [];
+        var fetchMap = {};
+        pendentes.forEach(function (ativo, i) {
+            var result = results[i];
+            if (result.status === 'fulfilled' && result.value && result.value.price) {
+                fetchMap[ativo] = parseFloat(result.value.price);
+            }
+        });
 
         var html = '';
-        ativos.forEach(function(ativo, i) {
-            var result = results[i];
+        ativos.forEach(function (ativo, i) {
             var price = 0;
-            if (result.status === 'fulfilled' && result.value && result.value.price) {
-                price = parseFloat(result.value.price);
+            if (window.CryptoLive && window.CryptoLive.getPrice(ativo)) {
+                price = parseFloat(window.CryptoLive.getPrice(ativo));
+            } else if (fetchMap[ativo]) {
+                price = fetchMap[ativo];
             }
             var color = COLORS_MAP[ativo] || DEFAULT_COLORS[i % DEFAULT_COLORS.length];
             var formatted = price > 0 ? 'US$' + price.toLocaleString('en-US', { maximumFractionDigits: 2 }) : '—';
@@ -2709,8 +2827,8 @@ async function updateCryptoMarketStatus() {
         container.innerHTML = html;
 
         // Adiciona click nos badges para abrir modal preço médio
-        container.querySelectorAll('[data-nav-ativo]').forEach(function(badge) {
-            badge.addEventListener('click', function() {
+        container.querySelectorAll('[data-nav-ativo]').forEach(function (badge) {
+            badge.addEventListener('click', function () {
                 var ativo = badge.getAttribute('data-nav-ativo');
                 if (window.ModalPrecoMedio && typeof window.ModalPrecoMedio.open === 'function') {
                     window.ModalPrecoMedio.open(ativo);

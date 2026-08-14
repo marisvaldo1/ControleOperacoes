@@ -23,6 +23,7 @@
 
     let _loadPromise    = null;
     let _countdownTimer = null;
+    let _liveQuoteSub   = null;
     let _currentOpId    = null;
     let _buttonsWired   = false;
 
@@ -175,10 +176,19 @@
                 const op  = ops.find(o => String(o.id) === String(id));
                 if (!op) throw new Error('Operação #' + id + ' não encontrada');
                 const sym = ((op.ativo || '') + 'USDT').replace(/USDTUSDT$/i, 'USDT');
-                const r   = await fetch((window.API_BASE || '') + '/api/proxy/crypto/' + sym, { cache: 'no-store' });
-                if (!r.ok) throw new Error('HTTP ' + r.status);
-                const d   = await r.json();
-                const rawPrice = d.price ?? d.lastPrice ?? d.last ?? d.c ?? d.close;
+                // Usa o serviço global CryptoLive (cache em tempo real na porta 443) com fallback ao proxy
+                let rawPrice = null;
+                if (window.CryptoLive) {
+                    const p = window.CryptoLive.getPrice(op.ativo);
+                    if (p) { rawPrice = p; }
+                }
+                let d = null;
+                if (!rawPrice) {
+                    const r   = await fetch((window.API_BASE || '') + '/api/proxy/crypto/' + sym, { cache: 'no-store' });
+                    if (!r.ok) throw new Error('HTTP ' + r.status);
+                    d = await r.json();
+                }
+                rawPrice = rawPrice || (d.price ?? d.lastPrice ?? d.last ?? d.c ?? d.close);
                 if (!rawPrice) throw new Error('Preço não retornado pela API');
                 op._livePrice    = parseFloat(rawPrice);
                 op.cotacao_atual = parseFloat(rawPrice);
@@ -197,7 +207,7 @@
                 const probLucro2 = op.pop != null ? op.pop + '%'
                     : Math.min(95, Math.max(5, 50 + distNum2 * 3)).toFixed(0) + '% <small style="opacity:.6">(estimado)</small>';
                 const isLive2 = true;
-                if (cotEl)  cotEl.innerHTML  = fmtUsd(op._livePrice) 
+                if (cotEl)  cotEl.innerHTML  = fmtUsd(op._livePrice) + ' <span class="badge bg-success-lt" style="font-size:.65rem">ao vivo</span>';
                 if (gaugeEl) gaugeEl.innerHTML = buildGaugeSVG(dist2, tipo);
                 if (probEl)  probEl.innerHTML  =
                     `<span class="mdc-info-label">📐 Prob. Lucro</span>
@@ -509,6 +519,56 @@ ${op.observacoes ? `
 
     }
 
+    // ─── Atualização em tempo real via CryptoLive ───────────────────────────────
+    function _applyLiveUpdate(asset, price) {
+        if (!_currentOpId) return;
+        const ops = window.cryptoOperacoes || [];
+        const op  = ops.find(o => String(o.id) === String(_currentOpId));
+        if (!op) return;
+        if (String(op.ativo || '').toUpperCase() !== String(asset).toUpperCase()) return;
+        // Atualiza dados em memória
+        op._livePrice    = price;
+        op.cotacao_atual = price;
+        const tipo   = (op.tipo || 'PUT').toUpperCase();
+        const strike = parseFloat(op.strike) || 0;
+        if (strike) {
+            op._liveDist = window.CryptoUtils
+                ? window.CryptoUtils.calcLiveDist(tipo, strike, price)
+                : (tipo === 'CALL'
+                    ? ((strike - price) / price) * 100
+                    : ((price - strike) / strike) * 100);
+        }
+        // Atualiza apenas os 3 campos dinâmicos no DOM
+        const cotEl   = document.getElementById('mdcCardCotacao');
+        const gaugeEl = document.getElementById('mdcGaugeArea');
+        const probEl  = document.getElementById('mdcProbLucro');
+        const dist2    = op._liveDist !== undefined ? op._liveDist : op.distancia;
+        const distNum2 = parseFloat(dist2) || 0;
+        const probLucro2 = op.pop != null ? op.pop + '%'
+            : Math.min(95, Math.max(5, 50 + distNum2 * 3)).toFixed(0) + '% <small style="opacity:.6">(estimado)</small>';
+        if (cotEl)  cotEl.innerHTML  = fmtUsd(price) + ' <span class="badge bg-success-lt" style="font-size:.65rem">ao vivo</span>';
+        if (gaugeEl) gaugeEl.innerHTML = buildGaugeSVG(dist2, tipo);
+        if (probEl)  probEl.innerHTML  =
+            `<span class="mdc-info-label">📐 Prob. Lucro</span>
+             <span class="mdc-info-value" style="color:${distNum2 >= 5 ? '#47b96c' : distNum2 >= 2 ? '#4da6ff' : '#f59f00'}">${probLucro2}</span>`;
+    }
+
+    function _subscribeLive() {
+        _unsubscribeLive();
+        _liveQuoteSub = function (ev) {
+            const d = ev.detail;
+            if (d && d.asset && d.price) _applyLiveUpdate(d.asset, d.price);
+        };
+        window.addEventListener('cryptoLiveQuote', _liveQuoteSub);
+    }
+
+    function _unsubscribeLive() {
+        if (_liveQuoteSub) {
+            window.removeEventListener('cryptoLiveQuote', _liveQuoteSub);
+            _liveQuoteSub = null;
+        }
+    }
+
     // ─── show() principal ──────────────────────────────────────────────────────────────────────────
     async function show(id) {
         const ops = window.cryptoOperacoes || [];
@@ -522,10 +582,12 @@ ${op.observacoes ? `
         _wireButtons();
         _renderContent(op);
         _updateModalTs();
+        _subscribeLive();
 
         const modalEl = document.getElementById(MODAL_ID);
         modalEl.addEventListener('hidden.bs.modal', function () {
             if (_countdownTimer) { clearInterval(_countdownTimer); _countdownTimer = null; }
+            _unsubscribeLive();
             _currentOpId = null;
         }, { once: true });
 
