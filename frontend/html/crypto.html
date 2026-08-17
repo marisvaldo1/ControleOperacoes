@@ -302,6 +302,11 @@
                                                     <input type="text" class="form-control" id="cfgNavbarAtivos" placeholder="Ex: BTC,ETH,BNB">
                                                     <div class="form-text">Até 5 ativos separados por vírgula. Exibidos no menu com cotação atualizada.</div>
                                                 </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Intervalo de atualização ao vivo (segundos)</label>
+                                                    <input type="number" min="3" max="600" class="form-control" id="cfgPollInterval" placeholder="Ex: 15">
+                                                    <div class="form-text">Intervalo de polling da cotação (fallback HTTP). Menor = atualização mais rápida, maiores requisições ao proxy.</div>
+                                                </div>
                                                 <button class="btn btn-primary w-100" id="btnSaveConfigCrypto">
                                                     Salvar Configurações
                                                 </button>
@@ -1166,7 +1171,7 @@
     <!-- Scripts -->
     <script src="../js/core/libs.js?v=1.2.1"></script>
     <script src="../js/core/global.js?v=1.2.2"></script>
-    <script src="../js/crypto/crypto-live.js?v=1.0.0"></script>
+    <script src="../js/crypto/crypto-live.js?v=1.2.0"></script>
     <script src="../js/core/layout.js?v=1.2.1"></script>
     <script src="../js/core/crypto-exercise.js?v=1.1.0"></script>
     <script src="../js/core/crypto-filter-bar.js?v=1.0.0"></script>
@@ -1178,7 +1183,7 @@
     <script src="../js/crypto/modal-resultados-crypto-compact.js?v=1.0.0"></script>
     <script src="../js/crypto/modal-resultados-crypto.js?v=1.0.0"></script>
     <script src="../js/crypto/modal-resultado-total-crypto-simple.js?v=4.0.0"></script>
-    <script src="../js/crypto/visao-geral-crypto.js?v=1.0.15"></script>
+    <script src="../js/crypto/visao-geral-crypto.js?v=1.0.17"></script>
     <script src="../js/crypto/modal-resultado-total-crypto.js?v=1.3.0"></script>
     <script src="../js/crypto/modal-saldo-medio-crypto.js?v=1.1.0"></script>
     <script src="../js/crypto/modal-preco-medio-crypto.js?v=3.0.0"></script>
@@ -1188,7 +1193,7 @@
     <script src="../js/crypto/modal-total-operacoes-crypto.js?v=1.3.0"></script>
     <script src="../js/crypto/modal-detalhe-crypto.js?v=3.1.5"></script>
     <script src="../js/crypto/modal-analise-detalhe-crypto.js?v=1.0.1"></script>
-    <script src="../js/crypto/crypto.js?v=1.6.8"></script>
+    <script src="../js/crypto/crypto.js?v=1.7.0"></script>
     <script>
         // Configurar Dashboard Avançado para crypto
         if (window.ModalDashboardCrypto) {

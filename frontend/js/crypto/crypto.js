@@ -235,6 +235,11 @@ window.addEventListener("cryptoLiveQuote", function (ev) {
     refreshNavbarPrice(detail.asset, detail.price);
 });
 
+// Re-registra ativos sempre que os dados das operações mudarem
+document.addEventListener("cryptoDataUpdated", function () {
+    registerLiveAssets();
+});
+
 // Atualiza apenas o badge do navbar correspondente ao ativo (preserva ícone e handlers)
 function refreshNavbarPrice(asset, price) {
     const upAsset = String(asset).toUpperCase();
@@ -2642,6 +2647,7 @@ function loadConfig() {
     if (cfg.meta && el("cfgMetaCrypto"))           el("cfgMetaCrypto").value = cfg.meta;
     if (cfg.parPadrao && el("cfgParPadrao"))       el("cfgParPadrao").value  = cfg.parPadrao;
     if (cfg.navbarAtivos && el("cfgNavbarAtivos")) el("cfgNavbarAtivos").value = cfg.navbarAtivos;
+    if (cfg.pollInterval && el("cfgPollInterval")) el("cfgPollInterval").value = cfg.pollInterval;
     // Sincroniza do backend
     fetch(API_BASE + '/api/config').then(function(r) { return r.json(); }).then(function(backendCfg) {
         if (backendCfg.navbarAtivos) {
@@ -2650,25 +2656,39 @@ function loadConfig() {
             localStorage.setItem(CRYPTO_CFG_KEY, JSON.stringify(localCfg));
             if (el("cfgNavbarAtivos")) el("cfgNavbarAtivos").value = backendCfg.navbarAtivos;
         }
+        if (backendCfg.pollInterval && el("cfgPollInterval")) {
+            var localCfgPoll = loadLocalConfig();
+            localCfgPoll.pollInterval = Number(backendCfg.pollInterval);
+            localStorage.setItem(CRYPTO_CFG_KEY, JSON.stringify(localCfgPoll));
+            if (el("cfgPollInterval")) el("cfgPollInterval").value = backendCfg.pollInterval;
+        }
     }).catch(function() {});
 }
 
 function saveConfig() {
     const rawAtivos = (document.getElementById("cfgNavbarAtivos")?.value || '').toUpperCase();
     const ativos = rawAtivos.split(',').map(s => s.trim()).filter(Boolean).slice(0, 5).join(',');
+    let pollInterval = parseInt(document.getElementById("cfgPollInterval")?.value, 10);
+    if (!isFinite(pollInterval)) pollInterval = 15;
+    pollInterval = Math.max(3, Math.min(600, pollInterval));
     const cfg = {
         saldoCrypto:  parseFloat(document.getElementById("cfgSaldoCrypto")?.value) || 0,
         meta:         parseFloat(document.getElementById("cfgMetaCrypto")?.value)  || 0,
         parPadrao:    document.getElementById("cfgParPadrao")?.value || "BTC",
-        navbarAtivos: ativos
+        navbarAtivos: ativos,
+        pollInterval: pollInterval
     };
     localStorage.setItem(CRYPTO_CFG_KEY, JSON.stringify(cfg));
     // Salva também no backend para persistência
     fetch(API_BASE + '/api/config', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ saldoCrypto: cfg.saldoCrypto, metaCrypto: cfg.meta, parPadrao: cfg.parPadrao, navbarAtivos: cfg.navbarAtivos })
+        body: JSON.stringify({ saldoCrypto: cfg.saldoCrypto, metaCrypto: cfg.meta, parPadrao: cfg.parPadrao, navbarAtivos: cfg.navbarAtivos, pollInterval: cfg.pollInterval })
     }).catch(function() {});
+    // Aplica o novo intervalo imediatamente no serviço global
+    if (window.CryptoLive && typeof window.CryptoLive.setPollInterval === 'function') {
+        window.CryptoLive.setPollInterval(pollInterval);
+    }
     iziToast.success({ title: "Configuracoes salvas!", message: "Saldo e metas atualizados." });
     updateUI();
     // Atualiza navbar com novos ativos

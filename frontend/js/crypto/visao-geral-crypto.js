@@ -278,25 +278,27 @@
         h += '</div>';
       });
     }
-    /* Termômetro Duplo — accordion aberto por padrão */
-    h += '<div class="vg-thermometer-wrap" id="vgThermometerWrap">';
-    h += '<div class="vg-thermo-accordion">';
-    h += '<button class="vg-thermo-acc-btn" id="vgThermoAccBtn" type="button" aria-expanded="true">';
-    h += '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
-    h += ' Strike vs Cotação</button>';
-    h += '<div class="vg-thermo-acc-body" id="vgThermoAccBody">';
-    h += '<div class="vg-thermo-layout">';
-    h += '<div class="vg-thermo-left">';
-    h += '<svg id="vgThermometerSvg" class="vg-thermo-svg" viewBox="0 0 400 250" width="100%" height="250"></svg>';
-    h += '</div>';
-    h += '<div class="vg-thermo-right">';
-    h += '<div class="tradingview-widget-container" style="height:250px;width:100%">';
-    h += '<div id="vgMiniChartContainer"></div>';
-    h += '</div>';
-    h += '</div>';
-    h += '</div>';
-    h += '<div class="vg-thermo-diff-row" id="vgThermoDiff"></div>';
-    h += '</div></div></div>';
+    /* Termômetro Duplo — somente quando há operações abertas */
+    if (abertas.length > 0) {
+      h += '<div class="vg-thermometer-wrap" id="vgThermometerWrap">';
+      h += '<div class="vg-thermo-accordion">';
+      h += '<button class="vg-thermo-acc-btn" id="vgThermoAccBtn" type="button" aria-expanded="true">';
+      h += '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
+      h += ' Strike vs Cotação</button>';
+      h += '<div class="vg-thermo-acc-body" id="vgThermoAccBody">';
+      h += '<div class="vg-thermo-layout">';
+      h += '<div class="vg-thermo-left">';
+      h += '<svg id="vgThermometerSvg" class="vg-thermo-svg" viewBox="0 0 400 250" width="100%" height="250"></svg>';
+      h += '</div>';
+      h += '<div class="vg-thermo-right">';
+      h += '<div class="tradingview-widget-container" style="height:250px;width:100%">';
+      h += '<div id="vgMiniChartContainer"></div>';
+      h += '</div>';
+      h += '</div>';
+      h += '</div>';
+      h += '<div class="vg-thermo-diff-row" id="vgThermoDiff"></div>';
+      h += '</div></div></div>';
+    }
     h += '</div>';
     h += '</div>'; /* end top grid */
 
@@ -614,6 +616,7 @@
   var _miniTvWidget = null;
   var _miniTvCurrentTicker = null;
   var _miniTvPendingTimeout = null;
+  var _miniTvStrikeSeriesId = null;   // ID da linha do strike desenhada via API TradingView
 
   function resolveMiniTickerSymbol(ticker) {
     var base = String(ticker || '').trim().toUpperCase().replace('/USDT', '').replace('USDT', '').replace('/', '');
@@ -631,45 +634,56 @@
     return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
+  // Desenha a linha do strike DENTRO do gráfico TradingView, ancorada ao valor real
+  // de preço na escala do gráfico — assim ela sempre fica acima/abaixo da cotação corretamente.
   function renderMiniStrikeOverlay(strike, currentPrice, tipo) {
     var chartContainer = document.getElementById('vgMiniChartContainer');
-    var wrapper = chartContainer ? chartContainer.parentElement : null;
-    if (!chartContainer || !wrapper) return;
-
-    wrapper.style.position = 'relative';
-
-    var old = document.getElementById('vgMiniStrikeOverlay');
-    if (old) old.remove();
-
-    var s = parseFloat(strike);
-    var q = parseFloat(currentPrice);
-    if (!isFinite(s) || !isFinite(q) || s <= 0 || q <= 0) return;
-
-    var diffPct = Math.abs(((s - q) / q) * 100);
-    var strikeAboveCurrent = s > q;
-    var offsetRatio = Math.max(0.02, Math.min(0.4, diffPct / 12));
-    var topRatio = Math.min(0.92, Math.max(0.08, 0.5 + (strikeAboveCurrent ? -offsetRatio : offsetRatio)));
-    var topPercent = (topRatio * 100).toFixed(2);
+    if (!chartContainer) return;
 
     // Cor igual ao selo "SEGURA"/"EM EXERCÍCIO" do cabeçalho do card
-    var sealCls = thermoStatus(s, q, tipo).cls;
-    // 'otm' no thermoStatus = ITM (risco) → EM EXERCÍCIO (vermelho); 'itm' = OTM (seguro) → SEGURA (verde)
-    var lineColor = sealCls === 'otm' ? '#ef4444' : '#22c55e';
-    var lineGlow = sealCls === 'otm' ? 'rgba(239,68,68,.28)' : 'rgba(34,197,94,.28)';
+    var clsCls = thermoStatus(parseFloat(strike), parseFloat(currentPrice), tipo).cls;
+    var lineColor = clsCls === 'otm' ? '#ef4444' : '#22c55e';
 
-    var overlay = document.createElement('div');
-    overlay.id = 'vgMiniStrikeOverlay';
-    overlay.style.position = 'absolute';
-    overlay.style.inset = '0';
-    overlay.style.pointerEvents = 'none';
-    overlay.style.zIndex = '5';
-    overlay.style.borderRadius = '8px';
-    overlay.innerHTML =
-      '<div id="vgMiniStrikeLine" style="position:absolute;left:10px;right:10px;top:' + topPercent + '%;border-top:2px solid ' + lineColor + ';box-shadow:0 0 14px ' + lineGlow + '"></div>' +
-      '<div id="vgMiniStrikeLabel" style="position:absolute;right:10px;top:calc(' + topPercent + '% - 13px);padding:2px 8px;border-radius:999px;background:rgba(15,23,42,.96);border:1px solid ' + lineGlow + ';color:' + lineColor + ';font-size:9px;font-weight:700;letter-spacing:.02em;box-shadow:0 8px 18px rgba(0,0,0,.26)"></div>';
-    var labelEl = overlay.querySelector('#vgMiniStrikeLabel');
-    if (labelEl) labelEl.textContent = 'Strike ' + formatStrikeLabel(s);
-    wrapper.appendChild(overlay);
+    if (_miniTvWidget && typeof _miniTvWidget.chart === 'function') {
+      try {
+        var chart = _miniTvWidget.chart();
+        if (chart) {
+          // Remove linha anterior (se existir)
+          if (_miniTvStrikeSeriesId) {
+            try { chart.removeEntity(_miniTvStrikeSeriesId); } catch (e) {}
+            _miniTvStrikeSeriesId = null;
+          }
+          var now = Math.floor(Date.now() / 1000);
+          var p = parseFloat(strike);
+          if (!isFinite(p) || p <= 0) return;
+          var idPromise = chart.createShape(
+            { time: now, price: p },
+            {
+              shape: 'horizontal_line',
+              lock: true,
+              disableSave: true,
+              disableSelection: true,
+              zOrder: 'top',
+              overrides: {
+                linecolor: lineColor,
+                linewidth: 2,
+                linestyle: 2,
+                showInObjectsTree: false
+              }
+            }
+          );
+          if (idPromise && typeof idPromise.then === 'function') {
+            idPromise.then(function (id) { _miniTvStrikeSeriesId = id; }).catch(function () {});
+          }
+          // Atualiza rótulo flutuante do strike
+          var labelEl = document.getElementById('vgMiniStrikeLabel');
+          if (labelEl) labelEl.textContent = 'Strike ' + formatStrikeLabel(strike);
+          return;
+        }
+      } catch (e) {
+        return;
+      }
+    }
   }
 
   function loadMiniTradingViewChart(ticker) {
@@ -739,6 +753,14 @@
           }
         });
         console.log('[VG MiniChart] Widget criado para:', symbol);
+        // Desenha a linha do strike assim que o gráfico estiver pronto
+        if (typeof _miniTvWidget.onChartReady === 'function') {
+          _miniTvWidget.onChartReady(function() {
+            if (_currentSealStrike && _currentSealCot) {
+              renderMiniStrikeOverlay(_currentSealStrike, _currentSealCot, _currentSealTipo);
+            }
+          });
+        }
         // Override iframe background after load to match thermo area
         setTimeout(function() {
           var el = document.getElementById('vgMiniChartContainer');
@@ -927,10 +949,10 @@
     }
     setTimeout(function() {
       buildVGCharts(ops);
-      // Inicializa termômetro/selo com a primeira operação (aberta ou não)
+      // Inicializa termômetro/selo somente com operação aberta
       var abertasOps = computeAbertasInfo(ops);
-      var seedOp = abertasOps.length > 0 ? abertasOps[0] : (ops[0] || null);
-      if (seedOp) {
+      if (abertasOps.length > 0) {
+        var seedOp = abertasOps[0];
         var initPar = (seedOp.ativo || 'BTC').toUpperCase().replace('USDT','').replace('/','').trim();
         var pmInit = computePM(ops, initPar);
         buildThermometer(parseFloat(seedOp.strike || 0), parseFloat(seedOp.cotacao_atual || 0), (seedOp.tipo || 'PUT'), pmInit, initPar);

@@ -1,4 +1,4 @@
-/** crypto-live.js v1.0.0 - Serviço global de cotações em tempo real via WebSocket Binance (porta 443) */
+/** crypto-live.js v1.2.0 - Serviço global de cotações em tempo real via WebSocket Binance (porta 443) + fallback polling por proxy */
 (function (global) {
     'use strict';
 
@@ -10,6 +10,19 @@
     var _retryCount = 0;
     var _connected = false;
     var _subscribers = [];      // callbacks(asset, price)
+    var _fallbackTimer = null;
+    var _FALLBACK_TTL = 10000;     // ms — se o ativo recebeu tick via WS recentemente, pula o fetch
+
+    // Lê o intervalo configurável (segundos) do localStorage → ms. Padrão 15s.
+    function readPollInterval() {
+        try {
+            var cfg = JSON.parse(global.localStorage.getItem('cryptoConfig') || '{}');
+            var sec = parseInt(cfg.pollInterval, 10);
+            if (isFinite(sec) && sec >= 3 && sec <= 600) return sec * 1000;
+        } catch (e) {}
+        return 15000;
+    }
+    var _fallbackInterval = readPollInterval();
 
     function normalizeAsset(asset) {
         return String(asset || '').trim().toUpperCase().replace(/USDT$/g, '').replace('/', '');
@@ -19,6 +32,16 @@
         return Object.keys(_assets)
             .map(function (a) { return a.toLowerCase() + 'usdt@ticker'; })
             .join('/');
+    }
+
+    function publish(asset, price) {
+        _cache[asset] = { price: price, ts: Date.now() };
+        for (var i = 0; i < _subscribers.length; i++) {
+            try { _subscribers[i](asset, price); } catch (e) {}
+        }
+        global.document.dispatchEvent(new global.CustomEvent('cryptoLiveQuote', {
+            detail: { asset: asset, price: price }
+        }));
     }
 
     function connect() {
@@ -49,13 +72,7 @@
                 var asset = normalizeAsset(d.s.replace('USDT', ''));
                 var price = parseFloat(d.c);
                 if (!isFinite(price) || price <= 0) return;
-                _cache[asset] = { price: price, ts: Date.now() };
-                for (var i = 0; i < _subscribers.length; i++) {
-                    try { _subscribers[i](asset, price); } catch (e) {}
-                }
-                global.document.dispatchEvent(new global.CustomEvent('cryptoLiveQuote', {
-                    detail: { asset: asset, price: price }
-                }));
+                publish(asset, price);
             } catch (e) {}
         };
         _ws.onclose = function () {
@@ -82,11 +99,50 @@
         }));
     }
 
+    // Fallback: consulta o proxy do backend (HTTP) para cada ativo que não recebeu
+    // tick do WS recentemente. Garante atualização automática mesmo se o WS
+    // estiver bloqueado pela rede (firewall/proxy corporativo).
+    function fallbackPoll() {
+        var list = Object.keys(_assets);
+        if (!list.length) return;
+        list.forEach(function (a) {
+            var last = _cache[a] ? _cache[a].ts : 0;
+            if (_connected && (Date.now() - last) < _FALLBACK_TTL) return;
+            var sym = a + 'USDT';
+            global.fetch((global.API_BASE || '') + '/api/proxy/crypto/' + sym, { cache: 'no-store' })
+                .then(function (r) { return r.json(); })
+                .then(function (d) {
+                    var raw = d && (d.price || d.lastPrice || d.last || d.c || d.close);
+                    var price = parseFloat(raw);
+                    if (isFinite(price) && price > 0) publish(a, price);
+                })
+                .catch(function () {});
+        });
+    }
+
+    function startFallbackPolling() {
+        if (_fallbackTimer) return;
+        _fallbackInterval = readPollInterval(); // sempre re-lê caso a config tenha mudado
+        _fallbackTimer = setInterval(fallbackPoll, _fallbackInterval);
+    }
+
+    // Permite alterar o intervalo em tempo de execução (após salvar config)
+    function setPollInterval(seconds) {
+        var sec = parseInt(seconds, 10);
+        if (!isFinite(sec)) sec = 15;
+        sec = Math.max(3, Math.min(600, sec));
+        _fallbackInterval = sec * 1000;
+        if (_fallbackTimer) { clearInterval(_fallbackTimer); _fallbackTimer = null; }
+        _fallbackTimer = setInterval(fallbackPoll, _fallbackInterval);
+        return sec;
+    }
+
     function addAsset(asset) {
         var a = normalizeAsset(asset);
         if (!a) return;
         if (_assets[a]) return;
         _assets[a] = true;
+        startFallbackPolling();
         connect();
     }
 
@@ -97,7 +153,10 @@
             var n = normalizeAsset(a);
             if (n && !_assets[n]) { _assets[n] = true; changed = true; }
         });
-        if (changed) connect();
+        if (changed) {
+            startFallbackPolling();
+            connect();
+        }
     }
 
     function getPrice(asset) {
@@ -144,14 +203,16 @@
         fetchPrice: fetchPrice,
         onChange: onChange,
         isConnected: isConnected,
-        refresh: refresh
+        refresh: refresh,
+        setPollInterval: setPollInterval
     };
 
     // Fallback: se o servidor/servidor proxy da Binance não responder via WS, o sistema
     // mantém as funções existentes de fetch (resiliente).
     if (global.document.readyState === 'loading') {
-        global.document.addEventListener('DOMContentLoaded', function () { connect(); });
+        global.document.addEventListener('DOMContentLoaded', function () { startFallbackPolling(); connect(); });
     } else {
+        startFallbackPolling();
         connect();
     }
 })(window);
