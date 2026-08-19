@@ -1,4 +1,4 @@
-// visao-geral-crypto.js v1.0.0
+// visao-geral-crypto.js v1.0.26
 // Aba Visão Geral — layout fiel à imagem (claude9.html)
 // Combina: Evolução acumulada + Posições abertas + Fluxo do ciclo + Projeção + Resumo
 
@@ -610,13 +610,54 @@
     loadMiniTradingViewChart(par);
     renderMiniStrikeOverlay(s, q, tipo);
     connectBinanceWs(par);
+    startVgLiveTicker(par);
+  }
+
+  /* ─ Ticker próprio da Visão Geral ─
+     O gráfico TradingView atualiza em tempo real via servidores próprios; já o restante
+     da tela depende do CryptoLive (WS Binance bloqueado em algumas redes → polling).
+     Este ticker rápido garante que o valor exibido SOBRE o gráfico (pill "Cotação")
+     e os valores ABAIXO (termômetro / linha de diferença) acompanhem a cotação ao vivo
+     mesmo com o intervalo global de polling alto. */
+  var _vgLiveFetching = false;
+  var _vgLiveTickerSealPar = null;
+
+  function startVgLiveTicker(par) {
+    _vgLiveTickerSealPar = par;
+    if (_vgLiveTimer) return;
+    _vgLiveTimer = setInterval(function() {
+      var p = _vgLiveTickerSealPar || _currentSealPar;
+      if (!p || _vgLiveFetching) return;
+      // Se o CryptoLive tem tick fresco do WS (fonte canônica), usa o cache em vez de fetch
+      try {
+        if (window.CryptoLive && window.CryptoLive.getPrice) {
+          var cached = window.CryptoLive.getPrice(p);
+          if (cached) {
+            updateThermoPrice(parseFloat(cached));
+            return;
+          }
+        }
+      } catch (e) {}
+      _vgLiveFetching = true;
+      fetch((globalThis.API_BASE || '') + '/api/proxy/crypto/' + p + 'USDT', { cache: 'no-store' })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          var raw = d && (d.price || d.lastPrice || d.last || d.c || d.close);
+          var v = parseFloat(raw);
+          if (isFinite(v) && v > 0) updateThermoPrice(v);
+        })
+        .catch(function() {})
+        .finally(function() { _vgLiveFetching = false; });
+    }, 2500);
   }
 
   /* ─ Mini TradingView Chart ─ */
   var _miniTvWidget = null;
   var _miniTvCurrentTicker = null;
   var _miniTvPendingTimeout = null;
-  var _miniTvStrikeSeriesId = null;   // ID da linha do strike desenhada via API TradingView
+  var _miniTvRealtimeTimer = null;
+  var _miniTvLastPublished = 0;
+  var _vgLiveTimer = null;
 
   function resolveMiniTickerSymbol(ticker) {
     var base = String(ticker || '').trim().toUpperCase().replace('/USDT', '').replace('USDT', '').replace('/', '');
@@ -634,56 +675,21 @@
     return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
-  // Desenha a linha do strike DENTRO do gráfico TradingView, ancorada ao valor real
-  // de preço na escala do gráfico — assim ela sempre fica acima/abaixo da cotação corretamente.
+  // Strike NÃO é desenhado dentro do gráfico: a API do embed TradingView não é
+  // acessível (onChartReady não dispara / chart() não expõe priceScale ou shapes),
+  // então não há posicionamento de etiqueta sobre o mapa. O valor do strike é exibido
+  // no termômetro e no card — sinais visuais que já coincidem com a escala real.
+
+  // Pinta apenas o VALOR do strike DENTRO do mini gráfico, posicionado na altura exata
+  // do preço na escala do TradingView — sem pill flutuante sobre o mapa. A linha de
+  // cotação fica por conta do próprio TradingView (linha de preço padrão).
   function renderMiniStrikeOverlay(strike, currentPrice, tipo) {
     var chartContainer = document.getElementById('vgMiniChartContainer');
-    if (!chartContainer) return;
+    var wrapper = chartContainer ? chartContainer.parentElement : null;
+    if (!chartContainer || !wrapper) return;
 
-    // Cor igual ao selo "SEGURA"/"EM EXERCÍCIO" do cabeçalho do card
-    var clsCls = thermoStatus(parseFloat(strike), parseFloat(currentPrice), tipo).cls;
-    var lineColor = clsCls === 'otm' ? '#ef4444' : '#22c55e';
-
-    if (_miniTvWidget && typeof _miniTvWidget.chart === 'function') {
-      try {
-        var chart = _miniTvWidget.chart();
-        if (chart) {
-          // Remove linha anterior (se existir)
-          if (_miniTvStrikeSeriesId) {
-            try { chart.removeEntity(_miniTvStrikeSeriesId); } catch (e) {}
-            _miniTvStrikeSeriesId = null;
-          }
-          var now = Math.floor(Date.now() / 1000);
-          var p = parseFloat(strike);
-          if (!isFinite(p) || p <= 0) return;
-          var idPromise = chart.createShape(
-            { time: now, price: p },
-            {
-              shape: 'horizontal_line',
-              lock: true,
-              disableSave: true,
-              disableSelection: true,
-              zOrder: 'top',
-              overrides: {
-                linecolor: lineColor,
-                linewidth: 2,
-                linestyle: 2,
-                showInObjectsTree: false
-              }
-            }
-          );
-          if (idPromise && typeof idPromise.then === 'function') {
-            idPromise.then(function (id) { _miniTvStrikeSeriesId = id; }).catch(function () {});
-          }
-          // Atualiza rótulo flutuante do strike
-          var labelEl = document.getElementById('vgMiniStrikeLabel');
-          if (labelEl) labelEl.textContent = 'Strike ' + formatStrikeLabel(strike);
-          return;
-        }
-      } catch (e) {
-        return;
-      }
-    }
+    var old = document.getElementById('vgMiniStrikeOverlay');
+    if (old) old.remove();
   }
 
   function loadMiniTradingViewChart(ticker) {
@@ -753,14 +759,22 @@
           }
         });
         console.log('[VG MiniChart] Widget criado para:', symbol);
-        // Desenha a linha do strike assim que o gráfico estiver pronto
-        if (typeof _miniTvWidget.onChartReady === 'function') {
-          _miniTvWidget.onChartReady(function() {
-            if (_currentSealStrike && _currentSealCot) {
-              renderMiniStrikeOverlay(_currentSealStrike, _currentSealCot, _currentSealTipo);
-            }
-          });
+        // Tenta usar onChartReady do embed para iniciar o leitor de preço em tempo real.
+        // Se o embed não chamar onChartReady (comportamento observado), o setTimeout
+        // abaixo garante que o reader inicie mesmo assim.
+        var _readerStarted = false;
+        function _tryStartReader() {
+          if (_readerStarted) return;
+          _readerStarted = true;
+          if (!_miniTvRealtimeTimer && _miniTvCurrentTicker) startMiniTvRealtimeReader();
         }
+        if (typeof _miniTvWidget.onChartReady === 'function') {
+          try {
+            _miniTvWidget.onChartReady(function() { _tryStartReader(); });
+          } catch (e) {}
+        }
+        // Fallback: se onChartReady não disparou em 6s, inicia o reader mesmo assim
+        setTimeout(function() { _tryStartReader(); }, 6000);
         // Override iframe background after load to match thermo area
         setTimeout(function() {
           var el = document.getElementById('vgMiniChartContainer');
@@ -807,8 +821,33 @@
     }, 150);
   }
 
+  // Lê o preço em tempo real do widget TradingView e alimenta o termômetro.
+  function startMiniTvRealtimeReader() {
+    if (_miniTvRealtimeTimer) return;
+    _miniTvRealtimeTimer = setInterval(function() {
+      try {
+        if (!_miniTvWidget || !_miniTvCurrentTicker) return;
+        if (typeof _miniTvWidget.chart !== 'function') return;
+        var chart = _miniTvWidget.chart();
+        if (!chart || typeof chart.getSeriesData !== 'function') return;
+        var step = function(data) {
+          var keys = data ? Object.keys(data) : [];
+          if (!keys.length) return;
+          var v = parseFloat(data[keys[keys.length - 1]]);
+          if (isFinite(v) && v > 0 && window.CryptoLive) {
+            window.CryptoLive.publishFromExternal && window.CryptoLive.publishFromExternal(_miniTvCurrentTicker, v);
+          }
+        };
+var data = chart.getSeriesData();
+        if (data && typeof data.then === 'function') { data.then(step).catch(function() {}); }
+        else step(data);
+      } catch (e) {}
+    }, 3000);
+  }
+
   function reloadMiniChart() {
     if (_miniTvPendingTimeout) { clearTimeout(_miniTvPendingTimeout); _miniTvPendingTimeout = null; }
+    if (_miniTvRealtimeTimer) { clearInterval(_miniTvRealtimeTimer); _miniTvRealtimeTimer = null; }
     _miniTvCurrentTicker = null;
     if (_miniTvWidget) {
       try { _miniTvWidget.remove(); } catch (e) {}
@@ -875,6 +914,8 @@
     injectVGStyles();
     // Reset mini chart state before rebuilding DOM (widget iframe is destroyed with innerHTML)
     if (_miniTvPendingTimeout) { clearTimeout(_miniTvPendingTimeout); _miniTvPendingTimeout = null; }
+    if (_miniTvRealtimeTimer) { clearInterval(_miniTvRealtimeTimer); _miniTvRealtimeTimer = null; }
+    if (_vgLiveTimer) { clearInterval(_vgLiveTimer); _vgLiveTimer = null; _vgLiveTickerSealPar = null; _vgLiveFetching = false; }
     _miniTvWidget = null;
     _miniTvCurrentTicker = null;
     disconnectBinanceWs();

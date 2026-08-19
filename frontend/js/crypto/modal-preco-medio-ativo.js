@@ -10,10 +10,50 @@
     var sgn = function (n) {
         return (n >= 0 ? '+' : '−') + usd(n);
     };
+    var fmtDateBR = function (iso) {
+        if (!iso) return '';
+        var parts = String(iso).split('T')[0].split('-');
+        if (parts.length < 3) return iso;
+        return parts[2] + '/' + parts[1] + '/' + parts[0];
+    };
 
     var modalData = null;
     var closeHandler = null;
     var chartRef = null;
+    var tooltipEl = null;
+
+    function ensureTooltip() {
+        if (tooltipEl) return tooltipEl;
+        tooltipEl = document.createElement('div');
+        tooltipEl.className = 'pm-tooltip';
+        document.body.appendChild(tooltipEl);
+        return tooltipEl;
+    }
+
+    function showTooltip(box, html) {
+        var tt = ensureTooltip();
+        tt.innerHTML = html;
+        tt.classList.add('show');
+        var rect = box.getBoundingClientRect();
+        var ttW = 320;
+        var left = rect.left + rect.width / 2 - ttW / 2;
+        if (left < 8) left = 8;
+        if (left + ttW > window.innerWidth - 8) left = window.innerWidth - ttW - 8;
+        var top = rect.top - 8;
+        tt.style.left = left + 'px';
+        tt.style.maxWidth = ttW + 'px';
+        requestAnimationFrame(function () {
+            var ttH = tt.offsetHeight;
+            top = rect.top - ttH - 8;
+            if (top < 8) top = rect.bottom + 8;
+            tt.style.top = top + 'px';
+        });
+        tt.style.top = top + 'px';
+    }
+
+    function hideTooltip() {
+        if (tooltipEl) tooltipEl.classList.remove('show');
+    }
 
     function getOps(par, opsOverride) {
         var source = Array.isArray(opsOverride) ? opsOverride : (window.cryptoOperacoes || []);
@@ -96,6 +136,7 @@
         return {
             ativo: par,
             ultimoExercicio: strikeBase,
+            dataUltimaPut: cicloDate || '',
             premios: premios,
             totalPremios: totalPremios,
             pm: pm,
@@ -114,9 +155,11 @@
         build();
         overlay.classList.add('open');
         document.body.style.overflow = 'hidden';
+        startLiveUpdates(par);
     }
 
     function closeModal() {
+        stopLiveUpdates();
         if (chartRef) { try { chartRef.destroy(); } catch (e) {} chartRef = null; }
         var overlay = document.getElementById('pmOverlay');
         if (overlay) overlay.classList.remove('open');
@@ -343,14 +386,85 @@
         var resExerc = d.strikeAberto && d.pm ? d.strikeAberto - d.pm : null;
         var dist = d.cotacao && d.strikeAberto ? ((d.cotacao - d.strikeAberto) / d.strikeAberto) * 100 : null;
 
+        var cotTip = '<div class="tt-title">📊 Cotação</div>' +
+            '<div class="tt-row">Preço atual do ' + d.ativo + '</div>' +
+            '<div class="tt-row" style="color:#60a5fa">Fonte: Binance (tempo real)</div>';
+
+        var pmTip = d.pm
+            ? '<div class="tt-title">📊 Preço Médio</div>' +
+              '<div class="tt-row">Custo efetivo por unidade no ciclo atual</div>' +
+              '<div class="tt-formula">' +
+              'Fórmula: Strike − Prêmios<br>' +
+              'Valores: ' + usd(d.ultimoExercicio) + ' − ' + usd(d.totalPremios) + '<br>' +
+              'Resultado: ' + usd(d.pm) +
+              '</div>' +
+              '<div class="tt-note">O PM já desconta todos os prêmios colhidos desde a última PUT exercida.</div>'
+            : '<div class="tt-title">📊 Preço Médio</div><div class="tt-row">Indisponível</div>';
+
+        var entradaTip = d.ultimoExercicio
+            ? '<div class="tt-title">📌 Entrada (PUT)</div>' +
+              '<div class="tt-row">Strike da última PUT exercida no ciclo</div>' +
+              '<div class="tt-formula">Strike: ' + usd(d.ultimoExercicio) + '</div>' +
+              (d.dataUltimaPut
+                  ? '<div class="tt-row" style="color:#60a5fa">📅 Exercida em: ' + fmtDateBR(d.dataUltimaPut) + '</div>'
+                  : '') +
+              '<div class="tt-note">Base de cálculo do Preço Médio. Quando uma PUT é exercida, este passa a ser o preço de referência.</div>'
+            : '<div class="tt-title">📌 Entrada (PUT)</div><div class="tt-row">Nenhuma PUT exercida ainda</div>';
+
+        var premiosTip = d.totalPremios > 0
+            ? '<div class="tt-title">💰 Prêmios Acumulados</div>' +
+              '<div class="tt-row">Soma dos prêmios desde a última PUT exercida</div>' +
+              '<div class="tt-formula">' +
+              'Total: ' + usd(d.totalPremios) + '<br>' +
+              'Operações: ' + d.premios.length + ' lançamento' + (d.premios.length !== 1 ? 's' : '') +
+              '</div>' +
+              '<div class="tt-note">Cada lançamento de CALL ou PUT vendedora gera um prêmio que reduz o PM.</div>'
+            : '<div class="tt-title">💰 Prêmios Acumulados</div><div class="tt-row">Nenhum prêmio no ciclo atual</div>';
+
+        var vsPmTip = d.cotacao && d.pm
+            ? '<div class="tt-title">📈 Cotação vs PM</div>' +
+              '<div class="tt-row">Quanto a cotação está acima (ou abaixo) do PM</div>' +
+              '<div class="tt-formula">' +
+              '(Cotação − PM) / PM × 100<br>' +
+              '(' + usd(d.cotacao) + ' − ' + usd(d.pm) + ') / ' + usd(d.pm) + ' × 100<br>' +
+              'Resultado: ' + pct(vsPm) +
+              '</div>' +
+              '<div class="tt-note">Quanto maior, mais "segura" a posição.</div>'
+            : '<div class="tt-title">📈 Cotação vs PM</div><div class="tt-row">Indisponível</div>';
+
+        var resExercTip = d.strikeAberto && d.pm
+            ? '<div class="tt-title">💰 Resultado se Exercido</div>' +
+              '<div class="tt-row">Lucro se a ' + d.tipoAberto + ' (strike ' + usd(d.strikeAberto) + ') for exercida</div>' +
+              '<div class="tt-formula">' +
+              'Strike − PM<br>' +
+              usd(d.strikeAberto) + ' − ' + usd(d.pm) + '<br>' +
+              'Resultado: ' + sgn(resExerc) +
+              '</div>' +
+              '<div class="tt-note">O PM já desconta todos os prêmios colhidos.</div>'
+            : '<div class="tt-title">💰 Resultado se Exercido</div><div class="tt-row">Sem opção aberta ou sem PM</div>';
+
+        var distTip = d.cotacao && d.strikeAberto
+            ? '<div class="tt-title">📏 Distância Strike</div>' +
+              '<div class="tt-row">Distância da cotação até o strike da ' + d.tipoAberto + '</div>' +
+              '<div class="tt-formula">' +
+              '(Cotação − Strike) / Strike × 100<br>' +
+              '(' + usd(d.cotacao) + ' − ' + usd(d.strikeAberto) + ') / ' + usd(d.strikeAberto) + ' × 100<br>' +
+              'Resultado: ' + pct(dist) +
+              '</div>' +
+              '<div class="tt-note">' + (dist < 0
+                  ? 'Negativo = cotação abaixo do strike = ' + d.tipoAberto + ' fora do dinheiro (OTM, segura).'
+                  : 'Positivo = cotação acima do strike = ' + d.tipoAberto + ' dentro do dinheiro (ITM, risco de exercício).') +
+              '</div>'
+            : '<div class="tt-title">📏 Distância Strike</div><div class="tt-row">Indisponível</div>';
+
         var body = document.getElementById('pmBody');
         if (!body) return;
 
         body.innerHTML =
             '<div class="pm-summary-row">' +
-                '<div class="pm-stat-box"><div class="lbl">Preço Médio</div><div class="val" style="color:var(--pm-amber)">' + usd(d.pm) + '</div></div>' +
-                '<div class="pm-stat-box"><div class="lbl">Entrada (PUT)</div><div class="val" style="color:var(--pm-blue)">' + usd(d.ultimoExercicio) + '</div></div>' +
-                '<div class="pm-stat-box"><div class="lbl">Prêmios acumulados</div><div class="val" style="color:var(--pm-green)">−' + usd(d.totalPremios) + '</div></div>' +
+                '<div class="pm-stat-box" data-tip="pm"><div class="lbl">Preço Médio</div><div class="val" style="color:var(--pm-amber)">' + usd(d.pm) + '</div></div>' +
+                '<div class="pm-stat-box" data-tip="entrada"><div class="lbl">Entrada (PUT)</div><div class="val" style="color:var(--pm-blue)">' + usd(d.ultimoExercicio) + '</div></div>' +
+                '<div class="pm-stat-box" data-tip="premios"><div class="lbl">Prêmios acumulados</div><div class="val" style="color:var(--pm-green)">' + usd(d.totalPremios) + '</div></div>' +
             '</div>' +
             '<div class="pm-panel">' +
                 '<div class="pm-panel-title">' +
@@ -367,16 +481,96 @@
                 '</div>' +
             '</div>' +
             '<div class="pm-summary-row">' +
-                '<div class="pm-stat-box"><div class="lbl">Cotação</div><div class="val" style="color:var(--pm-blue)">' + usd(d.cotacao) + '</div></div>' +
-                '<div class="pm-stat-box ' + (vsPm !== null && vsPm >= 0 ? 'g' : '') + '"><div class="lbl">vs PM</div><div class="val">' + (vsPm !== null ? pct(vsPm) : '—') + '</div></div>' +
-                '<div class="pm-stat-box ' + (resExerc !== null && resExerc >= 0 ? 'g' : '') + '"><div class="lbl">Resultado se exercido</div><div class="val">' + (resExerc !== null ? sgn(resExerc) : '—') + '</div></div>' +
-                '<div class="pm-stat-box"><div class="lbl">Distância strike</div><div class="val">' + (dist !== null ? pct(dist) : '—') + '</div></div>' +
+                '<div class="pm-stat-box" data-tip="cot"><div class="lbl">📊 Cotação</div><div class="val" style="color:var(--pm-blue)">' + usd(d.cotacao) + '</div></div>' +
+                '<div class="pm-stat-box ' + (vsPm !== null && vsPm >= 0 ? 'g' : '') + '" data-tip="vsPm"><div class="lbl">📈 Cotação vs PM</div><div class="val">' + (vsPm !== null ? pct(vsPm) : '—') + '</div></div>' +
+                '<div class="pm-stat-box ' + (resExerc !== null && resExerc >= 0 ? 'g' : '') + '" data-tip="resExerc"><div class="lbl">💰 Resultado se exercido</div><div class="val">' + (resExerc !== null ? sgn(resExerc) : '—') + '</div></div>' +
+                '<div class="pm-stat-box" data-tip="dist"><div class="lbl">📏 Distância strike</div><div class="val">' + (dist !== null ? pct(dist) : '—') + '</div></div>' +
             '</div>';
+
+        var tipMap = { pm: pmTip, entrada: entradaTip, premios: premiosTip, cot: cotTip, vsPm: vsPmTip, resExerc: resExercTip, dist: distTip };
+        body.querySelectorAll('.pm-stat-box[data-tip]').forEach(function (box) {
+            var key = box.getAttribute('data-tip');
+            var html = tipMap[key];
+            if (!html) return;
+            box.addEventListener('mouseenter', function () { showTooltip(box, html); });
+            box.addEventListener('mouseleave', hideTooltip);
+        });
 
         drawLedger(steps);
         if (typeof Chart !== 'undefined') {
             drawChart(steps);
         }
+    }
+
+    var _liveUnsub = null;
+    var _currentAsset = null;
+
+    function updateFooterPrices(newPrice) {
+        if (!modalData || !isFinite(newPrice) || newPrice <= 0) return;
+        modalData.cotacao = newPrice;
+        var d = modalData;
+        var vsPm = d.cotacao && d.pm ? ((d.cotacao - d.pm) / d.pm) * 100 : null;
+        var resExerc = d.strikeAberto && d.pm ? d.strikeAberto - d.pm : null;
+        var dist = d.cotacao && d.strikeAberto ? ((d.cotacao - d.strikeAberto) / d.strikeAberto) * 100 : null;
+
+        var boxes = document.querySelectorAll('#pmBody .pm-summary-row:last-child .pm-stat-box');
+        if (boxes.length < 4) return;
+
+        boxes[0].querySelector('.val').textContent = usd(d.cotacao);
+        boxes[1].querySelector('.val').textContent = vsPm !== null ? pct(vsPm) : '—';
+        boxes[1].className = 'pm-stat-box' + (vsPm !== null && vsPm >= 0 ? ' g' : '');
+        boxes[2].querySelector('.val').textContent = resExerc !== null ? sgn(resExerc) : '—';
+        boxes[2].className = 'pm-stat-box' + (resExerc !== null && resExerc >= 0 ? g : '');
+        boxes[3].querySelector('.val').textContent = dist !== null ? pct(dist) : '—';
+
+        var tipMap2 = {
+            cot: '<div class="tt-title">📊 Cotação</div>' +
+                '<div class="tt-row">Preço atual do ' + d.ativo + '</div>' +
+                '<div class="tt-row" style="color:#60a5fa">Fonte: Binance (tempo real)</div>',
+            vsPm: vsPm !== null
+                ? '<div class="tt-title">📈 Cotação vs PM</div>' +
+                  '<div class="tt-row">Quanto a cotação está acima (ou abaixo) do PM</div>' +
+                  '<div class="tt-formula">(Cotação − PM) / PM × 100<br>(' + usd(d.cotacao) + ' − ' + usd(d.pm) + ') / ' + usd(d.pm) + ' × 100<br>Resultado: ' + pct(vsPm) + '</div>' +
+                  '<div class="tt-note">Quanto maior, mais "segura" a posição.</div>'
+                : '<div class="tt-title">📈 Cotação vs PM</div><div class="tt-row">Indisponível</div>',
+            resExerc: resExerc !== null
+                ? '<div class="tt-title">💰 Resultado se Exercido</div>' +
+                  '<div class="tt-row">Lucro se a ' + d.tipoAberto + ' (strike ' + usd(d.strikeAberto) + ') for exercida</div>' +
+                  '<div class="tt-formula">Strike − PM<br>' + usd(d.strikeAberto) + ' − ' + usd(d.pm) + '<br>Resultado: ' + sgn(resExerc) + '</div>' +
+                  '<div class="tt-note">O PM já desconta todos os prêmios colhidos.</div>'
+                : '<div class="tt-title">💰 Resultado se Exercido</div><div class="tt-row">Sem opção aberta ou sem PM</div>',
+            dist: dist !== null
+                ? '<div class="tt-title">📏 Distância Strike</div>' +
+                  '<div class="tt-row">Distância da cotação até o strike da ' + d.tipoAberto + '</div>' +
+                  '<div class="tt-formula">(Cotação − Strike) / Strike × 100<br>(' + usd(d.cotacao) + ' − ' + usd(d.strikeAberto) + ') / ' + usd(d.strikeAberto) + ' × 100<br>Resultado: ' + pct(dist) + '</div>' +
+                  '<div class="tt-note">' + (dist < 0
+                      ? 'Negativo = cotação abaixo do strike = ' + d.tipoAberto + ' fora do dinheiro (OTM, segura).'
+                      : 'Positivo = cotação acima do strike = ' + d.tipoAberto + ' dentro do dinheiro (ITM, risco de exercício).') + '</div>'
+                : '<div class="tt-title">📏 Distância Strike</div><div class="tt-row">Indisponível</div>'
+        };
+
+        boxes.forEach(function (box) {
+            var key = box.getAttribute('data-tip');
+            var html = tipMap2[key];
+            if (!html) return;
+            box.onmouseenter = function () { showTooltip(box, html); };
+            box.onmouseleave = hideTooltip;
+        });
+    }
+
+    function startLiveUpdates(par) {
+        stopLiveUpdates();
+        _currentAsset = par;
+        if (window.CryptoLive && typeof window.CryptoLive.onChange === 'function') {
+            _liveUnsub = window.CryptoLive.onChange(function (asset, price) {
+                if (asset === _currentAsset) updateFooterPrices(price);
+            });
+        }
+    }
+
+    function stopLiveUpdates() {
+        if (typeof _liveUnsub === 'function') { _liveUnsub(); _liveUnsub = null; }
+        _currentAsset = null;
     }
 
     function init() {

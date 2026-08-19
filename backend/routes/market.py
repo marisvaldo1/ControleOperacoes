@@ -11,6 +11,7 @@ Rotas registradas:
   GET /api/cotacao/hibrido/<ticker>    — sistema híbrido yfinance + OpLab
   GET /api/cache/clear                 — limpar cache de cotações
   GET /api/proxy/crypto/<ticker>       — preço de crypto (Binance)
+  GET /api/proxy/crypto/<ticker>/klines — klines OHLCV (Binance, para faixa visível)
   GET /api/cotacao/opcoes              — cotação de opção individual (?symbol=)
   GET /api/cotacao/opcoes/<symbol>     — cotação de opção individual (path)
 """
@@ -283,6 +284,32 @@ def proxy_crypto(ticker):
             f'https://api.binance.com/api/v3/ticker/price?symbol={ticker}',
             timeout=10,
             verify=False,  # Evita erro de certificado SSL em ambientes locais (Laragon)
+        )
+        return jsonify(r.json()), r.status_code
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@market_bp.route('/proxy/crypto/<ticker>/klines')
+def proxy_crypto_klines(ticker):
+    """Retorna klines (OHLCV) da Binance para estimar a faixa de preços visível no gráfico.
+
+    Query params:
+      interval  — padrão '1d' (diário). Ex.: 1h, 4h, 1d, 1w
+      limit     — número de barras (padrão 60, máx 1000)
+    """
+    interval = request.args.get('interval', '1d')
+    limit = request.args.get('limit', '60', type=int)
+    if limit < 1:
+        limit = 60
+    if limit > 1000:
+        limit = 1000
+    try:
+        r = requests.get(
+            f'https://api.binance.com/api/v3/klines',
+            params={'symbol': ticker, 'interval': interval, 'limit': limit},
+            timeout=10,
+            verify=False,
         )
         return jsonify(r.json()), r.status_code
     except Exception as e:

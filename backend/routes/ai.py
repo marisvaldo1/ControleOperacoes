@@ -43,15 +43,24 @@ def analyze_market():
         row  = conn.execute(
             'SELECT valor FROM configuracoes WHERE chave=?', ('selected_ai',)
         ).fetchone()
-        conn.close()
-        selected_ai = force_ai or (row['valor'] if row else None)
 
-        # Chaves de API
-        openai_key     = os.environ.get('OPENAI_API_KEY')
-        deepseek_key   = os.environ.get('DEEPSEEK_API_KEY')
-        grok_key       = os.environ.get('GROK_API_KEY')
-        gemini_key     = os.environ.get('GEMINI_API_KEY')
-        openrouter_key = os.environ.get('OPENROUTER_API_KEY')
+        # Chaves de API: primeiro do banco (configuracoes), depois do .env.
+        # Armazenadas via /api/config ou diretamente na tabela configuracoes.
+        def _key(db_chave, env_var):
+            r = conn.execute(
+                'SELECT valor FROM configuracoes WHERE chave=?', (db_chave,)
+            ).fetchone()
+            if r and r['valor']:
+                return r['valor']
+            return os.environ.get(env_var)
+
+        selected_ai     = force_ai or (row['valor'] if row else None)
+        openai_key      = _key('openai_key',      'OPENAI_API_KEY')
+        deepseek_key    = _key('deepseek_key',    'DEEPSEEK_API_KEY')
+        grok_key        = _key('grok_key',        'GROK_API_KEY')
+        gemini_key      = _key('gemini_key',      'GEMINI_API_KEY')
+        openrouter_key  = _key('openrouter_key',  'OPENROUTER_API_KEY')
+        conn.close()
 
         if not any([openai_key, deepseek_key, grok_key, gemini_key, openrouter_key]):
             return jsonify({'error': 'Nenhuma chave de API encontrada no .env'}), 400
@@ -174,7 +183,6 @@ def analyze_market():
             elif ai_name == 'GEMINI' and gemini_key:
                 gemini_models = [
                     'gemini-2.5-flash', 'gemini-flash-latest',
-                    'gemini-2.0-flash', 'gemini-1.5-flash',
                 ]
                 gemini_contents = []
                 for i, msg in enumerate(messages):

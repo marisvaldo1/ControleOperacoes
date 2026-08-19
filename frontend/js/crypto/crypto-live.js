@@ -1,4 +1,4 @@
-/** crypto-live.js v1.2.0 - Serviço global de cotações em tempo real via WebSocket Binance (porta 443) + fallback polling por proxy */
+/** crypto-live.js v1.3.0 - Serviço global de cotações em tempo real via WebSocket Binance (porta 443) + fallback polling por proxy */
 (function (global) {
     'use strict';
 
@@ -20,9 +20,10 @@
             var sec = parseInt(cfg.pollInterval, 10);
             if (isFinite(sec) && sec >= 3 && sec <= 600) return sec * 1000;
         } catch (e) {}
-        return 15000;
+        return 5000;
     }
     var _fallbackInterval = readPollInterval();
+    var _fallbackKickTimer = null;
 
     function normalizeAsset(asset) {
         return String(asset || '').trim().toUpperCase().replace(/USDT$/g, '').replace('/', '');
@@ -120,10 +121,21 @@
         });
     }
 
+    // Dispara um poll imediato (sem esperar o primeiro tick do intervalo).
+    // Garante que, ao registrar ativos, a primeira atualização chegue na hora.
+    function kickFallback() {
+        if (_fallbackKickTimer) return;
+        _fallbackKickTimer = setTimeout(function () {
+            _fallbackKickTimer = null;
+            fallbackPoll();
+        }, 0);
+    }
+
     function startFallbackPolling() {
         if (_fallbackTimer) return;
         _fallbackInterval = readPollInterval(); // sempre re-lê caso a config tenha mudado
         _fallbackTimer = setInterval(fallbackPoll, _fallbackInterval);
+        kickFallback();
     }
 
     // Permite alterar o intervalo em tempo de execução (após salvar config)
@@ -134,6 +146,7 @@
         _fallbackInterval = sec * 1000;
         if (_fallbackTimer) { clearInterval(_fallbackTimer); _fallbackTimer = null; }
         _fallbackTimer = setInterval(fallbackPoll, _fallbackInterval);
+        kickFallback();
         return sec;
     }
 
@@ -196,6 +209,18 @@
     // Força reconexão imediata
     function refresh() { connect(); }
 
+    // Permitido a outros módulos publicarem um preço externo (ex.: feed em tempo real do
+    // widget TradingView) no mesmo evento global usado por tabelas/navbar/termômetro.
+    function publishFromExternal(asset, price) {
+        var a = normalizeAsset(asset);
+        var p = parseFloat(price);
+        if (!a || !isFinite(p) || p <= 0) return;
+        // Não sobrescreve um tick do WS Binance mais recente (fonte canônica)
+        var cached = _cache[a];
+        if (cached && (Date.now() - cached.ts) < 2000 && cached.price !== p) return;
+        publish(a, p);
+    }
+
     global.CryptoLive = {
         addAsset: addAsset,
         ensureAssets: ensureAssets,
@@ -204,7 +229,8 @@
         onChange: onChange,
         isConnected: isConnected,
         refresh: refresh,
-        setPollInterval: setPollInterval
+        setPollInterval: setPollInterval,
+        publishFromExternal: publishFromExternal
     };
 
     // Fallback: se o servidor/servidor proxy da Binance não responder via WS, o sistema

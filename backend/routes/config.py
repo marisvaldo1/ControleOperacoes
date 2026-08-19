@@ -40,21 +40,38 @@ def save_config():
 
 
 # ─── IAs disponíveis ──────────────────────────────────────────────────────────
+def _ai_keys_in_db():
+    """Lê chaves de IA armazenadas na tabela configuracoes."""
+    keys = {}
+    try:
+        conn = db.get_db()
+        rows = conn.execute(
+            "SELECT chave, valor FROM configuracoes WHERE chave IN "
+            "('openai_key','deepseek_key','grok_key','gemini_key','openrouter_key')"
+        ).fetchall()
+        conn.close()
+        for r in rows:
+            keys[r['chave']] = r['valor']
+    except Exception:
+        pass
+    return keys
+
+
 @config_bp.route('/available-ais', methods=['GET'])
 def get_available_ais():
-    """Retorna lista de IAs com chave configurada no .env."""
+    """Retorna lista de IAs com chave configurada no .env OU no banco."""
     ai_mapping = {
-        'OPENAI':      ('OPENAI_API_KEY',      'OpenAI (GPT-3.5/GPT-4)'),
-        'DEEPSEEK':    ('DEEPSEEK_API_KEY',     'DeepSeek'),
-        'GROK':        ('GROK_API_KEY',         'Grok (xAI)'),
-        'GEMINI':      ('GEMINI_API_KEY',       'Gemini (Google)'),
-        'OPENROUTER':  ('OPENROUTER_API_KEY',   'OpenRouter (Múltiplos modelos)'),
+        'OPENAI':      ('OPENAI_API_KEY',      'openai_key',      'OpenAI (GPT-3.5/GPT-4)'),
+        'DEEPSEEK':    ('DEEPSEEK_API_KEY',     'deepseek_key',    'DeepSeek'),
+        'GROK':        ('GROK_API_KEY',         'grok_key',        'Grok (xAI)'),
+        'GEMINI':      ('GEMINI_API_KEY',       'gemini_key',      'Gemini (Google)'),
+        'OPENROUTER':  ('OPENROUTER_API_KEY',   'openrouter_key',  'OpenRouter (Múltiplos modelos)'),
     }
-    available = [
-        {'key': key, 'name': name}
-        for key, (env_var, name) in ai_mapping.items()
-        if os.environ.get(env_var)
-    ]
+    db_keys = _ai_keys_in_db()
+    available = []
+    for key, (env_var, db_key, name) in ai_mapping.items():
+        if os.environ.get(env_var) or db_keys.get(db_key):
+            available.append({'key': key, 'name': name})
     conn = db.get_db()
     current_row = conn.execute(
         'SELECT valor FROM configuracoes WHERE chave=?', ('selected_ai',)
