@@ -1,0 +1,240 @@
+/* ═════════════════════════════════════════════════════════════════════════════
+   TOOLTIP COMPARTILHADO - Padrão para todo o site
+   ═════════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --tt-bg: #0d1117;
+  --tt-border: #21262d;
+  --tt-header-put: rgba(59, 130, 246, 0.18);
+  --tt-header-call: rgba(6, 182, 212, 0.18);
+  --tt-text: #e6edf3;
+  --tt-muted: #8b949e;
+  --tt-green: #22c55e;
+  --tt-red: #ef4444;
+  --tt-orange: #f59e0b;
+  --tt-purple: #a78bfa;
+  --tt-cyan: #06b6d4;
+  --tt-blue: #3b82f6;
+  --tt-mono: 'SFMono-Regular', ui-monospace, 'Cascadia Code', Consolas, monospace;
+}
+
+/* Container principal do tooltip */
+.shared-tooltip {
+  position: fixed;
+  z-index: 10000;
+  display: none;
+  min-width: 220px;
+  max-width: 320px;
+  background: var(--tt-bg);
+  border: 1px solid var(--tt-border);
+  border-radius: 12px;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  pointer-events: none;
+  font-family: var(--tt-sans, 'Inter', system-ui, sans-serif);
+}
+
+.shared-tooltip.visible {
+  display: block;
+}
+
+/* Cabeçalho do tooltip */
+.shared-tooltip .tt-head {
+  padding: 10px 14px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  letter-spacing: 0.3px;
+}
+
+.shared-tooltip .tt-head.tt-put {
+  background: var(--tt-header-put);
+  color: var(--tt-purple);
+}
+
+.shared-tooltip .tt-head.tt-call {
+  background: var(--tt-header-call);
+  color: var(--tt-cyan);
+}
+
+.shared-tooltip .tt-head.tt-default {
+  background: rgba(139, 148, 158, 0.12);
+  color: var(--tt-muted);
+}
+
+/* Corpo do tooltip */
+.shared-tooltip .tt-body {
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Linha de informações */
+.tt-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.72rem;
+  gap: 16px;
+}
+
+.tt-line .tt-key {
+  color: var(--tt-muted);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.tt-line .tt-value {
+  font-family: var(--tt-mono);
+  font-weight: 700;
+  color: var(--tt-text);
+  text-align: right;
+}
+
+.tt-line .tt-value.tt-positive {
+  color: var(--tt-green);
+}
+
+.tt-line .tt-value.tt-negative {
+  color: var(--tt-red);
+}
+
+/* Badges */
+.tt-badge {
+  font-size: 0.6rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tt-badge.tt-exercida {
+  background: rgba(245, 158, 11, 0.16);
+  color: var(--tt-orange);
+}
+
+.tt-badge.tt-nao-exercida {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--tt-muted);
+}
+
+.tt-badge.tt-aberta {
+  background: rgba(245, 158, 11, 0.14);
+  color: var(--tt-orange);
+}
+
+.tt-badge.tt-fechada {
+  background: rgba(34, 197, 94, 0.14);
+  color: var(--tt-green);
+}
+
+/* Fórmula ou cálculo */
+.tt-formula {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-family: var(--tt-mono);
+  font-size: 0.68rem;
+  line-height: 1.6;
+  color: var(--tt-text);
+}
+
+/* Nota explicativa */
+.tt-note {
+  font-size: 0.65rem;
+  color: var(--tt-muted);
+  font-style: italic;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 8px;
+  margin-top: 4px;
+}
+
+/* Separador */
+.tt-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 4px 0;
+}
+
+/* ═════════════════════════════════════════════════════════════════════════════
+   LIGHT THEME OVERRIDES
+   ═════════════════════════════════════════════════════════════════════════════ */
+
+[data-bs-theme="light"] .shared-tooltip {
+  background: #fff;
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.15);
+}
+
+[data-bs-theme="light"] .shared-tooltip .tt-head.tt-put {
+  background: rgba(59, 130, 246, 0.12);
+  color: #2563eb;
+}
+
+[data-bs-theme="light"] .shared-tooltip .tt-head.tt-call {
+  background: rgba(6, 182, 212, 0.12);
+  color: #0891b2;
+}
+
+[data-bs-theme="light"] .shared-tooltip .tt-head.tt-default {
+  background: rgba(139, 148, 158, 0.08);
+  color: #64748b;
+}
+
+[data-bs-theme="light"] .tt-line .tt-key {
+  color: #64748b;
+}
+
+[data-bs-theme="light"] .tt-line .tt-value {
+  color: #1e293b;
+}
+
+[data-bs-theme="light"] .tt-line .tt-value.tt-positive {
+  color: #16a34a;
+}
+
+[data-bs-theme="light"] .tt-line .tt-value.tt-negative {
+  color: #dc2626;
+}
+
+[data-bs-theme="light"] .tt-badge.tt-exercida {
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+}
+
+[data-bs-theme="light"] .tt-badge.tt-nao-exercida {
+  background: rgba(0, 0, 0, 0.06);
+  color: #64748b;
+}
+
+[data-bs-theme="light"] .tt-badge.tt-aberta {
+  background: rgba(245, 158, 11, 0.1);
+  color: #d97706;
+}
+
+[data-bs-theme="light"] .tt-badge.tt-fechada {
+  background: rgba(34, 197, 94, 0.1);
+  color: #16a34a;
+}
+
+[data-bs-theme="light"] .tt-formula {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #1e293b;
+}
+
+[data-bs-theme="light"] .tt-note {
+  color: #94a3b8;
+  border-top-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-bs-theme="light"] .tt-divider {
+  background: rgba(0, 0, 0, 0.08);
+}

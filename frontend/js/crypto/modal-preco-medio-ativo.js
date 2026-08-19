@@ -20,40 +20,6 @@
     var modalData = null;
     var closeHandler = null;
     var chartRef = null;
-    var tooltipEl = null;
-
-    function ensureTooltip() {
-        if (tooltipEl) return tooltipEl;
-        tooltipEl = document.createElement('div');
-        tooltipEl.className = 'pm-tooltip';
-        document.body.appendChild(tooltipEl);
-        return tooltipEl;
-    }
-
-    function showTooltip(box, html) {
-        var tt = ensureTooltip();
-        tt.innerHTML = html;
-        tt.classList.add('show');
-        var rect = box.getBoundingClientRect();
-        var ttW = 320;
-        var left = rect.left + rect.width / 2 - ttW / 2;
-        if (left < 8) left = 8;
-        if (left + ttW > window.innerWidth - 8) left = window.innerWidth - ttW - 8;
-        var top = rect.top - 8;
-        tt.style.left = left + 'px';
-        tt.style.maxWidth = ttW + 'px';
-        requestAnimationFrame(function () {
-            var ttH = tt.offsetHeight;
-            top = rect.top - ttH - 8;
-            if (top < 8) top = rect.bottom + 8;
-            tt.style.top = top + 'px';
-        });
-        tt.style.top = top + 'px';
-    }
-
-    function hideTooltip() {
-        if (tooltipEl) tooltipEl.classList.remove('show');
-    }
 
     function getOps(par, opsOverride) {
         var source = Array.isArray(opsOverride) ? opsOverride : (window.cryptoOperacoes || []);
@@ -96,12 +62,6 @@
             })[0]
             : null;
 
-        var strikeBase = ultimaPut
-            ? parseFloat(ultimaPut.strike || 0)
-            : parseFloat(baseOps.reduce(function (max, o) {
-                return parseFloat(o.strike || 0) > parseFloat(max.strike || 0) ? o : max;
-            }, baseOps[0])?.strike || 0);
-
         var cicloDate = ultimaPut
             ? (ultimaPut.exercicio || ultimaPut.data_operacao || '')
             : '';
@@ -111,6 +71,7 @@
                 rot: (o.tipo || '') + ' ' + (o.ativo || '') + ' — ' + (o.status || ''),
                 v: parseFloat(o.premio_us || 0),
                 data: o.exercicio || o.data_operacao || '',
+                exercida: isExercisedPut(o),
             };
         }).filter(function (p) { return p.v > 0; }).sort(function (a, b) {
             return (b.data || '').localeCompare(a.data || '');
@@ -123,7 +84,33 @@
             : allPremios;
 
         var totalPremios = premios.reduce(function (s, p) { return s + p.v; }, 0);
-        var pm = strikeBase - totalPremios;
+
+        var custoTotal = 0;
+        var qtyTotal = 0;
+        var detalheCompras = [];
+
+        putsExercidas.forEach(function (op) {
+            var strike = parseFloat(op.strike || 0);
+            var crypto = parseFloat(op.crypto || 0);
+            var premio = parseFloat(op.premio_us || 0);
+            var data = op.exercicio || op.data_operacao || '';
+
+            if (strike > 0 && crypto > 0) {
+                var custo = strike * crypto - premio;
+                custoTotal += custo;
+                qtyTotal += crypto;
+                detalheCompras.push({
+                    id: op.id,
+                    data: data,
+                    strike: strike,
+                    crypto: crypto,
+                    premio: premio,
+                    custo: custo,
+                });
+            }
+        });
+
+        var pm = qtyTotal > 0 ? custoTotal / qtyTotal : 0;
 
         var cotacao = cotacaoOverride || parseFloat(ops.find(function (o) {
             return parseFloat(o.cotacao_atual || 0) > 0;
@@ -135,11 +122,14 @@
 
         return {
             ativo: par,
-            ultimoExercicio: strikeBase,
+            ultimoExercicio: ultimaPut ? parseFloat(ultimaPut.strike || 0) : 0,
             dataUltimaPut: cicloDate || '',
             premios: premios,
             totalPremios: totalPremios,
             pm: pm,
+            custoTotal: custoTotal,
+            qtyTotal: qtyTotal,
+            detalheCompras: detalheCompras,
             cotacao: cotacao,
             strikeAberto: strikeAberto,
             tipoAberto: tipoAberto,
@@ -352,13 +342,15 @@
                 var ativo = sp > 0 ? left.substring(sp + 1) : left;
                 var tipoBadge = tipo === 'PUT' ? 'put' : 'call';
                 var statusBadge = statusStr === 'ABERTA' ? 'aberta' : 'fechada';
+                var exercidaBadge = s.exercida ? ' <span class="pm-badge pm-badge-sm exercida" title="PUT exercida - Comprou crypto">EXERCIDA</span>' : '';
                 opHtml = '<span class="pm-badge ' + tipoBadge + '">' + tipo + '</span> ' +
                     '<span class="pm-op-asset">' + ativo + '</span> ' +
-                    (statusStr ? '<span class="pm-badge pm-badge-sm ' + statusBadge + '">' + statusStr + '</span>' : '');
+                    (statusStr ? '<span class="pm-badge pm-badge-sm ' + statusBadge + '">' + statusStr + '</span>' : '') +
+                    exercidaBadge;
                 valorStr = '−' + usd(s.v);
             }
 
-            html += '<tr class="' + (isLast ? 'pm-final-row' : '') + '">' +
+            html += '<tr class="' + (isLast ? 'pm-final-row' : '') + (s.exercida ? ' pm-exercida-row' : '') + '">' +
                 '<td>' + dataStr + '</td>' +
                 '<td>' + opHtml + '</td>' +
                 '<td class="pm-valor">' + valorStr + '</td>' +
@@ -386,76 +378,122 @@
         var resExerc = d.strikeAberto && d.pm ? d.strikeAberto - d.pm : null;
         var dist = d.cotacao && d.strikeAberto ? ((d.cotacao - d.strikeAberto) / d.strikeAberto) * 100 : null;
 
-        var cotTip = '<div class="tt-title">📊 Cotação</div>' +
-            '<div class="tt-row">Preço atual do ' + d.ativo + '</div>' +
-            '<div class="tt-row" style="color:#60a5fa">Fonte: Binance (tempo real)</div>';
+        var cotTip = function () {
+            return {
+                type: 'default',
+                title: 'Cotação',
+                lines: [
+                    { key: '📊 Preço atual do ' + d.ativo },
+                    { key: 'Fonte: Binance (tempo real)' },
+                ],
+            };
+        };
 
-        var pmTip = d.pm
-            ? '<div class="tt-title">📊 Preço Médio</div>' +
-              '<div class="tt-row">Custo efetivo por unidade no ciclo atual</div>' +
-              '<div class="tt-formula">' +
-              'Fórmula: Strike − Prêmios<br>' +
-              'Valores: ' + usd(d.ultimoExercicio) + ' − ' + usd(d.totalPremios) + '<br>' +
-              'Resultado: ' + usd(d.pm) +
-              '</div>' +
-              '<div class="tt-note">O PM já desconta todos os prêmios colhidos desde a última PUT exercida.</div>'
-            : '<div class="tt-title">📊 Preço Médio</div><div class="tt-row">Indisponível</div>';
+        var pmTip = function () {
+            if (!d.pm) {
+                return { type: 'default', title: 'Preço Médio', lines: [{ key: 'Indisponível' }] };
+            }
+            return {
+                type: 'default',
+                title: 'Preço Médio (Ponderado)',
+                lines: [
+                    { key: 'Custo efetivo ponderado de todas as compras' },
+                ],
+                formula: 'Fórmula: Custo Total / Quantidade Total<br>' +
+                    'Custo Total: ' + usd(d.custoTotal) + '<br>' +
+                    'Quantidade: ' + d.qtyTotal.toFixed(6) + ' ' + d.ativo + '<br>' +
+                    'Resultado: ' + usd(d.pm),
+                note: 'PM ponderado de todas as PUTs exercidas (compras).',
+            };
+        };
 
-        var entradaTip = d.ultimoExercicio
-            ? '<div class="tt-title">📌 Entrada (PUT)</div>' +
-              '<div class="tt-row">Strike da última PUT exercida no ciclo</div>' +
-              '<div class="tt-formula">Strike: ' + usd(d.ultimoExercicio) + '</div>' +
-              (d.dataUltimaPut
-                  ? '<div class="tt-row" style="color:#60a5fa">📅 Exercida em: ' + fmtDateBR(d.dataUltimaPut) + '</div>'
-                  : '') +
-              '<div class="tt-note">Base de cálculo do Preço Médio. Quando uma PUT é exercida, este passa a ser o preço de referência.</div>'
-            : '<div class="tt-title">📌 Entrada (PUT)</div><div class="tt-row">Nenhuma PUT exercida ainda</div>';
+        var entradaTip = function () {
+            if (!d.ultimoExercicio) {
+                return { type: 'default', title: 'Última PUT Exercida', lines: [{ key: 'Nenhuma PUT exercida ainda' }] };
+            }
+            var lines = [
+                { key: 'Strike da última PUT exercida' },
+                { key: 'Strike', value: usd(d.ultimoExercicio) },
+            ];
+            if (d.dataUltimaPut) {
+                lines.push({ key: '📅 Exercida em', value: fmtDateBR(d.dataUltimaPut) });
+            }
+            return {
+                type: 'default',
+                title: 'Última PUT Exercida',
+                lines: lines,
+                note: 'Última operação de compra via Dual Investment.',
+            };
+        };
 
-        var premiosTip = d.totalPremios > 0
-            ? '<div class="tt-title">💰 Prêmios Acumulados</div>' +
-              '<div class="tt-row">Soma dos prêmios desde a última PUT exercida</div>' +
-              '<div class="tt-formula">' +
-              'Total: ' + usd(d.totalPremios) + '<br>' +
-              'Operações: ' + d.premios.length + ' lançamento' + (d.premios.length !== 1 ? 's' : '') +
-              '</div>' +
-              '<div class="tt-note">Cada lançamento de CALL ou PUT vendedora gera um prêmio que reduz o PM.</div>'
-            : '<div class="tt-title">💰 Prêmios Acumulados</div><div class="tt-row">Nenhum prêmio no ciclo atual</div>';
+        var premiosTip = function () {
+            if (d.totalPremios <= 0) {
+                return { type: 'default', title: 'Prêmios Acumulados', lines: [{ key: 'Nenhum prêmio no ciclo atual' }] };
+            }
+            return {
+                type: 'default',
+                title: 'Prêmios Acumulados',
+                lines: [
+                    { key: 'Soma dos prêmios desde a última PUT exercida' },
+                    { key: 'Total', value: usd(d.totalPremios) },
+                    { key: 'Operações', value: d.premios.length + ' lançamento' + (d.premios.length !== 1 ? 's' : '') },
+                ],
+                note: 'Prêmios dos lançamentos recentes (não impactam mais o PM ponderado).',
+            };
+        };
 
-        var vsPmTip = d.cotacao && d.pm
-            ? '<div class="tt-title">📈 Cotação vs PM</div>' +
-              '<div class="tt-row">Quanto a cotação está acima (ou abaixo) do PM</div>' +
-              '<div class="tt-formula">' +
-              '(Cotação − PM) / PM × 100<br>' +
-              '(' + usd(d.cotacao) + ' − ' + usd(d.pm) + ') / ' + usd(d.pm) + ' × 100<br>' +
-              'Resultado: ' + pct(vsPm) +
-              '</div>' +
-              '<div class="tt-note">Quanto maior, mais "segura" a posição.</div>'
-            : '<div class="tt-title">📈 Cotação vs PM</div><div class="tt-row">Indisponível</div>';
+        var vsPmTip = function () {
+            if (!d.cotacao || !d.pm) {
+                return { type: 'default', title: 'Cotação vs PM', lines: [{ key: 'Indisponível' }] };
+            }
+            return {
+                type: 'default',
+                title: 'Cotação vs PM',
+                lines: [
+                    { key: 'Quanto a cotação está acima (ou abaixo) do PM' },
+                ],
+                formula: '(Cotação − PM) / PM × 100<br>' +
+                    '(' + usd(d.cotacao) + ' − ' + usd(d.pm) + ') / ' + usd(d.pm) + ' × 100<br>' +
+                    'Resultado: ' + pct(vsPm),
+                note: 'Quanto maior, mais "segura" a posição.',
+            };
+        };
 
-        var resExercTip = d.strikeAberto && d.pm
-            ? '<div class="tt-title">💰 Resultado se Exercido</div>' +
-              '<div class="tt-row">Lucro se a ' + d.tipoAberto + ' (strike ' + usd(d.strikeAberto) + ') for exercida</div>' +
-              '<div class="tt-formula">' +
-              'Strike − PM<br>' +
-              usd(d.strikeAberto) + ' − ' + usd(d.pm) + '<br>' +
-              'Resultado: ' + sgn(resExerc) +
-              '</div>' +
-              '<div class="tt-note">O PM já desconta todos os prêmios colhidos.</div>'
-            : '<div class="tt-title">💰 Resultado se Exercido</div><div class="tt-row">Sem opção aberta ou sem PM</div>';
+        var resExercTip = function () {
+            if (!d.strikeAberto || !d.pm) {
+                return { type: 'default', title: 'Resultado se Exercido', lines: [{ key: 'Sem opção aberta ou sem PM' }] };
+            }
+            return {
+                type: 'default',
+                title: 'Resultado se Exercido',
+                lines: [
+                    { key: 'Lucro se a ' + d.tipoAberto + ' (strike ' + usd(d.strikeAberto) + ') for exercida' },
+                ],
+                formula: 'Strike − PM<br>' +
+                    usd(d.strikeAberto) + ' − ' + usd(d.pm) + '<br>' +
+                    'Resultado: ' + sgn(resExerc),
+                note: 'O PM já desconta todos os prêmios colhidos.',
+            };
+        };
 
-        var distTip = d.cotacao && d.strikeAberto
-            ? '<div class="tt-title">📏 Distância Strike</div>' +
-              '<div class="tt-row">Distância da cotação até o strike da ' + d.tipoAberto + '</div>' +
-              '<div class="tt-formula">' +
-              '(Cotação − Strike) / Strike × 100<br>' +
-              '(' + usd(d.cotacao) + ' − ' + usd(d.strikeAberto) + ') / ' + usd(d.strikeAberto) + ' × 100<br>' +
-              'Resultado: ' + pct(dist) +
-              '</div>' +
-              '<div class="tt-note">' + (dist < 0
-                  ? 'Negativo = cotação abaixo do strike = ' + d.tipoAberto + ' fora do dinheiro (OTM, segura).'
-                  : 'Positivo = cotação acima do strike = ' + d.tipoAberto + ' dentro do dinheiro (ITM, risco de exercício).') +
-              '</div>'
-            : '<div class="tt-title">📏 Distância Strike</div><div class="tt-row">Indisponível</div>';
+        var distTip = function () {
+            if (!d.cotacao || !d.strikeAberto) {
+                return { type: 'default', title: 'Distância Strike', lines: [{ key: 'Indisponível' }] };
+            }
+            return {
+                type: 'default',
+                title: 'Distância Strike',
+                lines: [
+                    { key: 'Distância da cotação até o strike da ' + d.tipoAberto },
+                ],
+                formula: '(Cotação − Strike) / Strike × 100<br>' +
+                    '(' + usd(d.cotacao) + ' − ' + usd(d.strikeAberto) + ') / ' + usd(d.strikeAberto) + ' × 100<br>' +
+                    'Resultado: ' + pct(dist),
+                note: dist < 0
+                    ? 'Negativo = cotação abaixo do strike = ' + d.tipoAberto + ' fora do dinheiro (OTM, segura).'
+                    : 'Positivo = cotação acima do strike = ' + d.tipoAberto + ' dentro do dinheiro (ITM, risco de exercício).',
+            };
+        };
 
         var body = document.getElementById('pmBody');
         if (!body) return;
@@ -490,10 +528,13 @@
         var tipMap = { pm: pmTip, entrada: entradaTip, premios: premiosTip, cot: cotTip, vsPm: vsPmTip, resExerc: resExercTip, dist: distTip };
         body.querySelectorAll('.pm-stat-box[data-tip]').forEach(function (box) {
             var key = box.getAttribute('data-tip');
-            var html = tipMap[key];
-            if (!html) return;
-            box.addEventListener('mouseenter', function () { showTooltip(box, html); });
-            box.addEventListener('mouseleave', hideTooltip);
+            var configFn = tipMap[key];
+            if (!configFn) return;
+            box.addEventListener('mouseenter', function () {
+                var config = configFn();
+                if (config) SharedTooltip.show(box, config);
+            });
+            box.addEventListener('mouseleave', function () { SharedTooltip.hide(); });
         });
 
         drawLedger(steps);
@@ -524,37 +565,71 @@
         boxes[3].querySelector('.val').textContent = dist !== null ? pct(dist) : '—';
 
         var tipMap2 = {
-            cot: '<div class="tt-title">📊 Cotação</div>' +
-                '<div class="tt-row">Preço atual do ' + d.ativo + '</div>' +
-                '<div class="tt-row" style="color:#60a5fa">Fonte: Binance (tempo real)</div>',
-            vsPm: vsPm !== null
-                ? '<div class="tt-title">📈 Cotação vs PM</div>' +
-                  '<div class="tt-row">Quanto a cotação está acima (ou abaixo) do PM</div>' +
-                  '<div class="tt-formula">(Cotação − PM) / PM × 100<br>(' + usd(d.cotacao) + ' − ' + usd(d.pm) + ') / ' + usd(d.pm) + ' × 100<br>Resultado: ' + pct(vsPm) + '</div>' +
-                  '<div class="tt-note">Quanto maior, mais "segura" a posição.</div>'
-                : '<div class="tt-title">📈 Cotação vs PM</div><div class="tt-row">Indisponível</div>',
-            resExerc: resExerc !== null
-                ? '<div class="tt-title">💰 Resultado se Exercido</div>' +
-                  '<div class="tt-row">Lucro se a ' + d.tipoAberto + ' (strike ' + usd(d.strikeAberto) + ') for exercida</div>' +
-                  '<div class="tt-formula">Strike − PM<br>' + usd(d.strikeAberto) + ' − ' + usd(d.pm) + '<br>Resultado: ' + sgn(resExerc) + '</div>' +
-                  '<div class="tt-note">O PM já desconta todos os prêmios colhidos.</div>'
-                : '<div class="tt-title">💰 Resultado se Exercido</div><div class="tt-row">Sem opção aberta ou sem PM</div>',
-            dist: dist !== null
-                ? '<div class="tt-title">📏 Distância Strike</div>' +
-                  '<div class="tt-row">Distância da cotação até o strike da ' + d.tipoAberto + '</div>' +
-                  '<div class="tt-formula">(Cotação − Strike) / Strike × 100<br>(' + usd(d.cotacao) + ' − ' + usd(d.strikeAberto) + ') / ' + usd(d.strikeAberto) + ' × 100<br>Resultado: ' + pct(dist) + '</div>' +
-                  '<div class="tt-note">' + (dist < 0
-                      ? 'Negativo = cotação abaixo do strike = ' + d.tipoAberto + ' fora do dinheiro (OTM, segura).'
-                      : 'Positivo = cotação acima do strike = ' + d.tipoAberto + ' dentro do dinheiro (ITM, risco de exercício).') + '</div>'
-                : '<div class="tt-title">📏 Distância Strike</div><div class="tt-row">Indisponível</div>'
+            cot: function () {
+                return {
+                    type: 'default',
+                    title: 'Cotação',
+                    lines: [
+                        { key: 'Preço atual do ' + d.ativo },
+                        { key: 'Fonte: Binance (tempo real)' },
+                    ],
+                };
+            },
+            vsPm: function () {
+                if (vsPm === null) {
+                    return { type: 'default', title: 'Cotação vs PM', lines: [{ key: 'Indisponível' }] };
+                }
+                return {
+                    type: 'default',
+                    title: 'Cotação vs PM',
+                    lines: [
+                        { key: 'Quanto a cotação está acima (ou abaixo) do PM' },
+                    ],
+                    formula: '(Cotação − PM) / PM × 100<br>(' + usd(d.cotacao) + ' − ' + usd(d.pm) + ') / ' + usd(d.pm) + ' × 100<br>Resultado: ' + pct(vsPm),
+                    note: 'Quanto maior, mais "segura" a posição.',
+                };
+            },
+            resExerc: function () {
+                if (resExerc === null) {
+                    return { type: 'default', title: 'Resultado se Exercido', lines: [{ key: 'Sem opção aberta ou sem PM' }] };
+                }
+                return {
+                    type: 'default',
+                    title: 'Resultado se Exercido',
+                    lines: [
+                        { key: 'Lucro se a ' + d.tipoAberto + ' (strike ' + usd(d.strikeAberto) + ') for exercida' },
+                    ],
+                    formula: 'Strike − PM<br>' + usd(d.strikeAberto) + ' − ' + usd(d.pm) + '<br>Resultado: ' + sgn(resExerc),
+                    note: 'O PM já desconta todos os prêmios colhidos.',
+                };
+            },
+            dist: function () {
+                if (dist === null) {
+                    return { type: 'default', title: 'Distância Strike', lines: [{ key: 'Indisponível' }] };
+                }
+                return {
+                    type: 'default',
+                    title: 'Distância Strike',
+                    lines: [
+                        { key: 'Distância da cotação até o strike da ' + d.tipoAberto },
+                    ],
+                    formula: '(Cotação − Strike) / Strike × 100<br>(' + usd(d.cotacao) + ' − ' + usd(d.strikeAberto) + ') / ' + usd(d.strikeAberto) + ' × 100<br>Resultado: ' + pct(dist),
+                    note: dist < 0
+                        ? 'Negativo = cotação abaixo do strike = ' + d.tipoAberto + ' fora do dinheiro (OTM, segura).'
+                        : 'Positivo = cotação acima do strike = ' + d.tipoAberto + ' dentro do dinheiro (ITM, risco de exercício).',
+                };
+            },
         };
 
         boxes.forEach(function (box) {
             var key = box.getAttribute('data-tip');
-            var html = tipMap2[key];
-            if (!html) return;
-            box.onmouseenter = function () { showTooltip(box, html); };
-            box.onmouseleave = hideTooltip;
+            var configFn = tipMap2[key];
+            if (!configFn) return;
+            box.onmouseenter = function () {
+                var config = configFn();
+                if (config) SharedTooltip.show(box, config);
+            };
+            box.onmouseleave = function () { SharedTooltip.hide(); };
         });
     }
 

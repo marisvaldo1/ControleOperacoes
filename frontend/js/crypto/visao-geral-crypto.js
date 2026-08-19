@@ -233,7 +233,7 @@
 
     /* RIGHT-TOP: Posições Abertas + Distância */
     h += '<div class="vg-card">';
-    h += '<div class="vg-card-title"><span>&#128269;</span>Posições Abertas Agora</div>';
+    h += '<div class="vg-card-title" style="cursor:pointer" id="vgOpenPosHeader"><span>&#128200;</span>Posições Abertas Agora</div>';
     if (abertas.length === 0) {
       h += '<div style="color:' + C_MUTED + ';font-size:.72rem;padding:12px 0">Nenhuma posição aberta</div>';
     } else {
@@ -272,7 +272,6 @@
         if (isEx) h += '<span class="vg-badge" style="background:rgba(249,115,22,.1);color:#f97316;border:1px solid rgba(249,115,22,.26)">Poss. Exercício</span>';
         h += '<div style="flex:1"></div>';
         h += '<span style="font-size:.68rem;color:' + C_MUTED + ';margin-right:2px">Prêmio Recebido:</span><span style="font-family:monospace;font-size:.78rem;font-weight:700;color:#22c55e">+' + fmt(premio) + '</span>';
-        h += '<span class="vg-op-detail-btn" data-op-id="' + (op.id || '') + '" title="Ver detalhes"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>';
         h += '<span class="vg-refresh-cot-btn" data-par="' + asset + '" title="Atualizar cotação"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg></span>';
         h += '<span class="vg-chart-btn" data-par="' + asset + '" data-strike="' + strike + '" data-cotacao="' + cot + '" data-tipo="' + tipo + '" title="Gráfico TradingView"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>';
         h += '</div>';
@@ -545,6 +544,11 @@
       diffEl.innerHTML = '<span>Diferença: <span style="color:' + diffCol + '">' + diffSign2 + fmtShort(diffVal) + '</span></span>' +
                          '<span>PoP: <span style="color:' + popColor + ';font-weight:700">' + popEst.toFixed(0) + '%</span></span>' +
                          pmHtml;
+
+      // Vincula tooltips aos links de PM
+      if (window.CryptoUtils && window.CryptoUtils.bindPmTooltips) {
+        window.CryptoUtils.bindPmTooltips();
+      }
     }
   }
 
@@ -924,30 +928,65 @@ var data = chart.getSeriesData();
     container.querySelectorAll('.vg-op-row[data-op-id]').forEach(function(el) {
       el.addEventListener('click', function(e) {
         // Se clicou em botão de ação, não faz nada (cada botão tem seu próprio handler)
-        if (e.target.closest('.vg-op-detail-btn') || e.target.closest('.vg-refresh-cot-btn') || e.target.closest('.vg-chart-btn')) return;
-        var strike  = parseFloat(el.getAttribute('data-strike') || 0);
-        var cotacao = parseFloat(el.getAttribute('data-cotacao') || 0);
-        var tipo    = el.getAttribute('data-tipo') || 'PUT';
-        var clickPar = el.getAttribute('data-par') || 'BTC';
-        // Destaca a row ativa
-        container.querySelectorAll('.vg-op-row').forEach(function(r) { r.classList.remove('vg-op-active'); });
-        el.classList.add('vg-op-active');
-        // Atualiza termômetro e selo
-        var pmVal = computePM(ops, clickPar);
-        buildThermometer(strike, cotacao, tipo, pmVal, clickPar);
-        buildSeal(strike, cotacao, tipo, pmVal, clickPar);
-      });
-    });
-    /* Listeners: clique na lupa → abre modal de análise */
-    container.querySelectorAll('.vg-op-detail-btn[data-op-id]').forEach(function(btn) {
-      btn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        var opId = btn.getAttribute('data-op-id');
+        if (e.target.closest('.vg-refresh-cot-btn') || e.target.closest('.vg-chart-btn')) return;
+        var opId = el.getAttribute('data-op-id');
         if (opId && window.ModalAnaliseCrypto && typeof window.ModalAnaliseCrypto.open === 'function') {
           window.ModalAnaliseCrypto.open(opId);
         }
       });
+
+      // Tooltip compartilhado
+      el.addEventListener('mouseenter', function() {
+        if (!window.SharedTooltip) return;
+        var opId = el.getAttribute('data-op-id');
+        var asset = el.getAttribute('data-par') || '';
+        var tipo = el.getAttribute('data-tipo') || 'PUT';
+        var strike = parseFloat(el.getAttribute('data-strike') || 0);
+        var cotacao = parseFloat(el.getAttribute('data-cotacao') || 0);
+        var dist = strike > 0 && cotacao > 0 ? ((cotacao - strike) / strike * 100) : 0;
+        var distSign = dist >= 0 ? '+' : '';
+        var op = ops.find(function(o) { return String(o.id) === opId; });
+        var premio = op ? parseFloat(op.premio_us || 0) : 0;
+        var vencimento = op ? (op.vencimento || op.exercicio || '') : '';
+        var pmVal = computePM(ops, asset);
+        var vsPm = pmVal > 0 && cotacao > 0 ? ((cotacao - pmVal) / pmVal * 100) : 0;
+        var vsPmSign = vsPm >= 0 ? '+' : '';
+
+        var lines = [
+          { key: '📅 Data', value: vencimento ? vencimento.substring(0, 10).split('-').reverse().join('/') : '—' },
+          { key: '🏷️ Tipo', value: tipo },
+          { key: '📌 Strike', value: 'US$ ' + strike.toLocaleString('en-US', {minimumFractionDigits: 2}) },
+          { key: '💰 Prêmio', value: '+US$ ' + premio.toFixed(2), className: 'tt-positive' },
+          { key: '📏 Distância', value: distSign + dist.toFixed(2) + '%', className: dist >= 0 ? 'tt-positive' : 'tt-negative' },
+          { key: '📊 Cotação vs PM', value: vsPmSign + vsPm.toFixed(2) + '%', className: vsPm >= 0 ? 'tt-positive' : 'tt-negative' },
+        ];
+
+        if (pmVal > 0) {
+          lines.push({ key: '🧮 PM', value: 'US$ ' + pmVal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) });
+        }
+
+        window.SharedTooltip.show(el, {
+          type: tipo,
+          title: 'Operação ' + tipo + ' — ' + asset,
+          lines: lines,
+          note: 'Clique para ver detalhes do cálculo do preço médio e evolução de prêmios',
+        });
+      });
+
+      el.addEventListener('mouseleave', function() {
+        if (window.SharedTooltip) window.SharedTooltip.hide();
+      });
     });
+    /* Listener: cabeçalho "Posições Abertas" → abre modal de análise da primeira op aberta */
+    var headerEl = document.getElementById('vgOpenPosHeader');
+    if (headerEl) {
+      headerEl.addEventListener('click', function() {
+        var firstOp = abertas.length > 0 ? abertas[0] : null;
+        if (firstOp && firstOp.id && window.ModalAnaliseCrypto && typeof window.ModalAnaliseCrypto.open === 'function') {
+          window.ModalAnaliseCrypto.open(String(firstOp.id));
+        }
+      });
+    }
     /* Listeners: refresh cotação */
     container.querySelectorAll('.vg-refresh-cot-btn[data-par]').forEach(function(btn) {
       btn.addEventListener('click', function(e) {

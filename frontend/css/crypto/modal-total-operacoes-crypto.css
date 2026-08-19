@@ -113,12 +113,14 @@
     letter-spacing: .5px;
     color: rgba(255,255,255,0.5);
     margin-bottom: 0.3rem;
+    text-align: center;
 }
 
 .toc-card-value {
     font-size: 1.25rem;
     font-weight: 700;
     color: #f59e0b;
+    text-align: right;
 }
 
 .toc-accordion .accordion-button {
@@ -749,12 +751,14 @@
     text-transform: uppercase;
     color: rgba(255,255,255,.45);
     letter-spacing: 0.3px;
+    text-align: center;
 }
 
 .toc-perf-scard-value {
     font-size: 20px;
     font-weight: 700;
     margin-top: 2px;
+    text-align: right;
 }
 
 /* Highlights */

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>Premium Gauge</title>
+
+<style>
+
+*{margin:0;padding:0;box-sizing:border-box;}
+
+body{
+
+    background:#071326;
+    display:grid;
+    place-items:center;
+    height:100vh;
+    font-family:Inter,Segoe UI,sans-serif;
+
+}
+
+.card{
+
+    width:360px;
+    padding:22px;
+    border-radius:22px;
+
+    background:
+        radial-gradient(circle at top,#112348,#071326);
+
+    border:1px solid rgba(80,180,255,.12);
+
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.04),
+        0 18px 45px rgba(0,0,0,.45);
+
+}
+
+svg{
+    width:100%;
+    overflow:visible;
+}
+
+.tick{
+
+    stroke:#18E9FF;
+    stroke-width:2;
+    opacity:.9;
+
+}
+
+.tick.small{
+
+    opacity:.28;
+    stroke-width:1.4;
+
+}
+
+.label{
+
+    fill:#18E9FF;
+    font-size:13px;
+    font-weight:600;
+
+}
+
+#pointer{
+
+    transition:transform .55s cubic-bezier(.22,1,.36,1);
+
+}
+
+</style>
+</head>
+<body>
+
+<div class="card">
+
+<svg viewBox="0 0 340 260">
+
+<defs>
+
+<linearGradient id="arcGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+    <stop offset="0%" stop-color="#6E3BFF"/>
+    <stop offset="35%" stop-color="#4C73FF"/>
+    <stop offset="100%" stop-color="#27E7F8"/>
+</linearGradient>
+
+<linearGradient id="pointerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#83FFFF"/>
+    <stop offset="100%" stop-color="#23E9FF"/>
+</linearGradient>
+
+<filter id="glow">
+    <feGaussianBlur stdDeviation="8" result="blur"/>
+    <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+    </feMerge>
+</filter>
+
+<filter id="softGlow">
+    <feGaussianBlur stdDeviation="3"/>
+</filter>
+
+</defs>
+
+<!-- trilho -->
+
+<path d="M45 205 A125 125 0 0 1 295 205"
+      stroke="rgba(255,255,255,.08)"
+      stroke-width="28"
+      fill="none"
+      stroke-linecap="round"/>
+
+<!-- arco premium -->
+
+<path id="progressArc"
+      d="M45 205 A125 125 0 0 1 295 205"
+      stroke="url(#arcGradient)"
+      stroke-width="28"
+      fill="none"
+      stroke-linecap="round"
+      filter="url(#glow)"/>
+
+<!-- linha interna -->
+
+<path d="M58 205 A112 112 0 0 1 282 205"
+      stroke="#1AE8FF"
+      stroke-width="3"
+      fill="none"/>
+
+<!-- ticks -->
+
+<g id="ticks"></g>
+
+<!-- marcador -->
+
+<circle id="marker"
+        r="7"
+        fill="#071326"
+        stroke="#4EEBFF"
+        stroke-width="4"
+        filter="url(#glow)"/>
+
+<!-- ponteiro -->
+
+<g id="pointer">
+
+<polygon
+points="170,205 164,194 170,92 176,194"
+fill="url(#pointerGradient)"
+filter="url(#glow)"/>
+
+<circle cx="170" cy="205" r="18"
+fill="#0D2343"/>
+
+<circle cx="170" cy="205" r="10"
+fill="#29E7FF"
+filter="url(#softGlow)"/>
+
+<circle cx="170" cy="205" r="3"
+fill="#083250"/>
+
+</g>
+
+<!-- números -->
+
+<text x="62" y="178" class="label">0</text>
+<text x="45" y="145" class="label">10</text>
+<text x="82" y="92" class="label">25</text>
+<text x="170" y="58" text-anchor="middle" class="label">50</text>
+<text x="258" y="92" text-anchor="end" class="label">75</text>
+<text x="282" y="145" text-anchor="end" class="label">90</text>
+<text x="255" y="178" text-anchor="end" class="label">100</text>
+
+</svg>
+
+</div>
+
+<script>
+
+const ticks=document.getElementById("ticks");
+const pointer=document.getElementById("pointer");
+const marker=document.getElementById("marker");
+
+const CX=170;
+const CY=205;
+const R=112;
+
+function polar(a,r){
+
+ const rad=(a-90)*Math.PI/180;
+
+ return{
+  x:CX+r*Math.cos(rad),
+  y:CY+r*Math.sin(rad)
+ };
+
+}
+
+for(let i=0;i<=30;i++){
+
+ const angle=-135+i*9;
+
+ const p1=polar(angle,R+4);
+ const p2=polar(angle,R-8);
+
+ const line=document.createElementNS("http://www.w3.org/2000/svg","line");
+
+ line.setAttribute("x1",p1.x);
+ line.setAttribute("y1",p1.y);
+ line.setAttribute("x2",p2.x);
+ line.setAttribute("y2",p2.y);
+
+ line.setAttribute("class",i%5===0?"tick":"tick small");
+
+ ticks.appendChild(line);
+
+}
+
+function setValue(v){
+
+ v=Math.max(0,Math.min(100,v));
+
+ const angle=-135+(v*270/100);
+
+ pointer.setAttribute(
+ "transform",
+ `rotate(${angle} ${CX} ${CY})`
+ );
+
+ const p=polar(angle,R+14);
+
+ marker.setAttribute("cx",p.x);
+ marker.setAttribute("cy",p.y);
+
+}
+
+setValue(82);
+
+</script>
+
+</body>
+</html>

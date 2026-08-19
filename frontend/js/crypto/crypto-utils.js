@@ -105,14 +105,76 @@
         const cor = par === 'BTC' ? '#f59f00' : par === 'ETH' ? '#4da6ff' : '#3fb950';
         const formatted = '$' + pm.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         const fontSize = (opts && opts.fontSize) || 'inherit';
-        return '<span class="crypto-pm-link" ' +
+        const uid = 'pm-link-' + par + '-' + Date.now();
+        return '<span class="crypto-pm-link" id="' + uid + '" ' +
+            'data-par="' + par + '" ' +
+            'data-pm="' + pm + '" ' +
             'style="color:' + cor + ';cursor:pointer;text-decoration:underline dotted ' + cor + '80;text-underline-offset:4px;font-weight:700;font-size:' + fontSize + '" ' +
-            'title="Clique para ver detalhes do cálculo do preço médio e evolução de prêmios" ' +
             'role="button" ' +
             'tabindex="0" ' +
             'onclick="if (window.ModalPrecoMedioAtivo && typeof window.ModalPrecoMedioAtivo.openModal === \'function\') { event.preventDefault(); event.stopPropagation(); ModalPrecoMedioAtivo.openModal(\'' + par + '\'); }" ' +
             'onkeydown="if (event.key === \'Enter\' || event.key === \' \') { event.preventDefault(); if (window.ModalPrecoMedioAtivo && typeof window.ModalPrecoMedioAtivo.openModal === \'function\') { ModalPrecoMedioAtivo.openModal(\'' + par + '\'); } }">' +
             formatted + '</span>';
+    }
+
+    // Vincula tooltips aos links de PM após renderização
+    function bindPmTooltips() {
+        if (!window.SharedTooltip) return;
+        document.querySelectorAll('.crypto-pm-link[data-par][data-pm]').forEach(function(el) {
+            // Remove listeners anteriores para evitar duplicação
+            el.removeEventListener('mouseenter', _pmTooltipEnter);
+            el.removeEventListener('mouseleave', _pmTooltipLeave);
+            el.addEventListener('mouseenter', _pmTooltipEnter);
+            el.addEventListener('mouseleave', _pmTooltipLeave);
+        });
+    }
+
+    function _pmTooltipEnter(e) {
+        var el = e.currentTarget;
+        var par = el.getAttribute('data-par') || '';
+        var pm = parseFloat(el.getAttribute('data-pm') || 0);
+        if (!pm || !window.SharedTooltip) return;
+
+        var ops = window.cryptoOperacoes || [];
+        var assetOps = ops.filter(function(o) {
+            return (o.ativo || '').toUpperCase().replace('USDT','').replace('/','').trim() === par;
+        });
+
+        var putsExercidas = assetOps.filter(function(o) {
+            return (o.tipo || '').toUpperCase() === 'PUT' && 
+                   (o.exercicio_status || '').toUpperCase() === 'SIM';
+        });
+
+        var custoTotal = 0;
+        var qtyTotal = 0;
+        putsExercidas.forEach(function(op) {
+            var strike = parseFloat(op.strike || 0);
+            var crypto = parseFloat(op.crypto || 0);
+            var premio = parseFloat(op.premio_us || 0);
+            if (strike > 0 && crypto > 0) {
+                custoTotal += strike * crypto - premio;
+                qtyTotal += crypto;
+            }
+        });
+
+        var lines = [
+            { key: '📊 Fórmula', value: 'Custo Total / Qtd Total' },
+            { key: '💰 Custo Total', value: 'US$ ' + custoTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) },
+            { key: '📦 Quantidade', value: qtyTotal.toFixed(6) + ' ' + par },
+            { key: '🧮 PM', value: 'US$ ' + pm.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) },
+            { key: '🔢 PUTs Exercidas', value: putsExercidas.length.toString() },
+        ];
+
+        window.SharedTooltip.show(el, {
+            type: 'default',
+            title: 'Preço Médio — ' + par,
+            lines: lines,
+            note: 'PM ponderado de todas as PUTs exercidas. Clique para ver detalhes.',
+        });
+    }
+
+    function _pmTooltipLeave() {
+        if (window.SharedTooltip) window.SharedTooltip.hide();
     }
 
     // ─── Expor globalmente ──────────────────────────────────────────────────
@@ -123,6 +185,7 @@
         calcDistancia: calcDistancia,
         calcLiveDist: calcLiveDist,
         renderPmLink: renderPmLink,
+        bindPmTooltips: bindPmTooltips,
     };
 
 })();
