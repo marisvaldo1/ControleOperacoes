@@ -734,7 +734,7 @@
     if (!bodyEl) return;
     updateOpThermometerSvg(s, q, tipo, pm, par, bodyEl);
     var chartContainer = bodyEl.querySelector('.vg-op-mini-chart-container');
-    if (chartContainer && s && q) {
+    if (chartContainer && s && q && !chartContainer.querySelector('iframe')) {
       buildOpMiniChart(chartContainer, par + 'USDT', s, q, tipo);
     }
   }
