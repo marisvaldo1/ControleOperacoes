@@ -572,7 +572,7 @@ ${op.observacoes ? `
     // ─── show() principal ──────────────────────────────────────────────────────────────────────────
     async function show(id) {
         const ops = window.cryptoOperacoes || [];
-        const op  = ops.find(o => o.id === id);
+        const op  = ops.find(o => String(o.id) === String(id));
         if (!op) return;
         _currentOpId = id;
 

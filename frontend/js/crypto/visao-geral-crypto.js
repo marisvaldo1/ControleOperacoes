@@ -259,12 +259,13 @@
         var sealLabel = sealSt.cls === 'otm' ? 'EM EXERCÍCIO' : 'SEGURA';
         var sealPct = strike > 0 ? ((cot - strike) / strike * 100) : 0;
         var sealPctSign = sealPct >= 0 ? '+' : '';
-        var sealEmoji = sealSt.cls === 'otm' ? '🔴' : '🟢';
         var sealBadge = '<span class="vg-badge" id="vgSealBadge" style="background:rgba(' + (sealSt.cls === 'otm' ? '239,68,68' : '34,197,94') + ',.15);color:' + sealColor + ';border:1px solid ' + sealColor + ';display:inline-flex;align-items:center;gap:4px" title="' + sealLabel + ' ' + sealPctSign + sealPct.toFixed(2) + '%">' +
           '<span style="width:8px;height:8px;border-radius:50%;background:' + sealColor + ';display:inline-block;box-shadow:0 0 6px ' + sealColor + '"></span>' +
           sealLabel + ' ' + sealPctSign + sealPct.toFixed(2) + '%</span>';
         var activeClass = idx === 0 ? ' vg-op-active' : '';
-        h += '<div class="vg-op-row' + activeClass + '" data-op-id="' + (op.id || '') + '" data-par="' + asset + '" data-strike="' + strike + '" data-cotacao="' + cot + '" data-tipo="' + tipo + '" style="border-left:3px solid ' + acol + ';cursor:pointer">';
+        var rowId = 'vg-op-row-' + (op.id || idx);
+        var bodyId = rowId + '-body';
+        h += '<div class="vg-op-row' + activeClass + '" id="' + rowId + '" data-op-id="' + (op.id || '') + '" data-par="' + asset + '" data-strike="' + strike + '" data-cotacao="' + cot + '" data-tipo="' + tipo + '" style="border-left:3px solid ' + acol + ';cursor:pointer">';
         h += '<span style="font-family:var(--syne,Syne),sans-serif;font-size:.8rem;font-weight:700;min-width:30px;color:'+bcol+'">'+asset+'</span>';
         h += '<span class="vg-badge" style="background:rgba(59,130,246,.1);color:#3b82f6;border:1px solid rgba(59,130,246,.26)">'+tipo+'</span>';
         h += corrBadge;
@@ -272,31 +273,25 @@
         if (isEx) h += '<span class="vg-badge" style="background:rgba(249,115,22,.1);color:#f97316;border:1px solid rgba(249,115,22,.26)">Poss. Exercício</span>';
         h += '<div style="flex:1"></div>';
         h += '<span style="font-size:.68rem;color:' + C_MUTED + ';margin-right:2px">Prêmio Recebido:</span><span style="font-family:monospace;font-size:.78rem;font-weight:700;color:#22c55e">+' + fmt(premio) + '</span>';
+        h += '<span class="vg-op-detail-btn" data-op-id="' + (op.id || '') + '" title="Ver detalhes da operação" style="margin-left:8px"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>';
         h += '<span class="vg-refresh-cot-btn" data-par="' + asset + '" title="Atualizar cotação"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg></span>';
         h += '<span class="vg-chart-btn" data-par="' + asset + '" data-strike="' + strike + '" data-cotacao="' + cot + '" data-tipo="' + tipo + '" title="Gráfico TradingView"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>';
+        h += '<span class="vg-op-toggle-ico" style="margin-left:8px;color:var(--tx2)">&#9654;</span>';
+        h += '</div>';
+        h += '<div class="vg-op-row-body hide" id="' + bodyId + '" style="display:none;padding:10px 0 10px 34px;border-top:1px solid var(--bdr2);margin-top:4px;background:rgba(0,0,0,.03);border-radius:0 0 8px 8px">';
+        h += '  <div class="vg-op-thermometer-wrap">';
+        h += '    <div class="vg-op-thermo-left">';
+        h += '      <svg class="vg-op-thermo-svg" viewBox="0 0 400 200" width="100%" height="200"></svg>';
+        h += '    </div>';
+        h += '    <div class="vg-op-thermo-right">';
+        h += '      <div class="tradingview-widget-container" style="height:200px;width:100%">';
+        h += '        <div class="vg-op-mini-chart-container"></div>';
+        h += '      </div>';
+        h += '    </div>';
+        h += '    <div class="vg-op-thermo-diff-row"></div>';
+        h += '  </div>';
         h += '</div>';
       });
-    }
-    /* Termômetro Duplo — somente quando há operações abertas */
-    if (abertas.length > 0) {
-      h += '<div class="vg-thermometer-wrap" id="vgThermometerWrap">';
-      h += '<div class="vg-thermo-accordion">';
-      h += '<button class="vg-thermo-acc-btn" id="vgThermoAccBtn" type="button" aria-expanded="true">';
-      h += '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
-      h += ' Strike vs Cotação</button>';
-      h += '<div class="vg-thermo-acc-body" id="vgThermoAccBody">';
-      h += '<div class="vg-thermo-layout">';
-      h += '<div class="vg-thermo-left">';
-      h += '<svg id="vgThermometerSvg" class="vg-thermo-svg" viewBox="0 0 400 250" width="100%" height="250"></svg>';
-      h += '</div>';
-      h += '<div class="vg-thermo-right">';
-      h += '<div class="tradingview-widget-container" style="height:250px;width:100%">';
-      h += '<div id="vgMiniChartContainer"></div>';
-      h += '</div>';
-      h += '</div>';
-      h += '</div>';
-      h += '<div class="vg-thermo-diff-row" id="vgThermoDiff"></div>';
-      h += '</div></div></div>';
     }
     h += '</div>';
     h += '</div>'; /* end top grid */
@@ -373,21 +368,88 @@
                   var total = btcVal + ethVal;
                   return total > 0 ? 'Total: US$ ' + total.toFixed(2) : '';
                 }
-              }
+}
             }
-          },
-          scales: (function() {
-            var isLight = document.body.getAttribute('data-bs-theme') === 'light';
-            var tc  = isLight ? '#6c757d' : '#3a4f6a';
-            var gc  = isLight ? 'rgba(0,0,0,.06)' : 'rgba(255,255,255,.04)';
-            return {
-              x:  { grid: { display: false }, ticks: { color: tc, font: { size: 10 } }, stacked: true },
-              y:  { grid: { color: gc }, ticks: { color: tc, font: { size: 10 }, callback: function(v) { return '$' + v.toFixed(0); } }, stacked: true },
-              y2: { position: 'right', grid: { display: false }, ticks: { color: '#f59e0b', font: { size: 10 }, callback: function(v) { return '$' + v.toFixed(0); } } }
-            };
-          }())
+          }
         }
-      });
+      }
+    );
+}
+  }
+
+  /* ─ Mini TradingView Chart per accordion ─ */
+  var _vgOpMiniCharts = {}; // chartId -> widget
+
+  function buildOpMiniChart(chartContainer, ticker, strike, currentPrice, operationType) {
+    if (!chartContainer) return;
+    var chartId = 'vg-op-mini-chart-' + Math.random().toString(36).substr(2, 9);
+    chartContainer.innerHTML = '<div id="' + chartId + '" style="width:100%;height:100%"></div>';
+
+    function createWidget() {
+      try {
+        var isDarkMode = document.body.dataset.bsTheme === 'dark';
+        var widgetOptions = {
+          symbol: ticker,
+          interval: '60',
+          container_id: chartId,
+          locale: 'pt_BR',
+          theme: isDarkMode ? 'dark' : 'light',
+          style: '1',
+          toolbar_bg: isDarkMode ? '#131722' : '#f1f3f6',
+          enable_publishing: false,
+          allow_symbol_change: false,
+          hide_side_toolbar: true,
+          hide_top_toolbar: true,
+          hide_legend: true,
+          save_image: false,
+          fullscreen: false,
+          autosize: true,
+          studies: [],
+          overrides: {
+            'mainSeriesProperties.showPriceLine': true,
+            'mainSeriesProperties.candleStyle.upColor': '#26a69a',
+            'mainSeriesProperties.candleStyle.downColor': '#ef5350',
+            'mainSeriesProperties.candleStyle.borderUpColor': '#26a69a',
+            'mainSeriesProperties.candleStyle.borderDownColor': '#ef5350',
+            'mainSeriesProperties.candleStyle.wickUpColor': '#26a69a',
+            'mainSeriesProperties.candleStyle.wickDownColor': '#ef5350'
+          }
+        };
+        var widget = new TradingView.widget(widgetOptions);
+        _vgOpMiniCharts[chartId] = widget;
+        setTimeout(function() {
+          var el = document.getElementById(chartId);
+          if (el) {
+            el.style.backgroundColor = '#111827';
+            var iframe = el.querySelector('iframe');
+            if (iframe) {
+              iframe.style.backgroundColor = '#111827';
+              iframe.style.borderRadius = '8px';
+            }
+          }
+        }, 800);
+      } catch (error) {
+        console.error('[VG Op MiniChart] Erro ao criar widget:', error);
+      }
+    }
+
+    if (!globalThis.TradingView) {
+      var existingScript = document.querySelector('script[src="https://s3.tradingview.com/tv.js"]');
+      if (existingScript && !existingScript.dataset.vgOpBound) {
+        existingScript.dataset.vgOpBound = 'true';
+        existingScript.addEventListener('load', function() {
+          createWidget();
+        });
+      } else if (!existingScript) {
+        var script = document.createElement('script');
+        script.src = 'https://s3.tradingview.com/tv.js';
+        script.async = true;
+        script.onload = createWidget;
+        script.onerror = function() { console.error('[VG Op MiniChart] Falha ao carregar script TradingView'); };
+        document.head.appendChild(script);
+}
+    } else {
+      createWidget();
     }
   }
 
@@ -414,6 +476,16 @@
       '.vg-thermo-layout{display:flex;align-items:center;gap:12px;width:100%}',
       '.vg-thermo-left{flex:1 1 0;min-width:0}',
       '.vg-thermo-right{flex:1 1 0;min-width:0}',
+      '.vg-op-thermometer-wrap{display:flex;flex-wrap:wrap;align-items:flex-start;gap:12px;width:100%}',
+      '.vg-op-thermo-left{flex:1 1 0;min-width:0}',
+      '.vg-op-thermo-right{flex:1 1 0;min-width:0}',
+      '.vg-op-thermo-diff-row{flex-basis:100%;margin-top:8px;display:flex;gap:8px;justify-content:space-between}',
+      '.vg-op-thermo-diff-row .vg-td-badge{flex:1 1 0;display:flex;align-items:center;justify-content:center;gap:6px;padding:6px 10px;border-radius:6px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);font-size:.7rem;font-weight:600;color:#8aa4c0;text-align:center;min-width:0}',
+      '.vg-op-thermo-diff-row .vg-td-badge .vg-td-val{font-family:monospace;font-weight:700;font-size:.78rem}',
+      '[data-bs-theme="light"] .vg-op-thermo-diff-row .vg-td-badge{background:rgba(0,0,0,.03);border-color:rgba(0,0,0,.08);color:#6c757d}',
+      '.vg-op-thermo-svg{display:block}',
+      '.vg-op-mini-chart-container{width:100%;height:200px}',
+      '.tradingview-widget-container{height:200px;width:100%}',
       /* LIGHT THEME */
       '[data-bs-theme="light"] .vg-card{background:var(--bs-body-bg,#fff);border-color:rgba(0,0,0,.10)}',
       '[data-bs-theme="light"] .vg-card-title{color:#6c757d}',
@@ -552,6 +624,137 @@
     }
   }
 
+  /* ─ Thermometer per operation accordion ─ */
+  function buildOpThermometer(s, q, tipo, pm, par, bodyEl) {
+    var svg = bodyEl ? bodyEl.querySelector('.vg-op-thermo-svg') : null;
+    var diffEl = bodyEl ? bodyEl.querySelector('.vg-op-thermo-diff-row') : null;
+    var chartContainer = bodyEl ? bodyEl.querySelector('.vg-op-mini-chart-container') : null;
+    if (!svg) return;
+
+    if (!s || !q) {
+      svg.innerHTML = '';
+      if (diffEl) diffEl.innerHTML = '';
+      if (chartContainer) chartContainer.innerHTML = '';
+      return;
+    }
+
+    // Range dinâmico
+    var spread = Math.abs(q - s);
+    var margin = Math.max(spread * 1.5, Math.max(s, q) * 0.08);
+    var MIN = Math.max(0, Math.min(s, q) - margin);
+    var MAX = Math.max(s, q) + margin;
+
+    var clamp = function(v) { return Math.max(0, Math.min(1, (v - MIN) / (MAX - MIN))); };
+    var totalH = 160, barW = 56, y0 = 20;
+    var sx = 140, qx = 250;
+
+    var sh = clamp(s) * totalH;
+    var qh = clamp(q) * totalH;
+    var sy0 = y0 + totalH - sh;
+    var qy0 = y0 + totalH - qh;
+
+    // Status
+    var st = thermoStatus(s, q, tipo);
+    var statusColor = st.cls === 'itm' ? '#22c55e' : '#ef4444';
+    var cotBarColor = statusColor;
+
+    var zoneH = totalH / 3;
+    var zoneColors = ['#991b1b', '#a16207', '#166534'];
+
+    var h = '';
+
+    // Grade horizontal
+    for (var i = 0; i <= 8; i++) {
+      var gy = y0 + totalH - (i / 8) * totalH;
+      var val = MIN + (MAX - MIN) / 8 * i;
+      var label = val >= 1000 ? (val/1000).toFixed(1) + 'k' : val.toFixed(0);
+      h += '<line x1="56" y1="' + gy + '" x2="344" y2="' + gy + '" stroke="#334d6e" stroke-width="1"/>';
+      h += '<text x="48" y="' + (gy + 4) + '" fill="#8aa4c0" font-size="9" text-anchor="end">' + label + '</text>';
+      h += '<text x="352" y="' + (gy + 4) + '" fill="#8aa4c0" font-size="9">' + label + '</text>';
+    }
+
+    // Função tubo
+    function tube(cx) {
+      var t = '';
+      for (var z = 0; z < 3; z++) {
+        var zy = y0 + totalH - (z + 1) * zoneH;
+        t += '<rect x="' + (cx - barW/2) + '" y="' + zy + '" width="' + barW + '" height="' + zoneH + '" fill="' + zoneColors[z] + '" opacity=".6" rx="2"/>';
+      }
+      t += '<rect x="' + (cx - barW/2) + '" y="' + y0 + '" width="' + barW + '" height="' + totalH + '" fill="none" stroke="#334155" stroke-width="1.5" rx="8"/>';
+      return t;
+    }
+
+    h += tube(sx);
+    h += tube(qx);
+
+    // Fill strike
+    h += '<rect x="' + (sx - barW/2 + 3) + '" y="' + sy0 + '" width="' + (barW - 6) + '" height="' + sh + '" fill="#60a5fa" rx="5"/>';
+    h += '<circle cx="' + sx + '" cy="' + sy0 + '" r="6" fill="#93c5fd"/>';
+
+    // Fill cotação
+    h += '<rect x="' + (qx - barW/2 + 3) + '" y="' + qy0 + '" width="' + (barW - 6) + '" height="' + qh + '" fill="' + cotBarColor + '" rx="5"/>';
+    h += '<circle cx="' + qx + '" cy="' + qy0 + '" r="6" fill="' + cotBarColor + '"/>';
+
+    // Linha tracejada
+    h += '<line x1="' + sx + '" y1="' + sy0 + '" x2="' + qx + '" y2="' + qy0 + '" stroke="' + statusColor + '" stroke-width="2" stroke-dasharray="5,4" opacity=".8"/>';
+
+    // Seta de diferença
+    var midX = (sx + qx) / 2;
+    var arrowY = Math.min(sy0, qy0) - 18;
+    var diff = q - s;
+    var sign = diff > 0 ? '\u25B2' : diff < 0 ? '\u25BC' : '=';
+    var diffCol = statusColor;
+    h += '<text x="' + midX + '" y="' + arrowY + '" fill="' + diffCol + '" font-size="16" text-anchor="middle">' + sign + '</text>';
+    h += '<text x="' + midX + '" y="' + (arrowY + 15) + '" fill="' + diffCol + '" font-size="11" text-anchor="middle" font-weight="700">' + (diff > 0 ? '+' : '') + fmtShort(diff) + '</text>';
+
+    // Labels topo
+    h += '<text x="' + sx + '" y="' + (y0 - 6) + '" fill="#60a5fa" font-size="11" text-anchor="middle" font-weight="700">Strike</text>';
+    h += '<text x="' + qx + '" y="' + (y0 - 6) + '" fill="' + cotBarColor + '" font-size="11" text-anchor="middle" font-weight="700">Cotação</text>';
+
+    // Valores abaixo
+    var sLabel = fmtK(s);
+    var qLabel = fmtK(q);
+    h += '<text x="' + sx + '" y="' + (y0 + totalH + 20) + '" fill="#60a5fa" font-size="11" text-anchor="middle" font-weight="700">' + sLabel + '</text>';
+    h += '<text x="' + qx + '" y="' + (y0 + totalH + 20) + '" fill="' + cotBarColor + '" font-size="11" text-anchor="middle" font-weight="700">' + qLabel + '</text>';
+
+    svg.innerHTML = h;
+
+    // Diff row + PoP + PM
+    if (diffEl) {
+      var diffVal = (q - s);
+      var diffSign2 = diffVal > 0 ? '+' : '';
+      var distPct = s > 0 ? Math.abs(diffVal) / s * 100 : 0;
+      var isCall = (tipo || '').toUpperCase() === 'CALL';
+      var isITM = isCall ? (diffVal > 0) : (diffVal < 0);
+      var popEst = isITM ? Math.max(5, 50 - distPct * 4) : Math.min(95, 50 + distPct * 4);
+      var popColor = popEst >= 50 ? '#22c55e' : '#ef4444';
+
+      var pmHtml = '';
+      if (pm && pm > 0) {
+        var pmFmt = 'US$ ' + pm.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+        if (window.CryptoUtils && window.CryptoUtils.renderPmLink) {
+          pmHtml = '<div class="vg-td-badge"><span>PM:</span> ' + window.CryptoUtils.renderPmLink(par || 'BTC', pm) + '</div>';
+        } else {
+          pmHtml = '<div class="vg-td-badge"><span>PM:</span> <span class="vg-td-val" style="color:#f2a900">' + pmFmt + '</span></div>';
+        }
+      }
+
+      diffEl.innerHTML = '<div class="vg-td-badge"><span>Diferença:</span> <span class="vg-td-val" style="color:' + diffCol + '">' + diffSign2 + fmtShort(diffVal) + '</span></div>' +
+                           '<div class="vg-td-badge"><span>PoP:</span> <span class="vg-td-val" style="color:' + popColor + '">' + popEst.toFixed(0) + '%</span></div>' +
+                           pmHtml;
+
+      if (window.CryptoUtils && window.CryptoUtils.bindPmTooltips) {
+        window.CryptoUtils.bindPmTooltips();
+      }
+    }
+
+    // Mini TradingView chart per accordion
+    if (chartContainer) {
+      var ticker = par + 'USDT';
+      buildOpMiniChart(chartContainer, ticker, s, q, tipo);
+    }
+  }
+
   /* ─ Mini TradingView Chart (no selo — selo agora está no header do card) ─ */
   var _currentSealPar = null;
   var _currentSealStrike = null;
@@ -656,21 +859,7 @@
   }
 
   /* ─ Mini TradingView Chart ─ */
-  var _miniTvWidget = null;
-  var _miniTvCurrentTicker = null;
-  var _miniTvPendingTimeout = null;
-  var _miniTvRealtimeTimer = null;
-  var _miniTvLastPublished = 0;
   var _vgLiveTimer = null;
-
-  function resolveMiniTickerSymbol(ticker) {
-    var base = String(ticker || '').trim().toUpperCase().replace('/USDT', '').replace('USDT', '').replace('/', '');
-    var cryptoSet = ['BTC', 'ETH', 'BNB', 'SOL', 'XRP', 'ADA', 'DOGE'];
-    if (cryptoSet.indexOf(base) !== -1) {
-      return 'BINANCE:' + base + 'USDT';
-    }
-    return 'BINANCE:' + base + 'USDT';
-  }
 
   /* ─ Overlay do Strike no mini gráfico (igual à modal) ─ */
   function formatStrikeLabel(value) {
@@ -696,171 +885,12 @@
     if (old) old.remove();
   }
 
-  function loadMiniTradingViewChart(ticker) {
-    var container = document.getElementById('vgMiniChartContainer');
-    if (!container) {
-      console.warn('[VG MiniChart] Container vgMiniChartContainer não encontrado');
-      return;
-    }
-
-    // Cancel any pending schedule from a previous render call
-    if (_miniTvPendingTimeout) { clearTimeout(_miniTvPendingTimeout); _miniTvPendingTimeout = null; }
-
-    // Don't reload if same ticker and widget exists
-    if (_miniTvCurrentTicker === ticker && _miniTvWidget) return;
-    _miniTvCurrentTicker = ticker;
-
-    // Clear container completely
-    container.innerHTML = '';
-
-    // Remove old widget if exists
-    if (_miniTvWidget) {
-      try {
-        if (typeof _miniTvWidget.remove === 'function') {
-          _miniTvWidget.remove();
-        }
-      } catch (e) {
-        console.warn('[VG MiniChart] Erro ao remover widget antigo:', e);
-      }
-      _miniTvWidget = null;
-    }
-
-    var symbol = resolveMiniTickerSymbol(ticker);
-    var isDarkMode = document.body.dataset.bsTheme === 'dark';
-    var theme = isDarkMode ? 'dark' : 'light';
-
-    function createWidget() {
-      try {
-        if (!globalThis.TradingView) {
-          console.warn('[VG MiniChart] TradingView não disponível');
-          return;
-        }
-        _miniTvWidget = new (globalThis.TradingView).widget({
-          width: '100%',
-          height: 250,
-          symbol: symbol,
-          interval: 'D',
-          timezone: 'America/Sao_Paulo',
-          theme: theme,
-          style: '1',
-          locale: 'pt_BR',
-          toolbar_bg: theme === 'dark' ? '#111827' : '#f1f3f6',
-          enable_publishing: false,
-          allow_symbol_change: false,
-          hide_side_toolbar: true,
-          hide_top_toolbar: true,
-          hide_legend: true,
-          save_image: false,
-          container_id: 'vgMiniChartContainer',
-          studies_overrides: {},
-          overrides: {
-            'mainSeriesProperties.candleStyle.upColor': '#26a69a',
-            'mainSeriesProperties.candleStyle.downColor': '#ef5350',
-            'mainSeriesProperties.candleStyle.borderUpColor': '#26a69a',
-            'mainSeriesProperties.candleStyle.borderDownColor': '#ef5350',
-            'mainSeriesProperties.candleStyle.wickUpColor': '#26a69a',
-            'mainSeriesProperties.candleStyle.wickDownColor': '#ef5350'
-          }
-        });
-        console.log('[VG MiniChart] Widget criado para:', symbol);
-        // Tenta usar onChartReady do embed para iniciar o leitor de preço em tempo real.
-        // Se o embed não chamar onChartReady (comportamento observado), o setTimeout
-        // abaixo garante que o reader inicie mesmo assim.
-        var _readerStarted = false;
-        function _tryStartReader() {
-          if (_readerStarted) return;
-          _readerStarted = true;
-          if (!_miniTvRealtimeTimer && _miniTvCurrentTicker) startMiniTvRealtimeReader();
-        }
-        if (typeof _miniTvWidget.onChartReady === 'function') {
-          try {
-            _miniTvWidget.onChartReady(function() { _tryStartReader(); });
-          } catch (e) {}
-        }
-        // Fallback: se onChartReady não disparou em 6s, inicia o reader mesmo assim
-        setTimeout(function() { _tryStartReader(); }, 6000);
-        // Override iframe background after load to match thermo area
-        setTimeout(function() {
-          var el = document.getElementById('vgMiniChartContainer');
-          if (!el) return;
-          el.style.backgroundColor = '#111827';
-          var iframe = el.querySelector('iframe');
-          if (iframe) {
-            iframe.style.backgroundColor = '#111827';
-            iframe.style.borderRadius = '8px';
-          }
-        }, 600);
-      } catch (error) {
-        console.error('[VG MiniChart] Erro ao criar widget:', error);
-      }
-    }
-
-    // Wait for DOM and TradingView script
-    _miniTvPendingTimeout = setTimeout(function() {
-      _miniTvPendingTimeout = null;
-      if (!globalThis.TradingView) {
-        var existingScript = document.querySelector('script[src="https://s3.tradingview.com/tv.js"]');
-        if (existingScript && !existingScript.dataset.vgBound) {
-          existingScript.dataset.vgBound = 'true';
-          existingScript.addEventListener('load', function() {
-            if (_miniTvWidget) return;
-            createWidget();
-          });
-          existingScript.addEventListener('error', function() {
-            console.error('[VG MiniChart] Falha ao carregar script TradingView');
-          });
-        } else if (!existingScript) {
-          var script = document.createElement('script');
-          script.src = 'https://s3.tradingview.com/tv.js';
-          script.async = true;
-          script.onload = function() { createWidget(); };
-          script.onerror = function() {
-            console.error('[VG MiniChart] Falha ao carregar script TradingView');
-          };
-          document.head.appendChild(script);
-        }
-        return;
-      }
-      createWidget();
-    }, 150);
-  }
-
-  // Lê o preço em tempo real do widget TradingView e alimenta o termômetro.
-  function startMiniTvRealtimeReader() {
-    if (_miniTvRealtimeTimer) return;
-    _miniTvRealtimeTimer = setInterval(function() {
-      try {
-        if (!_miniTvWidget || !_miniTvCurrentTicker) return;
-        if (typeof _miniTvWidget.chart !== 'function') return;
-        var chart = _miniTvWidget.chart();
-        if (!chart || typeof chart.getSeriesData !== 'function') return;
-        var step = function(data) {
-          var keys = data ? Object.keys(data) : [];
-          if (!keys.length) return;
-          var v = parseFloat(data[keys[keys.length - 1]]);
-          if (isFinite(v) && v > 0 && window.CryptoLive) {
-            window.CryptoLive.publishFromExternal && window.CryptoLive.publishFromExternal(_miniTvCurrentTicker, v);
-          }
-        };
-var data = chart.getSeriesData();
-        if (data && typeof data.then === 'function') { data.then(step).catch(function() {}); }
-        else step(data);
-      } catch (e) {}
-    }, 3000);
+  function loadMiniTradingViewChart() {
+    // Container antigo (vgMiniChartContainer) removido — gráficos agora são por accordion
   }
 
   function reloadMiniChart() {
-    if (_miniTvPendingTimeout) { clearTimeout(_miniTvPendingTimeout); _miniTvPendingTimeout = null; }
-    if (_miniTvRealtimeTimer) { clearInterval(_miniTvRealtimeTimer); _miniTvRealtimeTimer = null; }
-    _miniTvCurrentTicker = null;
-    if (_miniTvWidget) {
-      try { _miniTvWidget.remove(); } catch (e) {}
-      _miniTvWidget = null;
-    }
-    if (_currentSealPar) {
-      loadMiniTradingViewChart(_currentSealPar);
-      renderMiniStrikeOverlay(_currentSealStrike, _currentSealCot, _currentSealTipo);
-    }
+    // Função antiga removida — gráficos agora são gerenciados por accordion
   }
 
   function thermoStatus(s, q, tipo) {
@@ -916,22 +946,50 @@ var data = chart.getSeriesData();
       return;
     }
     injectVGStyles();
-    // Reset mini chart state before rebuilding DOM (widget iframe is destroyed with innerHTML)
-    if (_miniTvPendingTimeout) { clearTimeout(_miniTvPendingTimeout); _miniTvPendingTimeout = null; }
-    if (_miniTvRealtimeTimer) { clearInterval(_miniTvRealtimeTimer); _miniTvRealtimeTimer = null; }
     if (_vgLiveTimer) { clearInterval(_vgLiveTimer); _vgLiveTimer = null; _vgLiveTickerSealPar = null; _vgLiveFetching = false; }
-    _miniTvWidget = null;
-    _miniTvCurrentTicker = null;
     disconnectBinanceWs();
     container.innerHTML = renderVG(ops);
-    /* Listeners: clique na linha de posição aberta → atualiza termômetro */
+    /* Listeners: clique na linha de posição aberta → toggle accordion */
     container.querySelectorAll('.vg-op-row[data-op-id]').forEach(function(el) {
       el.addEventListener('click', function(e) {
         // Se clicou em botão de ação, não faz nada (cada botão tem seu próprio handler)
-        if (e.target.closest('.vg-refresh-cot-btn') || e.target.closest('.vg-chart-btn')) return;
-        var opId = el.getAttribute('data-op-id');
-        if (opId && window.ModalAnaliseCrypto && typeof window.ModalAnaliseCrypto.open === 'function') {
-          window.ModalAnaliseCrypto.open(opId);
+        var target = e.target;
+        var isActionBtn = target.closest('.vg-op-detail-btn') || target.closest('.vg-refresh-cot-btn') || target.closest('.vg-chart-btn');
+        if (isActionBtn) return;
+        var rowId = el.id;
+        var bodyId = rowId + '-body';
+        var body = document.getElementById(bodyId);
+        if (!body) return;
+        var isOpen = !body.classList.contains('hide');
+        // Accordion exclusivo: fechar todos os outros antes de abrir
+        container.querySelectorAll('.vg-op-row-body').forEach(function(b) {
+          if (b.id !== bodyId) {
+            b.classList.add('hide');
+            b.style.display = 'none';
+            var otherIco = b.previousElementSibling;
+            if (otherIco) {
+              var icoEl = otherIco.querySelector('.vg-op-toggle-ico');
+              if (icoEl) icoEl.textContent = '\u25B6';
+            }
+          }
+        });
+        body.classList.toggle('hide');
+        body.style.display = isOpen ? 'none' : 'block';
+        var ico = el.querySelector('.vg-op-toggle-ico');
+        if (ico) ico.textContent = isOpen ? '\u25B6' : '\u25BC';
+        // Atualiza termômetro da operação selecionada
+        var strike  = parseFloat(el.getAttribute('data-strike') || 0);
+        var cotacao = parseFloat(el.getAttribute('data-cotacao') || 0);
+        var tipo    = el.getAttribute('data-tipo') || 'PUT';
+        var clickPar = el.getAttribute('data-par') || 'BTC';
+        container.querySelectorAll('.vg-op-row').forEach(function(r) { r.classList.remove('vg-op-active'); });
+        el.classList.add('vg-op-active');
+        var pmVal = computePM(ops, clickPar);
+        buildSeal(strike, cotacao, tipo, pmVal, clickPar);
+        if (!isOpen) {
+          setTimeout(function() {
+            buildOpThermometer(strike, cotacao, tipo, pmVal, clickPar, body);
+          }, 10);
         }
       });
 
@@ -987,6 +1045,16 @@ var data = chart.getSeriesData();
         }
       });
     }
+    /* Listeners: botão detalhes da operação */
+    container.querySelectorAll('.vg-op-detail-btn[data-op-id]').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var opId = btn.getAttribute('data-op-id');
+        if (opId && window.ModalDetalheCrypto && typeof window.ModalDetalheCrypto.show === 'function') {
+          window.ModalDetalheCrypto.show(opId);
+        }
+      });
+    });
     /* Listeners: refresh cotação */
     container.querySelectorAll('.vg-refresh-cot-btn[data-par]').forEach(function(btn) {
       btn.addEventListener('click', function(e) {
@@ -1037,6 +1105,27 @@ var data = chart.getSeriesData();
         var pmInit = computePM(ops, initPar);
         buildThermometer(parseFloat(seedOp.strike || 0), parseFloat(seedOp.cotacao_atual || 0), (seedOp.tipo || 'PUT'), pmInit, initPar);
         buildSeal(parseFloat(seedOp.strike || 0), parseFloat(seedOp.cotacao_atual || 0), (seedOp.tipo || 'PUT'), pmInit, initPar);
+      }
+      /* Abre o primeiro accordion por padrão */
+      var firstRow = container.querySelector('.vg-op-row[data-op-id]');
+      if (firstRow) {
+        var firstBodyId = firstRow.id + '-body';
+        var firstBody = document.getElementById(firstBodyId);
+        if (firstBody) {
+          firstBody.classList.remove('hide');
+          firstBody.style.display = 'block';
+          var firstIco = firstRow.querySelector('.vg-op-toggle-ico');
+          if (firstIco) firstIco.textContent = '\u25BC';
+          firstRow.classList.add('vg-op-active');
+          var firstStrike  = parseFloat(firstRow.getAttribute('data-strike') || 0);
+          var firstCotacao = parseFloat(firstRow.getAttribute('data-cotacao') || 0);
+          var firstTipo    = firstRow.getAttribute('data-tipo') || 'PUT';
+          var firstPar     = firstRow.getAttribute('data-par') || 'BTC';
+          var firstPmVal   = computePM(ops, firstPar);
+          setTimeout(function() {
+            buildOpThermometer(firstStrike, firstCotacao, firstTipo, firstPmVal, firstPar, firstBody);
+          }, 10);
+        }
       }
     }, 50);
   }

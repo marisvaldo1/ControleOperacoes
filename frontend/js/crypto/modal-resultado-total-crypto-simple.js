@@ -100,17 +100,23 @@
 
   /* ─ Op Row ─ */
   function opRow(op) {
-    var asset  = (op.ativo || '?').toUpperCase();
-    var tipo   = (op.tipo  || 'CALL').toUpperCase();
-    var strike = parseFloat(op.strike || 0);
-    var status = (op.status || '').toUpperCase();
-    var isEx   = isActuallyExercised(op);
-    var premio = parseFloat(op.premio_us || 0);
-    var resul  = parseFloat(op.resultado  || 0);
+    var asset   = (op.ativo   || '?').toUpperCase();
+    var tipo    = (op.tipo    || 'CALL').toUpperCase();
+    var strike  = parseFloat(op.strike   || 0);
+    var cotacao = parseFloat(op.cotacao_atual || 0);
+    var status  = (op.status  || '').toUpperCase();
+    var isEx    = isActuallyExercised(op);
+    var premio  = parseFloat(op.premio_us  || 0);
+    var resul   = parseFloat(op.resultado  || 0);
+    var abertura= parseFloat(op.abertura   || op.strike || 0);
 
     var stk = strike > 0
       ? 'US$ ' + strike.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})
       : '—';
+    var cot = cotacao > 0
+      ? 'US$ ' + cotacao.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})
+      : '—';
+    var hasP = premio > 0;
 
     var corrRaw   = (op.corretora || 'BINANCE').toUpperCase();
     var corrBadge = corrRaw === 'BINANCE'
@@ -125,18 +131,38 @@
     var stTxt = status === 'FECHADA' ? 'Fechada' : status === 'ABERTA' ? 'Aberta' : 'Exercida';
     if (isEx) { stCls = 'st-ex'; stTxt = 'Exercida'; }
 
-    var hasP = premio > 0;
+    var dist = strike > 0 && cotacao > 0
+      ? ((tipo === 'PUT' ? (cotacao - strike) / strike : (strike - cotacao) / strike) * 100).toFixed(2) + '%'
+      : '—';
+    var distColor = strike > 0 && cotacao > 0
+      ? (tipo === 'PUT' ? (cotacao >= strike ? 'var(--grn)' : 'var(--red)') : (cotacao <= strike ? 'var(--grn)' : 'var(--red)'))
+      : 'var(--tx2)';
 
-    var h = '<div class="op-row' + (isEx ? ' ex' : '') + '">';
-    h += '<span class="or-a ' + acCls(asset) + '">' + asset + '</span>';
+    var rowId = 'op-row-' + (op.id || Math.random().toString(36).substr(2, 9));
+    var bodyId = rowId + '-body';
+
+    var h = '<div class="op-row' + (isEx ? ' ex' : '') + '" id="' + rowId + '">';
+    h += '  <div class="op-row-head" data-op-body="' + bodyId + '" style="cursor:pointer">';
+    h += '    <span class="or-a ' + acCls(asset) + '">' + asset + '</span>';
     h += corrBadge;
-    h += '<span class="or-t ' + tipo.toLowerCase() + '">' + tipo + '</span>';
+    h += '    <span class="or-t ' + tipo.toLowerCase() + '">' + tipo + '</span>';
     if (isEx) h += '<span class="or-t exbdg">exercida</span>';
-    h += '<span class="or-str">' + tipo + ' Strike ' + stk + '</span>';
+    h += '    <span class="or-str">' + tipo + ' Strike ' + stk + '</span>';
     h += exStatusBadge;
-    h += '<span class="or-st ' + stCls + '">' + stTxt + '</span>';
-    h += '<span class="or-val" style="color:' + (hasP ? 'var(--grn)' : 'var(--tx2)') + '">' + (hasP ? '+' + fmt(premio) : '—') + '</span>';
-    h += '<span class="or-pct">' + (resul ? resul.toFixed(3) + '%' : '') + '</span>';
+    h += '    <span class="or-st ' + stCls + '">' + stTxt + '</span>';
+    h += '    <span class="or-val" style="color:' + (hasP ? 'var(--grn)' : 'var(--tx2)') + '">' + (hasP ? '+' + fmt(premio) : '—') + '</span>';
+    h += '    <span class="or-pct">' + (resul ? resul.toFixed(3) + '%' : '') + '</span>';
+    h += '    <button class="op-detail-btn" data-op-id="' + (op.id || '') + '" title="Ver detalhes da operação"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>';
+    h += '    <span class="op-toggle-ico">&#9660;</span>';
+    h += '  </div>';
+    h += '  <div class="op-row-body hide" id="' + bodyId + '" style="display:none;padding:8px 0 0 28px;border-top:1px solid var(--bdr2);margin-top:4px">';
+    h += '    <div class="op-strike-cot" style="display:flex;gap:16px;font-size:.68rem;color:var(--tx2)">';
+    h += '      <div class="strike-info"><span style="color:var(--tx3)">Strike:</span> <span style="font-family:var(--mono);color:var(--pur)">' + stk + '</span></div>';
+    h += '      <div class="cot-info"><span style="color:var(--tx3)">Cotação:</span> <span style="font-family:var(--mono);color:var(--cya)">' + cot + '</span></div>';
+    h += '      <div class="dist-info"><span style="color:var(--tx3)">Distância:</span> <span style="font-family:var(--mono);color:' + distColor + '">' + dist + '</span></div>';
+    h += '      <div class="abertura-info"><span style="color:var(--tx3)">Abertura:</span> <span style="font-family:var(--mono);color:var(--org)">US$ ' + (abertura > 0 ? abertura.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '—') + '</span></div>';
+    h += '    </div>';
+    h += '  </div>';
     h += '</div>';
     return h;
   }
@@ -512,6 +538,42 @@
       h.removeEventListener('click', toggleCycle);
       h.addEventListener('click', toggleCycle);
     });
+    attachOpRowListeners();
+  }
+
+  function attachOpRowListeners() {
+    /* Toggle accordion on header click */
+    document.querySelectorAll('#modalResultadoTotalCrypto .op-row-head[data-op-body]').forEach(function (h) {
+      h.removeEventListener('click', toggleOpRow);
+      h.addEventListener('click', toggleOpRow);
+    });
+    /* Detail button click */
+    document.querySelectorAll('#modalResultadoTotalCrypto .op-detail-btn[data-op-id]').forEach(function (btn) {
+      btn.removeEventListener('click', openOpDetail);
+      btn.addEventListener('click', openOpDetail);
+    });
+  }
+
+  function toggleOpRow(e) {
+    /* Não faz nada se clicou no botão de detalhes */
+    if (e.target.closest('.op-detail-btn')) return;
+    var bodyId = this.getAttribute('data-op-body');
+    var body = document.getElementById(bodyId);
+    if (!body) return;
+    var isOpen = !body.classList.contains('hide');
+    this.classList.toggle('open');
+    body.classList.toggle('hide');
+    body.style.display = isOpen ? 'none' : 'block';
+    var ico = this.querySelector('.op-toggle-ico');
+    if (ico) ico.textContent = isOpen ? '▼' : '▶';
+  }
+
+  function openOpDetail(e) {
+    e.stopPropagation();
+    var opId = this.getAttribute('data-op-id');
+    if (opId && window.ModalDetalheCrypto && typeof window.ModalDetalheCrypto.show === 'function') {
+      window.ModalDetalheCrypto.show(opId);
+    }
   }
 
   function attachEventListeners() {
