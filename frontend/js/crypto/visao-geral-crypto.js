@@ -625,20 +625,18 @@
   }
 
   /* ─ Thermometer per operation accordion ─ */
-  function buildOpThermometer(s, q, tipo, pm, par, bodyEl) {
+  /* ─ Atualiza apenas o SVG e diff row do termômetro (sem recriar TradingView) ─ */
+  function updateOpThermometerSvg(s, q, tipo, pm, par, bodyEl) {
     var svg = bodyEl ? bodyEl.querySelector('.vg-op-thermo-svg') : null;
     var diffEl = bodyEl ? bodyEl.querySelector('.vg-op-thermo-diff-row') : null;
-    var chartContainer = bodyEl ? bodyEl.querySelector('.vg-op-mini-chart-container') : null;
     if (!svg) return;
 
     if (!s || !q) {
       svg.innerHTML = '';
       if (diffEl) diffEl.innerHTML = '';
-      if (chartContainer) chartContainer.innerHTML = '';
       return;
     }
 
-    // Range dinâmico
     var spread = Math.abs(q - s);
     var margin = Math.max(spread * 1.5, Math.max(s, q) * 0.08);
     var MIN = Math.max(0, Math.min(s, q) - margin);
@@ -653,7 +651,6 @@
     var sy0 = y0 + totalH - sh;
     var qy0 = y0 + totalH - qh;
 
-    // Status
     var st = thermoStatus(s, q, tipo);
     var statusColor = st.cls === 'itm' ? '#22c55e' : '#ef4444';
     var cotBarColor = statusColor;
@@ -663,7 +660,6 @@
 
     var h = '';
 
-    // Grade horizontal
     for (var i = 0; i <= 8; i++) {
       var gy = y0 + totalH - (i / 8) * totalH;
       var val = MIN + (MAX - MIN) / 8 * i;
@@ -673,7 +669,6 @@
       h += '<text x="352" y="' + (gy + 4) + '" fill="#8aa4c0" font-size="9">' + label + '</text>';
     }
 
-    // Função tubo
     function tube(cx) {
       var t = '';
       for (var z = 0; z < 3; z++) {
@@ -686,19 +681,12 @@
 
     h += tube(sx);
     h += tube(qx);
-
-    // Fill strike
     h += '<rect x="' + (sx - barW/2 + 3) + '" y="' + sy0 + '" width="' + (barW - 6) + '" height="' + sh + '" fill="#60a5fa" rx="5"/>';
     h += '<circle cx="' + sx + '" cy="' + sy0 + '" r="6" fill="#93c5fd"/>';
-
-    // Fill cotação
     h += '<rect x="' + (qx - barW/2 + 3) + '" y="' + qy0 + '" width="' + (barW - 6) + '" height="' + qh + '" fill="' + cotBarColor + '" rx="5"/>';
     h += '<circle cx="' + qx + '" cy="' + qy0 + '" r="6" fill="' + cotBarColor + '"/>';
-
-    // Linha tracejada
     h += '<line x1="' + sx + '" y1="' + sy0 + '" x2="' + qx + '" y2="' + qy0 + '" stroke="' + statusColor + '" stroke-width="2" stroke-dasharray="5,4" opacity=".8"/>';
 
-    // Seta de diferença
     var midX = (sx + qx) / 2;
     var arrowY = Math.min(sy0, qy0) - 18;
     var diff = q - s;
@@ -706,20 +694,13 @@
     var diffCol = statusColor;
     h += '<text x="' + midX + '" y="' + arrowY + '" fill="' + diffCol + '" font-size="16" text-anchor="middle">' + sign + '</text>';
     h += '<text x="' + midX + '" y="' + (arrowY + 15) + '" fill="' + diffCol + '" font-size="11" text-anchor="middle" font-weight="700">' + (diff > 0 ? '+' : '') + fmtShort(diff) + '</text>';
-
-    // Labels topo
     h += '<text x="' + sx + '" y="' + (y0 - 6) + '" fill="#60a5fa" font-size="11" text-anchor="middle" font-weight="700">Strike</text>';
     h += '<text x="' + qx + '" y="' + (y0 - 6) + '" fill="' + cotBarColor + '" font-size="11" text-anchor="middle" font-weight="700">Cotação</text>';
-
-    // Valores abaixo
-    var sLabel = fmtK(s);
-    var qLabel = fmtK(q);
-    h += '<text x="' + sx + '" y="' + (y0 + totalH + 20) + '" fill="#60a5fa" font-size="11" text-anchor="middle" font-weight="700">' + sLabel + '</text>';
-    h += '<text x="' + qx + '" y="' + (y0 + totalH + 20) + '" fill="' + cotBarColor + '" font-size="11" text-anchor="middle" font-weight="700">' + qLabel + '</text>';
+    h += '<text x="' + sx + '" y="' + (y0 + totalH + 20) + '" fill="#60a5fa" font-size="11" text-anchor="middle" font-weight="700">' + fmtK(s) + '</text>';
+    h += '<text x="' + qx + '" y="' + (y0 + totalH + 20) + '" fill="' + cotBarColor + '" font-size="11" text-anchor="middle" font-weight="700">' + fmtK(q) + '</text>';
 
     svg.innerHTML = h;
 
-    // Diff row + PoP + PM
     if (diffEl) {
       var diffVal = (q - s);
       var diffSign2 = diffVal > 0 ? '+' : '';
@@ -747,11 +728,14 @@
         window.CryptoUtils.bindPmTooltips();
       }
     }
+  }
 
-    // Mini TradingView chart per accordion
-    if (chartContainer) {
-      var ticker = par + 'USDT';
-      buildOpMiniChart(chartContainer, ticker, s, q, tipo);
+  function buildOpThermometer(s, q, tipo, pm, par, bodyEl) {
+    if (!bodyEl) return;
+    updateOpThermometerSvg(s, q, tipo, pm, par, bodyEl);
+    var chartContainer = bodyEl.querySelector('.vg-op-mini-chart-container');
+    if (chartContainer && s && q) {
+      buildOpMiniChart(chartContainer, par + 'USDT', s, q, tipo);
     }
   }
 
@@ -791,8 +775,14 @@
     if (!isFinite(newPrice) || newPrice <= 0 || !_currentSealPar) return;
     _currentSealCot = newPrice;
     var pmVal = computePM(window.cryptoOperacoes, _currentSealPar);
-    buildThermometer(_currentSealStrike, newPrice, _currentSealTipo, pmVal, _currentSealPar);
-    renderMiniStrikeOverlay(_currentSealStrike, newPrice, _currentSealTipo);
+    // Atualiza apenas o SVG e diff row do accordion ativo (sem recriar TradingView)
+    var activeRow = document.querySelector('.vg-op-row.vg-op-active');
+    if (activeRow) {
+      var activeBody = document.getElementById(activeRow.id + '-body');
+      if (activeBody) {
+        updateOpThermometerSvg(_currentSealStrike, newPrice, _currentSealTipo, pmVal, _currentSealPar, activeBody);
+      }
+    }
     // Atualiza badge do selo no header
     var badge = document.getElementById('vgSealBadge');
     if (badge) {
@@ -860,13 +850,6 @@
 
   /* ─ Mini TradingView Chart ─ */
   var _vgLiveTimer = null;
-
-  /* ─ Overlay do Strike no mini gráfico (igual à modal) ─ */
-  function formatStrikeLabel(value) {
-    var n = parseFloat(value);
-    if (!isFinite(n)) return '-';
-    return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  }
 
   // Strike NÃO é desenhado dentro do gráfico: a API do embed TradingView não é
   // acessível (onChartReady não dispara / chart() não expõe priceScale ou shapes),
