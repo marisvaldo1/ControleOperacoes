@@ -137,6 +137,28 @@
             return r > best ? r : best;
         }, 0);
 
+        // Pior trade
+        const worstResult = ops.reduce((worst, op) => {
+            const r = getNumber(op, resultField);
+            return r < worst ? r : worst;
+        }, 0);
+
+        // Total investido (soma dos tickets / valores das operações)
+        const totalInvested = ops.reduce((sum, op) => {
+            return sum + getNumber(op, 'ticket') + getNumber(op, 'valor') + getNumber(op, 'investimento');
+        }, 0);
+
+        // Tempo médio das operações
+        const durations = ops.map(op => {
+            const abertura = op.abertura || op.data_abertura || op.openTime;
+            const fechamento = op.fechamento || op.data_fechamento || op.closeTime;
+            if (!abertura || !fechamento) return 0;
+            const diff = (new Date(fechamento) - new Date(abertura)) / (1000 * 60 * 60);
+            return diff > 0 ? diff : 0;
+        }).filter(d => d > 0);
+        const avgDuration = durations.length > 0 ? (durations.reduce((a, b) => a + b, 0) / durations.length) : 0;
+        const avgDurationStr = avgDuration >= 24 ? (avgDuration / 24).toFixed(1) + 'd' : avgDuration.toFixed(1) + 'h';
+
         // Distribuição por tipo (CALL / PUT / outros)
         const tipoMap = {};
         ops.forEach(op => {
@@ -157,7 +179,7 @@
             .sort((a, b) => b[1] - a[1])
             .slice(0, 7);
 
-        return { totalResult, totalOps, wins, winRate, ticketMedio, roi, bestResult, tipoMap, ativos };
+        return { totalResult, totalOps, wins, winRate, ticketMedio, roi, bestResult, worstResult, totalInvested, avgDuration: avgDurationStr, tipoMap, ativos };
     }
 
     /* ------------------------------------------------------------------ */
@@ -478,10 +500,11 @@
         setEl('maRightResult', fmtCurrency(stats.totalResult));
         setEl('maRightSub', `Lucro Total | ${stats.totalOps} Operaç${stats.totalOps === 1 ? 'ão' : 'ões'} | ${stats.winRate.toFixed(0)}% Win Rate`);
 
-        /* Footer summary */
-        setEl('maMelhorTrade', stats.bestResult > 0 ? '+' + fmtCurrencyShort(stats.bestResult) : fmtCurrencyShort(stats.bestResult));
-        setEl('maTicketMedioFooter', fmtCurrencyShort(stats.ticketMedio));
-        setEl('maRoiFooter', roiStr);
+        /* Stats bar abaixo da lista */
+        setEl('maStatMelhor', fmtCurrencyShort(stats.bestResult));
+        setEl('maStatPior', fmtCurrencyShort(stats.worstResult));
+        setEl('maStatTicket', fmtCurrencyShort(stats.ticketMedio));
+        setEl('maStatRoi', roiStr);
     }
 
     function setEl(id, val) {

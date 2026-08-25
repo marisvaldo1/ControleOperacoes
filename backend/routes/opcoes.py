@@ -231,14 +231,14 @@ def refresh_opcoes_quotes():
 
     def _oplab_get(url, headers=None, timeout=5):
         mode = os.environ.get('OPLAB_SSL_VERIFY', 'auto').lower()
-        if mode in ('false', '0', 'no'):
-            return requests.get(url, headers=headers, timeout=timeout, verify=False)
         if mode in ('true', '1', 'yes'):
             return requests.get(url, headers=headers, timeout=timeout, verify=certifi.where())
         try:
             return requests.get(url, headers=headers, timeout=timeout, verify=certifi.where())
         except SSLError:
-            return requests.get(url, headers=headers, timeout=timeout, verify=False)
+            import logging
+            logging.warning(f'SSL verification failed for {url}, using system certificates')
+            return requests.get(url, headers=headers, timeout=timeout, verify=certifi.where())
 
     conn    = db.get_db()
     c       = conn.cursor()

@@ -298,7 +298,7 @@
     padding: 1.5rem;
     display: flex;
     flex-direction: column;
-    overflow-y: auto;
+    overflow: hidden;
     min-height: 0;
 }
 
@@ -306,12 +306,14 @@
     display: flex;
     flex-direction: column;
     gap: 1.25rem;
-    height: 100%;
+    flex: 1;
+    min-height: 0;
 }
 
 /* Header direita */
 .ma-right-header {
     text-align: left;
+    flex-shrink: 0;
 }
 
 .ma-right-result {
@@ -416,7 +418,7 @@
 /* Footer summary */
 .ma-footer-summary {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(6, 1fr);
     margin-top: auto;
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 10px;
@@ -466,6 +468,7 @@
     min-height: 0;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 .ma-ops-header {
@@ -510,7 +513,7 @@
     overflow-y: auto;
     flex: 1 1 0;
     min-height: 0;
-    max-height: 310px;
+    max-height: none;
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
@@ -534,6 +537,51 @@
     font-size: 0.82rem;
     padding: 1rem 0;
     text-align: center;
+}
+
+/* Barra de estatísticas compacta abaixo da lista */
+.ma-ops-stats-bar {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.6rem 0.75rem;
+    margin-top: auto;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    flex-shrink: 0;
+}
+
+.ma-stat-chip {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 6px;
+    padding: 0.35rem 0.6rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.ma-stat-chip-label {
+    font-size: 0.65rem;
+    color: #6e7681;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+
+.ma-stat-chip-value {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #c9d1d9;
+    margin-left: auto;
+}
+
+.ma-stat-chip-value.text-success {
+    color: #2dc653 !important;
+}
+
+.ma-stat-chip-value.text-danger {
+    color: #f85149 !important;
 }
 
 /* Item de operação */
@@ -686,8 +734,8 @@
         font-size: 1.75rem;
     }
 
-    .ma-ops-list {
-        max-height: 260px;
+    .ma-right-result {
+        font-size: 1.75rem;
     }
 }
 
@@ -749,8 +797,9 @@
 .ma-tab-pane {
     flex: 1;
     overflow-y: auto;
-    overflow-x: hidden;
     min-height: 0;
+    display: flex;
+    flex-direction: column;
 }
 
 /* =====================================================================

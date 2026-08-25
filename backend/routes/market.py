@@ -47,7 +47,9 @@ def oplab_get(url, headers=None, timeout=10):
     try:
         return requests.get(url, headers=headers, timeout=timeout, verify=certifi.where())
     except SSLError:
-        return requests.get(url, headers=headers, timeout=timeout, verify=False)
+        import logging
+        logging.warning(f'SSL verification failed for {url}, using system certificates')
+        return requests.get(url, headers=headers, timeout=timeout, verify=certifi.where())
 
 
 def _oplab_headers():

@@ -24,6 +24,7 @@ from datetime     import datetime
 import db
 import requests
 import urllib3
+import certifi
 from models.crypto_exercise import (
     calculate_crypto_exercicio_status,
     serialize_crypto_operation,
@@ -143,7 +144,7 @@ def refresh_crypto_quotes():
             r = requests.get(
                 f'https://api.binance.com/api/v3/ticker/price?symbol={ticker}',
                 timeout=5,
-                verify=False,
+                verify=certifi.where(),
             )
             if r.status_code == 200:
                 spot_price = float(r.json().get('price', 0) or 0)
@@ -201,7 +202,7 @@ def get_dual_investment():
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
                 },
                 timeout=10,
-                verify=False,
+                verify=certifi.where(),
             )
             if r.status_code == 403:
                 # Binance bloqueia IP externo — retorna vazio sem erro 500

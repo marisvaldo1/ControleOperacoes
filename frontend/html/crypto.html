@@ -22,8 +22,8 @@
     <link rel="stylesheet" href="../css/shared/modal-resultados.css?v=1.0.0">
     <link rel="stylesheet" href="../css/shared/tooltip.css?v=1.0.0">
     <link rel="stylesheet" href="../css/crypto/crypto-shared.css?v=1.0.0">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha512-ZXn0G3JM6WIIQHdRj9IokS3nY3N+I8Uo8+6H6p4I6nZI6nZI6nZI6nZI6nZI6nZI6nZI6nZI6nZI6nZI6nZI6n" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" integrity="sha384-p+Y+R+Y+R+Y+R+Y+R+Y+R+Y+R+Y+R+Y+R+Y+R+Y+R+Y+R+Y+R+Y+R+Y+R+Y+R+Y+R" crossorigin="anonymous"></script>
 </head>
 
 <body data-bs-theme="dark">
@@ -820,8 +820,6 @@
                                 <div class="ma-donut-sub" id="maDonutSub">0 operações</div>
                             </div>
                         </div>
-                        <div class="ma-section-title">Detalhamento por Tipo</div>
-                        <div class="ma-tipo-list" id="maTipoList"></div>
                         <div class="ma-metrics">
                             <div class="ma-metric-row">
                                 <span class="ma-metric-label">Win Rate</span>
@@ -843,10 +841,6 @@
                                 <div class="ma-right-result" id="maRightResult">R$ 0,00</div>
                                 <div class="ma-right-sub" id="maRightSub">Lucro Total | 0 Operações | 0% Win Rate</div>
                             </div>
-                            <div class="ma-section">
-                                <div class="ma-section-title">Distribuição por Tipo</div>
-                                <div class="ma-dist-list" id="maDistTipo"></div>
-                            </div>
                             <div class="ma-section ma-ops-section">
                                 <div class="ma-ops-header">
                                     <div class="ma-section-title">Operações</div>
@@ -857,19 +851,11 @@
                                     </div>
                                 </div>
                                 <div class="ma-ops-list" id="maOpsList"></div>
-                            </div>
-                            <div class="ma-footer-summary">
-                                <div class="ma-summary-item">
-                                    <div class="ma-summary-value text-success" id="maMelhorTrade">R$ 0</div>
-                                    <div class="ma-summary-label">Melhor Trade</div>
-                                </div>
-                                <div class="ma-summary-item">
-                                    <div class="ma-summary-value" id="maTicketMedioFooter">R$ 0</div>
-                                    <div class="ma-summary-label">Ticket Médio</div>
-                                </div>
-                                <div class="ma-summary-item">
-                                    <div class="ma-summary-value text-success" id="maRoiFooter">+0,00%</div>
-                                    <div class="ma-summary-label">ROI Total</div>
+                                <div class="ma-ops-stats-bar">
+                                    <div class="ma-stat-chip"><span class="ma-stat-chip-label">Melhor</span><span class="ma-stat-chip-value text-success" id="maStatMelhor">US$ 0</span></div>
+                                    <div class="ma-stat-chip"><span class="ma-stat-chip-label">Pior</span><span class="ma-stat-chip-value text-danger" id="maStatPior">US$ 0</span></div>
+                                    <div class="ma-stat-chip"><span class="ma-stat-chip-label">Ticket Médio</span><span class="ma-stat-chip-value" id="maStatTicket">US$ 0</span></div>
+                                    <div class="ma-stat-chip"><span class="ma-stat-chip-label">ROI</span><span class="ma-stat-chip-value text-success" id="maStatRoi">+0%</span></div>
                                 </div>
                             </div>
                         </div>
