@@ -402,23 +402,24 @@
         }
 
         const totalPremio = ops.reduce((sum, op) => sum + getPremio(op), 0);
-        const wins = ops.filter(op => getPremio(op) > 0).length;
-        const winRate = (wins / ops.length) * 100;
         const avgPremio = totalPremio / ops.length;
         const best = Math.max(...ops.map(getResultadoPct));
         const worst = Math.min(...ops.map(getResultadoPct));
 
         const summaryCards = [
             ['📊', 'Operações', ops.length, 'var(--pm-text)'],
-            ['✅', 'Taxa de acerto', fmtPct(winRate), '#4ade80'],
+            ['💰', 'Total de Prêmio', fmtUsd(totalPremio), '#fbbf24', true],
             ['💰', 'Prêmio médio', fmtUsd(avgPremio), '#fbbf24'],
             ['📈', 'Melhor resultado', fmtPct(best), '#4ade80'],
             ['📉', 'Pior resultado', fmtPct(worst), '#f87171'],
-        ].map(([icon, label, value, color]) => `<div class="toc-perf-scard">
+        ].map(([icon, label, value, color, clickable]) => {
+            const clickAttr = clickable ? ' style="cursor:pointer;" onclick="if(window.ModalPrecoMedio&&typeof window.ModalPrecoMedio.open===\'function\'){window.ModalPrecoMedio.open();}"' : '';
+            return `<div class="toc-perf-scard"${clickAttr}>
             <div class="toc-perf-scard-icon">${icon}</div>
             <div class="toc-perf-scard-label">${label}</div>
             <div class="toc-perf-scard-value" style="color:${color};">${value}</div>
-        </div>`).join('');
+        </div>`;
+        }).join('');
 
         const rows = ops.slice().sort((a, b) => (getOpDate(b)?.getTime() || 0) - (getOpDate(a)?.getTime() || 0)).map(op => {
             const tipo = (op.tipo || '—').toUpperCase();

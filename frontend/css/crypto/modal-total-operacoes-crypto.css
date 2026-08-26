@@ -742,6 +742,12 @@
     background: rgba(255,255,255,.015);
     border: 1px solid rgba(255,255,255,.06);
     border-radius: 8px;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.toc-perf-scard[style*="cursor:pointer"]:hover {
+    background: rgba(255,255,255,.06);
+    border-color: rgba(251,191,36,.3);
 }
 
 .toc-perf-scard-icon { font-size: 20px; margin-bottom: 2px; }
