@@ -56,6 +56,30 @@
         return sign + v.toFixed(2) + '%';
     }
 
+    function computePMForAsset(asset) {
+        var allOps = window.cryptoOperacoes || [];
+        var par = (asset || '').toUpperCase().replace('USDT', '').replace('/', '').trim();
+        var assetOps = allOps.filter(function(o) {
+            return (o.ativo || '').toUpperCase().replace('USDT', '').replace('/', '').trim() === par;
+        });
+        var custoTotal = 0, qtyTotal = 0;
+        assetOps.forEach(function(op) {
+            if ((op.tipo || '').toUpperCase() !== 'PUT') return;
+            var s = (op.status || '').toUpperCase();
+            if (s === 'ABERTA') return;
+            var exStatus = (op.exercicio_status_persistido || op.exercicio_status || '').toUpperCase();
+            if (exStatus !== 'SIM') return;
+            var strike = parseFloat(op.strike || 0);
+            var crypto = parseFloat(op.crypto || 0);
+            var premio = parseFloat(op.premio_us || 0);
+            if (strike > 0 && crypto > 0) {
+                custoTotal += strike * crypto - premio;
+                qtyTotal += crypto;
+            }
+        });
+        return qtyTotal > 0 ? custoTotal / qtyTotal : 0;
+    }
+
     function getSaldoCorretora() {
         try {
             const cfg = JSON.parse(localStorage.getItem('appConfig') || '{}');
@@ -762,6 +786,11 @@
       <div class="ma-kpi-sub" id="mapos-${id}-popstatus">—</div>
     </div>
     <div class="ma-pos-kpi">
+      <div class="ma-kpi-lbl">PREÇO MÉDIO</div>
+      <div class="ma-kpi-val" id="mapos-${id}-pm">${sp}</div>
+      <div class="ma-kpi-sub" id="mapos-${id}-pmsub">PM ponderado</div>
+    </div>
+    <div class="ma-pos-kpi">
       <div class="ma-kpi-lbl">COTAÇÃO ATUAL</div>
       <div class="ma-kpi-val" id="mapos-${id}-spot2">${sp}</div>
       <div class="ma-kpi-sub" id="mapos-${id}-varspot">${sp}</div>
@@ -1081,6 +1110,7 @@
         const optionPrice = parseFloat(live.option_price || live.optionPrice || op.preco_atual || 0);
         const probRaw     = parseFloat(live.pop          || live.prob_lucro  || 0);
         const strike      = parseFloat(op.strike   || 0);
+        const ativo       = op.ativo || '';
         const premioAb    = Math.abs(parseFloat(op.premio || op.preco_entrada || 0));
         const precoAb     = parseFloat(op.preco_ativo_base || 0);
         const qtdAbs      = Math.abs(parseInt(op.quantidade || 0));
@@ -1134,10 +1164,24 @@
             decEl.style.cssText = `background:${fg}22;color:${fg};border:1px solid ${fg}55`;
         }
 
-        // 4 KPIs
+        // 5 KPIs
         setH(`mapos-${id}-lucroaberto`, `<span class="${c0(mtm)}" style="font-size:1.3rem;font-weight:700">${mtm >= 0 ? '+' : ''}${fmtCurrencyShort(mtm)}</span>`);
         setH(`mapos-${id}-pop2`,        `<span class="${popColor}" style="font-size:1.4rem;font-weight:700">${popEst.toFixed(0)}%</span>`);
         setH(`mapos-${id}-popstatus`,   `<span class="${popEst >= 50 ? 'text-success' : 'text-danger'} small">${popEst >= 50 ? 'Vencendo' : 'Perdendo'}</span>`);
+
+        // Preço Médio para este ativo
+        const pmVal = computePMForAsset(ativo);
+        if (pmVal > 0) {
+            const pmColor = spotPrice > 0 ? (spotPrice >= pmVal ? '#2dc653' : '#f85149') : '#c9d1d9';
+            setH(`mapos-${id}-pm`, `<span style="font-size:1.2rem;font-weight:700;color:${pmColor}">${fmtCurrency(pmVal)}</span>`);
+            if (spotPrice > 0) {
+                const pmPct = ((spotPrice - pmVal) / pmVal * 100);
+                setH(`mapos-${id}-pmsub`, `<span class="${c0(pmPct)} small">${pmPct >= 0 ? '+' : ''}${pmPct.toFixed(1)}% vs cotação</span>`);
+            }
+        } else {
+            setH(`mapos-${id}-pm`, '<span class="text-muted">—</span>');
+        }
+
         setH(`mapos-${id}-spot2`,       spotPrice > 0 ? `<span style="font-size:1.3rem;font-weight:700;color:#c9d1d9">${fmtCurrency(spotPrice)}</span>` : '<span class="text-muted">—</span>');
         if (precoAb > 0 && spotPrice > 0) {
             setH(`mapos-${id}-varspot`, `<span class="${c0(varSpot)} small">${varSpot >= 0 ? '+' : ''}${varSpot.toFixed(2)}% vs abertura</span>`);
