@@ -1,20 +1,9 @@
 <div class="modal modal-blur fade" id="modalResumoCrypto" tabindex="-1" aria-labelledby="modalResumoCryptoTitle" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable modal-resumo-dialog">
         <div class="modal-content modal-resumo-content">
-            <div class="modal-header modal-resumo-header">
-                <div>
-                    <h2 class="modal-title" id="modalResumoCryptoTitle"><i class="fas fa-coins"></i> Painel de Lucros</h2>
-                    <div class="modal-resumo-subtitle">Prêmios + Resultado percentual · Dual Investment</div>
-                </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-            </div>
+            <!-- Header padrão — gerenciado por CryptoModalHeader -->
+            <div id="resumoCryptoHeader" style="flex-shrink:0;"></div>
             <div class="modal-body modal-resumo-body">
-                <div class="modal-resumo-tabs" id="resumoCryptoTabs" role="tablist" aria-label="Período do resumo">
-                    <button class="resumo-tab active" type="button" data-resumo-period="anual" role="tab" aria-selected="true"><i class="fas fa-calendar-alt"></i> Anual</button>
-                    <button class="resumo-tab" type="button" data-resumo-period="mensal" role="tab" aria-selected="false"><i class="fas fa-calendar-week"></i> Mensal</button>
-                    <button class="resumo-tab" type="button" data-resumo-period="semanal" role="tab" aria-selected="false"><i class="fas fa-clock"></i> Semanal</button>
-                    <button class="resumo-tab" type="button" data-resumo-period="diario" role="tab" aria-selected="false"><i class="fas fa-sun"></i> Diário</button>
-                </div>
                 <div id="resumoCryptoLoading" class="resumo-loading"><div class="spinner-border text-warning" role="status"></div><span>Calculando resumo...</span></div>
                 <div id="resumoCryptoEmpty" class="resumo-empty d-none">Nenhuma operação encontrada para este período.</div>
                 <div id="resumoCryptoView" class="d-none"></div>

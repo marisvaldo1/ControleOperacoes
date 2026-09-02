@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Modal de Importação — Binance</title>
+<style>
+  :root{
+    --bg:#0f1720;
+    --panel:#151f2b;
+    --panel-2:#1b2733;
+    --panel-3:#101922;
+    --border:#25313f;
+    --text:#e7edf3;
+    --muted:#8ea0b3;
+    --green:#3ecf8e;
+    --red:#ef5b5b;
+    --blue:#4f9dde;
+    --amber:#e2b93b;
+    --accent:#6fd3ff;
+    --binance:#f0b90b;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    padding:24px;
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  h1{font-size:19px;margin:0 0 4px;}
+  p.sub{color:var(--muted);font-size:13px;margin:0 0 24px;line-height:1.5;}
+  .tabs{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+    margin-bottom:18px;
+    position:sticky;
+    top:0;
+    background:var(--bg);
+    padding:8px 0;
+    z-index:20;
+  }
+  .tab{
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    color:var(--muted);
+    padding:8px 12px;
+    border-radius:8px;
+    font-size:12.5px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .tab.active{
+    background:var(--binance);
+    color:#1a1400;
+    border-color:var(--binance);
+    font-weight:600;
+  }
+  .section{display:none;}
+  .section.active{display:block;}
+  .section p.desc{
+    color:var(--muted);
+    font-size:12.5px;
+    margin:0 0 16px;
+    line-height:1.5;
+    max-width:640px;
+  }
+
+  .mobile-frame{
+    max-width:380px;
+    margin:0 auto;
+    background:#000;
+    border:6px solid #222;
+    border-radius:28px;
+    padding:10px;
+    position:relative;
+  }
+  .mobile-screen{
+    background:var(--panel);
+    border-radius:18px;
+    min-height:560px;
+    position:relative;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+  }
+  .app-bar{
+    background:var(--panel-2);
+    padding:14px 16px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    border-bottom:1px solid var(--border);
+    font-size:13px;
+    font-weight:600;
+  }
+  .app-bar .binance-dot{
+    width:8px;height:8px;border-radius:50%;background:var(--binance);
+    display:inline-block;margin-right:6px;
+  }
+  .card-body{padding:16px;flex:1;display:flex;flex-direction:column;}
+
+  /* ===== Botão flutuante que abre a modal (tela "app") ===== */
+  .app-mock{
+    padding:40px 16px;
+    text-align:center;
+    color:var(--muted);
+  }
+  .open-btn{
+    margin-top:20px;
+    background:var(--binance);
+    color:#1a1400;
+    border:none;
+    padding:12px 20px;
+    border-radius:10px;
+    font-weight:700;
+    font-size:13px;
+    cursor:pointer;
+  }
+
+  /* ===== Modal overlay ===== */
+  .modal-overlay{
+    position:absolute;
+    inset:0;
+    background:rgba(0,0,0,.55);
+    display:flex;
+    align-items:flex-end;
+    justify-content:center;
+    z-index:30;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .2s;
+  }
+  .modal-overlay.show{opacity:1;pointer-events:auto;}
+  .modal-sheet{
+    background:var(--panel);
+    width:100%;
+    border-radius:18px 18px 0 0;
+    padding:18px;
+    max-height:88%;
+    overflow-y:auto;
+    transform:translateY(12px);
+    transition:transform .2s;
+  }
+  .modal-overlay.show .modal-sheet{transform:translateY(0);}
+  .modal-handle{
+    width:36px;height:4px;background:var(--border);border-radius:2px;
+    margin:0 auto 14px;
+  }
+  .modal-title{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:15px;
+    font-weight:700;
+    margin-bottom:4px;
+  }
+  .modal-title .binance-badge{
+    background:var(--binance);
+    color:#1a1400;
+    font-size:9px;
+    font-weight:800;
+    padding:2px 6px;
+    border-radius:5px;
+    letter-spacing:.03em;
+  }
+  .modal-sub{font-size:11.5px;color:var(--muted);margin-bottom:18px;}
+
+  /* período options */
+  .period-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;}
+  .period-opt{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:12px 14px;
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    border-radius:10px;
+    font-size:13px;
+    cursor:pointer;
+  }
+  .period-opt.selected{
+    border-color:var(--accent);
+    background:#16303c;
+  }
+  .period-opt .radio{
+    width:16px;height:16px;border-radius:50%;
+    border:2px solid var(--muted);
+    position:relative;flex-shrink:0;
+  }
+  .period-opt.selected .radio{border-color:var(--accent);}
+  .period-opt.selected .radio::after{
+    content:'';position:absolute;inset:3px;border-radius:50%;background:var(--accent);
+  }
+  .period-opt .p-left{display:flex;align-items:center;gap:10px;}
+  .period-opt .p-count{font-size:10.5px;color:var(--muted);}
+
+  .divider{height:1px;background:var(--border);margin:16px 0;}
+
+  .danger-opt{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    padding:12px 14px;
+    background:#2a1414;
+    border:1px solid #5a2323;
+    border-radius:10px;
+    margin-bottom:16px;
+    cursor:pointer;
+  }
+  .danger-opt.selected{border-color:var(--red);background:#331414;}
+  .danger-opt .radio{
+    width:16px;height:16px;border-radius:50%;
+    border:2px solid var(--red);position:relative;flex-shrink:0;margin-top:1px;
+  }
+  .danger-opt.selected .radio::after{
+    content:'';position:absolute;inset:3px;border-radius:50%;background:var(--red);
+  }
+  .danger-opt .d-title{font-size:13px;font-weight:700;color:var(--red);margin-bottom:2px;}
+  .danger-opt .d-desc{font-size:11px;color:var(--muted);line-height:1.4;}
+
+  .btn{
+    border:none;
+    border-radius:10px;
+    padding:13px 16px;
+    font-size:13.5px;
+    font-weight:700;
+    cursor:pointer;
+    width:100%;
+  }
+  .btn-primary{background:var(--binance);color:#1a1400;}
+  .btn-primary:disabled{opacity:.4;cursor:not-allowed;}
+  .btn-secondary{background:var(--panel-2);color:var(--text);border:1px solid var(--border);}
+  .btn-danger{background:var(--red);color:#fff;}
+  .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border);}
+  .btn-row{display:flex;gap:8px;margin-top:6px;}
+
+  /* confirmação zerar banco */
+  .warn-box{
+    background:#2a1414;
+    border:1px solid #5a2323;
+    border-radius:10px;
+    padding:14px;
+    margin-bottom:18px;
+    display:flex;
+    gap:10px;
+  }
+  .warn-box .icon{font-size:20px;}
+  .warn-box .txt{font-size:12px;color:#f5b8b8;line-height:1.5;}
+  .warn-box .txt b{color:#fff;}
+
+  /* progresso */
+  .progress-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    margin-bottom:8px;
+  }
+  .progress-pct{font-size:24px;font-weight:800;}
+  .progress-count{font-size:11px;color:var(--muted);}
+  .progress-track{
+    height:10px;
+    background:var(--panel-3);
+    border-radius:6px;
+    overflow:hidden;
+    margin-bottom:6px;
+  }
+  .progress-fill{
+    height:100%;
+    background:linear-gradient(90deg,var(--binance),#ffd75e);
+    border-radius:6px;
+    width:0%;
+    transition:width .25s linear;
+  }
+  .progress-status{font-size:11px;color:var(--muted);margin-bottom:18px;display:flex;justify-content:space-between;}
+  .progress-status .status-badge{
+    padding:1px 8px;border-radius:8px;font-weight:700;font-size:10px;
+  }
+  .status-running{background:#123822;color:var(--green);}
+  .status-paused{background:#3a2f10;color:var(--amber);}
+
+  .chart-box{
+    background:var(--panel-3);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:12px;
+    margin-bottom:14px;
+  }
+  .chart-box .chart-title{font-size:11px;color:var(--muted);margin-bottom:8px;display:flex;justify-content:space-between;}
+  .chart-box .chart-title .live-dot{
+    width:6px;height:6px;border-radius:50%;background:var(--green);
+    display:inline-block;margin-right:5px;
+    animation:pulse 1.2s infinite;
+  }
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+  #liveChart{width:100%;height:70px;display:block;}
+  #barsChart{width:100%;height:110px;display:block;}
+
+  .log-box{
+    background:var(--panel-3);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:10px 12px;
+    height:100px;
+    overflow-y:auto;
+    margin-bottom:16px;
+    font-size:10.5px;
+    font-family:'SF Mono',Consolas,monospace;
+    color:var(--muted);
+    display:flex;
+    flex-direction:column-reverse;
+  }
+  .log-box .log-line{padding:2px 0;white-space:nowrap;}
+  .log-box .log-line .sym{color:var(--accent);}
+  .log-box .log-line .buy{color:var(--green);}
+  .log-box .log-line .sell{color:var(--red);}
+
+  .btn-cancel-link{
+    text-align:center;
+    font-size:11.5px;
+    color:var(--muted);
+    margin-top:10px;
+    text-decoration:underline;
+    cursor:pointer;
+  }
+
+  /* concluído */
+  .done-icon{
+    width:56px;height:56px;border-radius:50%;
+    background:#123822;
+    color:var(--green);
+    display:flex;align-items:center;justify-content:center;
+    font-size:28px;margin:6px auto 14px;
+  }
+  .done-title{text-align:center;font-size:15px;font-weight:700;margin-bottom:4px;}
+  .done-sub{text-align:center;font-size:11.5px;color:var(--muted);margin-bottom:18px;}
+  .summary-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    margin-bottom:20px;
+  }
+  .summary-cell{
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:10px;
+  }
+  .summary-cell .lbl{font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;}
+  .summary-cell .val{font-size:14px;font-weight:700;margin-top:2px;}
+
+  /* circular progress variant */
+  .ring-wrap{display:flex;align-items:center;gap:16px;margin-bottom:18px;}
+  .ring-num{font-size:20px;font-weight:800;}
+  .ring-sub{font-size:10.5px;color:var(--muted);}
+
+  .note{
+    margin-top:18px;
+    font-size:11px;
+    color:var(--muted);
+    border-top:1px dashed var(--border);
+    padding-top:10px;
+    max-width:640px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Importação de dados — Binance</h1>
+<p class="sub">Mockup interativo da modal de importação: escolha de período (com opção "importar tudo" que zera o banco), progresso em tempo real com gráfico, e botões pausar/continuar/cancelar. Clique nas abas para ver o fluxo interativo e variações do gráfico de progresso.</p>
+
+<div class="tabs" id="tabs"></div>
+<div id="sections"></div>
+
+<script>
+// ---------------- estado compartilhado do fluxo interativo ----------------
+const symbols = ["BTCUSDT","ETHUSDT","SOLUSDT","XRPUSDT","BNBUSDT"];
+const sides = ["BUY","SELL"];
+
+function fmtTime(d){
+  return d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+
+// ================= FLUXO INTERATIVO (tela 1) =================
+function buildInteractiveFlow(){
+  return `
+  <div class="mobile-frame">
+    <div class="mobile-screen" id="flow-screen">
+      <div class="app-bar"><span><span class="binance-dot"></span>Opções2026 — Crypto</span><span style="color:var(--muted);font-weight:400">15:52</span></div>
+      <div class="app-mock">
+        <div style="font-size:40px;margin-bottom:8px;">📊</div>
+        <div style="font-size:13px;">Sua planilha de operações</div>
+        <button class="open-btn" onclick="openModal()">Importar da Binance</button>
+      </div>
+
+      <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-sheet" id="modalSheet"></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+let selectedPeriod = null;
+let importAllSelected = false;
+
+function openModal(){
+  selectedPeriod = null;
+  importAllSelected = false;
+  document.getElementById('modalOverlay').classList.add('show');
+  renderPeriodScreen();
+}
+function closeModal(){
+  document.getElementById('modalOverlay').classList.remove('show');
+  stopSim();
+}
+
+function renderPeriodScreen(){
+  const periods = [
+    {id:'today', label:'Hoje', count:'~12 operações'},
+    {id:'7d', label:'Últimos 7 dias', count:'~80 operações'},
+    {id:'30d', label:'Últimos 30 dias', count:'~340 operações'},
+    {id:'90d', label:'Últimos 90 dias', count:'~1.020 operações'},
+  ];
+  let optsHtml = periods.map(p=>`
+    <div class="period-opt ${selectedPeriod===p.id?'selected':''}" onclick="choosePeriod('${p.id}')">
+      <div class="p-left"><div class="radio"></div><div>${p.label}</div></div>
+      <div class="p-count">${p.count}</div>
+    </div>`).join('');
+
+  document.getElementById('modalSheet').innerHTML = `
+    <div class="modal-handle"></div>
+    <div class="modal-title"><span class="binance-badge">BINANCE</span>Importar operações</div>
+    <div class="modal-sub">Escolha o período que deseja trazer da sua conta Binance para a planilha.</div>
+    <div class="period-list">${optsHtml}</div>
+    <div class="divider"></div>
+    <div class="danger-opt ${importAllSelected?'selected':''}" onclick="chooseImportAll()">
+      <div class="radio"></div>
+      <div>
+        <div class="d-title">⚠ Importar tudo</div>
+        <div class="d-desc">Apaga todas as operações já salvas e importa o histórico completo encontrado na Binance, do zero.</div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" style="flex:2" id="startBtn" disabled onclick="handleStart()">Iniciar importação</button>
+    </div>
+  `;
+}
+function choosePeriod(id){
+  selectedPeriod = id; importAllSelected = false;
+  renderPeriodScreen();
+  document.getElementById('startBtn').disabled = false;
+}
+function chooseImportAll(){
+  importAllSelected = true; selectedPeriod = null;
+  renderPeriodScreen();
+  document.getElementById('startBtn').disabled = false;
+}
+function handleStart(){
+  if(importAllSelected){ renderConfirmScreen(); }
+  else { renderProgressScreen(); }
+}
+
+function renderConfirmScreen(){
+  document.getElementById('modalSheet').innerHTML = `
+    <div class="modal-handle"></div>
+    <div class="modal-title">Tem certeza?</div>
+    <div class="modal-sub">Essa ação não pode ser desfeita.</div>
+    <div class="warn-box">
+      <div class="icon">⚠️</div>
+      <div class="txt">Isso vai <b>apagar todas as operações</b> já registradas na planilha e trazer <b>o histórico completo</b> encontrado na sua conta Binance, do zero.</div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" style="flex:1" onclick="renderPeriodScreen()">Voltar</button>
+      <button class="btn btn-danger" style="flex:2" onclick="renderProgressScreen()">Sim, apagar e importar tudo</button>
+    </div>
+  `;
+}
+
+// ---- simulação de progresso ----
+let simInterval = null;
+let simPaused = false;
+let simTotal = 0;
+let simDone = 0;
+let simSpeedHistory = [];
+let simLog = [];
+
+function totalForContext(){
+  if(importAllSelected) return 2450;
+  const map = {today:12, '7d':80, '30d':340, '90d':1020};
+  return map[selectedPeriod] || 100;
+}
+
+function renderProgressScreen(){
+  simTotal = totalForContext();
+  simDone = 0;
+  simPaused = false;
+  simSpeedHistory = [];
+  simLog = [];
+
+  document.getElementById('modalSheet').innerHTML = `
+    <div class="modal-handle"></div>
+    <div class="modal-title"><span class="binance-badge">BINANCE</span>Importando operações</div>
+    <div class="progress-head">
+      <div class="progress-pct" id="pctLabel">0%</div>
+      <div class="progress-count" id="countLabel">0 / ${simTotal}</div>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progFill"></div></div>
+    <div class="progress-status">
+      <span id="statusBadgeWrap"><span class="status-badge status-running" id="statusBadge">Importando</span></span>
+      <span id="etaLabel">estimando tempo...</span>
+    </div>
+
+    <div class="chart-box">
+      <div class="chart-title"><span><span class="live-dot"></span>Velocidade (operações/seg)</span><span id="speedNow">0/s</span></div>
+      <svg id="liveChart" viewBox="0 0 300 70" preserveAspectRatio="none"></svg>
+    </div>
+
+    <div class="log-box" id="logBox"></div>
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" style="flex:1" id="pauseBtn" onclick="togglePause()">Pausar</button>
+      <button class="btn btn-ghost" style="flex:1" onclick="cancelImport()">Interromper</button>
+    </div>
+  `;
+  startSim();
+}
+
+function startSim(){
+  clearInterval(simInterval);
+  simInterval = setInterval(()=>{
+    if(simPaused) return;
+    const batch = Math.max(1, Math.round(Math.random()*6));
+    simDone = Math.min(simTotal, simDone+batch);
+    simSpeedHistory.push(batch*2);
+    if(simSpeedHistory.length>24) simSpeedHistory.shift();
+
+    // log de operações fake
+    const sym = symbols[Math.floor(Math.random()*symbols.length)];
+    const side = sides[Math.floor(Math.random()*sides.length)];
+    simLog.push({t:fmtTime(new Date()), sym, side});
+    if(simLog.length>40) simLog.shift();
+
+    updateProgressUI();
+
+    if(simDone>=simTotal){
+      clearInterval(simInterval);
+      setTimeout(renderDoneScreen, 500);
+    }
+  }, 220);
+}
+function stopSim(){ clearInterval(simInterval); }
+
+function updateProgressUI(){
+  const pct = Math.round((simDone/simTotal)*100);
+  const pctEl = document.getElementById('pctLabel');
+  const countEl = document.getElementById('countLabel');
+  const fillEl = document.getElementById('progFill');
+  if(!pctEl) return;
+  pctEl.textContent = pct+'%';
+  countEl.textContent = simDone+' / '+simTotal;
+  fillEl.style.width = pct+'%';
+  const remaining = simTotal-simDone;
+  const avgSpeed = simSpeedHistory.length ? (simSpeedHistory.reduce((a,b)=>a+b,0)/simSpeedHistory.length) : 1;
+  document.getElementById('speedNow').textContent = Math.round(avgSpeed)+'/s';
+  document.getElementById('etaLabel').textContent = avgSpeed>0 ? ('~'+Math.max(1,Math.round(remaining/Math.max(avgSpeed,1)))+'s restantes') : '';
+
+  drawLiveChart();
+  renderLog();
+}
+
+function drawLiveChart(){
+  const svg = document.getElementById('liveChart');
+  if(!svg) return;
+  const w=300,h=70;
+  const vals = simSpeedHistory.length ? simSpeedHistory : [0];
+  const max = Math.max(...vals, 1);
+  const stepX = w/Math.max(vals.length-1,1);
+  let points = vals.map((v,i)=>{
+    const x = i*stepX;
+    const y = h - (v/max)*h*0.85 - 4;
+    return x+','+y;
+  }).join(' ');
+  svg.innerHTML = `
+    <polyline points="${points}" fill="none" stroke="var(--binance)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <polygon points="0,${h} ${points} ${w},${h}" fill="var(--binance)" opacity="0.12"/>
+  `;
+}
+function renderLog(){
+  const box = document.getElementById('logBox');
+  if(!box) return;
+  box.innerHTML = simLog.slice(-12).map(l=>
+    `<div class="log-line">${l.t} · <span class="sym">${l.sym}</span> · <span class="${l.side==='BUY'?'buy':'sell'}">${l.side}</span></div>`
+  ).join('');
+}
+
+function togglePause(){
+  simPaused = !simPaused;
+  const btn = document.getElementById('pauseBtn');
+  const badge = document.getElementById('statusBadge');
+  if(simPaused){
+    btn.textContent = 'Continuar';
+    badge.textContent = 'Pausado';
+    badge.className = 'status-badge status-paused';
+  } else {
+    btn.textContent = 'Pausar';
+    badge.textContent = 'Importando';
+    badge.className = 'status-badge status-running';
+  }
+}
+function cancelImport(){
+  clearInterval(simInterval);
+  document.getElementById('modalSheet').innerHTML = `
+    <div class="modal-handle"></div>
+    <div class="modal-title">Interromper importação?</div>
+    <div class="modal-sub">Você importou ${simDone} de ${simTotal} operações até agora. O que já foi importado fica salvo.</div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" style="flex:1" onclick="resumeAfterCancelPrompt()">Voltar a importar</button>
+      <button class="btn btn-danger" style="flex:1" onclick="renderPeriodScreen()">Encerrar aqui</button>
+    </div>
+  `;
+}
+function resumeAfterCancelPrompt(){
+  renderProgressScreenResume();
+}
+function renderProgressScreenResume(){
+  // volta pra tela de progresso mantendo o que já tinha
+  renderProgressScreenKeepState();
+}
+function renderProgressScreenKeepState(){
+  document.getElementById('modalSheet').innerHTML = `
+    <div class="modal-handle"></div>
+    <div class="modal-title"><span class="binance-badge">BINANCE</span>Importando operações</div>
+    <div class="progress-head">
+      <div class="progress-pct" id="pctLabel">${Math.round((simDone/simTotal)*100)}%</div>
+      <div class="progress-count" id="countLabel">${simDone} / ${simTotal}</div>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progFill" style="width:${Math.round((simDone/simTotal)*100)}%"></div></div>
+    <div class="progress-status">
+      <span><span class="status-badge status-running" id="statusBadge">Importando</span></span>
+      <span id="etaLabel"></span>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title"><span><span class="live-dot"></span>Velocidade (operações/seg)</span><span id="speedNow">-</span></div>
+      <svg id="liveChart" viewBox="0 0 300 70" preserveAspectRatio="none"></svg>
+    </div>
+    <div class="log-box" id="logBox"></div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" style="flex:1" id="pauseBtn" onclick="togglePause()">Pausar</button>
+      <button class="btn btn-ghost" style="flex:1" onclick="cancelImport()">Interromper</button>
+    </div>
+  `;
+  simPaused = false;
+  startSim();
+}
+
+function renderDoneScreen(){
+  document.getElementById('modalSheet').innerHTML = `
+    <div class="modal-handle"></div>
+    <div class="done-icon">✓</div>
+    <div class="done-title">Importação concluída</div>
+    <div class="done-sub">Tudo certo, seus dados foram atualizados.</div>
+    <div class="summary-grid">
+      <div class="summary-cell"><div class="lbl">Operações</div><div class="val">${simTotal}</div></div>
+      <div class="summary-cell"><div class="lbl">Tempo total</div><div class="val">${Math.max(1,Math.round(simTotal/8))}s</div></div>
+      <div class="summary-cell"><div class="lbl">Período</div><div class="val" style="font-size:11.5px">${importAllSelected?'Histórico completo':selectedPeriod}</div></div>
+      <div class="summary-cell"><div class="lbl">Pares</div><div class="val" style="font-size:11.5px">${symbols.length} moedas</div></div>
+    </div>
+    <button class="btn btn-primary" onclick="closeModal()">Concluir</button>
+  `;
+}
+
+// ================= VARIANTE: gráfico de barras por símbolo =================
+function buildBarsVariant(){
+  return `
+  <div class="mobile-frame">
+    <div class="mobile-screen">
+      <div class="app-bar"><span><span class="binance-dot"></span>Importando</span></div>
+      <div class="card-body" style="padding-top:18px">
+        <div class="modal-title"><span class="binance-badge">BINANCE</span>Importando por moeda</div>
+        <div class="progress-head">
+          <div class="progress-pct">63%</div>
+          <div class="progress-count">1.543 / 2.450</div>
+        </div>
+        <div class="progress-track"><div class="progress-fill" style="width:63%"></div></div>
+        <div class="progress-status"><span class="status-badge status-running">Importando</span><span>~9s restantes</span></div>
+
+        <div class="chart-box">
+          <div class="chart-title"><span><span class="live-dot"></span>Operações importadas por moeda</span></div>
+          <svg id="barsChart" viewBox="0 0 300 110"></svg>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-secondary" style="flex:1">Pausar</button>
+          <button class="btn btn-ghost" style="flex:1">Interromper</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+function drawBarsChart(){
+  const svg = document.getElementById('barsChart');
+  if(!svg) return;
+  const counts = [{s:'BTC',v:612,c:'#f0b90b'},{s:'ETH',v:410,c:'#4f9dde'},{s:'SOL',v:298,c:'#3ecf8e'},{s:'XRP',v:150,c:'#e2b93b'},{s:'BNB',v:73,c:'#ef5b5b'}];
+  const max = Math.max(...counts.map(c=>c.v));
+  const barW = 40, gap = 18, baseY = 95;
+  let x = 15;
+  let bars = '';
+  counts.forEach(c=>{
+    const h = (c.v/max)*70;
+    bars += `<rect x="${x}" y="${baseY-h}" width="${barW}" height="${h}" rx="4" fill="${c.c}"/>
+      <text x="${x+barW/2}" y="${baseY+14}" text-anchor="middle" font-size="10" fill="var(--muted)">${c.s}</text>
+      <text x="${x+barW/2}" y="${baseY-h-6}" text-anchor="middle" font-size="10" fill="var(--text)" font-weight="700">${c.v}</text>`;
+    x += barW+gap;
+  });
+  svg.innerHTML = bars;
+}
+
+// ================= VARIANTE: anel circular =================
+function buildRingVariant(){
+  return `
+  <div class="mobile-frame">
+    <div class="mobile-screen">
+      <div class="app-bar"><span><span class="binance-dot"></span>Importando</span></div>
+      <div class="card-body" style="padding-top:18px">
+        <div class="modal-title"><span class="binance-badge">BINANCE</span>Importando (histórico completo)</div>
+        <div class="ring-wrap">
+          <svg width="96" height="96" viewBox="0 0 96 96">
+            <circle cx="48" cy="48" r="40" stroke="var(--panel-3)" stroke-width="10" fill="none"/>
+            <circle cx="48" cy="48" r="40" stroke="var(--binance)" stroke-width="10" fill="none"
+              stroke-linecap="round" stroke-dasharray="251.2" stroke-dashoffset="88"
+              transform="rotate(-90 48 48)"/>
+            <text x="48" y="53" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">65%</text>
+          </svg>
+          <div>
+            <div class="ring-num">1.590 <span style="font-size:11px;color:var(--muted);font-weight:400">/ 2.450</span></div>
+            <div class="ring-sub">operações importadas</div>
+            <div class="ring-sub" style="margin-top:4px">velocidade média: <b style="color:var(--text)">14/s</b></div>
+          </div>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title"><span><span class="live-dot"></span>Velocidade (operações/seg)</span><span>14/s</span></div>
+          <svg viewBox="0 0 300 70" style="width:100%;height:70px">
+            <polyline points="0,50 20,44 40,48 60,30 80,36 100,20 120,28 140,18 160,24 180,14 200,20 220,10 240,16 260,8 280,14 300,10" fill="none" stroke="var(--binance)" stroke-width="2"/>
+          </svg>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-secondary" style="flex:1">Pausar</button>
+          <button class="btn btn-ghost" style="flex:1">Interromper</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ---------------- montagem das abas ----------------
+const ideas = [
+  { id:'flow', label:'Fluxo interativo (completo)', title:'Fluxo completo: período → confirmação → progresso → concluído',
+    desc:'Clique em "Importar da Binance" para abrir a modal de verdade e navegar pelo fluxo: escolher período (ou "importar tudo", que pede confirmação por apagar o banco), ver o progresso com gráfico de velocidade em tempo real e log de operações, pausar/continuar, interromper, e a tela final de resumo.',
+    build: buildInteractiveFlow, after: ()=>{} },
+  { id:'bars', label:'Variante gráfico: barras por moeda', title:'Progresso com gráfico de barras por moeda',
+    desc:'Em vez de mostrar só a velocidade geral, esse layout quebra o progresso por símbolo (BTC, ETH, SOL...), útil se você quiser acompanhar quais moedas já foram importadas primeiro.',
+    build: buildBarsVariant, after: drawBarsChart },
+  { id:'ring', label:'Variante gráfico: anel circular', title:'Progresso com anel circular + linha de velocidade',
+    desc:'Combina um anel de progresso (bom pra "importar tudo", que costuma ser um processo mais longo) com uma linha fina mostrando a velocidade de importação ao lado, mais compacto verticalmente que a barra horizontal.',
+    build: buildRingVariant, after: ()=>{} },
+];
+
+const tabsEl = document.getElementById('tabs');
+const sectionsEl = document.getElementById('sections');
+
+ideas.forEach((idea,i)=>{
+  const tab = document.createElement('div');
+  tab.className = 'tab'+(i===0?' active':'');
+  tab.textContent = idea.label;
+  tab.onclick = ()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('sec-'+idea.id).classList.add('active');
+    stopSim();
+    if(idea.after) setTimeout(idea.after, 30);
+  };
+  tabsEl.appendChild(tab);
+
+  const sec = document.createElement('div');
+  sec.className = 'section'+(i===0?' active':'');
+  sec.id = 'sec-'+idea.id;
+  sec.innerHTML = `<h2 style="font-size:15px;margin:0 0 4px;">${idea.title}</h2><p class="desc">${idea.desc}</p>${idea.build()}`;
+  sectionsEl.appendChild(sec);
+});
+
+setTimeout(()=>{ drawBarsChart(); }, 50);
+</script>
+</body>
+</html>

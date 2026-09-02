@@ -10,7 +10,7 @@ $startupLog = Join-Path $tmpDir 'start_hidden.log'
 $stdoutLog = Join-Path $tmpDir 'server_stdout.log'
 $stderrLog = Join-Path $tmpDir 'server_stderr.log'
 $pidFile = Join-Path $tmpDir 'server.pid'
-$appUrl = 'http://localhost:8888/html/opcoes.html'
+$appUrl = 'http://localhost:8888/html/crypto.html'
 
 function Show-StartupError {
     param([string]$Message)

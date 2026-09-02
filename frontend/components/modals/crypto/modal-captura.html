@@ -1,0 +1,133 @@
+<!-- Captura de Operações — Binance Dual Investment -->
+<div class="modal modal-blur fade" id="modalCaptura" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content modal-captura-content">
+
+            <!-- Cabeçalho -->
+            <div class="modal-captura-header">
+                <div class="modal-captura-header-left">
+                    <span class="modal-captura-badge">BINANCE</span>
+                    <h5 class="modal-captura-title">Capturar Operações</h5>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+
+            <div class="modal-body">
+
+                <!-- Tela 1: Seleção de período -->
+                <div id="capturaTelaPeriodo">
+                    <p class="modal-captura-sub">Escolha o período ou importe todo o histórico da sua conta Binance.</p>
+
+                    <div class="captura-period-list">
+                        <div class="captura-period-opt" data-period="today" onclick="ModalCaptura.choosePeriod('today')">
+                            <div class="captura-period-left">
+                                <div class="captura-radio"></div>
+                                <div>Hoje</div>
+                            </div>
+                            <div class="captura-period-count">~12 operações</div>
+                        </div>
+                        <div class="captura-period-opt" data-period="7d" onclick="ModalCaptura.choosePeriod('7d')">
+                            <div class="captura-period-left">
+                                <div class="captura-radio"></div>
+                                <div>Últimos 7 dias</div>
+                            </div>
+                            <div class="captura-period-count">~80 operações</div>
+                        </div>
+                        <div class="captura-period-opt" data-period="30d" onclick="ModalCaptura.choosePeriod('30d')">
+                            <div class="captura-period-left">
+                                <div class="captura-radio"></div>
+                                <div>Últimos 30 dias</div>
+                            </div>
+                            <div class="captura-period-count">~340 operações</div>
+                        </div>
+                        <div class="captura-period-opt" data-period="90d" onclick="ModalCaptura.choosePeriod('90d')">
+                            <div class="captura-period-left">
+                                <div class="captura-radio"></div>
+                                <div>Últimos 90 dias</div>
+                            </div>
+                            <div class="captura-period-count">~1.020 operações</div>
+                        </div>
+                    </div>
+
+                    <div class="captura-divider"></div>
+
+                    <div class="captura-danger-opt" id="capturaImportAll" onclick="ModalCaptura.chooseImportAll()">
+                        <div class="captura-radio captura-radio-danger"></div>
+                        <div>
+                            <div class="captura-danger-title">⚠ Importar tudo</div>
+                            <div class="captura-danger-desc">Apaga todas as operações já salvas e importa o histórico completo encontrado na Binance, do zero.</div>
+                        </div>
+                    </div>
+
+                    <div class="captura-btn-row">
+                        <button class="btn captura-btn-secondary" style="flex:1" data-bs-dismiss="modal">Cancelar</button>
+                        <button class="btn captura-btn-primary" style="flex:2" id="capturaStartBtn" disabled onclick="ModalCaptura.handleStart()">Iniciar importação</button>
+                    </div>
+                </div>
+
+                <!-- Tela 2: Confirmação (zerar banco) -->
+                <div id="capturaTelaConfirmacao" style="display:none;">
+                    <p class="modal-captura-sub">Tem certeza? Essa ação não pode ser desfeita.</p>
+
+                    <div class="captura-warn-box">
+                        <div class="captura-warn-icon">⚠️</div>
+                        <div class="captura-warn-txt">Isso vai <strong>apagar todas as operações</strong> já registradas e trazer <strong>o histórico completo</strong> encontrado na sua conta Binance, do zero.</div>
+                    </div>
+
+                    <div class="captura-btn-row">
+                        <button class="btn captura-btn-secondary" style="flex:1" onclick="ModalCaptura.showPeriodo()">Voltar</button>
+                        <button class="btn captura-btn-danger" style="flex:2" onclick="ModalCaptura.startImport()">Sim, apagar e importar tudo</button>
+                    </div>
+                </div>
+
+                <!-- Tela 3: Progresso -->
+                <div id="capturaTelaProgresso" style="display:none;">
+                    <div class="captura-progress-head">
+                        <div class="captura-progress-pct" id="capturaPctLabel">0%</div>
+                        <div class="captura-progress-count" id="capturaCountLabel">0 / 0</div>
+                    </div>
+                    <div class="captura-progress-track">
+                        <div class="captura-progress-fill" id="capturaProgFill"></div>
+                    </div>
+                    <div class="captura-progress-status">
+                        <span id="capturaStatusBadgeWrap"><span class="captura-status-badge captura-status-running" id="capturaStatusBadge">Importando</span></span>
+                        <span id="capturaEtaLabel">estimando tempo...</span>
+                    </div>
+
+                    <!-- Gráfico de velocidade (linha) -->
+                    <div class="captura-chart-box">
+                        <div class="captura-chart-title"><span><span class="captura-live-dot"></span>Velocidade (operações/seg)<span id="capturaSpeedNow">0/s</span></span></div>
+                        <svg id="capturaSpeedChart" viewBox="0 0 300 70" preserveAspectRatio="none"></svg>
+                    </div>
+
+                    <!-- Gráfico de barras por moeda -->
+                    <div class="captura-chart-box">
+                        <div class="captura-chart-title"><span><span class="captura-live-dot"></span>Operações importadas por moeda</span></div>
+                        <svg id="capturaBarsChart" viewBox="0 0 300 110"></svg>
+                    </div>
+
+                    <!-- Log -->
+                    <div class="captura-log-box" id="capturaLogBox"></div>
+
+                    <div class="captura-btn-row">
+                        <button class="btn captura-btn-secondary" style="flex:1" id="capturaPauseBtn" onclick="ModalCaptura.togglePause()">Pausar</button>
+                        <button class="btn captura-btn-ghost" style="flex:1" onclick="ModalCaptura.cancelImport()">Interromper</button>
+                    </div>
+                </div>
+
+                <!-- Tela 4: Concluído -->
+                <div id="capturaTelaConcluidox" style="display:none;">
+                    <div class="captura-done-icon">✓</div>
+                    <div class="captura-done-title">Importação concluída</div>
+                    <div class="captura-done-sub">Tudo certo, seus dados foram atualizados.</div>
+
+                    <div class="captura-summary-grid" id="capturaSummaryGrid"></div>
+
+                    <button class="btn captura-btn-primary" onclick="ModalCaptura.close">Concluir</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+<!-- /modal-captura -->

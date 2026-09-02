@@ -29,10 +29,10 @@ if errorlevel 1 (
 echo.
 echo [2/2] Iniciando sistema na porta 8888...
 echo.
-echo Acessar: http://localhost:8888/html/opcoes.html
+echo Acessar: http://localhost:8888/html/crypto.html
 echo.
 
-start "" /MIN powershell -NoProfile -WindowStyle Hidden -Command "Start-Sleep -Seconds 3; Start-Process 'http://localhost:8888/html/opcoes.html'"
+start "" /MIN powershell -NoProfile -WindowStyle Hidden -Command "Start-Sleep -Seconds 3; Start-Process 'http://localhost:8888/html/crypto.html'"
 
 echo ========================================
 echo  SERVIDOR RODANDO (CTRL+C para parar)

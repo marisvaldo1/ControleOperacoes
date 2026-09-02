@@ -287,7 +287,539 @@ def get_ultima_put_exercida():
             a = (_row_value(row, 'ativo') or '').upper()
             if a and a not in result:
                 result[a] = serialize_crypto_operation(row)
-        return jsonify(result)
+    return jsonify(result)
+
+
+# ─── Capturar operações Dual Investment da Binance (abertas + fechadas) ──────
+@crypto_bp.route('/dual-investment/sync', methods=['POST'])
+def sync_dual_investment():
+    """Busca operações Dual Investment (abertas e fechadas) na Binance e insere no banco.
+    
+    Verifica duplicatas por productId antes de inserir.
+    Para SETTLED, calcula prêmio real a partir de settleAmount/settlePrice.
+    Retorna resumo: quantas encontradas, inseridas, já existiam.
+    """
+    api_key = os.getenv('BINANCE_API_KEY', '')
+    secret = os.getenv('BINANCE_SECRET', '')
+    if not api_key or not secret:
+        return jsonify({'success': False, 'error': 'Chaves Binance não configuradas'}), 400
+
+    base = 'https://api.binance.com'
+    headers = {'X-MBX-APIKEY': api_key}
+
+    def signed_get(path, extra_params=None):
+        params = {'timestamp': int(time.time() * 1000), 'recvWindow': 30000}
+        if extra_params:
+            params.update(extra_params)
+        query, signature = _binance_sign(params, secret)
+        params['signature'] = signature
+        return requests.get(f'{base}{path}', headers=headers, params=params, timeout=15)
+
+    # ── Busca posições (abertas + fechadas) com paginação ──
+    all_positions = []
+    statuses_to_fetch = ['PURCHASE_SUCCESS', 'SETTLED']
+
+    for status in statuses_to_fetch:
+        page = 1
+        while True:
+            try:
+                r = signed_get('/sapi/v1/dci/product/positions', {
+                    'status': status,
+                    'pageSize': 50,
+                    'pageIndex': page,
+                })
+                if r.status_code == 200:
+                    data = r.json()
+                    if isinstance(data, dict):
+                        lst = data.get('list', []) or data.get('rows', [])
+                        total = data.get('total', 0)
+                        all_positions.extend(lst)
+                        if len(all_positions) >= total or not lst:
+                            break
+                        page += 1
+                    else:
+                        break
+                else:
+                    break
+            except Exception:
+                break
+
+    if not all_positions:
+        return jsonify({
+            'success': True,
+            'found': 0,
+            'inserted': 0,
+            'duplicated': 0,
+            'message': 'Nenhuma operação Dual Investment encontrada na Binance.',
+            'positions': []
+        })
+
+    conn = db.get_db()
+    c = conn.cursor()
+    
+    inserted = 0
+    duplicated = 0
+    inserted_ops = []
+
+    for pos in all_positions:
+        product_id = pos.get('id', pos.get('productId', ''))
+        if not product_id:
+            continue
+
+        existing = c.execute(
+            'SELECT id FROM operacoes_crypto WHERE observacoes LIKE ?',
+            (f'%productId:{product_id}%',)
+        ).fetchone()
+        
+        if existing:
+            duplicated += 1
+            continue
+
+        # ── Dados básicos ──
+        option_type = (pos.get('optionType', '') or '').upper()
+        invest_coin = (pos.get('investCoin', '') or '').upper()
+        # CALL: investCoin é o crypto vendido; PUT: exercisedCoin é o crypto comprado
+        if option_type == 'PUT':
+            underlying = (pos.get('exercisedCoin', '') or '').upper()
+        else:
+            underlying = invest_coin
+        purchase_status = pos.get('purchaseStatus', '')
+        is_settled = purchase_status == 'SETTLED'
+
+        strike_price = 0
+        try:
+            strike_price = float(pos.get('strikePrice', 0) or 0)
+        except (ValueError, TypeError):
+            pass
+
+        annual_rate = 0
+        try:
+            annual_rate = float(pos.get('apr', 0) or 0)
+        except (ValueError, TypeError):
+            pass
+
+        duration = 0
+        try:
+            duration = int(pos.get('duration', 0) or 0)
+        except (ValueError, TypeError):
+            pass
+
+        invest_amount = 0
+        try:
+            invest_amount = float(pos.get('subscriptionAmount', 0) or 0)
+        except (ValueError, TypeError):
+            pass
+
+        # ── Datas ──
+        from datetime import datetime
+
+        settle_date = pos.get('settleDate', 0)
+        delivery_date = ''
+        if isinstance(settle_date, (int, float)) and settle_date > 1e10:
+            delivery_date = datetime.fromtimestamp(settle_date / 1000).strftime('%Y-%m-%d')
+
+        purchase_end_ts = pos.get('purchaseEndTime', 0)
+        purchase_end = ''
+        if isinstance(purchase_end_ts, (int, float)) and purchase_end_ts > 1e10:
+            purchase_end = datetime.fromtimestamp(purchase_end_ts / 1000).strftime('%Y-%m-%d')
+
+        subs_time = pos.get('subscriptionTime', 0)
+        data_operacao = ''
+        if isinstance(subs_time, (int, float)) and subs_time > 1e10:
+            data_operacao = datetime.fromtimestamp(subs_time / 1000).strftime('%Y-%m-%d')
+
+        prazo = duration
+
+        # ── Observações ──
+        obs = f'productId:{product_id}'
+        if purchase_status:
+            obs += f' | status:{purchase_status}'
+
+        data_op = data_operacao if data_operacao else purchase_end
+        if not data_op:
+            try:
+                data_op = datetime.now().strftime('%Y-%m-%d')
+            except:
+                data_op = None
+
+        # ── Abertura em USDT ──
+        abertura_usd = None
+        if invest_amount > 0:
+            if invest_coin == 'USDT':
+                abertura_usd = invest_amount
+            elif strike_price > 0:
+                abertura_usd = invest_amount * strike_price
+
+        # ── Prêmio e resultado ──
+        premio_us = None
+        resultado = None
+        exercicio_status_db = None
+        is_exercised = False
+
+        if is_settled:
+            # Posição fechada: usa dados reais da liquidação
+            settle_amount = 0
+            settle_price = 0
+            try:
+                settle_amount = float(pos.get('settleAmount', 0) or 0)
+            except (ValueError, TypeError):
+                pass
+            try:
+                settle_price = float(pos.get('settlePrice', 0) or 0)
+            except (ValueError, TypeError):
+                pass
+
+            is_exercised = pos.get('isExercised', False)
+
+            if is_exercised:
+                # Exercida: comprou crypto ao strike (USDT → crypto)
+                exercicio_status_db = 'SIM'
+                if underlying == 'USDT':
+                    resultado = settle_amount - invest_amount
+                elif strike_price > 0 and settle_price > 0 and invest_amount > 0:
+                    crypto_qty = invest_amount / strike_price
+                    resultado = (strike_price - settle_price) * crypto_qty
+                # premio = premium recebido (APR * dias / 365), sempre positivo
+                premio_us = invest_amount * annual_rate * prazo / 365 if (invest_amount > 0 and annual_rate > 0 and prazo > 0) else 0
+                if invest_coin != 'USDT' and strike_price > 0:
+                    premio_us = premio_us * strike_price
+            else:
+                # Nao exercida: recebeu ativo de volta + premium
+                exercicio_status_db = 'NAO'
+                if settle_amount > 0 and invest_amount > 0:
+                    if invest_coin == 'USDT':
+                        premio_us = settle_amount - invest_amount
+                    elif settle_price > 0:
+                        premio_us = (settle_amount - invest_amount) * settle_price
+                    resultado = premio_us
+        else:
+            # Posicao aberta: estima premio pelo APR
+            if invest_amount > 0 and annual_rate > 0 and prazo > 0 and strike_price > 0:
+                premio_crypto = invest_amount * annual_rate * prazo / 365
+                premio_us = premio_crypto * strike_price if invest_coin != 'USDT' else premio_crypto
+
+        # ── Status ──
+        status_db = 'FECHADA' if is_settled else 'ABERTA'
+
+        c.execute('''
+            INSERT INTO operacoes_crypto
+                (ativo, tipo, tipo_estrategia, cotacao_atual, abertura, tae, strike,
+                 distancia, prazo, crypto, premio_us, resultado, exercicio, dias,
+                 exercicio_status, status, observacoes, data_operacao, corretora)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+        ''', (
+            underlying,
+            option_type,
+            'DUAL_INVESTMENT',
+            strike_price if strike_price > 0 else None,
+            abertura_usd,
+            annual_rate * 100 if annual_rate <= 1 else annual_rate,
+            strike_price if strike_price > 0 else None,
+            None,
+            prazo if prazo > 0 else None,
+            invest_amount if invest_amount > 0 and invest_coin != 'USDT' else (invest_amount / strike_price if invest_amount > 0 and strike_price > 0 and invest_coin == 'USDT' else None),
+            round(premio_us, 2) if premio_us else None,
+            round(resultado, 2) if resultado else None,
+            delivery_date if delivery_date else None,
+            prazo if prazo > 0 else None,
+            exercicio_status_db,
+            status_db,
+            obs,
+            data_op,
+            'BINANCE',
+        ))
+        inserted += 1
+        inserted_ops.append({
+            'productId': product_id,
+            'underlying': underlying,
+            'optionType': option_type,
+            'strike': strike_price,
+            'duration': prazo,
+            'deliveryDate': delivery_date,
+            'status': status_db,
+            'premio_us': round(premio_us, 2) if premio_us else None,
+        })
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({
+        'success': True,
+        'found': len(all_positions),
+        'inserted': inserted,
+        'duplicated': duplicated,
+        'message': f'{inserted} operacao(oes) inserida(s), {duplicated} ja existia(m).',
+        'positions': inserted_ops,
+    })
+
+
+# ─── Capturar operações Dual Investment — Streaming SSE ─────────────────────
+@crypto_bp.route('/dual-investment/stream', methods=['POST'])
+def stream_dual_investment():
+    """Busca operações Dual Investment com progresso em tempo real via SSE.
+    
+    Envia eventos: progress, coin, done, error
+    """
+    from flask import Response, stream_with_context
+    import json as _json
+
+    api_key = os.getenv('BINANCE_API_KEY', '')
+    secret = os.getenv('BINANCE_SECRET', '')
+    if not api_key or not secret:
+        return jsonify({'success': False, 'error': 'Chaves Binance nao configuradas'}), 400
+
+    base = 'https://api.binance.com'
+    headers_bin = {'X-MBX-APIKEY': api_key}
+
+    def signed_get(path, extra_params=None):
+        params = {'timestamp': int(time.time() * 1000), 'recvWindow': 30000}
+        if extra_params:
+            params.update(extra_params)
+        query, signature = _binance_sign(params, secret)
+        params['signature'] = signature
+        return requests.get(f'{base}{path}', headers=headers_bin, params=params, timeout=15)
+
+    def generate():
+        # Fase 1: buscar posições da Binance
+        yield _json.dumps({'event': 'progress', 'pct': 0, 'done': 0, 'total': 0, 'status': 'fetching', 'msg': 'Conectando a Binance...'}) + '\n'
+
+        all_positions = []
+        statuses_to_fetch = ['PURCHASE_SUCCESS', 'SETTLED']
+
+        for status in statuses_to_fetch:
+            page = 1
+            while True:
+                try:
+                    r = signed_get('/sapi/v1/dci/product/positions', {
+                        'status': status,
+                        'pageSize': 50,
+                        'pageIndex': page,
+                    })
+                    if r.status_code == 200:
+                        data = r.json()
+                        if isinstance(data, dict):
+                            lst = data.get('list', []) or data.get('rows', [])
+                            total_api = data.get('total', 0)
+                            all_positions.extend(lst)
+                            if len(all_positions) >= total_api or not lst:
+                                break
+                            page += 1
+                        else:
+                            break
+                    else:
+                        break
+                except Exception:
+                    break
+
+        if not all_positions:
+            yield _json.dumps({'event': 'done', 'found': 0, 'inserted': 0, 'duplicated': 0, 'coins': {}}) + '\n'
+            return
+
+        total = len(all_positions)
+        yield _json.dumps({'event': 'progress', 'pct': 0, 'done': 0, 'total': total, 'status': 'importing', 'msg': f'{total} operacoes encontradas'}) + '\n'
+
+        # Fase 2: importar posições uma a uma
+        conn = db.get_db()
+        c = conn.cursor()
+
+        inserted = 0
+        duplicated = 0
+        coin_counts = {}
+        done = 0
+        from datetime import datetime
+
+        for pos in all_positions:
+            product_id = pos.get('id', pos.get('productId', ''))
+            option_type = (pos.get('optionType', '') or '').upper()
+            invest_coin = (pos.get('investCoin', '') or '').upper()
+            # CALL: investCoin é o crypto vendido; PUT: exercisedCoin é o crypto comprado
+            if option_type == 'PUT':
+                underlying = (pos.get('exercisedCoin', '') or '').upper()
+            else:
+                underlying = invest_coin
+
+            if not product_id:
+                done += 1
+                pct = round((done / total) * 100)
+                yield _json.dumps({'event': 'progress', 'pct': pct, 'done': done, 'total': total, 'status': 'importing', 'coin': underlying, 'type': option_type}) + '\n'
+                continue
+
+            existing = c.execute(
+                'SELECT id FROM operacoes_crypto WHERE observacoes LIKE ?',
+                (f'%productId:{product_id}%',)
+            ).fetchone()
+
+            if existing:
+                duplicated += 1
+                done += 1
+                pct = round((done / total) * 100)
+                yield _json.dumps({'event': 'progress', 'pct': pct, 'done': done, 'total': total, 'status': 'importing', 'coin': underlying, 'type': option_type}) + '\n'
+                continue
+
+            purchase_status = pos.get('purchaseStatus', '')
+            is_settled = purchase_status == 'SETTLED'
+
+            strike_price = 0
+            try:
+                strike_price = float(pos.get('strikePrice', 0) or 0)
+            except (ValueError, TypeError):
+                pass
+
+            annual_rate = 0
+            try:
+                annual_rate = float(pos.get('apr', 0) or 0)
+            except (ValueError, TypeError):
+                pass
+
+            duration = 0
+            try:
+                duration = int(pos.get('duration', 0) or 0)
+            except (ValueError, TypeError):
+                pass
+
+            invest_amount = 0
+            try:
+                invest_amount = float(pos.get('subscriptionAmount', 0) or 0)
+            except (ValueError, TypeError):
+                pass
+
+            settle_date = pos.get('settleDate', 0)
+            delivery_date = ''
+            if isinstance(settle_date, (int, float)) and settle_date > 1e10:
+                delivery_date = datetime.fromtimestamp(settle_date / 1000).strftime('%Y-%m-%d')
+
+            purchase_end_ts = pos.get('purchaseEndTime', 0)
+            purchase_end = ''
+            if isinstance(purchase_end_ts, (int, float)) and purchase_end_ts > 1e10:
+                purchase_end = datetime.fromtimestamp(purchase_end_ts / 1000).strftime('%Y-%m-%d')
+
+            subs_time = pos.get('subscriptionTime', 0)
+            data_operacao = ''
+            if isinstance(subs_time, (int, float)) and subs_time > 1e10:
+                data_operacao = datetime.fromtimestamp(subs_time / 1000).strftime('%Y-%m-%d')
+
+            prazo = duration
+            obs = f'productId:{product_id}'
+            if purchase_status:
+                obs += f' | status:{purchase_status}'
+
+            data_op = data_operacao if data_operacao else purchase_end
+            if not data_op:
+                try:
+                    data_op = datetime.now().strftime('%Y-%m-%d')
+                except:
+                    data_op = None
+
+            abertura_usd = None
+            if invest_amount > 0:
+                if invest_coin == 'USDT':
+                    abertura_usd = invest_amount
+                elif strike_price > 0:
+                    abertura_usd = invest_amount * strike_price
+
+            premio_us = None
+            resultado = None
+            exercicio_status_db = None
+
+            if is_settled:
+                settle_amount = 0
+                settle_price = 0
+                try:
+                    settle_amount = float(pos.get('settleAmount', 0) or 0)
+                except (ValueError, TypeError):
+                    pass
+                try:
+                    settle_price = float(pos.get('settlePrice', 0) or 0)
+                except (ValueError, TypeError):
+                    pass
+                is_exercised = pos.get('isExercised', False)
+
+                if is_exercised:
+                    exercicio_status_db = 'SIM'
+                    if underlying == 'USDT':
+                        resultado = settle_amount - invest_amount
+                    elif strike_price > 0 and settle_price > 0 and invest_amount > 0:
+                        crypto_qty = invest_amount / strike_price
+                        resultado = (strike_price - settle_price) * crypto_qty
+                    # premio = premium recebido (APR * dias / 365), sempre positivo
+                    premio_us = invest_amount * annual_rate * prazo / 365 if (invest_amount > 0 and annual_rate > 0 and prazo > 0) else 0
+                    if invest_coin != 'USDT' and strike_price > 0:
+                        premio_us = premio_us * strike_price
+                else:
+                    exercicio_status_db = 'NAO'
+                    if settle_amount > 0 and invest_amount > 0:
+                        if invest_coin == 'USDT':
+                            premio_us = settle_amount - invest_amount
+                        elif settle_price > 0:
+                            premio_us = (settle_amount - invest_amount) * settle_price
+                        resultado = premio_us
+            else:
+                if invest_amount > 0 and annual_rate > 0 and prazo > 0 and strike_price > 0:
+                    premio_crypto = invest_amount * annual_rate * prazo / 365
+                    premio_us = premio_crypto * strike_price if invest_coin != 'USDT' else premio_crypto
+
+            status_db = 'FECHADA' if is_settled else 'ABERTA'
+
+            c.execute('''
+                INSERT INTO operacoes_crypto
+                    (ativo, tipo, tipo_estrategia, cotacao_atual, abertura, tae, strike,
+                     distancia, prazo, crypto, premio_us, resultado, exercicio, dias,
+                     exercicio_status, status, observacoes, data_operacao, corretora)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            ''', (
+                underlying, option_type, 'DUAL_INVESTMENT',
+                strike_price if strike_price > 0 else None,
+                abertura_usd,
+                annual_rate * 100 if annual_rate <= 1 else annual_rate,
+                strike_price if strike_price > 0 else None,
+                None, prazo if prazo > 0 else None,
+                invest_amount if invest_amount > 0 and invest_coin != 'USDT' else (invest_amount / strike_price if invest_amount > 0 and strike_price > 0 and invest_coin == 'USDT' else None),
+                round(premio_us, 2) if premio_us else None,
+                round(resultado, 2) if resultado else None,
+                delivery_date if delivery_date else None,
+                prazo if prazo > 0 else None,
+                exercicio_status_db, status_db, obs, data_op, 'BINANCE',
+            ))
+            inserted += 1
+            coin_counts[underlying] = coin_counts.get(underlying, 0) + 1
+
+            done += 1
+            pct = round((done / total) * 100)
+            evt = {
+                'event': 'progress',
+                'pct': pct,
+                'done': done,
+                'total': total,
+                'status': 'importing',
+                'coin': underlying,
+                'type': option_type,
+                'op_status': status_db,
+            }
+            yield _json.dumps(evt) + '\n'
+
+            # Pequena pausa para o frontend processar
+            if done % 5 == 0:
+                time.sleep(0.01)
+
+        conn.commit()
+        conn.close()
+
+        yield _json.dumps({
+            'event': 'done',
+            'found': total,
+            'inserted': inserted,
+            'duplicated': duplicated,
+            'coins': coin_counts,
+        }) + '\n'
+
+    return Response(
+        stream_with_context(generate()),
+        mimetype='text/event-stream',
+        headers={
+            'Cache-Control': 'no-cache',
+            'X-Accel-Buffering': 'no',
+        }
+    )
 
 
 # ─── Listar todas ────────────────────────────────────────────────────────────
@@ -464,3 +996,339 @@ def delete_crypto(id):
     conn.commit()
     conn.close()
     return jsonify({'success': True})
+
+
+# ─── Saldo Binance ────────────────────────────────────────────────────────────
+import os, time, hashlib, hmac
+from urllib.parse import urlencode
+
+def _binance_sign(params, secret):
+    query = urlencode(params)
+    signature = hmac.new(secret.encode(), query.encode(), hashlib.sha256).hexdigest()
+    return query, signature
+
+@crypto_bp.route('/balance', methods=['GET'])
+def binance_balance():
+    """Retorna saldo total da conta Binance (todas as carteiras acessíveis via API).
+    
+    NOTA: A API da Binance NÃO fornece saldo de Dual Investment/Advanced Earn.
+    O saldo retornado é: Spot + Earn Flexible + Earn Locked + Funding.
+    Para incluir Dual Investment, configure manualmente em Configurações."""
+    api_key = os.getenv('BINANCE_API_KEY', '')
+    secret = os.getenv('BINANCE_SECRET', '')
+    if not api_key or not secret:
+        return jsonify({'error': 'Chaves Binance não configuradas'}), 400
+
+    base = 'https://api.binance.com'
+    headers = {'X-MBX-APIKEY': api_key}
+
+    def signed_params():
+        return {'timestamp': int(time.time() * 1000), 'recvWindow': 30000}
+
+    def signed_get(path):
+        p = signed_params()
+        query, sig = _binance_sign(p, secret)
+        p['signature'] = sig
+        return requests.get(f'{base}{path}', headers=headers, params=p, timeout=15)
+
+    def signed_post(path):
+        p = signed_params()
+        query, sig = _binance_sign(p, secret)
+        p['signature'] = sig
+        return requests.post(f'{base}{path}', headers=headers, data=p, timeout=15)
+
+    # 1) Busca cotações atuais
+    prices = {}
+    try:
+        r_price = requests.get(f'{base}/api/v3/ticker/price', timeout=10)
+        if r_price.status_code == 200:
+            for p in r_price.json():
+                prices[p['symbol']] = float(p['price'])
+    except Exception:
+        pass
+
+    all_assets = {}
+
+    # 2) Spot Account
+    try:
+        r = signed_get('/api/v3/account')
+        if r.status_code == 200:
+            for b in r.json().get('balances', []):
+                free = float(b.get('free', 0)) + float(b.get('locked', 0))
+                if free > 0:
+                    all_assets[b['asset']] = all_assets.get(b['asset'], 0) + free
+    except Exception:
+        pass
+
+    # 3) Simple Earn Flexible
+    try:
+        r = signed_get('/sapi/v1/simple-earn/flexible/position')
+        if r.status_code == 200:
+            for row in r.json().get('rows', []):
+                amt = float(row.get('totalAmount', 0))
+                if amt > 0:
+                    all_assets[row['asset']] = all_assets.get(row['asset'], 0) + amt
+    except Exception:
+        pass
+
+    # 4) Simple Earn Locked
+    try:
+        r = signed_get('/sapi/v1/simple-earn/locked/position')
+        if r.status_code == 200:
+            for row in r.json().get('rows', []):
+                amt = float(row.get('totalAmount', 0))
+                if amt > 0:
+                    all_assets[row['asset']] = all_assets.get(row['asset'], 0) + amt
+    except Exception:
+        pass
+
+    # 5) Funding Wallet (requer POST)
+    try:
+        r = signed_post('/sapi/v1/asset/get-funding-asset')
+        if r.status_code == 200:
+            for row in r.json():
+                amt = float(row.get('free', 0)) + float(row.get('locked', 0))
+                if amt > 0:
+                    all_assets[row['asset']] = all_assets.get(row['asset'], 0) + amt
+    except Exception:
+        pass
+
+    # 6) Converte tudo para USDT
+    total_usdt = 0.0
+    for asset, amount in all_assets.items():
+        if asset in ('USDT', 'USDC', 'BUSD', 'FDUSD'):
+            total_usdt += amount
+        elif f'{asset}USDT' in prices:
+            total_usdt += amount * prices[f'{asset}USDT']
+
+    # 7) Salva no banco
+    if total_usdt > 0:
+        try:
+            conn = db.get_db()
+            conn.execute('''INSERT INTO configuracoes (chave, valor, updated_at) VALUES (?,?,?)
+                ON CONFLICT(chave) DO UPDATE SET valor=?, updated_at=?''',
+                ('saldoCrypto', str(round(total_usdt, 2)),
+                 datetime.now().isoformat(),
+                 str(round(total_usdt, 2)),
+                 datetime.now().isoformat()))
+            conn.commit()
+            conn.close()
+        except Exception:
+            pass
+
+    return jsonify({
+        'success': True,
+        'total_usdt': round(total_usdt, 2),
+    })
+
+
+@crypto_bp.route('/balance/test', methods=['GET'])
+def binance_balance_test():
+    """Endpoint de diagnóstico - testa múltiplas APIs da Binance."""
+    api_key = os.getenv('BINANCE_API_KEY', '')
+    secret = os.getenv('BINANCE_SECRET', '')
+    if not api_key or not secret:
+        return jsonify({'error': 'Chaves não configuradas', 'api_key_set': bool(api_key), 'secret_set': bool(secret)})
+
+    base = 'https://api.binance.com'
+    headers = {'X-MBX-APIKEY': api_key}
+
+    def signed_get(path):
+        params = {'timestamp': int(time.time() * 1000), 'recvWindow': 30000}
+        query, signature = _binance_sign(params, secret)
+        params['signature'] = signature
+        return requests.get(f'{base}{path}', headers=headers, params=params, timeout=15)
+
+    result = {'api_key_prefix': api_key[:8] + '...', 'secret_set': bool(secret)}
+
+    # 1) Account Spot
+    try:
+        r = signed_get('/api/v3/account')
+        result['account_status'] = r.status_code
+        if r.status_code == 200:
+            account = r.json()
+            non_zero = [b for b in account.get('balances', []) if float(b.get('free', 0)) + float(b.get('locked', 0)) > 0]
+            result['spot_assets'] = [{'asset': b['asset'], 'free': b['free'], 'locked': b['locked']} for b in non_zero[:30]]
+    except Exception as e:
+        result['account_error'] = str(e)
+
+    # 2) Total balance - POST (método correto)
+    try:
+        p = {'timestamp': int(time.time() * 1000), 'recvWindow': 30000}
+        query, sig = _binance_sign(p, secret)
+        p['signature'] = sig
+        r = requests.post(f'{base}/sapi/v1/asset/get-total-balance', headers=headers, data=p, timeout=15)
+        result['total_balance_status'] = r.status_code
+        if r.status_code == 200:
+            data = r.json()
+            result['totalWalletBalance'] = data.get('totalWalletBalance')
+            result['totalMarginBalance'] = data.get('totalMarginBalance')
+        else:
+            result['total_balance_error'] = r.text[:300]
+    except Exception as e:
+        result['total_balance_error'] = str(e)
+
+    # 3) Fund value (outra API de saldo total)
+    try:
+        p = {'timestamp': int(time.time() * 1000), 'recvWindow': 30000}
+        query, sig = _binance_sign(p, secret)
+        p['signature'] = sig
+        r = requests.post(f'{base}/sapi/v1/asset/get-fund-value', headers=headers, data=p, timeout=15)
+        result['fund_value_status'] = r.status_code
+        if r.status_code == 200:
+            data = r.json()
+            result['fund_value'] = data
+    except Exception as e:
+        result['fund_value_error'] = str(e)
+
+    # 3) Simple Earn Flexible
+    try:
+        r = signed_get('/sapi/v1/simple-earn/flexible/position')
+        result['simple_earn_flexible_status'] = r.status_code
+        if r.status_code == 200:
+            data = r.json()
+            result['simple_earn_flexible'] = data.get('rows', [])[:10]
+    except Exception as e:
+        result['simple_earn_flexible_error'] = str(e)
+
+    # 4) Simple Earn Locked
+    try:
+        r = signed_get('/sapi/v1/simple-earn/locked/position')
+        result['simple_earn_locked_status'] = r.status_code
+        if r.status_code == 200:
+            data = r.json()
+            result['simple_earn_locked'] = data.get('rows', [])[:10]
+    except Exception as e:
+        result['simple_earn_locked_error'] = str(e)
+
+    # 5) Funding wallet
+    try:
+        r = signed_get('/sapi/v1/asset/get-funding-asset')
+        result['funding_status'] = r.status_code
+        if r.status_code == 200:
+            data = r.json()
+            result['funding_assets'] = [{'asset': a['asset'], 'free': a['free'], 'locked': a['locked']} for a in data[:20]]
+    except Exception as e:
+        result['funding_error'] = str(e)
+
+    # 6) Savings account (Earn)
+    try:
+        r = signed_get('/sapi/v1/savings/product/list')
+        result['savings_product_status'] = r.status_code
+        if r.status_code == 200:
+            data = r.json()
+            result['savings_product_count'] = len(data) if isinstance(data, list) else 0
+    except Exception as e:
+        result['savings_product_error'] = str(e)
+
+    # 7) Dual Investment positions (v3 API)
+    try:
+        r = signed_get('/sapi/v1/dual-investment/position')
+        result['dual_investment_v3_status'] = r.status_code
+        if r.status_code == 200:
+            data = r.json()
+            result['dual_investment_positions'] = data.get('rows', [])[:10]
+    except Exception as e:
+        result['dual_investment_v3_error'] = str(e)
+
+    # 8) Margin account
+    try:
+        r = signed_get('/sapi/v1/margin/account')
+        result['margin_status'] = r.status_code
+        if r.status_code == 200:
+            data = r.json()
+            result['margin_assets'] = [{'asset': a['asset'], 'free': a['free'], 'locked': a['locked'], 'borrowed': a['borrowed'], 'interest': a['interest']} for a in data.get('userAssets', []) if float(a.get('free', 0)) + float(a.get('locked', 0)) + float(a.get('borrowed', 0)) > 0][:20]
+    except Exception as e:
+        result['margin_error'] = str(e)
+
+    # 9) Futures account (USDT-M)
+    try:
+        r = signed_get('/fapi/v2/account')
+        result['futures_usdt_status'] = r.status_code
+        if r.status_code == 200:
+            data = r.json()
+            result['futures_usdt_assets'] = [{'asset': a['asset'], 'walletBalance': a['walletBalance'], 'availableBalance': a['availableBalance']} for a in data.get('assets', []) if float(a.get('walletBalance', 0)) > 0][:20]
+    except Exception as e:
+        result['futures_usdt_error'] = str(e)
+
+    # 10) Futures account (COIN-M)
+    try:
+        r = signed_get('/dapi/v1/account')
+        result['futures_coin_status'] = r.status_code
+        if r.status_code == 200:
+            data = r.json()
+            result['futures_coin_assets'] = [{'asset': a['asset'], 'walletBalance': a['walletBalance'], 'availableBalance': a['availableBalance']} for a in data.get('assets', []) if float(a.get('walletBalance', 0)) > 0][:20]
+    except Exception as e:
+        result['futures_coin_error'] = str(e)
+
+    # 11) Launchpool
+    try:
+        r = signed_get('/sapi/v1/launchpool/userPosition')
+        result['launchpool_status'] = r.status_code
+        if r.status_code == 200:
+            data = r.json()
+            result['launchpool_positions'] = data.get('rows', [])[:10]
+    except Exception as e:
+        result['launchpool_error'] = str(e)
+
+    # 12) Auto-Invest
+    try:
+        r = signed_get('/sapi/v1/lending/auto-invest/plan/list')
+        result['auto_invest_status'] = r.status_code
+        if r.status_code == 200:
+            data = r.json()
+            result['auto_invest_plans'] = data.get('data', [])[:10]
+    except Exception as e:
+        result['auto_invest_error'] = str(e)
+
+    # 13) Convert/Trade history (para ver se há BTC/ETH recentes)
+    try:
+        r = signed_get('/sapi/v1/convert/tradeFlow')
+        result['convert_history_status'] = r.status_code
+        if r.status_code == 200:
+            data = r.json()
+            result['convert_trades'] = data.get('list', [])[:10]
+    except Exception as e:
+        result['convert_history_error'] = str(e)
+
+    # 14) Dual Investment v1/v2 (endpoint antigo)
+    try:
+        r = signed_get('/sapi/v1/dual-investment/positions')
+        result['dual_investment_positions_status'] = r.status_code
+        if r.status_code == 200:
+            data = r.json()
+            result['dual_investment_positions'] = data.get('rows', [])[:10]
+    except Exception as e:
+        result['dual_investment_positions_error'] = str(e)
+
+    # 15) ETH Staking (ETH 2.0)
+    try:
+        r = signed_get('/sapi/v1/eth-staking/eth/history/rateHistory')
+        result['eth_staking_status'] = r.status_code
+        if r.status_code == 200:
+            data = r.json()
+            result['eth_staking_data'] = data
+    except Exception as e:
+        result['eth_staking_error'] = str(e)
+
+    # 16) Staking positions
+    try:
+        r = signed_get('/sapi/v1/staking/position')
+        result['staking_status'] = r.status_code
+        if r.status_code == 200:
+            data = r.json()
+            result['staking_positions'] = data[:10]
+    except Exception as e:
+        result['staking_error'] = str(e)
+
+    # 17) Asset transfer history (pode mostrar movimentos de BTC/ETH)
+    try:
+        r = signed_get('/sapi/v1/asset/transfer')
+        result['asset_transfer_status'] = r.status_code
+        if r.status_code == 200:
+            data = r.json()
+            result['asset_transfers'] = data.get('rows', [])[:10]
+    except Exception as e:
+        result['asset_transfer_error'] = str(e)
+
+    return jsonify(result)

@@ -973,28 +973,39 @@ ${op.observacoes ? `<div class="mdc-info-row" style="flex-direction:column;align
     }
 
     // ─── Ponto de entrada ────────────────────────────────────────────────────
+    let _openPending = null;
+
     async function open(opId) {
         if (!opId) return;
-        const ops = window.cryptoOperacoes || [];
-        const op  = ops.find(o => String(o.id) === String(opId));
-        if (!op) { console.warn('[ModalAnalise] Operação #' + opId + ' não encontrada'); return; }
+        if (_openPending === opId) return;
+        _openPending = opId;
+        try {
+            const ops = window.cryptoOperacoes || [];
+            const op  = ops.find(o => String(o.id) === String(opId));
+            if (!op) { console.warn('[ModalAnalise] Operação #' + opId + ' não encontrada'); return; }
 
-        const loaded = await _ensureLoaded();
-        if (!loaded) { console.error('[ModalAnalise] Falha ao carregar template'); return; }
+            const loaded = await _ensureLoaded();
+            if (!loaded) { console.error('[ModalAnalise] Falha ao carregar template'); return; }
 
-        _wireRefresh(op);
+            _wireRefresh(op);
 
-        const modalEl = document.getElementById(MODAL_ID);
-        modalEl.addEventListener('hidden.bs.modal', function () {
-            if (_macCountdownTimer) { clearInterval(_macCountdownTimer); _macCountdownTimer = null; }
-        }, { once: true });
+            const modalEl = document.getElementById(MODAL_ID);
+            modalEl.addEventListener('hidden.bs.modal', function () {
+                if (_macCountdownTimer) { clearInterval(_macCountdownTimer); _macCountdownTimer = null; }
+            }, { once: true });
 
-        new bootstrap.Modal(modalEl).show();
+            const existing = bootstrap.Modal.getInstance(modalEl);
+            if (existing) existing.dispose();
 
-        // Renderiza após o modal estar visível (evita bug de canvas com display:none)
-        modalEl.addEventListener('shown.bs.modal', function () {
-            _renderAll(op);
-        }, { once: true });
+            new bootstrap.Modal(modalEl).show();
+
+            // Renderiza após o modal estar visível (evita bug de canvas com display:none)
+            modalEl.addEventListener('shown.bs.modal', function () {
+                _renderAll(op);
+            }, { once: true });
+        } finally {
+            _openPending = null;
+        }
     }
 
     window.ModalAnaliseCrypto = { open: open };

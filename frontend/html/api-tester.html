@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Tester - Controle Operações</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta17/dist/css/tabler.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta17/dist/css/tabler-vendors.min.css">
+    <style>
+        body { background: #0f172a; color: #e2e8f0; font-family: 'JetBrains Mono', monospace; }
+        .card { background: #1e293b; border: 1px solid #334155; }
+        .form-control, .form-select { background: #0f172a; border-color: #475569; color: #e2e8f0; }
+        .form-control:focus, .form-select:focus { background: #0f172a; color: #e2e8f0; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.25); }
+        .btn-primary { background: #3b82f6; border-color: #3b82f6; }
+        .btn-primary:hover { background: #2563eb; }
+        .btn-success { background: #22c55e; border-color: #22c55e; }
+        .btn-success:hover { background: #16a34a; }
+        .btn-warning { background: #f59e0b; border-color: #f59e0b; color: #000; }
+        #response { 
+            background: #0f172a; border: 1px solid #475569; border-radius: 8px; 
+            padding: 16px; min-height: 300px; max-height: 600px; overflow: auto;
+            font-size: 12px; white-space: pre-wrap; word-break: break-all;
+        }
+        .method-badge { 
+            display: inline-block; padding: 4px 8px; border-radius: 4px; 
+            font-weight: bold; font-size: 12px; min-width: 50px; text-align: center;
+        }
+        .method-GET { background: #22c55e33; color: #22c55e; }
+        .method-POST { background: #3b82f633; color: #3b82f6; }
+        .method-PUT { background: #f59e0b33; color: #f59e0b; }
+        .method-DELETE { background: #ef444433; color: #ef4444; }
+        .status-ok { color: #22c55e; }
+        .status-error { color: #ef4444; }
+        .quick-btn { margin: 4px; }
+        pre { margin: 0; }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+        <div class="page-body">
+            <div class="container-xl">
+                <div class="page-header d-print-none mb-4">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h2 class="page-title">API Tester</h2>
+                            <div class="text-muted">Teste endpoints do Controle Operações</div>
+                        </div>
+                        <div class="col-auto">
+                            <a href="crypto.html" class="btn btn-secondary">← Voltar ao Dashboard</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Request -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3 class="card-title">Requisição</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3 mb-3">
+                            <div class="col-auto">
+                                <select class="form-select" id="method" style="min-width:100px;">
+                                    <option value="GET">GET</option>
+                                    <option value="POST">POST</option>
+                                    <option value="PUT">PUT</option>
+                                    <option value="DELETE">DELETE</option>
+                                </select>
+                            </div>
+                            <div class="col">
+                                <input type="text" class="form-control" id="url" 
+                                       placeholder="/api/crypto/balance/test" 
+                                       value="/api/crypto/balance/test">
+                            </div>
+                            <div class="col-auto">
+                                <button class="btn btn-primary" id="btnSend" onclick="sendRequest()">
+                                    Enviar
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Body (para POST/PUT) -->
+                        <div class="mb-3" id="bodyContainer" style="display:none;">
+                            <label class="form-label">Body (JSON)</label>
+                            <textarea class="form-control" id="body" rows="4" placeholder='{"key": "value"}'></textarea>
+                        </div>
+
+                        <!-- Quick Access -->
+                        <div class="mt-3">
+                            <label class="form-label text-muted">Acesso Rápido:</label>
+                            <div class="d-flex flex-wrap">
+                                <button class="btn btn-sm btn-outline-secondary quick-btn" onclick="setEndpoint('GET', '/api/crypto/balance/test')">
+                                    Balance Test
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary quick-btn" onclick="setEndpoint('GET', '/api/crypto/balance')">
+                                    Balance
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary quick-btn" onclick="setEndpoint('GET', '/api/crypto')">
+                                    Listar Operações
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary quick-btn" onclick="setEndpoint('POST', '/api/crypto/dual-investment/sync')">
+                                    Sync DI
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary quick-btn" onclick="setEndpoint('GET', '/api/crypto/dual-investment')">
+                                    DI Products
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary quick-btn" onclick="setEndpoint('GET', '/api/crypto/estrategias')">
+                                    Estratégias
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Response -->
+                <div class="card">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                        <h3 class="card-title mb-0">Resposta</h3>
+                        <div id="statusBadge"></div>
+                    </div>
+                    <div class="card-body">
+                        <div id="response"><span class="text-muted">Clique em "Enviar" para executar a requisição...</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+
+        function setEndpoint(method, url) {
+            document.getElementById('method').value = method;
+            document.getElementById('url').value = url;
+            document.getElementById('bodyContainer').style.display = 
+                (method === 'POST' || method === 'PUT') ? 'block' : 'none';
+            sendRequest();
+        }
+
+        async function sendRequest() {
+            const method = document.getElementById('method').value;
+            const url = document.getElementById('url').value;
+            const body = document.getElementById('body').value;
+            const responseEl = document.getElementById('response');
+            const statusBadge = document.getElementById('statusBadge');
+            const btn = document.getElementById('btnSend');
+
+            if (!url) {
+                responseEl.innerHTML = '<span class="text-danger">Digite um endpoint válido.</span>';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="spinner-border spinner-border-sm me-1"></i> Enviando...';
+            responseEl.innerHTML = '<span class="text-muted">Executando...</span>';
+            statusBadge.innerHTML = '';
+
+            const startTime = Date.now();
+
+            try {
+                const options = {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                };
+
+                if ((method === 'POST' || method === 'PUT') && body) {
+                    options.body = body;
+                }
+
+                const fullUrl = API_BASE + url;
+                const res = await fetch(fullUrl, options);
+                const elapsed = Date.now() - startTime;
+                const data = await res.json();
+
+                const statusClass = res.ok ? 'status-ok' : 'status-error';
+                statusBadge.innerHTML = `<span class="${statusClass}">${res.status} ${res.statusText}</span> <span class="text-muted">(${elapsed}ms)</span>`;
+
+                responseEl.innerHTML = syntaxHighlight(JSON.stringify(data, null, 2));
+            } catch (e) {
+                statusBadge.innerHTML = '<span class="status-error">Erro</span>';
+                responseEl.innerHTML = `<span class="text-danger">Erro: ${e.message}</span>\n\nPossíveis causas:\n- Servidor Flask não está rodando\n- Endpoint não existe\n- Erro de CORS`;
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Enviar';
+            }
+        }
+
+        function syntaxHighlight(json) {
+            json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                let cls = 'color: #a5d6ff'; // number
+                if (/^"/.test(match)) {
+                    if (/:$/.test(match)) {
+                        cls = 'color: #7ee787'; // key
+                    } else {
+                        cls = 'color: #ffa657'; // string
+                    }
+                } else if (/true|false/.test(match)) {
+                    cls = 'color: #ff7b72'; // boolean
+                } else if (/null/.test(match)) {
+                    cls = 'color: #ffa657'; // null
+                }
+                return '<span style="' + cls + '">' + match + '</span>';
+            });
+        }
+
+        // Mostrar/esconder body baseado no method
+        document.getElementById('method').addEventListener('change', function() {
+            document.getElementById('bodyContainer').style.display = 
+                (this.value === 'POST' || this.value === 'PUT') ? 'block' : 'none';
+        });
+
+        // Executar ao pressionar Enter
+        document.getElementById('url').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') sendRequest();
+        });
+    </script>
+</body>
+</html>

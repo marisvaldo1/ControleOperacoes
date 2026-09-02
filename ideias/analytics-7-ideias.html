@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>7 Ideias — Analytics com Gráficos + Accordions</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0d1117; --surface: #161b22; --border: rgba(255,255,255,.06);
+    --text: #c9d1d9; --muted: #8b949e; --accent: #fbbf24;
+    --green: #4ade80; --red: #f87171; --blue: #60a5fa; --purple: #a78bfa;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, 'Segoe UI', sans-serif; }
+
+  /* Navegação entre ideias */
+  .ideia-nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(13,17,23,.95); backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  }
+  .ideia-nav a {
+    padding: 6px 14px; border-radius: 6px; font-size: 13px; font-weight: 600;
+    color: var(--muted); text-decoration: none; border: 1px solid var(--border);
+    transition: all .15s;
+  }
+  .ideia-nav a:hover, .ideia-nav a.active {
+    color: var(--accent); border-color: var(--accent); background: rgba(251,191,36,.08);
+  }
+  .ideia-nav .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .05em; margin-right: 8px; }
+
+  /* Cada ideia */
+  .ideia-section {
+    max-width: 1200px; margin: 0 auto; padding: 40px 24px 60px;
+    border-bottom: 1px solid var(--border);
+  }
+  .ideia-header {
+    display: flex; align-items: baseline; gap: 12px; margin-bottom: 24px;
+  }
+  .ideia-num {
+    font-size: 14px; font-weight: 700; color: var(--accent);
+    background: rgba(251,191,36,.12); padding: 4px 10px; border-radius: 20px;
+  }
+  .ideia-title { font-size: 22px; font-weight: 700; }
+  .ideia-desc { font-size: 13px; color: var(--muted); margin: -16px 0 24px 0; line-height: 1.5; }
+
+  /* KPIs genéricos */
+  .kpi-row { display: grid; gap: 12px; margin-bottom: 20px; }
+  .kpi-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px; text-align: center;
+  }
+  .kpi-card .label { font-size: 11px; text-transform: uppercase; color: var(--muted); letter-spacing: .04em; }
+  .kpi-card .value { font-size: 26px; font-weight: 700; margin-top: 4px; }
+
+  /* Chart wrappers */
+  .chart-box {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px; position: relative;
+  }
+  .chart-box h3 { font-size: 13px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+  .chart-box canvas { width: 100% !important; }
+
+  /* Accordion genérico */
+  .accordion { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-top: 20px; }
+  .acc-header {
+    background: var(--surface); padding: 14px 18px; cursor: pointer;
+    display: flex; justify-content: space-between; align-items: center;
+    font-weight: 600; font-size: 14px; border-bottom: 1px solid var(--border);
+    transition: background .15s;
+  }
+  .acc-header:hover { background: rgba(255,255,255,.03); }
+  .acc-header .arrow { transition: transform .2s; color: var(--muted); }
+  .acc-header.open .arrow { transform: rotate(180deg); }
+  .acc-body { display: none; padding: 16px 18px; background: var(--surface); font-size: 13px; color: var(--muted); }
+  .acc-body.show { display: block; }
+</style>
+</head>
+<body>
+
+<!-- Navegação -->
+<nav class="ideia-nav">
+  <span class="label">Ideias:</span>
+  <a href="#ideia1">1 Bento</a>
+  <a href="#ideia2">2 Full-Width</a>
+  <a href="#ideia3">3 2×2 Grid</a>
+  <a href="#ideia4">4 Sidebar</a>
+  <a href="#ideia5">5 Tabs</a>
+  <a href="#ideia6">6 Magazine</a>
+  <a href="#ideia7">7 Compact</a>
+</nav>
+
+<!-- ════════════════════════════════════════════════════════════════════════════ -->
+<!-- IDEIA 1 — BENTO GRID -->
+<!-- ════════════════════════════════════════════════════════════════════════════ -->
+<section class="ideia-section" id="ideia1">
+  <div class="ideia-header"><span class="ideia-num">1</span><span class="ideia-title">Bento Grid</span></div>
+  <p class="ideia-desc">Layout em grade desigual (bento). Cards grandes para os gráficos principais, cards menores para KPIs e donuts. Efeito visual moderno, aproveita bem o espaço.</p>
+
+  <div class="kpi-row" style="grid-template-columns: repeat(4, 1fr);">
+    <div class="kpi-card"><div class="label">Prêmios Totais</div><div class="value" style="color:var(--accent)">$339.36</div></div>
+    <div class="kpi-card"><div class="label">Prêmio Médio/Op</div><div class="value" style="color:var(--accent)">$16.16</div></div>
+    <div class="kpi-card"><div class="label">Operações</div><div class="value" style="color:var(--blue)">21</div></div>
+    <div class="kpi-card"><div class="label">Win Rate</div><div class="value" style="color:var(--green)">100%</div></div>
+  </div>
+
+  <div style="display:grid; grid-template-columns: 2fr 1fr; grid-template-rows: auto auto; gap:12px;">
+    <div class="chart-box" style="grid-row: span 2;">
+      <h3>📈 Evolução de Prêmios</h3>
+      <canvas id="c1-evo" height="280"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3>📊 Distribuição (Tipo)</h3>
+      <canvas id="c1-donut" height="160"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3>🏢 Por Corretora</h3>
+      <canvas id="c1-corretora" height="160"></canvas>
+    </div>
+  </div>
+
+  <div class="accordion" style="margin-top:20px;">
+    <div class="acc-header" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('show')">Operações <span class="arrow">▼</span></div>
+    <div class="acc-body">Lista de operações detalhada...</div>
+  </div>
+  <div class="accordion">
+    <div class="acc-header" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('show')">Resultados Mensais e Meta <span class="arrow">▼</span></div>
+    <div class="acc-body">Conteúdo mensal...</div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════════════ -->
+<!-- IDEIA 2 — FULL WIDTH STACKED -->
+<!-- ════════════════════════════════════════════════════════════════════════════ -->
+<section class="ideia-section" id="ideia2">
+  <div class="ideia-header"><span class="ideia-num">2</span><span class="ideia-title">Full-Width Stacked</span></div>
+  <p class="ideia-desc">Cada gráfico ocupa a largura total. Ideal para gráficos detalhados com mais dados. KPIs em linha, gráficos em pilha vertical.</p>
+
+  <div class="kpi-row" style="grid-template-columns: repeat(4, 1fr);">
+    <div class="kpi-card"><div class="label">Prêmios Totais</div><div class="value" style="color:var(--accent)">$339.36</div></div>
+    <div class="kpi-card"><div class="label">Prêmio Médio/Op</div><div class="value" style="color:var(--accent)">$16.16</div></div>
+    <div class="kpi-card"><div class="label">Operações</div><div class="value" style="color:var(--blue)">21</div></div>
+    <div class="kpi-card"><div class="label">Win Rate</div><div class="value" style="color:var(--green)">100%</div></div>
+  </div>
+
+  <div class="chart-box">
+    <h3>📈 Evolução de Prêmios Acumulados</h3>
+    <canvas id="c2-evo" height="200"></canvas>
+  </div>
+
+  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:12px;">
+    <div class="chart-box">
+      <h3>🏢 Performance por Corretora</h3>
+      <canvas id="c2-corretora" height="180"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3>📊 Ganhos vs Perdas</h3>
+      <canvas id="c2-ganhos" height="180"></canvas>
+    </div>
+  </div>
+
+  <div class="accordion" style="margin-top:20px;">
+    <div class="acc-header" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('show')">Operações <span class="arrow">▼</span></div>
+    <div class="acc-body">Lista de operações detalhada...</div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════════════ -->
+<!-- IDEIA 3 — 2×2 GRID SIMÉTRICO -->
+<!-- ════════════════════════════════════════════════════════════════════════════ -->
+<section class="ideia-section" id="ideia3">
+  <div class="ideia-header"><span class="ideia-num">3</span><span class="ideia-title">2×2 Grid Simétrico</span></div>
+  <p class="ideia-desc">Grade 2×2 com todos os gráficos do mesmo tamanho. Simples, equilibrado, fácil de ler. Cada gráfico tem mesmo peso visual.</p>
+
+  <div class="kpi-row" style="grid-template-columns: repeat(4, 1fr);">
+    <div class="kpi-card"><div class="label">Prêmios Totais</div><div class="value" style="color:var(--accent)">$339.36</div></div>
+    <div class="kpi-card"><div class="label">Prêmio Médio/Op</div><div class="value" style="color:var(--accent)">$16.16</div></div>
+    <div class="kpi-card"><div class="label">Operações</div><div class="value" style="color:var(--blue)">21</div></div>
+    <div class="kpi-card"><div class="label">Win Rate</div><div class="value" style="color:var(--green)">100%</div></div>
+  </div>
+
+  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+    <div class="chart-box">
+      <h3>📈 Evolução de Prêmios</h3>
+      <canvas id="c3-evo" height="200"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3>🏢 Performance por Corretora</h3>
+      <canvas id="c3-corretora" height="200"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3>📊 Distribuição (Tipo)</h3>
+      <canvas id="c3-donut" height="200"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3>📊 Ganhos vs Perdas</h3>
+      <canvas id="c3-ganhos" height="200"></canvas>
+    </div>
+  </div>
+
+  <div class="accordion" style="margin-top:20px;">
+    <div class="acc-header" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('show')">Operações <span class="arrow">▼</span></div>
+    <div class="acc-body">Lista de operações detalhada...</div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════════════ -->
+<!-- IDEIA 4 — SIDEBAR + CHARTS -->
+<!-- ════════════════════════════════════════════════════════════════════════════ -->
+<section class="ideia-section" id="ideia4">
+  <div class="ideia-header"><span class="ideia-num">4</span><span class="ideia-title">Sidebar + Charts</span></div>
+  <p class="ideia-desc">KPIs e donuts em coluna lateral esquerda, gráficos maiores à direita. Bom para telas largas, mantém KPIs sempre visíveis.</p>
+
+  <div style="display:grid; grid-template-columns: 280px 1fr; gap:16px;">
+    <!-- Sidebar -->
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <div class="kpi-card"><div class="label">Prêmios Totais</div><div class="value" style="color:var(--accent)">$339.36</div></div>
+      <div class="kpi-card"><div class="label">Prêmio Médio/Op</div><div class="value" style="color:var(--accent)">$16.16</div></div>
+      <div class="kpi-card"><div class="label">Operações</div><div class="value" style="color:var(--blue)">21</div></div>
+      <div class="kpi-card"><div class="label">Win Rate</div><div class="value" style="color:var(--green)">100%</div></div>
+      <div class="chart-box">
+        <h3>📊 Distribuição</h3>
+        <canvas id="c4-donut" height="150"></canvas>
+      </div>
+    </div>
+    <!-- Charts -->
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <div class="chart-box">
+        <h3>📈 Evolução de Prêmios</h3>
+        <canvas id="c4-evo" height="200"></canvas>
+      </div>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+        <div class="chart-box">
+          <h3>🏢 Por Corretora</h3>
+          <canvas id="c4-corretora" height="160"></canvas>
+        </div>
+        <div class="chart-box">
+          <h3>📊 Ganhos vs Perdas</h3>
+          <canvas id="c4-ganhos" height="160"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="accordion" style="margin-top:20px;">
+    <div class="acc-header" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('show')">Operações <span class="arrow">▼</span></div>
+    <div class="acc-body">Lista de operações detalhada...</div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════════════ -->
+<!-- IDEIA 5 — TABS -->
+<!-- ════════════════════════════════════════════════════════════════════════════ -->
+<section class="ideia-section" id="ideia5">
+  <div class="ideia-header"><span class="ideia-num">5</span><span class="ideia-title">Tabs de Gráficos</span></div>
+  <p class="ideia-desc">Gráficos organizados em abas. Cada aba mostra um aspecto diferente. Reduz scroll, mantém a tela limpa.</p>
+
+  <div class="kpi-row" style="grid-template-columns: repeat(4, 1fr);">
+    <div class="kpi-card"><div class="label">Prêmios Totais</div><div class="value" style="color:var(--accent)">$339.36</div></div>
+    <div class="kpi-card"><div class="label">Prêmio Médio/Op</div><div class="value" style="color:var(--accent)">$16.16</div></div>
+    <div class="kpi-card"><div class="label">Operações</div><div class="value" style="color:var(--blue)">21</div></div>
+    <div class="kpi-card"><div class="label">Win Rate</div><div class="value" style="color:var(--green)">100%</div></div>
+  </div>
+
+  <div style="border:1px solid var(--border); border-radius:10px; overflow:hidden;">
+    <div style="display:flex; background:var(--surface); border-bottom:1px solid var(--border);">
+      <button onclick="showTab5(this,'t5-evo')" style="flex:1;padding:12px;background:rgba(251,191,36,.08);border:none;color:var(--accent);font-weight:600;font-size:13px;cursor:pointer;border-right:1px solid var(--border);">📈 Evolução</button>
+      <button onclick="showTab5(this,'t5-dist')" style="flex:1;padding:12px;background:transparent;border:none;color:var(--muted);font-weight:600;font-size:13px;cursor:pointer;border-right:1px solid var(--border);">📊 Distribuição</button>
+      <button onclick="showTab5(this,'t5-ganhos')" style="flex:1;padding:12px;background:transparent;border:none;color:var(--muted);font-weight:600;font-size:13px;cursor:pointer;">💰 Ganhos vs Perdas</button>
+    </div>
+    <div id="t5-evo" style="padding:16px;"><canvas id="c5-evo" height="220"></canvas></div>
+    <div id="t5-dist" style="padding:16px;display:none;">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div><canvas id="c5-donut" height="200"></canvas></div>
+        <div><canvas id="c5-corretora" height="200"></canvas></div>
+      </div>
+    </div>
+    <div id="t5-ganhos" style="padding:16px;display:none;"><canvas id="c5-ganhos" height="220"></canvas></div>
+  </div>
+
+  <div class="accordion" style="margin-top:20px;">
+    <div class="acc-header" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('show')">Operações <span class="arrow">▼</span></div>
+    <div class="acc-body">Lista de operações detalhada...</div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════════════ -->
+<!-- IDEIA 6 — MAGAZINE -->
+<!-- ════════════════════════════════════════════════════════════════════════════ -->
+<section class="ideia-section" id="ideia6">
+  <div class="ideia-header"><span class="ideia-num">6</span><span class="ideia-title">Magazine Layout</span></div>
+  <p class="ideia-desc">Um gráfico "destaque" grande + 3 menores ao lado. Estilo revista/dashboard executivo. Hierarquia visual clara.</p>
+
+  <div class="kpi-row" style="grid-template-columns: repeat(4, 1fr);">
+    <div class="kpi-card"><div class="label">Prêmios Totais</div><div class="value" style="color:var(--accent)">$339.36</div></div>
+    <div class="kpi-card"><div class="label">Prêmio Médio/Op</div><div class="value" style="color:var(--accent)">$16.16</div></div>
+    <div class="kpi-card"><div class="label">Operações</div><div class="value" style="color:var(--blue)">21</div></div>
+    <div class="kpi-card"><div class="label">Win Rate</div><div class="value" style="color:var(--green)">100%</div></div>
+  </div>
+
+  <div style="display:grid; grid-template-columns: 3fr 2fr; gap:12px;">
+    <div class="chart-box" style="grid-row: span 2;">
+      <h3>📈 Evolução de Prêmios (Destaque)</h3>
+      <canvas id="c6-evo" height="320"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3>📊 Distribuição (Tipo)</h3>
+      <canvas id="c6-donut" height="145"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3>🏢 Por Corretora</h3>
+      <canvas id="c6-corretora" height="145"></canvas>
+    </div>
+  </div>
+
+  <div class="accordion" style="margin-top:20px;">
+    <div class="acc-header" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('show')">Operações <span class="arrow">▼</span></div>
+    <div class="acc-body">Lista de operações detalhada...</div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════════════ -->
+<!-- IDEIA 7 — COMPACT DENSITY -->
+<!-- ════════════════════════════════════════════════════════════════════════════ -->
+<section class="ideia-section" id="ideia7">
+  <div class="ideia-header"><span class="ideia-num">7</span><span class="ideia-title">Compact Density</span></div>
+  <p class="ideia-desc">Muitos gráficos pequenos em grade densa. Maximiza informação por pixel. Ideal para traders que querem ver tudo de uma vez.</p>
+
+  <div class="kpi-row" style="grid-template-columns: repeat(6, 1fr);">
+    <div class="kpi-card"><div class="label">Prêmios</div><div class="value" style="color:var(--accent);font-size:20px;">$339</div></div>
+    <div class="kpi-card"><div class="label">Médio/Op</div><div class="value" style="color:var(--accent);font-size:20px;">$16</div></div>
+    <div class="kpi-card"><div class="label">Ops</div><div class="value" style="color:var(--blue);font-size:20px;">21</div></div>
+    <div class="kpi-card"><div class="label">Win Rate</div><div class="value" style="color:var(--green);font-size:20px;">100%</div></div>
+    <div class="kpi-card"><div class="label">Melhor</div><div class="value" style="color:var(--green);font-size:20px;">$39</div></div>
+    <div class="kpi-card"><div class="label">Pior</div><div class="value" style="color:var(--red);font-size:20px;">$8</div></div>
+  </div>
+
+  <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:10px;">
+    <div class="chart-box">
+      <h3 style="font-size:12px;">📈 Evolução</h3>
+      <canvas id="c7-evo" height="130"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3 style="font-size:12px;">📊 Distribuição</h3>
+      <canvas id="c7-donut" height="130"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3 style="font-size:12px;">🏢 Corretora</h3>
+      <canvas id="c7-corretora" height="130"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3 style="font-size:12px;">💰 Ganhos vs Perdas</h3>
+      <canvas id="c7-ganhos" height="130"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3 style="font-size:12px;">📅 Performance Mensal</h3>
+      <canvas id="c7-mensal" height="130"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3 style="font-size:12px;">🎯 Acumulado Semanal</h3>
+      <canvas id="c7-semanal" height="130"></canvas>
+    </div>
+  </div>
+
+  <div class="accordion" style="margin-top:16px;">
+    <div class="acc-header" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('show')">Operações <span class="arrow">▼</span></div>
+    <div class="acc-body">Lista de operações detalhada...</div>
+  </div>
+</section>
+
+<script>
+// ── Dados mock ──
+const days = ['01','05','10','15','20','25','30'];
+const evoData = [10, 18, 25, 42, 58, 72, 88];
+const evoAcum = [10, 28, 53, 95, 153, 225, 313];
+const corretoras = ['Binance','Bybit','Outros'];
+const corretoraVals = [180, 95, 64];
+const tipoLabels = ['C,P','C,C','Outros'];
+const tipoVals = [180, 95, 64];
+const ganhos = [12, 18, 22, 28, 24, 30, 26];
+const perdas = [2, 1, 0, 3, 1, 0, 2];
+const mensal = [45, 62, 58, 72, 85, 95];
+
+const chartOpts = { responsive:true, plugins:{ legend:{display:false} }, scales:{ x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#8b949e',font:{size:10}}}, y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#8b949e',font:{size:10}}} } };
+const doughnutOpts = { responsive:true, plugins:{ legend:{position:'bottom',labels:{color:'#8b949e',font:{size:10},padding:8}} }, cutout:'65%' };
+
+function mkLine(id, data, color) {
+  new Chart(document.getElementById(id), { type:'line', data:{ labels:days, datasets:[{data, borderColor:color||'#fbbf24', backgroundColor:(color||'#fbbf24')+'20', fill:true, tension:.4, pointRadius:3, pointBackgroundColor:color||'#fbbf24', borderWidth:2}] }, options:chartOpts });
+}
+function mkBar(id, labels, data, colors) {
+  new Chart(document.getElementById(id), { type:'bar', data:{ labels, datasets:[{data, backgroundColor:colors||'#60a5fa', borderRadius:4}] }, options:chartOpts });
+}
+function mkStacked(id, labels, g, p) {
+  new Chart(document.getElementById(id), { type:'bar', data:{ labels, datasets:[{label:'Ganhos',data:g,backgroundColor:'#4ade80',borderRadius:4},{label:'Perdas',data:p,backgroundColor:'#f87171',borderRadius:4}] }, options:{...chartOpts, plugins:{legend:{display:true,labels:{color:'#8b949e',font:{size:10}}}}, scales:{...chartOpts.scales, x:{...chartOpts.scales.x,stacked:true}, y:{...chartOpts.scales.y,stacked:true}}} });
+}
+function mkDonut(id, labels, data, colors) {
+  new Chart(document.getElementById(id), { type:'doughnut', data:{ labels, datasets:[{data, backgroundColor:colors||['#fbbf24','#60a5fa','#a78bfa'], borderWidth:0}] }, options:doughnutOpts });
+}
+
+// ── Ideia 1 ──
+mkLine('c1-evo', evoAcum, '#fbbf24');
+mkDonut('c1-donut', tipoLabels, tipoVals, ['#4ade80','#60a5fa','#a78bfa']);
+mkBar('c1-corretora', corretoras, corretoraVals, ['#60a5fa','#a78bfa','#fbbf24']);
+
+// ── Ideia 2 ──
+mkLine('c2-evo', evoAcum, '#fbbf24');
+mkBar('c2-corretora', corretoras, corretoraVals, ['#60a5fa','#a78bfa','#fbbf24']);
+mkStacked('c2-ganhos', days, ganhos, perdas);
+
+// ── Ideia 3 ──
+mkLine('c3-evo', evoAcum, '#fbbf24');
+mkBar('c3-corretora', corretoras, corretoraVals, ['#60a5fa','#a78bfa','#fbbf24']);
+mkDonut('c3-donut', tipoLabels, tipoVals, ['#4ade80','#60a5fa','#a78bfa']);
+mkStacked('c3-ganhos', days, ganhos, perdas);
+
+// ── Ideia 4 ──
+mkLine('c4-evo', evoAcum, '#fbbf24');
+mkDonut('c4-donut', tipoLabels, tipoVals, ['#4ade80','#60a5fa','#a78bfa']);
+mkBar('c4-corretora', corretoras, corretoraVals, ['#60a5fa','#a78bfa','#fbbf24']);
+mkStacked('c4-ganhos', days, ganhos, perdas);
+
+// ── Ideia 5 ──
+mkLine('c5-evo', evoAcum, '#fbbf24');
+mkDonut('c5-donut', tipoLabels, tipoVals, ['#4ade80','#60a5fa','#a78bfa']);
+mkBar('c5-corretora', corretoras, corretoraVals, ['#60a5fa','#a78bfa','#fbbf24']);
+mkStacked('c5-ganhos', days, ganhos, perdas);
+
+// ── Ideia 6 ──
+mkLine('c6-evo', evoAcum, '#fbbf24');
+mkDonut('c6-donut', tipoLabels, tipoVals, ['#4ade80','#60a5fa','#a78bfa']);
+mkBar('c6-corretora', corretoras, corretoraVals, ['#60a5fa','#a78bfa','#fbbf24']);
+
+// ── Ideia 7 ──
+mkLine('c7-evo', evoAcum, '#fbbf24');
+mkDonut('c7-donut', tipoLabels, tipoVals, ['#4ade80','#60a5fa','#a78bfa']);
+mkBar('c7-corretora', corretoras, corretoraVals, ['#60a5fa','#a78bfa','#fbbf24']);
+mkStacked('c7-ganhos', days, ganhos, perdas);
+mkBar('c7-mensal', ['Jan','Fev','Mar','Abr','Mai','Jun'], mensal, '#fbbf24');
+mkLine('c7-semanal', [28,55,82,115,150,190], '#4ade80');
+
+// ── Tab navigation (Ideia 5) ──
+function showTab5(btn, tabId) {
+  btn.parentElement.querySelectorAll('button').forEach(b => { b.style.background='transparent'; b.style.color='var(--muted)'; });
+  btn.style.background='rgba(251,191,36,.08)'; btn.style.color='var(--accent)';
+  ['t5-evo','t5-dist','t5-ganhos'].forEach(id => { document.getElementById(id).style.display='none'; });
+  document.getElementById(tabId).style.display='block';
+}
+
+// ── Smooth scroll nav ──
+document.querySelectorAll('.ideia-nav a').forEach(a => {
+  a.addEventListener('click', function(e) {
+    document.querySelectorAll('.ideia-nav a').forEach(x => x.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+</script>
+</body>
+</html>

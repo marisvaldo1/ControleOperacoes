@@ -380,13 +380,18 @@
   /* ─ Mini TradingView Chart per accordion ─ */
   var _vgOpMiniCharts = {}; // chartId -> widget
 
-  function buildOpMiniChart(chartContainer, ticker, strike, currentPrice, operationType) {
+    function buildOpMiniChart(chartContainer, ticker, strike, currentPrice, operationType) {
     if (!chartContainer) return;
     var chartId = 'vg-op-mini-chart-' + Math.random().toString(36).substr(2, 9);
     chartContainer.innerHTML = '<div id="' + chartId + '" style="width:100%;height:100%"></div>';
 
     function createWidget() {
       try {
+        var containerEl = document.getElementById(chartId);
+        if (!containerEl || !containerEl.parentNode) {
+          console.warn('[VG Op MiniChart] Container não encontrado no DOM, ignorando:', chartId);
+          return;
+        }
         var isDarkMode = document.body.dataset.bsTheme === 'dark';
         var widgetOptions = {
           symbol: ticker,

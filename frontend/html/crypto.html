@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="../css/crypto/modal-preco-medio-crypto.css?v=3.1.0">
     <link rel="stylesheet" href="../css/crypto/modal-preco-medio-ativo.css?v=1.0.0">
     <link rel="stylesheet" href="../css/crypto/modal-dashboard-crypto.css?v=1.0.0">
+    <link rel="stylesheet" href="../css/crypto/modal-captura.css?v=1.0.0">
     <link rel="stylesheet" href="../css/crypto/modal-resumo-crypto.css?v=2.0.0">
     <link rel="stylesheet" href="../css/crypto/modal-resultados-crypto-compact.css?v=1.0.0">
     <link rel="stylesheet" href="../css/shared/modal-analise.css?v=1.1.0">
@@ -55,6 +56,10 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><path d="M2 12h10"/><path d="M9 4v16"/><path d="M3 9l3 3-3 3"/><path d="M14 9l3 3-3 3"/></svg>
                                 Simular
                             </button>
+                            <button class="btn btn-success me-2" id="btnSyncDualInvestment" title="Capturar operações Dual Investment da Binance">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+                                Capturar DI
+                            </button>
                             <button class="btn btn-primary" id="btnNovaOperacao">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><path d="M12 5v14M5 12h14"/></svg>
                                 Nova Operação
@@ -66,22 +71,22 @@
                 <!-- Cards de Resumo -->
                 <div class="row row-deck row-cards mb-4">
                     <div class="col-sm-6 col-lg-3">
-                        <div class="card card-clickable" id="cardTotalOpsCryptoCard" role="button" tabindex="0">
-                            <div class="card-body">
-                                <div class="d-flex align-items-center">
-                                    <div class="subheader">Total Operações</div>
-                                </div>
-                                <div class="h1 mb-0" id="cardTotalOps">0</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-sm-6 col-lg-3">
                         <div class="card card-clickable" id="cardSaldoCryptoCard" role="button" tabindex="0">
                             <div class="card-body">
                                 <div class="d-flex align-items-center">
                                     <div class="subheader">Saldo em Crypto</div>
                                 </div>
                                 <div class="h1 mb-0 text-primary" id="cardSaldoCrypto">US$ 0,00</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-lg-3">
+                        <div class="card card-clickable" id="cardTotalOpsCryptoCard" role="button" tabindex="0">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="subheader">Total Operações</div>
+                                </div>
+                                <div class="h1 mb-0" id="cardTotalOps">0</div>
                             </div>
                         </div>
                     </div>
@@ -115,16 +120,13 @@
                                 <a href="#tab-visao-geral" class="nav-link active" data-bs-toggle="tab">&#128202; Visão Geral</a>
                             </li>
                             <li class="nav-item">
-                                <a href="#tab-mes-atual" class="nav-link" data-bs-toggle="tab">Mês Atual</a>
+                                <a href="#tab-mes-atual" class="nav-link" data-bs-toggle="tab">&#128197; Mês Atual</a>
                             </li>
                             <li class="nav-item">
-                                <a href="#tab-historico" class="nav-link" data-bs-toggle="tab">Histórico</a>
+                                <a href="#tab-historico" class="nav-link" data-bs-toggle="tab">&#128200; Histórico</a>
                             </li>
                             <li class="nav-item">
-                                <a href="#tab-anual" class="nav-link" data-bs-toggle="tab">Anual</a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="#tab-config-crypto" class="nav-link" data-bs-toggle="tab">Configurações</a>
+                                <a href="#tab-anual" class="nav-link" data-bs-toggle="tab">&#128198; Anual</a>
                             </li>
                         </ul>
                     </div>
@@ -267,52 +269,6 @@
                                     </button>
                                     <div class="collapse" id="anualExtraChartsCollapse">
                                         <div class="row row-cards mt-2" id="anualExtraCharts"></div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Tab: Configurações -->
-                            <div class="tab-pane" id="tab-config-crypto">
-                                <div class="row justify-content-center">
-                                    <div class="col-md-8 col-lg-6">
-                                        <div class="card">
-                                            <div class="card-header">
-                                                <h3 class="card-title">Configurações Crypto</h3>
-                                            </div>
-                                            <div class="card-body">
-                                                <div class="mb-3">
-                                                    <label class="form-label">Saldo em Crypto (US$)</label>
-                                                    <input type="number" step="0.01" class="form-control" id="cfgSaldoCrypto" placeholder="Ex: 5000.00">
-                                                    <div class="form-text">Valor total investido em Dual Investment (USDT)</div>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label">Meta Mensal (US$)</label>
-                                                    <input type="number" step="0.01" class="form-control" id="cfgMetaCrypto" placeholder="Ex: 200.00">
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label">Par Padrão</label>
-                                                    <select class="form-select" id="cfgParPadrao">
-                                                        <option value="BTC">BTC/USDT</option>
-                                                        <option value="ETH">ETH/USDT</option>
-                                                        <option value="BNB">BNB/USDT</option>
-                                                        <option value="SOL">SOL/USDT</option>
-                                                    </select>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label">Ativos no Navbar (cotação ao vivo)</label>
-                                                    <input type="text" class="form-control" id="cfgNavbarAtivos" placeholder="Ex: BTC,ETH,BNB">
-                                                    <div class="form-text">Até 5 ativos separados por vírgula. Exibidos no menu com cotação atualizada.</div>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label">Intervalo de atualização ao vivo (segundos)</label>
-                                                    <input type="number" min="3" max="600" class="form-control" id="cfgPollInterval" placeholder="Ex: 15">
-                                                    <div class="form-text">Intervalo de polling da cotação (fallback HTTP). Menor = atualização mais rápida, maiores requisições ao proxy.</div>
-                                                </div>
-                                                <button class="btn btn-primary w-100" id="btnSaveConfigCrypto">
-                                                    Salvar Configurações
-                                                </button>
-                                            </div>
-                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -876,6 +832,7 @@
                             <div class="ma-pos-sumcard"><div class="ma-pos-sumval" id="maPosPctMedio">—</div><div class="ma-pos-sumlbl">ROI Médio</div></div>
                             <div class="ma-pos-sumcard"><div class="ma-pos-sumval" id="maPosRiscoCount">—</div><div class="ma-pos-sumlbl">Em Risco (ITM)</div></div>
                             <div class="ma-pos-sumcard"><div class="ma-pos-sumval" id="maPosDecayMedio">—</div><div class="ma-pos-sumlbl">Decay Médio</div></div>
+                            <div class="ma-pos-sumcard"><div class="ma-pos-sumval" id="maPosPrecoMedio">—</div><div class="ma-pos-sumlbl">Preço Médio</div></div>
                             <div class="ma-pos-sumcard"><div class="ma-pos-sumval" id="maPosUltimaAtt">nunca</div><div class="ma-pos-sumlbl">Atualizado</div></div>
                         </div>
                         <div id="maPosCards" class="ma-pos-cards-grid" style="display:none"></div>
@@ -1177,12 +1134,21 @@
     <script src="../js/crypto/modal-preco-medio-crypto.js?v=3.0.0"></script>
     <script src="../js/crypto/modal-preco-medio-ativo.js?v=1.0.0"></script>
     <script src="../js/crypto/modal-dashboard-crypto.js?v=1.0.1"></script>
+    <script src="../js/crypto/modal-captura.js?v=1.0.0"></script>
     <script src="../js/crypto/modal-resumo-crypto.js?v=2.0.0"></script>
     <script src="../js/crypto/modal-total-operacoes-crypto.js?v=1.3.0"></script>
     <script src="../js/crypto/modal-detalhe-crypto.js?v=3.1.5"></script>
     <script src="../js/crypto/modal-analise-detalhe-crypto.js?v=1.0.1"></script>
     <script src="../js/crypto/crypto.js?v=1.7.0"></script>
     <script>
+        // Carregar modal-captura
+        fetch('../components/modals/crypto/modal-captura.html')
+            .then(function(r) { return r.text(); })
+            .then(function(html) {
+                var div = document.createElement('div');
+                div.innerHTML = html;
+                document.body.appendChild(div);
+            });
         // Configurar Dashboard Avançado para crypto
         if (window.ModalDashboardCrypto) {
             window.ModalDashboardCrypto.configure({

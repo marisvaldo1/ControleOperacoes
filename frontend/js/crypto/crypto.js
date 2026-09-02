@@ -50,6 +50,7 @@ function setupCryptoDynamicEventListeners() {
             const ativoLink = e.target.closest('.op-ativo-link');
             if (ativoLink) {
                 e.preventDefault();
+                e.stopPropagation();
                 const opId = ativoLink.getAttribute('data-analise-id');
                 if (window.ModalAnaliseCrypto && typeof window.ModalAnaliseCrypto.open === 'function') {
                     window.ModalAnaliseCrypto.open(opId);
@@ -149,6 +150,78 @@ function _initCrypto() {
     setupCardClicks();
     setupFilterButtons();
     setupHistoricoQuickFilters();
+    fetchBinanceBalance();
+}
+
+/* ── Saldo Binance (atualiza card e localStorage) ─────────────────────────── */
+async function fetchBinanceBalance() {
+    try {
+        const r = await fetch('/api/crypto/balance');
+        const data = await r.json();
+        if (!data.success || !data.total_usdt || data.total_usdt <= 0) return;
+        
+        // Lê saldo configurado manualmente pelo usuário
+        let saldoConfigurado = 0;
+        try {
+            const cfg = JSON.parse(localStorage.getItem(CRYPTO_CFG_KEY) || '{}');
+            saldoConfigurado = parseFloat(cfg.saldoCrypto || 0) || 0;
+        } catch (_) {}
+        
+        // REGRA: Se o usuário configurou um saldo manualmente, NÃO sobrescreve
+        // A API da Binance NÃO retorna saldo de Dual Investment/Advanced Earn
+        // Portanto, o saldo da API (~US$ 30) é sempre menor que o real (~US$ 14.000)
+        if (saldoConfigurado > 0 && data.total_usdt < saldoConfigurado * 0.5) {
+            // API retornou valor muito menor que o configurado - não atualiza
+            // (Dual Investment não é acessível via API)
+            return;
+        }
+        
+        // Atualiza saldoCrypto no localStorage apenas se API retornou valor razoável
+        try {
+            const cfg = JSON.parse(localStorage.getItem(CRYPTO_CFG_KEY) || '{}');
+            cfg.saldoCrypto = data.total_usdt;
+            localStorage.setItem(CRYPTO_CFG_KEY, JSON.stringify(cfg));
+        } catch (_) {}
+        // Atualiza o card "Saldo em Crypto" imediatamente
+        const cardSaldo = document.getElementById('cardSaldoCrypto');
+        if (cardSaldo) {
+            cardSaldo.textContent = `US$ ${data.total_usdt.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        }
+    } catch (_) {}
+}
+
+/* ── Sincronizar Dual Investment da Binance ──────────────────────────────── */
+async function syncDualInvestment() {
+    const btn = document.getElementById('btnSyncDualInvestment');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Sincronizando...';
+    }
+    try {
+        const r = await fetch('/api/crypto/dual-investment/sync', { method: 'POST' });
+        const data = await r.json();
+        if (data.success) {
+            const msg = data.message || `${data.inserted} operação(ões) inserida(s).`;
+            if (data.inserted > 0) {
+                iziToast.success({ title: 'Sincronizado', message: msg });
+                // Recarrega operações
+                loadOperacoes();
+            } else if (data.duplicated > 0) {
+                iziToast.info({ title: 'Já atualizado', message: msg });
+            } else {
+                iziToast.info({ title: 'Dual Investment', message: msg });
+            }
+        } else {
+            iziToast.error({ title: 'Erro', message: data.error || 'Falha ao sincronizar.' });
+        }
+    } catch (e) {
+        iziToast.error({ title: 'Erro', message: 'Falha ao conectar com o servidor.' });
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg> Sincronizar DI';
+        }
+    }
 }
 
 // Garante inicialização mesmo se layoutReady já disparou antes de este script ser parseado
@@ -335,6 +408,13 @@ function setupEventListeners() {
     document.getElementById("btnReloadTradingViewCrypto")?.addEventListener("click", () => {
         if (globalThis.CryptoTechnicalAnalysis && globalThis.CryptoTechnicalAnalysis.reloadChart) {
             globalThis.CryptoTechnicalAnalysis.reloadChart();
+        }
+    });
+
+    // Botão capturar Dual Investment (abre modal)
+    document.getElementById("btnSyncDualInvestment")?.addEventListener("click", function() {
+        if (window.ModalCaptura) {
+            ModalCaptura.open();
         }
     });
 
@@ -714,18 +794,31 @@ function updateUI() {
     // Saldo: usa o configurado; se zero, exibe total capital nas posições abertas
     const abertasOps   = allOperacoes.filter(o => (o.status || "ABERTA") === "ABERTA");
     // Valora investido: novo formato -> abertura(preço) × crypto(qtd); antigo -> abertura era USD direto
-    const totalAbertura = abertasOps.reduce((s, o) => {
+const totalAbertura = abertasOps.reduce((s, o) => {
         const abr = parseFloat(o.abertura) || 0;
         const cot = parseFloat(o.cotacao_atual) || 0;
         const qty = parseFloat(o.crypto) || 0;
-        if (abr > 0 && cot > 0 && abr < cot * 0.1) return s + abr;  // formato antigo (USD)
+        if (abr > 0 && cot < 0.1) return s + abr;  // formato antigo (USD)
         return s + (abr > 0 && qty > 0 ? abr * qty : abr);           // formato novo (preço × qtd)
     }, 0);
     const saldoDisplay  = saldo > 0 ? saldo : totalAbertura;
+    // Preço médio: média ponderada dos preços de entrada das posições abertas
+    const totalQt = abertasOps.reduce((s, o) => s + (parseFloat(o.crypto) || 0), 0);
+    const precoMedio = totalQt > 0 ? totalAbertura / totalQt : 0;
+
     document.getElementById("cardTotalOps").textContent       = allOperacoes.length;
     document.getElementById("cardSaldoCrypto").textContent    = fmtUsd(saldoDisplay);
     document.getElementById("cardTotalPremios").textContent   = fmtUsd(totalPremios);
     document.getElementById("cardResultadoMedio").textContent = aberturaMed.toFixed(2) + "%";
+    // Novo: Preço Médio nas posições abertas
+    document.getElementById("maPosPrecoMedio").textContent    = fmtUsd(precoMedio);
+    document.getElementById("maPosPrecoMedio").onclick        = function () {
+      var ativo = abertasOps[0] && abertasOps[0].ativo ? abertasOps[0].ativo : '';
+      if (ativo && window.ModalPrecoMedio && typeof window.ModalPrecoMedio.open === 'function') {
+        window.ModalPrecoMedio.open(ativo);
+      }
+    };
+    document.getElementById("maPosCount").textContent         = abertasOps.length;
 
     const mesPremio  = mesAtualData.reduce((s, o) => s + (parseFloat(o.premio_us) || 0), 0);
     const mesResult  = calcResultadoMedio(mesAtualData);
@@ -1378,6 +1471,7 @@ function renderChartAnual(data, year) {
                         const link = e.target.closest('.op-ativo-link');
                         if (link) {
                             e.preventDefault();
+                            e.stopPropagation();
                             const opId = link.getAttribute('data-analise-id');
                             if (window.ModalAnaliseCrypto) window.ModalAnaliseCrypto.open(opId);
                         }
@@ -2662,6 +2756,19 @@ function loadConfig() {
             localStorage.setItem(CRYPTO_CFG_KEY, JSON.stringify(localCfgPoll));
             if (el("cfgPollInterval")) el("cfgPollInterval").value = backendCfg.pollInterval;
         }
+        // Sincroniza saldoCrypto do backend (importante: Dual Investment não é acessível via API)
+        if (backendCfg.saldoCrypto) {
+            var localCfgSaldo = loadLocalConfig();
+            var backendSaldo = parseFloat(backendCfg.saldoCrypto) || 0;
+            var localSaldo = parseFloat(localCfgSaldo.saldoCrypto) || 0;
+            // Usa o maior valor (backend vs local) - Dual Investment pode não estar na API
+            var bestSaldo = Math.max(backendSaldo, localSaldo);
+            if (bestSaldo > 0) {
+                localCfgSaldo.saldoCrypto = bestSaldo;
+                localStorage.setItem(CRYPTO_CFG_KEY, JSON.stringify(localCfgSaldo));
+                if (el("cfgSaldoCrypto")) el("cfgSaldoCrypto").value = bestSaldo;
+            }
+        }
     }).catch(function() {});
 }
 
@@ -2805,7 +2912,7 @@ async function updateCryptoMarketStatus() {
     var ativos = ativosStr.split(',').map(function(s) { return s.trim().toUpperCase(); }).filter(Boolean).slice(0, 5);
     if (!ativos.length) ativos = ['BTC'];
 
-    var COLORS_MAP = { BTC: '#f7931a', ETH: '#627eea', BNB: '#f3ba2f', SOL: '#9945ff', ADA: '#0033ad' };
+    var COLORS_MAP = { BTC: '#f7931a', ETH: '#627eea', BNB: '#f3ba2f', SOL: '#9945ff', ADA: '#0033ad', USDT: '#26a17b' };
     var DEFAULT_COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'];
 
     try {
@@ -2820,6 +2927,7 @@ async function updateCryptoMarketStatus() {
 
         var results = pendentes.length
             ? await Promise.allSettled(pendentes.map(function (ativo) {
+                if (ativo === 'USDT') return Promise.resolve({ price: 1.0 });
                 var sym = ativo + 'USDT';
                 return fetch(API_BASE + '/api/proxy/crypto/' + sym).then(function (r) { return r.json(); });
             }))
