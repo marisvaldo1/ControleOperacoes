@@ -612,3 +612,180 @@
 [data-bs-theme="light"] #vgMiniChartContainer iframe {
     background-color: #ffffff !important;
 }
+
+/* =========================================
+   Simulador DI — Split Layout
+   ========================================= */
+.sim-split { display: flex; gap: 0; min-height: 520px; }
+.sim-left  { width: 400px; min-width: 400px; max-width: 400px; flex-shrink: 0;
+             border-right: 1px solid rgba(255,255,255,.08); padding: 16px 14px;
+             overflow-y: auto; background: transparent; }
+.sim-right { flex: 1; min-width: 0; padding: 14px 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+.sim-left .form-label { font-size: .75rem; margin-bottom: 3px; color: var(--tblr-secondary); }
+.sim-left .form-control,
+.sim-left .form-select { font-size: .82rem; padding: 5px 10px; height: auto; }
+.sim-left .form-control::placeholder { font-size: .78rem; }
+.sim-left .mb-field { margin-bottom: 10px; }
+.sim-left .input-group .btn { font-size: .75rem; padding: 4px 8px; }
+
+/* KPI cards row */
+.sim-kpi-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
+.sim-kpi { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07);
+           border-radius: 8px; padding: 8px 10px; text-align: center; }
+.sim-kpi-lbl { font-size: .6rem; text-transform: uppercase; letter-spacing: .6px;
+               color: var(--tblr-secondary); margin-bottom: 4px; }
+.sim-kpi-val { font-family: 'JetBrains Mono', monospace; font-size: .9rem; font-weight: 700; }
+
+/* PM + Next-Op row */
+.sim-info-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.sim-pm-card, .sim-nextop-card {
+    background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.08);
+    border-radius: 10px; padding: 12px 14px; }
+.sim-card-title { font-size: .65rem; text-transform: uppercase; letter-spacing: .7px;
+                  color: var(--tblr-secondary); margin-bottom: 8px; }
+.sim-pm-val { font-family: 'JetBrains Mono', monospace; font-size: 1.4rem; font-weight: 700;
+              margin-bottom: 6px; }
+.sim-pm-row { display: flex; justify-content: space-between; align-items: center;
+              font-size: .7rem; margin-bottom: 3px; }
+.sim-pm-key { color: var(--tblr-secondary); }
+.sim-pm-v   { font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+.sim-zone   { display: flex; align-items: center; gap: 7px; padding: 5px 8px;
+              border-radius: 6px; margin-bottom: 5px; font-size: .72rem; font-weight: 600; }
+.sim-zone.danger { background: rgba(200,35,51,.12); border:1px solid rgba(200,35,51,.25); }
+.sim-zone.warn   { background: rgba(245,159,0,.10); border:1px solid rgba(245,159,0,.22); }
+.sim-zone.safe   { background: rgba(47,179,68,.10); border:1px solid rgba(47,179,68,.22); }
+.sim-zone.danger .sz-range { color: #f85149; font-family: monospace; }
+.sim-zone.warn   .sz-range { color: #f59f00; font-family: monospace; }
+.sim-zone.safe   .sz-range { color: #3fb950; font-family: monospace; }
+
+/* P&L Chart */
+.sim-chart-wrap { flex: 1; background: rgba(255,255,255,.02); border: 1px solid rgba(255,255,255,.07);
+                  border-radius: 10px; padding: 12px; min-height: 110px; }
+.sim-chart-title { font-size: .65rem; text-transform: uppercase; letter-spacing: .7px;
+                   color: var(--tblr-secondary); margin-bottom: 6px;
+                   display: flex; align-items: center; justify-content: space-between; }
+.sim-chart-legend { display: flex; gap: 12px; }
+.sim-chart-legend span { font-size: .62rem; display: flex; align-items: center; gap: 4px; }
+.sim-chart-legend i { width: 10px; height: 3px; border-radius: 2px; display: inline-block; }
+.sim-empty-state { display: flex; align-items: center; justify-content: center;
+                   height: 100%; color: var(--tblr-secondary); font-size: .8rem;
+                   flex-direction: column; gap: 6px; }
+
+/* Card de Prêmio Estimado ao Vencimento */
+.sim-premio-card {
+    background: rgba(255,255,255,.02);
+    border: 1px solid rgba(255,255,255,.07);
+    border-radius: 10px;
+    padding: 20px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    position: relative;
+    overflow: hidden;
+    margin-top: 10px;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+.sim-premio-card:hover {
+    background: rgba(255,255,255,.05);
+    border-color: rgba(255,255,255,.15);
+}
+.sim-premio-card::before {
+    content: none;
+}
+.sim-premio-card__left { display: flex; align-items: center; gap: 14px; z-index: 1; }
+.sim-premio-card__label { font-size: 0.72rem; color: #8b949e; margin-bottom: 4px; }
+.sim-premio-card__num {
+    font-family: 'JetBrains Mono', monospace; font-weight: 700;
+    font-size: 2.4rem; color: #22c55e; font-variant-numeric: tabular-nums;
+}
+.sim-premio-card__badge {
+    font-size: 0.65rem; font-weight: 600;
+    background: rgba(34,197,94,0.15); color: #22c55e;
+    border: 1px solid rgba(34,197,94,0.35);
+    padding: 4px 10px; border-radius: 20px; white-space: nowrap;
+}
+.sim-premio-card__right { z-index: 1; }
+.sim-premio-card__gauge { width: 160px; }
+.sim-premio-card__gauge-lbl {
+    font-size: 0.72rem; color: #8b949e;
+    display: flex; justify-content: space-between; margin-bottom: 6px;
+}
+.sim-premio-card__gauge-lbl b {
+    color: #e6ebf5; font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 0.85rem;
+}
+.sim-premio-card__gauge-bar {
+    height: 8px; border-radius: 4px; background: #0d1424; overflow: hidden;
+}
+.sim-premio-card__gauge-fill {
+    height: 100%; background: #f0a020; border-radius: 4px; transition: none;
+}
+
+/* Cenários (hidden, kept for JS compat) */
+#simResultContainer { display: none !important; }
+
+/* Previsão / POP card */
+.sim-prev-card { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.09);
+                 border-radius: 10px; padding: 10px 14px; }
+.sim-pop-wrap { position: relative; width: 82px; height: 82px; flex-shrink: 0; }
+.sim-pop-center { position: absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; }
+.sim-pop-pct { font-family: 'JetBrains Mono', monospace; font-size: 1.25rem; font-weight: 700; line-height: 1.1; }
+.sim-pop-lbl { font-size: .58rem; text-transform: uppercase; color: var(--tblr-secondary); letter-spacing: .6px; }
+.sim-prev-item { display: flex; align-items: center; gap: 6px; font-size: .7rem; margin-bottom: 4px; }
+.sim-prev-item-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.sim-prev-item-lbl { color: var(--tblr-secondary); flex: 1; }
+.sim-prev-item-val { font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: .7rem; }
+.sim-prev-bar-track { height: 7px; background: rgba(255,255,255,.07); border-radius: 4px; position: relative;
+                      margin-top: 8px; margin-bottom: 3px; overflow: visible; }
+.sim-prev-bar-fill { height: 100%; border-radius: 4px; }
+.sim-prev-bar-marker { position: absolute; top: -3px; width: 13px; height: 13px; border-radius: 50%;
+                       border: 2px solid #fff; background: #4da6ff; transform: translateX(-50%); }
+.sim-prev-bar-lbl { display: flex; justify-content: space-between; }
+.sim-prev-bar-lbl span { font-size: .59rem; color: var(--tblr-secondary); font-family: monospace; }
+.sim-prev-msg { margin-top: 7px; padding: 5px 9px; border-radius: 6px; font-size: .7rem; font-weight: 600; }
+
+/* Botão refresh header */
+#btnSimHeaderRefresh { color: var(--tblr-secondary); border: 1px solid rgba(255,255,255,.12);
+                       border-radius: 6px; background: transparent; line-height:1; padding:4px 6px; }
+#btnSimHeaderRefresh:hover { color:#fff; border-color:rgba(255,255,255,.3); background:rgba(255,255,255,.06); }
+@keyframes simSpinAnim { to { transform: rotate(360deg); } }
+.sim-spin { animation: simSpinAnim .7s linear infinite; display:inline-block; }
+
+/* Previsão no painel esquerdo — formato compacto */
+.sim-left .sim-prev-card { margin-top: 4px; }
+.sim-left .sim-pop-wrap { width:64px; height:64px; }
+.sim-left .sim-pop-pct  { font-size:.95rem; }
+
+/* Reduz min-height do split e chart */
+.sim-split { min-height: 400px !important; }
+
+/* Hint de último exercício ao lado do Strike */
+.sim-strike-hint {
+    display: none; align-items: center; gap: 4px; flex-wrap: nowrap;
+    margin-top: 5px; padding: 4px 7px; border-radius: 6px;
+    background: rgba(245,159,0,.07); border: 1px solid rgba(245,159,0,.18);
+    font-size: .67rem; cursor: default; overflow: hidden; min-width: 0;
+}
+.sim-strike-hint.visible { display: flex; }
+.sim-strike-hint.sim-recovery-profit {
+    background: rgba(47,179,68,.07); border-color: rgba(47,179,68,.22);
+}
+.sim-strike-hint.sim-recovery-loss {
+    background: rgba(248,81,73,.07); border-color: rgba(248,81,73,.22);
+}
+.sim-strike-hint .ssh-badge {
+    font-size: .6rem; font-weight: 700; padding: 1px 6px; border-radius: 4px;
+    text-transform: uppercase; letter-spacing: .5px; flex-shrink: 0;
+}
+.sim-strike-hint .ssh-badge.call { background: rgba(47,179,68,.22); color: #3fb950; }
+.sim-strike-hint .ssh-badge.put  { background: rgba(248,81,73,.22); color: #f85149; }
+.sim-strike-hint .ssh-badge.ssh-badge-ref { background: rgba(255,255,255,.08); color: var(--tblr-secondary); }
+.sim-strike-hint .ssh-lbl  { color: var(--tblr-secondary); white-space: nowrap; }
+.sim-strike-hint .ssh-date { color: var(--tblr-secondary); white-space: nowrap; }
+.sim-strike-hint .ssh-sep  { color: rgba(255,255,255,.18); }
+.sim-strike-hint .ssh-val  {
+    font-family: 'JetBrains Mono', monospace; font-weight: 700;
+    color: #f59f00; margin-left: auto; white-space: nowrap;
+}

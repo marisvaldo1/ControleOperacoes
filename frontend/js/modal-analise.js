@@ -836,6 +836,21 @@
         <span class="ma-payoff-stat">BE: <strong>${fmtCurrency(breakeven)}</strong></span>
         <span class="ma-payoff-stat" id="mapos-${id}-distatual2">${sp}</span>
       </div>
+      <div class="ma-payoff-callout" id="mapos-${id}-callout">
+        <div class="ma-payoff-callout__left">
+          <div>
+            <div class="ma-payoff-callout__label">Prêmio estimado ao vencimento</div>
+            <div class="ma-payoff-callout__num"><span id="mapos-${id}-counter">${fmtCurrency(premioTotalAb)}</span></div>
+          </div>
+          <span class="ma-payoff-callout__badge">${tipo}</span>
+        </div>
+        <div class="ma-payoff-callout__right">
+          <div class="ma-payoff-callout__gauge">
+            <div class="ma-payoff-callout__gauge-lbl"><span>PoP</span><b id="mapos-${id}-popcallout">${sp}</b></div>
+            <div class="ma-payoff-callout__gauge-bar"><div class="ma-payoff-callout__gauge-fill" id="mapos-${id}-gaugefill" style="width:0%"></div></div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
   <div class="ma-pos-prob-section">
@@ -1281,7 +1296,35 @@
         };
 
         // Renderizar payoff chart (aba Visão Geral)
-        ensureApex(() => renderPayoffChart(id, op, { spotPrice, optionPrice, premioTotalAb, strike, qtdAbs, tipo, isVenda, breakeven, premioAb }));
+        ensureApex(() => renderPayoffChart(id, op, { spotPrice, optionPrice, premioTotalAb, strike, qtdAbs, tipo, isVenda, breakeven, premioAb, popEst }));
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Animação do callout de prêmio (counter + gauge PoP)                 */
+    /* ------------------------------------------------------------------ */
+    function animateCallout(id, premioAlvo, popAlvo) {
+        var counterEl  = document.getElementById(`mapos-${id}-counter`);
+        var gaugeEl    = document.getElementById(`mapos-${id}-gaugefill`);
+        var popLabelEl = document.getElementById(`mapos-${id}-popcallout`);
+        if (!counterEl) return;
+
+        var start = null, dur = 900;
+        function easeOutCubic(p) { return 1 - Math.pow(1 - p, 3); }
+
+        function step(ts) {
+            if (!start) start = ts;
+            var p = Math.min(1, (ts - start) / dur);
+            var e = easeOutCubic(p);
+
+            counterEl.textContent = fmtCurrency(premioAlvo * e);
+
+            var popVal = popAlvo * e;
+            if (popLabelEl) popLabelEl.textContent = popVal.toFixed(0) + '%';
+            if (gaugeEl) gaugeEl.style.width = popVal + '%';
+
+            if (p < 1) requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
     }
 
     /* ------------------------------------------------------------------ */
@@ -1293,7 +1336,7 @@
         if (state.posPayoffCharts[id]) {
             try { state.posPayoffCharts[id].destroy(); } catch (_) {}
         }
-        const { spotPrice, premioTotalAb, strike, qtdAbs, tipo, isVenda, breakeven, premioAb } = data;
+        const { spotPrice, premioTotalAb, strike, qtdAbs, tipo, isVenda, breakeven, premioAb, popEst } = data;
 
         // Gerar curva de payoff
         const ref  = spotPrice > 0 ? spotPrice : strike;
@@ -1358,6 +1401,9 @@
             theme: { mode: 'dark' },
         });
         state.posPayoffCharts[id].render();
+
+        // ── Animação do callout (prêmio + PoP) ──
+        animateCallout(id, premioTotalAb, popEst || 0);
     }
 
     /* ------------------------------------------------------------------ */

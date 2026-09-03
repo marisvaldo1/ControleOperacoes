@@ -1211,6 +1211,88 @@
 }
 .ma-payoff-stat { color: #8b949e; }
 
+/* ── Callout de Prêmio (abaixo do payoff) ────────────────────── */
+.ma-payoff-callout {
+    border-radius: 0 0 8px 8px;
+    margin: 0 -10px -10px;
+    padding: 16px 18px;
+    background: linear-gradient(135deg, rgba(22,53,37,0.85), rgba(22,33,58,0.35));
+    border: 1px solid rgba(34,197,94,0.30);
+    border-top: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    position: relative;
+    overflow: hidden;
+}
+.ma-payoff-callout::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(circle at 12% 25%, rgba(34,197,94,0.12), transparent 55%);
+}
+.ma-payoff-callout__left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    z-index: 1;
+}
+.ma-payoff-callout__label {
+    font-size: 0.68rem;
+    color: #8b949e;
+    margin-bottom: 2px;
+}
+.ma-payoff-callout__num {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 1.6rem;
+    color: #e6ebf5;
+    font-variant-numeric: tabular-nums;
+}
+.ma-payoff-callout__badge {
+    font-size: 0.6rem;
+    font-weight: 600;
+    background: rgba(34,197,94,0.15);
+    color: #22c55e;
+    border: 1px solid rgba(34,197,94,0.35);
+    padding: 3px 9px;
+    border-radius: 20px;
+    white-space: nowrap;
+}
+.ma-payoff-callout__right {
+    z-index: 1;
+}
+.ma-payoff-callout__gauge {
+    width: 130px;
+}
+.ma-payoff-callout__gauge-lbl {
+    font-size: 0.65rem;
+    color: #8b949e;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+}
+.ma-payoff-callout__gauge-lbl b {
+    color: #e6ebf5;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+}
+.ma-payoff-callout__gauge-bar {
+    height: 6px;
+    border-radius: 4px;
+    background: #0d1424;
+    overflow: hidden;
+}
+.ma-payoff-callout__gauge-fill {
+    height: 100%;
+    background: #f0a020;
+    border-radius: 4px;
+    transition: none;
+}
+
 /* ── Barra de probabilidade ─────────────────────────────────── */
 .ma-pos-prob-section {
     background: rgba(255,255,255,0.03);
@@ -1641,6 +1723,15 @@
 }
 [data-bs-theme="light"] .ma-comp-table tbody tr td:first-child { color: #6c757d; }
 [data-bs-theme="light"] .ma-payoff-stat { color: #6c757d; }
+[data-bs-theme="light"] .ma-payoff-callout {
+    background: linear-gradient(135deg, rgba(200,235,210,0.6), rgba(240,245,255,0.4));
+    border: 1px solid rgba(34,197,94,0.30);
+    border-top: none;
+}
+[data-bs-theme="light"] .ma-payoff-callout__label { color: #6c757d; }
+[data-bs-theme="light"] .ma-payoff-callout__num { color: #212529; }
+[data-bs-theme="light"] .ma-payoff-callout__gauge-lbl { color: #6c757d; }
+[data-bs-theme="light"] .ma-payoff-callout__gauge-lbl b { color: #212529; }
 
 /* ── Probabilidade ────────────────────────────────────────────────────── */
 [data-bs-theme="light"] .ma-pos-prob-section {

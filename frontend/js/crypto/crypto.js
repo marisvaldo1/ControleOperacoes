@@ -2068,7 +2068,16 @@ let _simModo = 'usd'; // 'usd' | 'crypto'
 // Chamada em todo oninput — debounce 250ms para não sobrecarregar
 function onSimInput() {
     clearTimeout(_simInputTimer);
-    _simInputTimer = setTimeout(() => simAtualizar(), 250);
+    _simInputTimer = setTimeout(() => {
+        simAtualizar();
+        // Auto-habilita "Usar como Nova Operação" quando dados são suficientes
+        const valor  = parseFloat(document.getElementById("simValor")?.value)  || 0;
+        const tae    = parseFloat(document.getElementById("simTae")?.value)    || 0;
+        const strike = parseFloat(document.getElementById("simStrike")?.value) || 0;
+        if (valor && tae && strike) {
+            document.getElementById("btnAplicarSim").disabled = false;
+        }
+    }, 250);
 }
 
 // Reset do painel direito
@@ -2086,6 +2095,15 @@ function simResetRight() {
     const empty = document.getElementById('simPnLEmpty');
     if (empty) empty.style.display = 'flex';
     if (_simPnLChart) { try { _simPnLChart.destroy(); } catch(e) {} _simPnLChart = null; }
+    // Reseta card de prêmio — sempre visível com valor zero
+    const counterEl = document.getElementById('simCalloutPremio');
+    const badgeEl   = document.getElementById('simCalloutTipo');
+    const popEl     = document.getElementById('simCalloutPop');
+    const gaugeEl   = document.getElementById('simCalloutGauge');
+    if (counterEl) counterEl.textContent = 'US$ 0,00';
+    if (badgeEl)   badgeEl.textContent = 'CALL';
+    if (popEl)     popEl.textContent = '0%';
+    if (gaugeEl)   gaugeEl.style.width = '0%';
 }
 
 // Atualiza TODOS os componentes do painel direito com os valores atuais dos inputs
@@ -2114,10 +2132,15 @@ function simAtualizar() {
         _lastSimData = { ativo: par, tipo, abertura: valor, tae, prazo, strike, cotacao_atual: cotacao || null,
                          premio_us: premioEstimado, distancia: distanciaVal || null, data_operacao: getCurrentDate() };
         document.getElementById("btnAplicarSim").disabled = false;
+
+        // Card de Prêmio ao Vencimento (atualização em tempo real)
+        simAnimateCallout(premioEstimado, tipo, cotacao, strike, prazo);
     } else {
         document.getElementById("simPremioEstimado").textContent = '—';
         document.getElementById("simRoi").textContent = '—';
         document.getElementById("simTaeAnual").textContent = '—';
+        // Zera o card de prêmio quando não há dados
+        simAnimateCallout(0, tipo, cotacao, strike, prazo);
     }
 
     // Distância
@@ -2592,6 +2615,41 @@ function simRenderPnLChart(valor, strike, cotacao, tipo, prazo, tae) {
     });
 }
 
+function simAnimateCallout(premioAlvo, tipo, cotacao, strike, prazo) {
+    var counterEl  = document.getElementById('simCalloutPremio');
+    var badgeEl    = document.getElementById('simCalloutTipo');
+    var popLabelEl = document.getElementById('simCalloutPop');
+    var gaugeEl    = document.getElementById('simCalloutGauge');
+    if (!counterEl) return;
+
+    if (badgeEl) badgeEl.textContent = tipo || '—';
+
+    // Calcula PoP simplificado
+    var popAlvo = 0;
+    if (cotacao && strike) {
+        var dist = Math.abs(cotacao - strike) / strike * 100;
+        var isITM = (tipo === 'CALL' && cotacao >= strike) || (tipo === 'PUT' && cotacao <= strike);
+        popAlvo = isITM ? Math.max(5, 50 - dist * 4) : Math.min(95, 50 + dist * 4);
+    }
+
+    var start = null, dur = 600;
+    function easeOutCubic(p) { return 1 - Math.pow(1 - p, 3); }
+
+    function step(ts) {
+        if (!start) start = ts;
+        var p = Math.min(1, (ts - start) / dur);
+        var e = easeOutCubic(p);
+
+        counterEl.textContent = 'US$ ' + (premioAlvo * e).toFixed(2).replace('.', ',');
+        var popVal = popAlvo * e;
+        if (popLabelEl) popLabelEl.textContent = popVal.toFixed(0) + '%';
+        if (gaugeEl) gaugeEl.style.width = popVal + '%';
+
+        if (p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+}
+
 function calcularSimulador() {
     // Garantir que o valor está em USD antes de calcular
     if (_simModo === 'crypto') {
@@ -2972,3 +3030,59 @@ window.CryptoNavbar = { refresh: updateCryptoMarketStatus };
 // Mostra modal de detalhes de uma operação
 // showDetalhes() movida para modal-detalhe-crypto.js (v1.0.0)
 // O módulo expõe window.showDetalhes como retrocompatibilidade
+
+// ── Inicialização: configuração dos módulos ──────────────────────────────────
+(function cryptoInitModules() {
+    // Carregar modal-captura
+    fetch('../components/modals/crypto/modal-captura.html')
+        .then(function(r) { return r.text(); })
+        .then(function(html) {
+            var div = document.createElement('div');
+            div.innerHTML = html;
+            document.body.appendChild(div);
+        });
+
+    // Configurar Dashboard Avançado para crypto
+    if (window.ModalDashboardCrypto) {
+        window.ModalDashboardCrypto.configure({
+            currency: 'USD',
+            apiEndpoint: '/api/crypto',
+            modalElId: 'modalDashboardCrypto',
+            containerElId: 'modalDashboardCryptoContainer',
+            templatePath: 'modal-dashboard-crypto.html',
+            triggerCard: 'cardSaldoCryptoCard',
+            getSaldo: function() {
+                try {
+                    var c = JSON.parse(localStorage.getItem('cryptoConfig') || '{}');
+                    var a = JSON.parse(localStorage.getItem('appConfig') || '{}');
+                    return parseFloat(c.saldoCrypto || a.saldoCrypto || 0) || 0;
+                } catch(e) { return 0; }
+            },
+            getResultValue: function(op) { return parseFloat(op.premio_us) || 0; },
+            getAtivo: function(op) { return op.ativo || '—'; },
+            metaKey: 'metaCrypto',
+        });
+    }
+
+    // Configurar Modal Resultado Médio (Saldo Médio)
+    if (window.ModalSaldoMedioCrypto) {
+        window.ModalSaldoMedioCrypto.configure({
+            currency: 'USD',
+            apiEndpoint: '/api/crypto',
+            modalElId: 'modalSaldoMedio',
+            containerElId: 'modalSaldoMedioCryptoContainer',
+            templatePath: '../components/modals/crypto/modal-saldo-medio-crypto.html',
+            triggerCard: 'cardResultadoMedioCryptoCard',
+        });
+    }
+
+    // Configurar Modal Total Operações
+    if (window.ModalTotalOperacoesCrypto) {
+        // initTriggers já vincula o card automaticamente dentro do módulo
+    }
+})();
+
+// ── Card de Prêmio: click executa cálculo ───────────────────────────────────
+document.getElementById('simPremioCard')?.addEventListener('click', function() {
+    calcularSimulador();
+});

@@ -50,7 +50,7 @@
             result = isPositiveExerciseStatus(resolvedStatus) || isPositiveExerciseStatus(op.exercicio_status);
         }
         if (t === 'PUT' && s !== 'ABERTA') {
-            console.log('[PM-Debug] isExercisedPut op=' + op.id + ' tipo=' + t + ' status=' + s + ' exercicio_status=' + op.exercicio_status + ' persistido=' + op.exercicio_status_persistido + ' CryptoES=' + !!window.CryptoExerciseStatus + ' => ' + result);
+            // // console.log('[PM-Debug] isExercisedPut op=' + op.id + ' tipo=' + t + ' status=' + s + ' exercicio_status=' + op.exercicio_status + ' persistido=' + op.exercicio_status_persistido + ' CryptoES=' + !!window.CryptoExerciseStatus + ' => ' + result);
         }
         return result;
     }
@@ -60,11 +60,11 @@
         var baseOps = getOps(par, baseOpsOverride);
         if (!Array.isArray(opsOverride)) baseOps = ops;
 
-        console.log('[PM-Debug] par=' + par + ' totalOps=' + ops.length + ' cryptoOperacoes=' + (window.cryptoOperacoes || []).length);
-        console.log('[PM-Debug] sampleOp:', ops[0] ? { tipo: ops[0].tipo, status: ops[0].status, exercicio_status: ops[0].exercicio_status, exercicio_status_persistido: ops[0].exercicio_status_persistido, crypto: ops[0].crypto, strike: ops[0].strike } : 'none');
+        // // console.log('[PM-Debug] par=' + par + ' totalOps=' + ops.length + ' cryptoOperacoes=' + (window.cryptoOperacoes || []).length);
+        // console.log('[PM-Debug] sampleOp:', ops[0] ? { tipo: ops[0].tipo, status: ops[0].status, exercicio_status: ops[0].exercicio_status, exercicio_status_persistido: ops[0].exercicio_status_persistido, crypto: ops[0].crypto, strike: ops[0].strike } : 'none');
 
         var putsExercidas = baseOps.filter(isExercisedPut);
-        console.log('[PM-Debug] putsExercidas=' + putsExercidas.length);
+        // console.log('[PM-Debug] putsExercidas=' + putsExercidas.length);
         var ultimaPut = putsExercidas.length
             ? putsExercidas.sort(function (a, b) {
                 var aTime = window.CryptoExerciseStatus?.getOperationDate?.(a)?.getTime?.() || 0;
@@ -151,35 +151,35 @@
     function openModal(par, cotacaoOverride) {
         if (!par) return;
         var allOps = window.cryptoOperacoes || [];
-        console.log('[PM-Debug] openModal par=' + par + ' totalOps=' + allOps.length);
+        // console.log('[PM-Debug] openModal par=' + par + ' totalOps=' + allOps.length);
 
         var parOps = allOps.filter(function(o) {
             var a = (o.ativo || '').toUpperCase().replace('USDT', '').replace('/', '').trim();
             return a === par.toUpperCase();
         });
-        console.log('[PM-Debug] parOps(' + par + '):', parOps.length);
+        // console.log('[PM-Debug] parOps(' + par + '):', parOps.length);
 
         var putsAll = parOps.filter(function(o) { return (o.tipo || '').toUpperCase() === 'PUT'; });
-        console.log('[PM-Debug] PUTs:', putsAll.length);
+        // console.log('[PM-Debug] PUTs:', putsAll.length);
 
         var putsClosed = putsAll.filter(function(o) { return (o.status || '').toUpperCase() !== 'ABERTA'; });
-        console.log('[PM-Debug] PUTs closed:', putsClosed.length);
+        // console.log('[PM-Debug] PUTs closed:', putsClosed.length);
 
         var putsSIM = putsAll.filter(function(o) { return (o.exercicio_status || '').toUpperCase() === 'SIM'; });
-        console.log('[PM-Debug] PUTs with exercicio_status=SIM:', putsSIM.length);
+        // console.log('[PM-Debug] PUTs with exercicio_status=SIM:', putsSIM.length);
 
         var putsPersistido = putsAll.filter(function(o) { return (o.exercicio_status_persistido || '').toUpperCase() === 'SIM'; });
-        console.log('[PM-Debug] PUTs with persistido=SIM:', putsPersistido.length);
+        // console.log('[PM-Debug] PUTs with persistido=SIM:', putsPersistido.length);
 
         if (putsSIM.length > 0) {
             var sample = putsSIM[0];
-            console.log('[PM-Debug] sample PUT SIM:', JSON.stringify({id: sample.id, tipo: sample.tipo, status: sample.status, exercicio_status: sample.exercicio_status, persistido: sample.exercicio_status_persistido, crypto: sample.crypto, strike: sample.strike}));
+            // console.log('[PM-Debug] sample PUT SIM:', JSON.stringify({id: sample.id, tipo: sample.tipo, status: sample.status, exercicio_status: sample.exercicio_status, persistido: sample.exercicio_status_persistido, crypto: sample.crypto, strike: sample.strike}));
             var exResult = window.CryptoExerciseStatus ? window.CryptoExerciseStatus.isActuallyExercised(sample) : 'no CryptoExerciseStatus';
-            console.log('[PM-Debug] isActuallyExercised(sample) =', exResult);
+            // console.log('[PM-Debug] isActuallyExercised(sample) =', exResult);
         }
 
         modalData = computeData(par, cotacaoOverride);
-        console.log('[PM-Debug] computeData result: pm=' + (modalData ? modalData.pm : 'null') + ' qtyTotal=' + (modalData ? modalData.qtyTotal : 'null') + ' custoTotal=' + (modalData ? modalData.custoTotal : 'null'));
+        // console.log('[PM-Debug] computeData result: pm=' + (modalData ? modalData.pm : 'null') + ' qtyTotal=' + (modalData ? modalData.qtyTotal : 'null') + ' custoTotal=' + (modalData ? modalData.custoTotal : 'null'));
         var overlay = document.getElementById('pmOverlay');
         if (!overlay) return;
         build();
