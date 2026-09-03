@@ -18,7 +18,7 @@
     };
 
     let _loaded  = false;
-    let _period  = 'today';
+    let _period  = 'mes';
     let _statusF = null;
     let _tipoF   = null;
     let _statusList = null; // array multi-select
@@ -689,7 +689,7 @@
         _header = window.CryptoModalHeader.mount('#dshModalHeader', {
             title:         'Dashboard Analítico · Crypto',
             icon:          '⚡',
-            defaultPeriod: 'today',
+            defaultPeriod: 'mes',
             closeModalId:  cfg.modalElId,
             actionLabel:   'Análise Detalhada',
             actionId:      'btnResultadosCryptoDetalhado',

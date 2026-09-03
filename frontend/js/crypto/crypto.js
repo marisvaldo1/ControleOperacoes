@@ -2104,6 +2104,33 @@ function simResetRight() {
     if (badgeEl)   badgeEl.textContent = 'CALL';
     if (popEl)     popEl.textContent = '0%';
     if (gaugeEl)   gaugeEl.style.width = '0%';
+
+    // Novo design: reseta LCD e gauge circular
+    _simLcdReset('simLcdFiat');
+    _simLcdReset('simLcdCrypto');
+    _simLcdReset('simLcdHero');
+    const ringArc = document.getElementById('simRingArc');
+    if (ringArc) { ringArc.style.strokeDasharray = '0 999'; ringArc.style.stroke = '#3fe081'; }
+    const ringPct = document.getElementById('simRingPct');
+    if (ringPct) { ringPct.textContent = '0%'; ringPct.style.color = '#3fe081'; }
+    const ringLbl = document.getElementById('simRingLabel');
+    if (ringLbl) ringLbl.textContent = 'PoP';
+    const scFiat = document.getElementById('simScenarioFiat');
+    const scCrypto = document.getElementById('simScenarioCrypto');
+    if (scFiat) scFiat.classList.remove('active');
+    if (scCrypto) scCrypto.classList.remove('active');
+    const fiatOpt = document.getElementById('simScenarioFiatOpt');
+    const cryptoOpt = document.getElementById('simScenarioCryptoOpt');
+    if (fiatOpt) fiatOpt.textContent = '— ≤ Strike → Recebe USDT';
+    if (cryptoOpt) cryptoOpt.textContent = '— > Strike → Recebe —';
+    const popFiat = document.getElementById('simPopFiat');
+    const popCrypto = document.getElementById('simPopCrypto');
+    if (popFiat) popFiat.textContent = 'PoP 0%';
+    if (popCrypto) popCrypto.textContent = 'PoP 0%';
+    const heroSub = document.getElementById('simHeroSub');
+    if (heroSub) heroSub.textContent = 'Preencha os dados para ver o prêmio';
+    // Reseta scenario switcher
+    if (window._simScenarioReset) window._simScenarioReset();
 }
 
 // Atualiza TODOS os componentes do painel direito com os valores atuais dos inputs
@@ -2615,23 +2642,149 @@ function simRenderPnLChart(valor, strike, cotacao, tipo, prazo, tae) {
     });
 }
 
+// ── LCD Display: helper functions ────────────────────────────────────────────
+const _SIM_CIRC = 2 * Math.PI * 56; // raio do gauge SVG = 56
+
+function _simLcdRender(boxId, str, cellH) {
+    var box = document.getElementById(boxId);
+    if (!box) return;
+    var pat = str.replace(/\d/g, 'd');
+    if (box.dataset.pat !== pat) {
+        box.dataset.pat = pat;
+        box.dataset.h = cellH;
+        box.innerHTML = '';
+        var di = 0;
+        for (var i = 0; i < str.length; i++) {
+            var ch = str[i];
+            if (/\d/.test(ch)) {
+                var cell = document.createElement('span');
+                cell.className = 'sim-lcd__cell';
+                var reel = document.createElement('span');
+                reel.className = 'sim-lcd__reel';
+                for (var d = 0; d < 10; d++) {
+                    var digit = document.createElement('span');
+                    digit.className = 'sim-lcd__d';
+                    digit.textContent = d;
+                    reel.appendChild(digit);
+                }
+                reel.style.transitionDelay = (di * 60) + 'ms';
+                cell.appendChild(reel);
+                box.appendChild(cell);
+                di++;
+            } else {
+                var sep = document.createElement('span');
+                sep.className = 'sim-lcd__sep';
+                sep.textContent = ch;
+                box.appendChild(sep);
+            }
+        }
+        requestAnimationFrame(function() { requestAnimationFrame(function() { _simLcdSet(box, str); }); });
+    } else {
+        _simLcdSet(box, str);
+    }
+}
+
+function _simLcdSet(box, str) {
+    var h = +(box.dataset.h || 40);
+    var reels = box.querySelectorAll('.sim-lcd__reel');
+    var di = 0;
+    for (var i = 0; i < str.length; i++) {
+        if (/\d/.test(str[i])) {
+            if (reels[di]) reels[di].style.transform = 'translateY(' + (-parseInt(str[i]) * h) + 'px)';
+            di++;
+        }
+    }
+}
+
+function _simLcdReset(boxId) {
+    var box = document.getElementById(boxId);
+    if (box) { box.innerHTML = ''; box.dataset.pat = ''; }
+}
+
+// ── Callout animado com LCD + gauge circular ────────────────────────────────
 function simAnimateCallout(premioAlvo, tipo, cotacao, strike, prazo) {
-    var counterEl  = document.getElementById('simCalloutPremio');
     var badgeEl    = document.getElementById('simCalloutTipo');
+    var counterEl  = document.getElementById('simCalloutPremio');
     var popLabelEl = document.getElementById('simCalloutPop');
     var gaugeEl    = document.getElementById('simCalloutGauge');
-    if (!counterEl) return;
-
     if (badgeEl) badgeEl.textContent = tipo || '—';
 
-    // Calcula PoP simplificado
+    var par = (document.getElementById('simPar')?.value || 'BTC').toUpperCase();
+    var isCall = tipo === 'CALL';
+
+    // PoP simplificado
     var popAlvo = 0;
     if (cotacao && strike) {
         var dist = Math.abs(cotacao - strike) / strike * 100;
-        var isITM = (tipo === 'CALL' && cotacao >= strike) || (tipo === 'PUT' && cotacao <= strike);
+        var isITM = (isCall && cotacao >= strike) || (!isCall && cotacao <= strike);
         popAlvo = isITM ? Math.max(5, 50 - dist * 4) : Math.min(95, 50 + dist * 4);
     }
+    var popFiatAlvo  = isCall ? (100 - popAlvo) : popAlvo;
+    var popCryptoAlvo = isCall ? popAlvo : (100 - popAlvo);
 
+    // Quantidade de crypto recebida no cenário de exercício
+    var cryptoQty = (premioAlvo > 0 && strike > 0) ? premioAlvo / strike : 0;
+
+    // Descrições dos cenários
+    var fiatDesc  = isCall ? (par + ' ≤ Strike → Recebe USDT') : (par + ' ≥ Strike → Recebe USDT');
+    var cryptoDesc = isCall ? (par + ' > Strike → Recebe ' + par) : (par + ' < Strike → Recebe ' + par);
+    var fiatOpt  = document.getElementById('simScenarioFiatOpt');
+    var cryptoOpt = document.getElementById('simScenarioCryptoOpt');
+    if (fiatOpt) fiatOpt.textContent = fiatDesc;
+    if (cryptoOpt) cryptoOpt.textContent = cryptoDesc;
+
+    // Formatação
+    function fmtNum(v, dec) { return v.toFixed(dec || 2).replace('.', ','); }
+    function fmtCrypto(v) {
+        if (v >= 1) return fmtNum(v, 4);
+        if (v >= 0.01) return fmtNum(v, 4);
+        return fmtNum(v, 6);
+    }
+
+    // Valor alvo LCD
+    var lcdFiatStr  = fmtNum(premioAlvo);
+    var lcdCryptoStr = fmtCrypto(cryptoQty);
+    var lcdHeroStr  = fmtNum(premioAlvo);
+
+    // Cenário ativo: CALL → fiat ativo, PUT → crypto ativo
+    var scFiat   = document.getElementById('simScenarioFiat');
+    var scCrypto = document.getElementById('simScenarioCrypto');
+    var heroLcd  = document.getElementById('simHeroLcd');
+    var heroCur  = document.getElementById('simHeroCur');
+    var heroUnit = document.getElementById('simHeroUnit');
+    var fiatActive = isCall;
+    if (scFiat) scFiat.classList.toggle('active', fiatActive);
+    if (scCrypto) scCrypto.classList.toggle('active', !fiatActive);
+    if (heroLcd) {
+        heroLcd.classList.toggle('sim-lcd--blue', !fiatActive);
+        heroLcd.classList.toggle('sim-lcd--green', fiatActive);
+    }
+    if (heroCur) heroCur.style.display = fiatActive ? '' : 'none';
+    if (heroUnit) {
+        heroUnit.style.display = fiatActive ? 'none' : '';
+        heroUnit.textContent = par;
+    }
+
+    // Gauge circular
+    var arc = document.getElementById('simRingArc');
+    var ringPct = document.getElementById('simRingPct');
+    var ringLbl = document.getElementById('simRingLabel');
+    var popForRing = fiatActive ? popFiatAlvo : popCryptoAlvo;
+
+    // Atualiza dados do scenario switcher
+    if (window._simScenarioUpdate) {
+        window._simScenarioUpdate({
+            fiatStr: lcdFiatStr,
+            cryptoStr: lcdCryptoStr,
+            popFiat: popFiatAlvo,
+            popCrypto: popCryptoAlvo,
+            par: par,
+            premioAlvo: premioAlvo,
+            cryptoQty: cryptoQty
+        });
+    }
+
+    // Animação
     var start = null, dur = 600;
     function easeOutCubic(p) { return 1 - Math.pow(1 - p, 3); }
 
@@ -2640,10 +2793,42 @@ function simAnimateCallout(premioAlvo, tipo, cotacao, strike, prazo) {
         var p = Math.min(1, (ts - start) / dur);
         var e = easeOutCubic(p);
 
-        counterEl.textContent = 'US$ ' + (premioAlvo * e).toFixed(2).replace('.', ',');
-        var popVal = popAlvo * e;
-        if (popLabelEl) popLabelEl.textContent = popVal.toFixed(0) + '%';
-        if (gaugeEl) gaugeEl.style.width = popVal + '%';
+        // LCD animado
+        _simLcdRender('simLcdFiat', fmtNum(premioAlvo * e), 40);
+        _simLcdRender('simLcdCrypto', fmtCrypto(cryptoQty * e), 40);
+        _simLcdRender('simLcdHero', fmtNum(premioAlvo * e), 60);
+
+        // PoP animado
+        var popFiatV  = popFiatAlvo * e;
+        var popCryV   = popCryptoAlvo * e;
+        var popRingV  = popForRing * e;
+        var popFiatEl = document.getElementById('simPopFiat');
+        var popCryEl  = document.getElementById('simPopCrypto');
+        if (popFiatEl) popFiatEl.textContent = 'PoP ' + popFiatV.toFixed(0) + '%';
+        if (popCryEl)  popCryEl.textContent = 'PoP ' + popCryV.toFixed(0) + '%';
+
+        // Gauge circular
+        if (arc) {
+            arc.style.strokeDasharray = (_SIM_CIRC * popRingV / 100) + ' ' + _SIM_CIRC;
+            arc.style.stroke = fiatActive ? '#3fe081' : '#4d9fff';
+        }
+        if (ringPct) {
+            ringPct.textContent = popRingV.toFixed(0) + '%';
+            ringPct.style.color = fiatActive ? '#3fe081' : '#4d9fff';
+        }
+        if (ringLbl) ringLbl.textContent = 'PoP · ' + (fiatActive ? 'recebe USDT' : 'recebe ' + par);
+
+        // Subtexto hero
+        var heroSub = document.getElementById('simHeroSub');
+        if (heroSub && p >= 1) {
+            var totalVencimento = premioAlvo + (fiatActive ? 0 : cryptoQty * (cotacao || strike));
+            heroSub.textContent = 'Total no vencimento: ' + fmtNum(totalVencimento);
+        }
+
+        // Compat: mantém elementos antigos atualizados
+        if (counterEl) counterEl.textContent = 'US$ ' + fmtNum(premioAlvo * e);
+        if (popLabelEl) popLabelEl.textContent = (popForRing * e).toFixed(0) + '%';
+        if (gaugeEl) gaugeEl.style.width = (popForRing * e) + '%';
 
         if (p < 1) requestAnimationFrame(step);
     }
@@ -3083,6 +3268,93 @@ window.CryptoNavbar = { refresh: updateCryptoMarketStatus };
 })();
 
 // ── Card de Prêmio: click executa cálculo ───────────────────────────────────
-document.getElementById('simPremioCard')?.addEventListener('click', function() {
+document.getElementById('simPremioCard')?.addEventListener('click', function(e) {
     calcularSimulador();
 });
+
+// ── Scenario cards: click alterna cenário ativo ─────────────────────────────
+(function() {
+    var _activeScenario = 'fiat'; // 'fiat' | 'crypto'
+    var _scenarioData = { fiatStr: '0,00', cryptoStr: '0,0000', popFiat: 0, popCrypto: 0, par: 'BTC', premioAlvo: 0, cryptoQty: 0 };
+
+    function switchScenario(key) {
+        if (key === _activeScenario) return;
+        _activeScenario = key;
+
+        var scFiat   = document.getElementById('simScenarioFiat');
+        var scCrypto = document.getElementById('simScenarioCrypto');
+        var heroLcd  = document.getElementById('simHeroLcd');
+        var heroCur  = document.getElementById('simHeroCur');
+        var heroUnit = document.getElementById('simHeroUnit');
+
+        var isFiat = (key === 'fiat');
+        if (scFiat)   scFiat.classList.toggle('active', isFiat);
+        if (scCrypto) scCrypto.classList.toggle('active', !isFiat);
+
+        if (heroLcd) {
+            heroLcd.classList.toggle('sim-lcd--green', isFiat);
+            heroLcd.classList.toggle('sim-lcd--blue', !isFiat);
+        }
+        if (heroCur)  heroCur.style.display = isFiat ? '' : 'none';
+        if (heroUnit) {
+            heroUnit.style.display = isFiat ? 'none' : '';
+            heroUnit.textContent = _scenarioData.par;
+        }
+
+        if (isFiat) {
+            _simLcdRender('simLcdHero', _scenarioData.fiatStr, 60);
+        } else {
+            _simLcdRender('simLcdHero', _scenarioData.cryptoStr, 60);
+        }
+
+        // Atualiza gauge circular
+        var arc = document.getElementById('simRingArc');
+        var ringPct = document.getElementById('simRingPct');
+        var ringLbl = document.getElementById('simRingLabel');
+        var popForRing = isFiat ? _scenarioData.popFiat : _scenarioData.popCrypto;
+        var CIRC = 2 * Math.PI * 56;
+        if (arc) {
+            arc.style.strokeDasharray = (CIRC * popForRing / 100) + ' ' + CIRC;
+            arc.style.stroke = isFiat ? '#3fe081' : '#4d9fff';
+        }
+        if (ringPct) {
+            ringPct.textContent = popForRing.toFixed(0) + '%';
+            ringPct.style.color = isFiat ? '#3fe081' : '#4d9fff';
+        }
+        if (ringLbl) ringLbl.textContent = 'PoP · ' + (isFiat ? 'recebe USDT' : 'recebe ' + _scenarioData.par);
+
+        // Subtexto hero
+        var heroSub = document.getElementById('simHeroSub');
+        if (heroSub) {
+            if (isFiat) {
+                heroSub.textContent = 'Prêmio em USDT no vencimento';
+            } else {
+                heroSub.textContent = 'Quantidade em ' + _scenarioData.par + ' no vencimento';
+            }
+        }
+    }
+
+    document.getElementById('simScenarioFiat')?.addEventListener('click', function(e) {
+        e.stopPropagation();
+        switchScenario('fiat');
+    });
+    document.getElementById('simScenarioCrypto')?.addEventListener('click', function(e) {
+        e.stopPropagation();
+        switchScenario('crypto');
+    });
+
+    // Expõe para simAnimateCallout atualizar os dados
+    window._simScenarioUpdate = function(data) {
+        Object.assign(_scenarioData, data);
+        // Re-renderiza o cenário ativo atual
+        if (_activeScenario === 'fiat') {
+            _simLcdRender('simLcdHero', _scenarioData.fiatStr, 60);
+        } else {
+            _simLcdRender('simLcdHero', _scenarioData.cryptoStr, 60);
+        }
+    };
+    window._simScenarioReset = function() {
+        _activeScenario = 'fiat';
+        _scenarioData = { fiatStr: '0,00', cryptoStr: '0,0000', popFiat: 0, popCrypto: 0, par: 'BTC', premioAlvo: 0, cryptoQty: 0 };
+    };
+})();

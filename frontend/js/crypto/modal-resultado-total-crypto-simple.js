@@ -7,7 +7,7 @@
   var currentOperacoes = [];
   var filteredCycles   = [];
   var accChart         = null;
-  var filterState      = { period: 'today', status: null, tipo: null, asset: null, corretora: null, dateFrom: null, dateTo: null };
+  var filterState      = { period: 'mes', status: null, tipo: null, asset: null, corretora: null, dateFrom: null, dateTo: null };
   var _header          = null; /* controlador CryptoModalHeader */
 
   /* ─ Formatadores ─ */
@@ -473,7 +473,7 @@
     _header = window.CryptoModalHeader.mount('#rtModalHeader', {
       title:         'Dashboard Analítico · Crypto',
       icon:          '⚡',
-      defaultPeriod: 'today',
+      defaultPeriod: 'mes',
       closeModalId:  'modalResultadoTotalCrypto',
       onFilter: function (state) {
         filterState.period    = state.period;

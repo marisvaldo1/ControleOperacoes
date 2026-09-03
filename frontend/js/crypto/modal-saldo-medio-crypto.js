@@ -57,7 +57,7 @@
 
     const charts = { donut: null, bar: null };
     const FILTER_DEFAULTS = {
-        period: 'today',
+        period: 'mes',
         status: null,
         tipo: null,
         asset: null,

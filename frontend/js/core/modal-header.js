@@ -33,7 +33,7 @@
         const cfg = Object.assign({
             title: 'Crypto',
             icon: '⚡',
-            defaultPeriod: 'today',
+            defaultPeriod: 'mes',
             closeModalId: null,
             actionLabel: null,
             actionId: null,
@@ -55,8 +55,8 @@
         const idTotals = id + '_totals';
 
         const state = global.CryptoFilterBar
-            ? global.CryptoFilterBar.createState(Object.assign({ period: cfg.defaultPeriod || 'semana' }, cfg.defaultState || {}))
-            : Object.assign({ period: cfg.defaultPeriod || 'semana', status: null, tipo: null, statusList: ['aberta', 'fechada'], tipoList: ['CALL', 'PUT'], asset: null, corretora: null }, cfg.defaultState || {});
+            ? global.CryptoFilterBar.createState(Object.assign({ period: cfg.defaultPeriod || 'mes' }, cfg.defaultState || {}))
+            : Object.assign({ period: cfg.defaultPeriod || 'mes', status: null, tipo: null, statusList: ['aberta', 'fechada'], tipoList: ['CALL', 'PUT'], asset: null, corretora: null }, cfg.defaultState || {});
 
         let allOpsCache = [];
         let filteredOpsCache = [];

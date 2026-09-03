@@ -690,7 +690,7 @@
         _header = CryptoModalHeader.mount('#rcModalHeader', {
             title:         'Resultados · Crypto',
             icon:          '⚡',
-            defaultPeriod: 'today',
+            defaultPeriod: 'mes',
             closeModalId:  cfg.modalElId,
             onFilter: (state) => {
                 activePeriod   = state.period;

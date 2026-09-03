@@ -762,7 +762,7 @@
         _header = window.CryptoModalHeader.mount('#dcModalHeader', {
             title:         'Dashboard Avançado de Performance · Crypto',
             icon:          '🔥',
-            defaultPeriod: 'today',
+            defaultPeriod: 'mes',
             closeModalId:  cfg.modalElId,
             onFilter: function (state) {
                 const pv = _PERIOD_MAP[state.period] || 'today';

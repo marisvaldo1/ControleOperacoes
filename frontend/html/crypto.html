@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="../css/opcoes/opcoes.css?v=1.1.8">
     <link rel="stylesheet" href="../css/opcoes/modal-resultado-total.css?v=1.1.7">
     <link rel="stylesheet" href="../css/crypto/modal-resultado-total-crypto-v2.css?v=2.1.0">
-    <link rel="stylesheet" href="../css/crypto/crypto.css?v=1.4.0">
+    <link rel="stylesheet" href="../css/crypto/crypto.css?v=1.5.0">
     <link rel="stylesheet" href="../css/crypto/modal-total-operacoes-crypto.css?v=1.1.0">
     <link rel="stylesheet" href="../css/crypto/modal-detalhe-crypto.css?v=2.6.0">
     <link rel="stylesheet" href="../css/crypto/modal-analise-detalhe-crypto.css?v=1.2.0">
@@ -587,20 +587,53 @@
                                 </div>
                             </div>
 
-                            <!-- Card: Prêmio Estimado ao Vencimento -->
+                            <!-- Card: Prêmio Estimado ao Vencimento — 3 colunas -->
                             <div class="sim-premio-card" id="simPremioCard">
-                                <div class="sim-premio-card__left">
-                                    <div>
-                                        <div class="sim-premio-card__label">Prêmio estimado ao vencimento</div>
-                                        <div class="sim-premio-card__num"><span id="simCalloutPremio">US$ 0,00</span></div>
+                                <div class="sim-premio-grid">
+                                    <!-- Card cenário: Recebe moeda fiat -->
+                                    <div class="sim-scenario-card" id="simScenarioFiat">
+                                        <span class="sim-scenario-tag" id="simScenarioFiatTag">CENÁRIO ATIVO</span>
+                                        <span class="sim-scenario-opt" id="simScenarioFiatOpt">— ≤ Strike → Recebe USDT</span>
+                                        <div class="sim-lcd sim-lcd--green">
+                                            <span class="sim-lcd__cur">US$</span>
+                                            <span class="sim-lcd__digits" id="simLcdFiat"></span>
+                                        </div>
+                                        <span class="sim-pop-label sim-pop-label--green" id="simPopFiat">PoP 0%</span>
                                     </div>
-                                    <span class="sim-premio-card__badge" id="simCalloutTipo">—</span>
+
+                                    <!-- Gauge central PoP -->
+                                    <div class="sim-ring">
+                                        <svg width="140" height="140" viewBox="0 0 140 140">
+                                            <circle class="sim-ring__track" cx="70" cy="70" r="56"></circle>
+                                            <circle class="sim-ring__arc" id="simRingArc" cx="70" cy="70" r="56"></circle>
+                                        </svg>
+                                        <div class="sim-ring__center">
+                                            <b id="simRingPct">0%</b>
+                                            <span id="simRingLabel">PoP</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Card cenário: Recebe cripto -->
+                                    <div class="sim-scenario-card sim-scenario-card--blue" id="simScenarioCrypto">
+                                        <span class="sim-scenario-tag sim-scenario-tag--blue" id="simScenarioCryptoTag">CENÁRIO ATIVO</span>
+                                        <span class="sim-scenario-opt" id="simScenarioCryptoOpt">— > Strike → Recebe —</span>
+                                        <div class="sim-lcd sim-lcd--blue">
+                                            <span class="sim-lcd__digits" id="simLcdCrypto"></span>
+                                            <span class="sim-lcd__cur" id="simLcdCryptoUnit">—</span>
+                                        </div>
+                                        <span class="sim-pop-label sim-pop-label--blue" id="simPopCrypto">PoP 0%</span>
+                                    </div>
                                 </div>
-                                <div class="sim-premio-card__right">
-                                    <div class="sim-premio-card__gauge">
-                                        <div class="sim-premio-card__gauge-lbl"><span>PoP</span><b id="simCalloutPop">0%</b></div>
-                                        <div class="sim-premio-card__gauge-bar"><div class="sim-premio-card__gauge-fill" id="simCalloutGauge" style="width:0%"></div></div>
+
+                                <!-- Hero: prêmio do cenário ativo -->
+                                <div class="sim-premio-hero">
+                                    <span class="sim-premio-hero__label">Prêmio estimado — cenário ativo</span>
+                                    <div class="sim-lcd sim-lcd--lg sim-lcd--green" id="simHeroLcd">
+                                        <span class="sim-lcd__cur" id="simHeroCur">US$</span>
+                                        <span class="sim-lcd__digits" id="simLcdHero"></span>
+                                        <span class="sim-lcd__cur" id="simHeroUnit" style="display:none">—</span>
                                     </div>
+                                    <span class="sim-premio-hero__sub" id="simHeroSub">Preencha os dados para ver o prêmio</span>
                                 </div>
                             </div>
 

@@ -1,6 +1,6 @@
 (function () {
     const state = {
-        period: '60d',
+        period: 'mes',
         chart: null,
         loading: false,
         updating: false

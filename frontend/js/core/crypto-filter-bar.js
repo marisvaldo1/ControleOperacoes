@@ -288,7 +288,7 @@
 
     function createState(overrides) {
         return Object.assign({
-            period: 'semana',
+            period: 'mes',
             status: null,
             tipo: null,
             statusList: ['aberta', 'fechada'],

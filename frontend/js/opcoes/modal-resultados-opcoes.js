@@ -18,7 +18,7 @@
     // ── Estado ────────────────────────────────────────────────────────────────
     let filteredOps   = [];
     let currentIdx    = 0;
-    let activePeriod  = 'all';
+    let activePeriod  = 'mes';
     let activeType    = 'aberta';
     let activeTipo    = null;
     let activeSection = 'desempenho';
@@ -698,7 +698,7 @@
     async function openModal() {
         const ok = await ensureTemplate();
         if (!ok) return;
-        activePeriod  = 'all';
+        activePeriod  = 'mes';
         activeType    = 'aberta';
         activeTipo    = null;
         activeSection = 'desempenho';
@@ -706,7 +706,7 @@
 
         // Sync period pills
         document.querySelectorAll('#modalResultadosOpcoes [data-period]').forEach(b => {
-            b.classList.toggle('active', b.dataset.period === 'all');
+            b.classList.toggle('active', b.dataset.period === 'mes');
         });
         // Sync type pills — activate 'aberta' by default
         document.querySelectorAll('#modalResultadosOpcoes [data-type]').forEach(b => b.classList.remove('active'));

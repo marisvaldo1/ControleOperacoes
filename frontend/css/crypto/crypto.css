@@ -671,56 +671,217 @@
                    height: 100%; color: var(--tblr-secondary); font-size: .8rem;
                    flex-direction: column; gap: 6px; }
 
-/* Card de Prêmio Estimado ao Vencimento */
+/* Card de Prêmio Estimado ao Vencimento — design 3 colunas */
 .sim-premio-card {
-    background: rgba(255,255,255,.02);
-    border: 1px solid rgba(255,255,255,.07);
-    border-radius: 10px;
-    padding: 20px 18px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    flex-wrap: wrap;
-    position: relative;
-    overflow: hidden;
+    background: #0f1626;
+    border: 1px solid #1e2a44;
+    border-radius: 14px;
+    padding: 24px 20px 20px;
     margin-top: 10px;
     cursor: pointer;
-    transition: background 0.15s ease, border-color 0.15s ease;
+    transition: border-color 0.2s;
 }
 .sim-premio-card:hover {
-    background: rgba(255,255,255,.05);
-    border-color: rgba(255,255,255,.15);
+    border-color: #2a3a5c;
 }
-.sim-premio-card::before {
-    content: none;
+/* Grid 3 colunas: card | gauge | card */
+.sim-premio-grid {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 20px;
+    align-items: center;
+    max-width: 800px;
+    margin: 0 auto;
 }
-.sim-premio-card__left { display: flex; align-items: center; gap: 14px; z-index: 1; }
-.sim-premio-card__label { font-size: 0.72rem; color: #8b949e; margin-bottom: 4px; }
-.sim-premio-card__num {
-    font-family: 'JetBrains Mono', monospace; font-weight: 700;
-    font-size: 2.4rem; color: #22c55e; font-variant-numeric: tabular-nums;
+/* ── Scenario cards ── */
+.sim-scenario-card {
+    position: relative;
+    border: 1px solid #223052;
+    background: #121c33;
+    border-radius: 14px;
+    padding: 18px 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 10px;
+    transition: border-color 0.25s, box-shadow 0.25s;
 }
-.sim-premio-card__badge {
-    font-size: 0.65rem; font-weight: 600;
-    background: rgba(34,197,94,0.15); color: #22c55e;
-    border: 1px solid rgba(34,197,94,0.35);
-    padding: 4px 10px; border-radius: 20px; white-space: nowrap;
+.sim-scenario-card.active {
+    border-color: #3fe081;
+    box-shadow: 0 0 0 1px #3fe081, 0 8px 24px rgba(63,224,129,.12);
 }
-.sim-premio-card__right { z-index: 1; }
-.sim-premio-card__gauge { width: 160px; }
-.sim-premio-card__gauge-lbl {
-    font-size: 0.72rem; color: #8b949e;
-    display: flex; justify-content: space-between; margin-bottom: 6px;
+.sim-scenario-card--blue.active {
+    border-color: #4d9fff;
+    box-shadow: 0 0 0 1px #4d9fff, 0 8px 24px rgba(77,159,255,.12);
 }
-.sim-premio-card__gauge-lbl b {
-    color: #e6ebf5; font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 0.85rem;
+.sim-scenario-tag {
+    position: absolute;
+    top: -9px;
+    left: 50%;
+    transform: translateX(-50%);
+    font: 800 .55rem 'Manrope', system-ui, sans-serif;
+    letter-spacing: .14em;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: #3fe081;
+    color: #0a2416;
+    opacity: 0;
+    transition: opacity 0.25s;
 }
-.sim-premio-card__gauge-bar {
-    height: 8px; border-radius: 4px; background: #0d1424; overflow: hidden;
+.sim-scenario-tag--blue { background: #4d9fff; color: #081c33; }
+.sim-scenario-card.active .sim-scenario-tag { opacity: 1; }
+.sim-scenario-opt {
+    font-size: .7rem;
+    color: #8b98b0;
+    font-weight: 700;
+    line-height: 1.4;
 }
-.sim-premio-card__gauge-fill {
-    height: 100%; background: #f0a020; border-radius: 4px; transition: none;
+/* ── LCD Display ── */
+.sim-lcd {
+    --lh: 40px;
+    --fs: 1.4rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    background: #04120b;
+    border: 1px solid rgba(63,224,129,.28);
+    box-shadow: inset 0 2px 10px rgba(0,0,0,.7), 0 0 14px rgba(63,224,129,.06);
+    position: relative;
+}
+.sim-lcd::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    background: repeating-linear-gradient(0deg, transparent 0 2px, rgba(255,255,255,.025) 2px 4px);
+}
+.sim-lcd--blue {
+    background: #04101c;
+    border-color: rgba(77,159,255,.32);
+    box-shadow: inset 0 2px 10px rgba(0,0,0,.7), 0 0 14px rgba(77,159,255,.06);
+}
+.sim-lcd--lg {
+    --lh: 60px;
+    --fs: 2.4rem;
+    padding: 12px 18px;
+}
+.sim-lcd__cur {
+    font: 700 calc(var(--fs) * .55) 'JetBrains Mono', monospace;
+    color: #3fe081;
+    text-shadow: 0 0 6px rgba(63,224,129,.5);
+}
+.sim-lcd--blue .sim-lcd__cur { color: #4d9fff; text-shadow: 0 0 6px rgba(77,159,255,.5); }
+.sim-lcd__digits {
+    display: inline-flex;
+    gap: 2px;
+}
+.sim-lcd__cell {
+    position: relative;
+    height: var(--lh);
+    width: calc(var(--lh) * .62);
+    overflow: hidden;
+    display: inline-block;
+    -webkit-mask-image: linear-gradient(transparent, #000 20%, #000 80%, transparent);
+    mask-image: linear-gradient(transparent, #000 20%, #000 80%, transparent);
+}
+.sim-lcd__cell::before {
+    content: '8';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font: 800 var(--fs) 'JetBrains Mono', monospace;
+    color: rgba(87,255,154,.08);
+}
+.sim-lcd--blue .sim-lcd__cell::before { color: rgba(108,196,255,.08); }
+.sim-lcd__reel {
+    display: flex;
+    flex-direction: column;
+    transition: transform .9s cubic-bezier(.22,.9,.24,1);
+}
+.sim-lcd__d {
+    height: var(--lh);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font: 800 var(--fs) 'JetBrains Mono', monospace;
+    color: #57ff9a;
+    text-shadow: 0 0 10px rgba(87,255,154,.5);
+}
+.sim-lcd--blue .sim-lcd__d { color: #6cc4ff; text-shadow: 0 0 10px rgba(108,196,255,.5); }
+.sim-lcd__sep {
+    align-self: center;
+    font: 800 calc(var(--fs) * .85) 'JetBrains Mono', monospace;
+    color: #57ff9a;
+    text-shadow: 0 0 10px rgba(87,255,154,.5);
+    margin: 0 -1px;
+}
+.sim-lcd--blue .sim-lcd__sep { color: #6cc4ff; text-shadow: 0 0 10px rgba(108,196,255,.5); }
+/* ── PoP label ── */
+.sim-pop-label {
+    font: 700 .72rem 'JetBrains Mono', monospace;
+}
+.sim-pop-label--green { color: #3fe081; }
+.sim-pop-label--blue { color: #4d9fff; }
+/* ── Gauge central ── */
+.sim-ring {
+    position: relative;
+    width: 140px;
+    height: 140px;
+    flex: 0 0 auto;
+}
+.sim-ring svg { transform: rotate(-90deg); }
+.sim-ring circle { fill: none; stroke-width: 10; stroke-linecap: round; }
+.sim-ring__track { stroke: #1a2440; }
+.sim-ring__arc {
+    stroke: #3fe081;
+    stroke-dasharray: 0 999;
+    transition: stroke-dasharray 1s cubic-bezier(.2,.8,.2,1), stroke .4s;
+}
+.sim-ring__center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+}
+.sim-ring__center b {
+    font: 800 1.5rem 'JetBrains Mono', monospace;
+    color: #3fe081;
+    transition: color .4s;
+}
+.sim-ring__center span {
+    font-size: .52rem;
+    color: #8b98b0;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+}
+/* ── Hero section ── */
+.sim-premio-hero {
+    margin-top: 20px;
+    padding-top: 18px;
+    border-top: 1px dashed #223052;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+.sim-premio-hero__label {
+    font-size: .62rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: #8b98b0;
+}
+.sim-premio-hero__sub {
+    font-size: .75rem;
+    color: #8b98b0;
 }
 
 /* Cenários (hidden, kept for JS compat) */
