@@ -667,6 +667,28 @@
 .sim-chart-legend { display: flex; gap: 12px; }
 .sim-chart-legend span { font-size: .62rem; display: flex; align-items: center; gap: 4px; }
 .sim-chart-legend i { width: 10px; height: 3px; border-radius: 2px; display: inline-block; }
+
+/* Retorno ao Vencimento — Accordion */
+.sim-accordion { background: transparent; border: none; }
+.sim-accordion .accordion-item { background: rgba(255,255,255,.02); border: 1px solid rgba(255,255,255,.07);
+                                  border-radius: 10px; overflow: hidden; margin-bottom: 0; }
+.sim-accordion .accordion-item:not(:first-child) { border-top: 1px solid rgba(255,255,255,.07); }
+.sim-accordion .accordion-item + .accordion-item { margin-top: 0; }
+.sim-accordion .accordion-header { margin: 0; }
+.sim-accordion .accordion-button { background: transparent; color: var(--tblr-secondary);
+                                    font-size: .65rem; text-transform: uppercase; letter-spacing: .7px;
+                                    padding: 10px 14px; box-shadow: none;
+                                    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+                                    transition: background 0.15s; }
+.sim-accordion .accordion-button:not(.collapsed) { background: transparent; color: var(--tblr-secondary); }
+.sim-accordion .accordion-button:hover { background: rgba(255,255,255,.03); }
+.sim-accordion .accordion-button::after { width: 12px; height: 12px; flex-shrink: 0;
+                                           background-size: 12px; opacity: .5; }
+.sim-accordion .accordion-legend { display: flex; gap: 12px; pointer-events: none; }
+.sim-accordion .accordion-legend span { font-size: .62rem; display: flex; align-items: center; gap: 4px; }
+.sim-accordion .accordion-legend i { width: 10px; height: 3px; border-radius: 2px; display: inline-block; }
+.sim-accordion .accordion-body { padding: 0 14px 14px; }
+.sim-accordion-btn { width: 100%; }
 .sim-empty-state { display: flex; align-items: center; justify-content: center;
                    height: 100%; color: var(--tblr-secondary); font-size: .8rem;
                    flex-direction: column; gap: 6px; }

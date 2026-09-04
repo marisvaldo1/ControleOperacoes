@@ -568,21 +568,31 @@
                                 </div>
                             </div>
 
-                            <!-- Retorno ao Vencimento -->
-                            <div class="sim-chart-wrap" id="simChartWrap">
-                                <div class="sim-chart-title">
-                                    <span>&#x1F4C8; Retorno ao Vencimento</span>
-                                    <div class="sim-chart-legend">
-                                        <span><i style="background:#3fb950"></i> Recebe USDT</span>
-                                        <span><i style="background:#f59f00"></i> Strike</span>
-                                        <span><i style="background:#4da6ff"></i> Preço Atual</span>
-                                    </div>
-                                </div>
-                                <div style="position:relative; height:155px;">
-                                    <canvas id="simPnLCanvas"></canvas>
-                                    <div id="simPnLEmpty" class="sim-empty-state" style="position:absolute;inset:0">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                                        Preencha Valor, Strike e TAE para ver o gráfico
+                            <!-- Retorno ao Vencimento — Accordion -->
+                            <div class="accordion sim-accordion" id="simAccordionRetorno">
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed sim-accordion-btn" type="button"
+                                                data-bs-toggle="collapse" data-bs-target="#simCollapseRetorno"
+                                                aria-expanded="false" aria-controls="simCollapseRetorno">
+                                            <span>&#x1F4C8; Retorno ao Vencimento</span>
+                                            <div class="sim-chart-legend sim-accordion-legend">
+                                                <span><i style="background:#3fb950"></i> Recebe USDT</span>
+                                                <span><i style="background:#f59f00"></i> Strike</span>
+                                                <span><i style="background:#4da6ff"></i> Preço Atual</span>
+                                            </div>
+                                        </button>
+                                    </h2>
+                                    <div id="simCollapseRetorno" class="accordion-collapse collapse" data-bs-parent="#simAccordionRetorno">
+                                        <div class="accordion-body sim-accordion-body">
+                                            <div style="position:relative; height:155px;">
+                                                <canvas id="simPnLCanvas"></canvas>
+                                                <div id="simPnLEmpty" class="sim-empty-state" style="position:absolute;inset:0">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                                                    Preencha Valor, Strike e TAE para ver o gráfico
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
