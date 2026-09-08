@@ -381,36 +381,85 @@
         }
     }
     /* ------------------------------------------------------------------ */
-    /*  Modal de detalhe por dia (heatmap click)                            */
+    /*  Modal de detalhe por dia (heatmap click) — Formato Recibo         */
     /* ------------------------------------------------------------------ */
     function showDayDetailModal(dateKey, dayOps) {
         const existing = document.getElementById('dcDayDetailModal');
         if (existing) existing.remove();
 
         const [year, month, day] = dateKey.split('-');
+        const dateObj = new Date(`${year}-${month}-${day}T00:00:00`);
+        const weekdays = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+        const dayName = weekdays[dateObj.getDay()];
         const dateLabel = `${day}/${month}/${year}`;
         const totalResult = dayOps.reduce((acc, op) => acc + cfg.getResultValue(op), 0);
 
-        const rows = dayOps.length
+        function getStampText(op) {
+            const status = (op.status || '').toUpperCase();
+            const exStatus = (op.exercicio_status_exibicao || op.exercicio_status || '').toUpperCase();
+            if (status === 'FECHADA' && exStatus === 'SIM') return 'EXERCIDA';
+            if (status === 'FECHADA' && exStatus === 'NAO') return 'NÃO EXERCIDA';
+            if (status === 'ABERTA') return 'ABERTA';
+            return status;
+        }
+
+        function getBadgeClass(tipo, status, exStatus) {
+            const t = (tipo || '').toUpperCase();
+            const s = (status || '').toUpperCase();
+            const ex = (exStatus || '').toUpperCase();
+            const tipoClass = t === 'PUT' ? 'put' : t === 'CALL' ? 'call' : '';
+            const statusClass = s === 'FECHADA' ? 'fechada' : s === 'ABERTA' ? 'aberta' : '';
+            const exClass = ex === 'SIM' ? 'exercida' : '';
+            return { tipoClass, statusClass, exClass };
+        }
+
+        function fmtDateBR(dateStr) {
+            if (!dateStr) return '-';
+            const d = dateStr.toString().trim().slice(0, 10);
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
+            return d.split('-').reverse().join('/');
+        }
+
+        const cardsHtml = dayOps.length
             ? dayOps.map(op => {
-                const ativo  = cfg.getAtivo(op);
-                const tipo   = (op.tipo || '-').toUpperCase();
+                const ativo = cfg.getAtivo(op);
+                const tipo = (op.tipo || '-').toUpperCase();
                 const status = (op.status || 'ABERTA').toUpperCase();
-                const val    = cfg.getResultValue(op);
+                const exStatus = (op.exercicio_status_exibicao || op.exercicio_status || '').toUpperCase();
+                const stampText = getStampText(op);
+                const val = cfg.getResultValue(op);
                 const strike = op.strike ? fmtC(op.strike) : '-';
-                const exercicio = op.exercicio || '-';
-                const pct    = parseFloat(op.resultado) || 0;
-                return `<tr>
-                    <td><strong>${ativo}</strong></td>
-                    <td><span class="badge ${tipo === 'CALL' ? 'bg-success' : 'bg-danger'}">${tipo}</span></td>
-                    <td>${strike}</td>
-                    <td>${exercicio}</td>
-                    <td class="${val >= 0 ? 'text-success' : 'text-danger'} fw-bold">${fmtC(val)}</td>
-                    <td class="${pct >= 0 ? 'text-success' : 'text-danger'}">${pct ? pct.toFixed(2) + '%' : '-'}</td>
-                    <td><span class="badge ${status === 'ABERTA' ? 'bg-success' : 'bg-secondary'}">${status}</span></td>
-                </tr>`;
+                const cotacao = op.cotacao_atual ? fmtC(op.cotacao_atual) : (op.strike ? fmtC(op.strike) : '-');
+                const exercicio = op.exercicio ? fmtDateBR(op.exercicio) : '-';
+                const dataOp = op.data_operacao ? fmtDateBR(op.data_operacao) : '-';
+                const estrategia = op.tipo_estrategia || 'DUAL_INVESTMENT';
+                const corretora = op.corretora || 'BINANCE';
+                const badgeCls = getBadgeClass(tipo, status, exStatus);
+                const showStamp = status === 'FECHADA';
+
+                return `
+                <div class="dc-rc-card">
+                    ${showStamp ? `<div class="dc-rc-stamp">${stampText}</div>` : ''}
+                    <div class="dc-rc-date">${dataOp}<span>${dayName} · total do dia ${fmtC(totalResult)}</span></div>
+                    <div class="dc-rc-asset">
+                        <b>${ativo}</b>
+                        <span class="dc-badge ${badgeCls.tipoClass}">${tipo}</span>
+                        <span class="dc-badge ${badgeCls.statusClass}">${status}</span>
+                        ${exStatus === 'SIM' ? `<span class="dc-badge ${badgeCls.exClass}">EXERCIDA</span>` : ''}
+                    </div>
+                    <div class="dc-rc-row"><span>Entrada</span><span>${dataOp}</span></div>
+                    <div class="dc-rc-row"><span>Fechamento</span><span>${exercicio}</span></div>
+                    <div class="dc-rc-row"><span>Strike</span><span>${strike}</span></div>
+                    <div class="dc-rc-row"><span>Cotação</span><span>${cotacao}</span></div>
+                    <div class="dc-rc-row"><span>Estratégia</span><span>${estrategia}</span></div>
+                    <div class="dc-rc-row"><span>Corretora</span><span>${corretora}</span></div>
+                    <div class="dc-rc-total">
+                        <span class="dc-rc-total__lbl">Prêmio recebido</span>
+                        <span class="dc-rc-total__val">${val >= 0 ? '+' : ''}${fmtC(val).replace('US$ ', '')}</span>
+                    </div>
+                </div>`;
             }).join('')
-            : '<tr><td colspan="7" class="text-center text-muted py-3">Nenhuma operação nesta data</td></tr>';
+            : '<div class="dc-rc-card" style="text-align:center;padding:40px 20px;color:#7c8aa0;">Nenhuma operação nesta data</div>';
 
         const html = `
         <div class="modal modal-blur fade" id="dcDayDetailModal" tabindex="-1" style="z-index:1100;">
@@ -418,28 +467,13 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">
-                            📅 Operações de ${dateLabel}
+                            📅 Operações de ${dateLabel} (${dayName})
                             <span class="badge ms-2 ${totalResult >= 0 ? 'bg-success' : 'bg-danger'}">${fmtC(totalResult)}</span>
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
-                    <div class="modal-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-vcenter table-hover card-table mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>Ativo</th>
-                                        <th>Tipo</th>
-                                        <th>Strike</th>
-                                        <th>Exercício</th>
-                                        <th>Prêmio (USD)</th>
-                                        <th>Resultado %</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>${rows}</tbody>
-                            </table>
-                        </div>
+                    <div class="modal-body p-0" style="max-height: 70vh; overflow-y: auto;">
+                        ${cardsHtml}
                     </div>
                     <div class="modal-footer">
                         <span class="text-muted me-auto small">${dayOps.length} operação(ões)</span>

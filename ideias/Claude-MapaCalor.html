@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Detalhe da operação — opções</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0f1a; --panel:#111a2b; --panel2:#16213a; --border:#223050;
+    --text:#e8edf5; --muted:#7c8aa0;
+    --green:#22c55e; --green-dim:#122a1c;
+    --blue:#3b82f6; --gray:#64748b; --orange:#f0a020; --red:#ef4444;
+  }
+  *,*::before,*::after{ box-sizing:border-box; }
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased;
+  }
+  .mono{ font-family:'JetBrains Mono',monospace; }
+
+  .switcher{
+    position:sticky; top:0; z-index:10; display:flex; align-items:center; gap:14px;
+    padding:12px 22px; background:#0d1320; border-bottom:1px solid var(--border); overflow-x:auto;
+  }
+  .switcher__label{ font-size:12.5px; color:var(--muted); padding-right:10px; border-right:1px solid var(--border); white-space:nowrap; }
+  .tabs{ display:flex; gap:6px; }
+  .tab{
+    font-family:'Inter',sans-serif; font-size:13px; font-weight:500; color:#aab4c8;
+    background:transparent; border:1px solid transparent; border-radius:7px; padding:7px 13px; cursor:pointer; white-space:nowrap;
+  }
+  .tab:hover{ background:var(--panel2); }
+  .tab.active{ background:var(--orange); color:#1a1200; }
+
+  .stage{ max-width:640px; margin:0 auto; padding:34px 20px 70px; }
+  .variant{ display:none; }
+  .variant.active{ display:block; }
+
+  .badge{ font-size:11px; font-weight:700; padding:3px 9px; border-radius:6px; letter-spacing:0.02em; }
+  .badge.put{ background:rgba(59,130,246,0.16); color:var(--blue); border:1px solid rgba(59,130,246,0.4); }
+  .badge.fechada{ background:rgba(100,116,139,0.2); color:#b7c0cf; border:1px solid rgba(100,116,139,0.45); }
+  .badge.exercida{ background:rgba(240,160,32,0.16); color:var(--orange); border:1px solid rgba(240,160,32,0.45); }
+
+  .hint{ margin-top:18px; padding:14px 16px; background:var(--panel2); border:1px solid var(--border); border-radius:10px; font-size:12.5px; color:var(--muted); line-height:1.65; }
+  .hint b{ color:var(--text); }
+
+  /* ================= Opção 1 — Linha do tempo ================= */
+  .tl-card{ background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:20px 22px; }
+  .tl-top{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px; }
+  .tl-date{ font-size:15px; font-weight:700; }
+  .tl-date span{ font-weight:500; color:var(--muted); font-size:12px; display:block; margin-top:1px; }
+  .tl-total{ font-size:12.5px; color:var(--green); font-weight:600; text-align:right; }
+
+  .tl-asset-row{ display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; padding-bottom:16px; border-bottom:1px solid var(--border); }
+  .tl-asset{ display:flex; align-items:center; gap:8px; }
+  .tl-asset b{ font-size:16px; }
+  .tl-premio{ font-size:20px; font-weight:700; color:var(--green); }
+
+  .tl-line{ position:relative; height:54px; margin:0 6px 16px; }
+  .tl-line__rail{ position:absolute; left:6px; right:6px; top:9px; height:2px; background:var(--border); }
+  .tl-line__rail-fill{ position:absolute; left:6px; top:9px; height:2px; background:var(--green); }
+  .tl-node{ position:absolute; top:0; text-align:center; transform:translateX(-50%); }
+  .tl-node__dot{ width:12px; height:12px; border-radius:50%; background:var(--green); border:2px solid var(--panel); margin:0 auto 8px; box-shadow:0 0 0 2px var(--green); }
+  .tl-node__lbl{ font-size:10.5px; color:var(--muted); margin-bottom:2px; }
+  .tl-node__val{ font-size:12.5px; font-weight:600; }
+
+  .tl-fields{ display:flex; justify-content:space-between; font-size:12px; color:var(--muted); }
+  .tl-fields b{ color:var(--text); font-weight:600; }
+  .tl-tags{ display:flex; gap:8px; margin-top:14px; }
+  .tl-tag{ font-size:11px; padding:3px 9px; border-radius:6px; background:var(--panel2); border:1px solid var(--border); color:var(--muted); }
+
+  /* ================= Opção 2 — Recibo ================= */
+  .rc-card{ background:var(--panel); border:1px dashed #334259; border-radius:10px; padding:24px 26px; position:relative; overflow:hidden; }
+  .rc-stamp{
+    position:absolute; top:18px; right:-30px; transform:rotate(35deg);
+    border:2px solid var(--orange); color:var(--orange); font-weight:800; font-size:11px;
+    padding:4px 34px; letter-spacing:0.08em; opacity:0.85;
+  }
+  .rc-date{ font-size:15px; font-weight:700; }
+  .rc-date span{ display:block; font-size:11.5px; color:var(--muted); font-weight:500; margin-top:1px; }
+  .rc-asset{ display:flex; align-items:center; gap:8px; margin:14px 0 16px; }
+  .rc-asset b{ font-size:15px; }
+
+  .rc-row{ display:flex; justify-content:space-between; align-items:baseline; font-size:12.5px; padding:6px 0; border-bottom:1px dotted #26324a; }
+  .rc-row span:first-child{ color:var(--muted); }
+  .rc-row span:last-child{ font-family:'JetBrains Mono',monospace; font-weight:600; }
+
+  .rc-total{ display:flex; justify-content:space-between; align-items:center; margin-top:16px; padding-top:14px; border-top:2px solid var(--border); }
+  .rc-total__lbl{ font-size:13px; color:var(--muted); }
+  .rc-total__val{ font-family:'JetBrains Mono',monospace; font-size:22px; font-weight:700; color:var(--green); }
+
+  /* ================= Opção 3 — Cabeçalho grande ================= */
+  .hg-card{ background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:22px; }
+  .hg-top{ display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+  .hg-date{ display:flex; align-items:baseline; gap:10px; }
+  .hg-date__day{ font-size:44px; font-weight:800; line-height:1; }
+  .hg-date__meta{ font-size:12.5px; color:var(--muted); line-height:1.5; }
+  .hg-date__meta b{ color:var(--text); display:block; font-size:13px; }
+  .hg-premio{ text-align:right; }
+  .hg-premio__lbl{ font-size:11px; color:var(--muted); margin-bottom:3px; }
+  .hg-premio__val{ font-size:26px; font-weight:800; color:var(--green); }
+
+  .hg-asset{ display:flex; align-items:center; gap:8px; margin-bottom:18px; }
+  .hg-asset b{ font-size:15px; }
+
+  .hg-grid{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px 18px; }
+  .hg-field{ font-size:12px; }
+  .hg-field__lbl{ color:var(--muted); margin-bottom:3px; display:flex; align-items:center; gap:5px; }
+  .hg-field__val{ font-weight:600; font-size:13px; }
+
+  /* ================= Opção 4 — Compacto com régua ================= */
+  .cc-card{ background:var(--panel); border:1px solid var(--border); border-left:4px solid var(--green); border-radius:12px; padding:18px 20px; }
+  .cc-top{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px; }
+  .cc-date{ font-size:13.5px; font-weight:700; }
+  .cc-date span{ color:var(--muted); font-weight:500; font-size:11.5px; margin-left:6px; }
+  .cc-range{ display:inline-block; margin-top:6px; font-size:11px; padding:3px 9px; border-radius:20px; background:var(--panel2); border:1px solid var(--border); color:var(--muted); }
+  .cc-range b{ color:var(--text); }
+  .cc-premio{ font-size:19px; font-weight:700; color:var(--green); text-align:right; }
+
+  .cc-asset{ display:flex; align-items:center; gap:8px; margin:14px 0 16px; }
+  .cc-asset b{ font-size:14.5px; }
+
+  .cc-ruler{ position:relative; height:38px; margin:4px 4px 18px; }
+  .cc-ruler__line{ position:absolute; left:0; right:0; top:18px; height:1px; background:var(--border); }
+  .cc-ruler__mark{ position:absolute; top:0; transform:translateX(-50%); text-align:center; }
+  .cc-ruler__mark .dot{ width:9px; height:9px; border-radius:50%; background:var(--orange); margin:0 auto 5px; }
+  .cc-ruler__mark .lbl{ font-size:10.5px; color:var(--muted); }
+  .cc-ruler__mark .val{ font-size:11.5px; font-weight:600; }
+  .cc-ruler__note{ position:absolute; right:0; top:24px; font-size:10.5px; color:var(--orange); }
+
+  .cc-tags{ display:flex; gap:8px; }
+  .cc-tag{ font-size:11px; padding:3px 9px; border-radius:6px; background:var(--panel2); border:1px solid var(--border); color:var(--muted); }
+  .cc-tag b{ color:var(--text); }
+</style>
+</head>
+<body>
+
+<nav class="switcher">
+  <div class="switcher__label">Detalhe da operação — opções</div>
+  <div class="tabs">
+    <button class="tab active" data-target="1">1. Linha do Tempo</button>
+    <button class="tab" data-target="2">2. Recibo</button>
+    <button class="tab" data-target="3">3. Cabeçalho Grande</button>
+    <button class="tab" data-target="4">4. Compacto + Régua</button>
+  </div>
+</nav>
+
+<div class="stage">
+
+  <!-- ============ OPÇÃO 1: LINHA DO TEMPO ============ -->
+  <div class="variant active" id="v-1">
+    <div class="tl-card">
+      <div class="tl-top">
+        <div class="tl-date">04/09/2026<span>sexta-feira</span></div>
+        <div class="tl-total">Total do dia<br>+US$ 46,33</div>
+      </div>
+      <div class="tl-asset-row">
+        <div class="tl-asset"><b>ETH</b><span class="badge put">PUT</span><span class="badge fechada">FECHADA</span><span class="badge exercida">EXERCIDA</span></div>
+        <div class="tl-premio">+US$ 46,33</div>
+      </div>
+      <div class="tl-line">
+        <div class="tl-line__rail"></div>
+        <div class="tl-line__rail-fill" style="width:calc(100% - 12px);"></div>
+        <div class="tl-node" style="left:6px;">
+          <div class="tl-node__dot"></div>
+          <div class="tl-node__lbl">Entrada</div>
+          <div class="tl-node__val">04/09</div>
+        </div>
+        <div class="tl-node" style="left:calc(100% - 6px);">
+          <div class="tl-node__dot"></div>
+          <div class="tl-node__lbl">Fechamento</div>
+          <div class="tl-node__val">07/09</div>
+        </div>
+      </div>
+      <div class="tl-fields">
+        <div>Strike <b>US$ 2.525,00</b></div>
+        <div>Cotação <b>US$ 2.525,00</b></div>
+      </div>
+      <div class="tl-tags">
+        <div class="tl-tag">Estratégia <b style="color:var(--text)">DUAL_INVESTMENT</b></div>
+        <div class="tl-tag">Corretora <b style="color:var(--text)">BINANCE</b></div>
+      </div>
+    </div>
+    <div class="hint"><b>Ideia 1 — Linha do tempo:</b> Entrada e Fechamento viram os dois extremos de uma barra de progresso, o que deixa visualmente claro o ciclo da operação (quantos dias durou, se já foi concluída). Strike e cotação ficam logo abaixo, já que aqui são iguais — a operação foi exercida exatamente no strike.</div>
+  </div>
+
+  <!-- ============ OPÇÃO 2: RECIBO ============ -->
+  <div class="variant" id="v-2">
+    <div class="rc-card">
+      <div class="rc-stamp">EXERCIDA</div>
+      <div class="rc-date">04/09/2026<span>sexta-feira · total do dia +US$ 46,33</span></div>
+      <div class="rc-asset"><b>ETH</b><span class="badge put">PUT</span><span class="badge fechada">FECHADA</span></div>
+      <div class="rc-row"><span>Entrada</span><span>04/09/2026</span></div>
+      <div class="rc-row"><span>Fechamento</span><span>07/09/2026</span></div>
+      <div class="rc-row"><span>Strike</span><span>US$ 2.525,00</span></div>
+      <div class="rc-row"><span>Cotação</span><span>US$ 2.525,00</span></div>
+      <div class="rc-row"><span>Estratégia</span><span>DUAL_INVESTMENT</span></div>
+      <div class="rc-row"><span>Corretora</span><span>BINANCE</span></div>
+      <div class="rc-total"><span class="rc-total__lbl">Prêmio recebido</span><span class="rc-total__val">+US$ 46,33</span></div>
+    </div>
+    <div class="hint"><b>Ideia 2 — Recibo:</b> trata a operação como um comprovante — linhas rotuladas, borda pontilhada e um "carimbo" de EXERCIDA no canto, girado como um selo real. O prêmio some do topo e reaparece só no final, como o total de uma nota, reforçando a ideia de "conferência" da operação.</div>
+  </div>
+
+  <!-- ============ OPÇÃO 3: CABEÇALHO GRANDE ============ -->
+  <div class="variant" id="v-3">
+    <div class="hg-card">
+      <div class="hg-top">
+        <div class="hg-date">
+          <div class="hg-date__day">04</div>
+          <div class="hg-date__meta"><b>Setembro 2026</b>sexta-feira</div>
+        </div>
+        <div class="hg-premio">
+          <div class="hg-premio__lbl">Prêmio da operação</div>
+          <div class="hg-premio__val">+US$ 46,33</div>
+        </div>
+      </div>
+      <div class="hg-asset"><b>ETH</b><span class="badge put">PUT</span><span class="badge fechada">FECHADA</span><span class="badge exercida">EXERCIDA</span></div>
+      <div class="hg-grid">
+        <div class="hg-field"><div class="hg-field__lbl">📥 Entrada</div><div class="hg-field__val">04/09/2026</div></div>
+        <div class="hg-field"><div class="hg-field__lbl">📤 Fechamento</div><div class="hg-field__val">07/09/2026</div></div>
+        <div class="hg-field"><div class="hg-field__lbl">🎯 Strike</div><div class="hg-field__val">US$ 2.525,00</div></div>
+        <div class="hg-field"><div class="hg-field__lbl">📈 Cotação</div><div class="hg-field__val">US$ 2.525,00</div></div>
+        <div class="hg-field"><div class="hg-field__lbl">🧩 Estratégia</div><div class="hg-field__val">DUAL_INVESTMENT</div></div>
+        <div class="hg-field"><div class="hg-field__lbl">🏦 Corretora</div><div class="hg-field__val">BINANCE</div></div>
+      </div>
+    </div>
+    <div class="hint"><b>Ideia 3 — Cabeçalho grande:</b> a data ganha o mesmo peso visual do prêmio, com o dia em número gigante — bom se você quiser que a data seja tão fácil de achar quanto o resultado, especialmente útil quando o usuário está navegando dia a dia pelo mapa de calor. Os campos viram uma grade com ícone, mais fácil de escanear que uma linha só.</div>
+  </div>
+
+  <!-- ============ OPÇÃO 4: COMPACTO + RÉGUA ============ -->
+  <div class="variant" id="v-4">
+    <div class="cc-card">
+      <div class="cc-top">
+        <div>
+          <div class="cc-date">04/09/2026<span>sexta-feira</span></div>
+          <div class="cc-range">Entrada <b>04/09</b> → Fechamento <b>07/09</b></div>
+        </div>
+        <div class="cc-premio">+US$ 46,33</div>
+      </div>
+      <div class="cc-asset"><b>ETH</b><span class="badge put">PUT</span><span class="badge fechada">FECHADA</span><span class="badge exercida">EXERCIDA</span></div>
+      <div class="cc-ruler">
+        <div class="cc-ruler__line"></div>
+        <div class="cc-ruler__mark" style="left:50%;">
+          <div class="dot"></div>
+          <div class="val">US$ 2.525,00</div>
+          <div class="lbl">strike / cotação no fechamento</div>
+        </div>
+        <div class="cc-ruler__note">exercida no strike</div>
+      </div>
+      <div class="cc-tags">
+        <div class="cc-tag">Estratégia <b>DUAL_INVESTMENT</b></div>
+        <div class="cc-tag">Corretora <b>BINANCE</b></div>
+      </div>
+    </div>
+    <div class="hint"><b>Ideia 4 — Compacto + régua:</b> mantém a densidade do card atual (bom para caber várias operações do mesmo dia empilhadas), mas troca "Strike" e "Cotação" como dois campos soltos por uma régua única — já que aqui os valores coincidem, fica claro visualmente que foi exercida exatamente no strike. A barra colorida à esquerda sinaliza lucro/prejuízo antes mesmo de ler o número.</div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  var tabs = document.querySelectorAll('.tab');
+  tabs.forEach(function(tab){
+    tab.addEventListener('click', function(){
+      tabs.forEach(function(t){ t.classList.remove('active'); });
+      tab.classList.add('active');
+      document.querySelectorAll('.variant').forEach(function(v){ v.classList.remove('active'); });
+      document.getElementById('v-' + tab.dataset.target).classList.add('active');
+    });
+  });
+})();
+</script>
+</body>
+</html>

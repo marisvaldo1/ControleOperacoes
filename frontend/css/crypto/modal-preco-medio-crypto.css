@@ -693,6 +693,131 @@
 }
 
 /* ═════════════════════════════════════════════════════════════════════════════
+   RECIBO-STYLE OPERATION CARD
+   ═════════════════════════════════════════════════════════════════════════════ */
+
+.pm-rc-card {
+    background: var(--pm-card);
+    border: 1px dashed #334259;
+    border-radius: 10px;
+    padding: 20px 22px;
+    position: relative;
+    overflow: hidden;
+}
+
+.pm-rc-stamp {
+    position: absolute;
+    top: 14px;
+    right: -28px;
+    transform: rotate(35deg);
+    border: 2px solid var(--pm-orange);
+    color: var(--pm-orange);
+    font-weight: 800;
+    font-size: 0.6rem;
+    padding: 3px 28px;
+    letter-spacing: 0.08em;
+    opacity: 0.85;
+}
+
+.pm-rc-stamp-nao {
+    border-color: var(--pm-muted);
+    color: var(--pm-muted);
+}
+
+.pm-rc-asset {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+}
+
+.pm-rc-asset b {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: var(--pm-text);
+}
+
+.pm-badge {
+    font-size: 0.58rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 5px;
+    letter-spacing: 0.02em;
+}
+
+.pm-badge-put {
+    background: rgba(59, 130, 246, 0.16);
+    color: var(--pm-put);
+    border: 1px solid rgba(59, 130, 246, 0.4);
+}
+
+.pm-badge-call {
+    background: rgba(6, 182, 212, 0.16);
+    color: var(--pm-call);
+    border: 1px solid rgba(6, 182, 212, 0.4);
+}
+
+.pm-badge-pm-operation-open {
+    background: rgba(34, 197, 94, 0.16);
+    color: var(--pm-green);
+    border: 1px solid rgba(34, 197, 94, 0.4);
+}
+
+.pm-badge-pm-operation-closed {
+    background: rgba(148, 163, 184, 0.14);
+    color: var(--pm-muted);
+    border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+.pm-rc-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 0.72rem;
+    padding: 5px 0;
+    border-bottom: 1px dotted #26324a;
+}
+
+.pm-rc-row span:first-child {
+    color: var(--pm-muted);
+}
+
+.pm-rc-row span:last-child {
+    font-family: var(--pm-mono);
+    font-weight: 600;
+    color: var(--pm-text);
+}
+
+.pm-rc-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 2px solid var(--pm-border);
+}
+
+.pm-rc-total-lbl {
+    font-size: 0.74rem;
+    color: var(--pm-muted);
+}
+
+.pm-rc-total-val {
+    font-family: var(--pm-mono);
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.pm-rc-total-val.pm-pos {
+    color: var(--pm-green);
+}
+
+.pm-rc-total-val.pm-neg {
+    color: var(--pm-red);
+}
+
+/* ═════════════════════════════════════════════════════════════════════════════
    CUSTOM TOOLTIP
    ═════════════════════════════════════════════════════════════════════════════ */
 
@@ -969,4 +1094,67 @@
 
 [data-bs-theme="light"] .pm-tt-line .pm-tt-v {
     color: #212529;
+}
+
+/* ═════════════════════════════════════════════════════════════════════════════
+   RECIBO LIGHT THEME OVERRIDES
+   ═════════════════════════════════════════════════════════════════════════════ */
+
+[data-bs-theme="light"] .pm-rc-card {
+    background: #fff;
+    border-color: #d1d5db;
+}
+
+[data-bs-theme="light"] .pm-rc-stamp {
+    border-color: #d97706;
+    color: #b45309;
+}
+
+[data-bs-theme="light"] .pm-rc-stamp-nao {
+    border-color: #9ca3af;
+    color: #6b7280;
+}
+
+[data-bs-theme="light"] .pm-rc-asset b {
+    color: #212529;
+}
+
+[data-bs-theme="light"] .pm-badge-put {
+    background: rgba(37, 99, 235, 0.12);
+    color: #2563eb;
+}
+
+[data-bs-theme="light"] .pm-badge-call {
+    background: rgba(6, 182, 212, 0.12);
+    color: #0891b2;
+}
+
+[data-bs-theme="light"] .pm-badge-pm-operation-open {
+    background: rgba(22, 163, 74, 0.12);
+    color: #16a34a;
+}
+
+[data-bs-theme="light"] .pm-badge-pm-operation-closed {
+    background: rgba(107, 114, 128, 0.12);
+    color: #6b7280;
+}
+
+[data-bs-theme="light"] .pm-rc-row {
+    border-bottom-color: #e5e7eb;
+}
+
+[data-bs-theme="light"] .pm-rc-row span:first-child {
+    color: #6b7280;
+}
+
+[data-bs-theme="light"] .pm-rc-row span:last-child {
+    color: #212529;
+}
+
+[data-bs-theme="light"] .pm-rc-total {
+    border-top-color: #e5e7eb;
+}
+
+[data-bs-theme="light"] .pm-rc-total-lbl {
+    color: #6b7280;
 }

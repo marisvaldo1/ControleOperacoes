@@ -393,21 +393,24 @@
           var cotacao = formatOperationValue(o.cotacao_atual);
           var strategy = escapeHtml(o.tipo_estrategia || '—');
           var broker = escapeHtml(o.corretora || '—');
-          return '<div class="pm-dd-op">' +
-            '<div class="pm-dd-op-main">' +
-              '<span class="pm-dd-asset">' + escapeHtml(asset) + '</span>' +
-              '<span class="pm-dd-tipo-badge pm-' + tipo.toLowerCase() + '">' + (tipo === 'PUT' ? '🔵' : '🔷') + ' ' + escapeHtml(tipo) + '</span>' +
-              '<span class="pm-dd-operation-state ' + operationState.className + '">' + operationState.label + '</span>' +
-              '<span class="pm-dd-status ' + (exercida ? 'pm-ex' : 'pm-nex') + '">' + getExerciseLabel(o) + '</span>' +
-              '<span class="pm-dd-valor ' + (valor >= 0 ? 'pm-pos' : 'pm-neg') + '">Prêmio ' + fmtUS(valor) + '</span>' +
+          var exerciseLabel = exercida ? 'EXERCIDA' : 'NÃO EXERCIDA';
+          var stampClass = exercida ? 'pm-stamp-exercida' : 'pm-stamp-nao';
+          return '<div class="pm-rc-card">' +
+            '<div class="pm-rc-stamp ' + stampClass + '">' + exerciseLabel + '</div>' +
+            '<div class="pm-rc-asset">' +
+              '<b>' + escapeHtml(asset) + '</b>' +
+              '<span class="pm-badge pm-badge-' + tipo.toLowerCase() + '">' + tipo + '</span>' +
+              '<span class="pm-badge pm-badge-' + operationState.className + '">' + operationState.label + '</span>' +
             '</div>' +
-            '<div class="pm-dd-op-meta">' +
-              '<span><small>Entrada</small><b>' + dataEntrada + '</b></span>' +
-              '<span><small>Fechamento</small><b>' + dataFechamento + '</b></span>' +
-              '<span><small>Strike</small><b>' + strike + '</b></span>' +
-              '<span><small>Cotação</small><b>' + cotacao + '</b></span>' +
-              '<span><small>Estratégia</small><b>' + strategy + '</b></span>' +
-              '<span><small>Corretora</small><b>' + broker + '</b></span>' +
+            '<div class="pm-rc-row"><span>Entrada</span><span>' + dataEntrada + '</span></div>' +
+            '<div class="pm-rc-row"><span>Fechamento</span><span>' + dataFechamento + '</span></div>' +
+            '<div class="pm-rc-row"><span>Strike</span><span>' + strike + '</span></div>' +
+            '<div class="pm-rc-row"><span>Cotação</span><span>' + cotacao + '</span></div>' +
+            '<div class="pm-rc-row"><span>Estratégia</span><span>' + strategy + '</span></div>' +
+            '<div class="pm-rc-row"><span>Corretora</span><span>' + broker + '</span></div>' +
+            '<div class="pm-rc-total">' +
+              '<span class="pm-rc-total-lbl">Prêmio recebido</span>' +
+              '<span class="pm-rc-total-val ' + (valor >= 0 ? 'pm-pos' : 'pm-neg') + '">' + fmtUS(valor) + '</span>' +
             '</div>' +
           '</div>';
         }).join('');

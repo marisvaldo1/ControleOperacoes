@@ -266,3 +266,167 @@
     opacity: 0.6;
     cursor: not-allowed;
 }
+
+/* ============================================================
+   Modal de detalhe do dia (heatmap) — Formato Recibo
+   ============================================================ */
+#dcDayDetailModal .modal-content {
+    background: #0a0f1a;
+    border: 1px solid #223050;
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+#dcDayDetailModal .modal-header {
+    background: #0d1320;
+    border-bottom: 1px solid #223050;
+    padding: 16px 22px;
+}
+
+#dcDayDetailModal .modal-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #e8edf5;
+    margin: 0;
+}
+
+#dcDayDetailModal .modal-body {
+    padding: 0;
+}
+
+#dcDayDetailModal .modal-footer {
+    background: #0d1320;
+    border-top: 1px solid #223050;
+    padding: 12px 22px;
+}
+
+/* Recibo Card */
+.dc-rc-card {
+    background: #111a2b;
+    border: 1px dashed #334259;
+    border-radius: 10px;
+    padding: 24px 26px;
+    position: relative;
+    overflow: hidden;
+    margin: 16px;
+}
+
+.dc-rc-stamp {
+    position: absolute;
+    top: 18px;
+    right: -30px;
+    transform: rotate(35deg);
+    border: 2px solid #f0a020;
+    color: #f0a020;
+    font-weight: 800;
+    font-size: 11px;
+    padding: 4px 34px;
+    letter-spacing: 0.08em;
+    opacity: 0.85;
+}
+
+.dc-rc-date {
+    font-size: 15px;
+    font-weight: 700;
+    color: #e8edf5;
+}
+
+.dc-rc-date span {
+    display: block;
+    font-size: 11.5px;
+    color: #7c8aa0;
+    font-weight: 500;
+    margin-top: 1px;
+}
+
+.dc-rc-asset {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 14px 0 16px;
+}
+
+.dc-rc-asset b {
+    font-size: 15px;
+    color: #e8edf5;
+}
+
+.dc-rc-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 12.5px;
+    padding: 6px 0;
+    border-bottom: 1px dotted #26324a;
+}
+
+.dc-rc-row span:first-child {
+    color: #7c8aa0;
+}
+
+.dc-rc-row span:last-child {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    color: #e8edf5;
+}
+
+.dc-rc-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 2px solid #223050;
+}
+
+.dc-rc-total__lbl {
+    font-size: 13px;
+    color: #7c8aa0;
+}
+
+.dc-rc-total__val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 22px;
+    font-weight: 700;
+    color: #22c55e;
+}
+
+/* Badges */
+.dc-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 6px;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+}
+
+.dc-badge.put {
+    background: rgba(59, 130, 246, 0.16);
+    color: #3b82f6;
+    border: 1px solid rgba(59, 130, 246, 0.4);
+}
+
+.dc-badge.call {
+    background: rgba(34, 197, 94, 0.16);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.4);
+}
+
+.dc-badge.fechada {
+    background: rgba(100, 116, 139, 0.2);
+    color: #b7c0cf;
+    border: 1px solid rgba(100, 116, 139, 0.45);
+}
+
+.dc-badge.aberta {
+    background: rgba(34, 197, 94, 0.16);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.4);
+}
+
+.dc-badge.exercida {
+    background: rgba(240, 160, 32, 0.16);
+    color: #f0a020;
+    border: 1px solid rgba(240, 160, 32, 0.45);
+}
