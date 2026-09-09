@@ -5,6 +5,7 @@ let tableMesAtual, tableHistorico;
 let chartAnual = null;
 let _anualAccDts = {}; // DataTable instances por accordion item
 let currentFilterCrypto = "ABERTA";
+let _anualSelectedYear = new Date().getFullYear().toString();
 let _lastSimData = null;
 let _investidoMode = 'usd';
 const CRYPTO_CFG_KEY = "cryptoConfig";
@@ -850,7 +851,12 @@ const totalAbertura = abertasOps.reduce((s, o) => {
     populateTable(tableMesAtual,  mesAtualData, { prioritizeOpen: true });
     populateTable(tableHistorico, allOperacoes, { prioritizeOpen: false });
     renderHistoricoMensal();
-    renderChartAnual(anoData, currentYear);
+    populateAnualYearSelect();
+    if (_anualSelectedYear === 'all') {
+        renderChartAnual(allOperacoes, 'all');
+    } else {
+        renderChartAnual(filterByYear(allOperacoes, _anualSelectedYear), _anualSelectedYear);
+    }
     // Reaplica filtro de status ativo após recarregar a tabela
     applyStatusFilterMesAtual();
 
@@ -860,6 +866,28 @@ const totalAbertura = abertasOps.reduce((s, o) => {
 
 function fmtUsd(v) {
     return "US$ " + (parseFloat(v) || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function populateAnualYearSelect() {
+    const sel = document.getElementById('anualYearSelect');
+    if (!sel) return;
+    const currentYear = new Date().getFullYear();
+    let html = '<option value="all">Todos</option>';
+    for (let y = currentYear; y >= currentYear - 5; y--) {
+        html += '<option value="' + y + '">' + y + '</option>';
+    }
+    sel.innerHTML = html;
+    sel.value = _anualSelectedYear;
+    sel.addEventListener('change', function() {
+        _anualSelectedYear = this.value;
+        const currentYearStr = new Date().getFullYear().toString();
+        if (_anualSelectedYear === 'all') {
+            renderChartAnual(allOperacoes, 'all');
+        } else {
+            const filtered = filterByYear(allOperacoes, _anualSelectedYear);
+            renderChartAnual(filtered, _anualSelectedYear);
+        }
+    });
 }
 
 function calcResultadoMedio(ops) {
@@ -1154,24 +1182,86 @@ function renderHistoricoMensal() {
     document.getElementById("historicoContainer").innerHTML = html || "<div class=\"text-muted text-center py-4\">Nenhum historico disponivel.</div>";
 }
 
+function buildAnualOpRow(op) {
+    const tipoBadge  = op.tipo === "CALL"
+        ? "<span class='badge crypto-badge-call'>CALL</span>"
+        : "<span class='badge crypto-badge-put'>PUT</span>";
+    const corretoraTag = (() => {
+        const c = (op.corretora || 'BINANCE').toUpperCase();
+        if (c === 'BINANCE') return '<span class="badge bg-warning text-dark">BNC</span>';
+        if (c === 'BYBIT')   return '<span class="badge bg-info text-white">BB</span>';
+        return `<span class="badge bg-secondary text-white">${c}</span>`;
+    })();
+    const statusBadge = (op.status || "ABERTA") === "ABERTA"
+        ? `<span class="badge bg-success text-white">${op.status || "ABERTA"}</span>`
+        : `<span class="badge bg-azure text-white">${op.status || "FECHADA"}</span>`;
+    const isExercida = window.CryptoExerciseStatus
+        ? window.CryptoExerciseStatus.isActuallyExercised(op)
+        : (op.exercicio_status || '').toUpperCase() === 'SIM';
+    const exercBadge = isExercida
+        ? '<span class="badge bg-warning text-dark">SIM</span>'
+        : '<span class="badge bg-secondary text-white">NÃO</span>';
+    return `<tr>
+        <td>${op.data_operacao || "-"}</td>
+        <td><strong style="cursor:pointer;color:#4299e1" data-analise-id="${op.id}" class="op-ativo-link" title="Análise completa">${op.ativo || "-"}</strong> ${corretoraTag}</td>
+        <td>${tipoBadge}</td>
+        <td>${op.strike ? fmtUsd(parseFloat(op.strike)) : "-"}</td>
+        <td>${op.exercicio || "-"}</td>
+        <td class="text-success fw-bold">${fmtUsd(parseFloat(op.premio_us) || 0)}</td>
+        <td class="${(parseFloat(op.resultado) || 0) >= 0 ? 'text-success' : 'text-danger'}">${(parseFloat(op.resultado) || 0).toFixed(2)}%</td>
+        <td>${statusBadge}</td>
+        <td>${exercBadge}</td>
+        <td></td>
+    </tr>`;
+}
+
 function renderChartAnual(data, year) {
+    const isAllYears = (year === 'all');
     const grouped = groupByMonth(data);
     const months  = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-    const monthlyValues = [];
-    for (let i = 1; i <= 12; i++) {
-        const k = year + "-" + String(i).padStart(2, "0");
-        const d = grouped[k] || [];
-        monthlyValues.push(d.reduce((s, o) => s + (parseFloat(o.premio_us) || 0), 0));
+
+    let chartLabels, chartDataValues, anoTotal;
+
+    if (isAllYears) {
+        // Modo "Todos": agrupa por ano
+        const yearGroups = {};
+        data.forEach(o => {
+            const d = o.data_operacao || '';
+            const y = d ? d.substring(0, 4) : '';
+            if (y) {
+                if (!yearGroups[y]) yearGroups[y] = 0;
+                yearGroups[y] += parseFloat(o.premio_us) || 0;
+            }
+        });
+        const years = Object.keys(yearGroups).sort();
+        chartLabels = [...years, 'Total'];
+        const yearValues = years.map(y => parseFloat(yearGroups[y].toFixed(2)));
+        anoTotal = yearValues.reduce((s, v) => s + v, 0);
+        chartDataValues = [...yearValues, anoTotal];
+    } else {
+        // Modo ano específico: barras mensais
+        chartLabels = [...months, 'Total'];
+        const monthlyValues = [];
+        for (let i = 1; i <= 12; i++) {
+            const k = year + "-" + String(i).padStart(2, "0");
+            const d = grouped[k] || [];
+            monthlyValues.push(d.reduce((s, o) => s + (parseFloat(o.premio_us) || 0), 0));
+        }
+        anoTotal = monthlyValues.reduce((s, v) => s + v, 0);
+        chartDataValues = [...monthlyValues, anoTotal];
     }
-    const anoTotal = monthlyValues.reduce((s, v) => s + v, 0);
+
     const anoMedio = calcResultadoMedio(data);
 
     // Métricas para o header
-    const mesesComOps  = monthlyValues.filter(v => v !== 0);
-    const melhorMes    = mesesComOps.length > 0 ? Math.max(...mesesComOps) : 0;
-    const piorMes      = mesesComOps.length > 0 ? Math.min(...mesesComOps) : 0;
+    const dataNonZero  = chartDataValues.filter(v => v !== 0 && v !== anoTotal);
+    const melhorMes    = dataNonZero.length > 0 ? Math.max(...dataNonZero) : 0;
+    const piorMes      = dataNonZero.length > 0 ? Math.min(...dataNonZero) : 0;
     const totalWins    = data.filter(o => (parseFloat(o.premio_us) || 0) > 0).length;
     const taxaAcerto   = data.length > 0 ? (totalWins / data.length * 100) : 0;
+    const headerLabel  = isAllYears ? 'Resultado Total' : 'Resultado Anual';
+    const subLabel     = isAllYears ? 'Melhor Ano' : 'Melhor Mês';
+    const subLabel2    = isAllYears ? 'Pior Ano' : 'Pior Mês';
 
     // Header com 4 cards estilo opcoes
     const anualHeaderEl = document.getElementById("anualHeader");
@@ -1182,7 +1272,7 @@ function renderChartAnual(data, year) {
                     <div class="card-body d-flex align-items-center gap-3">
                         <span class="bg-blue text-white avatar"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
                         <div>
-                            <div class="text-muted small">Resultado Anual</div>
+                            <div class="text-muted small">${headerLabel}</div>
                             <div class="fw-bold ${anoTotal >= 0 ? 'text-success' : 'text-danger'}">${fmtUsd(anoTotal)}</div>
                         </div>
                     </div>
@@ -1204,7 +1294,7 @@ function renderChartAnual(data, year) {
                     <div class="card-body d-flex align-items-center gap-3">
                         <span class="bg-blue text-white avatar"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></span>
                         <div>
-                            <div class="text-muted small">Melhor Mês</div>
+                            <div class="text-muted small">${subLabel}</div>
                             <div class="fw-bold text-success">${fmtUsd(melhorMes)}</div>
                         </div>
                     </div>
@@ -1215,7 +1305,7 @@ function renderChartAnual(data, year) {
                     <div class="card-body d-flex align-items-center gap-3">
                         <span class="bg-red text-white avatar"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg></span>
                         <div>
-                            <div class="text-muted small">Pior Mês</div>
+                            <div class="text-muted small">${subLabel2}</div>
                             <div class="fw-bold ${piorMes < 0 ? 'text-danger' : 'text-muted'}">${fmtUsd(piorMes)}</div>
                         </div>
                     </div>
@@ -1223,12 +1313,11 @@ function renderChartAnual(data, year) {
             </div>`;
     }
 
-    // Barra Total azul no final
-    const chartLabels = [...months, 'Total'];
-    const chartData   = [...monthlyValues, anoTotal];
-    const chartColors = chartData.map((v, idx) =>
-        idx === chartData.length - 1 ? '#206bc4' : (v >= 0 ? '#2fb344' : '#d63939')
-    );
+    // Cores
+    const chartColors = chartDataValues.map((v, idx) => {
+        if (idx === chartDataValues.length - 1) return '#206bc4'; // Total sempre azul
+        return v >= 0 ? '#2fb344' : '#d63939';
+    });
 
     // Tema
     const isDark    = document.body.getAttribute('data-bs-theme') === 'dark';
@@ -1242,8 +1331,8 @@ function renderChartAnual(data, year) {
         data: {
             labels: chartLabels,
             datasets: [{
-                label: 'Resultado Mensal',
-                data: chartData,
+                label: isAllYears ? 'Resultado Anual' : 'Resultado Mensal',
+                data: chartDataValues,
                 backgroundColor: chartColors,
                 borderRadius: 4
             }]
@@ -1257,14 +1346,14 @@ function renderChartAnual(data, year) {
                     labels: { color: textColor, font: { size: 12 } }
                 },
                 tooltip: {
-                    callbacks: { label: c => 'US$ ' + c.parsed.y.toFixed(2) }
+                    callbacks: { label: c => fmtUsd(c.parsed.y) }
                 }
             },
             scales: {
                 y: {
                     beginAtZero: true,
                     grid: { color: gridColor },
-                    ticks: { color: textColor, callback: v => 'US$ ' + v.toFixed(0) }
+                    ticks: { color: textColor, callback: v => fmtUsd(v) }
                 },
                 x: {
                     grid: { color: gridColor },
@@ -1274,51 +1363,91 @@ function renderChartAnual(data, year) {
         }
     });
 
-    // ─── Resumo Mensal (padrão opcoes: tabela com barra de progresso) ───────
+    // ─── Resumo Mensal/Anual (padrão opcoes: tabela com barra de progresso) ───────
     const resumoCont = document.getElementById("anualResumoContainer");
     if (resumoCont) {
         let totalOps = 0, totalPremios = 0, totalResultado = 0, totalWins = 0;
         let cumulative = 0;
         const saldoCrypto = getSaldoCrypto() || 1;
-        const sortedMonths = [];
-        for (let i = 1; i <= 12; i++) sortedMonths.push(year + "-" + String(i).padStart(2, "0"));
-
-        // Primeira passagem (crescente) para calcular acumulados corretamente
         const rowsData = [];
-        sortedMonths.forEach(month => {
-            const ops = grouped[month] || [];
-            if (!ops.length) return;
-            const premio     = ops.reduce((s, o) => s + (parseFloat(o.premio_us) || 0), 0);
-            const resultado  = ops.reduce((s, o) => s + (parseFloat(o.resultado)  || 0), 0);
-            const wins       = ops.filter(o => parseFloat(o.resultado || 0) > 0).length;
-            const taxaAcerto = ops.length > 0 ? (wins / ops.length * 100) : 0;
-            const rentabilidade = saldoCrypto > 0 ? (premio / saldoCrypto * 100) : 0;
-            const rentAbs    = Math.min(100, Math.abs(rentabilidade));
-            const rentBarCls = rentabilidade >= 5 ? "bg-green" : rentabilidade >= 2 ? "bg-blue" : rentabilidade >= 0 ? "bg-yellow" : "bg-red";
-            const exercidas = ops.filter(o => window.CryptoExerciseStatus
-                ? window.CryptoExerciseStatus.isActuallyExercised(o)
-                : ((o.status || '').toUpperCase() !== 'ABERTA' && (o.exercicio_status || '').toUpperCase() === 'SIM')).length;
-            const naoExercidas = ops.filter(o => {
-                const st = (o.status || '').toUpperCase();
-                if (st === 'ABERTA') return false;
-                return window.CryptoExerciseStatus
-                    ? !window.CryptoExerciseStatus.isActuallyExercised(o)
-                    : (o.exercicio_status || '').toUpperCase() !== 'SIM';
-            }).length;
-            cumulative      += premio;
-            totalOps        += ops.length;
-            totalPremios    += premio;
-            totalResultado  += resultado;
-            totalWins       += wins;
 
-            rowsData.push({ month, ops, premio, resultado, wins, taxaAcerto, rentabilidade, rentAbs, rentBarCls, exercidas, naoExercidas, cumulative });
-        });
+        if (isAllYears) {
+            // Modo "Todos": agrupa por ano
+            const yearMap = {};
+            data.forEach(o => {
+                const d = o.data_operacao || '';
+                const y = d ? d.substring(0, 4) : '';
+                if (!y) return;
+                if (!yearMap[y]) yearMap[y] = [];
+                yearMap[y].push(o);
+            });
+            const sortedYears = Object.keys(yearMap).sort().reverse();
+            sortedYears.forEach(yr => {
+                const ops = yearMap[yr];
+                const premio     = ops.reduce((s, o) => s + (parseFloat(o.premio_us) || 0), 0);
+                const resultado  = ops.reduce((s, o) => s + (parseFloat(o.resultado)  || 0), 0);
+                const wins       = ops.filter(o => parseFloat(o.resultado || 0) > 0).length;
+                const taxaAcerto = ops.length > 0 ? (wins / ops.length * 100) : 0;
+                const rentabilidade = saldoCrypto > 0 ? (premio / saldoCrypto * 100) : 0;
+                const rentAbs    = Math.min(100, Math.abs(rentabilidade));
+                const rentBarCls = rentabilidade >= 5 ? "bg-green" : rentabilidade >= 2 ? "bg-blue" : rentabilidade >= 0 ? "bg-yellow" : "bg-red";
+                const exercidas = ops.filter(o => window.CryptoExerciseStatus
+                    ? window.CryptoExerciseStatus.isActuallyExercised(o)
+                    : ((o.status || '').toUpperCase() !== 'ABERTA' && (o.exercicio_status || '').toUpperCase() === 'SIM')).length;
+                const naoExercidas = ops.filter(o => {
+                    const st = (o.status || '').toUpperCase();
+                    if (st === 'ABERTA') return false;
+                    return window.CryptoExerciseStatus
+                        ? !window.CryptoExerciseStatus.isActuallyExercised(o)
+                        : (o.exercicio_status || '').toUpperCase() !== 'SIM';
+                }).length;
+                cumulative      += premio;
+                totalOps        += ops.length;
+                totalPremios    += premio;
+                totalResultado  += resultado;
+                totalWins       += wins;
+                rowsData.push({ month: yr, ops, premio, resultado, wins, taxaAcerto, rentabilidade, rentAbs, rentBarCls, exercidas, naoExercidas, cumulative });
+            });
+        } else {
+            // Modo ano específico: agrupa por mês
+            const sortedMonths = [];
+            for (let i = 1; i <= 12; i++) sortedMonths.push(year + "-" + String(i).padStart(2, "0"));
+            const groupedLocal = groupByMonth(data);
+            sortedMonths.forEach(month => {
+                const ops = groupedLocal[month] || [];
+                if (!ops.length) return;
+                const premio     = ops.reduce((s, o) => s + (parseFloat(o.premio_us) || 0), 0);
+                const resultado  = ops.reduce((s, o) => s + (parseFloat(o.resultado)  || 0), 0);
+                const wins       = ops.filter(o => parseFloat(o.resultado || 0) > 0).length;
+                const taxaAcerto = ops.length > 0 ? (wins / ops.length * 100) : 0;
+                const rentabilidade = saldoCrypto > 0 ? (premio / saldoCrypto * 100) : 0;
+                const rentAbs    = Math.min(100, Math.abs(rentabilidade));
+                const rentBarCls = rentabilidade >= 5 ? "bg-green" : rentabilidade >= 2 ? "bg-blue" : rentabilidade >= 0 ? "bg-yellow" : "bg-red";
+                const exercidas = ops.filter(o => window.CryptoExerciseStatus
+                    ? window.CryptoExerciseStatus.isActuallyExercised(o)
+                    : ((o.status || '').toUpperCase() !== 'ABERTA' && (o.exercicio_status || '').toUpperCase() === 'SIM')).length;
+                const naoExercidas = ops.filter(o => {
+                    const st = (o.status || '').toUpperCase();
+                    if (st === 'ABERTA') return false;
+                    return window.CryptoExerciseStatus
+                        ? !window.CryptoExerciseStatus.isActuallyExercised(o)
+                        : (o.exercicio_status || '').toUpperCase() !== 'SIM';
+                }).length;
+                cumulative      += premio;
+                totalOps        += ops.length;
+                totalPremios    += premio;
+                totalResultado  += resultado;
+                totalWins       += wins;
+                rowsData.push({ month, ops, premio, resultado, wins, taxaAcerto, rentabilidade, rentAbs, rentBarCls, exercidas, naoExercidas, cumulative });
+            });
+        }
 
-        // Renderiza em ordem decrescente (meses mais recentes primeiro)
+        // Renderiza em ordem decrescente
         let rows = "";
         [...rowsData].reverse().forEach(d => {
+            const label = isAllYears ? d.month : getMonthName(d.month).split("-")[0];
             rows += `<tr class="cursor-pointer show-crypto-month-ops-row" data-year="${year}" data-month="${d.month}" style="cursor:pointer" title="Clique para ver detalhes">
-                <td>${getMonthName(d.month).split("-")[0]}</td>
+                <td>${label}</td>
                 <td class="text-end">${d.ops.length}</td>
                 <td class="text-end ${d.premio >= 0 ? "text-success" : "text-danger"}">${fmtUsd(d.premio)}</td>
                 <td class="text-end ${d.resultado >= 0 ? "text-success" : "text-danger"}">${d.resultado.toFixed(2)}%</td>
@@ -1337,6 +1466,7 @@ function renderChartAnual(data, year) {
             </tr>`;
         });
 
+        const resumoLabel = isAllYears ? '📊 Resumo Anual (Todos)' : `📊 Resumo Mensal ${year}`;
         const summaryText = `${totalOps} ops · ${fmtUsd(totalPremios)} prêmio · ${totalWins > 0 ? (totalWins / totalOps * 100).toFixed(0) + "% acerto" : ""}`;
         resumoCont.innerHTML = `
         <div class="accordion" id="resumoMensalAcc">
@@ -1345,7 +1475,7 @@ function renderChartAnual(data, year) {
               <button class="accordion-button collapsed" type="button"
                       data-bs-toggle="collapse" data-bs-target="#resumoMensalBody"
                       aria-expanded="false" aria-controls="resumoMensalBody">
-                <span class="fw-bold me-2">📊 Resumo Mensal ${year}</span>
+                <span class="fw-bold me-2">${resumoLabel}</span>
                 <span class="text-muted small ms-2">${summaryText}</span>
               </button>
             </h2>
@@ -1354,14 +1484,14 @@ function renderChartAnual(data, year) {
                 <div class="table-responsive">
                   <table class="table table-vcenter table-hover card-table mb-0">
                     <thead><tr>
-                      <th>Mês</th><th class="text-end">Ops</th><th class="text-end">Prêmio</th>
+                      <th>${isAllYears ? 'Ano' : 'Mês'}</th><th class="text-end">Ops</th><th class="text-end">Prêmio</th>
                       <th class="text-end">Resultado</th><th class="text-end">Acerto</th>
                       <th class="text-end">Acumulado</th>
                       <th class="text-end" title="Operações exercidas">Exercidas</th>
                       <th class="text-end" title="Operações não exercidas">Não Exerc.</th>
                       <th>Rentabilidade</th>
                     </tr></thead>
-                    <tbody>${rows || '<tr><td colspan="9" class="text-muted text-center py-3">Nenhuma operação encerrada neste ano.</td></tr>'}</tbody>
+                    <tbody>${rows || '<tr><td colspan="9" class="text-muted text-center py-3">Nenhuma operação encontrada.</td></tr>'}</tbody>
                   </table>
                 </div>
               </div>
@@ -1370,67 +1500,91 @@ function renderChartAnual(data, year) {
         </div>`;
     }
 
-        // ─── Operações Detalhadas por mês (accordion) ───────────────────────────
+        // ─── Operações Detalhadas por mês/ano (accordion) ───────────────────────────
     // Destrói DataTables anteriores antes de re-renderizar o accordion
     Object.values(_anualAccDts).forEach(dt => { try { dt.destroy(); } catch (_) {} });
     _anualAccDts = {};
     const tabelaCont = document.getElementById("anualTabelaContainer");
     if (tabelaCont) {
-        const sortedMonths = [];
-        for (let i = 1; i <= 12; i++) sortedMonths.push(year + "-" + String(i).padStart(2, "0"));
-
         let accItems = "";
-        sortedMonths.forEach(month => {
-            const ops = grouped[month] || [];
-            if (!ops.length) return;
-            const monthPremio = ops.reduce((s, o) => s + (parseFloat(o.premio_us) || 0), 0);
-            const monthName   = getMonthName(month).split("-")[0];
-            const safeId      = month.replace("-", "_");
+        const groupedLocal = groupByMonth(data);
 
-            let opRows = "";
-            [...ops].sort((a, b) => {
-                const aOpen = (a.status || 'ABERTA') === 'ABERTA' ? 0 : 1;
-                const bOpen = (b.status || 'ABERTA') === 'ABERTA' ? 0 : 1;
-                if (aOpen !== bOpen) return aOpen - bOpen;
-                return new Date(b.exercicio || b.data_operacao || 0) - new Date(a.exercicio || a.data_operacao || 0);
-            }).forEach(op => {
-                const premio = parseFloat(op.premio_us) || 0;
-                const result = parseFloat(op.resultado) || 0;
-                const tipoBadge  = op.tipo === "CALL"
-                    ? "<span class='badge crypto-badge-call'>CALL</span>"
-                    : "<span class='badge crypto-badge-put'>PUT</span>";
-                const corretoraTag = (() => {
-                    const c = (op.corretora || 'BINANCE').toUpperCase();
-                    if (c === 'BINANCE') return '<span class="badge bg-warning text-dark">BNC</span>';
-                    if (c === 'BYBIT')   return '<span class="badge bg-info text-white">BB</span>';
-                    return `<span class="badge bg-secondary text-white">${c}</span>`;
-                })();
-                const statusBadge = (op.status || "ABERTA") === "ABERTA"
-                    ? `<span class="badge bg-success text-white">${op.status || "ABERTA"}</span>`
-                    : `<span class="badge bg-azure text-white">${op.status || "FECHADA"}</span>`;
-                const isExercida = window.CryptoExerciseStatus
-                    ? window.CryptoExerciseStatus.isActuallyExercised(op)
-                    : (op.exercicio_status || '').toUpperCase() === 'SIM';
-                const exercBadge = isExercida
-                    ? '<span class="badge bg-warning text-dark">SIM</span>'
-                    : '<span class="badge bg-secondary text-white">N\u00c3O</span>';
-                opRows += `<tr>
-                    <td>${op.data_operacao || "-"}</td>
-                        <td><strong style="cursor:pointer;color:#4299e1" data-analise-id="${op.id}" class="op-ativo-link" title="Análise completa">${op.ativo || "-"}</strong> ${corretoraTag}</td>
-                    <td>${tipoBadge}</td>
-                    <td>${op.strike ? fmtUsd(op.strike) : "-"}</td>
-                    <td>${op.exercicio || "-"}</td>
-                    <td class="${premio >= 0 ? "text-success" : "text-danger"}">${fmtUsd(premio)}</td>
-                    <td class="${result >= 0 ? "text-success" : "text-danger"}">${result.toFixed(2)}%</td>
-                    <td>${statusBadge}</td>
-                    <td>${exercBadge}</td>
-                    <td></td>
-                </tr>`;
+        if (isAllYears) {
+            // Modo "Todos": agrupa por ano
+            const yearMap = {};
+            data.forEach(o => {
+                const d = o.data_operacao || '';
+                const y = d ? d.substring(0, 4) : '';
+                if (!y) return;
+                if (!yearMap[y]) yearMap[y] = [];
+                yearMap[y].push(o);
             });
+            const sortedYears = Object.keys(yearMap).sort().reverse();
+            sortedYears.forEach(yr => {
+                const ops = yearMap[yr];
+                const yearPremio = ops.reduce((s, o) => s + (parseFloat(o.premio_us) || 0), 0);
+                const safeId = 'year_' + yr;
 
-            accItems += `<div class="accordion-item border-0 mb-2">
-  <h2 class="accordion-header" id="anualAH-${safeId}">
-    <button class="accordion-button collapsed rounded py-2" type="button"
+                let opRows = "";
+                [...ops].sort((a, b) => {
+                    const aOpen = (a.status || 'ABERTA') === 'ABERTA' ? 0 : 1;
+                    const bOpen = (b.status || 'ABERTA') === 'ABERTA' ? 0 : 1;
+                    if (aOpen !== bOpen) return aOpen - bOpen;
+                    return new Date(b.exercicio || b.data_operacao || 0) - new Date(a.exercicio || a.data_operacao || 0);
+                }).forEach(op => {
+                    opRows += buildAnualOpRow(op);
+                });
+
+                accItems += `<div class="accordion-item border-0 mb-1">
+      <h2 class="accordion-header" id="anualAH-${safeId}">
+        <button class="accordion-button collapsed" type="button"
+            data-bs-toggle="collapse" data-bs-target="#anualAP-${safeId}"
+            aria-expanded="false" aria-controls="anualAP-${safeId}"
+            style="background:rgba(66,153,225,0.06)">
+      <span class="fw-bold me-2">${yr}</span>
+      <span class="badge bg-blue-lt text-blue me-2">${ops.length} op${ops.length !== 1 ? "s" : ""}</span>
+      <span class="text-success fw-bold ms-auto me-3">${fmtUsd(yearPremio)}</span>
+    </button>
+  </h2>
+  <div id="anualAP-${safeId}" class="accordion-collapse collapse" aria-labelledby="anualAH-${safeId}">
+    <div class="accordion-body p-0">
+      <div class="table-responsive">
+        <table id="dt_anualAP-${safeId}" class="table table-vcenter table-hover table-sm card-table mb-0">
+          <thead><tr>
+            <th>Abertura</th><th>Ativo</th><th>Tipo</th><th>Strike</th>
+            <th>Exercício</th><th>Prêmio</th><th>Resultado</th><th>Status</th><th>Exerc.</th><th></th>
+          </tr></thead>
+          <tbody>${opRows}</tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>`;
+            });
+        } else {
+            // Modo ano específico: agrupa por mês
+            const sortedMonths = [];
+            for (let i = 1; i <= 12; i++) sortedMonths.push(year + "-" + String(i).padStart(2, "0"));
+            sortedMonths.forEach(month => {
+                const ops = groupedLocal[month] || [];
+                if (!ops.length) return;
+                const monthPremio = ops.reduce((s, o) => s + (parseFloat(o.premio_us) || 0), 0);
+                const monthName   = getMonthName(month).split("-")[0];
+                const safeId      = month.replace("-", "_");
+
+                let opRows = "";
+                [...ops].sort((a, b) => {
+                    const aOpen = (a.status || 'ABERTA') === 'ABERTA' ? 0 : 1;
+                    const bOpen = (b.status || 'ABERTA') === 'ABERTA' ? 0 : 1;
+                    if (aOpen !== bOpen) return aOpen - bOpen;
+                    return new Date(b.exercicio || b.data_operacao || 0) - new Date(a.exercicio || a.data_operacao || 0);
+                }).forEach(op => {
+                    opRows += buildAnualOpRow(op);
+                });
+
+                accItems += `<div class="accordion-item border-0 mb-1">
+      <h2 class="accordion-header" id="anualAH-${safeId}">
+        <button class="accordion-button collapsed" type="button"
             data-bs-toggle="collapse" data-bs-target="#anualAP-${safeId}"
             aria-expanded="false" aria-controls="anualAP-${safeId}"
             style="background:rgba(66,153,225,0.06)">
@@ -1453,11 +1607,13 @@ function renderChartAnual(data, year) {
     </div>
   </div>
 </div>`;
-        });
+            });
+        }
 
+        const tabelaLabel = isAllYears ? '📋 Operações Detalhadas (Todos)' : `📋 Operações Detalhadas ${year}`;
         tabelaCont.innerHTML = accItems
             ? `<div class="card mt-3">
-                 <div class="card-header"><h3 class="card-title mb-0">📋 Operações Detalhadas ${year}</h3></div>
+                 <div class="card-header"><h3 class="card-title mb-0">${tabelaLabel}</h3></div>
                  <div class="card-body p-2">
                    <div class="accordion" id="anualOpsAcc">${accItems}</div>
                  </div>
@@ -1780,10 +1936,7 @@ function simUpdateStrikeHint(par, tipo) {
     const dateRaw    = last.exercicio || last.data_operacao || '';
     let dateStr = '—';
     if (dateRaw) {
-        const d = new Date(String(dateRaw).split('T')[0] + 'T00:00:00');
-        if (!isNaN(d.getTime())) {
-            dateStr = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-        }
+        dateStr = formatDate(dateRaw);
     }
 
     const badgeClass = tipoNorm === 'PUT' ? 'put' : 'call';
@@ -1839,8 +1992,7 @@ function simUpdateCallRecovery(parNorm, strikeSim, todayEnd) {
     const putDateRaw   = lastPut.exercicio || lastPut.data_operacao || '';
     let putDateStr = '—';
     if (putDateRaw) {
-        const d = new Date(String(putDateRaw).split('T')[0] + 'T00:00:00');
-        if (!isNaN(d.getTime())) putDateStr = d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric' });
+        putDateStr = formatDate(putDateRaw);
     }
 
     // Se não há strike simulado ainda, mostra só a referência PUT

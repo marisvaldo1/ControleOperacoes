@@ -532,7 +532,7 @@
             if (!date) return;
             const value = getOpResultado(op);
             acc += value;
-            labels.push(date.toLocaleDateString('pt-BR'));
+            labels.push(formatDate(date));
             data.push(acc);
         });
 

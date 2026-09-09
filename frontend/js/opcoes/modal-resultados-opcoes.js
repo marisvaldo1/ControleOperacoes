@@ -448,8 +448,8 @@
 
         const resultado = parseFloat(op.resultado || 0);
         setEl('roEvoLabel', `<span class="${clr(resultado)}">${fmtPct(resultado)}</span>`);
-        setTx('roEvoDateStart', dataAb ? dataAb.toLocaleDateString('pt-BR') : '—');
-        setTx('roEvoDateEnd',   exDate ? exDate.toLocaleDateString('pt-BR') : '—');
+        setTx('roEvoDateStart', dataAb ? formatDate(op.data_operacao || op.data_abertura) : '—');
+        setTx('roEvoDateEnd',   exDate ? formatDate(op.exercicio) : '—');
         setTx('roEvoMin', cotAb   > 0 ? fmtBrl(Math.min(cotAb, cotacao)) : '—');
         setTx('roEvoMax', cotacao > 0 ? fmtBrl(Math.max(cotAb || cotacao, cotacao)) : '—');
         setTx('roThetaInicio', fmtBrl(premio * 1.3));

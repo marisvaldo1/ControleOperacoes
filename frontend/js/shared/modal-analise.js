@@ -515,7 +515,7 @@
             const vencRaw = op.vencimento || op.data_vencimento || null;
             const vencDate = vencRaw ? new Date(vencRaw) : null;
             const vencStr = vencDate && !Number.isNaN(vencDate.getTime())
-                ? vencDate.toLocaleDateString('pt-BR')
+                ? formatDate(vencRaw)
                 : '-';
 
             /* Duração */
@@ -1024,7 +1024,7 @@
                 const vctoRaw = op.vencimento || op.exercicio || null;
                 const vctoDate = vctoRaw ? new Date(vctoRaw) : null;
                 const vctoStr = vctoDate && !isNaN(vctoDate)
-                    ? vctoDate.toLocaleDateString('pt-BR') : '—';
+                    ? formatDate(vctoRaw) : '—';
                 const safeId = `pos${id}`;
                                 const isOpen = index === 0;
                 return `<div class="accordion-item border-0 mb-2">
@@ -1070,7 +1070,7 @@
         const premioTotalAb = premioAb * qtdAbs;
         const breakeven = tipo === 'PUT' ? strike - premioAb : strike + premioAb;
         const vctoDate = op.vencimento ? (() => { const d = new Date(op.vencimento); d.setHours(0, 0, 0, 0); return d; })() : null;
-        const vctoStr = vctoDate && !isNaN(vctoDate) ? vctoDate.toLocaleDateString('pt-BR') : '—';
+        const vctoStr = vctoDate && !isNaN(vctoDate) ? formatDate(op.vencimento) : '—';
         // Dias restantes calculados estaticamente (hoje → vencimento), sem depender de refresh
         const _hojeCard = new Date(); _hojeCard.setHours(0, 0, 0, 0);
         const diasRestantesStatic = vctoDate && !isNaN(vctoDate) ? Math.max(0, Math.round((vctoDate.getTime() - _hojeCard.getTime()) / 86400000)) : null;
@@ -1273,7 +1273,7 @@
         const qtdAbs = Math.abs(parseFloat(op.quantidade || 1) || 1);
         const premioTotalAb = premioAb * qtdAbs;
         const vctoDate = op.vencimento ? new Date(op.vencimento) : null;
-        const vctoStr = vctoDate && !isNaN(vctoDate) ? vctoDate.toLocaleDateString('pt-BR') : '—';
+        const vctoStr = vctoDate && !isNaN(vctoDate) ? formatDate(op.vencimento) : '—';
         const tipoColor = tipo === 'PUT' ? '#f59f00' : '#2dc653';
         const sp = '<span class="ma-spin-cell"></span>';
         return `
@@ -1328,7 +1328,7 @@
         const qtdAbs = Math.abs(parseFloat(op.quantidade || 1) || 1);
         const premioTotalAb = premioAb * qtdAbs;
         const vctoDate = op.vencimento ? new Date(op.vencimento) : null;
-        const vctoStr = vctoDate && !isNaN(vctoDate) ? vctoDate.toLocaleDateString('pt-BR') : '—';
+        const vctoStr = vctoDate && !isNaN(vctoDate) ? formatDate(op.vencimento) : '—';
         const tipoColor = tipo === 'PUT' ? '#f59f00' : '#2dc653';
         const sp = '<span class="ma-spin-cell"></span>';
         return `
@@ -1898,8 +1898,8 @@
     function renderEvolutionChart(id, op, liveData) {
         const { optionPrice, premioAb, premioTotalAb, spotPrice, strike } = liveData;
         const vctoDate = op.vencimento ? new Date(op.vencimento) : null;
-        const vctoStr = vctoDate && !isNaN(vctoDate) ? vctoDate.toLocaleDateString('pt-BR') : 'Vcto';
-        const dataAb = op.data_operacao ? new Date(op.data_operacao).toLocaleDateString('pt-BR') : 'Abertura';
+        const vctoStr = vctoDate && !isNaN(vctoDate) ? formatDate(op.vencimento) : 'Vcto';
+        const dataAb = op.data_operacao ? formatDate(op.data_operacao) : 'Abertura';
         const improved = optionPrice <= premioAb;
         const evoColor = improved ? '#2dc653' : '#fa5252';
 

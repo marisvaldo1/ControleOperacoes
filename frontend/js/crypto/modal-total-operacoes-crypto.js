@@ -29,15 +29,10 @@
     }
 
     function getOpDate(op) {
-        const raw = op.data_operacao || op.created_at || op.data || op.exercicio || null;
+        const raw = op.data_operacao || op.exercicio || op.data_abertura || null;
         if (!raw) return null;
         const d = new Date(raw);
         return Number.isNaN(d.getTime()) ? null : d;
-    }
-
-    function formatDate(d) {
-        if (!d) return '-';
-        return d.toLocaleDateString('pt-BR');
     }
 
     function getPremio(op) {
@@ -268,7 +263,7 @@
         const cotacao = op.cotacao_atual ? fmtUsd(parseFloat(op.cotacao_atual)) : '-';
         const prazo = op.prazo ? op.prazo + 'd' : '-';
         const crypto = op.crypto ? parseFloat(op.crypto).toFixed(6) : '-';
-        const vencimento = op.exercicio ? new Date(op.exercicio).toLocaleDateString('pt-BR') : '-';
+        const vencimento = op.exercicio ? formatDate(op.exercicio) : '-';
         const status = (op.status || 'ABERTA').toUpperCase();
         const statusBadge = status === 'ABERTA'
             ? `<span class="badge bg-success">${status}</span>`

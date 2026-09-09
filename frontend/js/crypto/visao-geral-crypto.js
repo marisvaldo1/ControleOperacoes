@@ -19,38 +19,42 @@
 
   /* ─ Computações sobre as operações ─ */
   function computeStats(ops) {
-    var total = 0, exercidas = 0, abertas = 0, profitable = 0;
+    var total = 0, exercidas = 0, abertas = 0, profitable = 0, n = 0;
     var btcPrem = 0, ethPrem = 0;
     var meses = {}, mesesBtc = {}, mesesEth = {};
     var nowM = new Date(); var yearKey = nowM.getFullYear();
 
     ops.forEach(function(op) {
       var prem = parseFloat(op.premio_us || 0);
-      total   += prem;
-      if (prem > 0) profitable++;
-      // Conta exercidas apenas para operações FECHADAS com exercicio_status = SIM no banco
-      var opStatus = (op.status || '').toUpperCase();
-      if (window.CryptoExerciseStatus
-        ? window.CryptoExerciseStatus.isActuallyExercised(op)
-        : (opStatus !== 'ABERTA' && (op.exercicio_status || '').toUpperCase() === 'SIM')) exercidas++;
-      if (opStatus === 'ABERTA') abertas++;
-      var ativo = (op.ativo || '').toUpperCase();
-      if (ativo === 'BTC') btcPrem += prem; else if (ativo === 'ETH') ethPrem += prem;
-
-      // por mês (total + separado por ativo)
       var d = op.data_operacao || op.data_abertura || '';
-      if (d) {
-        var parts = d.split('-');
-        if (parts.length >= 2) {
-          var mk = parts[1] + '/' + parts[0];
-          meses[mk]    = (meses[mk]    || 0) + prem;
-          mesesBtc[mk] = (mesesBtc[mk] || 0) + (ativo === 'BTC' ? prem : 0);
-          mesesEth[mk] = (mesesEth[mk] || 0) + (ativo === 'ETH' ? prem : 0);
+      var opYear = d ? d.substring(0, 4) : '';
+      var isCurrentYear = (opYear === String(yearKey));
+
+      if (isCurrentYear) {
+        n++;
+        total += prem;
+        if (prem > 0) profitable++;
+        // Conta exercidas apenas para operações FECHADAS com exercicio_status = SIM no banco
+        var opStatus = (op.status || '').toUpperCase();
+        if (window.CryptoExerciseStatus
+          ? window.CryptoExerciseStatus.isActuallyExercised(op)
+          : (opStatus !== 'ABERTA' && (op.exercicio_status || '').toUpperCase() === 'SIM')) exercidas++;
+        if (opStatus === 'ABERTA') abertas++;
+        var ativo = (op.ativo || '').toUpperCase();
+        if (ativo === 'BTC') btcPrem += prem; else if (ativo === 'ETH') ethPrem += prem;
+
+        // por mês (total + separado por ativo)
+        if (d) {
+          var parts = d.split('-');
+          if (parts.length >= 2) {
+            var mk = parts[1] + '/' + parts[0];
+            meses[mk]    = (meses[mk]    || 0) + prem;
+            mesesBtc[mk] = (mesesBtc[mk] || 0) + (ativo === 'BTC' ? prem : 0);
+            mesesEth[mk] = (mesesEth[mk] || 0) + (ativo === 'ETH' ? prem : 0);
+          }
         }
       }
     });
-
-    var n = ops.length;
     var capital = getCapital();
     var wr = n > 0 ? (profitable / n * 100) : 0;
     var roi = capital > 0 ? (total / capital * 100) : 0;

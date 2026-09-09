@@ -414,7 +414,7 @@
             const vencRaw = op.vencimento || op.data_vencimento || null;
             const vencDate = vencRaw ? new Date(vencRaw) : null;
             const vencStr  = vencDate && !Number.isNaN(vencDate.getTime())
-                ? vencDate.toLocaleDateString('pt-BR')
+                ? formatDate(vencRaw)
                 : '-';
 
             /* Duração */
@@ -744,7 +744,7 @@
         const premioTotalAb = premioAb * qtdAbs;
         const breakeven = tipo === 'PUT' ? strike - premioAb : strike + premioAb;
         const vctoDate  = op.vencimento ? new Date(op.vencimento) : null;
-        const vctoStr   = vctoDate && !isNaN(vctoDate) ? vctoDate.toLocaleDateString('pt-BR') : '—';
+        const vctoStr   = vctoDate && !isNaN(vctoDate) ? formatDate(op.vencimento) : '—';
         let diasAbertos = 0, percTempo = 0;
         if (op.data_operacao) {
             const dAb = new Date(op.data_operacao);
@@ -943,7 +943,7 @@
         const qtdAbs = Math.abs(parseInt(op.quantidade || 0));
         const premioTotalAb = premioAb * qtdAbs;
         const vctoDate = op.vencimento ? new Date(op.vencimento) : null;
-        const vctoStr  = vctoDate && !isNaN(vctoDate) ? vctoDate.toLocaleDateString('pt-BR') : '—';
+        const vctoStr  = vctoDate && !isNaN(vctoDate) ? formatDate(op.vencimento) : '—';
         const tipoColor = tipo === 'PUT' ? '#f59f00' : '#2dc653';
         const sp = '<span class="ma-spin-cell"></span>';
         return `
@@ -998,7 +998,7 @@
         const qtdAbs = Math.abs(parseInt(op.quantidade || 0));
         const premioTotalAb = premioAb * qtdAbs;
         const vctoDate = op.vencimento ? new Date(op.vencimento) : null;
-        const vctoStr  = vctoDate && !isNaN(vctoDate) ? vctoDate.toLocaleDateString('pt-BR') : '—';
+        const vctoStr  = vctoDate && !isNaN(vctoDate) ? formatDate(op.vencimento) : '—';
         const tipoColor = tipo === 'PUT' ? '#f59f00' : '#2dc653';
         const sp = '<span class="ma-spin-cell"></span>';
         return `
@@ -1412,8 +1412,8 @@
     function renderEvolutionChart(id, op, liveData) {
         const { optionPrice, premioAb, premioTotalAb, spotPrice, strike } = liveData;
         const vctoDate = op.vencimento ? new Date(op.vencimento) : null;
-        const vctoStr  = vctoDate && !isNaN(vctoDate) ? vctoDate.toLocaleDateString('pt-BR') : 'Vcto';
-        const dataAb   = op.data_operacao ? new Date(op.data_operacao).toLocaleDateString('pt-BR') : 'Abertura';
+        const vctoStr  = vctoDate && !isNaN(vctoDate) ? formatDate(op.vencimento) : 'Vcto';
+        const dataAb   = op.data_operacao ? formatDate(op.data_operacao) : 'Abertura';
         const improved = optionPrice <= premioAb;
         const evoColor = improved ? '#2dc653' : '#fa5252';
 

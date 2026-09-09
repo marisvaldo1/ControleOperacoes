@@ -631,11 +631,27 @@
             console.warn('[CryptoFilterBar] SweetAlert2 não carregado');
             return;
         }
-        var fmtInput = function(d) { return d || ''; };
+        // Converte ISO (YYYY-MM-DD) para BR (dd/mm/yyyy)
+        var isoToBr = function(d) {
+            if (!d) return '';
+            var p = d.split('-');
+            return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : d;
+        };
+        // Converte BR (dd/mm/yyyy) para ISO (YYYY-MM-DD)
+        var brToIso = function(s) {
+            if (!s) return null;
+            s = s.trim();
+            var m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+            if (!m) return null;
+            return m[3] + '-' + m[2] + '-' + m[1];
+        };
         // Pré-popula datas com base no período ativo, se não houver custom já definido
         var preload = (state.period !== 'custom' || (!state.dateFrom && !state.dateTo))
             ? _periodToDates(state.period)
             : { from: state.dateFrom, to: state.dateTo };
+        var preloadBr = { from: isoToBr(preload.from), to: isoToBr(preload.to) };
+        var inputStyle = 'width:100%;background:#1e2a3d;border:1px solid #334560;border-radius:6px;' +
+                    'color:#e8f0f8;padding:.4rem .7rem;font-size:.82rem;font-family:Inter,sans-serif;outline:none;box-sizing:border-box;';
         window.Swal.fire({
             title: 'Defina o período',
             icon: 'warning',
@@ -646,24 +662,32 @@
             reverseButtons: true,
             html: '<div style="text-align:left;margin-top:.5rem;">' +
                     '<label style="display:block;font-size:.78rem;color:#a0b0c8;margin-bottom:.3rem;">Data início</label>' +
-                    '<input id="cfb-swal-from" type="date" value="' + fmtInput(preload.from) + '" ' +
-                    'style="width:100%;background:#1e2a3d;border:1px solid #334560;border-radius:6px;' +
-                    'color:#e8f0f8;padding:.4rem .7rem;font-size:.82rem;font-family:Inter,sans-serif;outline:none;box-sizing:border-box;">' +
+                    '<input id="cfb-swal-from" type="text" placeholder="dd/mm/yyyy" value="' + preloadBr.from + '" ' +
+                    'style="' + inputStyle + '" maxlength="10">' +
                   '</div>' +
                   '<div style="text-align:left;margin-top:.75rem;">' +
                     '<label style="display:block;font-size:.78rem;color:#a0b0c8;margin-bottom:.3rem;">Data Fim</label>' +
-                    '<input id="cfb-swal-to" type="date" value="' + fmtInput(preload.to) + '" ' +
-                    'style="width:100%;background:#1e2a3d;border:1px solid #334560;border-radius:6px;' +
-                    'color:#e8f0f8;padding:.4rem .7rem;font-size:.82rem;font-family:Inter,sans-serif;outline:none;box-sizing:border-box;">' +
+                    '<input id="cfb-swal-to" type="text" placeholder="dd/mm/yyyy" value="' + preloadBr.to + '" ' +
+                    'style="' + inputStyle + '" maxlength="10">' +
                   '</div>',
             preConfirm: function() {
-                var from = document.getElementById('cfb-swal-from').value || null;
-                var to   = document.getElementById('cfb-swal-to').value   || null;
+                var rawFrom = document.getElementById('cfb-swal-from').value || '';
+                var rawTo   = document.getElementById('cfb-swal-to').value   || '';
+                var from = brToIso(rawFrom);
+                var to   = brToIso(rawTo);
+                if (rawFrom && !from) {
+                    window.Swal.showValidationMessage('Data início inválida. Use o formato dd/mm/aaaa.');
+                    return false;
+                }
+                if (rawTo && !to) {
+                    window.Swal.showValidationMessage('Data Fim inválida. Use o formato dd/mm/aaaa.');
+                    return false;
+                }
                 if (from && to && from > to) {
                     window.Swal.showValidationMessage('Data início deve ser anterior à Data Fim.');
                     return false;
                 }
-                return { from: from, to: to };
+                return { from: from || null, to: to || null };
             }
         }).then(function(result) {
             if (!result.isConfirmed) return;

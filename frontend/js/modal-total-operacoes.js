@@ -27,11 +27,6 @@
         return Number.isNaN(d.getTime()) ? null : d;
     }
 
-    function formatDate(d) {
-        if (!d) return '-';
-        return d.toLocaleDateString('pt-BR');
-    }
-
     function applyFilter(ops, filter) {
         if (filter === 'all') return ops;
         if (filter === 'ABERTA' || filter === 'FECHADA' || filter === 'VENCIDA') {
