@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Options Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #f1f5f9;
+        }
+
+        .total-premium {
+            font-size: 28px;
+            font-weight: 700;
+            color: #4ade80;
+        }
+
+        .period-selector {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .period-selector:hover {
+            background: rgba(30, 41, 59, 0.8);
+            border-color: rgba(148, 163, 184, 0.4);
+        }
+
+        .period-label {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .period-range {
+            font-size: 14px;
+            color: #94a3b8;
+        }
+
+        .summary-row {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .summary-item {
+            text-align: center;
+        }
+
+        .summary-label {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-bottom: 4px;
+        }
+
+        .summary-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #f1f5f9;
+        }
+
+        .progress-section {
+            margin-bottom: 24px;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .progress-label {
+            font-size: 14px;
+            color: #94a3b8;
+        }
+
+        .progress-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: #4ade80;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4ade80 0%, #22c55e 100%);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .charts-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .sparkline-container {
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .sparkline {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            height: 80px;
+            gap: 4px;
+        }
+
+        .sparkline-bar {
+            flex: 1;
+            background: linear-gradient(180deg, #4ade80 0%, #22c55e 100%);
+            border-radius: 4px 4px 0 0;
+            transition: height 0.3s ease;
+        }
+
+        .gauges-container {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .gauge {
+            text-align: center;
+        }
+
+        .gauge-circle {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: conic-gradient(#4ade80 0deg, #4ade80 var(--angle), rgba(30, 41, 59, 0.6) var(--angle));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            margin-bottom: 8px;
+        }
+
+        .gauge-inner {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #1e293b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .gauge-needle {
+            width: 2px;
+            height: 25px;
+            background: #4ade80;
+            position: absolute;
+            bottom: 50%;
+            left: 50%;
+            transform-origin: bottom center;
+            transform: translateX(-50%) rotate(var(--rotation));
+            transition: transform 0.5s ease;
+        }
+
+        .gauge-label {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .kpi-section {
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #94a3b8;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .kpi-card {
+            background: rgba(30, 41, 59, 0.4);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .kpi-card:hover {
+            background: rgba(30, 41, 59, 0.6);
+            border-color: rgba(148, 163, 184, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .kpi-info {
+            flex: 1;
+        }
+
+        .kpi-label {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-bottom: 4px;
+        }
+
+        .kpi-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #f1f5f9;
+        }
+
+        .kpi-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #4ade80;
+        }
+
+        .kpi-indicator.negative {
+            background: #f87171;
+        }
+
+        .forward-looking {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .forward-card {
+            background: rgba(30, 41, 59, 0.4);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .forward-icon {
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+
+        .forward-label {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-bottom: 4px;
+        }
+
+        .forward-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: #f1f5f9;
+        }
+
+        .controls-section {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .control-row {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .dropdown {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 8px;
+            padding: 10px 16px;
+            color: #e2e8f0;
+            font-size: 14px;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .toggle-label {
+            font-size: 13px;
+            color: #94a3b8;
+        }
+
+        .toggle {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .toggle.active {
+            background: #4ade80;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: #f1f5f9;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+        }
+
+        .toggle.active .toggle-slider {
+            transform: translateX(20px);
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-btn {
+            flex: 1;
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 8px;
+            padding: 10px;
+            color: #e2e8f0;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background: rgba(30, 41, 59, 0.8);
+            border-color: rgba(148, 163, 184, 0.4);
+        }
+
+        .nav-btn.active {
+            background: rgba(74, 222, 128, 0.2);
+            border-color: #4ade80;
+            color: #4ade80;
+        }
+
+        .trend-positive {
+            color: #4ade80;
+        }
+
+        .trend-negative {
+            color: #f87171;
+        }
+
+        @media (max-width: 480px) {
+            .summary-row {
+                grid-template-columns: repeat(5, 1fr);
+                gap: 4px;
+            }
+
+            .summary-value {
+                font-size: 16px;
+            }
+
+            .forward-looking {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>SETEMBRO-2026</h1>
+            <div class="total-premium" id="totalPremium">$142,54</div>
+        </div>
+
+        <!-- Period Selector -->
+        <div class="period-selector" id="periodSelector">
+            <span class="period-label" id="periodLabel">Semana</span>
+            <span class="period-range" id="periodRange">(07/09 a 13/09)</span>
+        </div>
+
+        <!-- Summary Row -->
+        <div class="summary-row">
+            <div class="summary-item">
+                <div class="summary-label">Operações</div>
+                <div class="summary-value" id="operacoes">9</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">Exercidas</div>
+                <div class="summary-value" id="exercidas">3</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">Não Exercidas</div>
+                <div class="summary-value" id="naoExercidas">6</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">Prêmio</div>
+                <div class="summary-value" id="premio">$142,54</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">TAE Médio</div>
+                <div class="summary-value" id="taeMedio">0,38</div>
+            </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="progress-section">
+            <div class="progress-header">
+                <span class="progress-label">Meta Mensal:</span>
+                <span class="progress-value" id="metaValue">68%</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 68%"></div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="charts-section">
+            <div class="sparkline-container">
+                <div class="sparkline" id="sparkline">
+                    <div class="sparkline-bar" style="height: 20%"></div>
+                    <div class="sparkline-bar" style="height: 35%"></div>
+                    <div class="sparkline-bar" style="height: 45%"></div>
+                    <div class="sparkline-bar" style="height: 60%"></div>
+                    <div class="sparkline-bar" style="height: 75%"></div>
+                    <div class="sparkline-bar" style="height: 85%"></div>
+                    <div class="sparkline-bar" style="height: 100%"></div>
+                </div>
+            </div>
+            <div class="gauges-container">
+                <div class="gauge">
+                    <div class="gauge-circle" style="--angle: 252deg">
+                        <div class="gauge-inner">
+                            <div class="gauge-needle" style="--rotation: 126deg"></div>
+                        </div>
+                    </div>
+                    <div class="gauge-label">P-ETH</div>
+                </div>
+                <div class="gauge">
+                    <div class="gauge-circle" style="--angle: 180deg">
+                        <div class="gauge-inner">
+                            <div class="gauge-needle" style="--rotation: 90deg"></div>
+                        </div>
+                    </div>
+                    <div class="gauge-label">C-BTC</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="kpi-section">
+            <div class="section-title">📊 Eficiência</div>
+            
+            <div class="kpi-card">
+                <div class="kpi-info">
+                    <div class="kpi-label">Taxa de Exercício</div>
+                    <div class="kpi-value" id="taxaExercicio">33,3%</div>
+                </div>
+                <div class="kpi-indicator"></div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-info">
+                    <div class="kpi-label">Prêmio Médio/Op</div>
+                    <div class="kpi-value" id="premioMedio">$15,84</div>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-info">
+                    <div class="kpi-label">Ritmo Diário</div>
+                    <div class="kpi-value" id="ritmoDiario">$20,36/dia</div>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-info">
+                    <div class="kpi-label">Melhor Prêmio</div>
+                    <div class="kpi-value" id="melhorPremio">$25,54 (BTCUSDT)</div>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-info">
+                    <div class="kpi-label">vs Semana Anterior</div>
+                    <div class="kpi-value trend-positive" id="vsAnterior">▲ 12,5%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Forward Looking -->
+        <div class="kpi-section">
+            <div class="section-title">⏳ Em Aberto</div>
+            <div class="forward-looking">
+                <div class="forward-card">
+                    <div class="forward-icon">🔴</div>
+                    <div class="forward-label">Em Aberto Agora</div>
+                    <div class="forward-value" id="emAberto">2</div>
+                </div>
+                <div class="forward-card">
+                    <div class="forward-icon">💰</div>
+                    <div class="forward-label">Prêmios a Vencer 7d</div>
+                    <div class="forward-value" id="premiosVencer">$45,20</div>
+                </div>
+                <div class="forward-card">
+                    <div class="forward-icon">📅</div>
+                    <div class="forward-label">Próx. Vencimento</div>
+                    <div class="forward-value" id="proxVencimento">15/09</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls-section">
+            <div class="control-row">
+                <select class="dropdown" id="assetFilter">
+                    <option value="todos">Todos</option>
+                    <option value="eth">ETHUSDT</option>
+                    <option value="btc">BTCUSDT</option>
+                </select>
+                <div class="toggle-container">
+                    <span class="toggle-label">Somente Exercidas</span>
+                    <div class="toggle" id="exercidasToggle">
+                        <div class="toggle-slider"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="nav-buttons">
+                <button class="nav-btn" id="btnAnterior">◀ Anterior</button>
+                <button class="nav-btn active" id="btnAtual">Esta Semana</button>
+                <button class="nav-btn" id="btnProxima">Próxima ▶</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mock data for different periods
+        const mockData = {
+            semana: {
+                operacoes: 9,
+                exercidas: 3,
+                naoExercidas: 6,
+                premio: 142.54,
+                taeMedio: 0.38,
+                meta: 68,
+                taxaExercicio: 33.3,
+                premioMedio: 15.84,
+                ritmoDiario: 20.36,
+                melhorPremio: 25.54,
+                melhorAtivo: 'BTCUSDT',
+                vsAnterior: 12.5,
+                emAberto: 2,
+                premiosVencer: 45.20,
+                proxVencimento: '15/09',
+                range: '(07/09 a 13/09)',
+                sparkline: [20, 35, 45, 60, 75, 85, 100]
+            },
+            mes: {
+                operacoes: 38,
+                exercidas: 14,
+                naoExercidas: 24,
+                premio: 587.32,
+                taeMedio: 0.42,
+                meta: 100,
+                taxaExercicio: 36.8,
+                premioMedio: 15.45,
+                ritmoDiario: 19.58,
+                melhorPremio: 46.33,
+                melhorAtivo: 'ETHUSDT',
+                vsAnterior: -5.2,
+                emAberto: 5,
+                premiosVencer: 128.40,
+                proxVencimento: '22/09',
+                range: '(01/09 a 30/09)',
+                sparkline: [30, 45, 55, 70, 80, 90, 95]
+            }
+        };
+
+        let currentPeriod = 'semana';
+        let onlyExercised = false;
+
+        // Format currency
+        function formatCurrency(value) {
+            return '$' + value.toFixed(2).replace('.', ',');
+        }
+
+        // Update dashboard with data
+        function updateDashboard(data) {
+            document.getElementById('operacoes').textContent = data.operacoes;
+            document.getElementById('exercidas').textContent = data.exercidas;
+            document.getElementById('naoExercidas').textContent = data.naoExercidas;
+            document.getElementById('premio').textContent = formatCurrency(data.premio);
+            document.getElementById('totalPremium').textContent = formatCurrency(data.premio);
+            document.getElementById('taeMedio').textContent = data.taeMedio.toFixed(2).replace('.', ',');
+            
+            document.getElementById('metaValue').textContent = data.meta + '%';
+            document.getElementById('progressFill').style.width = data.meta + '%';
+            
+            document.getElementById('taxaExercicio').textContent = data.taxaExercicio.toFixed(1).replace('.', ',') + '%';
+            document.getElementById('premioMedio').textContent = formatCurrency(data.premioMedio);
+            document.getElementById('ritmoDiario').textContent = formatCurrency(data.ritmoDiario) + '/dia';
+            document.getElementById('melhorPremio').textContent = formatCurrency(data.melhorPremio) + ' (' + data.melhorAtivo + ')';
+            
+            const vsElement = document.getElementById('vsAnterior');
+            if (data.vsAnterior >= 0) {
+                vsElement.textContent = '▲ ' + data.vsAnterior.toFixed(1).replace('.', ',') + '%';
+                vsElement.className = 'kpi-value trend-positive';
+            } else {
+                vsElement.textContent = '▼ ' + Math.abs(data.vsAnterior).toFixed(1).replace('.', ',') + '%';
+                vsElement.className = 'kpi-value trend-negative';
+            }
+            
+            document.getElementById('emAberto').textContent = data.emAberto;
+            document.getElementById('premiosVencer').textContent = formatCurrency(data.premiosVencer);
+            document.getElementById('proxVencimento').textContent = data.proxVencimento;
+            
+            document.getElementById('periodRange').textContent = data.range;
+            
+            // Update sparkline
+            const bars = document.querySelectorAll('.sparkline-bar');
+            data.sparkline.forEach((height, index) => {
+                if (bars[index]) {
+                    bars[index].style.height = height + '%';
+                }
+            });
+        }
+
+        // Period selector toggle
+        document.getElementById('periodSelector').addEventListener('click', function() {
+            currentPeriod = currentPeriod === 'semana' ? 'mes' : 'semana';
+            document.getElementById('periodLabel').textContent = currentPeriod === 'semana' ? 'Semana' : 'Mês';
+            updateDashboard(mockData[currentPeriod]);
+        });
+
+        // Toggle exercised only
+        document.getElementById('exercidasToggle').addEventListener('click', function() {
+            this.classList.toggle('active');
+            onlyExercised = !onlyExercised;
+            
+            const data = mockData[currentPeriod];
+            if (onlyExercised) {
+                document.getElementById('operacoes').textContent = data.exercidas;
+                document.getElementById('naoExercidas').textContent = 0;
+            } else {
+                updateDashboard(data);
+            }
+        });
+
+        // Navigation buttons
+        document.getElementById('btnAnterior').addEventListener('click', function() {
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            // Simulate previous period data
+            const prevData = {...mockData[currentPeriod]};
+            prevData.premio *= 0.85;
+            prevData.operacoes = Math.floor(prevData.operacoes * 0.8);
+            updateDashboard(prevData);
+        });
+
+        document.getElementById('btnAtual').addEventListener('click', function() {
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            updateDashboard(mockData[currentPeriod]);
+        });
+
+        document.getElementById('btnProxima').addEventListener('click', function() {
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            // Simulate next period data
+            const nextData = {...mockData[currentPeriod]};
+            nextData.premio *= 1.15;
+            nextData.operacoes = Math.floor(nextData.operacoes * 1.2);
+            updateDashboard(nextData);
+        });
+
+        // Asset filter
+        document.getElementById('assetFilter').addEventListener('change', function() {
+            const data = {...mockData[currentPeriod]};
+            if (this.value === 'eth') {
+                data.premio *= 0.6;
+                data.operacoes = Math.floor(data.operacoes * 0.6);
+            } else if (this.value === 'btc') {
+                data.premio *= 0.4;
+                data.operacoes = Math.floor(data.operacoes * 0.4);
+            }
+            updateDashboard(data);
+        });
+
+        // Initialize
+        updateDashboard(mockData.semana);
+    </script>
+</body>
+</html>
