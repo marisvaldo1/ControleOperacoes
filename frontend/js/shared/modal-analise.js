@@ -87,22 +87,35 @@
         var assetOps = allOps.filter(function(o) {
             return (o.ativo || '').toUpperCase().replace('USDT', '').replace('/', '').trim() === par;
         });
-        var custoTotal = 0, qtyTotal = 0;
-        assetOps.forEach(function(op) {
-            if ((op.tipo || '').toUpperCase() !== 'PUT') return;
+
+        var putsExercidas = assetOps.filter(function(op) {
+            if ((op.tipo || '').toUpperCase() !== 'PUT') return false;
             var s = (op.status || '').toUpperCase();
-            if (s === 'ABERTA') return;
+            if (s === 'ABERTA') return false;
             var exStatus = (op.exercicio_status_persistido || op.exercicio_status || '').toUpperCase();
-            if (exStatus !== 'SIM') return;
-            var strike = parseFloat(op.strike || 0);
-            var crypto = parseFloat(op.crypto || 0);
-            var premio = parseFloat(op.premio_us || 0);
-            if (strike > 0 && crypto > 0) {
-                custoTotal += strike * crypto - premio;
-                qtyTotal += crypto;
-            }
+            return exStatus === 'SIM';
         });
-        return qtyTotal > 0 ? custoTotal / qtyTotal : 0;
+        if (!putsExercidas.length) return 0;
+
+        putsExercidas.sort(function(a, b) {
+            var ad = a.exercicio || a.data_operacao || '';
+            var bd = b.exercicio || b.data_operacao || '';
+            return String(bd).localeCompare(String(ad));
+        });
+        var ultimaPut = putsExercidas[0];
+        var entradaStrike = parseFloat(ultimaPut.strike || 0);
+        if (entradaStrike <= 0) return 0;
+
+        var cicloDate = ultimaPut.exercicio || ultimaPut.data_operacao || '';
+        var totalPremios = assetOps.reduce(function(s, o) {
+            var v = parseFloat(o.premio_us || 0);
+            if (v <= 0) return s;
+            var data = o.exercicio || o.data_operacao || '';
+            if (cicloDate && String(data) < String(cicloDate)) return s;
+            return s + v;
+        }, 0);
+
+        return entradaStrike - totalPremios;
     }
 
     function getSaldoCorretora() {

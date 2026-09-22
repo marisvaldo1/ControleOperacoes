@@ -135,41 +135,34 @@
         var pm = parseFloat(el.getAttribute('data-pm') || 0);
         if (!pm || !window.SharedTooltip) return;
 
-        var ops = window.cryptoOperacoes || [];
-        var assetOps = ops.filter(function(o) {
-            return (o.ativo || '').toUpperCase().replace('USDT','').replace('/','').trim() === par;
-        });
+        // Usa a mesma fonte da verdade do modal Raio-X para garantir consistência
+        var d = null;
+        if (window.ModalPrecoMedioAtivo && typeof window.ModalPrecoMedioAtivo.computeData === 'function') {
+            try { d = window.ModalPrecoMedioAtivo.computeData(par); } catch (err) { d = null; }
+        }
 
-        var putsExercidas = assetOps.filter(function(o) {
-            return (o.tipo || '').toUpperCase() === 'PUT' && 
-                   (o.exercicio_status || '').toUpperCase() === 'SIM';
-        });
-
-        var custoTotal = 0;
-        var qtyTotal = 0;
-        putsExercidas.forEach(function(op) {
-            var strike = parseFloat(op.strike || 0);
-            var crypto = parseFloat(op.crypto || 0);
-            var premio = parseFloat(op.premio_us || 0);
-            if (strike > 0 && crypto > 0) {
-                custoTotal += strike * crypto - premio;
-                qtyTotal += crypto;
-            }
-        });
-
-        var lines = [
-            { key: '📊 Fórmula', value: 'Custo Total / Qtd Total' },
-            { key: '💰 Custo Total', value: 'US$ ' + custoTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) },
-            { key: '📦 Quantidade', value: qtyTotal.toFixed(6) + ' ' + par },
-            { key: '🧮 PM', value: 'US$ ' + pm.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) },
-            { key: '🔢 PUTs Exercidas', value: putsExercidas.length.toString() },
-        ];
+        var lines;
+        if (d && d.pm > 0) {
+            lines = [
+                { key: '📊 Fórmula', value: 'Entrada (PUT) − Prêmios do ciclo' },
+                { key: '🎯 Entrada (PUT)', value: 'US$ ' + d.ultimoExercicio.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) },
+                { key: '💰 Prêmios acumulados', value: 'US$ ' + d.totalPremios.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) },
+                { key: '🧮 PM', value: 'US$ ' + d.pm.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) },
+                { key: '🔢 PUTs no ciclo', value: (d.premios ? d.premios.length : 0) + ' lançamento' + ((d.premios && d.premios.length !== 1) ? 's' : '') },
+            ];
+        } else {
+            // Fallback: exibe apenas o PM já renderizado no link
+            lines = [
+                { key: '📊 Fórmula', value: 'Entrada (PUT) − Prêmios do ciclo' },
+                { key: '🧮 PM', value: 'US$ ' + pm.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) },
+            ];
+        }
 
         window.SharedTooltip.show(el, {
             type: 'default',
             title: 'Preço Médio — ' + par,
             lines: lines,
-            note: 'PM ponderado de todas as PUTs exercidas. Clique para ver detalhes.',
+            note: 'PM = strike da última PUT exercida − prêmios recebidos desde o exercício. Clique para ver detalhes.',
         });
     }
 

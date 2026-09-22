@@ -107,8 +107,7 @@
             var data = op.exercicio || op.data_operacao || '';
 
             if (strike > 0 && crypto > 0) {
-                var custo = strike * crypto - premio;
-                custoTotal += custo;
+                custoTotal += strike * crypto;
                 qtyTotal += crypto;
                 detalheCompras.push({
                     id: op.id,
@@ -116,12 +115,21 @@
                     strike: strike,
                     crypto: crypto,
                     premio: premio,
-                    custo: custo,
+                    custo: strike * crypto - premio,
                 });
             }
         });
 
-        var pm = qtyTotal > 0 ? custoTotal / qtyTotal : 0;
+        // PM do ciclo = strike da última PUT exercida − prêmios acumulados desde o exercício.
+        // Alinha o header/cards com o ledger (buildSteps), que já faz essa mesma subtração.
+        var entradaStrike = ultimaPut ? parseFloat(ultimaPut.strike || 0) : 0;
+        var pm = 0;
+        if (entradaStrike > 0) {
+            pm = entradaStrike - totalPremios;
+        } else if (qtyTotal > 0) {
+            // Fallback: média ponderada das PUTs executadas (sem ciclo ativo)
+            pm = custoTotal / qtyTotal;
+        }
 
         var cotacao = cotacaoOverride || parseFloat(ops.find(function (o) {
             return parseFloat(o.cotacao_atual || 0) > 0;
@@ -435,15 +443,15 @@
             }
             return {
                 type: 'default',
-                title: 'Preço Médio (Ponderado)',
+                title: 'Preço Médio (Ciclo Atual)',
                 lines: [
-                    { key: 'Custo efetivo ponderado de todas as compras' },
+                    { key: 'Strike da última PUT exercida menos os prêmios acumulados no ciclo' },
                 ],
-                formula: 'Fórmula: Custo Total / Quantidade Total<br>' +
-                    'Custo Total: ' + usd(d.custoTotal) + '<br>' +
-                    'Quantidade: ' + d.qtyTotal.toFixed(6) + ' ' + d.ativo + '<br>' +
+                formula: 'Fórmula: Entrada (PUT) − Prêmios Acumulados<br>' +
+                    'Entrada: ' + usd(d.ultimoExercicio) + '<br>' +
+                    'Prêmios: ' + usd(d.totalPremios) + '<br>' +
                     'Resultado: ' + usd(d.pm),
-                note: 'PM ponderado de todas as PUTs exercidas (compras).',
+                note: 'PM = valor da PUT exercida − prêmios recebidos desde o exercício.',
             };
         };
 

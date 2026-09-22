@@ -175,6 +175,10 @@
             }
             if (evt.msg) {
                 $('capturaEtaLabel').textContent = evt.msg;
+
+                if (evt.status === 'fetching' && evt.msg && evt.msg.indexOf('Erro') !== -1) {
+                    $('capturaLogBox').innerHTML = '<div class="captura-log-line" style="color:#ef4444">' + evt.msg + '</div>';
+                }
             }
 
             // Velocidade
@@ -222,9 +226,23 @@
             $('capturaProgFill').style.width = '100%';
             $('capturaCountLabel').textContent = simDone + ' / ' + simTotal;
             $('capturaSpeedNow').textContent = '0/s';
-            $('capturaEtaLabel').textContent = 'concluído';
-            $('capturaStatusBadge').textContent = 'Concluído';
-            $('capturaStatusBadge').className = 'captura-status-badge captura-status-running';
+
+            if (evt.error && simTotal === 0) {
+                $('capturaEtaLabel').textContent = 'Erro na captura';
+                $('capturaStatusBadge').textContent = 'Erro';
+                $('capturaStatusBadge').className = 'captura-status-badge captura-status-paused';
+                $('capturaLogBox').innerHTML = '<div class="captura-log-line" style="color:#ef4444">Erro: ' + evt.error + '</div>';
+            } else if (simTotal === 0) {
+                $('capturaEtaLabel').textContent = 'Nenhuma operação encontrada';
+                $('capturaStatusBadge').textContent = 'Concluído';
+                $('capturaStatusBadge').className = 'captura-status-badge captura-status-running';
+                $('capturaLogBox').innerHTML += '<div class="captura-log-line" style="color:#f59e0b">Nenhuma operação Dual Investment encontrada. Verifique se sua conta Binance possui posições Dual Investment.</div>';
+            } else {
+                $('capturaEtaLabel').textContent = 'concluído';
+                $('capturaStatusBadge').textContent = 'Concluído';
+                $('capturaStatusBadge').className = 'captura-status-badge captura-status-running';
+                $('capturaLogBox').innerHTML += '<div class="captura-log-line" style="color:#22c55e">Captura concluída: ' + simDone + ' operações importadas.</div>';
+            }
 
             drawBarsChart();
             drawSpeedChart();

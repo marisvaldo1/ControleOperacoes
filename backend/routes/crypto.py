@@ -571,8 +571,19 @@ def stream_dual_investment():
     base = 'https://api.binance.com'
     headers_bin = {'X-MBX-APIKEY': api_key}
 
+    # Obter offset do relógio em relação ao servidor da Binance
+    time_offset = 0
+    try:
+        server_resp = requests.get(f'{base}/api/v3/time', timeout=5)
+        if server_resp.status_code == 200:
+            server_time = server_resp.json().get('serverTime', 0)
+            local_time = int(time.time() * 1000)
+            time_offset = server_time - local_time
+    except Exception:
+        pass
+
     def signed_get(path, extra_params=None):
-        params = {'timestamp': int(time.time() * 1000), 'recvWindow': 30000}
+        params = {'timestamp': int(time.time() * 1000) + time_offset, 'recvWindow': 60000}
         if extra_params:
             params.update(extra_params)
         query, signature = _binance_sign(params, secret)
@@ -585,6 +596,7 @@ def stream_dual_investment():
 
         all_positions = []
         statuses_to_fetch = ['PURCHASE_SUCCESS', 'SETTLED']
+        errors = []
 
         for status in statuses_to_fetch:
             page = 1
@@ -607,12 +619,24 @@ def stream_dual_investment():
                         else:
                             break
                     else:
+                        error_msg = ''
+                        try:
+                            err_data = r.json()
+                            error_msg = err_data.get('msg', err_data.get('message', r.text[:200]))
+                        except Exception:
+                            error_msg = r.text[:200]
+                        errors.append(f'{status}: HTTP {r.status_code} - {error_msg}')
+                        yield _json.dumps({'event': 'progress', 'pct': 0, 'done': 0, 'total': 0, 'status': 'fetching', 'msg': f'Erro ao buscar {status}: {error_msg}'}) + '\n'
                         break
-                except Exception:
+                except Exception as e:
+                    error_msg = str(e)[:200]
+                    errors.append(f'{status}: {error_msg}')
+                    yield _json.dumps({'event': 'progress', 'pct': 0, 'done': 0, 'total': 0, 'status': 'fetching', 'msg': f'Erro de conexão ao buscar {status}: {error_msg}'}) + '\n'
                     break
 
         if not all_positions:
-            yield _json.dumps({'event': 'done', 'found': 0, 'inserted': 0, 'duplicated': 0, 'coins': {}}) + '\n'
+            detail = '; '.join(errors) if errors else 'Nenhuma operação Dual Investment encontrada na conta.'
+            yield _json.dumps({'event': 'done', 'found': 0, 'inserted': 0, 'duplicated': 0, 'coins': {}, 'error': detail}) + '\n'
             return
 
         total = len(all_positions)
@@ -1022,8 +1046,19 @@ def binance_balance():
     base = 'https://api.binance.com'
     headers = {'X-MBX-APIKEY': api_key}
 
+    # Obter offset do relógio em relação ao servidor da Binance
+    time_offset = 0
+    try:
+        server_resp = requests.get(f'{base}/api/v3/time', timeout=5)
+        if server_resp.status_code == 200:
+            server_time = server_resp.json().get('serverTime', 0)
+            local_time = int(time.time() * 1000)
+            time_offset = server_time - local_time
+    except Exception:
+        pass
+
     def signed_params():
-        return {'timestamp': int(time.time() * 1000), 'recvWindow': 30000}
+        return {'timestamp': int(time.time() * 1000) + time_offset, 'recvWindow': 60000}
 
     def signed_get(path):
         p = signed_params()
