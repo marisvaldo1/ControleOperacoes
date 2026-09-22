@@ -23,8 +23,8 @@ document.addEventListener('libsLoaded', function() {
                 </a>
             </h1>
             <div class="navbar-nav flex-row order-md-last">
-                <div class="nav-item d-none d-lg-flex me-3">
-                    <div id="navbarCryptoPrices" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;"></div>
+                <div class="nav-item d-flex me-2 me-md-3">
+                    <div id="navbarCryptoPrices" style="display:flex;gap:6px;align-items:center;flex-wrap:nowrap;overflow-x:auto;max-width:40vw;-webkit-overflow-scrolling:touch;scrollbar-width:none;"></div>
                 </div>
                 <div class="nav-item d-flex me-2">
                     <button class="btn btn-ghost-primary btn-sm" id="btnRefresh" title="Atualizar Cotacoes">
