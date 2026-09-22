@@ -314,7 +314,7 @@
   border-radius: var(--dsh-radlg); padding: .52rem .7rem; margin-bottom: .4rem;
 }
 /* Responsive */
-@media (max-width: 900px) {
+$1992px) {
   #modalResultadosCryptoCompact .dsh-mg-row.cols-8 { grid-template-columns: repeat(4,1fr); }
   #modalResultadosCryptoCompact .dsh-grid-main { grid-template-columns: 1fr !important; }
   #modalResultadosCryptoCompact .dsh-grid-cards { grid-template-columns: 1fr 1fr !important; }

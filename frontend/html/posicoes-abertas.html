@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Investimentos - Posições Abertas</title>
+    <link rel="stylesheet" href="../css/shared/style.css?v=1.2.0">
+    <link rel="stylesheet" href="../css/crypto/crypto.css?v=1.5.0">
+    <link rel="stylesheet" href="../css/crypto/crypto-shared.css?v=1.0.0">
+    <link rel="stylesheet" href="../css/crypto/posicoes-abertas.css?v=1.0.0">
+    <link rel="stylesheet" href="../css/shared/tooltip.css?v=1.0.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" referrerpolicy="no-referrer">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+
+<body data-bs-theme="dark">
+    <!-- AVISO DESKTOP: tela otimizada para mobile -->
+    <div class="somente-desktop aviso-desktop">
+        <div class="aviso-desktop-card">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+            <h2>Tela otimizada para celular</h2>
+            <p>Esta tela foi projetada para dispositivos móveis. Acesse pelo celular ou redimensione a janela do navegador para menos de 768px.</p>
+            <a href="crypto.html" class="btn btn-primary">Voltar ao Dashboard</a>
+        </div>
+    </div>
+
+    <!-- CONTEÚDO MOBILE -->
+    <div class="somente-mobile">
+        <div class="page-wrapper">
+            <div class="page-body">
+                <div class="container-fluid pa-container">
+
+                    <!-- Header -->
+                    <div class="pa-header">
+                        <a href="crypto.html" class="pa-back-btn" aria-label="Voltar">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                        </a>
+                        <h1 class="pa-title">Posições Abertas</h1>
+                        <button class="pa-refresh-btn" id="btnRefreshPosicoes" aria-label="Atualizar">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+                        </button>
+                    </div>
+
+                    <!-- Filtro de ativo -->
+                    <div class="pa-filter-bar">
+                        <button class="pa-filter-btn active" data-asset="ALL">Todos</button>
+                        <button class="pa-filter-btn" data-asset="ETH">ETH</button>
+                        <button class="pa-filter-btn" data-asset="BTC">BTC</button>
+                    </div>
+
+                    <!-- Resumo -->
+                    <div class="pa-summary">
+                        <div class="pa-summary-item">
+                            <span class="pa-summary-label">Total Abertas</span>
+                            <span class="pa-summary-value" id="paTotalAbertas">0</span>
+                        </div>
+                        <div class="pa-summary-item">
+                            <span class="pa-summary-label">Prêmio Total</span>
+                            <span class="pa-summary-value pa-value-green" id="paPremioTotal">US$ 0,00</span>
+                        </div>
+                    </div>
+
+                    <!-- Lista de posições -->
+                    <div class="pa-list" id="paList">
+                        <!-- Preenchido por posicoes-abertas.js -->
+                        <div class="pa-loading">Carregando posições...</div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/core/libs.js"></script>
+    <script src="../js/core/global.js"></script>
+    <script src="../js/core/layout.js"></script>
+    <script src="../js/crypto/posicoes-abertas.js?v=1.0.0"></script>
+</body>
+</html>

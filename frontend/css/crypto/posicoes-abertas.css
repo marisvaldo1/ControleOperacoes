@@ -1,0 +1,300 @@
+/* ============================================================
+   Posições Abertas — CSS com classes condicionais desktop/mobile
+   Breakpoints padrão: 576 | 768 | 992 | 1200
+   ============================================================ */
+
+/* ---------- Classes condicionais ---------- */
+.somente-desktop { display: block; }
+.somente-mobile  { display: none; }
+
+@media (max-width: 768px) {
+    .somente-desktop { display: none !important; }
+    .somente-mobile  { display: block !important; }
+}
+
+/* ---------- Aviso Desktop ---------- */
+.aviso-desktop {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: var(--tblr-body-bg, #1e293b);
+}
+
+.aviso-desktop-card {
+    text-align: center;
+    max-width: 420px;
+    padding: 2.5rem 2rem;
+    background: var(--tblr-card-bg, #0f172a);
+    border: 1px solid var(--tblr-border-color, rgba(255,255,255,0.1));
+    border-radius: 12px;
+    color: var(--tblr-body-color, #cbd5e1);
+}
+
+.aviso-desktop-card svg {
+    color: var(--tblr-warning, #f59f00);
+    margin-bottom: 1rem;
+}
+
+.aviso-desktop-card h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+}
+
+.aviso-desktop-card p {
+    font-size: 0.875rem;
+    opacity: 0.8;
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+}
+
+/* ---------- Layout Mobile ---------- */
+.pa-container {
+    padding: 0.75rem 0.75rem 2rem;
+}
+
+/* Header */
+.pa-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+    margin-bottom: 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--tblr-body-bg, #1e293b);
+}
+
+.pa-back-btn,
+.pa-refresh-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 10px;
+    background: var(--tblr-card-bg, #0f172a);
+    color: var(--tblr-body-color, #cbd5e1);
+    cursor: pointer;
+    flex-shrink: 0;
+    text-decoration: none;
+    transition: background 0.15s;
+}
+
+.pa-back-btn:active,
+.pa-refresh-btn:active {
+    background: rgba(255,255,255,0.1);
+}
+
+.pa-title {
+    flex: 1;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Filtro */
+.pa-filter-bar {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+
+.pa-filter-bar::-webkit-scrollbar { display: none; }
+
+.pa-filter-btn {
+    flex-shrink: 0;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--tblr-border-color, rgba(255,255,255,0.1));
+    border-radius: 20px;
+    background: var(--tblr-card-bg, #0f172a);
+    color: var(--tblr-body-color, #cbd5e1);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.pa-filter-btn.active {
+    background: var(--tblr-primary, #206bc4);
+    border-color: var(--tblr-primary, #206bc4);
+    color: #fff;
+}
+
+/* Resumo */
+.pa-summary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.pa-summary-item {
+    background: var(--tblr-card-bg, #0f172a);
+    border: 1px solid var(--tblr-border-color, rgba(255,255,255,0.1));
+    border-radius: 10px;
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.pa-summary-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    opacity: 0.6;
+}
+
+.pa-summary-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.pa-value-green { color: #2fb344; }
+
+/* Lista de posições */
+.pa-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.pa-loading {
+    text-align: center;
+    padding: 2rem;
+    opacity: 0.6;
+    font-size: 0.9rem;
+}
+
+/* Card de posição */
+.pa-card {
+    background: var(--tblr-card-bg, #0f172a);
+    border: 1px solid var(--tblr-border-color, rgba(255,255,255,0.1));
+    border-radius: 12px;
+    overflow: hidden;
+    border-left: 4px solid var(--tblr-primary, #206bc4);
+}
+
+.pa-card[data-asset="BTC"] { border-left-color: #f59f00; }
+.pa-card[data-asset="ETH"] { border-left-color: #4da6ff; }
+
+/* Card header */
+.pa-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.pa-asset-badge {
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.1);
+}
+
+.pa-type-badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+.pa-type-badge.put  { background: rgba(32,107,196,0.2); color: #4da6ff; }
+.pa-type-badge.call { background: rgba(245,159,0,0.2); color: #f59f00; }
+
+.pa-status-badge {
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+.pa-status-badge.segura   { background: rgba(47,179,68,0.2); color: #2fb344; }
+.pa-status-badge.cuidado  { background: rgba(245,159,0,0.2); color: #f59f00; }
+.pa-status-badge.risco    { background: rgba(214,57,57,0.2); color: #d63939; }
+
+.pa-premio-info {
+    margin-left: auto;
+    text-align: right;
+    font-size: 0.75rem;
+}
+
+.pa-premio-info .label { opacity: 0.6; display: block; }
+.pa-premio-info .value { color: #2fb344; font-weight: 700; font-size: 0.9rem; }
+
+/* Card body */
+.pa-card-body {
+    padding: 0 0.75rem 0.75rem;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+}
+
+.pa-stat {
+    background: rgba(255,255,255,0.03);
+    border-radius: 8px;
+    padding: 0.5rem;
+    text-align: center;
+}
+
+.pa-stat-label {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    opacity: 0.5;
+    display: block;
+    margin-bottom: 0.2rem;
+}
+
+.pa-stat-value {
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.pa-stat-value.green { color: #2fb344; }
+.pa-stat-value.red   { color: #d63939; }
+.pa-stat-value.blue  { color: #4da6ff; }
+
+/* Empty state */
+.pa-empty {
+    text-align: center;
+    padding: 3rem 1rem;
+    opacity: 0.5;
+}
+
+.pa-empty svg {
+    margin-bottom: 1rem;
+    opacity: 0.4;
+}
+
+.pa-empty p {
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+/* ---------- Breakpoints adicionais ---------- */
+@media (max-width: 576px) {
+    .pa-card-body {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .pa-summary {
+        grid-template-columns: 1fr;
+    }
+}
