@@ -297,6 +297,7 @@
         bindCardToggles(list);
         openFirstCard(list);
         registerLiveAssets(filtered);
+        syncLivePrices();
     }
 
     function openFirstCard(root) {
@@ -443,12 +444,36 @@
         window.CryptoLive.ensureAssets(ativos);
     }
 
+    function syncLivePrices() {
+        if (!window.CryptoLive) return;
+        document.querySelectorAll('#paList .pa-card[data-asset]').forEach(function (card) {
+            var asset = card.getAttribute('data-asset');
+            if (!asset) return;
+            var cached = window.CryptoLive.getPrice(asset);
+            if (cached) {
+                updateCardLive(card, parseFloat(cached));
+                return;
+            }
+            window.CryptoLive.fetchPrice(asset).then(function (price) {
+                if (price) updateCardLive(card, parseFloat(price));
+            });
+        });
+    }
+
     function updateCardLive(card, price) {
         if (!card || !isFinite(price) || price <= 0) return;
         var strike = parseFloat(card.getAttribute('data-strike') || 0);
         var tipo = card.getAttribute('data-tipo') || '';
         if (!strike) return;
         card.setAttribute('data-cot', price);
+
+        var opId = card.getAttribute('data-id');
+        var asset = card.getAttribute('data-asset');
+        _allOps.forEach(function (op) {
+            var match = (opId && String(op.id) === String(opId)) ||
+                (!opId && normalizeAsset(op) === asset);
+            if (match && isOpen(op)) op.cotacao_atual = price;
+        });
 
         var risk = getRiskStatus({ strike: strike, cotacao_atual: price, tipo: tipo });
         var statusEl = card.querySelector('.pa-status-badge');
@@ -510,7 +535,8 @@
         if (_liveBound) return;
         _liveBound = true;
 
-        window.addEventListener('cryptoLiveQuote', function (ev) {
+        // cryptoLiveQuote é despachado em document (sem bubbles) — escutar em document
+        document.addEventListener('cryptoLiveQuote', function (ev) {
             var d = ev.detail;
             if (!d || !d.asset || !d.price) return;
             var now = Date.now();
@@ -519,6 +545,17 @@
             _quoteThrottle[key] = now;
             onLiveQuote(d.asset, d.price);
         });
+
+        // Ticker de segurança (mesmo padrão da visão geral desktop, 2.5s):
+        // garante atualização mesmo se o WS estiver bloqueado e o cache já tiver preço
+        setInterval(function () {
+            if (!window.CryptoLive || !document.getElementById('paList')) return;
+            document.querySelectorAll('#paList .pa-card[data-asset]').forEach(function (card) {
+                var asset = card.getAttribute('data-asset');
+                var cached = asset ? window.CryptoLive.getPrice(asset) : null;
+                if (cached) updateCardLive(card, parseFloat(cached));
+            });
+        }, 2500);
     }
 
     function init() {
