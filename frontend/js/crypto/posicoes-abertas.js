@@ -1,10 +1,12 @@
 // posicoes-abertas.js — Tela de Posições Abertas (mobile-first)
-// v1.1.0 — cards com termômetro, stats (Diferença/PoP/PM) e accordion
+// v1.2.0 — accordion da 1ª posição aberto por default + cotações em tempo real (CryptoLive)
 (function () {
     'use strict';
 
     var _currentFilter = 'ALL';
     var _allOps = [];
+    var _liveBound = false;
+    var _quoteThrottle = {};
 
     function usd(n) {
         return 'US$ ' + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -222,7 +224,8 @@
         }
 
         return '' +
-            '<div class="pa-card" data-asset="' + asset + '" data-id="' + (op.id || '') + '" data-idx="' + idx + '">' +
+            '<div class="pa-card" data-asset="' + asset + '" data-id="' + (op.id || '') + '" data-idx="' + idx + '"' +
+                ' data-strike="' + strike + '" data-tipo="' + tipo + '" data-cot="' + cot + '">' +
                 '<div class="pa-card-header" data-toggle="' + bodyId + '">' +
                     '<span class="pa-asset-badge">' + asset + '</span>' +
                     '<span class="pa-type-badge ' + tipo.toLowerCase() + '">' + tipo + '</span>' +
@@ -292,6 +295,23 @@
 
         list.innerHTML = filtered.map(renderCard).join('');
         bindCardToggles(list);
+        openFirstCard(list);
+        registerLiveAssets(filtered);
+    }
+
+    function openFirstCard(root) {
+        var header = root.querySelector('.pa-card-header[data-toggle]');
+        if (!header) return;
+        var bodyId = header.getAttribute('data-toggle');
+        var body = document.getElementById(bodyId);
+        if (!body) return;
+        body.style.display = 'block';
+        body.classList.remove('hide');
+        var ico = header.querySelector('.pa-toggle-ico');
+        if (ico) ico.innerHTML = '&#9660;';
+        var card = header.closest('.pa-card');
+        if (card) card.classList.add('pa-card-active');
+        setTimeout(function () { mountMiniCharts(body); }, 30);
     }
 
     function bindCardToggles(root) {
@@ -410,9 +430,101 @@
         }
     }
 
+    /* ---------- Tempo real (CryptoLive — mesmo padrão do desktop) ---------- */
+
+    function registerLiveAssets(ops) {
+        if (!window.CryptoLive) return;
+        var ativos = [];
+        (ops || _allOps).forEach(function (op) {
+            if (!isOpen(op)) return;
+            var a = normalizeAsset(op);
+            if (a && ativos.indexOf(a) === -1) ativos.push(a);
+        });
+        window.CryptoLive.ensureAssets(ativos);
+    }
+
+    function updateCardLive(card, price) {
+        if (!card || !isFinite(price) || price <= 0) return;
+        var strike = parseFloat(card.getAttribute('data-strike') || 0);
+        var tipo = card.getAttribute('data-tipo') || '';
+        if (!strike) return;
+        card.setAttribute('data-cot', price);
+
+        var risk = getRiskStatus({ strike: strike, cotacao_atual: price, tipo: tipo });
+        var statusEl = card.querySelector('.pa-status-badge');
+        if (statusEl) {
+            statusEl.className = 'pa-status-badge ' + risk.cls;
+            statusEl.textContent = risk.label;
+        }
+
+        var seal = thermoStatus(strike, price, tipo);
+        var sealColor = seal.cls === 'otm' ? '#ef4444' : '#22c55e';
+        var sealLabel = seal.cls === 'otm' ? 'EM EXERCÍCIO' : 'SEGURA';
+        var sealSign = parseFloat(seal.pct) >= 0 ? '+' : '';
+        var sealEl = card.querySelector('.pa-seal-badge');
+        if (sealEl) {
+            sealEl.style.background = 'rgba(' + (seal.cls === 'otm' ? '239,68,68' : '34,197,94') + ',.15)';
+            sealEl.style.color = sealColor;
+            sealEl.style.border = '1px solid ' + sealColor;
+            sealEl.innerHTML = '<span class="pa-seal-dot" style="background:' + sealColor + '"></span>' +
+                sealLabel + ' ' + sealSign + seal.pct + '%';
+        }
+
+        var body = card.querySelector('.pa-card-body');
+        if (!body || body.style.display === 'none') return;
+
+        var thermoWrap = body.querySelector('.pa-thermo-wrap');
+        if (thermoWrap) thermoWrap.innerHTML = buildThermoSvg(strike, price, tipo);
+
+        var diff = price - strike;
+        var diffEl = body.querySelector('.pa-diff-row .pa-td-badge .pa-td-val');
+        if (diffEl) {
+            diffEl.style.color = sealColor;
+            diffEl.textContent = (diff >= 0 ? '+' : '') + fmtShort(diff);
+        }
+
+        var pop = calcPop(strike, price, tipo);
+        var popBadges = body.querySelectorAll('.pa-diff-row .pa-td-badge .pa-td-val');
+        if (popBadges[1]) {
+            popBadges[1].style.color = pop >= 50 ? '#22c55e' : '#ef4444';
+            popBadges[1].textContent = pop + '%';
+        }
+    }
+
+    function onLiveQuote(asset, price) {
+        var norm = String(asset || '').toUpperCase().replace('USDT', '').replace('/', '');
+        if (!norm || !isFinite(price) || price <= 0) return;
+        document.querySelectorAll('#paList .pa-card[data-asset="' + norm + '"]').forEach(function (card) {
+            updateCardLive(card, price);
+        });
+        refreshNavbarPriceLive(norm, price);
+    }
+
+    function refreshNavbarPriceLive(asset, price) {
+        var badge = document.querySelector('#navbarCryptoPrices [data-nav-ativo="' + asset + '"]');
+        if (!badge) return;
+        badge.innerHTML = asset + ' US$' + price.toLocaleString('en-US', { maximumFractionDigits: 2 });
+    }
+
+    function initLiveQuotes() {
+        if (_liveBound) return;
+        _liveBound = true;
+
+        window.addEventListener('cryptoLiveQuote', function (ev) {
+            var d = ev.detail;
+            if (!d || !d.asset || !d.price) return;
+            var now = Date.now();
+            var key = String(d.asset).toUpperCase();
+            if (now - (_quoteThrottle[key] || 0) < 400) return;
+            _quoteThrottle[key] = now;
+            onLiveQuote(d.asset, d.price);
+        });
+    }
+
     function init() {
         initFilters();
         initRefresh();
+        initLiveQuotes();
         loadData();
     }
 
