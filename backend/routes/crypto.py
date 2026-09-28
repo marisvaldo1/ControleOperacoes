@@ -33,6 +33,30 @@ from models.crypto_exercise import (
 # Suprime warnings de SSL em ambiente local (Laragon/Windows sem certificado raiz)
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
+# ─── Sessão TLS para a Binance ──────────────────────────────────────────────
+# Em rede corporativa o firewall intercepta o TLS da Binance e emite um
+# certificado sem a extensão Authority Key Identifier. O Python 3.13+ valida
+# com VERIFY_X509_STRICT por padrão e rejeita esse certificado ("Missing
+# Authority Key Identifier"), derrubando toda chamada com Max retries exceeded.
+# A cadeia continua validada com certifi + CAs do repositório do Windows;
+# apenas a checagem estrita (AKI/SKID obrigatórios) é removida.
+import ssl as _ssl
+from requests.adapters import HTTPAdapter
+
+_ssl_ctx = _ssl.create_default_context()
+_ssl_ctx.verify_flags &= ~_ssl.VERIFY_X509_STRICT
+_ssl_ctx.load_verify_locations(certifi.where())
+
+
+class _BinanceTLSAdapter(HTTPAdapter):
+    def init_poolmanager(self, connections, maxsize, block=False, **kwargs):
+        kwargs['ssl_context'] = _ssl_ctx
+        super().init_poolmanager(connections, maxsize, block, **kwargs)
+
+
+_binance_session = requests.Session()
+_binance_session.mount('https://', _BinanceTLSAdapter())
+
 # Blueprint registrado com prefixo /api/crypto em server.py
 crypto_bp = Blueprint('crypto', __name__)
 
@@ -141,10 +165,9 @@ def refresh_crypto_quotes():
         ticker     = (op['ativo'] or 'BTC').upper() + 'USDT'
         spot_price = None
         try:
-            r = requests.get(
+            r = _binance_session.get(
                 f'https://api.binance.com/api/v3/ticker/price?symbol={ticker}',
                 timeout=5,
-                verify=certifi.where(),
             )
             if r.status_code == 200:
                 spot_price = float(r.json().get('price', 0) or 0)
@@ -194,7 +217,7 @@ def get_dual_investment():
     last_error = None
     for url in ENDPOINTS:
         try:
-            r = requests.get(
+            r = _binance_session.get(
                 url,
                 params=params,
                 headers={
@@ -202,7 +225,6 @@ def get_dual_investment():
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
                 },
                 timeout=10,
-                verify=certifi.where(),
             )
             if r.status_code == 403:
                 # Binance bloqueia IP externo — retorna vazio sem erro 500
@@ -313,7 +335,7 @@ def sync_dual_investment():
             params.update(extra_params)
         query, signature = _binance_sign(params, secret)
         params['signature'] = signature
-        return requests.get(f'{base}{path}', headers=headers, params=params, timeout=15)
+        return _binance_session.get(f'{base}{path}', headers=headers, params=params, timeout=15)
 
     # ── Busca posições (abertas + fechadas) com paginação ──
     all_positions = []
@@ -574,7 +596,7 @@ def stream_dual_investment():
     # Obter offset do relógio em relação ao servidor da Binance
     time_offset = 0
     try:
-        server_resp = requests.get(f'{base}/api/v3/time', timeout=5)
+        server_resp = _binance_session.get(f'{base}/api/v3/time', timeout=5)
         if server_resp.status_code == 200:
             server_time = server_resp.json().get('serverTime', 0)
             local_time = int(time.time() * 1000)
@@ -588,7 +610,7 @@ def stream_dual_investment():
             params.update(extra_params)
         query, signature = _binance_sign(params, secret)
         params['signature'] = signature
-        return requests.get(f'{base}{path}', headers=headers_bin, params=params, timeout=15)
+        return _binance_session.get(f'{base}{path}', headers=headers_bin, params=params, timeout=15)
 
     def generate():
         # Fase 1: buscar posições da Binance
@@ -1049,7 +1071,7 @@ def binance_balance():
     # Obter offset do relógio em relação ao servidor da Binance
     time_offset = 0
     try:
-        server_resp = requests.get(f'{base}/api/v3/time', timeout=5)
+        server_resp = _binance_session.get(f'{base}/api/v3/time', timeout=5)
         if server_resp.status_code == 200:
             server_time = server_resp.json().get('serverTime', 0)
             local_time = int(time.time() * 1000)
@@ -1064,18 +1086,18 @@ def binance_balance():
         p = signed_params()
         query, sig = _binance_sign(p, secret)
         p['signature'] = sig
-        return requests.get(f'{base}{path}', headers=headers, params=p, timeout=15)
+        return _binance_session.get(f'{base}{path}', headers=headers, params=p, timeout=15)
 
     def signed_post(path):
         p = signed_params()
         query, sig = _binance_sign(p, secret)
         p['signature'] = sig
-        return requests.post(f'{base}{path}', headers=headers, data=p, timeout=15)
+        return _binance_session.post(f'{base}{path}', headers=headers, data=p, timeout=15)
 
     # 1) Busca cotações atuais
     prices = {}
     try:
-        r_price = requests.get(f'{base}/api/v3/ticker/price', timeout=10)
+        r_price = _binance_session.get(f'{base}/api/v3/ticker/price', timeout=10)
         if r_price.status_code == 200:
             for p in r_price.json():
                 prices[p['symbol']] = float(p['price'])
@@ -1172,7 +1194,7 @@ def binance_balance_test():
         params = {'timestamp': int(time.time() * 1000), 'recvWindow': 30000}
         query, signature = _binance_sign(params, secret)
         params['signature'] = signature
-        return requests.get(f'{base}{path}', headers=headers, params=params, timeout=15)
+        return _binance_session.get(f'{base}{path}', headers=headers, params=params, timeout=15)
 
     result = {'api_key_prefix': api_key[:8] + '...', 'secret_set': bool(secret)}
 
@@ -1192,7 +1214,7 @@ def binance_balance_test():
         p = {'timestamp': int(time.time() * 1000), 'recvWindow': 30000}
         query, sig = _binance_sign(p, secret)
         p['signature'] = sig
-        r = requests.post(f'{base}/sapi/v1/asset/get-total-balance', headers=headers, data=p, timeout=15)
+        r = _binance_session.post(f'{base}/sapi/v1/asset/get-total-balance', headers=headers, data=p, timeout=15)
         result['total_balance_status'] = r.status_code
         if r.status_code == 200:
             data = r.json()
@@ -1208,7 +1230,7 @@ def binance_balance_test():
         p = {'timestamp': int(time.time() * 1000), 'recvWindow': 30000}
         query, sig = _binance_sign(p, secret)
         p['signature'] = sig
-        r = requests.post(f'{base}/sapi/v1/asset/get-fund-value', headers=headers, data=p, timeout=15)
+        r = _binance_session.post(f'{base}/sapi/v1/asset/get-fund-value', headers=headers, data=p, timeout=15)
         result['fund_value_status'] = r.status_code
         if r.status_code == 200:
             data = r.json()
