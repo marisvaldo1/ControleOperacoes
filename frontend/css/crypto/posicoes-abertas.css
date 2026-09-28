@@ -460,11 +460,21 @@
 
     .pa-premio-info .label { display: inline; }
 
+    /* Diferença / PoP / PM: sempre na MESMA linha (3 colunas iguais) */
     .pa-diff-row {
-        flex-direction: column;
+        flex-wrap: nowrap;
+        gap: 0.3rem;
     }
 
     .pa-td-badge {
-        flex-basis: 100%;
+        flex: 1 1 0;
+        padding: 0.4rem 0.15rem;
+        gap: 3px;
+        font-size: 0.6rem;
+        white-space: nowrap;
+    }
+
+    .pa-td-badge .pa-td-val {
+        font-size: 0.68rem;
     }
 }

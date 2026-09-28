@@ -1,5 +1,5 @@
 // posicoes-abertas.js — Tela de Posições Abertas (mobile-first)
-// v1.5.0 — accordion mostra só o TradingView (termômetro/diferenças fixos fora) + fita de segurança
+// v1.6.0 — gadgets da navbar abrem o Mapa de Calor; header custom removido; init aguarda layoutReady
 (function () {
     'use strict';
 
@@ -380,24 +380,8 @@
         list.innerHTML = filtered.map(renderCard).join('');
         bindCardToggles(list);
         populateStrips(list);
-        openFirstCard(list);
         registerLiveAssets(filtered);
         syncLivePrices();
-    }
-
-    function openFirstCard(root) {
-        var header = root.querySelector('.pa-card-header[data-toggle]');
-        if (!header) return;
-        var bodyId = header.getAttribute('data-toggle');
-        var body = document.getElementById(bodyId);
-        if (!body) return;
-        body.style.display = 'block';
-        body.classList.remove('hide');
-        var ico = header.querySelector('.pa-toggle-ico');
-        if (ico) ico.innerHTML = '&#9660;';
-        var card = header.closest('.pa-card');
-        if (card) card.classList.add('pa-card-active');
-        setTimeout(function () { mountMiniCharts(body); }, 30);
     }
 
     function bindCardToggles(root) {
@@ -489,6 +473,16 @@
                 html += '<span class="badge crypto-nav-badge" style="background:' + color + '22;color:' + color + ';border:1px solid ' + color + '55;font-size:.78rem;cursor:pointer;padding:4px 10px;" data-nav-ativo="' + ativo + '">' + ativo + ' ' + formatted + '</span>';
             });
             container.innerHTML = html;
+
+            // Gadgets são links para o modal Mapa de calor da moeda (padrão do crypto.html)
+            container.querySelectorAll('[data-nav-ativo]').forEach(function (badge) {
+                badge.addEventListener('click', function () {
+                    var a = badge.getAttribute('data-nav-ativo');
+                    if (window.ModalPrecoMedio && typeof window.ModalPrecoMedio.open === 'function') {
+                        window.ModalPrecoMedio.open(a);
+                    }
+                });
+            });
         }).catch(function () {});
     }
 
@@ -504,9 +498,6 @@
     }
 
     function initRefresh() {
-        var btn = document.getElementById('btnRefreshPosicoes');
-        if (btn) btn.addEventListener('click', loadData);
-
         var navRefresh = document.getElementById('btnRefresh');
         if (navRefresh && !navRefresh.dataset.paBound) {
             navRefresh.dataset.paBound = '1';
@@ -643,11 +634,23 @@
         }, 2500);
     }
 
+    // A navbar (gadgets + botões) é injetada pelo layout.js após libsLoaded.
+    // Quando o init roda antes disso, refazemos quotes/bindings no layoutReady.
+    function onLayoutReady() {
+        refreshNavbarQuotes();
+        initRefresh();
+    }
+
     function init() {
         initFilters();
         initRefresh();
         initLiveQuotes();
         loadData();
+        if (window.__appLayoutReady) {
+            onLayoutReady();
+        } else {
+            document.addEventListener('layoutReady', onLayoutReady);
+        }
     }
 
     if (document.readyState === 'loading') {
