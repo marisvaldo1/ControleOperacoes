@@ -1,4 +1,4 @@
-﻿/** crypto.js v1.9.0 - Controle de Dual Investment Cryptos
+﻿/** crypto.js v1.9.1 - Controle de Dual Investment Cryptos
  *  (aba Mês Atual: toolbar + gadgets KPI + gráfico da evolução diária) */
 
 let allOperacoes = [];
@@ -10,6 +10,11 @@ let _anualSelectedYear = new Date().getFullYear().toString();
 let _lastSimData = null;
 let _investidoMode = 'usd';
 const CRYPTO_CFG_KEY = "cryptoConfig";
+// Estado da aba Mês Atual (declarado no topo: _initCrypto() roda de forma síncrona
+// ainda durante a avaliação do script — ver linha ~230)
+let _mesAtualOps = [];
+let _mesEvoChart = null;
+let _mesToolbarBound = false;
 const historicoQuickFilter = {
     periodo: "all",
     status: "all",
@@ -852,11 +857,8 @@ function fmtUsd(v) {
 
 /* ── Aba Mês Atual: gadgets (KPIs) + gráfico da evolução diária (v1.9.0) ───
    Substitui o antigo mesAtualHeader; métricas e visual iguais à demo
-   mes-atual-ideias. O DataTable continua sendo populado pelo fluxo normal. */
-let _mesAtualOps = [];
-let _mesEvoChart = null;
-let _mesToolbarBound = false;
-
+   mes-atual-ideias. O DataTable continua sendo populado pelo fluxo normal.
+   (estado: _mesAtualOps/_mesEvoChart/_mesToolbarBound declarados no topo) */
 function mesIsOpen(op) {
     const s = String(op.status || "ABERTA").toUpperCase();
     return s === "ABERTA" || s === "ABERTO";
