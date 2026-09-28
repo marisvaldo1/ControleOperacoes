@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Posições Abertas — Demo de Melhorias</title>
+<style>
+:root{
+    --bg:#1e293b; --card:#0f172a; --card2:#111c33; --border:rgba(255,255,255,.1);
+    --tx:#cbd5e1; --tx2:#8aa4c0; --tx3:#5b7291;
+    --green:#2fb344; --yellow:#f59f00; --red:#d63939; --blue:#206bc4;
+    --btc:#f59f00; --eth:#4da6ff; --sol:#9945ff; --bnb:#f3ba2f;
+    --radius:12px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;}
+body{
+    background:var(--bg); color:var(--tx);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:15px; line-height:1.4;
+    padding-bottom:2rem;
+}
+.shell{max-width:460px;margin:0 auto;padding:0 .75rem 2rem;}
+
+/* ---------- Header ---------- */
+.hdr{
+    position:sticky;top:0;z-index:50;background:var(--bg);
+    display:flex;align-items:center;gap:.6rem;padding:.6rem 0;
+    border-bottom:1px solid transparent;
+}
+.hdr.scrolled{border-bottom-color:var(--border);}
+.hdr h1{font-size:1.05rem;font-weight:700;margin:0;flex:1;}
+.icon-btn{
+    width:40px;height:40px;border:none;border-radius:10px;background:var(--card);
+    color:var(--tx);display:flex;align-items:center;justify-content:center;
+    cursor:pointer;font-size:1rem;flex-shrink:0;
+}
+.icon-btn:active{background:rgba(255,255,255,.1);}
+.icon-btn.spin svg{animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* preço vivo no header */
+.live-pill{
+    display:flex;align-items:center;gap:5px;background:var(--card);
+    border:1px solid var(--border);border-radius:20px;padding:5px 10px;
+    font-size:.78rem;font-weight:700;font-family:ui-monospace,monospace;
+    cursor:pointer;min-height:40px;
+}
+.live-pill .dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 2s infinite;}
+@keyframes pulse{50%{opacity:.4;}}
+.live-pill .up{color:var(--green);} .live-pill .down{color:var(--red);}
+
+/* ---------- Pull to refresh ---------- */
+.ptr{
+    height:0;overflow:hidden;display:flex;align-items:center;justify-content:center;
+    color:var(--tx3);font-size:.8rem;transition:height .2s;
+}
+.ptr.on{height:44px;}
+
+/* ---------- Selos de seção ---------- */
+.tag{
+    display:inline-block;font-size:.6rem;font-weight:800;letter-spacing:.06em;
+    background:rgba(47,179,68,.15);color:var(--green);border:1px solid rgba(47,179,68,.4);
+    padding:1px 6px;border-radius:4px;vertical-align:middle;margin-left:6px;
+}
+
+/* ---------- KPIs ---------- */
+.kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin:.4rem 0 .8rem;}
+.kpi{
+    background:var(--card);border:1px solid var(--border);border-radius:10px;
+    padding:.55rem .5rem;display:flex;flex-direction:column;gap:2px;position:relative;
+    min-height:70px;
+}
+.kpi .lbl{font-size:.6rem;text-transform:uppercase;letter-spacing:.04em;color:var(--tx3);}
+.kpi .val{font-size:1.02rem;font-weight:800;font-family:ui-monospace,monospace;}
+.kpi .sub{font-size:.62rem;color:var(--tx3);}
+.kpi.k-green .val{color:var(--green);}
+.kpi.k-yellow .val{color:var(--yellow);}
+.kpi.k-red .val{color:var(--red);}
+.kpi.k-blue .val{color:var(--eth);}
+
+/* ---------- Barra de status ---------- */
+.status-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-bottom:.7rem;}
+.st-btn{
+    background:var(--card);border:1px solid var(--border);border-radius:10px;
+    padding:.5rem .3rem;min-height:52px;cursor:pointer;color:var(--tx);
+    display:flex;flex-direction:column;align-items:center;gap:2px;transition:.15s;
+}
+.st-btn .n{font-size:1.15rem;font-weight:800;font-family:ui-monospace,monospace;}
+.st-btn .t{font-size:.62rem;text-transform:uppercase;letter-spacing:.04em;opacity:.75;}
+.st-btn[data-st="segura"] .n{color:var(--green);}
+.st-btn[data-st="cuidado"] .n{color:var(--yellow);}
+.st-btn[data-st="risco"] .n{color:var(--red);}
+.st-btn.active{outline:2px solid currentColor;background:rgba(255,255,255,.06);}
+.st-btn.active[data-st="segura"]{outline-color:var(--green);}
+.st-btn.active[data-st="cuidado"]{outline-color:var(--yellow);}
+.st-btn.active[data-st="risco"]{outline-color:var(--red);}
+
+/* ---------- Chips (ativos + ordenação) ---------- */
+.row-label{font-size:.65rem;text-transform:uppercase;letter-spacing:.05em;color:var(--tx3);margin:.2rem 0 .35rem;}
+.chips{display:flex;gap:.45rem;overflow-x:auto;padding-bottom:.3rem;margin-bottom:.6rem;scrollbar-width:none;}
+.chips::-webkit-scrollbar{display:none;}
+.chip{
+    flex-shrink:0;padding:.5rem .85rem;border:1px solid var(--border);border-radius:20px;
+    background:var(--card);color:var(--tx);font-size:.8rem;font-weight:600;cursor:pointer;
+    min-height:38px;display:flex;align-items:center;gap:5px;transition:.15s;white-space:nowrap;
+}
+.chip .cnt{font-size:.68rem;opacity:.55;font-family:ui-monospace,monospace;}
+.chip.active{background:var(--blue);border-color:var(--blue);color:#fff;}
+.chip.active .cnt{opacity:.85;}
+.chip .cdot{width:8px;height:8px;border-radius:50%;}
+
+/* ---------- Lista ---------- */
+.list{display:flex;flex-direction:column;gap:.6rem;}
+.pos-card{
+    background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+    overflow:hidden;border-left:4px solid var(--blue);transition:box-shadow .2s,border-color .2s;
+}
+.pos-card[data-asset="BTC"]{border-left-color:var(--btc);}
+.pos-card[data-asset="ETH"]{border-left-color:var(--eth);}
+.pos-card[data-asset="SOL"]{border-left-color:var(--sol);}
+.pos-card[data-asset="BNB"]{border-left-color:var(--bnb);}
+.pos-card.open{border-color:rgba(59,130,246,.5);box-shadow:0 0 0 1px rgba(59,130,246,.25);}
+
+/* linha 1: identidade + prêmio */
+.card-top{
+    display:flex;align-items:center;gap:.4rem;padding:.65rem .65rem .3rem;flex-wrap:wrap;
+    cursor:pointer;user-select:none;
+}
+.badge-asset{
+    font-size:.8rem;font-weight:800;padding:.22rem .5rem;border-radius:6px;
+    background:rgba(255,255,255,.1);
+}
+.badge-type{font-size:.66rem;font-weight:700;padding:.18rem .45rem;border-radius:4px;text-transform:uppercase;}
+.badge-type.put{background:rgba(32,107,196,.25);color:#4da6ff;}
+.badge-type.call{background:rgba(245,159,0,.2);color:var(--yellow);}
+.badge-risk{font-size:.64rem;font-weight:700;padding:.2rem .5rem;border-radius:4px;text-transform:uppercase;}
+.badge-risk.segura{background:rgba(47,179,68,.18);color:var(--green);}
+.badge-risk.cuidado{background:rgba(245,159,0,.18);color:var(--yellow);}
+.badge-risk.risco{background:rgba(214,57,57,.18);color:var(--red);}
+.premio{
+    margin-left:auto;text-align:right;font-family:ui-monospace,monospace;
+}
+.premio .p-lbl{display:block;font-size:.58rem;color:var(--tx3);text-transform:uppercase;}
+.premio .p-val{font-size:.88rem;font-weight:800;color:var(--green);}
+
+/* linha 2: gauge distância */
+.gauge-row{display:flex;align-items:center;gap:.55rem;padding:.15rem .65rem .1rem;}
+.gauge{
+    position:relative;flex:1;height:22px;border-radius:6px;overflow:hidden;
+    background:linear-gradient(90deg,rgba(214,57,57,.35) 0%,rgba(214,57,57,.35) 49.5%,rgba(47,179,68,.35) 50.5%,rgba(47,179,68,.35) 100%);
+}
+.gauge.inv{background:linear-gradient(90deg,rgba(47,179,68,.35) 0%,rgba(47,179,68,.35) 49.5%,rgba(214,57,57,.35) 50.5%,rgba(214,57,57,.35) 100%);}
+.gauge .mid{position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(255,255,255,.55);}
+.gauge .knob{
+    position:absolute;top:50%;width:12px;height:12px;border-radius:50%;
+    transform:translate(-50%,-50%);border:2px solid #fff;transition:left .5s;
+}
+.gauge .knob.ok{background:var(--green);} .gauge .knob.warn{background:var(--yellow);} .gauge .knob.bad{background:var(--red);}
+.gauge-meta{font-family:ui-monospace,monospace;font-size:.7rem;color:var(--tx2);white-space:nowrap;text-align:right;}
+.gauge-meta b{display:block;font-size:.78rem;}
+
+/* linha 3: vencimento + sparkline */
+.card-mid{display:flex;align-items:center;gap:.5rem;padding:.3rem .65rem .55rem;}
+.venc{
+    display:flex;align-items:center;gap:4px;font-size:.7rem;font-weight:700;
+    padding:.25rem .5rem;border-radius:6px;background:rgba(148,163,184,.12);
+    color:var(--tx2);border:1px solid rgba(148,163,184,.25);white-space:nowrap;
+}
+.venc.soon{background:rgba(245,159,0,.15);color:var(--yellow);border-color:rgba(245,159,0,.4);}
+.venc.urgent{background:rgba(214,57,57,.15);color:var(--red);border-color:rgba(214,57,57,.45);animation:blink 1.6s infinite;}
+@keyframes blink{50%{opacity:.55;}}
+.spark{flex:1;height:30px;min-width:60px;}
+.spark svg{width:100%;height:100%;display:block;}
+.quote{
+    font-family:ui-monospace,monospace;font-size:.76rem;font-weight:700;text-align:right;white-space:nowrap;
+}
+.quote .arrow{font-size:.68rem;}
+.quote.up{color:var(--green);} .quote.down{color:var(--red);} .quote.flat{color:var(--tx2);}
+
+/* flash de variação */
+@keyframes flashUp{0%{background:rgba(47,179,68,.35);}100%{background:transparent;}}
+@keyframes flashDown{0%{background:rgba(214,57,57,.35);}100%{background:transparent;}}
+.flash-up{animation:flashUp .7s ease-out;}
+.flash-down{animation:flashDown .7s ease-out;}
+
+/* corpo expandido */
+.card-body{
+    display:none;padding:.6rem .65rem .7rem;border-top:1px solid var(--border);
+    background:rgba(0,0,0,.15);
+}
+.card-body.open{display:block;}
+.detail-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem;}
+.dcell{
+    background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);
+    border-radius:8px;padding:.45rem .3rem;text-align:center;
+}
+.dcell .dl{font-size:.58rem;text-transform:uppercase;color:var(--tx3);display:block;}
+.dcell .dv{font-size:.82rem;font-weight:800;font-family:ui-monospace,monospace;}
+.dv.g{color:var(--green);} .dv.r{color:var(--red);} .dv.y{color:var(--yellow);} .dv.b{color:var(--eth);}
+.body-note{
+    margin-top:.55rem;font-size:.7rem;color:var(--tx3);text-align:center;
+    font-style:italic;
+}
+.chev{margin-left:4px;color:var(--tx3);font-size:.7rem;transition:transform .2s;}
+.pos-card.open .chev{transform:rotate(90deg);}
+
+/* ---------- Skeleton ---------- */
+.skel{
+    background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+    padding:.8rem .7rem;display:flex;flex-direction:column;gap:.55rem;
+}
+.sk-line{height:14px;border-radius:6px;background:linear-gradient(90deg,#16233b 25%,#1e2f4d 50%,#16233b 75%);background-size:200% 100%;animation:shimmer 1.2s infinite;}
+.sk-line.w40{width:40%;} .sk-line.w70{width:70%;} .sk-line.w55{width:55%;}
+@keyframes shimmer{to{background-position:-200% 0;}}
+
+/* ---------- Guia ---------- */
+.guia-wrap{margin-top:1.4rem;}
+.guia-btn{
+    width:100%;min-height:48px;border:1px dashed rgba(47,179,68,.5);border-radius:10px;
+    background:rgba(47,179,68,.08);color:var(--green);font-weight:700;font-size:.9rem;cursor:pointer;
+}
+.guia{display:none;margin-top:.7rem;}
+.guia.on{display:block;}
+.gitem{
+    background:var(--card);border:1px solid var(--border);border-radius:10px;
+    padding:.7rem .75rem;margin-bottom:.55rem;
+}
+.gitem h3{margin:0 0 .35rem;font-size:.86rem;display:flex;align-items:center;gap:6px;}
+.gitem h3 .num{
+    background:var(--blue);color:#fff;border-radius:50%;width:20px;height:20px;
+    display:inline-flex;align-items:center;justify-content:center;font-size:.68rem;flex-shrink:0;
+}
+.gitem p{margin:.2rem 0;font-size:.78rem;color:var(--tx2);line-height:1.45;}
+.gitem .before{color:#f08c8c;}
+.gitem .after{color:#8ee6a1;}
+.gitem .where{font-size:.68rem;color:var(--tx3);margin-top:.3rem;}
+footer{margin-top:1.2rem;font-size:.68rem;color:var(--tx3);text-align:center;line-height:1.5;}
+
+/* toast */
+.toast{
+    position:fixed;left:50%;bottom:18px;transform:translateX(-50%) translateY(80px);
+    background:#0b1324;border:1px solid var(--border);color:var(--tx);
+    padding:.6rem 1rem;border-radius:10px;font-size:.8rem;z-index:99;
+    transition:transform .3s;box-shadow:0 8px 24px rgba(0,0,0,.5);max-width:90%;
+}
+.toast.on{transform:translateX(-50%) translateY(0);}
+
+@media (max-width:380px){
+    .kpi-grid{grid-template-columns:repeat(2,1fr);}
+    .detail-grid{grid-template-columns:repeat(2,1fr);}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+    <!-- ================= HEADER ================= -->
+    <header class="hdr" id="hdr">
+        <button class="icon-btn" aria-label="Voltar" onclick="toast('Voltaria para crypto.html')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+        <h1>Posições Abertas</h1>
+        <!-- MELHORIA 7: cotação âncora viva no header -->
+        <div class="live-pill" id="livePill" title="Toque para alternar ativo"><span class="dot"></span><span id="liveSym">BTC</span> <span id="liveVal">US$ 96.850</span><span id="liveArrow" class="up">▲</span></div>
+        <button class="icon-btn" id="btnRefresh" aria-label="Atualizar">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+        </button>
+    </header>
+
+    <!-- MELHORIA 11: pull-to-refresh -->
+    <div class="ptr" id="ptr">↓ Puxe para atualizar</div>
+
+    <!-- MELHORIA 9: timestamp de frescor -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin:.1rem 0 .45rem;">
+        <span class="row-label" style="margin:0">Resumo <span class="tag">NOVO</span></span>
+        <span id="freshness" style="font-size:.68rem;color:var(--tx3);">atualizado agora</span>
+    </div>
+
+    <!-- ================= MELHORIA 1: KPIs ================= -->
+    <div class="kpi-grid">
+        <div class="kpi"><span class="lbl">Abertas</span><span class="val" id="kAbertas">0</span><span class="sub" id="kAbertasSub">—</span></div>
+        <div class="kpi k-green"><span class="lbl">Prêmio total</span><span class="val" id="kPremio">US$ 0</span><span class="sub">recebido acumulado</span></div>
+        <div class="kpi k-blue"><span class="lbl">Exposição</span><span class="val" id="kExpo">US$ 0</span><span class="sub">capital em jogo</span></div>
+        <div class="kpi k-red"><span class="lbl">Em risco</span><span class="val" id="kRisco">0</span><span class="sub" id="kRiscoSub">cuidado + risco</span></div>
+        <div class="kpi k-yellow"><span class="lbl">Prêmio ≤ 7 dias</span><span class="val" id="kPremio7">US$ 0</span><span class="sub">a liberar em breve</span></div>
+        <div class="kpi"><span class="lbl">Resultado MTM</span><span class="val" id="kMtm">US$ 0</span><span class="sub">marcação a mercado</span></div>
+    </div>
+
+    <!-- ============ MELHORIA 2: barra de status ============ -->
+    <div class="row-label">Status das posições <span class="tag">NOVO</span> — toque para filtrar</div>
+    <div class="status-bar" id="statusBar">
+        <button class="st-btn" data-st="segura"><span class="n" id="stSegura">0</span><span class="t">Seguras</span></button>
+        <button class="st-btn" data-st="cuidado"><span class="n" id="stCuidado">0</span><span class="t">Cuidado</span></button>
+        <button class="st-btn" data-st="risco"><span class="n" id="stRisco">0</span><span class="t">Em risco</span></button>
+    </div>
+
+    <!-- ============ MELHORIA 3: filtro dinâmico ============ -->
+    <div class="row-label">Ativos <span class="tag">NOVO</span> — gerado da sua carteira</div>
+    <div class="chips" id="assetChips"></div>
+
+    <!-- ============ MELHORIA 4: ordenação ============ -->
+    <div class="row-label">Ordenar por <span class="tag">NOVO</span></div>
+    <div class="chips" id="sortChips">
+        <button class="chip active" data-sort="risco">Risco</button>
+        <button class="chip" data-sort="vencimento">Vencimento</button>
+        <button class="chip" data-sort="distancia">Distância do strike</button>
+        <button class="chip" data-sort="premio">Prêmio</button>
+    </div>
+
+    <!-- ============ LISTA ============ -->
+    <div class="list" id="list"></div>
+
+    <!-- ================= GUIA ================= -->
+    <div class="guia-wrap">
+        <button class="guia-btn" id="guiaBtn">📖 Guia das 12 melhorias (antes × depois)</button>
+        <div class="guia" id="guia">
+
+            <div class="gitem"><h3><span class="num">1</span> Resumo executivo com 6 KPIs</h3>
+                <p class="before">Antes: só 2 números (Total Abertas + Prêmio Total). Dá para saber quantas posições tem, mas não quanto capital está exposto, quantas estão em risco nem quanto prêmio libera nos próximos dias.</p>
+                <p class="after">Depois: 6 cartões de KPI — Abertas, Prêmio total, Exposição, Em risco (vermelho), Prêmio ≤ 7 dias e Resultado MTM. Visão de "saúde da carteira" em 1 segundo, sem rolar a tela.</p>
+                <p class="where">Onde: grid superior "Resumo".</p></div>
+
+            <div class="gitem"><h3><span class="num">2</span> Barra de status agregada e clicável</h3>
+                <p class="before">Antes: o status (SEGURA/CUIDADO/EM RISCO) só aparece dentro de cada card. Para saber "quantas estão em risco" é preciso varrer a lista inteira.</p>
+                <p class="after">Depois: 3 contadores globais no topo que já respondem essa pergunta e ainda funcionam como filtro (toque em "Em risco" e a lista mostra só as problemáticas).</p>
+                <p class="where">Onde: barra "Status das posições".</p></div>
+
+            <div class="gitem"><h3><span class="num">3</span> Filtro de ativos dinâmico com contagem</h3>
+                <p class="before">Antes: chips fixos "Todos / ETH / BTC" escritos no HTML. Se você abrir uma posição em SOL, BNB ou XRP, não existe filtro para ela — e não há contagem de quantas posições cada chip representa.</p>
+                <p class="after">Depois: os chips são gerados a partir dos dados reais, com a quantidade de posições por ativo. Você sempre encontra o que tem.</p>
+                <p class="where">Onde: seção "Ativos".</p></div>
+
+            <div class="gitem"><h3><span class="num">4</span> Ordenação selecionável</h3>
+                <p class="before">Antes: ordem fixa (em risco primeiro, depois alfabético). Não dá para responder "o que vence primeiro?" ou "onde recebi mais prêmio?" sem procurar manualmente.</p>
+                <p class="after">Depois: escolha entre Risco, Vencimento, Distância do strike e Prêmio — conforme o objetivo do momento (monitorar risco, planejar caixa ou revisar entrega).</p>
+                <p class="where">Onde: seção "Ordenar por".</p></div>
+
+            <div class="gitem"><h3><span class="num">5</span> Distância do strike visível sem expandir (gauge)</h3>
+                <p class="before">Antes: a distância até o strike só aparece como texto dentro do card expandido (badge "Diferença"). Para espiar cada posição é preciso tocar em cada uma.</p>
+                <p class="after">Depois: gauge horizontal no card fechado — zona vermelha/verde com o marcador da cotação e a distância em %. Risco percebido com um olhar, sem interação.</p>
+                <p class="where">Onde: faixa central de cada card.</p></div>
+
+            <div class="gitem"><h3><span class="num">6</span> Countdown de vencimento</h3>
+                <p class="before">Antes: a tela não mostra a data de vencimento/settle de nenhuma posição. Em Dual Investment, saber "vence amanhã" é decisivo — e você só descobre isso em outra tela.</p>
+                <p class="after">Depois: selo "vence em 3d" em cada card, que fica âmbar perto do vencimento e vermelho piscando nas últimas 48h. Ordenação por vencimento complementa.</p>
+                <p class="where">Onde: faixa inferior de cada card.</p></div>
+
+            <div class="gitem"><h3><span class="num">7</span> Cotação âncora viva no header + seta de direção</h3>
+                <p class="before">Antes: as cotações atualizam em silêncio dentro dos cards; não há referência fixa de preço nem indicação de que direção o mercado tomou desde a última olhada.</p>
+                <p class="after">Depois: pílula com preço ao vivo no topo (BTC/ETH), com seta ▲/▼ colorida e ponto pulsante de conexão. Serve de "chão" visual para todos os números da tela.</p>
+                <p class="where">Onde: header, à direita do título.</p></div>
+
+            <div class="gitem"><h3><span class="num">8</span> Flash verde/vermelho na mudança de preço</h3>
+                <p class="before">Antes: quando a cotação muda, o número simplesmente troca (JS substitui o texto). Em leitura rápida é fácil não perceber que algo mudou.</p>
+                <p class="after">Depois: ao mudar, o card pisca verde (subiu) ou vermelho (caiu) por 0,7s. O olho captura a variação mesmo com o telefone a 40 cm de distância.</p>
+                <p class="where">Onde: ao vivo — observe os cards se moverem a cada 3s.</p></div>
+
+            <div class="gitem"><h3><span class="num">9</span> Timestamp de frescor + refresh com estado</h3>
+                <p class="before">Antes: botão de refresh sem feedback além do ícone; o usuário não sabe se está olhando dados de agora ou de 10 minutos atrás (frustração clássica em tela financeira).</p>
+                <p class="after">Depois: "atualizado há 12s" em tempo real ao lado do resumo, ícone girando durante a atualização e toast de confirmação ao terminar.</p>
+                <p class="where">Onde: linha acima dos KPIs + botão ↻.</p></div>
+
+            <div class="gitem"><h3><span class="num">10</span> Sparkline leve no card (em vez de chart pesado)</h3>
+                <p class="before">Antes: o gráfico só existe dentro do card expandido, e é um widget TradingView completo (iframe pesado, ~centenas de KB, demora no 4G). Fora dele, nenhuma pista de tendência.</p>
+                <p class="after">Depois: mini-sparkline em SVG puro (0 dependências, bytes) já no card fechado — tendência da última hora visível na lista. TradingView pode ficar só no expandido, para quem quiser detalhe.</p>
+                <p class="where">Onde: faixa inferior dos cards (linha azul).</p></div>
+
+            <div class="gitem"><h3><span class="num">11</span> Pull-to-refresh (puxe para atualizar)</h3>
+                <p class="before">Antes: para atualizar é preciso alcançar o botão ↻ no topo; em uso de uma mão, num celular grande, isso é desconfortável.</p>
+                <p class="after">Depois: gesto natural do mobile — arrastar a lista para baixo atualiza. Teste aqui: puxe a lista no topo desta página.</p>
+                <p class="where">Onde: gesto na parte superior da lista.</p></div>
+
+            <div class="gitem"><h3><span class="num">12</span> Skeleton loading + acessibilidade de toque</h3>
+                <p class="before">Antes: texto simples "Carregando posições..." (tela vazia) e headers de card com altura variável; sem aria-expanded, o leitor de tela não anuncia o estado do accordion.</p>
+                <p class="after">Depois: 3 skeletons com shimmer (percepção de velocidade e sem layout shift) e alvos de toque ≥ 40-44px com aria-expanded nos corpos expansíveis.</p>
+                <p class="where">Onde: recarregue a página para ver o skeleton; inspecione os cards.</p></div>
+
+            <div class="gitem"><h3><span class="num">+</span> Sugestões extras (não demonstradas)</h3>
+                <p>• <b>Modo compacto</b>: toggle densidade para ver 8-10 cards sem rolar.<br>
+                • <b>Agrupar por ativo</b>: seções com subtotal por moeda.<br>
+                • <b>Cache local</b>: persistir a última resposta para abrir instantaneamente mesmo sem rede (e marcar "dados de 14:02").<br>
+                • <b>Alerta de virada</b>: push/toast quando uma posição muda de SEGURA → EM RISCO.<br>
+                • <b>Ordenação persistida</b>: salvar a preferência no localStorage.<br>
+                • <b>PoP com base real</b>: hoje a probabilidade é heurística (50 ± distância×4); considerar volatilidade implícita para não apresentar número otimista demais.</p></div>
+        </div>
+
+        <footer>Demo autocontido (sem API) — dados simulados, cotações se movem a cada 3s.<br>Tela original: frontend/html/posicoes-abertas.html</footer>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+'use strict';
+
+/* =============== DADOS MOCK =============== */
+var DIA = 86400000;
+function mk(id, ativo, tipo, strike, cot, premio, diasVenc, exposicao, resultado){
+    return { id:id, ativo:ativo, tipo:tipo, strike:strike, cotacao:cot, premio:premio,
+             vencimento: Date.now() + diasVenc*DIA, exposicao: exposicao, resultado: resultado,
+             pm: Math.round(strike*0.985) };
+}
+var POS = [
+    mk(1,'BTC','PUT', 94000, 96850, 142.30, 2,  3000,  18.4),
+    mk(2,'BTC','CALL',104000, 96850,  96.75, 5,  3000,  -6.2),
+    mk(3,'BTC','PUT', 90500, 96850, 210.50, 12, 4500,  44.1),
+    mk(4,'ETH','PUT', 3450,  3612,   64.20, 1,  2200,  21.8),
+    mk(5,'ETH','CALL',3950,  3612,   48.90, 9,  2200,  -3.5),
+    mk(6,'SOL','PUT', 178,   191.4,  27.60, 4,  1200,   9.2),
+    mk(7,'BNB','CALL', 720,  668.2,  15.40, 6,  1000,  -1.1)
+];
+var SYM = ['BTC','ETH','SOL','BNB'];
+
+/* =============== CÁLCULOS =============== */
+function riskOf(p){
+    if(!p.strike || !p.cotacao) return {cls:'segura', label:'SEGURA'};
+    var d = ((p.cotacao - p.strike)/p.strike)*100;
+    if(p.tipo==='PUT'){
+        if(d < -3) return {cls:'risco', label:'EM RISCO'};
+        if(d < 0)  return {cls:'cuidado', label:'CUIDADO'};
+        return {cls:'segura', label:'SEGURA'};
+    }
+    if(d > 3)  return {cls:'risco', label:'EM RISCO'};
+    if(d > 0)  return {cls:'cuidado', label:'CUIDADO'};
+    return {cls:'segura', label:'SEGURA'};
+}
+function distPct(p){ return p.strike ? ((p.cotacao - p.strike)/p.strike)*100 : 0; }
+function daysLeft(p){ return Math.ceil((p.vencimento - Date.now())/DIA); }
+function usd(n){ return 'US$ ' + Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2}); }
+function usd0(n){ return 'US$ ' + Math.round(Math.abs(n)).toLocaleString('en-US'); }
+function popOf(p){
+    var d = Math.abs(distPct(p)), itm = (p.tipo==='CALL') ? (p.cotacao>p.strike) : (p.cotacao<p.strike);
+    return Math.round(itm ? Math.max(5, 50 - d*4) : Math.min(95, 50 + d*4));
+}
+function trendOf(p){ return p._prev == null ? 'flat' : (p.cotacao > p._prev ? 'up' : (p.cotacao < p._prev ? 'down' : 'flat')); }
+
+/* sparkline determinística por ativo */
+function sparkPath(seed, w, h){
+    var pts = [], v = 0.5, s = seed*9301;
+    for(var i=0;i<24;i++){
+        s = (s*9301 + 49297) % 233280;
+        v += ((s/233280) - 0.5) * 0.22;
+        v = Math.max(0.08, Math.min(0.92, v));
+        pts.push(v);
+    }
+    return pts.map(function(v,i){
+        var x = (i/(pts.length-1))*w, y = h - v*h;
+        return (i?'L':'M') + x.toFixed(1) + ',' + y.toFixed(1);
+    }).join(' ');
+}
+function sparkSvg(p){
+    var w=120, h=30, d=sparkPath(p.strike%97, w, h);
+    var rising = p.tipo==='PUT' ? true : true;
+    var col = trendOf(p)==='down' ? '#ef4444' : (trendOf(p)==='up' ? '#22c55e' : '#60a5fa');
+    if(trendOf(p)==='down') rising = false;
+    col = trendOf(p)==='flat' ? '#60a5fa' : col;
+    return '<svg viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none">'+
+        '<path d="'+d+'" fill="none" stroke="'+col+'" stroke-width="1.8" stroke-linejoin="round"/></svg>';
+}
+
+/* =============== ESTADO =============== */
+var fAsset='ALL', fStatus=null, sortBy='risco';
+
+function filtered(){
+    var out = POS.filter(function(p){
+        if(fAsset!=='ALL' && p.ativo!==fAsset) return false;
+        if(fStatus && riskOf(p).cls!==fStatus) return false;
+        return true;
+    });
+    var order = {risco:0, cuidado:1, segura:2};
+    out.sort(function(a,b){
+        if(sortBy==='risco') return order[riskOf(a).cls] - order[riskOf(b).cls] || a.vencimento-b.vencimento;
+        if(sortBy==='vencimento') return a.vencimento - b.vencimento;
+        if(sortBy==='distancia') return Math.abs(distPct(a)) - Math.abs(distPct(b));
+        if(sortBy==='premio') return b.premio - a.premio;
+        return 0;
+    });
+    return out;
+}
+
+/* =============== RENDER: KPIs + status + chips =============== */
+function renderTop(){
+    var all = POS;
+    var risco = all.filter(function(p){ return riskOf(p).cls!=='segura'; }).length;
+    var p7 = all.filter(function(p){ return daysLeft(p) <= 7; }).reduce(function(s,p){ return s+p.premio; },0);
+    var premio = all.reduce(function(s,p){ return s+p.premio; },0);
+    var expo = all.reduce(function(s,p){ return s+p.exposicao; },0);
+    var mtm = all.reduce(function(s,p){ return s+p.resultado; },0);
+
+    document.getElementById('kAbertas').textContent = all.length;
+    document.getElementById('kAbertasSub').textContent = SYM.length + ' ativos';
+    document.getElementById('kPremio').textContent = usd0(premio);
+    document.getElementById('kExpo').textContent = usd0(expo);
+    document.getElementById('kRisco').textContent = risco;
+    document.getElementById('kRiscoSub').textContent = risco ? 'atenção necessária' : 'tudo seguro';
+    document.getElementById('kPremio7').textContent = usd0(p7);
+    var m = document.getElementById('kMtm');
+    m.textContent = (mtm>=0?'+':'-') + usd0(mtm);
+    m.parentElement.className = 'kpi ' + (mtm>=0 ? 'k-green' : 'k-red');
+
+    var c = {segura:0, cuidado:0, risco:0};
+    all.forEach(function(p){ c[riskOf(p).cls]++; });
+    document.getElementById('stSegura').textContent = c.segura;
+    document.getElementById('stCuidado').textContent = c.cuidado;
+    document.getElementById('stRisco').textContent = c.risco;
+
+    // chips de ativo dinâmicos
+    var counts = {};
+    all.forEach(function(p){ counts[p.ativo] = (counts[p.ativo]||0)+1; });
+    var html = '<button class="chip'+(fAsset==='ALL'?' active':'')+'" data-a="ALL">Todos <span class="cnt">'+all.length+'</span></button>';
+    SYM.forEach(function(s){
+        if(!counts[s]) return;
+        html += '<button class="chip'+(fAsset===s?' active':'')+'" data-a="'+s+'">'+
+            '<span class="cdot" style="background:var(--'+s.toLowerCase()+')"></span>'+s+
+            ' <span class="cnt">'+counts[s]+'</span></button>';
+    });
+    document.getElementById('assetChips').innerHTML = html;
+    document.querySelectorAll('#assetChips .chip').forEach(function(b){
+        b.onclick = function(){ fAsset = b.getAttribute('data-a'); renderTop(); renderList(); };
+    });
+}
+
+function renderStatusActive(){
+    document.querySelectorAll('#statusBar .st-btn').forEach(function(b){
+        b.classList.toggle('active', fStatus === b.getAttribute('data-st'));
+    });
+    document.querySelectorAll('#sortChips .chip').forEach(function(b){
+        b.classList.toggle('active', sortBy === b.getAttribute('data-sort'));
+    });
+}
+
+/* =============== RENDER: cards =============== */
+function gaugeHtml(p){
+    var d = distPct(p);
+    var pos = Math.max(4, Math.min(96, 50 + (d/6)*50));   // ±6% = extremos
+    var inv = p.tipo==='PUT';                              // PUT: verde à esquerda
+    var good = inv ? (d<0) : (d>0);
+    var warn = !good && Math.abs(d) < 1.2;
+    var cls = good ? 'ok' : (warn ? 'warn' : 'bad');
+    return '<div class="gauge-row">'+
+        '<div class="gauge'+(inv?' inv':'')+'">'+
+            '<span class="mid"></span>'+
+            '<span class="knob '+cls+'" style="left:'+pos.toFixed(1)+'%"></span>'+
+        '</div>'+
+        '<div class="gauge-meta">dist<b style="color:'+(good?'#2fb344':(warn?'#f59f00':'#d63939'))+'">'+
+            (d>=0?'+':'')+d.toFixed(2)+'%</b></div></div>';
+}
+
+function vencHtml(p){
+    var d = daysLeft(p);
+    var cls = d<=2 ? 'urgent' : (d<=5 ? 'soon' : '');
+    var txt = d<=0 ? 'vence hoje' : (d===1 ? 'vence amanhã' : 'vence em '+d+'d');
+    return '<span class="venc '+cls+'">⏱ '+txt+'</span>';
+}
+
+function quoteHtml(p){
+    var t = trendOf(p);
+    var arr = t==='up' ? '<span class="arrow">▲</span>' : (t==='down' ? '<span class="arrow">▼</span>' : '');
+    return '<span class="quote '+t+'" data-q="'+p.id+'">'+usd(p.cotacao)+' '+arr+'</span>';
+}
+
+function cardHtml(p){
+    var r = riskOf(p);
+    var pop = popOf(p);
+    var d = distPct(p);
+    var good = (p.tipo==='PUT') ? (d<0) : (d>0);
+    return '<article class="pos-card" data-id="'+p.id+'" data-asset="'+p.ativo+'" style="border-left-color:var(--'+p.ativo.toLowerCase()+')">'+
+        '<div class="card-top" role="button" tabindex="0" aria-expanded="false">'+
+            '<span class="badge-asset">'+p.ativo+'</span>'+
+            '<span class="badge-type '+p.tipo.toLowerCase()+'">'+p.tipo+'</span>'+
+            '<span class="badge-risk '+r.cls+'">'+r.label+'</span>'+
+            '<span class="premio"><span class="p-lbl">Prêmio</span><span class="p-val">+'+usd(p.premio)+'</span></span>'+
+            '<span class="chev">▶</span>'+
+        '</div>'+
+        gaugeHtml(p)+
+        '<div class="card-mid">'+ vencHtml(p) +'<span class="spark">'+sparkSvg(p)+'</span>'+ quoteHtml(p) +'</div>'+
+        '<div class="card-body">'+
+            '<div class="detail-grid">'+
+                '<div class="dcell"><span class="dl">Strike</span><span class="dv">'+usd0(p.strike)+'</span></div>'+
+                '<div class="dcell"><span class="dl">Cotação</span><span class="dv '+(good?'g':'r')+'" data-cot="'+p.id+'">'+usd0(p.cotacao)+'</span></div>'+
+                '<div class="dcell"><span class="dl">Diferença</span><span class="dv '+(good?'g':'r')+'">'+(d>=0?'+':'')+d.toFixed(2)+'%</span></div>'+
+                '<div class="dcell"><span class="dl">PoP</span><span class="dv '+(pop>=50?'g':'r')+'">'+pop+'%</span></div>'+
+                '<div class="dcell"><span class="dl">Prêmio</span><span class="dv g">+'+usd(p.premio)+'</span></div>'+
+                '<div class="dcell"><span class="dl">Exposição</span><span class="dv">'+usd0(p.exposicao)+'</span></div>'+
+                '<div class="dcell"><span class="dl">PM</span><span class="dv y">'+usd0(p.pm)+'</span></div>'+
+                '<div class="dcell"><span class="dl">MTM</span><span class="dv '+(p.resultado>=0?'g':'r')+'">'+(p.resultado>=0?'+':'')+usd(p.resultado)+'</span></div>'+
+            '</div>'+
+            '<div class="body-note">Nesta demo o gráfico TradingView ficou de fora — aqui o detalhe usa a sparkline ampliada acima; no app real, mantenha o TV apenas neste corpo expandido.</div>'+
+        '</div>'+
+    '</article>';
+}
+
+function skeleton(){
+    var s = '';
+    for(var i=0;i<3;i++){
+        s += '<div class="skel"><div class="sk-line w40"></div><div class="sk-line"></div><div class="sk-line w70"></div><div class="sk-line w55"></div></div>';
+    }
+    return s;
+}
+
+function renderList(){
+    var list = document.getElementById('list');
+    var items = filtered();
+    if(!items.length){
+        list.innerHTML = '<div class="skel" style="text-align:center;padding:2rem;color:var(--tx3)">Nenhuma posição com este filtro</div>';
+        return;
+    }
+    list.innerHTML = items.map(cardHtml).join('');
+    list.querySelectorAll('.card-top').forEach(function(top){
+        var act = function(){
+            var card = top.parentElement, body = card.querySelector('.card-body');
+            var isOpen = body.classList.contains('open');
+            list.querySelectorAll('.card-body.open').forEach(function(b){
+                b.classList.remove('open');
+                b.parentElement.classList.remove('open');
+                b.previousElementSibling.setAttribute('aria-expanded','false');
+            });
+            if(!isOpen){
+                body.classList.add('open');
+                card.classList.add('open');
+                top.setAttribute('aria-expanded','true');
+            }
+        };
+        top.addEventListener('click', act);
+        top.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); act(); }});
+    });
+    // abre o primeiro (mesmo comportamento do app atual)
+    var first = list.querySelector('.card-top');
+    if(first) first.click();
+}
+
+/* =============== TICKER SIMULADO (flash de variação) =============== */
+function tick(){
+    POS.forEach(function(p){
+        p._prev = p.cotacao;
+        var vol = p.strike * 0.0012;
+        p.cotacao = Math.max(1, p.cotacao + (Math.random()-0.5)*2*vol);
+    });
+    renderTop();
+    // atualiza só o que mudou, preservando expansão
+    POS.forEach(function(p){
+        var card = document.querySelector('.pos-card[data-id="'+p.id+'"]');
+        if(!card) return;
+        var t = trendOf(p);
+        var q = card.querySelector('.quote');
+        if(q){
+            q.className = 'quote ' + t;
+            q.innerHTML = usd(p.cotacao) + (t==='up'?' <span class="arrow">▲</span>':t==='down'?' <span class="arrow">▼</span>':'');
+        }
+        card.classList.remove('flash-up','flash-down');
+        void card.offsetWidth;
+        if(t==='up') card.classList.add('flash-up');
+        else if(t==='down') card.classList.add('flash-down');
+
+        // gauge + risk badge ao vivo
+        var gr = card.querySelector('.gauge-row');
+        if(gr){
+            var tmp = document.createElement('div');
+            tmp.innerHTML = gaugeHtml(p);
+            gr.replaceWith(tmp.firstChild);
+        }
+        var rb = card.querySelector('.badge-risk');
+        if(rb){ var r = riskOf(p); rb.className = 'badge-risk ' + r.cls; rb.textContent = r.label; }
+        var cot = card.querySelector('[data-cot]');
+        if(cot){
+            var good = (p.tipo==='PUT') ? (p.cotacao<p.strike) : (p.cotacao>p.strike);
+            cot.className = 'dv ' + (good?'g':'r');
+            cot.textContent = usd0(p.cotacao);
+        }
+    });
+    updateLivePill();
+    lastUpdate = Date.now();
+}
+
+var liveIdx = 0, livePrev = null;
+function updateLivePill(){
+    var sym = SYM[liveIdx % SYM.length];
+    var p = POS.filter(function(x){ return x.ativo===sym; })[0];
+    if(!p) return;
+    document.getElementById('liveSym').textContent = sym;
+    document.getElementById('liveVal').textContent = 'US$' + p.cotacao.toLocaleString('en-US',{maximumFractionDigits: p.cotacao>1000?0:2});
+    var a = document.getElementById('liveArrow');
+    if(livePrev==null || p.cotacao===livePrev){ a.textContent='●'; a.className='up'; }
+    else { a.textContent = p.cotacao>livePrev ? '▲' : '▼'; a.className = p.cotacao>livePrev ? 'up':'down'; }
+    livePrev = p.cotacao;
+}
+document.getElementById('livePill').onclick = function(){ liveIdx++; livePrev=null; updateLivePill(); };
+
+/* =============== FRESHNESS + REFRESH =============== */
+var lastUpdate = Date.now();
+setInterval(function(){
+    var s = Math.round((Date.now()-lastUpdate)/1000);
+    var el = document.getElementById('freshness');
+    el.textContent = s < 5 ? 'atualizado agora' : ('atualizado há ' + s + 's');
+    el.style.color = s > 30 ? 'var(--yellow)' : 'var(--tx3)';
+}, 1000);
+
+document.getElementById('btnRefresh').onclick = function(){
+    var b = this;
+    b.classList.add('spin');
+    document.getElementById('freshness').textContent = 'atualizando...';
+    setTimeout(function(){
+        b.classList.remove('spin');
+        tick();
+        toast('Posições atualizadas ✓');
+    }, 900);
+};
+
+/* =============== PULL TO REFRESH =============== */
+var ptr = document.getElementById('ptr'), startY = null;
+document.addEventListener('touchstart', function(e){
+    if(window.scrollY <= 0) startY = e.touches[0].clientY;
+}, {passive:true});
+document.addEventListener('touchmove', function(e){
+    if(startY==null) return;
+    var dy = e.touches[0].clientY - startY;
+    if(dy > 60){ ptr.classList.add('on'); ptr.textContent='Solte para atualizar'; }
+}, {passive:true});
+document.addEventListener('touchend', function(){
+    if(ptr.classList.contains('on')){
+        ptr.classList.remove('on'); ptr.textContent='↓ Puxe para atualizar';
+        document.getElementById('btnRefresh').click();
+    }
+    startY = null;
+});
+
+/* =============== FILTROS / ORDENAÇÃO =============== */
+document.querySelectorAll('#statusBar .st-btn').forEach(function(b){
+    b.onclick = function(){
+        var st = b.getAttribute('data-st');
+        fStatus = (fStatus===st) ? null : st;
+        renderStatusActive(); renderList();
+    };
+});
+document.querySelectorAll('#sortChips .chip').forEach(function(b){
+    b.onclick = function(){
+        sortBy = b.getAttribute('data-sort');
+        renderStatusActive(); renderList();
+    };
+});
+
+/* =============== HEADER SHADOW + GUIA + TOAST =============== */
+window.addEventListener('scroll', function(){
+    document.getElementById('hdr').classList.toggle('scrolled', window.scrollY > 6);
+});
+document.getElementById('guiaBtn').onclick = function(){
+    var g = document.getElementById('guia');
+    g.classList.toggle('on');
+    this.textContent = g.classList.contains('on') ? '📖 Fechar guia das melhorias' : '📖 Guia das 12 melhorias (antes × depois)';
+    if(g.classList.contains('on')) g.scrollIntoView({behavior:'smooth'});
+};
+var toastT;
+function toast(msg){
+    var t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('on');
+    clearTimeout(toastT);
+    toastT = setTimeout(function(){ t.classList.remove('on'); }, 2200);
+}
+window.toast = toast;
+
+/* =============== BOOT =============== */
+document.getElementById('list').innerHTML = skeleton();
+renderTop(); renderStatusActive(); updateLivePill();
+setTimeout(function(){
+    renderList();
+    setInterval(tick, 3000);
+}, 800);
+
+})();
+</script>
+</body>
+</html>

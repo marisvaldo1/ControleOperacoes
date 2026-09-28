@@ -145,8 +145,10 @@
     border-radius: 10px;
     padding: 0.75rem;
     display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
 }
 
 .pa-summary-label {
@@ -159,6 +161,7 @@
 .pa-summary-value {
     font-size: 1.1rem;
     font-weight: 700;
+    text-align: right;
 }
 
 .pa-value-green { color: #2fb344; }
@@ -284,7 +287,66 @@
     margin-left: 2px;
 }
 
-/* Card body (expandido) */
+/* Fita de segurança (histórico 28h vs strike) */
+.pa-fit {
+    flex: 1 1 100%;
+    min-width: 100%;
+    margin-top: 0.35rem;
+    padding-top: 0.45rem;
+    border-top: 1px dashed rgba(255,255,255,0.07);
+}
+
+.pa-fit-load {
+    font-size: 0.62rem;
+    opacity: 0.5;
+}
+
+.pa-fit-strip {
+    display: flex;
+    gap: 2px;
+    height: 14px;
+}
+
+.pa-fit-strip > span {
+    flex: 1;
+    height: 100%;
+    border-radius: 2px;
+}
+
+.pa-seg-ok   { background: #22c55e; opacity: 0.55; }
+.pa-seg-warn { background: #f59e0b; }
+.pa-seg-bad  { background: #ef4444; }
+
+.pa-fit-sum {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 4px;
+    font-size: 0.65rem;
+    color: #8aa4c0;
+}
+
+.pa-fit-grow { flex: 1; }
+.pa-fit-sum b { font-weight: 700; }
+.pa-txt-ok   { color: #22c55e; }
+.pa-txt-warn { color: #f59e0b; }
+.pa-txt-bad  { color: #ef4444; }
+
+[data-bs-theme="light"] .pa-fit-sum { color: #6c757d; }
+[data-bs-theme="light"] .pa-fit { border-top-color: rgba(0,0,0,0.08); }
+
+/* Card sempre-visível: termômetro + diferenças (fora do accordion) */
+.pa-inspect {
+    padding: 0 0.75rem 0.75rem;
+    border-top: 1px solid var(--tblr-border-color, rgba(255,255,255,0.08));
+    background: rgba(0,0,0,0.03);
+}
+
+.pa-inspect .pa-thermo-wrap {
+    padding: 0.6rem 0 0.35rem;
+}
+
+/* Card body (expandido) — somente TradingView */
 .pa-card-body {
     padding: 0 0.75rem 0.75rem;
     border-top: 1px solid var(--tblr-border-color, rgba(255,255,255,0.08));
@@ -381,10 +443,6 @@
 
 /* ---------- Breakpoints adicionais ---------- */
 @media (max-width: 576px) {
-    .pa-summary {
-        grid-template-columns: 1fr;
-    }
-
     .pa-card-header {
         gap: 0.3rem;
     }

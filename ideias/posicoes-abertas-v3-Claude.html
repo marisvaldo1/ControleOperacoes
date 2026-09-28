@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Posições abertas: layout C evoluído</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f3f5f9;--fg:#111827;--mut:#5b6472;--card:#fff;--line:#d8dde6}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#070b14;--fg:#e6ebf5;--mut:#98a2b5;--card:#0f1626;--line:#222c42}}
+:root[data-theme="dark"]{--bg:#070b14;--fg:#e6ebf5;--mut:#98a2b5;--card:#0f1626;--line:#222c42}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*:before,*:after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 "IBM Plex Sans",system-ui,sans-serif;padding:16px}
+main{max-width:460px;margin:0 auto}
+h1{font-size:20px;margin:4px 0 6px;line-height:1.25}p{margin:0 0 8px}.mut{color:var(--mut)}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:12px 0}
+.tabs button{min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--fg);font:inherit;font-size:13px;font-weight:600;line-height:1.2}
+.tabs button[aria-selected=true]{background:#0b5cad;border-color:#0b5cad;color:#fff}
+.box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin:12px 0}
+.box h2{font-size:16px;margin:0 0 6px}.box p{font-size:14px}
+.phone{--pb:#0a0f1c;--pc:#111a2d;--pl:#243050;--pt:#e8edf7;--pm:#8d99b3;--g:#22c55e;--r:#ef4444;--a:#f59e0b;--b:#60a5fa;
+background:var(--pb);color:var(--pt);border:1px solid var(--pl);border-radius:22px;height:700px;display:flex;flex-direction:column;overflow:hidden}
+.top{padding:12px 14px 8px;font-weight:600}
+.scroll{flex:1;overflow:auto;padding:0 12px 12px}
+.num{font-variant-numeric:tabular-nums}
+.sum{background:var(--pc);border:1px solid var(--pl);border-radius:14px;padding:10px 12px;margin-bottom:10px}
+.sum .big{display:flex;align-items:center;gap:8px;font-weight:700}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--g)}.sum.warn .dot{background:var(--a)}.sum.bad .dot{background:var(--r)}
+.kp{display:flex;justify-content:space-between;margin-top:6px;font-size:12px;color:var(--pm)}.kp b{color:var(--pt);font-weight:600}
+.c-ok{color:var(--g)}.c-warn{color:var(--a)}.c-bad{color:var(--r)}
+.pos{background:var(--pc);border:1px solid var(--pl);border-left:4px solid var(--g);border-radius:12px;margin-bottom:8px;overflow:hidden}
+.pos.s-warn{border-left-color:var(--a)}.pos.s-bad{border-left-color:var(--r)}
+.hd{padding:10px 12px;cursor:pointer;min-height:48px}
+.r1{display:flex;align-items:center;gap:8px}.grow{flex:1}
+.sym{font-weight:700;font-size:16px}
+.chip{font-size:11px;padding:2px 6px;border-radius:6px;background:#1c2742;color:var(--pm)}
+.pill{font-size:11px;padding:2px 8px;border-radius:10px;border:1px solid currentColor;white-space:nowrap}
+.dist{font-weight:700;font-size:17px}
+.sm{font-size:12px;color:var(--pm)}.sm b{color:var(--pt);font-weight:600}
+.chev{color:var(--pm);transition:transform .2s;display:inline-block}.open .chev{transform:rotate(90deg)}
+.hbar{position:relative;height:10px;border-radius:5px;margin:10px 0 4px;background:linear-gradient(90deg,#14532d 0 46%,#7a4a0c 46% 54%,#7f1d1d 54%)}
+.hbar u{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:var(--g);opacity:.9}.s-warn .hbar u{background:var(--a)}.s-bad .hbar u{background:var(--r)}
+.hbar i{position:absolute;left:50%;top:-4px;bottom:-4px;width:2px;background:#fff}
+.hbar s{position:absolute;top:-3px;bottom:-3px;border:1.5px solid #fff;border-radius:6px;opacity:.85}
+.x{margin-top:8px}.x svg{width:100%;display:block}
+.blk{display:flex;gap:4px;margin-top:2px}.blk span{flex:1;height:10px;border-radius:3px;background:#1c2742}
+.strip{display:flex;gap:2px}.strip span{flex:1;height:14px;border-radius:2px}
+.body{padding:4px 10px 12px;border-top:1px solid var(--pl)}
+.tw,.cw{margin-top:8px}.tw svg,.cw svg{width:100%;display:block}
+.cw{background:#0b0c0e;border-radius:8px;padding:4px}
+.cap{font-size:11px;color:var(--pm);margin-top:4px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+.g3 div{background:#0f1a30;border-radius:8px;padding:6px 8px;font-size:11px;color:var(--pm)}.g3 b{display:block;font-size:13px;color:var(--pt)}
+.foot{display:flex;gap:8px;align-items:center;padding:10px 12px;border-top:1px solid var(--pl);background:var(--pc)}
+.foot button{min-height:44px;padding:0 16px;border-radius:22px;border:1px solid var(--pl);background:transparent;color:var(--pt);font:inherit;font-weight:600}
+.foot button.on{background:#0b5cad;border-color:#0b5cad}.upd{margin-left:auto;font-size:11px;color:var(--pm)}
+button:focus-visible,.hd:focus-visible{outline:2px solid #fff;outline-offset:2px}
+</style>
+</head>
+<body>
+<main>
+<h1>Layout C evoluído: 6 formas de ver a distância</h1>
+<p class="mut">Cada aba acrescenta um elemento novo ao card fechado. Toque numa operação para abrir termômetro e gráfico de preços. Dados de exemplo.</p>
+<div class="tabs" id="tabs"></div>
+<div class="phone"><div class="top">Posições abertas</div><div class="scroll" id="list"></div><div class="foot" id="foot"></div></div>
+<div class="box" id="note"></div>
+</main>
+<script>
+const D=[
+{id:1,sym:'ETH',strike:2700,price:2683.71,prem:7.85,pm:2309.30,pop:52,h:5.5},
+{id:2,sym:'BTC',strike:78000,price:76940,prem:33,pm:61200,pop:64,h:29},
+{id:3,sym:'ETH',strike:2690,price:2686.5,prem:9.10,pm:2309.30,pop:49,h:2.2},
+{id:4,sym:'BTC',strike:80000,price:76940,prem:21.4,pm:61200,pop:83,h:72}];
+const N=[
+['Histórico da distância','Uma linha mostra como a distância até o strike evoluiu nas últimas horas. A linha de 0% é o strike, com faixas de atenção e perigo.','No C você vê só a distância de agora. Aqui vê se ela está encolhendo, e isso pesa mais que o número isolado.'],
+['Tendência e falta','Um selo de tendência (aproximando, afastando, estável), quanto falta em dólares e, se der, em quantas horas o preço tocaria o strike no ritmo atual.','Transforma o percentual em uma resposta pronta: "estou seguro por quanto tempo?".'],
+['Faixa de 24h','A barra do termômetro ganha uma moldura com o mínimo e o máximo do período, além da cotação atual.','Mostra se o preço já chegou perto do strike e recuou, o que dá contexto sem abrir o gráfico.'],
+['Folga','Cinco blocos medem a distância em múltiplos do movimento típico do ativo, e não só em %.','1% é muito para o ouro e pouco para o BTC. A folga compara ativos diferentes na mesma régua.'],
+['Fita de segurança','Uma fita com um segmento por hora, colorido pela situação naquele momento (verde, âmbar, vermelho).','Em um segundo você vê se a operação passou sustos, algo que o número atual esconde.'],
+['Cone até o vencimento','Histórico à esquerda e um cone que se abre até o vencimento, com o strike como linha. Mostra também uma estimativa de chance de passar do strike.','É o único que olha para frente. Se o cone cruza o strike, o risco é visível de longe.']];
+let V=0,open=null,filt='Todos',last=Date.now();
+const $=s=>document.querySelector(s);
+const fmt=(n,d=2)=>n.toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});
+const dist=p=>(p.price-p.strike)/p.strike*100;
+const dh=p=>p.c.map(c=>(c.c-p.strike)/p.strike*100);
+const stv=d=>d>=-0.2?'bad':d>=-1?'warn':'ok';
+const st=p=>stv(dist(p));
+const cls={ok:'c-ok',warn:'c-warn',bad:'c-bad'},lbl={ok:'Segura',warn:'Atenção',bad:'No strike'};
+const col={ok:'#22c55e',warn:'#f59e0b',bad:'#ef4444'};
+const left=h=>h<24?`${Math.floor(h)}h${String(Math.round(h%1*60)).padStart(2,'0')}`:`${Math.floor(h/24)}d ${Math.round(h%24)}h`;
+const sg=d=>(d>0?'+':'')+fmt(d)+'%';
+const pos=d=>Math.max(2,Math.min(98,50+d/7*100));
+function rnd(s){return()=>(s=(s*16807)%2147483647)/2147483647}
+function Phi(z){const t=1/(1+.2316419*Math.abs(z)),d=.3989423*Math.exp(-z*z/2),p=d*t*(.3193815+t*(-.3565638+t*(1.781478+t*(-1.821256+t*1.330274))));return z>0?1-p:p}
+D.forEach(p=>{const r=rnd(p.id*97+13);let v=p.price*(1+(r()-.5)*.012);p.c=[];
+for(let i=0;i<28;i++){const o=v;v+=(p.price-v)*.06+(r()-.5)*p.price*.0035;p.c.push({o,c:v,h:Math.max(o,v)+r()*p.price*.0012,l:Math.min(o,v)-r()*p.price*.0012,v:r()})}
+p.c[27].c=p.price});
+const sig=p=>{const r=p.c.map(c=>(c.c-c.o)/c.o),m=r.reduce((a,b)=>a+b,0)/r.length;return Math.sqrt(r.reduce((a,b)=>a+(b-m)**2,0)/r.length)};
+function thermo(p){const lo=p.strike*.93,hi=p.strike*1.07,T=18,B=150,s=st(p);
+const y=v=>B-Math.max(0,Math.min(1,(v-lo)/(hi-lo)))*(B-T);const k=v=>(v/1000).toFixed(1)+'k';
+let g='';for(let i=0;i<5;i++){const v=lo+(hi-lo)*i/4,yy=y(v);g+=`<line x1="34" x2="266" y1="${yy}" y2="${yy}" stroke="#2a3654"/><text x="28" y="${yy+3}" fill="#8d99b3" font-size="9" text-anchor="end">${k(v)}</text><text x="272" y="${yy+3}" fill="#8d99b3" font-size="9">${k(v)}</text>`}
+const bar=(x,v,c,id)=>`<clipPath id="k${p.id}${id}"><rect x="${x}" y="${T}" width="64" height="${B-T}" rx="9"/></clipPath><g clip-path="url(#k${p.id}${id})"><rect x="${x}" y="${T}" width="64" height="${y(p.strike*1.01)-T}" fill="#14532d"/><rect x="${x}" y="${y(p.strike*1.01)}" width="64" height="${y(p.strike*.99)-y(p.strike*1.01)}" fill="#7a4a0c"/><rect x="${x}" y="${y(p.strike*.99)}" width="64" height="${B-y(p.strike*.99)}" fill="#1a2238"/><rect x="${x+4}" y="${y(v)}" width="56" height="${B-y(v)}" rx="6" fill="${c}"/></g>`;
+const ys=y(p.strike),yp=y(p.price);
+return `<svg viewBox="0 0 300 190"><text x="88" y="11" fill="#60a5fa" font-size="11" font-weight="700" text-anchor="middle">Strike</text><text x="212" y="11" fill="${col[s]}" font-size="11" font-weight="700" text-anchor="middle">Cotação</text>${g}${bar(56,p.strike,'#60a5fa','a')}${bar(180,p.price,col[s],'b')}<line x1="88" y1="${ys}" x2="212" y2="${yp}" stroke="${col[s]}" stroke-dasharray="4 3" stroke-width="1.5"/><text x="150" y="${Math.min(ys,yp)-8}" fill="${col[s]}" font-size="11" font-weight="700" text-anchor="middle">${fmt(p.price-p.strike)}</text><text x="88" y="172" fill="#60a5fa" font-size="11" font-weight="700" text-anchor="middle">US$ ${fmt(p.strike)}</text><text x="212" y="172" fill="${col[s]}" font-size="11" font-weight="700" text-anchor="middle">US$ ${fmt(p.price)}</text></svg>`}
+function candles(p){const a=p.c,mn0=Math.min(...a.map(c=>c.l),p.strike),mx0=Math.max(...a.map(c=>c.h),p.strike),pd=(mx0-mn0)*.08,mn=mn0-pd,mx=mx0+pd;
+const y=v=>6+(1-(v-mn)/(mx-mn))*88,w=250/a.length;let s='';
+for(let i=0;i<4;i++){const v=mn+(mx-mn)*i/3;s+=`<line x1="0" x2="250" y1="${y(v)}" y2="${y(v)}" stroke="#1c1f26"/><text x="254" y="${y(v)+3}" fill="#8b93a3" font-size="8">${fmt(v,0)}</text>`}
+a.forEach((c,i)=>{const x=i*w+w/2,u=c.c>=c.o,cc=u?'#22c55e':'#ef4444';
+s+=`<line x1="${x}" x2="${x}" y1="${y(c.h)}" y2="${y(c.l)}" stroke="${cc}"/><rect x="${x-w*.3}" y="${y(Math.max(c.o,c.c))}" width="${w*.6}" height="${Math.max(1,Math.abs(y(c.o)-y(c.c)))}" fill="${cc}"/><rect x="${x-w*.3}" y="${126-c.v*22}" width="${w*.6}" height="${c.v*22}" fill="${cc}" opacity=".45"/>`});
+const l=a[a.length-1],lc=l.c>=l.o?'#22c55e':'#ef4444';
+return `<svg viewBox="0 0 300 130">${s}<line x1="0" x2="250" y1="${y(p.strike)}" y2="${y(p.strike)}" stroke="#60a5fa" stroke-dasharray="4 3"/><text x="3" y="${y(p.strike)-3}" fill="#60a5fa" font-size="8">Strike</text><rect x="251" y="${y(l.c)-6}" width="47" height="12" rx="2" fill="${lc}"/><text x="254" y="${y(l.c)+3}" fill="#fff" font-size="8" font-weight="700">${fmt(l.c)}</text></svg>`}
+const body=p=>`<div class="body"><div class="tw">${thermo(p)}</div><div class="cw">${candles(p)}</div><div class="cap">Gráfico de preços (aqui simulado; no app é o TradingView)</div><div class="g3 num"><div>Diferença<b>${fmt(p.price-p.strike)}</b></div><div>PoP<b>${p.pop}%</b></div><div>PM<b>US$ ${fmt(p.pm)}</b></div><div>Vence em<b>${left(p.h)}</b></div><div>Prêmio<b class="c-ok">+US$ ${fmt(p.prem)}</b></div><div>Status<b class="${cls[st(p)]}">${lbl[st(p)]}</b></div></div></div>`;
+function extra(p){const d=dist(p),s=st(p),H=dh(p),dt=H[27]-H[21],tr=dt>.05?['▲ Aproximando','warn']:dt<-.05?['▼ Afastando','ok']:['● Estável','ok'];
+if(V===0){const mn=Math.min(-3,...H),mx=Math.max(.5,...H),y=v=>4+(mx-v)/(mx-mn)*36;
+const pts=H.map((v,i)=>`${i*300/27},${y(v)}`).join(' ');
+return `<div class="x"><svg viewBox="0 0 300 44" preserveAspectRatio="none" style="height:44px"><rect x="0" y="0" width="300" height="${y(0)}" fill="#ef4444" opacity=".14"/><rect x="0" y="${y(0)}" width="300" height="${y(-1)-y(0)}" fill="#f59e0b" opacity=".12"/><line x1="0" x2="300" y1="${y(0)}" y2="${y(0)}" stroke="#fff" stroke-dasharray="3 3" opacity=".7"/><polyline points="${pts}" fill="none" stroke="${col[s]}" stroke-width="2"/><circle cx="300" cy="${y(H[27])}" r="3.5" fill="${col[s]}"/></svg><div class="r1 sm"><span>Distância nas últimas 28h</span><span class="grow"></span><span class="${cls[tr[1]]}">${tr[0].slice(2)} ${fmt(Math.abs(dt))}% em 6h</span></div></div>`}
+if(V===1){const rate=dt/6,eta=d<0&&rate>.005?-d/rate:null;
+return `<div class="x r1 sm"><span class="pill ${cls[tr[1]]}">${tr[0]}</span><span class="grow"></span><span>${d<0?'Faltam':'Passou'} <b class="num">US$ ${fmt(Math.abs(p.strike-p.price))}</b></span></div><div class="sm" style="margin-top:4px">${eta!==null?(eta<p.h?`No ritmo atual, toca o strike em <b>~${left(eta)}</b>, antes do vencimento`:`No ritmo atual, não toca o strike até vencer`):'Sem aproximação relevante no ritmo atual'}</div>`}
+if(V===3){const a=(p.c.reduce((t,c)=>t+(c.h-c.l)/p.price,0)/28)*100*4,f=Math.abs(d)/a,n=Math.max(0,Math.min(5,Math.round(f)));
+return `<div class="x"><div class="blk">${[0,1,2,3,4].map(i=>`<span style="${i<n?'background:'+col[s]:''}"></span>`).join('')}</div><div class="r1 sm" style="margin-top:4px"><span>Folga</span><b class="${cls[s]}">${d>=0?'sem folga':fmt(f,1)+'x o movimento típico'}</b><span class="grow"></span><span>vence ${left(p.h)}</span></div></div>`}
+if(V===4){const c={ok:0,warn:0,bad:0};H.forEach(v=>c[stv(v)]++);
+return `<div class="x"><div class="strip">${H.map(v=>`<span style="background:${col[stv(v)]};opacity:${stv(v)==='ok'?.55:1}"></span>`).join('')}</div><div class="r1 sm" style="margin-top:4px"><span>28h atrás</span><span class="grow"></span><span>${c.bad?`<b class="c-bad">${c.bad}h no strike</b>, `:''}${c.warn?`<b class="c-warn">${c.warn}h em atenção</b>`:'<b class="c-ok">sem sustos</b>'}</span></div></div>`}
+if(V===5){const sg1=sig(p),hh=Math.max(p.h,.5),z=Math.log(p.strike/p.price)/(sg1*Math.sqrt(hh)),pr=1-Phi(z),
+band=f=>p.price*1.28*sg1*Math.sqrt(hh*f),ups=[],dns=[];for(let i=0;i<=10;i++){ups.push([120+i*17.6,p.price+band(i/10)]);dns.push([120+i*17.6,p.price-band(i/10)])}
+const all=[...p.c.map(c=>c.c),p.strike,...ups.map(u=>u[1]),...dns.map(u=>u[1])],mn=Math.min(...all),mx=Math.max(...all),y=v=>4+(mx-v)/(mx-mn)*52;
+const hist=p.c.map((c,i)=>`${i*120/27},${y(c.c)}`).join(' '),poly=[...ups,...dns.reverse()].map(q=>`${q[0]},${y(q[1])}`).join(' ');
+return `<div class="x"><svg viewBox="0 0 300 60" preserveAspectRatio="none" style="height:60px"><polygon points="${poly}" fill="${col[s]}" opacity=".22"/><line x1="0" x2="300" y1="${y(p.strike)}" y2="${y(p.strike)}" stroke="#fff" stroke-dasharray="3 3" opacity=".75"/><polyline points="${hist}" fill="none" stroke="${col[s]}" stroke-width="2"/><line x1="120" x2="120" y1="0" y2="60" stroke="#243050"/></svg><div class="r1 sm"><span>Agora</span><span class="grow"></span><span>Chance de passar o strike <b class="${pr>.35?'c-bad':pr>.15?'c-warn':'c-ok'} num">${fmt(pr*100,0)}%</b> (estimativa)</span></div></div>`}
+return ''}
+function head(p){const d=dist(p),s=st(p),c=cls[s],H=dh(p);let ov='';
+if(V===2){const a=pos(Math.min(...H)),b=pos(Math.max(...H));ov=`<s style="left:${a}%;width:${Math.max(3,b-a)}%"></s>`}
+const mx=Math.max(...H);
+return `<div class="r1"><span class="sym">${p.sym}</span><span class="chip">CALL</span><span class="chip">BNC</span><span class="grow"></span><span class="dist num ${c}">${sg(d)}</span><span class="chev">›</span></div><div class="hbar"><u style="width:${pos(d)}%"></u><i></i>${ov}</div><div class="r1 sm num"><span>Cot. ${fmt(p.price)}</span><span class="grow"></span><span>Strike ${fmt(p.strike,0)}</span><span class="c-ok">+${fmt(p.prem)}</span></div>${V===2?`<div class="sm" style="margin-top:4px">Moldura: mín. e máx. de 28h. O máximo chegou a <b class="${cls[stv(mx)]}">${sg(mx)}</b> do strike.</div>`:''}${extra(p)}`}
+function render(){let a=D.filter(p=>filt==='Todos'||p.sym===filt).sort((x,y)=>dist(y)-dist(x));
+const bad=a.filter(p=>st(p)==='bad').length,w=a.filter(p=>st(p)!=='ok').length,c=bad?'bad':w?'warn':'';
+let h=`<div class="sum ${c}"><div class="big"><span class="dot"></span>${bad?bad+' no strike':w?w+' perto do strike':'Tudo seguro'}</div><div class="kp"><span>Prêmio total <b class="c-ok num">US$ ${fmt(a.reduce((s,p)=>s+p.prem,0))}</b></span><span>Próx. vencimento <b>${left(Math.min(...a.map(p=>p.h)))}</b></span></div></div>`;
+h+=a.map(p=>`<div class="pos s-${st(p)} ${open===p.id?'open':''}"><div class="hd" tabindex="0" role="button" aria-expanded="${open===p.id}" data-id="${p.id}">${head(p)}</div>${open===p.id?body(p):''}</div>`).join('');
+const sc=$('#list'),t=sc.scrollTop;sc.innerHTML=h;sc.scrollTop=t;foot()}
+function foot(){$('#foot').innerHTML=['Todos','ETH','BTC'].map(x=>`<button class="${x===filt?'on':''}" data-f="${x}">${x}</button>`).join('')+`<span class="upd" id="upd">Atualizado há ${Math.round((Date.now()-last)/1000)}s</span>`}
+function tabs(){$('#tabs').innerHTML=N.map((n,i)=>`<button aria-selected="${i===V}" data-v="${i}">${i+1}. ${n[0]}</button>`).join('');
+$('#note').innerHTML=`<h2>${V+1}. ${N[V][0]}</h2><p>${N[V][1]}</p><p class="mut"><b>Ganho sobre o C:</b> ${N[V][2]}</p>`}
+document.addEventListener('click',e=>{const t=e.target,v=t.closest('[data-v]');if(v){V=+v.dataset.v;open=null;tabs();return render()}
+const f=t.closest('[data-f]');if(f){filt=f.dataset.f;return render()}
+const c=t.closest('[data-id]');if(c){const id=+c.dataset.id;open=open===id?null:id;render()}});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){const c=e.target.closest('[data-id]');if(c){e.preventDefault();c.click()}}});
+setInterval(()=>{D.forEach(p=>{const m=p.sym==='ETH'?3:90,l=p.c[27];p.price+=(Math.random()-.5)*m;l.c=p.price;l.h=Math.max(l.h,p.price);l.l=Math.min(l.l,p.price)});last=Date.now();render()},4000);
+setInterval(()=>{const u=$('#upd');if(u)u.textContent=`Atualizado há ${Math.round((Date.now()-last)/1000)}s`},1000);
+tabs();render();
+</script>
+</body>
+</html>

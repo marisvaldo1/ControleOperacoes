@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Controle de Investimentos - Posições Abertas v3 (Demo)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/crypto/posicoes-abertas-v3.css?v=1.1.0">
+</head>
+
+<body>
+    <!-- AVISO DESKTOP: tela otimizada para mobile (padrão do site) -->
+    <div class="somente-desktop aviso-desktop">
+        <div class="aviso-desktop-card">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+            <h2>Tela otimizada para celular</h2>
+            <p>Este demo do Layout C evoluído foi projetado para dispositivos móveis. Acesse pelo celular ou redimensione a janela do navegador para menos de 768px.</p>
+            <a href="crypto.html" class="btn-primary">Voltar ao Dashboard</a>
+        </div>
+    </div>
+
+    <!-- CONTEÚDO MOBILE -->
+    <div class="somente-mobile">
+
+        <!-- Header sticky -->
+        <header class="hdr">
+            <a href="crypto.html" class="hdr-btn" aria-label="Voltar">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            </a>
+            <h1>Posições Abertas <span class="demo-badge">DEMO v3</span></h1>
+            <button class="hdr-btn" id="btnRefreshV3" aria-label="Atualizar agora">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+            </button>
+            <button class="hdr-btn" id="btnTheme" aria-label="Alternar tema claro/escuro">
+                <svg id="themeIco" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+            </button>
+        </header>
+
+        <!-- Frescor dos dados -->
+        <div class="hdr-sub" id="hdrSub">
+            <span class="dot"></span>
+            <span id="upd">atualizado agora</span>
+        </div>
+
+        <main class="pa3">
+
+            <p class="intro">6 formas de ver a distância até o strike — escolha uma opção e toque numa operação para abrir termômetro e gráfico. Dados reais do banco, com cotações ao vivo da Binance.</p>
+
+            <!-- Abas: as 6 opções -->
+            <div class="tabs" id="tabs" role="tablist" aria-label="Opções de visualização"></div>
+
+            <!-- Explicação da opção ativa -->
+            <div class="box" id="note" role="region" aria-live="polite"></div>
+
+            <!-- Resumo -->
+            <div id="sum"></div>
+
+            <!-- Filtro de ativos (gerado dos dados) -->
+            <div class="chips" id="chips" aria-label="Filtrar por ativo"></div>
+
+            <!-- Lista de posições -->
+            <div class="list" id="list">
+                <div class="pa3-empty">Carregando posições...</div>
+            </div>
+
+            <footer class="pa3-foot">
+                Demo Layout C evoluído — base: ideias/posicoes-abertas-v3-Claude.html<br>
+                Operações do banco local, cotações ao vivo (CryptoLive) e candles 1h da Binance
+            </footer>
+        </main>
+    </div>
+
+    <script src="../js/core/global.js?v=1.2.2"></script>
+    <script src="../js/crypto/crypto-live.js?v=1.3.0"></script>
+    <script src="../js/crypto/modal-preco-medio-ativo.js?v=1.0.1"></script>
+    <script src="../js/crypto/posicoes-abertas-v3.js?v=2.1.0"></script>
+</body>
+</html>

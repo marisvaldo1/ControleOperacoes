@@ -1,4 +1,5 @@
-﻿/** crypto.js v1.5.3 - Controle de Dual Investment Cryptos */
+﻿/** crypto.js v1.9.0 - Controle de Dual Investment Cryptos
+ *  (aba Mês Atual: toolbar + gadgets KPI + gráfico da evolução diária) */
 
 let allOperacoes = [];
 let tableMesAtual, tableHistorico;
@@ -329,6 +330,8 @@ function refreshNavbarPrice(asset, price) {
 }
 
 function setupEventListeners() {
+    // Aba Mês Atual: toggle gadgets/gráfico + recarga
+    setupMesToolbar();
     document.getElementById("btnNovaOperacao")?.addEventListener("click", openNewModal);
     document.getElementById("btnSaveOperacao")?.addEventListener("click", saveOperacao);
     document.getElementById("btnAtualizarCotacaoOp")?.addEventListener("click", buscarCotacaoOperacao);
@@ -821,31 +824,10 @@ const totalAbertura = abertasOps.reduce((s, o) => {
     };
     document.getElementById("maPosCount").textContent         = abertasOps.length;
 
-    const mesPremio  = mesAtualData.reduce((s, o) => s + (parseFloat(o.premio_us) || 0), 0);
-    const mesResult  = calcResultadoMedio(mesAtualData);
-    const mesAbertas = mesAtualData.filter(o => !o.status || o.status === "ABERTA").length;
-
-    document.getElementById("mesAtualHeader").innerHTML = `
-        <div class="col-12 mb-2">
-            <h4 class="d-inline">${getMonthName(currentMonth)}</h4>
-            <span class="ms-2 badge bg-primary">Mes Atual</span>
-        </div>
-        <div class="col-md-3 col-sm-6 mb-2">
-            <div class="text-muted small">Total Operacoes</div>
-            <div class="fw-bold">${mesAtualData.length}</div>
-        </div>
-        <div class="col-md-3 col-sm-6 mb-2">
-            <div class="text-muted small">Premio Mes (US$)</div>
-            <div class="fw-bold text-success">${fmtUsd(mesPremio)}</div>
-        </div>
-        <div class="col-md-3 col-sm-6 mb-2">
-            <div class="text-muted small">Resultado Medio</div>
-            <div class="fw-bold text-success">${mesResult.toFixed(2)}%</div>
-        </div>
-        <div class="col-md-3 col-sm-6 mb-2">
-            <div class="text-muted small">Operacoes Abertas</div>
-            <div class="fw-bold text-primary">${mesAbertas}</div>
-        </div>`;
+    // Aba Mês Atual: toolbar + gadgets (KPIs) — substitui o antigo mesAtualHeader
+    document.getElementById("mesAtualMonth").textContent = getMonthName(currentMonth);
+    _mesAtualOps = mesAtualData;
+    renderMesGadgets(mesAtualData);
 
     document.getElementById("mesAtualTitle").textContent = "Operacoes - " + getMonthName(currentMonth);
     populateTable(tableMesAtual,  mesAtualData, { prioritizeOpen: true });
@@ -866,6 +848,159 @@ const totalAbertura = abertasOps.reduce((s, o) => {
 
 function fmtUsd(v) {
     return "US$ " + (parseFloat(v) || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+/* ── Aba Mês Atual: gadgets (KPIs) + gráfico da evolução diária (v1.9.0) ───
+   Substitui o antigo mesAtualHeader; métricas e visual iguais à demo
+   mes-atual-ideias. O DataTable continua sendo populado pelo fluxo normal. */
+let _mesAtualOps = [];
+let _mesEvoChart = null;
+let _mesToolbarBound = false;
+
+function mesIsOpen(op) {
+    const s = String(op.status || "ABERTA").toUpperCase();
+    return s === "ABERTA" || s === "ABERTO";
+}
+
+function mesMetrics(ops) {
+    const abertas = ops.filter(mesIsOpen);
+    const fechadas = ops.filter(o => !mesIsOpen(o));
+    const comResultado = fechadas.filter(o => o.resultado !== null && o.resultado !== undefined);
+    const lucrativas = comResultado.filter(o => (parseFloat(o.resultado) || 0) >= 0);
+    const premio = ops.reduce((s, o) => s + (parseFloat(o.premio_us) || 0), 0);
+    const taeOps = ops.filter(o => (parseFloat(o.tae) || 0) > 0);
+    const taeMed = taeOps.length ? taeOps.reduce((s, o) => s + parseFloat(o.tae), 0) / taeOps.length : 0;
+    const ganho = comResultado.reduce((s, o) => s + (parseFloat(o.resultado) || 0), 0);
+    const vencHoje = abertas.filter(o => {
+        const d = calcularDuracaoDias(getCurrentDate(), o.exercicio);
+        return d !== null && d <= 1;
+    }).length;
+    return {
+        n: ops.length,
+        abertas: abertas.length,
+        fechadas: fechadas.length,
+        premio: premio,
+        premioMedio: ops.length ? premio / ops.length : 0,
+        win: comResultado.length ? (lucrativas.length / comResultado.length) * 100 : null,
+        winN: lucrativas.length,
+        winTotal: comResultado.length,
+        taeMed: taeMed,
+        ganho: ganho,
+        vencHoje: vencHoje
+    };
+}
+
+function renderMesGadgets(ops) {
+    const el = document.getElementById("mesKpiGrid");
+    if (!el) return;
+    const m = mesMetrics(ops);
+    const kpis = [
+        { cls: "k-blue",  lbl: "Operações do mês",   val: String(m.n),
+          sub: m.abertas + " abertas · " + m.fechadas + " fechadas" },
+        { cls: "k-green", lbl: "Prêmio do mês",      val: fmtUsd(m.premio),
+          sub: "média de " + fmtUsd(m.premioMedio) + " por operação" },
+        { cls: "k-yellow", lbl: "Abertas agora",     val: String(m.abertas),
+          sub: m.vencHoje ? (m.vencHoje + " vencendo hoje/amanhã") : "nenhum vencimento iminente" },
+        { cls: (m.win !== null && m.win >= 50) ? "k-green" : "k-red",
+          lbl: "Taxa de acerto",
+          val: m.win !== null ? m.win.toFixed(0) + "%" : "—",
+          sub: m.winTotal ? (m.winN + " de " + m.winTotal + " fechadas lucrativas") : "sem fechadas no mês" },
+        { cls: "k-blue",  lbl: "TAE médio",          val: m.taeMed ? m.taeMed.toFixed(2) + "%" : "—",
+          sub: "prêmio sobre a abertura" },
+        { cls: m.ganho >= 0 ? "k-green" : "k-red",   lbl: "Retorno acumulado",
+          val: (m.ganho >= 0 ? "+" : "") + m.ganho.toFixed(2) + "%",
+          sub: "soma dos resultados fechados" }
+    ];
+    el.innerHTML = kpis.map(k =>
+        '<div class="mes-kpi ' + k.cls + '">' +
+            '<span class="mes-kpi-lbl">' + k.lbl + '</span>' +
+            '<span class="mes-kpi-val">' + k.val + '</span>' +
+            '<span class="mes-kpi-sub">' + k.sub + '</span>' +
+        '</div>').join("");
+
+    // Se o gráfico estiver visível, re-renderiza com os dados novos
+    const chartWrap = document.getElementById("mesViewChart");
+    if (chartWrap && !chartWrap.hidden) renderMesEvoChart(ops);
+}
+
+function renderMesEvoChart(ops) {
+    const canvas = document.getElementById("chartMesEvo");
+    if (!canvas || typeof Chart === "undefined") return;
+
+    const ym = getCurrentMonth();
+    const parts = ym.split("-");
+    const total = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10), 0).getDate();
+    const perDay = new Array(total + 1).fill(0);
+    (ops || []).forEach(o => {
+        const ds = String(o.data_operacao || "");
+        if (ds.slice(0, 7) !== ym) return;
+        const d = parseInt(ds.slice(8, 10), 10);
+        if (d >= 1 && d <= total) perDay[d] += parseFloat(o.premio_us) || 0;
+    });
+
+    const labels = [], bars = [], acum = [];
+    let acc = 0;
+    for (let d = 1; d <= total; d++) {
+        labels.push(String(d));
+        bars.push(perDay[d]);
+        acc += perDay[d];
+        acum.push(Number(acc.toFixed(2)));
+    }
+
+    if (_mesEvoChart) { try { _mesEvoChart.destroy(); } catch (e) { /* best-effort */ } }
+    try {
+        _mesEvoChart = new Chart(canvas, {
+            type: "bar",
+            data: {
+                labels: labels,
+                datasets: [
+                    { type: "bar", label: "Prêmio do dia (US$)", data: bars,
+                      backgroundColor: "rgba(47,179,68,.65)", borderRadius: 3, order: 2 },
+                    { type: "line", label: "Acumulado (US$)", data: acum,
+                      borderColor: "#4da6ff", backgroundColor: "rgba(77,166,255,.15)",
+                      borderWidth: 2, tension: .35, pointRadius: 0, fill: true, yAxisID: "y1", order: 1 }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                interaction: { mode: "index", intersect: false },
+                plugins: { legend: { labels: { color: "#8aa4c0", boxWidth: 12, font: { size: 11 } } } },
+                scales: {
+                    x: { ticks: { color: "#5b7291", font: { size: 10 }, maxRotation: 0, autoSkip: true },
+                         grid: { display: false } },
+                    y: { beginAtZero: true,
+                         ticks: { color: "#5b7291", font: { size: 10 }, callback: v => "US$ " + v },
+                         grid: { color: "rgba(255,255,255,.06)" } },
+                    y1: { position: "right", beginAtZero: true,
+                          ticks: { color: "#4da6ff", font: { size: 10 }, callback: v => v + "%" },
+                          grid: { display: false } }
+                }
+            }
+        });
+    } catch (e) {
+        console.warn("[crypto] Falha ao montar gráfico da evolução do mês:", e);
+    }
+}
+
+function toggleMesView() {
+    const g = document.getElementById("mesViewGadgets");
+    const c = document.getElementById("mesViewChart");
+    const btn = document.getElementById("btnMesView");
+    if (!g || !c) return;
+    const showChart = c.hidden;
+    g.hidden = showChart;
+    c.hidden = !showChart;
+    if (btn) btn.innerHTML = showChart ? "&#128201; Ver gadgets" : "&#128200; Ver gráfico";
+    if (showChart) renderMesEvoChart(_mesAtualOps);
+}
+
+function setupMesToolbar() {
+    if (_mesToolbarBound) return;
+    _mesToolbarBound = true;
+    document.getElementById("btnMesView")?.addEventListener("click", toggleMesView);
+    document.getElementById("btnMesRefresh")?.addEventListener("click", function () {
+        loadOperacoes(0);
+    });
 }
 
 function populateAnualYearSelect() {
@@ -1562,9 +1697,9 @@ function renderChartAnual(data, year) {
 </div>`;
             });
         } else {
-            // Modo ano específico: agrupa por mês
+            // Modo ano específico: agrupa por mês (ordem decrescente — mês mais recente primeiro)
             const sortedMonths = [];
-            for (let i = 1; i <= 12; i++) sortedMonths.push(year + "-" + String(i).padStart(2, "0"));
+            for (let i = 12; i >= 1; i--) sortedMonths.push(year + "-" + String(i).padStart(2, "0"));
             sortedMonths.forEach(month => {
                 const ops = groupedLocal[month] || [];
                 if (!ops.length) return;

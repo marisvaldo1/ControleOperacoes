@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Mês Atual — Gadgets + Gráfico (Demo)</title>
+    <link rel="stylesheet" href="../css/crypto/mes-atual-ideias.css?v=2.0.0">
+    <link rel="stylesheet" href="../css/crypto/crypto.css?v=1.5.0">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body data-bs-theme="dark">
+
+    <header class="demo-hd">
+        <div class="demo-hd-txt">
+            <h1>&#128200; Aba "Mês Atual" — gadgets + gráfico</h1>
+            <p>Protótipo com dados reais do mês corrente. O DataTable abaixo é idêntico ao da tela real. Nada altera o <code>crypto.html</code>.</p>
+        </div>
+        <div class="demo-hd-act">
+            <span class="src-badge" id="srcBadge">carregando…</span>
+            <button class="btn-v" id="btnToggleView" type="button">&#128200; Ver gráfico</button>
+            <button class="btn-round" id="btnReload" type="button" aria-label="Recarregar">&#8635;</button>
+        </div>
+    </header>
+
+    <main class="demo-shell">
+
+        <!-- Área 1 — GADGETS (toda a largura) -->
+        <section class="view" id="viewGadgets">
+            <div class="kpi-grid" id="kpiGrid"></div>
+        </section>
+
+        <!-- Área 2 — GRÁFICO (toda a largura; entra no lugar dos gadgets) -->
+        <section class="view" id="viewChart" hidden>
+            <div class="idea" id="idea3">
+                <header class="idea-hd">
+                    <span class="idea-num">3</span>
+                    <div>
+                        <h2>&#128200; Evolução diária do prêmio</h2>
+                        <p class="idea-why">Barras por dia + linha acumulada mostram o ritmo do mês e em que ponto a curva desacelerou.</p>
+                    </div>
+                </header>
+                <div class="idea-body">
+                    <div class="panel">
+                        <div class="chart-box tall"><canvas id="chEvo" width="760" height="260"></canvas></div>
+                    </div>
+                    <p class="fallback-note" id="noteChart3" hidden>Gráfico indisponível (Chart.js não carregou).</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- DataTable idêntico ao da tela real (inalterado) -->
+        <div class="card">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <h3 class="card-title mb-0" id="mesAtualTitle">Operações</h3>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-outline-secondary crypto-filter-btn" data-filter="all">Todas</button>
+                    <button class="btn btn-sm btn-outline-success crypto-filter-btn active" data-filter="ABERTA">Abertas</button>
+                    <button class="btn btn-sm btn-outline-secondary crypto-filter-btn" data-filter="FECHADA">Fechadas</button>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-vcenter card-table" id="tableMesAtual">
+                    <thead>
+                        <tr>
+                            <th>Corretora</th>
+                            <th>Ativo</th>
+                            <th>Tipo</th>
+                            <th>Cotação Atual</th>
+                            <th>Abertura</th>
+                            <th>TAE %</th>
+                            <th>Strike</th>
+                            <th>Distância</th>
+                            <th>Prêmio US$</th>
+                            <th>%</th>
+                            <th>Resultado</th>
+                            <th>Vencimento</th>
+                            <th>Prazo</th>
+                            <th>Crypto</th>
+                            <th>Exercício</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="demo-ft">
+        Demo isolado — usa <code>/api/crypto</code> (mês corrente) com fallback para dados de exemplo.
+        Botão no topo alterna entre os gadgets e o gráfico de evolução diária, em largura total.
+    </footer>
+
+    <script src="../js/core/libs.js?v=1.2.1"></script>
+    <script src="../js/core/global.js?v=1.2.2"></script>
+    <script src="../js/core/crypto-exercise.js?v=1.1.0"></script>
+    <script src="../js/crypto/mes-atual-ideias.js?v=2.0.0"></script>
+</body>
+</html>

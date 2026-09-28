@@ -1,5 +1,5 @@
 // posicoes-abertas.js — Tela de Posições Abertas (mobile-first)
-// v1.2.0 — accordion da 1ª posição aberto por default + cotações em tempo real (CryptoLive)
+// v1.5.0 — accordion mostra só o TradingView (termômetro/diferenças fixos fora) + fita de segurança
 (function () {
     'use strict';
 
@@ -193,6 +193,85 @@
         });
     }
 
+    /* ---------- Fita de segurança (histórico 28h vs strike) ---------- */
+
+    var _klinesCache = {};
+
+    function fetchKlines(asset) {
+        var now = Date.now();
+        var hit = _klinesCache[asset];
+        if (hit && now - hit.ts < 300000) return Promise.resolve(hit.closes);
+        return fetch(API_BASE + '/api/proxy/crypto/' + asset + 'USDT/klines?interval=1h&limit=28', { cache: 'no-store' })
+            .then(function (r) {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.json();
+            })
+            .then(function (data) {
+                var closes = (Array.isArray(data) ? data : [])
+                    .map(function (k) { return parseFloat(k && k[4]); })
+                    .filter(function (v) { return isFinite(v) && v > 0; });
+                if (!closes.length) throw new Error('sem candles');
+                _klinesCache[asset] = { ts: now, closes: closes };
+                return closes;
+            })
+            .catch(function (err) {
+                console.warn('[Posições Abertas] klines indisponível para ' + asset + ':', err);
+                return null;
+            });
+    }
+
+    function fitState(m) {
+        return m >= -0.2 ? 'bad' : m >= -1 ? 'warn' : 'ok';
+    }
+
+    // mesma semântica da aba 5 do demo: PUT espelhado (m>0 = no strike/lado ruim)
+    function buildFitHtml(closes, strike, tipo) {
+        if (!strike || !closes || !closes.length) return '';
+        var mir = String(tipo || '').toUpperCase() === 'PUT' ? -1 : 1;
+        var counts = { ok: 0, warn: 0, bad: 0 };
+        var strip = closes.map(function (c) {
+            var s = fitState(((c - strike) / strike) * 100 * mir);
+            counts[s]++;
+            return '<span class="pa-seg-' + s + '"></span>';
+        }).join('');
+        var summary = (counts.bad ? '<b class="pa-txt-bad">' + counts.bad + 'h no strike</b>, ' : '') +
+            (counts.warn ? '<b class="pa-txt-warn">' + counts.warn + 'h em atenção</b>' : '<b class="pa-txt-ok">sem sustos</b>');
+        return '<div class="pa-fit-strip">' + strip + '</div>' +
+            '<div class="pa-fit-sum"><span>' + closes.length + 'h atrás</span>' +
+            '<span class="pa-fit-grow"></span><span>' + summary + '</span></div>';
+    }
+
+    function populateStrips(root) {
+        if (!root) return;
+        root.querySelectorAll('.pa-fit').forEach(function (fit) {
+            if (fit._closes) return;
+            var asset = fit.getAttribute('data-fit-asset');
+            var strike = parseFloat(fit.getAttribute('data-fit-strike') || 0);
+            var tipo = fit.getAttribute('data-fit-tipo') || '';
+            if (!asset || !strike) return;
+            fetchKlines(asset).then(function (closes) {
+                if (!closes) {
+                    fit.innerHTML = '<span class="pa-fit-load">Histórico indisponível</span>';
+                    return;
+                }
+                fit._closes = closes;
+                fit.innerHTML = buildFitHtml(closes, strike, tipo);
+            });
+        });
+    }
+
+    function updateCardFit(card, price) {
+        if (!card) return;
+        var fit = card.querySelector('.pa-fit');
+        if (!fit || !fit._closes) return;
+        var strike = parseFloat(card.getAttribute('data-strike') || 0);
+        var tipo = card.getAttribute('data-tipo') || '';
+        if (!strike) return;
+        var closes = fit._closes.slice();
+        closes[closes.length - 1] = price;
+        fit.innerHTML = buildFitHtml(closes, strike, tipo);
+    }
+
     function renderCard(op, idx) {
         var asset = normalizeAsset(op);
         var tipo = String(op.tipo || '').toUpperCase();
@@ -240,18 +319,23 @@
                         '<span class="value">+' + usd(premio) + '</span>' +
                     '</span>' +
                     '<span class="pa-toggle-ico">&#9654;</span>' +
+                    '<div class="pa-fit" data-fit-asset="' + asset + '" data-fit-strike="' + strike + '" data-fit-tipo="' + tipo + '">' +
+                        '<span class="pa-fit-load">Carregando histórico…</span>' +
+                    '</div>' +
                 '</div>' +
-                '<div class="pa-card-body hide" id="' + bodyId + '" style="display:none">' +
+                '<div class="pa-inspect">' +
                     '<div class="pa-thermo-wrap">' +
                         buildThermoSvg(strike, cot, tipo) +
-                    '</div>' +
-                    '<div class="pa-tv-section">' +
-                        buildMiniChart(asset, strike, cot, tipo) +
                     '</div>' +
                     '<div class="pa-diff-row">' +
                         '<div class="pa-td-badge"><span>Diferença:</span> <span class="pa-td-val" style="color:' + diffColor + '">' + (diff >= 0 ? '+' : '') + fmtShort(diff) + '</span></div>' +
                         '<div class="pa-td-badge"><span>PoP:</span> <span class="pa-td-val" style="color:' + popColor + '">' + pop + '%</span></div>' +
                         pmHtml +
+                    '</div>' +
+                '</div>' +
+                '<div class="pa-card-body hide" id="' + bodyId + '" style="display:none">' +
+                    '<div class="pa-tv-section">' +
+                        buildMiniChart(asset, strike, cot, tipo) +
                     '</div>' +
                 '</div>' +
             '</div>';
@@ -295,6 +379,7 @@
 
         list.innerHTML = filtered.map(renderCard).join('');
         bindCardToggles(list);
+        populateStrips(list);
         openFirstCard(list);
         registerLiveAssets(filtered);
         syncLivePrices();
@@ -327,7 +412,8 @@
                     if (b.id !== bodyId) {
                         b.style.display = 'none';
                         b.classList.add('hide');
-                        var h = b.previousElementSibling;
+                        var card = b.closest('.pa-card');
+                        var h = card ? card.querySelector('.pa-card-header') : b.previousElementSibling;
                         if (h) {
                             var ico = h.querySelector('.pa-toggle-ico');
                             if (ico) ico.innerHTML = '&#9654;';
@@ -466,6 +552,7 @@
         var tipo = card.getAttribute('data-tipo') || '';
         if (!strike) return;
         card.setAttribute('data-cot', price);
+        updateCardFit(card, price);
 
         var opId = card.getAttribute('data-id');
         var asset = card.getAttribute('data-asset');
@@ -495,21 +582,19 @@
                 sealLabel + ' ' + sealSign + seal.pct + '%';
         }
 
-        var body = card.querySelector('.pa-card-body');
-        if (!body || body.style.display === 'none') return;
-
-        var thermoWrap = body.querySelector('.pa-thermo-wrap');
+        // Termômetro e linha de diferenças ficam sempre visíveis (fora do accordion)
+        var thermoWrap = card.querySelector('.pa-thermo-wrap');
         if (thermoWrap) thermoWrap.innerHTML = buildThermoSvg(strike, price, tipo);
 
         var diff = price - strike;
-        var diffEl = body.querySelector('.pa-diff-row .pa-td-badge .pa-td-val');
+        var diffEl = card.querySelector('.pa-diff-row .pa-td-badge .pa-td-val');
         if (diffEl) {
             diffEl.style.color = sealColor;
             diffEl.textContent = (diff >= 0 ? '+' : '') + fmtShort(diff);
         }
 
         var pop = calcPop(strike, price, tipo);
-        var popBadges = body.querySelectorAll('.pa-diff-row .pa-td-badge .pa-td-val');
+        var popBadges = card.querySelectorAll('.pa-diff-row .pa-td-badge .pa-td-val');
         if (popBadges[1]) {
             popBadges[1].style.color = pop >= 50 ? '#22c55e' : '#ef4444';
             popBadges[1].textContent = pop + '%';
