@@ -1,7 +1,9 @@
 /**
- * modal-dashboard-crypto.js  v1.0.0
+ * modal-dashboard-crypto.js  v1.1.0
  * Dashboard Avançado de Performance · Crypto
- * Padrão IIFE + configure(), espelhando opcoes modal-saldo-medio.
+ * Layout "Bento Executivo" + acordeão de meses — baseado em
+ * ideias/dashboard-performance-Claude.html, com dados 100% reais de /api/crypto.
+ * Cabeçalho/filtros continuam a cargo do CryptoModalHeader (padrão do site).
  */
 
 ;(function () {
@@ -16,6 +18,7 @@
         modalElId      : 'modalDashboardCrypto',
         containerElId  : 'modalDashboardCryptoContainer',
         templatePath   : 'modal-dashboard-crypto.html',
+        templateVersion: '1.1.0',
         triggerCard    : 'cardSaldoCryptoCard',
         /** Retorna o saldo numérico da conta de crypto */
         getSaldo       : function () {
@@ -39,16 +42,18 @@
     /* ------------------------------------------------------------------ */
     /*  Estado                                                              */
     /* ------------------------------------------------------------------ */
-    let chartComparacao = null;
-    let chartPatrimonio = null;
     let loaded          = false;
     let _dcStartDate    = null;
     let _dcEndDate      = null;
     let _header         = null;
+    let _dcPeriod       = 'mes';
+    let _dcState        = null;
     let _dcTipo         = 'ALL';
     let _dcAsset        = null;
     let _dcCorr         = null;
     let _dcStatus       = null;
+    let _bentoUid       = 0;
+    let _bodyBound      = false;
 
     /* Mapeamento de período cfb-bar → applyPeriodo() */
     const _PERIOD_MAP = {
@@ -63,8 +68,10 @@
         'ano':    'year',
     };
 
+    const _MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
     /* ------------------------------------------------------------------ */
-    /*  Utilitários                                                         */
+    /*  Utilitários (mantidos)                                              */
     /* ------------------------------------------------------------------ */
     function fmtC(value) {
         const v = parseFloat(value) || 0;
@@ -86,10 +93,7 @@
     }
 
     function getOpDate(op) {
-        // Usa data_operacao (abertura) como referência primária do heatmap.
-        // Operações abertas têm exercicio no futuro — usá-lo colocaria o dia
-        // fora do range de períodos como "semana" ou "hoje".
-        // Para operações já fechadas/exercidas, usa exercicio se não houver data_operacao.
+        // Usa data_operacao (abertura) como referência primária.
         const raw = op.data_operacao || op.created_at || op.exercicio || null;
         if (!raw) return null;
         return parseDateLocal(raw.toString().trim().slice(0, 10));
@@ -99,47 +103,6 @@
         return date.getFullYear() + '-' +
             String(date.getMonth() + 1).padStart(2, '0') + '-' +
             String(date.getDate()).padStart(2, '0');
-    }
-
-    function computeDailyResults(ops) {
-        const map = new Map();
-        ops.forEach(op => {
-            const d = getOpDate(op);
-            if (!d) return;
-            const key  = getDateKey(d);
-            const val  = cfg.getResultValue(op);
-            map.set(key, (map.get(key) || 0) + val);
-        });
-        return map;
-    }
-
-    function computeDailyHeatmapMetrics(ops) {
-        const map = new Map();
-        ops.forEach(op => {
-            const d = getOpDate(op);
-            if (!d) return;
-            const key = getDateKey(d);
-            const premium = cfg.getResultValue(op);
-            if (!map.has(key)) map.set(key, { premium: 0, ops: 0 });
-            const dayMetrics = map.get(key);
-            dayMetrics.premium += premium;
-            dayMetrics.ops += 1;
-        });
-        return map;
-    }
-
-    function getHeatmapClass(value, maxPos, maxNeg) {
-        if (!value) return 'heatmap-neutral';
-        if (value > 0) {
-            const r = maxPos > 0 ? value / maxPos : 0;
-            if (r >= 0.66) return 'heatmap-profit-high';
-            if (r >= 0.33) return 'heatmap-profit-med';
-            return 'heatmap-profit-low';
-        }
-        const r = maxNeg > 0 ? Math.abs(value) / maxNeg : 0;
-        if (r >= 0.66) return 'heatmap-loss-high';
-        if (r >= 0.33) return 'heatmap-loss-med';
-        return 'heatmap-loss-low';
     }
 
     function filterOps(ops, startDate, endDate, tipoFiltro, asset, corretora, status) {
@@ -176,22 +139,56 @@
         });
     }
 
-    function computeStats(ops, prevOps) {
-        function statsFrom(arr) {
-            const total    = arr.length;
-            const results  = arr.map(o => cfg.getResultValue(o));
-            const sum      = results.reduce((a, b) => a + b, 0);
-            const wins     = results.filter(v => v > 0).length;
-            const losses   = results.filter(v => v < 0).length;
-            const winRate  = total > 0 ? (wins / total) * 100 : 0;
-            const sumPos   = results.filter(v => v > 0).reduce((a, b) => a + b, 0);
-            const sumNeg   = results.filter(v => v < 0).reduce((a, b) => a + b, 0);
-            return { totalOps: total, totalResultado: sum, wins, losses, winRate, sumPos, sumNeg };
+    /* ------------------------------------------------------------------ */
+    /*  Dados reais: helpers de valor/resultado/win rate                    */
+    /* ------------------------------------------------------------------ */
+    function isAberta(op) {
+        return String(op.status || '').toUpperCase() === 'ABERTA';
+    }
+
+    /* Resultado realizado da op (campo da API); null quando ainda não definido */
+    function resultadoOf(op) {
+        const r = op.resultado;
+        if (r === null || r === undefined || r === '') return null;
+        const v = parseFloat(r);
+        return isFinite(v) ? v : null;
+    }
+
+    /* Valor "realizado" do dia: resultado quando existe, senão o prêmio recebido */
+    function opValue(op) {
+        const r = resultadoOf(op);
+        return r !== null ? r : cfg.getResultValue(op);
+    }
+
+    /* Win rate: % das ops COM resultado definido cujo resultado é lucrativo */
+    function winRateOf(ops) {
+        const com = ops.filter(op => resultadoOf(op) !== null);
+        if (!com.length) return null;
+        const wins = com.filter(op => resultadoOf(op) >= 0).length;
+        return (wins / com.length) * 100;
+    }
+
+    function normAtivo(op) {
+        if (window.CryptoFilterBar && window.CryptoFilterBar.getAsset) {
+            return window.CryptoFilterBar.getAsset(op.ativo);
         }
-        return {
-            current  : statsFrom(ops),
-            previous : statsFrom(prevOps),
-        };
+        return cfg.getAtivo(op);
+    }
+
+    /* Métricas por dia: { 'YYYY-MM-DD': { ops, premio, value } } */
+    function dayMetrics(ops) {
+        const map = new Map();
+        ops.forEach(op => {
+            const d = getOpDate(op);
+            if (!d) return;
+            const key = getDateKey(d);
+            if (!map.has(key)) map.set(key, { ops: 0, premio: 0, value: 0 });
+            const m = map.get(key);
+            m.ops += 1;
+            m.premio += cfg.getResultValue(op);
+            m.value += opValue(op);
+        });
+        return map;
     }
 
     /* ------------------------------------------------------------------ */
@@ -225,161 +222,450 @@
         _dcEndDate   = end;
     }
 
-    /* ------------------------------------------------------------------ */
-    /*  Render: Métricas KPI                                                */
-    /* ------------------------------------------------------------------ */
-    function renderMetrics(stats) {
-        const saldoEl   = document.getElementById('dcMetricSaldo');
-        const resultEl  = document.getElementById('dcMetricResultado');
-        const wrEl      = document.getElementById('dcMetricWinRate');
-        const wlEl      = document.getElementById('dcMetricWinLoss');
-        const opsEl     = document.getElementById('dcMetricOps');
+    /* Resolve o intervalo do período ativo (inclui custom do filter bar) */
+    function resolveRange(state) {
+        if (state && state.period === 'custom') {
+            const s = state.dateFrom ? parseDateLocal(state.dateFrom) : null;
+            const e = state.dateTo   ? parseDateLocal(state.dateTo)   : null;
+            _dcStartDate = s || new Date(2000, 0, 1);
+            _dcEndDate   = e ? new Date(e.getFullYear(), e.getMonth(), e.getDate(), 23, 59, 59, 999) : new Date();
+            return;
+        }
+        const pv = _PERIOD_MAP[(state && state.period) || 'mes'] || 'today';
+        if (pv === '_all') {
+            _dcStartDate = new Date(2000, 0, 1);
+            _dcEndDate   = new Date();
+        } else {
+            applyPeriodo(pv);
+        }
+    }
 
-        if (saldoEl)  saldoEl .textContent = fmtC(cfg.getSaldo());
-        if (resultEl) resultEl.textContent = fmtC(stats.totalResultado);
-        if (wrEl)     wrEl    .textContent = stats.winRate.toFixed(1) + '%';
-        if (wlEl)     wlEl    .textContent = stats.wins + 'W / ' + stats.losses + 'L';
-        if (opsEl)    opsEl   .textContent = String(stats.totalOps);
+    /* Modo lista (acordeão de meses): "Todos" ou intervalo maior que 1 mês */
+    function isListMode() {
+        if (_dcPeriod === 'all') return true;
+        if (!_dcStartDate || !_dcEndDate) return false;
+        const days = Math.round((_dcEndDate - _dcStartDate) / 86400000);
+        return days > 31;
     }
 
     /* ------------------------------------------------------------------ */
-    /*  Render: Heatmap                                                     */
+    /*  Agregação (dados reais)                                             */
     /* ------------------------------------------------------------------ */
-    function renderHeatmap(ops, startDate, endDate) {
-        const container = document.getElementById('dcHeatmap');
-        if (!container) return;
-
-        const dailyMap = computeDailyResults(ops);
-        const dailyMetrics = computeDailyHeatmapMetrics(ops);
-        let maxPos = 0, maxNeg = 0;
-        dailyMap.forEach(v => {
-            if (v > maxPos) maxPos = v;
-            if (v < 0) maxNeg = Math.min(maxNeg, v);
-        });
-        maxNeg = Math.abs(maxNeg);
-
-        const monthNames    = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-        const weekdayLabels = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];
-
-        const monthsWithOps = new Set();
+    function groupByMonth(ops) {
+        const groups = new Map();
         ops.forEach(op => {
             const d = getOpDate(op);
             if (!d) return;
-            monthsWithOps.add(d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'));
+            const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+            if (!groups.has(key)) groups.set(key, { key, year: d.getFullYear(), month: d.getMonth(), ops: [] });
+            groups.get(key).ops.push(op);
+        });
+        return groups;
+    }
+
+    /**
+     * Meta de exibição: métricas do conjunto `ops` + grid/weekday do mês
+     * (gridYear/gridMonth) calculados com as ops daquele mês.
+     */
+    function buildMeta(ops, gridYear, gridMonth) {
+        const totalOps = ops.length;
+        const totalPremio = ops.reduce((s, o) => s + cfg.getResultValue(o), 0);
+        const abertas  = ops.filter(isAberta).length;
+        const fechadas = totalOps - abertas;
+        const winRate  = winRateOf(ops);
+
+        const callOps = ops.filter(o => (o.tipo || '') === 'CALL');
+        const putOps  = ops.filter(o => (o.tipo || '') === 'PUT');
+        const premio  = arr => arr.reduce((s, o) => s + cfg.getResultValue(o), 0);
+        const call = { premio: premio(callOps), ops: callOps.length, winRate: winRateOf(callOps) };
+        const put  = { premio: premio(putOps),  ops: putOps.length,  winRate: winRateOf(putOps) };
+
+        const ativoMap = new Map();
+        ops.forEach(op => {
+            const name = normAtivo(op);
+            if (!name || name === '?') return;
+            if (!ativoMap.has(name)) ativoMap.set(name, { name, ops: 0, premio: 0, comResultado: 0, wins: 0 });
+            const e = ativoMap.get(name);
+            e.ops += 1;
+            e.premio += cfg.getResultValue(op);
+            const r = resultadoOf(op);
+            if (r !== null) { e.comResultado += 1; if (r >= 0) e.wins += 1; }
+        });
+        const ativos = [...ativoMap.values()]
+            .sort((a, b) => b.premio - a.premio)
+            .slice(0, 5)
+            .map(a => ({
+                name: a.name,
+                ops: a.ops,
+                premio: a.premio,
+                winRate: a.comResultado > 0 ? (a.wins / a.comResultado) * 100 : null,
+                ticket: a.ops > 0 ? a.premio / a.ops : 0,
+            }));
+
+        /* Grid do mês + prêmio por dia da semana */
+        const monthOps = ops.filter(op => {
+            const d = getOpDate(op);
+            return d && d.getFullYear() === gridYear && d.getMonth() === gridMonth;
+        });
+        const dm = dayMetrics(monthOps);
+
+        const daysInMonth = new Date(gridYear, gridMonth + 1, 0).getDate();
+        const startIdx = (new Date(gridYear, gridMonth, 1).getDay() + 6) % 7; // 0=Seg..6=Dom
+        const grid = [];
+        let row = [];
+        for (let i = 0; i < startIdx; i++) row.push(null);
+        for (let d = 1; d <= daysInMonth; d++) {
+            const key = gridYear + '-' + String(gridMonth + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+            const m = dm.get(key);
+            row.push(m ? { d: d, ops: m.ops, p: Math.round(m.value * 100) / 100, premio: m.premio, key: key }
+                       : { d: d, ops: 0, p: 0, premio: 0, key: key });
+            if (row.length === 7) { grid.push(row); row = []; }
+        }
+        if (row.length) { while (row.length < 7) row.push(null); grid.push(row); }
+
+        const weekday = { Dom: 0, Seg: 0, Ter: 0, Qua: 0, Qui: 0, Sex: 0, Sab: 0 };
+        const wdKeys = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
+        dm.forEach((m, key) => {
+            const dt = parseDateLocal(key);
+            if (dt) weekday[wdKeys[dt.getDay()]] += m.value;
         });
 
-        const html = ['<div class="accordion" id="dcHeatmapAccordion">'];
-        let current = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
-        const endMonth = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
+        return {
+            grid, weekday, totalOps, totalPremio,
+            abertas, fechadas, winRate,
+            call, put, ativos,
+            gridYear, gridMonth,
+        };
+    }
 
-        while (current <= endMonth) {
-            const year   = current.getFullYear();
-            const month  = current.getMonth();
-            const days   = new Date(year, month + 1, 0).getDate();
-            const mKey   = year + '-' + String(month + 1).padStart(2, '0');
+    /* ------------------------------------------------------------------ */
+    /*  KPIs de topo                                                        */
+    /* ------------------------------------------------------------------ */
+    function renderTopKpis(ops) {
+        const el = document.getElementById('dcTopKpis');
+        if (!el) return;
+        const abertas  = ops.filter(isAberta).length;
+        const premio   = ops.reduce((s, o) => s + cfg.getResultValue(o), 0);
+        el.innerHTML =
+            '<div class="dc-kpi"><span class="dc-kpi__lbl">📊 Total</span><span class="dc-kpi__val">' + ops.length + '</span></div>' +
+            '<div class="dc-kpi"><span class="dc-kpi__lbl">🟢 Abertas</span><span class="dc-kpi__val">' + abertas + '</span></div>' +
+            '<div class="dc-kpi"><span class="dc-kpi__lbl">✅ Fechadas</span><span class="dc-kpi__val">' + (ops.length - abertas) + '</span></div>' +
+            '<div class="dc-kpi dc-kpi--premio"><span class="dc-kpi__lbl">💰 Prêmio</span><span class="dc-kpi__val">' + fmtC(premio) + '</span></div>';
+    }
 
-            if (!monthsWithOps.has(mKey)) {
-                current = new Date(year, month + 1, 1);
-                continue;
-            }
+    /* ------------------------------------------------------------------ */
+    /*  Widgets (SVG/HTML string — dados reais)                             */
+    /* ------------------------------------------------------------------ */
+    function svgEl(tag, attrs) {
+        const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+        for (const k in attrs) el.setAttribute(k, attrs[k]);
+        return el;
+    }
 
-            const accId = 'dc-hm-' + mKey;
-            html.push(`
-                <div class="accordion-item">
-                    <h2 class="accordion-header" id="hd-${accId}">
-                        <button class="accordion-button collapsed" type="button"
-                            data-bs-toggle="collapse" data-bs-target="#cl-${accId}"
-                            aria-expanded="false" aria-controls="cl-${accId}">
-                            ${monthNames[month]} ${year}
-                        </button>
-                    </h2>
-                    <div id="cl-${accId}" class="accordion-collapse collapse"
-                        aria-labelledby="hd-${accId}" data-bs-parent="#dcHeatmapAccordion">
-                        <div class="accordion-body">
-                            <div class="heatmap-month">
-                                <div class="heatmap-weekdays">
-                                    ${weekdayLabels.map(l => `<span class="heatmap-weekday">${l}</span>`).join('')}
-                                </div>
-                                <div class="heatmap-grid">
-            `);
+    function ringSvg(pct, color, size, stroke) {
+        size = size || 130; stroke = stroke || 11;
+        const r = (size - stroke) / 2;
+        const c = 2 * Math.PI * r;
+        const v = Math.max(0, Math.min(100, pct || 0));
+        const half = size / 2;
+        return '<svg viewBox="0 0 ' + size + ' ' + size + '" width="100%" height="100%">' +
+            '<circle cx="' + half + '" cy="' + half + '" r="' + r + '" fill="none" stroke="#1c2536" stroke-width="' + stroke + '"/>' +
+            '<circle cx="' + half + '" cy="' + half + '" r="' + r + '" fill="none" stroke="' + color + '" stroke-width="' + stroke +
+            '" stroke-linecap="round" stroke-dasharray="' + c + '" stroke-dashoffset="' + (c * (1 - v / 100)) +
+            '" transform="rotate(-90 ' + half + ' ' + half + ')"/></svg>';
+    }
 
-            const firstWeekday = (new Date(year, month, 1).getDay() + 6) % 7;
-            for (let i = 0; i < firstWeekday; i++) {
-                html.push('<span class="heatmap-day heatmap-empty" aria-hidden="true"></span>');
-            }
-
-            for (let day = 1; day <= days; day++) {
-                const date    = new Date(year, month, day);
-                const inRange = date >= startDate && date <= endDate;
-                const dayLabel = String(day).padStart(2, '0');
-
-                if (!inRange) {
-                    html.push(`
-                        <span class="heatmap-day heatmap-neutral heatmap-out-range">
-                            <span class="hm-top">Dia</span>
-                            <span class="hm-daynum">${dayLabel}</span>
-                            <span class="hm-meta">Ops: -</span>
-                            <span class="hm-prem">Prêmios: -</span>
-                        </span>
-                    `);
-                    continue;
-                }
-
-                const key    = getDateKey(date);
-                const value  = dailyMap.get(key) || 0;
-                const dayData = dailyMetrics.get(key) || { premium: 0, ops: 0 };
-                const cls    = getHeatmapClass(value, maxPos, maxNeg);
-                const tip    = dayLabel + '/' + String(month + 1).padStart(2, '0')
-                    + ' · Ops: ' + dayData.ops + ' · ' + fmtC(dayData.premium);
-                html.push(`
-                    <span class="heatmap-day ${cls}" data-date="${key}" title="${tip}">
-                        <span class="hm-top">Dia</span>
-                        <span class="hm-daynum">${dayLabel}</span>
-                        <span class="hm-meta">Ops: ${dayData.ops}</span>
-                        <span class="hm-prem">Prêmios: ${fmtC(dayData.premium)}</span>
-                    </span>
-                `);
-            }
-
-            const totalCells = firstWeekday + days;
-            const trailing = (7 - (totalCells % 7)) % 7;
-            for (let i = 0; i < trailing; i++) {
-                html.push('<span class="heatmap-day heatmap-empty" aria-hidden="true"></span>');
-            }
-
-            html.push(`
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `);
-
-            current = new Date(year, month + 1, 1);
+    function heatBg(day) {
+        if (!day || day.ops <= 0) return { bg: '#1a222c', neg: false };
+        const p = day.p || 0;
+        if (p < 0) {
+            const a = Math.abs(p);
+            return { bg: a >= 70 ? '#f87171' : a >= 30 ? '#b91c1c' : '#5c1d1d', neg: true };
         }
-        html.push('</div>');
-        container.innerHTML = html.join('');
+        return { bg: p >= 70 ? '#3fe089' : p >= 30 ? '#1c8f56' : '#0f3d24', neg: false };
+    }
 
-        // Delegated click: clique em dia do heatmap → exibe operações daquele dia.
-        // O bind é feito uma única vez para evitar múltiplos handlers ao re-renderizar.
-        if (!container.dataset.dayClickBound) {
-            container.addEventListener('click', function (e) {
-                const dayEl = e.target.closest('.heatmap-day[data-date]');
-                if (!dayEl) return;
-                const date = dayEl.getAttribute('data-date');
-                if (!date) return;
-                // Inclui ops fechadas nesta data (por data de exercício/fechamento)
-                // e ops abertas com data_operacao nesta data.
-                const allOps2 = window.cryptoOperacoes || window.allOperacoesCrypto || [];
-                const dayOps = allOps2.filter(op => {
-                    const d = getOpDate(op);
-                    return d && getDateKey(d) === date;
-                });
-                showDayDetailModal(date, dayOps);
+    function heatGridHtml(meta) {
+        const wds = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+        let html = '<div class="dc-heat">';
+        wds.forEach(w => { html += '<div class="dc-heat__wd">' + w + '</div>'; });
+        meta.grid.forEach(row => {
+            row.forEach(day => {
+                if (!day) { html += '<div class="dc-heat__cell dc-heat__cell--empty"></div>'; return; }
+                const c = heatBg(day);
+                html += '<div class="dc-heat__cell' + (c.neg ? ' dc-heat__cell--neg' : '') + (day.ops > 0 ? ' is-click' : '') +
+                    '" style="background:' + c.bg + ';"' +
+                    (day.ops > 0 && day.key ? ' data-date="' + day.key + '" title="' + day.key.split('-').reverse().join('/') + ' · Ops: ' + day.ops + ' · ' + fmtC(day.p) + '"' : '') + '>' +
+                    '<div class="dc-heat__day">' + day.d + '</div>' +
+                    '<div class="dc-heat__meta">Ops: ' + day.ops + '<br>' + (day.ops > 0 ? 'US$ ' + (day.p).toFixed(2) : '—') + '</div>' +
+                    '</div>';
             });
-            container.dataset.dayClickBound = '1';
+        });
+        html += '</div>';
+        return html;
+    }
+
+    function lineSvg(meta, color) {
+        const days = [];
+        meta.grid.forEach(row => row.forEach(d => { if (d) days.push(d); }));
+        if (!days.length) return '';
+        let cum = 0;
+        const series = [];
+        days.forEach(d => {
+            if (d.ops > 0 || d.p !== 0) { cum += d.p; series.push({ d: d.d, v: cum }); }
+        });
+        if (!series.length) return '';
+        const W = 480, H = 120, pad = { l: 8, r: 8, t: 12, b: 18 };
+        const plotW = W - pad.l - pad.r, plotH = H - pad.t - pad.b;
+        const n = series.length;
+        const vals = series.map(s => s.v);
+        const maxV = Math.max.apply(null, vals.concat([0]));
+        const minV = Math.min.apply(null, vals.concat([0]));
+        const span = (maxV - minV) || 1;
+        const x = i => pad.l + plotW * (n > 1 ? i / (n - 1) : 0.5);
+        const y = v => pad.t + plotH - ((v - minV) / span) * plotH;
+
+        let out = '<svg class="dc-line" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">';
+        for (let g = 0; g <= 3; g++) {
+            const gy = pad.t + plotH - (plotH * g / 3);
+            out += '<line x1="' + pad.l + '" x2="' + (W - pad.r) + '" y1="' + gy + '" y2="' + gy + '" stroke="#223050" stroke-width="1" stroke-dasharray="2,4"/>';
+        }
+        const pts = series.map((s, i) => [x(i), y(s.v)]);
+        if (n > 1) {
+            out += '<path d="M' + pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' L') +
+                ' L' + pts[n - 1][0].toFixed(1) + ',' + (pad.t + plotH) + ' L' + pts[0][0].toFixed(1) + ',' + (pad.t + plotH) + ' Z" fill="' + color + '" opacity="0.12"/>';
+            out += '<polyline points="' + pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ') + '" fill="none" stroke="' + color + '" stroke-width="2.2"/>';
+        } else {
+            out += '<circle cx="' + pts[0][0].toFixed(1) + '" cy="' + pts[0][1].toFixed(1) + '" r="4" fill="' + color + '"/>';
+        }
+        series.forEach((s, i) => {
+            if (i % 5 === 0 || i === n - 1) {
+                out += '<text x="' + x(i).toFixed(1) + '" y="' + (H - 4) + '" text-anchor="middle" fill="#7c8aa0" font-size="9">' + s.d + '</text>';
+            }
+        });
+        out += '</svg>';
+        return out;
+    }
+
+    function weekdayBarsHtml(meta, color) {
+        const order = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
+        const labels = { Dom: 'Dom', Seg: 'Seg', Ter: 'Ter', Qua: 'Qua', Qui: 'Qui', Sex: 'Sex', Sab: 'Sáb' };
+        let max = 0, best = null, bestVal = -Infinity;
+        order.forEach(k => {
+            const v = meta.weekday[k] || 0;
+            if (v > max) max = v;
+            if (v > bestVal) { bestVal = v; best = k; }
+        });
+        let html = '';
+        order.forEach(k => {
+            const v = meta.weekday[k] || 0;
+            const pct = max ? Math.abs(v) / max * 100 : 0;
+            html += '<div class="dc-wd"><div class="dc-wd__lbl">' + labels[k] + (k === best && v > 0 ? ' ⭐' : '') + '</div>' +
+                '<div class="dc-wd__bar"><div class="dc-wd__fill" style="width:' + pct + '%;background:' + (v >= 0 ? color : '#f87171') + ';"></div></div>' +
+                '<div class="dc-wd__val">US$ ' + v.toFixed(2) + '</div></div>';
+        });
+        return html;
+    }
+
+    function bentoHtml(meta) {
+        _bentoUid += 1;
+        const p = 'dcb' + _bentoUid;
+        const medals = ['🥇', '🥈', '🥉'];
+        const ativosHtml = meta.ativos.length
+            ? meta.ativos.map((a, i) =>
+                '<div class="dc-ta"><div class="dc-ta__l"><span>' + (medals[i] || '•') + '</span>' + a.name +
+                '<span class="dc-ta__mid">' + a.ops + ' ops · ' + (a.winRate === null ? '—' : Math.round(a.winRate) + '%') + '</span></div>' +
+                '<div class="dc-ta__r">US$ ' + a.premio.toFixed(2).replace('.', ',') +
+                '<small>tkt US$ ' + a.ticket.toFixed(2).replace('.', ',') + '</small></div></div>').join('')
+            : '<div class="dc-empty-sm">Sem dados</div>';
+
+        const order = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
+        const full = { Dom: 'Domingo', Seg: 'Segunda', Ter: 'Terça', Qua: 'Quarta', Qui: 'Quinta', Sex: 'Sexta', Sab: 'Sábado' };
+        let bestKey = null, bestVal = -Infinity;
+        order.forEach(k => { const v = meta.weekday[k] || 0; if (v > bestVal) { bestVal = v; bestKey = k; } });
+
+        const wr = meta.winRate === null ? '—' : Math.round(meta.winRate) + '%';
+        const wrPct = meta.winRate === null ? 0 : meta.winRate;
+        const callWr = meta.call.winRate === null ? '—' : Math.round(meta.call.winRate) + '%';
+        const putWr  = meta.put.winRate  === null ? '—' : Math.round(meta.put.winRate)  + '%';
+
+        return '' +
+            '<div class="dc-bento">' +
+                '<div class="dc-widget dc-hero">' +
+                    '<div class="dc-widget__title">💰 Prêmio total no mês</div>' +
+                    '<div class="dc-ring">' + ringSvg(wrPct, '#3b82f6') +
+                        '<div class="dc-ring__c"><b class="dc-mono">' + wr + '</b><span>win rate</span></div>' +
+                    '</div>' +
+                    '<div class="dc-hero__premio dc-mono">' + fmtC(meta.totalPremio) + '</div>' +
+                    '<div class="dc-hero__sub">' + meta.totalOps + ' ops · ' + meta.fechadas + ' fechadas · ' + meta.abertas + ' aberta' + (meta.abertas !== 1 ? 's' : '') + '</div>' +
+                '</div>' +
+                '<div class="dc-mini"><span>🟢</span><i>Abertas</i><b>' + meta.abertas + '</b></div>' +
+                '<div class="dc-mini"><span>✅</span><i>Fechadas</i><b>' + meta.fechadas + '</b></div>' +
+                '<div class="dc-mini"><span>⭐</span><i>Melhor dia</i><b class="dc-mini__day">' + (bestVal > 0 ? full[bestKey] : '—') + '</b></div>' +
+                '<div class="dc-widget" style="grid-column:2 / span 3;">' +
+                    '<div class="dc-widget__title">📈 Evolução do patrimônio acumulado</div>' +
+                    lineSvg(meta, '#3b82f6') +
+                '</div>' +
+                '<div class="dc-widget" style="grid-column:1 / span 2;">' +
+                    '<div class="dc-widget__title">🗓️ Heatmap do mês</div>' + heatGridHtml(meta) +
+                '</div>' +
+                '<div class="dc-widget">' +
+                    '<div class="dc-widget__title">🥊 CALL vs PUT</div>' +
+                    '<div class="dc-cvp">' +
+                        '<div><div class="dc-cvp__lbl">CALL</div><div class="dc-cvp__val" style="color:#22c55e">' + fmtC(meta.call.premio) + '</div>' +
+                            '<div class="dc-cvp__sub">' + callWr + ' · ' + meta.call.ops + ' ops</div></div>' +
+                        '<div><div class="dc-cvp__lbl">PUT</div><div class="dc-cvp__val" style="color:#f87171">' + fmtC(meta.put.premio) + '</div>' +
+                            '<div class="dc-cvp__sub">' + putWr + ' · ' + meta.put.ops + ' ops</div></div>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="dc-widget"><div class="dc-widget__title">📅 Por dia da semana</div>' + weekdayBarsHtml(meta, '#3b82f6') + '</div>' +
+                '<div class="dc-widget"><div class="dc-widget__title">🏆 Top ativos</div>' + ativosHtml + '</div>' +
+            '</div>';
+    }
+
+    /* ------------------------------------------------------------------ */
+  /*  Modo lista: acordeão de meses (ordem decrescente)                    */
+  /* ------------------------------------------------------------------ */
+    function showMonthList(body, ops) {
+        const groups = groupByMonth(ops);
+        const keys = Array.from(groups.keys()).sort().reverse();
+        if (!keys.length) {
+            body.innerHTML = '<div class="dc-empty">Nenhuma operação no período selecionado.</div>';
+            return;
+        }
+        let html = '<div class="dc-mlist">';
+        keys.forEach(k => {
+            const g = groups.get(k);
+            const quick = buildMeta(g.ops, g.year, g.month);
+            html +=
+                '<div class="dc-mitem" data-mkey="' + k + '">' +
+                    '<div class="dc-mhead">' +
+                        '<div class="dc-mhead__l"><span class="dc-mhead__label">' + _MONTHS[g.month] + ' ' + g.year + '</span>' +
+                            '<span class="dc-mhead__meta">' + quick.totalOps + ' ops</span></div>' +
+                        '<div class="dc-mhead__r">' +
+                            '<span class="dc-mhead__premio">' + fmtC(quick.totalPremio) + '</span>' +
+                            '<span class="dc-mhead__chev">▾</span>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="dc-mbody"><div class="dc-mbody__in"></div></div>' +
+                '</div>';
+        });
+        html += '</div>';
+        body.innerHTML = html;
+    }
+
+    /* ------------------------------------------------------------------ */
+    /*  Modo direto: bento do período                                       */
+    /* ------------------------------------------------------------------ */
+    function showDirectDashboard(body, ops) {
+        if (!ops.length) {
+            body.innerHTML = '<div class="dc-empty">Nenhuma operação no período selecionado.</div>';
+            return;
+        }
+        const end = _dcEndDate || new Date();
+        const meta = buildMeta(ops, end.getFullYear(), end.getMonth());
+        body.innerHTML = bentoHtml(meta);
+    }
+
+    /* ------------------------------------------------------------------ */
+    /*  Orquestrador principal                                              */
+    /* ------------------------------------------------------------------ */
+    function renderAll() {
+        const allOps = (window.cryptoOperacoes || window.allOperacoesCrypto || []);
+
+        /* Filtros padrão do site (período/status/tipo/moeda/corretora) */
+        const state = _dcState || { period: _dcPeriod || 'mes' };
+        let ops;
+        if (window.CryptoFilterBar && typeof window.CryptoFilterBar.filter === 'function') {
+            ops = window.CryptoFilterBar.filter(allOps, state);
+        } else {
+            ops = filterOps(allOps,
+                _dcStartDate || new Date(2000, 0, 1),
+                _dcEndDate   || new Date(),
+                _dcTipo, _dcAsset, _dcCorr, _dcStatus);
+        }
+
+        renderTopKpis(ops);
+
+        const body = document.getElementById('dcBentoBody');
+        if (body) {
+            if (isListMode()) showMonthList(body, ops);
+            else showDirectDashboard(body, ops);
+            bindBody(body);
+        }
+
+        if (_header) {
+            _header.setOps(allOps, ops);
+            _header.tick();
         }
     }
+
+    /* Delegação única: dia do heatmap (detalhe) + acordeão de meses */
+    function bindBody(body) {
+        if (!body || _bodyBound) return;
+        _bodyBound = true;
+
+        body.addEventListener('click', function (e) {
+            /* Dia do heatmap → modal de detalhe do dia */
+            const dayEl = e.target.closest('.dc-heat__cell[data-date]');
+            if (dayEl) {
+                const date = dayEl.getAttribute('data-date');
+                if (date) {
+                    const allOps2 = window.cryptoOperacoes || window.allOperacoesCrypto || [];
+                    const dayOps = allOps2.filter(op => {
+                        const d = getOpDate(op);
+                        return d && getDateKey(d) === date;
+                    });
+                    showDayDetailModal(date, dayOps);
+                }
+                return;
+            }
+
+            /* Cabeçalho do mês → acordeão (abrir fecha o anterior) */
+            const head = e.target.closest('.dc-mhead');
+            if (!head) return;
+            const item = head.closest('.dc-mitem');
+            if (!item) return;
+            const wasOpen = item.classList.contains('open');
+            body.querySelectorAll('.dc-mitem.open').forEach(function (openItem) {
+                openItem.classList.remove('open');
+                openItem.querySelector('.dc-mbody').classList.remove('open');
+                openItem.querySelector('.dc-mhead__chev').classList.remove('open');
+            });
+            if (wasOpen) return;
+            item.classList.add('open');
+            item.classList.add('dc-loading');
+            item.querySelector('.dc-mbody').classList.add('open');
+            item.querySelector('.dc-mhead__chev').classList.add('open');
+
+            const mkey = item.getAttribute('data-mkey');
+            const inner = item.querySelector('.dc-mbody__in');
+            const allOps = (window.cryptoOperacoes || window.allOperacoesCrypto || []);
+            const monthOps = allOps.filter(op => {
+                const d = getOpDate(op);
+                return d && (d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0')) === mkey;
+            });
+            /* Reaplica os filtros ativos do site ao mês aberto */
+            const state = _dcState || { period: _dcPeriod || 'mes' };
+            const filtered = (window.CryptoFilterBar && window.CryptoFilterBar.filter)
+                ? window.CryptoFilterBar.filter(monthOps, Object.assign({}, state, { period: 'all', dateFrom: null, dateTo: null }))
+                : filterOps(monthOps,
+                    _dcStartDate || new Date(2000, 0, 1),
+                    _dcEndDate   || new Date(),
+                    _dcTipo, _dcAsset, _dcCorr, _dcStatus);
+
+            if (!filtered.length) {
+                inner.innerHTML = '<div class="dc-empty">Nenhuma operação em ' + mkey + ' com os filtros ativos.</div>';
+                item.classList.remove('dc-loading');
+                return;
+            }
+            const [yy, mm] = mkey.split('-').map(Number);
+            const meta = buildMeta(filtered, yy, mm - 1);
+            inner.innerHTML = bentoHtml(meta);
+            item.classList.remove('dc-loading');
+        });
+    }
+
     /* ------------------------------------------------------------------ */
     /*  Modal de detalhe por dia (heatmap click) — Formato Recibo         */
     /* ------------------------------------------------------------------ */
@@ -491,281 +777,6 @@
     }
 
     /* ------------------------------------------------------------------ */
-    /*  Render: Evolução do Patrimônio Acumulado                           */
-    /* ------------------------------------------------------------------ */
-    function renderPatrimonio(ops) {
-        const canvas = document.getElementById('dcPatrimonioChart');
-        if (!canvas || typeof Chart === 'undefined') return;
-        if (chartPatrimonio) { chartPatrimonio.destroy(); chartPatrimonio = null; }
-
-        const sorted = [...ops]
-            .filter(op => getOpDate(op))
-            .sort((a, b) => getOpDate(a) - getOpDate(b));
-
-        const labels = [];
-        const data   = [];
-        let acc      = 0;
-        sorted.forEach(op => {
-            const d = getOpDate(op);
-            if (!d) return;
-            acc += cfg.getResultValue(op);
-            labels.push(d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }));
-            data.push(parseFloat(acc.toFixed(2)));
-        });
-
-        if (!labels.length) return;
-
-        chartPatrimonio = new Chart(canvas.getContext('2d'), {
-            type: 'line',
-            data: {
-                labels,
-                datasets: [{
-                    label: 'Patrimônio Acumulado',
-                    data,
-                    borderColor: '#f6c23e',
-                    backgroundColor: 'rgba(246,194,62,0.15)',
-                    tension: 0.3,
-                    fill: true,
-                    borderWidth: 2,
-                    pointRadius: 2,
-                    pointHoverRadius: 5,
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: ctx => fmtC(ctx.parsed.y)
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        ticks: { color: '#94a3b8', maxRotation: 0, autoSkip: true, maxTicksLimit: 14 },
-                        grid: { color: 'rgba(148,163,184,0.12)' }
-                    },
-                    y: {
-                        ticks: { color: '#94a3b8', callback: v => fmtC(v) },
-                        grid: { color: 'rgba(148,163,184,0.12)' }
-                    }
-                }
-            }
-        });
-    }
-
-    /* ------------------------------------------------------------------ */
-    /*  Render: CALL vs PUT                                                 */
-    /* ------------------------------------------------------------------ */
-    function renderComparacao(ops) {
-        const canvas = document.getElementById('dcChartComparacao');
-        if (!canvas || typeof Chart === 'undefined') return;
-        if (chartComparacao) { chartComparacao.destroy(); chartComparacao = null; }
-
-        const callOps = ops.filter(o => (o.tipo || '') === 'CALL');
-        const putOps  = ops.filter(o => (o.tipo || '') === 'PUT');
-        const sum     = arr => arr.map(o => cfg.getResultValue(o)).reduce((a, b) => a + b, 0);
-        const wr      = arr => arr.length > 0
-            ? (arr.filter(o => cfg.getResultValue(o) > 0).length / arr.length) * 100
-            : 0;
-
-        chartComparacao = new Chart(canvas.getContext('2d'), {
-            type: 'bar',
-            data: {
-                labels: ['Resultado (USD)', 'Win Rate (%)', 'Operações'],
-                datasets: [
-                    {
-                        label: 'CALL',
-                        data: [sum(callOps), wr(callOps), callOps.length],
-                        backgroundColor: 'rgba(47,179,68,0.75)',
-                    },
-                    {
-                        label: 'PUT',
-                        data: [sum(putOps), wr(putOps), putOps.length],
-                        backgroundColor: 'rgba(214,57,57,0.75)',
-                    },
-                ],
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom' } },
-                scales: { y: { beginAtZero: true } },
-            },
-        });
-    }
-
-    /* ------------------------------------------------------------------ */
-    /*  Render: Weekday Performance                                         */
-    /* ------------------------------------------------------------------ */
-    function renderWeekday(ops) {
-        const container = document.getElementById('dcWeekdayList');
-        if (!container) return;
-        const labels  = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
-        const totals  = new Array(7).fill(0);
-        const dailyMap = computeDailyResults(ops);
-
-        dailyMap.forEach((value, key) => {
-            const d = new Date(key + 'T00:00:00');
-            if (!isNaN(d.getTime())) totals[d.getDay()] += value;
-        });
-
-        const maxAbs = Math.max(...totals.map(v => Math.abs(v)), 1);
-        let bestIdx = -1, bestVal = -Infinity;
-        totals.forEach((v, i) => { if (v > bestVal) { bestVal = v; bestIdx = i; } });
-
-        container.innerHTML = '';
-        totals.forEach((value, idx) => {
-            const item = document.createElement('div');
-            item.className = 'saldo-weekday-item';
-
-            const lbl = document.createElement('div');
-            lbl.className = 'saldo-weekday-label';
-            lbl.textContent = labels[idx];
-
-            const bar = document.createElement('div');
-            bar.className = 'saldo-weekday-bar';
-            const fill = document.createElement('span');
-            fill.style.width = Math.min(100, Math.abs(value) / maxAbs * 100) + '%';
-            fill.style.background = value >= 0 ? '#2fb344' : '#d63939';
-            bar.appendChild(fill);
-
-            const val = document.createElement('div');
-            val.className = 'saldo-weekday-value' + (value < 0 ? ' text-danger' : value > 0 ? ' text-success' : '');
-            val.textContent = fmtC(value);
-
-            item.append(lbl, bar, val);
-            container.appendChild(item);
-        });
-
-        const bestDayEl = document.getElementById('dcBestDay');
-        if (bestDayEl) bestDayEl.textContent = bestIdx >= 0 ? labels[bestIdx] : '-';
-    }
-
-    /* ------------------------------------------------------------------ */
-    /*  Render: Top Ativos                                                  */
-    /* ------------------------------------------------------------------ */
-    function renderTopAtivos(ops) {
-        const tbody = document.getElementById('dcTopAtivosBody');
-        if (!tbody) return;
-        const map = new Map();
-        ops.forEach(op => {
-            const ativo = cfg.getAtivo(op);
-            if (!map.has(ativo)) map.set(ativo, { ativo, total: 0, wins: 0, count: 0 });
-            const e = map.get(ativo);
-            const v = cfg.getResultValue(op);
-            e.total += v;
-            e.count += 1;
-            if (v > 0) e.wins += 1;
-        });
-        const items = [...map.values()].sort((a, b) => b.total - a.total).slice(0, 5);
-        if (!items.length) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-muted text-center">Sem dados no período</td></tr>';
-            return;
-        }
-        tbody.innerHTML = items.map((it, i) => {
-            const wr   = it.count > 0 ? (it.wins / it.count) * 100 : 0;
-            const tick = it.count > 0 ? it.total / it.count : 0;
-            return `<tr>
-                <td>#${i + 1}</td>
-                <td class="fw-bold">${it.ativo}</td>
-                <td>${it.count}</td>
-                <td>${wr.toFixed(1)}%</td>
-                <td class="${it.total >= 0 ? 'text-success' : 'text-danger'}">${fmtC(it.total)}</td>
-                <td>${fmtC(tick)}</td>
-            </tr>`;
-        }).join('');
-    }
-
-    /* ------------------------------------------------------------------ */
-    /*  Render: Consistência                                                */
-    /* ------------------------------------------------------------------ */
-    function renderConsistencia(ops) {
-        const dailyMap   = computeDailyResults(ops);
-        const values     = [...dailyMap.values()];
-        const positiveDays = values.filter(v => v > 0).length;
-        const negativeDays = values.filter(v => v < 0).length;
-        const total        = positiveDays + negativeDays;
-        const posPct = total > 0 ? (positiveDays / total) * 100 : 0;
-        const negPct = total > 0 ? (negativeDays / total) * 100 : 0;
-        const stabPct = Math.max(0, 100 - negPct);
-
-        const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-        const setW = (id, pct) => { const el = document.getElementById(id); if (el) el.style.width = pct + '%'; };
-
-        set  ('dcConsPositiveValue', posPct .toFixed(0) + '%');
-        setW ('dcConsPositiveBar',   posPct);
-        set  ('dcConsNegativeValue', negPct .toFixed(0) + '%');
-        setW ('dcConsNegativeBar',   negPct);
-        set  ('dcConsStabilityValue',stabPct.toFixed(0) + '%');
-        setW ('dcConsStabilityBar',  stabPct);
-    }
-
-    /* ------------------------------------------------------------------ */
-    /*  Render: Probabilidades                                              */
-    /* ------------------------------------------------------------------ */
-    function renderProbabilidades(ops, stats) {
-        const callOps = ops.filter(o => (o.tipo || '') === 'CALL');
-        const putOps  = ops.filter(o => (o.tipo || '') === 'PUT');
-        const callWins = callOps.filter(o => cfg.getResultValue(o) > 0).length;
-        const putWins  = putOps .filter(o => cfg.getResultValue(o) > 0).length;
-        const callRate = callOps.length > 0 ? (callWins / callOps.length) * 100 : 0;
-        const putRate  = putOps .length > 0 ? (putWins  / putOps .length) * 100 : 0;
-        const expectancy = stats.totalOps > 0 ? stats.totalResultado / stats.totalOps : 0;
-        const roi        = cfg.getSaldo() > 0 ? (stats.totalResultado / cfg.getSaldo()) * 100 : 0;
-
-        const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-        set('dcProbCall',    callRate.toFixed(0) + '%');
-        set('dcProbPut',     putRate.toFixed(0) + '%');
-        set('dcExpectativa', fmtC(expectancy));
-
-        const roiEl = document.getElementById('dcRoi');
-        if (roiEl) {
-            roiEl.textContent = roi.toFixed(1) + '%';
-            roiEl.className   = 'h2 mb-0 ' + (roi >= 0 ? 'text-success' : 'text-danger');
-        }
-    }
-
-    /* ------------------------------------------------------------------ */
-    /*  Orquestrador principal                                              */
-    /* ------------------------------------------------------------------ */
-    function renderAll() {
-        const startDate = _dcStartDate || new Date(new Date().getFullYear(), 0, 1);
-        const endDate   = _dcEndDate   || new Date();
-
-        const tipo      = _dcTipo   || 'ALL';
-        const asset     = _dcAsset  || null;
-        const corretora = _dcCorr   || null;
-        const status    = _dcStatus || null;
-
-        const allOps  = (window.cryptoOperacoes || window.allOperacoesCrypto || []);
-        const ops     = filterOps(allOps, startDate, endDate, tipo, asset, corretora, status);
-
-        const diffMs    = endDate - startDate;
-        const prevEnd   = new Date(startDate.getTime() - 1);
-        const prevStart = new Date(prevEnd.getTime() - diffMs);
-        const prevOps   = filterOps(allOps, prevStart, prevEnd, tipo, asset, corretora);
-
-        const { current: stats } = computeStats(ops, prevOps);
-
-        renderMetrics(stats);
-        renderHeatmap(ops, startDate, endDate);
-        renderPatrimonio(ops);
-        renderComparacao(ops);
-        renderWeekday(ops);
-        renderTopAtivos(ops);
-        renderConsistencia(ops);
-        renderProbabilidades(ops, stats);
-
-        if (_header) {
-            _header.setOps(allOps, ops);
-            _header.tick();
-        }
-    }
-
-    /* ------------------------------------------------------------------ */
     /*  Lazy HTML loading                                                   */
     /* ------------------------------------------------------------------ */
     async function ensureModalLoaded() {
@@ -776,9 +787,10 @@
         if (!container) { console.warn('[ModalDashboardCrypto] container não encontrado:', cfg.containerElId); return; }
 
         try {
-            const res  = await fetch('../components/modals/crypto/' + cfg.templatePath + '?v=1.0.0');
+            const res  = await fetch('../components/modals/crypto/' + cfg.templatePath + '?v=' + cfg.templateVersion);
             const html = await res.text();
             container.innerHTML = html;
+            _bodyBound = false;
         } catch (err) {
             console.error('[ModalDashboardCrypto] Erro ao carregar template:', err);
         }
@@ -799,13 +811,9 @@
             defaultPeriod: 'mes',
             closeModalId:  cfg.modalElId,
             onFilter: function (state) {
-                const pv = _PERIOD_MAP[state.period] || 'today';
-                if (pv === '_all') {
-                    _dcStartDate = new Date(2000, 0, 1);
-                    _dcEndDate   = new Date();
-                } else {
-                    applyPeriodo(pv);
-                }
+                _dcState  = state;
+                _dcPeriod = state.period || 'mes';
+                resolveRange(state);
                 _dcTipo   = state.tipo   || 'ALL';
                 _dcAsset  = state.asset  || null;
                 _dcCorr   = state.corretora || null;
@@ -814,7 +822,7 @@
             },
             onRefresh: async function () {
                 try {
-                    const res = await fetch(cfg.apiEndpoint);
+                    const res = await fetch(cfg.apiEndpoint, { cache: 'no-store' });
                     if (res.ok) {
                         const data = await res.json();
                         window.cryptoOperacoes = Array.isArray(data) ? data : [];
@@ -827,8 +835,12 @@
             },
             showTotals: true,
         });
-        // Estado inicial: hoje, todos os tipos
-        applyPeriodo('today');
+        // Estado inicial: mês corrente, todos os tipos/status (padrão do site)
+        _dcState  = window.CryptoFilterBar && window.CryptoFilterBar.createState
+            ? window.CryptoFilterBar.createState({ period: 'mes' })
+            : { period: 'mes' };
+        _dcPeriod = 'mes';
+        resolveRange(_dcState);
         _dcTipo   = 'ALL';
         _dcAsset  = null;
         _dcCorr   = null;

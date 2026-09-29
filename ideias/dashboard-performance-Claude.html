@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bento Executivo — acordeão de meses</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0e131c; --panel2:#141c29; --panel3:#0d1424; --border:#223050;
+    --text:#e8edf5; --muted:#7c8aa0; --accent:#3b82f6;
+    --green:#22c55e; --red:#f87171;
+  }
+  *,*::before,*::after{ box-sizing:border-box; }
+  body{ margin:0; background:#05070c; color:var(--text); font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased; }
+  .mono{ font-family:'JetBrains Mono',monospace; }
+  .stage{ max-width:1180px; margin:0 auto; padding:30px 16px 70px; }
+
+  .modal{ background:var(--bg); border:1px solid var(--border); border-radius:16px; overflow:hidden; }
+  .m-head{ display:flex; align-items:center; justify-content:space-between; padding:16px 22px; border-bottom:1px solid var(--border); }
+  .m-head__title{ display:flex; align-items:center; gap:9px; font-weight:700; font-size:15.5px; }
+  .m-head__dot{ width:7px; height:7px; border-radius:50%; background:var(--accent); }
+  .m-head__right{ font-size:11.5px; color:var(--muted); display:flex; align-items:center; gap:10px; }
+
+  .filters{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:12px 22px; border-bottom:1px solid var(--border); }
+  .fseg{ display:flex; gap:3px; background:var(--panel2); border:1px solid var(--border); border-radius:8px; padding:3px; }
+  .fseg button{ font-size:11.5px; font-family:'Inter',sans-serif; color:var(--muted); background:transparent; border:none; border-radius:6px; padding:5px 10px; cursor:pointer; }
+  .fseg button.active{ background:var(--accent); color:#fff; }
+  .fchip{ font-size:11px; color:var(--muted); background:var(--panel2); border:1px solid var(--border); border-radius:7px; padding:6px 10px; display:flex; gap:5px; align-items:center; }
+  .fchip b{ color:var(--text); font-weight:600; }
+
+  .kpis{ display:flex; flex-wrap:wrap; gap:10px; padding:14px 22px; }
+  .kpi{ display:flex; flex-direction:column; align-items:flex-start; gap:2px; background:var(--panel2); border:1px solid var(--border); border-radius:10px; padding:10px 14px; flex:1; min-width:130px; }
+  .kpi__lbl{ font-size:10.5px; color:var(--muted); }
+  .kpi__val{ font-size:16px; font-weight:700; font-family:'JetBrains Mono',monospace; }
+  .kpi.premio .kpi__val{ color:var(--accent); }
+
+  .section-title{ display:flex; align-items:baseline; gap:8px; padding:4px 22px 2px; }
+  .section-title b{ font-size:14px; }
+  .section-title span{ font-size:11.5px; color:var(--muted); }
+
+  .body{ padding:14px 22px 24px; }
+
+  /* ---------------- lista de meses (acordeão) ---------------- */
+  .month-list{ border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+  .month-item{ border-bottom:1px solid var(--border); }
+  .month-item:last-child{ border-bottom:none; }
+  .month-head{ display:flex; align-items:center; justify-content:space-between; padding:15px 18px; cursor:pointer; user-select:none; background:var(--panel2); }
+  .month-head:hover{ background:#182238; }
+  .month-head__left{ display:flex; align-items:center; gap:10px; }
+  .month-head__label{ font-weight:700; font-size:13.5px; }
+  .month-head__meta{ font-size:11px; color:var(--muted); display:flex; gap:10px; }
+  .month-head__premio{ font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:600; color:var(--green); }
+  .month-chevron{ color:var(--muted); transition:transform 0.25s ease; display:flex; }
+  .month-chevron.open{ transform:rotate(180deg); color:var(--accent); }
+  .month-item.open .month-head{ background:#182238; }
+
+  .month-body{ max-height:0; overflow:hidden; transition:max-height 0.35s ease; background:var(--panel3); }
+  .month-body.open{ max-height:2200px; }
+  .month-body__inner{ padding:18px; }
+
+  /* ---------------- bento (reaproveitado da Opção 1) ---------------- */
+  .bento{ display:grid; grid-template-columns:1.1fr 0.8fr 0.8fr 0.8fr; gap:14px; }
+  .widget{ background:var(--panel2); border:1px solid var(--border); border-radius:12px; padding:16px 18px; }
+  .widget__title{ font-size:12.5px; font-weight:600; color:var(--muted); margin:0 0 12px; }
+  .hero{ grid-row:span 2; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
+  .hero-ring-wrap{ width:130px; height:130px; position:relative; }
+  .hero-ring-wrap svg{ width:100%; height:100%; }
+  .hero-ring-center{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .hero-premio{ font-family:'JetBrains Mono',monospace; font-size:26px; font-weight:700; margin-top:8px; }
+  .hero-sub{ font-size:11px; color:var(--muted); margin-top:4px; }
+
+  .miniKpi{ display:flex; flex-direction:column; align-items:flex-start; gap:2px; background:var(--panel2); border:1px solid var(--border); border-radius:10px; padding:10px 14px; }
+  .miniKpi__icon{ font-size:16px; }
+  .miniKpi__lbl{ font-size:10.5px; color:var(--muted); }
+  .miniKpi__val{ font-size:15px; font-weight:700; }
+
+  .heat-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:6px; }
+  .heat-wd{ font-size:9.5px; color:var(--muted); text-align:center; padding-bottom:3px; }
+  .heat-cell{ border-radius:7px; padding:6px; min-height:52px; font-size:9.5px; color:#0a1a10; }
+  .heat-cell.empty{ background:transparent !important; }
+  .heat-cell__day{ font-weight:700; font-size:11px; }
+  .heat-cell__meta{ opacity:0.85; margin-top:3px; line-height:1.35; }
+
+  .cvp{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .cvp-col{ text-align:center; }
+  .cvp-col__lbl{ font-size:11px; color:var(--muted); margin-bottom:6px; }
+  .cvp-col__val{ font-size:19px; font-weight:700; font-family:'JetBrains Mono',monospace; }
+  .cvp-sub{ font-size:10.5px; color:var(--muted); margin-top:4px; }
+
+  .wd-row{ display:grid; grid-template-columns:40px 1fr 76px; align-items:center; gap:10px; margin-bottom:8px; font-size:11.5px; }
+  .wd-lbl{ color:var(--muted); }
+  .wd-bar{ height:8px; background:var(--panel3); border-radius:5px; overflow:hidden; }
+  .wd-bar__fill{ height:100%; border-radius:5px; }
+  .wd-val{ text-align:right; font-family:'JetBrains Mono',monospace; }
+
+  .ta-row{ display:flex; align-items:center; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--border); font-size:12px; }
+  .ta-row:last-child{ border-bottom:none; }
+  .ta-left{ display:flex; align-items:center; gap:9px; }
+  .ta-mid{ color:var(--muted); font-size:11px; }
+  .ta-right{ text-align:right; font-family:'JetBrains Mono',monospace; }
+  .ta-right small{ display:block; color:var(--muted); font-size:10px; font-weight:400; }
+
+  .empty-note{ padding:24px; text-align:center; color:var(--muted); font-size:12.5px; }
+
+  .hint{ margin-top:16px; padding:14px 16px; background:var(--panel2); border:1px solid var(--border); border-radius:10px; font-size:12.5px; color:var(--muted); line-height:1.65; }
+  .hint b{ color:var(--text); }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="modal">
+    <div class="m-head"><div class="m-head__title"><span class="m-head__dot"></span>Dashboard Avançado de Performance · Crypto</div><div class="m-head__right">Atualizado: 07:54 ↻ ✕</div></div>
+
+    <div class="filters">
+      <div class="fseg" id="period-seg">
+        <button data-period="todos" class="active">Todos</button>
+        <button data-period="hoje">Hoje</button>
+        <button data-period="semana">Semana</button>
+        <button data-period="mes">Mês</button>
+        <button data-period="periodo">📅 Período</button>
+      </div>
+      <div class="fchip">Status <b>A, F, E, N</b></div>
+      <div class="fchip">Tipo <b>C, P</b></div>
+      <div class="fchip">Moeda <b>Todas</b></div>
+      <div class="fchip">Corretora <b>Todas</b></div>
+    </div>
+
+    <div class="kpis" id="top-kpis"></div>
+
+    <div class="section-title">🗓️ <b>Heatmap de Performance Diária</b><span>Resultado diário por prêmio acumulado · Verde = Lucro | Vermelho = Prejuízo</span></div>
+
+    <div class="body" id="dash-body"></div>
+  </div>
+
+  <div class="hint">
+    <b>O que mudou:</b> em <b>Todos</b> e <b>Período</b> (quando o intervalo passa de 1 mês), o heatmap vira uma lista de meses em <b>ordem decrescente</b> (mês mais recente primeiro) — cada um mostra só a contagem de operações e o prêmio total enquanto fechado. Ao clicar, só aquele mês expande (acordeão — abrir um fecha o anterior) e revela o dashboard completo no padrão Bento, com dados só daquele mês. Em <b>Hoje</b>, <b>Semana</b> e <b>Mês</b> o dashboard do período aparece direto, sem lista, como antes.
+  </div>
+</div>
+
+<script>
+(function(){
+  function svgEl(tag, attrs){
+    var el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    for (var k in attrs) el.setAttribute(k, attrs[k]);
+    return el;
+  }
+
+  // ---------------- geração determinística de meses ----------------
+  function lcg(seed){ var s = seed; return function(){ s = (s*9301+49297) % 233280; return s/233280; }; }
+
+  var SEPT_2026_GRID = [
+    [ null, {d:1,ops:1,p:6.32}, {d:2,ops:2,p:0.90}, {d:3,ops:2,p:9.64}, {d:4,ops:2,p:70.30}, {d:5,ops:0,p:0}, {d:6,ops:0,p:0} ],
+    [ {d:7,ops:1,p:17.14}, {d:8,ops:2,p:24.73}, {d:9,ops:2,p:33.94}, {d:10,ops:2,p:69.06}, {d:11,ops:0,p:0}, {d:12,ops:0,p:0}, {d:13,ops:1,p:3.85} ],
+    [ {d:14,ops:1,p:37.43}, {d:15,ops:0,p:0}, {d:16,ops:2,p:17.56}, {d:17,ops:1,p:5.87}, {d:18,ops:2,p:35.55}, {d:19,ops:0,p:0}, {d:20,ops:0,p:0} ],
+    [ {d:21,ops:2,p:91.23}, {d:22,ops:2,p:62.72}, {d:23,ops:2,p:30.73}, {d:24,ops:2,p:48.18}, {d:25,ops:2,p:30.60}, {d:26,ops:0,p:0}, {d:27,ops:0,p:0} ],
+    [ {d:28,ops:2,p:40.85}, {d:29,ops:1,p:43.86}, {d:30,ops:0,p:null}, null, null, null, null ]
+  ];
+
+  function buildGrid(year, month, rand){
+    var first = new Date(year, month-1, 1);
+    var daysInMonth = new Date(year, month, 0).getDate();
+    var startIdx = (first.getDay() + 6) % 7; // 0=Seg..6=Dom
+    var grid = [], row = [];
+    for (var i=0;i<startIdx;i++) row.push(null);
+    var weekday = { Seg:0, Ter:0, Qua:0, Qui:0, Sex:0, Sab:0, Dom:0 };
+    var wdKeys = ['Seg','Ter','Qua','Qui','Sex','Sab','Dom'];
+    var totalOps = 0, totalPremio = 0;
+    for (var d=1; d<=daysInMonth; d++){
+      var dow = (startIdx + d - 1) % 7;
+      var isWeekend = dow >= 5;
+      var r = rand();
+      var ops = 0;
+      if (!isWeekend){ if (r < 0.12) ops = 0; else if (r < 0.55) ops = 1; else ops = 2; }
+      else { ops = r < 0.85 ? 0 : 1; }
+      var premio = 0;
+      if (ops > 0){
+        var base = ops * (16 + rand()*28);
+        if (rand() < 0.12) base *= 2.1;
+        premio = Math.round(base*100)/100;
+      }
+      var day = { d:d, ops:ops, p: premio };
+      row.push(day);
+      weekday[wdKeys[dow]] += premio;
+      totalOps += ops; totalPremio += premio;
+      if (row.length === 7){ grid.push(row); row = []; }
+    }
+    if (row.length){ while(row.length<7) row.push(null); grid.push(row); }
+    return { grid:grid, weekday:weekday, totalOps:totalOps, totalPremio:Math.round(totalPremio*100)/100 };
+  }
+
+  function gridFromFixed(fixedGrid){
+    var weekday = { Seg:0, Ter:0, Qua:0, Qui:0, Sex:0, Sab:0, Dom:0 };
+    var wdKeys = ['Seg','Ter','Qua','Qui','Sex','Sab','Dom'];
+    var totalOps = 0, totalPremio = 0;
+    fixedGrid.forEach(function(row){
+      row.forEach(function(day, idx){
+        if (!day) return;
+        weekday[wdKeys[idx]] += (day.p || 0);
+        totalOps += day.ops || 0;
+        totalPremio += day.p || 0;
+      });
+    });
+    return { grid:fixedGrid, weekday:weekday, totalOps:totalOps, totalPremio:Math.round(totalPremio*100)/100 };
+  }
+
+  function deriveMonth(meta){
+    var base;
+    var isCurrent = (meta.year === 2026 && meta.month === 9);
+    if (isCurrent){
+      base = gridFromFixed(SEPT_2026_GRID);
+    } else {
+      var rand = lcg(meta.year*100 + meta.month + 7);
+      base = buildGrid(meta.year, meta.month, rand);
+    }
+    var rand2 = lcg(meta.year*1000 + meta.month*13 + 3);
+    var callRatio = isCurrent ? (210.30/680.46) : (0.32 + rand2()*0.22);
+    var callPremio = isCurrent ? 210.30 : Math.round(base.totalPremio*callRatio*100)/100;
+    var putPremio = isCurrent ? 470.16 : Math.round((base.totalPremio-callPremio)*100)/100;
+    var callOps = isCurrent ? 14 : Math.max(0, Math.round(base.totalOps*callRatio));
+    var putOps = isCurrent ? 19 : Math.max(0, base.totalOps-callOps);
+    var callWin = isCurrent ? 78 : Math.round(65+rand2()*25);
+    var putWin = isCurrent ? 89 : Math.round(70+rand2()*25);
+
+    var btcRatio = isCurrent ? (410.20/680.46) : (0.5+rand2()*0.28);
+    var btcPremio = isCurrent ? 410.20 : Math.round(base.totalPremio*btcRatio*100)/100;
+    var ethPremio = isCurrent ? 270.26 : Math.round((base.totalPremio-btcPremio)*100)/100;
+    var btcOps = isCurrent ? 20 : Math.max(1, Math.round(base.totalOps*btcRatio));
+    var ethOps = isCurrent ? 13 : Math.max(0, base.totalOps-btcOps);
+    var btcWin = isCurrent ? 95 : Math.round(80+rand2()*18);
+    var ethWin = isCurrent ? 85 : Math.round(75+rand2()*20);
+
+    var abertas = isCurrent ? 1 : 0;
+    var fechadas = base.totalOps - abertas;
+    var winRateGeral = base.totalOps ? Math.round(((callOps*callWin)+(putOps*putWin))/Math.max(1,(callOps+putOps))) : 0;
+
+    return {
+      key: meta.key, label: meta.label,
+      grid: base.grid, weekday: base.weekday,
+      totalOps: base.totalOps, totalPremio: base.totalPremio,
+      abertas: abertas, fechadas: fechadas, winRateGeral: winRateGeral,
+      call: { premio:callPremio, winRate:callWin, ops:callOps },
+      put: { premio:putPremio, winRate:putWin, ops:putOps },
+      ativos: [
+        { name:'BTC', ops:btcOps, winRate:btcWin, premio:btcPremio, ticket: btcOps? Math.round(btcPremio/btcOps*100)/100 : 0 },
+        { name:'ETH', ops:ethOps, winRate:ethWin, premio:ethPremio, ticket: ethOps? Math.round(ethPremio/ethOps*100)/100 : 0 }
+      ]
+    };
+  }
+
+  var MONTHS_META = [
+    {key:'2026-09', label:'Setembro 2026', year:2026, month:9},
+    {key:'2026-08', label:'Agosto 2026', year:2026, month:8},
+    {key:'2026-07', label:'Julho 2026', year:2026, month:7},
+    {key:'2026-06', label:'Junho 2026', year:2026, month:6},
+    {key:'2026-05', label:'Maio 2026', year:2026, month:5},
+    {key:'2026-04', label:'Abril 2026', year:2026, month:4},
+    {key:'2026-03', label:'Março 2026', year:2026, month:3},
+    {key:'2025-10', label:'Outubro 2025', year:2025, month:10},
+    {key:'2025-09', label:'Setembro 2025', year:2025, month:9},
+    {key:'2025-08', label:'Agosto 2025', year:2025, month:8},
+    {key:'2025-07', label:'Julho 2025', year:2025, month:7}
+  ]; // já em ordem decrescente — mês mais recente primeiro
+
+  // ---------------- render helpers ----------------
+  function renderHeatmap(containerId, grid){
+    var el = document.getElementById(containerId);
+    if (!el) return;
+    var wds = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
+    var html = '<div class="heat-grid">';
+    wds.forEach(function(w){ html += '<div class="heat-wd">' + w + '</div>'; });
+    grid.forEach(function(row){
+      row.forEach(function(day){
+        if (!day){ html += '<div class="heat-cell empty"></div>'; return; }
+        var bg = '#1a222c';
+        if (day.ops > 0 && day.p !== null){
+          if (day.p >= 70) bg = '#3fe089';
+          else if (day.p >= 30) bg = '#1c8f56';
+          else bg = '#0f3d24';
+        }
+        html += '<div class="heat-cell" style="background:' + bg + ';"><div class="heat-cell__day">' + day.d + '</div><div class="heat-cell__meta">Ops: ' + day.ops + '<br>' + (day.p == null ? '—' : 'US$ ' + day.p.toFixed(2)) + '</div></div>';
+      });
+    });
+    html += '</div>';
+    el.innerHTML = html;
+  }
+
+  function renderLineChart(id, grid, color){
+    var svg = document.getElementById(id);
+    if (!svg) return;
+    var W = 480, H = 120;
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    svg.setAttribute('preserveAspectRatio', 'none');
+    svg.innerHTML = '';
+    var pad = { left:8, right:8, top:12, bottom:18 };
+    var plotW = W - pad.left - pad.right, plotH = H - pad.top - pad.bottom;
+    var days = [];
+    grid.forEach(function(row){ row.forEach(function(d){ if (d && d.p !== null && d.p !== undefined) days.push(d); }); });
+    if (!days.length) return;
+    var cum = 0;
+    var series = days.map(function(d){ cum += d.p; return { d:d.d, v:cum }; });
+    var maxV = series[series.length-1].v || 1;
+    var n = series.length;
+    for (var g=0; g<=3; g++){
+      var gy = pad.top + plotH - (plotH*g/3);
+      svg.appendChild(svgEl('line', {x1:pad.left, x2:W-pad.right, y1:gy, y2:gy, stroke:'#223050', 'stroke-width':1, 'stroke-dasharray':'2,4'}));
+    }
+    var pts = series.map(function(s,i){
+      var x = pad.left + plotW*(n>1 ? i/(n-1) : 0);
+      var y = pad.top + plotH - (s.v/maxV)*plotH;
+      return [x,y];
+    });
+    var fillPath = 'M'+pts.map(function(p){return p.join(',');}).join(' L')+' L'+pts[pts.length-1][0]+','+(pad.top+plotH)+' L'+pts[0][0]+','+(pad.top+plotH)+' Z';
+    svg.appendChild(svgEl('path', {d:fillPath, fill:color, opacity:0.12}));
+    svg.appendChild(svgEl('polyline', {points:pts.map(function(p){return p.join(',');}).join(' '), fill:'none', stroke:color, 'stroke-width':2.2}));
+    series.forEach(function(s,i){
+      if (i % 5 === 0 || i === n-1){
+        var t = svgEl('text', {x:pts[i][0], y:H-4, 'text-anchor':'middle', fill:'#7c8aa0', 'font-size':9});
+        t.textContent = s.d;
+        svg.appendChild(t);
+      }
+    });
+  }
+
+  function renderWeekdayBars(containerId, weekday, color){
+    var el = document.getElementById(containerId);
+    if (!el) return;
+    var order = ['Dom','Seg','Ter','Qua','Qui','Sex','Sab'];
+    var labels = { Dom:'Dom', Seg:'Seg', Ter:'Ter', Qua:'Qua', Qui:'Qui', Sex:'Sex', Sab:'Sáb' };
+    var max = 0, bestKey = null, bestVal = -1;
+    order.forEach(function(k){ var v = weekday[k]||0; if (v>max) max=v; if (v>bestVal){bestVal=v;bestKey=k;} });
+    var html = '';
+    order.forEach(function(k){
+      var v = weekday[k]||0;
+      var pct = max ? (v/max*100) : 0;
+      html += '<div class="wd-row"><div class="wd-lbl">'+labels[k]+(k===bestKey&&v>0?' ⭐':'')+'</div><div class="wd-bar"><div class="wd-bar__fill" style="width:'+pct+'%; background:'+color+';"></div></div><div class="wd-val">US$ '+v.toFixed(2)+'</div></div>';
+    });
+    el.innerHTML = html;
+  }
+
+  function renderRing(id, pct, color, track, size, stroke){
+    var svg = document.getElementById(id);
+    if (!svg) return;
+    size = size||130; stroke = stroke||11;
+    var r = (size-stroke)/2, c = 2*Math.PI*r;
+    svg.setAttribute('viewBox', '0 0 '+size+' '+size);
+    svg.innerHTML = '';
+    svg.appendChild(svgEl('circle', {cx:size/2, cy:size/2, r:r, fill:'none', stroke:track, 'stroke-width':stroke}));
+    var fg = svgEl('circle', {cx:size/2, cy:size/2, r:r, fill:'none', stroke:color, 'stroke-width':stroke, 'stroke-linecap':'round', 'stroke-dasharray':c, 'stroke-dashoffset': c*(1-pct/100)});
+    fg.setAttribute('transform', 'rotate(-90 '+size/2+' '+size/2+')');
+    svg.appendChild(fg);
+  }
+
+  var uid = 0;
+  function bentoHTML(prefix){
+    return '' +
+      '<div class="bento">' +
+        '<div class="widget hero">' +
+          '<div class="widget__title">💰 Prêmio total no mês</div>' +
+          '<div class="hero-ring-wrap"><svg id="'+prefix+'-ring"></svg>' +
+            '<div class="hero-ring-center"><b class="mono" id="'+prefix+'-winrate" style="font-size:15px;"></b><span style="font-size:9.5px;color:var(--muted);">win rate</span></div>' +
+          '</div>' +
+          '<div class="hero-premio mono" id="'+prefix+'-premio"></div>' +
+          '<div class="hero-sub" id="'+prefix+'-opssub"></div>' +
+        '</div>' +
+        '<div class="miniKpi"><span class="miniKpi__icon">🟢</span><span class="miniKpi__lbl">Abertas</span><span class="miniKpi__val" id="'+prefix+'-abertas"></span></div>' +
+        '<div class="miniKpi"><span class="miniKpi__icon">✅</span><span class="miniKpi__lbl">Fechadas</span><span class="miniKpi__val" id="'+prefix+'-fechadas"></span></div>' +
+        '<div class="miniKpi"><span class="miniKpi__icon">⭐</span><span class="miniKpi__lbl">Melhor dia</span><span class="miniKpi__val" id="'+prefix+'-bestday" style="font-size:13px;"></span></div>' +
+        '<div class="widget" style="grid-column:2 / span 3;"><div class="widget__title">📈 Evolução do patrimônio acumulado</div><svg id="'+prefix+'-line" style="width:100%; height:120px;"></svg></div>' +
+        '<div class="widget" style="grid-column:1 / span 2;"><div class="widget__title">🗓️ Heatmap do mês</div><div id="'+prefix+'-heat"></div></div>' +
+        '<div class="widget"><div class="widget__title">🥊 CALL vs PUT</div>' +
+          '<div class="cvp">' +
+            '<div class="cvp-col"><div class="cvp-col__lbl">CALL</div><div class="cvp-col__val" style="color:#22c55e" id="'+prefix+'-call-premio"></div><div class="cvp-sub" id="'+prefix+'-call-sub"></div></div>' +
+            '<div class="cvp-col"><div class="cvp-col__lbl">PUT</div><div class="cvp-col__val" style="color:#f87171" id="'+prefix+'-put-premio"></div><div class="cvp-sub" id="'+prefix+'-put-sub"></div></div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="widget"><div class="widget__title">📅 Por dia da semana</div><div id="'+prefix+'-wd"></div></div>' +
+        '<div class="widget"><div class="widget__title">🏆 Top ativos</div><div id="'+prefix+'-ativos"></div></div>' +
+      '</div>';
+  }
+
+  function renderBento(container, m){
+    uid++;
+    var prefix = 'm' + uid;
+    container.innerHTML = bentoHTML(prefix);
+    document.getElementById(prefix+'-premio').textContent = 'US$ ' + m.totalPremio.toFixed(2).replace('.', ',');
+    document.getElementById(prefix+'-opssub').textContent = m.totalOps + ' ops · ' + m.fechadas + ' fechadas · ' + m.abertas + ' aberta' + (m.abertas!==1?'s':'');
+    document.getElementById(prefix+'-winrate').textContent = m.winRateGeral + '%';
+    document.getElementById(prefix+'-abertas').textContent = m.abertas;
+    document.getElementById(prefix+'-fechadas').textContent = m.fechadas;
+    var order = ['Dom','Seg','Ter','Qua','Qui','Sex','Sab'];
+    var labels = { Dom:'Domingo', Seg:'Segunda', Ter:'Terça', Qua:'Quarta', Qui:'Quinta', Sex:'Sexta', Sab:'Sábado' };
+    var bestKey=null, bestVal=-1;
+    order.forEach(function(k){ var v=m.weekday[k]||0; if (v>bestVal){bestVal=v;bestKey=k;} });
+    document.getElementById(prefix+'-bestday').textContent = bestVal>0 ? labels[bestKey] : '—';
+    document.getElementById(prefix+'-call-premio').textContent = 'US$ ' + m.call.premio.toFixed(2).replace('.', ',');
+    document.getElementById(prefix+'-call-sub').textContent = m.call.winRate + '% · ' + m.call.ops + ' ops';
+    document.getElementById(prefix+'-put-premio').textContent = 'US$ ' + m.put.premio.toFixed(2).replace('.', ',');
+    document.getElementById(prefix+'-put-sub').textContent = m.put.winRate + '% · ' + m.put.ops + ' ops';
+    var medals = ['🥇','🥈','🥉'];
+    var ativosHtml = '';
+    m.ativos.forEach(function(a, i){
+      ativosHtml += '<div class="ta-row"><div class="ta-left"><span>'+(medals[i]||'•')+'</span>'+a.name+'<span class="ta-mid">'+a.ops+' ops · '+a.winRate+'%</span></div><div class="ta-right">US$ '+a.premio.toFixed(2).replace('.', ',')+'<small>tkt US$ '+a.ticket.toFixed(2).replace('.', ',')+'</small></div></div>';
+    });
+    document.getElementById(prefix+'-ativos').innerHTML = ativosHtml;
+
+    renderHeatmap(prefix+'-heat', m.grid);
+    renderLineChart(prefix+'-line', m.grid, '#3b82f6');
+    renderWeekdayBars(prefix+'-wd', m.weekday, '#3b82f6');
+    renderRing(prefix+'-ring', m.winRateGeral, '#3b82f6', '#1c2536', 130, 11);
+  }
+
+  // ---------------- estado de topo ----------------
+  var TOTALS_TODOS = { total:259, abertas:1, fechadas:258, premio:2620.50 };
+  var currentMonth = deriveMonth(MONTHS_META[0]);
+
+  function renderTopKpis(mode){
+    var el = document.getElementById('top-kpis');
+    if (mode === 'list'){
+      el.innerHTML =
+        '<div class="kpi"><span class="kpi__lbl">📊 Total</span><span class="kpi__val">'+TOTALS_TODOS.total+'</span></div>' +
+        '<div class="kpi"><span class="kpi__lbl">🟢 Abertas</span><span class="kpi__val">'+TOTALS_TODOS.abertas+'</span></div>' +
+        '<div class="kpi"><span class="kpi__lbl">✅ Fechadas</span><span class="kpi__val">'+TOTALS_TODOS.fechadas+'</span></div>' +
+        '<div class="kpi premio"><span class="kpi__lbl">💰 Prêmio</span><span class="kpi__val">US$ '+TOTALS_TODOS.premio.toFixed(2).replace('.', ',')+'</span></div>';
+    } else {
+      el.innerHTML =
+        '<div class="kpi"><span class="kpi__lbl">📊 Total</span><span class="kpi__val">'+currentMonth.totalOps+'</span></div>' +
+        '<div class="kpi"><span class="kpi__lbl">🟢 Abertas</span><span class="kpi__val">'+currentMonth.abertas+'</span></div>' +
+        '<div class="kpi"><span class="kpi__lbl">✅ Fechadas</span><span class="kpi__val">'+currentMonth.fechadas+'</span></div>' +
+        '<div class="kpi premio"><span class="kpi__lbl">💰 Prêmio</span><span class="kpi__val">US$ '+currentMonth.totalPremio.toFixed(2).replace('.', ',')+'</span></div>';
+    }
+  }
+
+  function showDirectDashboard(){
+    renderTopKpis('direct');
+    var body = document.getElementById('dash-body');
+    body.innerHTML = '';
+    renderBento(body, currentMonth);
+  }
+
+  function showMonthList(){
+    renderTopKpis('list');
+    var body = document.getElementById('dash-body');
+    var html = '<div class="month-list">';
+    MONTHS_META.forEach(function(meta, i){
+      var quick = deriveMonth(meta);
+      html += '' +
+        '<div class="month-item" id="mi-'+meta.key+'">' +
+          '<div class="month-head" data-key="'+meta.key+'">' +
+            '<div class="month-head__left"><span class="month-head__label">'+meta.label+'</span>' +
+              '<span class="month-head__meta">'+quick.totalOps+' ops</span>' +
+            '</div>' +
+            '<div style="display:flex; align-items:center; gap:16px;">' +
+              '<span class="month-head__premio">US$ '+quick.totalPremio.toFixed(2).replace('.', ',')+'</span>' +
+              '<span class="month-chevron" data-chev="'+meta.key+'">▾</span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="month-body" id="mb-'+meta.key+'"><div class="month-body__inner" id="mbi-'+meta.key+'"></div></div>' +
+        '</div>';
+    });
+    html += '</div>';
+    body.innerHTML = html;
+
+    body.querySelectorAll('.month-head').forEach(function(head){
+      head.addEventListener('click', function(){
+        var key = head.dataset.key;
+        var item = document.getElementById('mi-'+key);
+        var isOpen = item.classList.contains('open');
+        body.querySelectorAll('.month-item.open').forEach(function(openItem){
+          openItem.classList.remove('open');
+          openItem.querySelector('.month-body').classList.remove('open');
+          openItem.querySelector('.month-chevron').classList.remove('open');
+        });
+        if (!isOpen){
+          item.classList.add('open');
+          item.querySelector('.month-body').classList.add('open');
+          item.querySelector('.month-chevron').classList.add('open');
+          var meta = MONTHS_META.filter(function(m){ return m.key === key; })[0];
+          var monthData = deriveMonth(meta);
+          var innerEl = document.getElementById('mbi-'+key);
+          if (monthData.totalOps === 0){
+            innerEl.innerHTML = '<div class="empty-note">Nenhuma operação registrada em ' + meta.label + '.</div>';
+          } else {
+            renderBento(innerEl, monthData);
+          }
+        }
+      });
+    });
+  }
+
+  var segBtns = document.querySelectorAll('#period-seg button');
+  segBtns.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      segBtns.forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      var p = btn.dataset.period;
+      if (p === 'todos' || p === 'periodo') showMonthList();
+      else showDirectDashboard();
+    });
+  });
+
+  showMonthList();
+})();
+</script>
+</body>
+</html>
