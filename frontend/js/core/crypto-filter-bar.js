@@ -671,6 +671,57 @@
             ? _periodToDates(state.period)
             : { from: state.dateFrom, to: state.dateTo };
         var preloadBr = { from: isoToBr(preload.from), to: isoToBr(preload.to) };
+        // Valida data BR completa (dd/mm/aaaa) e devolve ISO, ou null
+        var brParaIsoValida = function(s) {
+            var m = (s || '').match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+            if (!m) return null;
+            var d = new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
+            if (d.getFullYear() !== Number(m[3]) || d.getMonth() !== Number(m[2]) - 1 || d.getDate() !== Number(m[1])) return null;
+            return m[3] + '-' + m[2] + '-' + m[1];
+        };
+        // Máscara dd/mm/aaaa aplicada enquanto o usuário digita
+        var mascaraData = function(el) {
+            el.addEventListener('input', function() {
+                var pos = el.selectionStart;
+                var bruto = el.value;
+                var d = bruto.replace(/\D/g, '').slice(0, 8);
+                var out = d.slice(0, 2);
+                if (d.length > 2) out += '/' + d.slice(2, 4);
+                if (d.length > 4) out += '/' + d.slice(4, 8);
+                if (out !== bruto) {
+                    el.value = out;
+                    // reposiciona o cursor mantendo a quantidade de dígitos digitados antes dele
+                    var antes = bruto.slice(0, pos).replace(/\D/g, '').length;
+                    var i = 0, n = 0;
+                    while (i < out.length && n < antes) {
+                        if (out[i] >= '0' && out[i] <= '9') n++;
+                        i++;
+                    }
+                    el.setSelectionRange(i, i);
+                }
+                // data completa e válida → sincroniza a data selecionada no calendário
+                var iso = brParaIsoValida(out);
+                if (iso && window.tabler && window.tabler.Datepicker) {
+                    var inst = window.tabler.Datepicker.getInstance(el);
+                    if (inst) inst.setSelectedDates([iso]);
+                }
+            });
+        };
+        var _datepickers = [];
+        var _onKeyEscape = null;
+        // O popup do datepicker nasce com z-index 1000, abaixo do SweetAlert2 (1060)
+        // e do Bootstrap modal (1055); sem isto o Swal intercepta os cliques no calendário.
+        var _garanteZIndexPopup = function() {
+            if (document.getElementById('cfb-dp-style')) return;
+            var st = document.createElement('style');
+            st.id = 'cfb-dp-style';
+            st.textContent = '.vc { z-index: 1200 !important; }';
+            document.head.appendChild(st);
+        };
+        var _fmtCalendar = function(dt) {
+            return String(dt.getDate()).padStart(2, '0') + '/' +
+                   String(dt.getMonth() + 1).padStart(2, '0') + '/' + dt.getFullYear();
+        };
         var inputStyle = 'width:100%;background:#1e2a3d;border:1px solid #334560;border-radius:6px;' +
                     'color:#e8f0f8;padding:.4rem .7rem;font-size:.82rem;font-family:Inter,sans-serif;outline:none;box-sizing:border-box;';
         var _restoreTraps = null;
@@ -684,6 +735,21 @@
             reverseButtons: true,
             didOpen: function () {
                 _restoreTraps = _pauseModalFocusTraps();
+                _garanteZIndexPopup();
+                // Com o calendário aberto, o Escape deve fechá-lo apenas; sem esta
+                // interceptação o evento chega ao SweetAlert2 e fecha a janela inteira.
+                // O Vanilla Calendar oculta o popup com opacity (não display: none).
+                _onKeyEscape = function (e) {
+                    if (e.key !== 'Escape') return;
+                    var aberto = Array.prototype.some.call(document.querySelectorAll('.vc'), function (v) {
+                        return parseFloat(getComputedStyle(v).opacity) > 0;
+                    });
+                    if (!aberto) return;
+                    e.stopPropagation();
+                    e.preventDefault();
+                    _datepickers.forEach(function (dp) { try { dp.hide(); } catch (err) { /* já oculto */ } });
+                };
+                document.addEventListener('keydown', _onKeyEscape, true);
                 // Seleciona o conteúdo ao receber foco por teclado (Tab), permitindo
                 // substituir a data pré-preenchida; clique dentro do campo posiciona o cursor.
                 ['cfb-swal-from', 'cfb-swal-to'].forEach(function (id) {
@@ -695,16 +761,40 @@
                         if (!clicked) el.select();
                         clicked = false;
                     });
+                    mascaraData(el);
+                    // Datepicker do Tabler (requer @tabler/core >= 1.6 + vanilla-calendar-pro)
+                    if (window.tabler && window.tabler.Datepicker) {
+                        var iso = id === 'cfb-swal-from' ? preload.from : preload.to;
+                        var cfg = { locale: 'pt-BR', dateFormat: _fmtCalendar };
+                        if (iso) cfg.selectedDates = [iso];
+                        try {
+                            _datepickers.push(new window.tabler.Datepicker(el, cfg));
+                        } catch (err) {
+                            console.warn('[CryptoFilterBar] Falha ao criar datepicker:', err);
+                        }
+                    }
                 });
+            },
+            willClose: function () {
+                if (_onKeyEscape) {
+                    document.removeEventListener('keydown', _onKeyEscape, true);
+                    _onKeyEscape = null;
+                }
+                _datepickers.forEach(function (dp) {
+                    try { dp.hide(); dp.dispose(); } catch (err) { /* já destruído */ }
+                });
+                _datepickers = [];
             },
             html: '<div style="text-align:left;margin-top:.5rem;">' +
                     '<label style="display:block;font-size:.78rem;color:#a0b0c8;margin-bottom:.3rem;">Data início</label>' +
                     '<input id="cfb-swal-from" type="text" placeholder="dd/mm/yyyy" value="' + preloadBr.from + '" ' +
+                    'data-bs-toggle="datepicker" autocomplete="off" ' +
                     'style="' + inputStyle + '" maxlength="10">' +
                   '</div>' +
                   '<div style="text-align:left;margin-top:.75rem;">' +
                     '<label style="display:block;font-size:.78rem;color:#a0b0c8;margin-bottom:.3rem;">Data Fim</label>' +
                     '<input id="cfb-swal-to" type="text" placeholder="dd/mm/yyyy" value="' + preloadBr.to + '" ' +
+                    'data-bs-toggle="datepicker" autocomplete="off" ' +
                     'style="' + inputStyle + '" maxlength="10">' +
                   '</div>',
             preConfirm: function() {

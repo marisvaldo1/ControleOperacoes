@@ -1,15 +1,17 @@
 // Carrega todas as bibliotecas necessarias
 const LIBS = {
     css: [
-        'https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css',
-        'https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler-vendors.min.css',
+        'https://cdn.jsdelivr.net/npm/@tabler/core@1.6.1/dist/css/tabler.min.css',
+        'https://cdn.jsdelivr.net/npm/@tabler/core@1.6.1/dist/css/tabler-vendors.min.css',
         'https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css',
         'https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/css/iziToast.min.css',
         'https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css'
     ],
     js: [
         'https://code.jquery.com/jquery-4.0.0-beta.min.js',
-        'https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/js/tabler.min.js',
+        // vanilla-calendar-pro deve carregar antes do tabler.js (dependência do datepicker)
+        'https://cdn.jsdelivr.net/npm/@tabler/core@1.6.1/dist/libs/vanilla-calendar-pro/index.js',
+        'https://cdn.jsdelivr.net/npm/@tabler/core@1.6.1/dist/js/tabler.min.js',
         'https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js',
         'https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js',
         'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js',
@@ -51,6 +53,11 @@ async function loadLibs() {
     await Promise.all(LIBS.css.map(loadCSS));
     for (const src of LIBS.js) {
         await loadJS(src);
+    }
+    // Compat: desde @tabler/core 1.6.0 o Bootstrap deixou de ser global e
+    // passou a window.tabler.bootstrap; restaura o global usado pelo projeto
+    if (!window.bootstrap && window.tabler && window.tabler.bootstrap) {
+        window.bootstrap = window.tabler.bootstrap;
     }
     console.log('[Libs] Todas as bibliotecas carregadas, disparando evento libsLoaded');
     document.dispatchEvent(new Event('libsLoaded'));
