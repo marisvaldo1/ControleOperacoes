@@ -626,6 +626,27 @@
         return { from: null, to: null };
     }
 
+    // Pausa o FocusTrap do Bootstrap enquanto o SweetAlert2 estiver aberto.
+    // Com a modal ativa, o trap captura o focusin do Swal e devolve o foco para o
+    // primeiro elemento focável da modal, impedindo a digitação nos inputs do período.
+    function _pauseModalFocusTraps() {
+        var pairs = [];
+        if (!window.bootstrap || !window.bootstrap.Modal) return function () {};
+        Array.prototype.forEach.call(document.querySelectorAll('.modal.show'), function (m) {
+            var inst = window.bootstrap.Modal.getInstance(m);
+            var trap = inst && inst._focustrap;
+            if (trap && trap._isActive) {
+                trap.deactivate();
+                pairs.push({ trap: trap, el: m });
+            }
+        });
+        return function () {
+            pairs.forEach(function (p) {
+                if (p.el.classList.contains('show') && !p.trap._isActive) p.trap.activate();
+            });
+        };
+    }
+
     function _openCustomPeriodSwal(state, barEl, emit) {
         if (typeof window.Swal === 'undefined') {
             console.warn('[CryptoFilterBar] SweetAlert2 não carregado');
@@ -652,6 +673,7 @@
         var preloadBr = { from: isoToBr(preload.from), to: isoToBr(preload.to) };
         var inputStyle = 'width:100%;background:#1e2a3d;border:1px solid #334560;border-radius:6px;' +
                     'color:#e8f0f8;padding:.4rem .7rem;font-size:.82rem;font-family:Inter,sans-serif;outline:none;box-sizing:border-box;';
+        var _restoreTraps = null;
         window.Swal.fire({
             title: 'Defina o período',
             icon: 'warning',
@@ -660,6 +682,21 @@
             confirmButtonText: 'Aplicar',
             cancelButtonText: 'Cancelar',
             reverseButtons: true,
+            didOpen: function () {
+                _restoreTraps = _pauseModalFocusTraps();
+                // Seleciona o conteúdo ao receber foco por teclado (Tab), permitindo
+                // substituir a data pré-preenchida; clique dentro do campo posiciona o cursor.
+                ['cfb-swal-from', 'cfb-swal-to'].forEach(function (id) {
+                    var el = document.getElementById(id);
+                    if (!el) return;
+                    var clicked = false;
+                    el.addEventListener('mousedown', function () { clicked = true; });
+                    el.addEventListener('focus', function () {
+                        if (!clicked) el.select();
+                        clicked = false;
+                    });
+                });
+            },
             html: '<div style="text-align:left;margin-top:.5rem;">' +
                     '<label style="display:block;font-size:.78rem;color:#a0b0c8;margin-bottom:.3rem;">Data início</label>' +
                     '<input id="cfb-swal-from" type="text" placeholder="dd/mm/yyyy" value="' + preloadBr.from + '" ' +
@@ -690,6 +727,7 @@
                 return { from: from || null, to: to || null };
             }
         }).then(function(result) {
+            if (_restoreTraps) { _restoreTraps(); _restoreTraps = null; }
             if (!result.isConfirmed) return;
             state.period   = 'custom';
             state.dateFrom = result.value.from;

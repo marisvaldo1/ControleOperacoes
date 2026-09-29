@@ -974,9 +974,9 @@
 }
 
 /* ============================================================
-   Aba MÍs Atual ó toolbar, gadgets KPI e gr·fico (v1.6.0)
-   Substitui o antigo mesAtualHeader (4 mÈtricas) pela tela de
-   gadgets da demo mes-atual-ideias + altern‚ncia para o gr·fico
+   Aba M√™s Atual ‚Äî toolbar, gadgets KPI e gr√°fico (v1.6.0)
+   Substitui o antigo mesAtualHeader (4 m√©tricas) pela tela de
+   gadgets da demo mes-atual-ideias + altern√¢ncia para o gr√°fico
    ============================================================ */
 .mes-toolbar {
     display: flex;
@@ -1066,7 +1066,7 @@
 .mes-kpi.k-red .mes-kpi-val    { color: #d63939; }
 .mes-kpi.k-blue .mes-kpi-val   { color: #4da6ff; }
 
-/* Gr·fico da evoluÁ„o di·ria (view altern·vel) */
+/* Gr√°fico da evolu√ß√£o di√°ria (view altern√°vel) */
 .mes-chart-box {
     position: relative;
     width: 100%;
