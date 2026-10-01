@@ -1,5 +1,5 @@
 // posicoes-abertas.js — Tela de Posições Abertas (mobile-first)
-// v1.7.0 — gadgets da navbar abrem o Mapa de Calor; header custom removido; init aguarda layoutReady
+// v1.7.1 — gadgets da navbar abrem o Mapa de Calor; header custom removido; init aguarda layoutReady
 (function () {
     'use strict';
 
@@ -130,7 +130,7 @@
         h += '<text x="' + sx + '" y="' + (y0 + totalH + 18) + '" fill="#60a5fa" font-size="11" text-anchor="middle" font-weight="700">' + usd(strike) + '</text>';
         h += '<text x="' + qx + '" y="' + (y0 + totalH + 18) + '" fill="' + statusColor + '" font-size="11" text-anchor="middle" font-weight="700">' + usd(cot) + '</text>';
 
-        return '<svg class="pa-thermo-svg" viewBox="0 0 320 ' + (y0 + totalH + 28) + '" width="100%" height="auto">' + h + '</svg>';
+        return '<svg class="pa-thermo-svg" viewBox="0 0 320 ' + (y0 + totalH + 28) + '" width="100%">' + h + '</svg>';
     }
 
     function calcPop(strike, cot, tipo) {
