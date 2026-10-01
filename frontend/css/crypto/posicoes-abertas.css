@@ -477,4 +477,22 @@
     .pa-td-badge .pa-td-val {
         font-size: 0.68rem;
     }
+
+    /* Lucro se Exercido / Lucro Total: 2 colunas compactas */
+    .pg-td-row {
+        gap: 0.3rem;
+        margin-top: 0.5rem;
+    }
+
+    .pg-td-box {
+        padding: 0.45rem 0.3rem;
+    }
+
+    .pg-td-box .pg-td-lbl {
+        font-size: 0.58rem;
+    }
+
+    .pg-td-box .pg-td-big {
+        font-size: 0.95rem;
+    }
 }

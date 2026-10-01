@@ -1,4 +1,4 @@
-// visao-geral-crypto.js v1.0.26
+// visao-geral-crypto.js v1.0.28
 // Aba Visão Geral — layout fiel à imagem (claude9.html)
 // Combina: Evolução acumulada + Posições abertas + Fluxo do ciclo + Projeção + Resumo
 
@@ -269,7 +269,7 @@
         var activeClass = idx === 0 ? ' vg-op-active' : '';
         var rowId = 'vg-op-row-' + (op.id || idx);
         var bodyId = rowId + '-body';
-        h += '<div class="vg-op-row' + activeClass + '" id="' + rowId + '" data-op-id="' + (op.id || '') + '" data-par="' + asset + '" data-strike="' + strike + '" data-cotacao="' + cot + '" data-tipo="' + tipo + '" style="border-left:3px solid ' + acol + ';cursor:pointer">';
+        h += '<div class="vg-op-row' + activeClass + '" id="' + rowId + '" data-op-id="' + (op.id || '') + '" data-par="' + asset + '" data-strike="' + strike + '" data-cotacao="' + cot + '" data-tipo="' + tipo + '" data-premio="' + premio + '" style="border-left:3px solid ' + acol + ';cursor:pointer">';
         h += '<span style="font-family:var(--syne,Syne),sans-serif;font-size:.8rem;font-weight:700;min-width:30px;color:'+bcol+'">'+asset+'</span>';
         h += '<span class="vg-badge" style="background:rgba(59,130,246,.1);color:#3b82f6;border:1px solid rgba(59,130,246,.26)">'+tipo+'</span>';
         h += corrBadge;
@@ -293,6 +293,7 @@
         h += '      </div>';
         h += '    </div>';
         h += '    <div class="vg-op-thermo-diff-row"></div>';
+        h += '    <div class="pg-td-row"></div>';
         h += '  </div>';
         h += '</div>';
       });
@@ -638,6 +639,12 @@
   function updateOpThermometerSvg(s, q, tipo, pm, par, bodyEl) {
     var svg = bodyEl ? bodyEl.querySelector('.vg-op-thermo-svg') : null;
     var diffEl = bodyEl ? bodyEl.querySelector('.vg-op-thermo-diff-row') : null;
+    var profitEl = bodyEl ? bodyEl.querySelector('.pg-td-row') : null;
+    var rowEl = bodyEl && bodyEl.previousElementSibling ? bodyEl.previousElementSibling : null;
+    var premio = rowEl ? (parseFloat(rowEl.getAttribute('data-premio')) || 0) : 0;
+    if (profitEl && window.CryptoUtils && window.CryptoUtils.buildProfitRowHtml) {
+      profitEl.innerHTML = window.CryptoUtils.buildProfitRowHtml(s, pm, premio, tipo);
+    }
     if (!svg) return;
 
     if (!s || !q) {
@@ -941,6 +948,9 @@
     if (_vgLiveTimer) { clearInterval(_vgLiveTimer); _vgLiveTimer = null; _vgLiveTickerSealPar = null; _vgLiveFetching = false; }
     disconnectBinanceWs();
     container.innerHTML = renderVG(ops);
+    if (window.CryptoUtils && window.CryptoUtils.bindProfitTooltips) {
+      window.CryptoUtils.bindProfitTooltips(container);
+    }
     /* Listeners: clique na linha de posição aberta → toggle accordion */
     container.querySelectorAll('.vg-op-row[data-op-id]').forEach(function(el) {
       el.addEventListener('click', function(e) {

@@ -129,7 +129,7 @@ document.addEventListener('libsLoaded', function() {
         <div class="container-xl">
             <div class="row text-center align-items-center">
                 <div class="col-12">
-                    <span class="text-muted">Controle de Investimentos © 2026 | <span class="badge bg-blue-lt" id="footerVersion">carregando...</span></span>
+                    <span class="text-muted">Controle de Investimentos © ${new Date().getFullYear()} | <span class="badge bg-blue-lt" id="footerVersion">carregando...</span></span>
                 </div>
             </div>
         </div>

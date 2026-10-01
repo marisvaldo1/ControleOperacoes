@@ -1,6 +1,7 @@
 /**
- * crypto-utils.js  v1.0.0
- * Funções globais compartilhadas para cálculos de risco, distância e gauge.
+ * crypto-utils.js  v1.2.0
+ * Funções globais compartilhadas para cálculos de risco, distância, gauge e
+ * lucro projetado (exercício + prêmio) com tooltip desktop/mobile.
  * Evita divergências entre modal-detalhe, modal-analise, visão-geral, etc.
  */
 (function () {
@@ -170,6 +171,121 @@
         if (window.SharedTooltip) window.SharedTooltip.hide();
     }
 
+    // ─── Lucro projetado (exercício + prêmio) ───────────────────────────────
+    // Fórmula única para CALL e PUT:
+    //   Lucro se Exercido = Strike − PM
+    //   Lucro Total       = Lucro se Exercido + Prêmio recebido
+    function calcProfit(strike, pm, premio) {
+        const s = parseFloat(strike) || 0;
+        const m = parseFloat(pm) || 0;
+        const p = parseFloat(premio) || 0;
+        if (!s || !m) return null;
+        const exercicio = s - m;
+        return { strike: s, pm: m, premio: p, exercicio: exercicio, total: exercicio + p };
+    }
+
+    function fmtUsd(n) {
+        return 'US$ ' + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function fmtSigned(n) {
+        return (n >= 0 ? '+' : '-') + fmtUsd(n);
+    }
+
+    function buildProfitRowHtml(strike, pm, premio, tipo) {
+        const d = calcProfit(strike, pm, premio);
+        if (!d || d.pm <= 0) return '';
+        const t = (tipo || '').toUpperCase();
+        const data = ' data-strike="' + d.strike + '" data-pm="' + d.pm + '" data-premio="' + d.premio + '" data-tipo="' + t + '"';
+        const box = (lbl, val, pg, highlight) =>
+            '<div class="pg-td-box' + (highlight ? ' pg-td-box-total' : '') + '" data-pg="' + pg + '"' + data + '>' +
+            '<span class="pg-td-lbl">' + lbl + '</span>' +
+            '<span class="pg-td-big" style="color:' + (val >= 0 ? '#22c55e' : '#ef4444') + '">' + fmtSigned(val) + '</span>' +
+            '</div>';
+        return box('Lucro se Exercido (Strike \u2212 PM)', d.exercicio, 'exercicio', false) +
+               box('Lucro Total (Pr\u00eAmio + Exerc\u00edcio)', d.total, 'total', true);
+    }
+
+    // Tooltip das caixas de lucro projetado (desktop: hover | mobile: toque).
+    // Delegação de eventos: o innerHTML da linha é reescrito a cada cotação ao vivo.
+    const PG_SELECTOR = '.pg-td-box[data-pg]';
+
+    function bindProfitTooltips(root) {
+        if (!root || !window.SharedTooltip || root.__pgTipBound) return;
+        root.__pgTipBound = true;
+        let tipEl = null;
+        let touchLock = 0;
+
+        const findBox = (target) =>
+            (target && target.closest) ? target.closest(PG_SELECTOR) : null;
+
+        const hide = () => { tipEl = null; window.SharedTooltip.hide(); };
+
+        root.addEventListener('mouseover', function (e) {
+            if (Date.now() - touchLock < 800) return; // evento sintético pós-toque
+            const el = findBox(e.target);
+            if (!el || el === tipEl) return;
+            tipEl = el;
+            showProfitTooltip(el);
+        });
+
+        root.addEventListener('mouseout', function (e) {
+            if (Date.now() - touchLock < 800) return;
+            const el = findBox(e.target);
+            if (!el || el !== tipEl) return;
+            if (e.relatedTarget && el.contains(e.relatedTarget)) return;
+            hide();
+        });
+
+        // Mobile: sem hover — toque abre/fecha, toque fora fecha
+        root.addEventListener('touchstart', function (e) {
+            const el = findBox(e.target);
+            touchLock = Date.now();
+            if (!el) { if (tipEl) hide(); return; }
+            if (el === tipEl) { hide(); return; }
+            tipEl = el;
+            showProfitTooltip(el);
+        }, { passive: true });
+
+        document.addEventListener('touchstart', function (e) {
+            if (!tipEl || (e.target && root.contains(e.target))) return;
+            touchLock = Date.now();
+            hide();
+        }, { passive: true });
+    }
+
+    function showProfitTooltip(el) {
+        const d = calcProfit(el.getAttribute('data-strike'), el.getAttribute('data-pm'), el.getAttribute('data-premio'));
+        if (!d || !window.SharedTooltip) return;
+        const tipo = (el.getAttribute('data-tipo') || '').toLowerCase();
+        const isTotal = el.getAttribute('data-pg') === 'total';
+        const cls = (v) => (v >= 0 ? 'tt-positive' : 'tt-negative');
+
+        const lines = [
+            { key: '📌 Strike', value: fmtUsd(d.strike) },
+            { key: '🧮 PM (Preço Médio)', value: fmtUsd(d.pm) },
+            { key: '💰 Prêmio Recebido', value: fmtSigned(d.premio), className: cls(d.premio) },
+            { key: '🧾 Lucro se Exercido', value: fmtSigned(d.exercicio), className: cls(d.exercicio) }
+        ];
+        let formula = 'Strike ' + fmtUsd(d.strike) + ' \u2212 PM ' + fmtUsd(d.pm) + ' = <b>' + fmtSigned(d.exercicio) + '</b>';
+        let note = 'Lucro Total = ' + fmtSigned(d.exercicio) + ' + Pr\u00eAmio ' + fmtSigned(d.premio) + ' = ' + fmtSigned(d.total);
+
+        if (isTotal) {
+            lines.push({ key: '🎯 Lucro Total', value: fmtSigned(d.total), className: cls(d.total) });
+            formula = '(Strike \u2212 PM) + Pr\u00eAmio = (' + fmtUsd(d.strike) + ' \u2212 ' + fmtUsd(d.pm) +
+                ') + ' + fmtUsd(d.premio) + ' = <b>' + fmtSigned(d.total) + '</b>';
+            note = 'Lucro do exerc\u00edcio somado ao pr\u00eAmio j\u00e1 recebido na venda da opera\u00e7\u00e3o.';
+        }
+
+        window.SharedTooltip.show(el, {
+            type: tipo === 'put' || tipo === 'call' ? tipo : 'default',
+            title: (isTotal ? 'Lucro Total' : 'Lucro se Exercido') + ' — ' + (tipo ? tipo.toUpperCase() : 'Operação'),
+            lines: lines,
+            formula: formula,
+            note: note
+        });
+    }
+
     // ─── Expor globalmente ──────────────────────────────────────────────────
     window.CryptoUtils = {
         getRisk: getRisk,
@@ -177,6 +293,9 @@
         buildSemaforo: buildSemaforo,
         calcDistancia: calcDistancia,
         calcLiveDist: calcLiveDist,
+        calcProfit: calcProfit,
+        buildProfitRowHtml: buildProfitRowHtml,
+        bindProfitTooltips: bindProfitTooltips,
         renderPmLink: renderPmLink,
         bindPmTooltips: bindPmTooltips,
     };

@@ -1,5 +1,5 @@
 // posicoes-abertas.js — Tela de Posições Abertas (mobile-first)
-// v1.6.0 — gadgets da navbar abrem o Mapa de Calor; header custom removido; init aguarda layoutReady
+// v1.7.0 — gadgets da navbar abrem o Mapa de Calor; header custom removido; init aguarda layoutReady
 (function () {
     'use strict';
 
@@ -302,6 +302,11 @@
             }
         }
 
+        var profitHtml = '';
+        if (window.CryptoUtils && window.CryptoUtils.buildProfitRowHtml) {
+            profitHtml = window.CryptoUtils.buildProfitRowHtml(strike, pm, premio, tipo);
+        }
+
         return '' +
             '<div class="pa-card" data-asset="' + asset + '" data-id="' + (op.id || '') + '" data-idx="' + idx + '"' +
                 ' data-strike="' + strike + '" data-tipo="' + tipo + '" data-cot="' + cot + '">' +
@@ -332,6 +337,7 @@
                         '<div class="pa-td-badge"><span>PoP:</span> <span class="pa-td-val" style="color:' + popColor + '">' + pop + '%</span></div>' +
                         pmHtml +
                     '</div>' +
+                    (profitHtml ? '<div class="pg-td-row">' + profitHtml + '</div>' : '') +
                 '</div>' +
                 '<div class="pa-card-body hide" id="' + bodyId + '" style="display:none">' +
                     '<div class="pa-tv-section">' +
@@ -378,6 +384,9 @@
         });
 
         list.innerHTML = filtered.map(renderCard).join('');
+        if (window.CryptoUtils && window.CryptoUtils.bindProfitTooltips) {
+            window.CryptoUtils.bindProfitTooltips(list);
+        }
         bindCardToggles(list);
         populateStrips(list);
         registerLiveAssets(filtered);
