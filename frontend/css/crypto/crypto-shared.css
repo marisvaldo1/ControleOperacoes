@@ -243,8 +243,9 @@
       Aplicado em:
       • Visão Geral desktop (visao-geral-crypto.js)
       • Posições Abertas mobile (posicoes-abertas.js)
-      Fórmula: Lucro se Exercido = Strike − PM
-               Lucro Total       = Lucro se Exercido + Prêmio recebido
+      CALL: Lucro se Exercido = Strike − PM
+            Lucro Total       = Lucro se Exercido + Prêmio recebido
+      PUT : sem linha (lucro realizado = prêmio, já exibido no cabeçalho)
    ══════════════════════════════════════════════════════════════════════ */
 .pg-td-row {
     width: 100%;
@@ -252,6 +253,11 @@
     margin-top: 8px;
     display: flex;
     gap: 8px;
+}
+
+/* PUT (ou sem dados): linha vazia não ocupa espaço */
+.pg-td-row:empty {
+    display: none;
 }
 
 .pg-td-box {

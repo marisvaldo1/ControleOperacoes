@@ -172,9 +172,12 @@
     }
 
     // ─── Lucro projetado (exercício + prêmio) ───────────────────────────────
-    // Fórmula única para CALL e PUT:
+    // CALL (exercida → vende a moeda pelo strike):
     //   Lucro se Exercido = Strike − PM
     //   Lucro Total       = Lucro se Exercido + Prêmio recebido
+    // PUT (exercida → compra a moeda pelo strike):
+    //   não há ganho realizado além do prêmio (já exibido no cabeçalho como
+    //   "Prêmio Recebido") → a linha de lucro projetado não é renderizada.
     function calcProfit(strike, pm, premio) {
         const s = parseFloat(strike) || 0;
         const m = parseFloat(pm) || 0;
@@ -193,10 +196,12 @@
     }
 
     function buildProfitRowHtml(strike, pm, premio, tipo) {
+        // PUT: sem linha de lucro projetado (lucro realizado = prêmio, já exibido)
+        if ((tipo || '').toUpperCase() === 'PUT') return '';
         const d = calcProfit(strike, pm, premio);
         if (!d || d.pm <= 0) return '';
-        const t = (tipo || '').toUpperCase();
-        const data = ' data-strike="' + d.strike + '" data-pm="' + d.pm + '" data-premio="' + d.premio + '" data-tipo="' + t + '"';
+        const data = ' data-strike="' + d.strike + '" data-pm="' + d.pm +
+            '" data-premio="' + d.premio + '" data-tipo="' + (tipo || '').toUpperCase() + '"';
         const box = (lbl, val, pg, highlight) =>
             '<div class="pg-td-box' + (highlight ? ' pg-td-box-total' : '') + '" data-pg="' + pg + '"' + data + '>' +
             '<span class="pg-td-lbl">' + lbl + '</span>' +
@@ -255,9 +260,9 @@
     }
 
     function showProfitTooltip(el) {
+        const tipo = (el.getAttribute('data-tipo') || '').toLowerCase();
         const d = calcProfit(el.getAttribute('data-strike'), el.getAttribute('data-pm'), el.getAttribute('data-premio'));
         if (!d || !window.SharedTooltip) return;
-        const tipo = (el.getAttribute('data-tipo') || '').toLowerCase();
         const isTotal = el.getAttribute('data-pg') === 'total';
         const cls = (v) => (v >= 0 ? 'tt-positive' : 'tt-negative');
 
