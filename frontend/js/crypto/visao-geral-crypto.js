@@ -1,4 +1,5 @@
-// visao-geral-crypto.js v1.0.28
+// visao-geral-crypto.js v1.0.31
+// v1.0.31 — card "Posições Abertas Agora" vazio usa CelularSugestoes (mesmo layout de posicoes-abertas.html)
 // Aba Visão Geral — layout fiel à imagem (claude9.html)
 // Combina: Evolução acumulada + Posições abertas + Fluxo do ciclo + Projeção + Resumo
 
@@ -239,7 +240,7 @@
     h += '<div class="vg-card">';
     h += '<div class="vg-card-title" style="cursor:pointer" id="vgOpenPosHeader"><span>&#128200;</span>Posições Abertas Agora</div>';
     if (abertas.length === 0) {
-      h += '<div style="color:' + C_MUTED + ';font-size:.72rem;padding:12px 0">Nenhuma posição aberta</div>';
+      h += '<div id="vgOpenPosEmpty" style="color:' + C_MUTED + ';font-size:.72rem;padding:12px 0">Nenhuma posi\u00e7\u00e3o aberta</div>';
     } else {
       abertas.forEach(function(op, idx) {
         var asset  = (op.ativo||'?').toUpperCase();
@@ -948,6 +949,9 @@
     if (_vgLiveTimer) { clearInterval(_vgLiveTimer); _vgLiveTimer = null; _vgLiveTickerSealPar = null; _vgLiveFetching = false; }
     disconnectBinanceWs();
     container.innerHTML = renderVG(ops);
+    /* Estado vazio do card "Posições Abertas Agora" — mesmo layout de posicoes-abertas.html */
+    var vgEmpty = document.getElementById('vgOpenPosEmpty');
+    if (vgEmpty && window.CelularSugestoes) window.CelularSugestoes.mount(vgEmpty, ops);
     if (window.CryptoUtils && window.CryptoUtils.bindProfitTooltips) {
       window.CryptoUtils.bindProfitTooltips(container);
     }

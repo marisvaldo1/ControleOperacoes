@@ -498,3 +498,15 @@
         font-size: 0.95rem;
     }
 }
+
+/* ---------- Estado vazio: componente ocupa toda a largura da tela ---------- */
+.pa-container.pa-cs-full {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.pa-container.pa-cs-full .pa-filter-bar,
+.pa-container.pa-cs-full .pa-summary {
+    margin-left: 0.75rem;
+    margin-right: 0.75rem;
+}

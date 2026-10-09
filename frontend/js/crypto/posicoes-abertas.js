@@ -1,5 +1,6 @@
 // posicoes-abertas.js — Tela de Posições Abertas (mobile-first)
-// v1.7.1 — gadgets da navbar abrem o Mapa de Calor; header custom removido; init aguarda layoutReady
+// v1.7.5 — empty state ocupa toda a largura da tela (pa-cs-full); gadgets da navbar abrem o Mapa de Calor
+//          empty state usa CelularSugestoes (cards com dados do banco)
 (function () {
     'use strict';
 
@@ -367,14 +368,25 @@
             premioEl.textContent = usd(totalPremio);
         }
 
-        if (!filtered.length) {
-            list.innerHTML = '' +
-                '<div class="pa-empty">' +
-                    '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>' +
-                    '<p>Nenhuma posição aberta encontrada</p>' +
-                '</div>';
+if (!filtered.length) {
+            // Estado vazio: sugestões "Moedas para abrir CALL e PUT" com dados do banco
+            list.innerHTML = '<div class="cs-host"></div>';
+            var container = list.closest('.pa-container');
+            if (container) container.classList.add('pa-cs-full');
+            var host = list.querySelector('.cs-host');
+            if (window.CelularSugestoes) {
+                var sugOps = _allOps.filter(function (op) {
+                    return _currentFilter === 'ALL' || normalizeAsset(op) === _currentFilter;
+                });
+                window.CelularSugestoes.mount(host, sugOps);
+            } else if (host) {
+                host.innerHTML = '<div class="pa-empty"><p>Nenhuma posi\u00e7\u00e3o aberta encontrada</p></div>';
+            }
             return;
         }
+
+        var fullContainer = list.closest('.pa-container');
+        if (fullContainer) fullContainer.classList.remove('pa-cs-full');
 
         filtered.sort(function (a, b) {
             var ra = getRiskStatus(a).cls === 'risco' ? 0 : 1;

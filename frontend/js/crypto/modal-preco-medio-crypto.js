@@ -406,8 +406,6 @@
             '<div class="pm-rc-row"><span>Fechamento</span><span>' + dataFechamento + '</span></div>' +
             '<div class="pm-rc-row"><span>Strike</span><span>' + strike + '</span></div>' +
             '<div class="pm-rc-row"><span>Cotação</span><span>' + cotacao + '</span></div>' +
-            '<div class="pm-rc-row"><span>Estratégia</span><span>' + strategy + '</span></div>' +
-            '<div class="pm-rc-row"><span>Corretora</span><span>' + broker + '</span></div>' +
             '<div class="pm-rc-total">' +
               '<span class="pm-rc-total-lbl">Prêmio recebido</span>' +
               '<span class="pm-rc-total-val ' + (valor >= 0 ? 'pm-pos' : 'pm-neg') + '">' + fmtUS(valor) + '</span>' +

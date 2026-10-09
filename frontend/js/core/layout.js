@@ -26,6 +26,11 @@ document.addEventListener('libsLoaded', function() {
                 <div class="nav-item d-flex me-2 me-md-3">
                     <div id="navbarCryptoPrices" style="display:flex;gap:6px;align-items:center;flex-wrap:nowrap;overflow-x:auto;max-width:40vw;-webkit-overflow-scrolling:touch;scrollbar-width:none;"></div>
                 </div>
+                <div class="nav-item">
+                    <select class="form-select form-select-sm" id="selectAno" style="width:120px;">
+                        <option value="">Ano</option>
+                    </select>
+                </div>
                 <div class="nav-item d-flex me-2">
                     <button class="btn btn-ghost-primary btn-sm" id="btnRefresh" title="Atualizar Cotacoes">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
@@ -267,6 +272,34 @@ document.addEventListener('libsLoaded', function() {
             iziToast.error({title: 'Erro', message: 'Erro ao salvar no servidor'});
         }
     });
+    
+    // --- Combo de Ano na navbar: "Todos" + 5 anos (atual + 4 anteriores) ---
+    (() => {
+        const select = document.getElementById('selectAno');
+        if (!select) return;
+        const anoAtual = new Date().getFullYear();
+        // Primeiro opção: "Todos" — seleciona por defeito
+        select.innerHTML = `<option value="todos" selected>Todos</option>${[anoAtual, anoAtual-1, anoAtual-2, anoAtual-3, anoAtual-4].map(y => `<option value="${y}" ${y===anoAtual?'selected':''}>${y}</option>`).join('')}`;
+        // Dispatch de evento quando o usuário mudar o ano, para que outros módulos filtrem
+        select.addEventListener('change', (e) => {
+            const valor = e.target.value; // "todos" ou número do ano
+            if (valor === 'todos') {
+                document.dispatchEvent(new CustomEvent('anoSelecionado', { detail: { ano: null, todos: true } }));
+                // Limpar filtro de ano: simular clique no botão "Todos" do histórico
+                const btnTodos = document.querySelector('.history-filter-btn[data-filter-group="periodo"][data-filter-value="all"]');
+                if (btnTodos) {
+                    btnTodos.click();
+                }
+            } else {
+                document.dispatchEvent(new CustomEvent('anoSelecionado', { detail: { ano: Number(valor), todos: false } }));
+                // Aplicar filtro de ano imediatamente: simular clique no botão "Ano" do histórico
+                const btnAno = document.querySelector('.history-filter-btn[data-filter-group="periodo"][data-filter-value="year"]');
+                if (btnAno) {
+                    btnAno.click();
+                }
+            }
+        });
+    })();
     
     // Função para carregar IAs disponíveis no offcanvas
     async function loadAvailableAIsInOffcanvas() {

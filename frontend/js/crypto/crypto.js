@@ -1,8 +1,10 @@
-﻿/** crypto.js v1.9.1 - Controle de Dual Investment Cryptos
- *  (aba Mês Atual: toolbar + gadgets KPI + gráfico da evolução diária) */
+﻿/** crypto.js v2.1.2 - Controle de Dual Investment Cryptos
+ *  (aba Mês Atual: toolbar + gadgets KPI + gráfico da evolução diária;
+ *   aba Histórico: mestre-detalhes — ideias/claude-historico-2.html, card 5) */
 
 let allOperacoes = [];
 let tableMesAtual, tableHistorico;
+let tableHistMes = null;   // DataTable "Operações do mês" (aba Histórico)
 let chartAnual = null;
 let _anualAccDts = {}; // DataTable instances por accordion item
 let currentFilterCrypto = "ABERTA";
@@ -21,6 +23,9 @@ const historicoQuickFilter = {
     tipo: "all"
 };
 let historicoFilterRegistered = false;
+// Estado da aba Histórico (mestre-detalhes — ideias/claude-historico-2.html, card 5)
+let _histSel = null;    // 'YYYY-MM' selecionado no índice de meses
+let _histBound = false;
 
 function setInvestidoMode(mode) {
     _investidoMode = mode;
@@ -278,22 +283,24 @@ function applyLiveQuoteToTables(asset, price) {
     });
 
     // Atualiza células das tabelas que exibem a cotação desse ativo
-    [tableMesAtual, tableHistorico].forEach(dt => {
+    [tableMesAtual, tableHistorico, tableHistMes].forEach(dt => {
         if (!dt || !dt.rows) { try { dt?.draw(false); } catch(e) {} return; }
+        // tableHistMes tem a coluna extra "Data Op." no início (+1 em todos os índices)
+        const off = dt === tableHistMes ? 1 : 0;
         try {
             dt.rows().every(function () {
                 const d = this.data();
-                if (!d || !d[1]) return;
-                const cellAsset = String(d[1]).replace(/<[^>]*>/g, '').trim().toUpperCase();
+                if (!d || !d[1 + off]) return;
+                const cellAsset = String(d[1 + off]).replace(/<[^>]*>/g, '').trim().toUpperCase();
                 if (cellAsset !== upAsset) return;
-                const opAberta = String(d[15] || '').replace(/<[^>]*>/g, '').trim().toUpperCase() === 'ABERTA';
+                const opAberta = String(d[15 + off] || '').replace(/<[^>]*>/g, '').trim().toUpperCase() === 'ABERTA';
                 if (!opAberta) return;
                 const rowIdx = this.index();
-                if (d[3] !== undefined) dt.cell(rowIdx, 3).data(fmtUsd(price));
-                if (d[7] !== undefined) {
+                if (d[3 + off] !== undefined) dt.cell(rowIdx, 3 + off).data(fmtUsd(price));
+                if (d[7 + off] !== undefined) {
                     const opLive = (allOperacoes || []).find(o => String(o.ativo || '').toUpperCase() === upAsset);
                     if (opLive && opLive._liveDist !== undefined) {
-                        dt.cell(rowIdx, 7).data(parseFloat(opLive._liveDist).toFixed(2) + "%");
+                        dt.cell(rowIdx, 7 + off).data(parseFloat(opLive._liveDist).toFixed(2) + "%");
                     }
                 }
             });
@@ -756,15 +763,39 @@ function initDataTables() {
         ]
     };
     tableMesAtual  = $('#tableMesAtual').DataTable(dtConfig);
-    tableHistorico = $('#tableHistorico').DataTable({ ...dtConfig, order: [] });
-    registerHistoricoQuickFilter();
+    // Aba Histórico: a tabela "Todas as Operações" foi substituída pelo layout
+    // mestre-detalhes (índice de meses + painel). Inicializa apenas se existir.
+    if ($('#tableHistorico').length) {
+        tableHistorico = $('#tableHistorico').DataTable({
+            ...dtConfig,
+            order: [],
+            columnDefs: [
+                ...dtConfig.columnDefs,
+                { targets: 0, visible: false, searchable: false }
+            ]
+        });
+        registerHistoricoQuickFilter();
+    }
     // Recalcula larguras das colunas apenas nas tabs principais da tela crypto
     document.querySelectorAll('#cryptoTabs a[data-bs-toggle="tab"]').forEach(tab => {
         tab.addEventListener('shown.bs.tab', () => {
-            tableMesAtual?.columns.adjust();
-            tableHistorico?.columns.adjust();
+            dtAdjustIfVisible(tableMesAtual);
+            dtAdjustIfVisible(tableHistorico);
+            dtAdjustIfVisible(tableHistMes);
         });
     });
+}
+
+// columns.adjust() lança TypeError em tabelas ocultas (display:none);
+// só ajusta quando a tabela está visível (ajuste é refeito no shown.bs.tab)
+function dtAdjustIfVisible(dt) {
+    if (!dt) return;
+    try {
+        const c = dt.table && dt.table().container();
+        if (c && (c.offsetParent !== null || c.getBoundingClientRect().width > 0)) {
+            dt.columns.adjust();
+        }
+    } catch (e) {}
 }
 
 async function loadOperacoes(attempt) {
@@ -802,13 +833,12 @@ function updateUI() {
 
     // Saldo: usa o configurado; se zero, exibe total capital nas posições abertas
     const abertasOps   = allOperacoes.filter(o => (o.status || "ABERTA") === "ABERTA");
-    // Valora investido: novo formato -> abertura(preço) × crypto(qtd); antigo -> abertura era USD direto
+    // Valora investido: detecta o formato via CryptoUtils.valorInvestido
+    // (abertura = USD investido na importação; abertura = preço × qtd no formulário)
 const totalAbertura = abertasOps.reduce((s, o) => {
-        const abr = parseFloat(o.abertura) || 0;
-        const cot = parseFloat(o.cotacao_atual) || 0;
-        const qty = parseFloat(o.crypto) || 0;
-        if (abr > 0 && cot < 0.1) return s + abr;  // formato antigo (USD)
-        return s + (abr > 0 && qty > 0 ? abr * qty : abr);           // formato novo (preço × qtd)
+        return s + (window.CryptoUtils?.valorInvestido
+            ? window.CryptoUtils.valorInvestido(o)
+            : (parseFloat(o.abertura) || 0));
     }, 0);
     const saldoDisplay  = saldo > 0 ? saldo : totalAbertura;
     // Preço médio: média ponderada dos preços de entrada das posições abertas
@@ -836,7 +866,7 @@ const totalAbertura = abertasOps.reduce((s, o) => {
 
     document.getElementById("mesAtualTitle").textContent = "Operacoes - " + getMonthName(currentMonth);
     populateTable(tableMesAtual,  mesAtualData, { prioritizeOpen: true });
-    populateTable(tableHistorico, allOperacoes, { prioritizeOpen: false });
+    if (tableHistorico) populateTable(tableHistorico, allOperacoes, { prioritizeOpen: false });
     renderHistoricoMensal();
     populateAnualYearSelect();
     if (_anualSelectedYear === 'all') {
@@ -1146,6 +1176,12 @@ function populateTable(dt, data, options) {
     const prioritizeOpen = cfg.prioritizeOpen !== false;
     dt.clear();
     [...data].sort((a, b) => {
+        if (cfg.sort === "dataOperacao") {
+            // mais recentes primeiro (data da operação)
+            const cmp = String(b.data_operacao || "").localeCompare(String(a.data_operacao || ""));
+            if (cmp) return cmp;
+            return (b.id || 0) - (a.id || 0);
+        }
         if (prioritizeOpen) {
             const aOpen = (a.status || 'ABERTA') === 'ABERTA' ? 0 : 1;
             const bOpen = (b.status || 'ABERTA') === 'ABERTA' ? 0 : 1;
@@ -1179,7 +1215,7 @@ function populateTable(dt, data, options) {
             if (c === 'BYBIT')   return '<span class="badge bg-info text-white" title="Bybit">BB</span>';
             return `<span class="badge bg-secondary text-white">${c}</span>`;
         })();
-        dt.row.add([
+        const row = [
             corretoraBadge,
             "<span class=\"badge bg-warning text-dark op-analise-link\" style=\"cursor:pointer\" title=\"Análise completa\" data-op-id=\"" + op.id + "\">" + (op.ativo || "-") + "</span>",
             tipoBadge,
@@ -1199,10 +1235,15 @@ function populateTable(dt, data, options) {
             "<button class=\"btn btn-sm btn-primary btn-icon crypto-edit-btn\" data-op-id=\"" + op.id + "\" title=\"Editar\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7\"/><path d=\"M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z\"/></svg></button>" +
             (status === "ABERTA" ? "<button class=\"btn btn-sm btn-danger btn-icon crypto-delete-btn\" data-op-id=\"" + op.id + "\" title=\"Excluir\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"3 6 5 6 21 6\"/><path d=\"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2\"/><line x1=\"10\" y1=\"11\" x2=\"10\" y2=\"17\"/><line x1=\"14\" y1=\"11\" x2=\"14\" y2=\"17\"/></svg></button>" : "") +
             "</div>"
-        ]);
+        ];
+        // Coluna extra "Data Op." no início (tabela do card Operações do mês)
+        if (cfg.prependDate) {
+            row.unshift(op.data_operacao ? formatDateCell(op.data_operacao) : "-");
+        }
+        dt.row.add(row);
     });
     dt.draw();
-    dt.columns.adjust();
+    dtAdjustIfVisible(dt);
 }
 
 function setupHistoricoQuickFilters() {
@@ -1306,17 +1347,156 @@ function matchPeriodoFilter(date, periodo) {
     return true;
 }
 
-function renderHistoricoMensal() {
+/* ── Aba Histórico: mestre-detalhes (índice de meses + painel do mês) ───────
+   Referência: ideias/claude-historico-2.html (card 5). Substitui a lista de
+   meses e a tabela "Todas as Operações" por uma navegação única. */
+function _histAnoAtual() {
+    // Filtro de ano da navbar (#selectAno); null = todos
+    const sel = document.getElementById("selectAno");
+    const v = sel ? String(sel.value || "") : "";
+    return v && v !== "todos" ? v : null;
+}
+
+function _histMonths() {
     const grouped = groupByMonth(allOperacoes);
-    const months  = Object.keys(grouped).sort().reverse();
-    let html = "";
-    months.forEach(month => {
-        const data   = grouped[month];
-        const premio = data.reduce((s, o) => s + (parseFloat(o.premio_us) || 0), 0);
-        const medio  = calcResultadoMedio(data);
-        html += "<div class=\"card mb-2\"><div class=\"card-body py-2\"><div class=\"row align-items-center\"><div class=\"col-md-2 col-6\"><strong>" + getMonthName(month) + "</strong></div><div class=\"col-md-2 col-6\"><span class=\"text-muted small\">Ops:</span> <span class=\"fw-bold\">" + data.length + "</span></div><div class=\"col-md-3 col-6\"><span class=\"text-muted small\">Premio:</span> <span class=\"fw-bold text-success\">" + fmtUsd(premio) + "</span></div><div class=\"col-md-2 col-6\"><span class=\"text-muted small\">Media:</span> <span class=\"fw-bold text-success\">" + medio.toFixed(2) + "%</span></div></div></div></div>";
+    let months = Object.keys(grouped).sort().reverse();
+    const ano = _histAnoAtual();
+    if (ano) months = months.filter(m => m.substring(0, 4) === String(ano));
+    return months.map(k => ({ k: k, ops: grouped[k] }));
+}
+
+function renderHistoricoMensal() {
+    const host = document.getElementById("historicoContainer");
+    if (!host) return;
+
+    // Destroi a DataTable do mês anterior antes de remontar o HTML
+    if (tableHistMes) {
+        try { tableHistMes.destroy(); } catch (e) {}
+        tableHistMes = null;
+    }
+
+    if (!_histBound) {
+        _histBound = true;
+        host.addEventListener("click", function (e) {
+            const b = e.target && e.target.closest ? e.target.closest(".mitem") : null;
+            if (!b || !host.contains(b)) return;
+            _histSel = b.getAttribute("data-k");
+            renderHistoricoMensal();
+        });
+        // Filtro de ano da navbar: refaz o índice de meses
+        document.addEventListener("anoSelecionado", function () {
+            renderHistoricoMensal();
+        });
+    }
+
+    const months = _histMonths();
+    if (!months.length) {
+        host.innerHTML = "<div class=\"text-muted text-center py-4\">Nenhum hist\u00f3rico dispon\u00edvel.</div>";
+        return;
+    }
+    if (!_histSel || !months.some(m => m.k === _histSel)) _histSel = months[0].k;
+
+    const premioOf = d => d.reduce((s, o) => s + (parseFloat(o.premio_us) || 0), 0);
+    const maxP = Math.max.apply(null, months.map(m => premioOf(m.ops))) || 1;
+    const now = new Date();
+    const curK = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0");
+
+    // ── Índice de meses (esquerda) ──
+    let idx = "";
+    months.forEach(m => {
+        const p = premioOf(m.ops);
+        const med = calcResultadoMedio(m.ops);
+        idx += '<button type="button" class="mitem' + (m.k === _histSel ? " sel" : "") + '" data-k="' + m.k + '">' +
+            '<div class="mitem__top">' + getMonthName(m.k) + "<span>" + fmtUsd(p) + "</span></div>" +
+            '<div class="mitem__bar"><i style="width:' + (p / maxP * 100).toFixed(1) + '%"></i></div>' +
+            "<small>" + m.ops.length + " ops \u00b7 m\u00e9dia " + med.toFixed(2) + "%" +
+            (m.k === curK ? " \u00b7 em andamento" : "") + "</small></button>";
     });
-    document.getElementById("historicoContainer").innerHTML = html || "<div class=\"text-muted text-center py-4\">Nenhum historico disponivel.</div>";
+
+    // ── Painel do mês selecionado (direita) ──
+    const sel = months.find(m => m.k === _histSel);
+    const ops = sel.ops;
+    const premio = premioOf(ops);
+    const medio = calcResultadoMedio(ops);
+    let call = 0, put = 0, fech = 0, exe = 0;
+    const byA = {};
+    ops.forEach(o => {
+        const p = parseFloat(o.premio_us) || 0;
+        if (String(o.tipo || "").toUpperCase() === "CALL") call += p; else put += p;
+        const a = String(o.ativo || "-").toUpperCase().replace("USDT", "");
+        byA[a] = (byA[a] || 0) + p;
+        if (String(o.status || "ABERTA").toUpperCase() !== "ABERTA") {
+            fech++;
+            if (getDisplayExerciseStatus(o) === "SIM") exe++;
+        }
+    });
+    const totalCP = call + put;
+    const cpPct = totalCP > 0 ? (call / totalCP * 100) : 50;
+    const coins = Object.keys(byA).sort((x, y) => byA[y] - byA[x]);
+    const maxA = coins.length ? byA[coins[0]] : 1;
+    const colors = { BTC: "#f59e0b", ETH: "#818cf8", BNB: "#eab308" };
+
+    let h = '<div class="md">';
+    h += '<div class="md-side"><h2>Meses</h2><div class="mlist">' + idx + "</div></div>";
+    h += "<div>";
+    h += '<div class="md-card"><h2>' + getMonthName(sel.k) +
+        (sel.k === curK ? ' <span class="md-tag">em andamento</span>' : "") + "</h2>" +
+        '<div class="kpis">' +
+        '<div class="kpi"><div class="kpi__icon blue"><i class="fa-solid fa-dollar-sign"></i></div>' +
+        '<div class="kpi__body"><div class="kpi__lbl">Pr\u00eamio</div><div class="kpi__val green">' + fmtUsd(premio) + "</div></div></div>" +
+        '<div class="kpi"><div class="kpi__icon green"><i class="fa-solid fa-check"></i></div>' +
+        '<div class="kpi__body"><div class="kpi__lbl">Opera\u00e7\u00f5es</div><div class="kpi__val">' + ops.length + "</div></div></div>" +
+        '<div class="kpi"><div class="kpi__icon blue"><i class="fa-solid fa-percent"></i></div>' +
+        '<div class="kpi__body"><div class="kpi__lbl">M\u00e9dia</div><div class="kpi__val">' + medio.toFixed(2) + "%</div></div></div>" +
+        '<div class="kpi"><div class="kpi__icon red"><i class="fa-solid fa-bolt"></i></div>' +
+        '<div class="kpi__body"><div class="kpi__lbl">Taxa de exerc\u00edcio</div><div class="kpi__val">' +
+        (fech ? (exe / fech * 100).toFixed(0) + "% (" + exe + "/" + fech + ")" : "\u2014") +
+        "</div></div></div>" +
+        "</div></div>";
+    h += '<div class="grid2">';
+    h += '<div class="md-card"><h2>CALL \u00d7 PUT <small>por pr\u00eamio</small></h2>' +
+        '<div class="splitbar"><i style="width:' + cpPct.toFixed(1) + '%;background:#d5d8df"></i>' +
+        '<i style="width:' + (100 - cpPct).toFixed(1) + '%;background:#a78bfa"></i></div>' +
+        '<div class="split-legend"><span><b class="mono">CALL</b> ' + fmtUsd(call) + "</span>" +
+        '<span><b class="mono" style="color:#c4b5fd">PUT</b> ' + fmtUsd(put) + "</span></div></div>";
+    h += '<div class="md-card"><h2>Pr\u00eamio por moeda</h2>';
+    coins.forEach(a => {
+        const cls = ["BTC", "ETH", "BNB"].indexOf(a) >= 0 ? a : "other";
+        h += '<div class="brow"><span class="coin ' + cls + '">' + a + "</span>" +
+            '<div class="btrack"><i style="width:' + (maxA ? byA[a] / maxA * 100 : 0).toFixed(1) +
+            "%;background:" + (colors[a] || "#94a3b8") + '"></i></div>' +
+            '<span class="mono" style="text-align:right">' + fmtUsd(byA[a]) + "</span></div>";
+    });
+    h += "</div></div>";
+    h += '<div class="md-card"><h2>Opera\u00e7\u00f5es do m\u00eas <small>mais recentes primeiro</small></h2>';
+    h += '<table id="tableHistMes" class="table table-vcenter card-table"><thead><tr>' +
+        "<th>Data Op.</th><th>Corretora</th><th>Ativo</th><th>Tipo</th><th>Cota\u00e7\u00e3o Atual</th>" +
+        "<th>Abertura</th><th>TAE %</th><th>Strike</th><th>Dist\u00e2ncia</th><th>Pr\u00eamio US$</th>" +
+        "<th>%</th><th>Resultado</th><th>Vencimento</th><th>Prazo</th><th>Crypto</th>" +
+        "<th>Exerc\u00edcio</th><th>Status</th><th>A\u00e7\u00f5es</th>" +
+        "</tr></thead><tbody></tbody></table></div>";
+    h += "</div></div>";
+
+    host.innerHTML = h;
+    initHistMesTable(ops);
+}
+
+function initHistMesTable(ops) {
+    if (!document.getElementById("tableHistMes")) return;
+    if (!window.jQuery || !window.jQuery.fn || !window.jQuery.fn.dataTable) return;
+    tableHistMes = window.jQuery("#tableHistMes").DataTable({
+        language: { url: "https://cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json" },
+        order: [],                 // preserva a ordem "mais recentes primeiro" dos dados
+        pageLength: 10,
+        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Todos"]],
+        scrollX: true,
+        autoWidth: false,
+        columnDefs: [
+            { targets: 1, visible: false, searchable: false },  // Corretora (oculta)
+            { targets: 17, orderable: false }                   // Ações
+        ]
+    });
+    populateTable(tableHistMes, ops, { prioritizeOpen: false, prependDate: true, sort: "dataOperacao" });
 }
 
 function buildAnualOpRow(op) {
@@ -1609,14 +1789,14 @@ function renderChartAnual(data, year) {
         <div class="accordion" id="resumoMensalAcc">
           <div class="accordion-item border-0">
             <h2 class="accordion-header" id="resumoMensalHeader">
-              <button class="accordion-button collapsed" type="button"
+              <button class="accordion-button" type="button"
                       data-bs-toggle="collapse" data-bs-target="#resumoMensalBody"
-                      aria-expanded="false" aria-controls="resumoMensalBody">
+                      aria-expanded="true" aria-controls="resumoMensalBody">
                 <span class="fw-bold me-2">${resumoLabel}</span>
                 <span class="text-muted small ms-2">${summaryText}</span>
               </button>
             </h2>
-            <div id="resumoMensalBody" class="accordion-collapse collapse" aria-labelledby="resumoMensalHeader">
+            <div id="resumoMensalBody" class="accordion-collapse collapse show" aria-labelledby="resumoMensalHeader">
               <div class="accordion-body p-0">
                 <div class="table-responsive">
                   <table class="table table-vcenter table-hover card-table mb-0">
@@ -1902,15 +2082,15 @@ function editOperacao(id) {
     document.getElementById("inputTipo").value               = op.tipo || "CALL";
     document.getElementById("inputStatus").value             = op.status || "ABERTA";
     document.getElementById("inputDataOperacao").value       = op.data_operacao || "";
-    // Valor Investido (USD) derivado: novo formato = preço × qtd; antigo = abertura era USD
+    // Valor Investido (USD) derivado do formato do registro
+    // (ver CryptoUtils.valorInvestido: importação = abertura é o USD investido;
+    //  formulário = abertura é o preço e o investimento é preço × qtd)
     (() => {
         const abr = parseFloat(op.abertura) || 0;
-        const cot = parseFloat(op.cotacao_atual) || 0;
-        const qty = parseFloat(op.crypto) || 0;
-        const isOldFormat = abr > 0 && cot > 0 && abr < cot * 0.1;
-        document.getElementById("inputAbertura").value = isOldFormat
-            ? abr.toFixed(2)
-            : (abr > 0 && qty > 0 ? (abr * qty).toFixed(2) : (abr || ""));
+        const investido = window.CryptoUtils?.valorInvestido
+            ? window.CryptoUtils.valorInvestido(op)
+            : abr;
+        document.getElementById("inputAbertura").value = investido > 0 ? investido.toFixed(2) : "";
     })();
     document.getElementById("inputStrike").value             = op.strike || "";
     document.getElementById("inputTae").value                = op.tae || "";

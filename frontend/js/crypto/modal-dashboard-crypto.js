@@ -718,8 +718,6 @@
                 const cotacao = op.cotacao_atual ? fmtC(op.cotacao_atual) : (op.strike ? fmtC(op.strike) : '-');
                 const exercicio = op.exercicio ? fmtDateBR(op.exercicio) : '-';
                 const dataOp = op.data_operacao ? fmtDateBR(op.data_operacao) : '-';
-                const estrategia = op.tipo_estrategia || 'DUAL_INVESTMENT';
-                const corretora = op.corretora || 'BINANCE';
                 const badgeCls = getBadgeClass(tipo, status, exStatus);
                 const showStamp = status === 'FECHADA';
 
@@ -737,8 +735,6 @@
                     <div class="dc-rc-row"><span>Fechamento</span><span>${exercicio}</span></div>
                     <div class="dc-rc-row"><span>Strike</span><span>${strike}</span></div>
                     <div class="dc-rc-row"><span>Cotação</span><span>${cotacao}</span></div>
-                    <div class="dc-rc-row"><span>Estratégia</span><span>${estrategia}</span></div>
-                    <div class="dc-rc-row"><span>Corretora</span><span>${corretora}</span></div>
                     <div class="dc-rc-total">
                         <span class="dc-rc-total__lbl">Prêmio recebido</span>
                         <span class="dc-rc-total__val">${val >= 0 ? '+' : ''}${fmtC(val).replace('US$ ', '')}</span>

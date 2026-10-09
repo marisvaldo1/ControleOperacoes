@@ -1,7 +1,8 @@
 /**
- * modal-analise.js  v1.5.0
+ * modal-analise.js  v1.5.3
  * Modal de Análise de Performance – padrão IIFE do projeto
  * Acionado pelo botão #btnAnalise na barra superior
+ * v1.5.3 — empty states exibem CelularSugestoes (dados do banco) quando não há posições abertas
  */
 (function () {
     'use strict';
@@ -1020,7 +1021,10 @@
         const summaryEl = document.getElementById('maPosSummary');
         if (loadingEl) loadingEl.style.display = 'none';
         if (state.posicoes.length === 0) {
-            if (emptyEl) emptyEl.style.display = '';
+            if (emptyEl) {
+                emptyEl.style.display = '';
+                if (window.CelularSugestoes) window.CelularSugestoes.mount(emptyEl, state.ops || []);
+            }
             if (container) container.style.display = 'none';
             if (summaryEl) summaryEl.style.display = 'none';
             return;
@@ -1453,7 +1457,10 @@
         if (!sectionsEl) return;
         if (state.posicoes.length === 0) {
             if (loadingEl) loadingEl.style.display = 'none';
-            if (emptyEl) emptyEl.style.removeProperty('display');
+            if (emptyEl) {
+                emptyEl.style.removeProperty('display');
+                if (window.CelularSugestoes) window.CelularSugestoes.mount(emptyEl, state.ops || []);
+            }
             sectionsEl.style.display = 'none';
             return;
         }
@@ -1518,7 +1525,10 @@
         if (!sectionsEl) return;
         if (state.posicoes.length === 0) {
             if (loadingEl) loadingEl.style.display = 'none';
-            if (emptyEl) emptyEl.style.removeProperty('display');
+            if (emptyEl) {
+                emptyEl.style.removeProperty('display');
+                if (window.CelularSugestoes) window.CelularSugestoes.mount(emptyEl, state.ops || []);
+            }
             sectionsEl.style.display = 'none';
             return;
         }

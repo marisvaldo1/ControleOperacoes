@@ -1,5 +1,5 @@
 /* =========================================
-   crypto.css  v1.2.0
+   crypto.css  v1.6.2
    Estilos específicos para Controle de Cryptos
    ========================================= */
 
@@ -1077,4 +1077,90 @@
 @media (max-width: 640px) {
     .mes-kpi-grid { grid-template-columns: repeat(2, 1fr); }
     .mes-chart-box { height: 220px; }
+}
+
+/* ============================================================
+   Aba Histórico — mestre-detalhes
+   Referência: ideias/claude-historico-2.html (card 5)
+   ============================================================ */
+#historicoContainer {
+    --md-panel: #0f172a;
+    --md-tile: #131c30;
+    --md-border: rgba(255, 255, 255, 0.1);
+    --md-text: #cbd5e1;
+    --md-muted: rgba(203, 213, 225, 0.55);
+    --md-blue: #3b82f6;
+    --md-green: #2fb344;
+    --md-amber: #f59f00;
+    --md-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    color: var(--md-text);
+}
+#historicoContainer * { box-sizing: border-box; }
+
+/* Índice de meses (esquerda) + painel do mês (direita) */
+#historicoContainer .md { display: grid; grid-template-columns: 260px 1fr; gap: 16px; }
+#historicoContainer .md-side { background: var(--md-panel); border: 1px solid var(--md-border); border-radius: 12px; padding: 14px; }
+#historicoContainer .md-side h2 { font-size: 15px; font-weight: 700; margin: 0 0 10px; }
+#historicoContainer .mlist { display: flex; flex-direction: column; gap: 6px; max-height: 640px; overflow-y: auto; padding-right: 4px; }
+#historicoContainer .mitem { display: block; width: 100%; text-align: left; background: var(--md-tile); border: 1px solid var(--md-border); border-radius: 10px; padding: 10px 12px; cursor: pointer; color: var(--md-text); font: inherit; }
+#historicoContainer .mitem:hover { border-color: #4f5361; }
+#historicoContainer .mitem:focus-visible { outline: 2px solid var(--md-blue); outline-offset: 1px; }
+#historicoContainer .mitem.sel { border-color: var(--md-blue); background: rgba(59, 130, 246, .10); }
+#historicoContainer .mitem__top { display: flex; justify-content: space-between; font-size: 12.5px; font-weight: 600; }
+#historicoContainer .mitem__top span { font-family: var(--md-mono); font-size: 12px; color: var(--md-green); }
+#historicoContainer .mitem__bar { height: 4px; background: #15161a; border-radius: 3px; margin-top: 7px; overflow: hidden; }
+#historicoContainer .mitem__bar i { display: block; height: 100%; background: var(--md-green); opacity: .75; }
+#historicoContainer .mitem small { color: var(--md-muted); font-size: 10.5px; }
+
+/* Painel do mês */
+#historicoContainer .md-card { background: var(--md-panel); border: 1px solid var(--md-border); border-radius: 12px; padding: 14px 16px; margin-bottom: 14px; }
+#historicoContainer .md-card h2 { font-size: 15px; font-weight: 700; margin: 0 0 10px; display: flex; align-items: center; gap: 8px; }
+#historicoContainer .md-card h2 small { font-size: 11px; font-weight: 400; color: var(--md-muted); }
+#historicoContainer .md-tag { font-size: 9.5px; background: rgba(59, 130, 246, .2); color: #60a5fa; border-radius: 4px; padding: 2px 6px; font-weight: 700; }
+/* KPIs — layout de card com ícone circular colorido */
+#historicoContainer .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+#historicoContainer .kpi { display: flex; align-items: center; gap: 12px; background: #12161d; border: 1px solid rgba(255,255,255,.09); border-radius: 10px; padding: 14px 16px; }
+#historicoContainer .kpi__icon { width: 38px; height: 38px; border-radius: 50%; flex: 0 0 38px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 15px; }
+#historicoContainer .kpi__icon.blue { background: #228be6; }
+#historicoContainer .kpi__icon.green { background: #40c057; }
+#historicoContainer .kpi__icon.red { background: #fa5252; }
+#historicoContainer .kpi__body { min-width: 0; }
+#historicoContainer .kpi__lbl { font-size: 12px; color: #8b949e; line-height: 1.35; }
+#historicoContainer .kpi__val { font-weight: 700; font-size: 15px; color: #e9ecef; line-height: 1.35; }
+#historicoContainer .kpi__val.green { color: #2fb344; }
+#historicoContainer .up { color: var(--md-green); }
+#historicoContainer .dim { color: var(--md-muted); }
+#historicoContainer .mono { font-family: var(--md-mono); }
+
+/* CALL × PUT + prêmio por moeda */
+#historicoContainer .grid2 { display: grid; grid-template-columns: 1.2fr 1fr; gap: 14px; }
+#historicoContainer .splitbar { display: flex; height: 12px; border-radius: 6px; overflow: hidden; margin: 8px 0 6px; }
+#historicoContainer .split-legend { display: flex; justify-content: space-between; font-size: 12px; }
+#historicoContainer .brow { display: grid; grid-template-columns: 50px 1fr 90px; gap: 10px; align-items: center; font-size: 12px; margin-bottom: 7px; }
+#historicoContainer .btrack { height: 9px; background: #15161a; border-radius: 5px; overflow: hidden; }
+#historicoContainer .btrack i { display: block; height: 100%; border-radius: 5px; }
+
+/* Operações do mês (DataTable) */
+#historicoContainer .md-card table.dataTable { width: 100% !important; font-size: 12.5px; }
+#historicoContainer .md-card table.dataTable thead th { font-size: 11px; text-transform: uppercase; letter-spacing: .03em; color: var(--md-muted); border-bottom: 1px solid var(--md-border); white-space: nowrap; }
+#historicoContainer .md-card table.dataTable tbody td { border-color: var(--md-border); vertical-align: middle; white-space: nowrap; }
+#historicoContainer .md-card .dataTables_wrapper .dataTables_length,
+#historicoContainer .md-card .dataTables_wrapper .dataTables_filter { color: var(--md-muted); font-size: 12px; }
+#historicoContainer .md-card .dataTables_wrapper .dataTables_length select,
+#historicoContainer .md-card .dataTables_wrapper .dataTables_filter input { background: var(--md-tile); border: 1px solid var(--md-border); color: #e9ecef; border-radius: 6px; padding: 3px 6px; }
+#historicoContainer .md-card .dataTables_wrapper .dataTables_info { color: var(--md-muted); font-size: 11.5px; }
+#historicoContainer .md-card .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+#historicoContainer .md-card .dataTables_wrapper .dataTables_paginate .paginate_button:hover { background: #228be6 !important; border-color: #228be6 !important; color: #fff !important; border-radius: 6px; }
+#historicoContainer .md-card .dataTables_wrapper .dataTables_paginate .paginate_button.disabled,
+#historicoContainer .md-card .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover { background: transparent !important; color: var(--md-muted) !important; }
+#historicoContainer .coin { display: inline-block; font-size: 10.5px; font-weight: 800; padding: 3px 9px; border-radius: 6px; color: #16171b; min-width: 42px; text-align: center; }
+#historicoContainer .coin.BTC { background: #f59f00; }
+#historicoContainer .coin.ETH { background: #818cf8; }
+#historicoContainer .coin.BNB { background: #eab308; }
+#historicoContainer .coin.other { background: #94a3b8; }
+
+@media (max-width: 992px) {
+    #historicoContainer .md { grid-template-columns: 1fr; }
+    #historicoContainer .kpis { grid-template-columns: 1fr 1fr; }
+    #historicoContainer .grid2 { grid-template-columns: 1fr; }
 }

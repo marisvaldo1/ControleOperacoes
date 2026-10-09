@@ -291,6 +291,22 @@
         });
     }
 
+    // ─── Valor investido (USD) ───────────────────────────────────────────────
+    // Dois formatos de `abertura` convivem no banco:
+    //  - Importação Binance (antigo): abertura já é o USD investido e crypto = abertura / ref
+    //  - Formulário (novo):           abertura é o preço de abertura e crypto é a quantidade
+    // Detecta o formato pela relação abertura ≈ qtd × ref (strike ou cotação).
+    // Heurística antiga (abertura < 10% da cotação) falhava em ativos de baixo preço
+    // (ex.: ETH com US$ 7.990 investidos vs cotação US$ 2.726) e inflava o valor 3x.
+    function valorInvestido(op) {
+        const abr = parseFloat(op && op.abertura) || 0;
+        const qty = parseFloat(op && op.crypto)   || 0;
+        const ref = parseFloat(op && op.strike)   || parseFloat(op && op.cotacao_atual) || 0;
+        if (abr <= 0) return 0;
+        if (qty > 0 && ref > 0 && Math.abs(abr - qty * ref) <= Math.abs(abr * 0.02)) return abr;
+        return qty > 0 ? abr * qty : abr;
+    }
+
     // ─── Expor globalmente ──────────────────────────────────────────────────
     window.CryptoUtils = {
         getRisk: getRisk,
@@ -303,6 +319,7 @@
         bindProfitTooltips: bindProfitTooltips,
         renderPmLink: renderPmLink,
         bindPmTooltips: bindPmTooltips,
+        valorInvestido: valorInvestido,
     };
 
 })();

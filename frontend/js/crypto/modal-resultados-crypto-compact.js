@@ -94,11 +94,12 @@
     };
 
     const getValorInvestido = op => {
-        const abr = parseFloat(op.abertura)      || 0;
-        const cot = parseFloat(op.cotacao_atual)  || 0;
-        const qty = parseFloat(op.crypto)         || 0;
-        if (abr <= 0) return 0;
-        return (cot > 0 && abr < cot * 0.1) ? abr : abr * qty;
+        // Formato do registro detectado em CryptoUtils.valorInvestido
+        // (importação: abertura = USD investido; formulário: abertura = preço × qtd)
+        if (window.CryptoUtils && typeof window.CryptoUtils.valorInvestido === 'function') {
+            return window.CryptoUtils.valorInvestido(op);
+        }
+        return parseFloat(op.abertura) || 0;
     };
 
     /* ─────────────────────────────
