@@ -35,6 +35,7 @@
         dlt:   0.30,
         sort:  'ann',
         radarView: 'bubbles', // 'bubbles' | 'table'
+        radarFilter: '',  // filtro de texto para modo tabela
         updated: null,
     };
 
@@ -471,16 +472,33 @@
             const maxNet = Math.max.apply(null, [1].concat(allBest.map(function (b) { return Math.max(0, b.premio_liquido || 0); })));
 
             if (G.radarView === 'table') {
-                // DataTable do radar
+                // DataTable do radar com filtro
                 q('[data-radar]', el).innerHTML = vis.length
-                    ? '<div style="overflow-x:auto"><table class="sc-t" style="font-size:11px"><thead><tr>' +
+                    ? '<div style="margin-bottom:8px"><input type="search" id="scRadarFilter" placeholder="Filtrar ativos (ticker, empresa...)" style="width:100%;padding:8px 12px;border-radius:6px;border:1px solid var(--sc-border);background:var(--sc-panel3);color:var(--sc-text);font-family:inherit;font-size:12px;" value="' + esc(G.radarFilter) + '"></div>' +
+                      '<div style="overflow-x:auto"><table class="sc-t" style="font-size:11px"><thead><tr>' +
                       '<th>Ativo</th><th>Preço</th><th>Lote</th><th>% Saldo</th><th>Strike</th><th>Prêmio</th><th>Anual.</th><th>PoP</th><th>Δ</th><th>Ação</th></tr></thead><tbody>' +
-                      vis.map(function (s) {
+                      vis.filter(function (s) {
+                          const q = G.radarFilter.toLowerCase();
+                          return !q || s.simbolo.toLowerCase().includes(q) ||
+                              (s.item.empresa || '').toLowerCase().includes(q) ||
+                              (s.item.atividade || '').toLowerCase().includes(q) ||
+                              (s.item.setor || '').toLowerCase().includes(q) ||
+                              (s.item.perfil || '').toLowerCase().includes(q);
+                      }).map(function (s) {
                           const b = s.best;
                           const use = b.capital / Math.max(1, f.saldo) * 100;
                           return '<tr><td><b>' + esc(s.simbolo) + '</b></td><td>' + usd(s.item.preco) + '</td><td>' + usd(b.capital, 0) + '</td><td>' + pct(use, 1) + '</td><td><b>' + kfmt(b.strike) + '</b></td><td class="sc-up">' + sg(b.premio_liquido) + '</td><td>' + pct((b.anualizado || 0) * 100, 1) + '</td><td>' + pct((b.pop_lucro || 0) * 100, 0) + '</td><td>' + fmt(b.delta, 2) + '</td><td><button class="sc-btn sc-btn-blue sc-btn-sm" data-open="' + esc(s.simbolo) + '">Abrir</button></td></tr>';
                       }).join('') + '</tbody></table></div>'
                     : '<div class="sc-empty">Nenhum ativo dentro do filtro e do saldo.</div>';
+
+                // Event listener do filtro
+                const filterInput = q('#scRadarFilter', el);
+                if (filterInput) {
+                    filterInput.addEventListener('input', function () {
+                        G.radarFilter = this.value;
+                        SC.update();
+                    });
+                }
             } else {
                 // Bolhas (original)
                 q('[data-radar]', el).innerHTML = vis.length
