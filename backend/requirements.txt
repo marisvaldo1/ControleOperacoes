@@ -4,5 +4,6 @@ requests
 python-dotenv
 yfinance>=0.2.32
 certifi
+truststore>=0.10
 pytest>=7.0
 pytest-json-report>=1.5

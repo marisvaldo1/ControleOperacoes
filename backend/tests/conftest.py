@@ -12,6 +12,10 @@ if BACKEND_DIR not in sys.path:
     sys.path.insert(0, BACKEND_DIR)
 os.chdir(BACKEND_DIR)
 
+# Backup da implementação anterior (sufixo _bkp) — guardado, mas fora da
+# coleta do pytest para não duplicar a suíte.
+collect_ignore = ['test_api_simulador_bkp.py']
+
 import db as _db_module  # noqa: E402
 import server as _server_module  # noqa: E402
 

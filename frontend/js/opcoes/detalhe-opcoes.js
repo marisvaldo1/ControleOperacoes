@@ -245,6 +245,20 @@ function setupEventListeners() {
         const newBtn = document.getElementById('btnDetalheRefresh');
         newBtn.addEventListener('click', () => refreshDetalheOperacao());
     }
+
+    // Botão Fechar antecipadamente (operações ABERTA)
+    const btnFechar = document.getElementById('btnDetalheFechar');
+    if (btnFechar) {
+        btnFechar.replaceWith(btnFechar.cloneNode(true));
+        const newFechar = document.getElementById('btnDetalheFechar');
+        newFechar.addEventListener('click', async () => {
+            if (!currentDetalheOpId) return;
+            if (typeof fecharAntecipadoOpcao === 'function') {
+                // fecharAntecipadoOpcao já re-renderiza o detalhe se o modal estiver aberto
+                await fecharAntecipadoOpcao(currentDetalheOpId);
+            }
+        });
+    }
     
     // Listener para tabs - re-renderizar gráficos quando tab é mostrada
     const tabLinks = document.querySelectorAll('[data-bs-toggle="tab"]');
@@ -332,7 +346,13 @@ function populateDetalheModal(op) {
     const spotPrice = Number.parseFloat(op.preco_atual || op.preco_ativo_base || op.strike || strike);
     const tipoOpcao = String(op.tipo || 'CALL').toUpperCase();
     const statusOperacao = String(op.status || 'ABERTA').toUpperCase();
-    
+
+    // Botão Fechar antecipadamente: somente para operações em aberto
+    const btnFecharDet = document.getElementById('btnDetalheFechar');
+    if (btnFecharDet) {
+        btnFecharDet.classList.toggle('d-none', statusOperacao !== 'ABERTA');
+    }
+
     // Badge de tipo de opção
     const badgeType = document.getElementById('detBadgeType');
     if (badgeType) {

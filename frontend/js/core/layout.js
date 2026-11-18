@@ -26,6 +26,9 @@ document.addEventListener('libsLoaded', function() {
                 <div class="nav-item d-flex me-2 me-md-3">
                     <div id="navbarCryptoPrices" style="display:flex;gap:6px;align-items:center;flex-wrap:nowrap;overflow-x:auto;max-width:40vw;-webkit-overflow-scrolling:touch;scrollbar-width:none;"></div>
                 </div>
+                <div class="nav-item d-flex me-2 me-md-3">
+                    <div id="navbarAcoesPrices" style="display:flex;gap:6px;align-items:center;flex-wrap:nowrap;overflow-x:auto;max-width:40vw;-webkit-overflow-scrolling:touch;scrollbar-width:none;"></div>
+                </div>
                 <div class="nav-item">
                     <select class="form-select form-select-sm" id="selectAno" style="width:120px;">
                         <option value="">Ano</option>
@@ -67,6 +70,14 @@ document.addEventListener('libsLoaded', function() {
                                 <span class="nav-link-title">Opções</span>
                             </a>
                         </li>
+                        <li class="nav-item ${currentPage === 'simulador' ? 'active' : ''}">
+                            <a class="nav-link" href="simulador.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8"/><path d="M8 10h.01"/><path d="M12 10h.01"/><path d="M16 10h.01"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/></svg>
+                                </span>
+                                <span class="nav-link-title">Simulador</span>
+                            </a>
+                        </li>
                         <li class="nav-item d-md-none">
                             <a class="nav-link" href="posicoes-abertas.html">
                                 <span class="nav-link-icon">
@@ -88,44 +99,83 @@ document.addEventListener('libsLoaded', function() {
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
         </div>
         <div class="offcanvas-body">
-            <div class="mb-3">
-                <label class="form-label">API Oplab Key</label>
-                <input type="text" class="form-control" id="configOplabKey" placeholder="Sua chave API Oplab">
+            <ul class="nav nav-tabs mb-3" id="configTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="configTabCryptoBtn" data-bs-toggle="tab" data-bs-target="#configTabCrypto" type="button" role="tab">🪙 Crypto</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="configTabOpcoesBtn" data-bs-toggle="tab" data-bs-target="#configTabOpcoes" type="button" role="tab">📈 Opções</button>
+                </li>
+            </ul>
+            <div class="tab-content">
+                <!-- ═══ Aba Crypto ═══ -->
+                <div class="tab-pane fade show active" id="configTabCrypto" role="tabpanel">
+                    <div class="mb-3">
+                        <label class="form-label">API Oplab Key</label>
+                        <input type="text" class="form-control config-common" id="configOplabKeyCrypto" placeholder="Sua chave API Oplab">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Meta Mensal (R$)</label>
+                        <input type="number" step="0.01" class="form-control config-common" id="configMetaCrypto" placeholder="0.00">
+                    </div>
+                    <hr class="my-3">
+                    <div class="mb-3">
+                        <label class="form-label">Binance API Key</label>
+                        <input type="text" class="form-control" id="configBinanceKey" placeholder="Sua chave API Binance">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Binance Secret</label>
+                        <input type="password" class="form-control" id="configBinanceSecret" placeholder="Seu secret Binance">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Saldo em Crypto (USD)</label>
+                        <input type="number" step="0.01" class="form-control" id="configSaldoCrypto" placeholder="0.00">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ativos para Cotação (Navbar Crypto)</label>
+                        <input type="text" class="form-control" id="configNavbarAtivos" placeholder="Ex: BTC,ETH,BNB">
+                        <div class="form-text">Até 5 criptos separadas por vírgula</div>
+                    </div>
+                    <hr class="my-3">
+                    <div class="mb-3">
+                        <label class="form-label">Inteligência Artificial</label>
+                        <select class="form-select config-selected-ai" id="configSelectedAICrypto">
+                            <option value="">Carregando...</option>
+                        </select>
+                        <div class="form-text">Escolha qual IA usar para análises</div>
+                    </div>
+                </div>
+                <!-- ═══ Aba Opções ═══ -->
+                <div class="tab-pane fade" id="configTabOpcoes" role="tabpanel">
+                    <div class="mb-3">
+                        <label class="form-label">API Oplab Key</label>
+                        <input type="text" class="form-control config-common" id="configOplabKeyOpcoes" placeholder="Sua chave API Oplab">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Meta Mensal (R$)</label>
+                        <input type="number" step="0.01" class="form-control config-common" id="configMetaOpcoes" placeholder="0.00">
+                    </div>
+                    <hr class="my-3">
+                    <div class="mb-3">
+                        <label class="form-label">Saldo em Ações (R$)</label>
+                        <input type="number" step="0.01" class="form-control" id="configSaldoAcoes" placeholder="0.00">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ativos de Ações para Cotação (Navbar)</label>
+                        <input type="text" class="form-control" id="configNavbarAtivosAcoes" placeholder="Ex: PETR4,BBAS3,ITUB4,VALE3">
+                        <div class="form-text">Até 5 ações separadas por vírgula</div>
+                    </div>
+                    <hr class="my-3">
+                    <div class="mb-3">
+                        <label class="form-label">Inteligência Artificial</label>
+                        <select class="form-select config-selected-ai" id="configSelectedAIOpcoes">
+                            <option value="">Carregando...</option>
+                        </select>
+                        <div class="form-text">Escolha qual IA usar para análises</div>
+                    </div>
+                </div>
             </div>
-            <div class="mb-3">
-                <label class="form-label">Binance API Key</label>
-                <input type="text" class="form-control" id="configBinanceKey" placeholder="Sua chave API Binance">
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Binance Secret</label>
-                <input type="password" class="form-control" id="configBinanceSecret" placeholder="Seu secret Binance">
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Meta Mensal (R$)</label>
-                <input type="number" step="0.01" class="form-control" id="configMeta" placeholder="0.00">
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Saldo em Ações (R$)</label>
-                <input type="number" step="0.01" class="form-control" id="configSaldoAcoes" placeholder="0.00">
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Saldo em Crypto (USD)</label>
-                <input type="number" step="0.01" class="form-control" id="configSaldoCrypto" placeholder="0.00">
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Ativos para Cotação (Navbar)</label>
-                <input type="text" class="form-control" id="configNavbarAtivos" placeholder="Ex: BTC,ETH,BNB">
-                <div class="form-text">Até 5 ativos separados por vírgula</div>
-            </div>
-            <hr class="my-4">
-            <div class="mb-3">
-                <label class="form-label">Inteligência Artificial</label>
-                <select class="form-select" id="configSelectedAI">
-                    <option value="">Carregando...</option>
-                </select>
-                <div class="form-text">Escolha qual IA usar para análises</div>
-            </div>
-            <button class="btn btn-primary w-100" id="btnSaveConfig">Salvar Configuracoes</button>
+            <button class="btn btn-primary w-100 mt-3" id="btnSaveConfig">Salvar Configuracoes</button>
         </div>
     </div>`;
     
@@ -188,15 +238,44 @@ document.addEventListener('libsLoaded', function() {
     }
     updateThemeIcons(theme);
     
+    // ── Helpers dos campos de configuração (offcanvas com abas) ──────────────
+    function setConfigVal(id, val) {
+        const el = document.getElementById(id);
+        if (el && val !== undefined && val !== null && val !== '') el.value = val;
+    }
+    // Campos comuns repetidos nas abas Crypto/Opções
+    function setCommonConfigVal(ids, val) { ids.forEach(id => setConfigVal(id, val)); }
+    function getConfigVal(id) { const el = document.getElementById(id); return el ? el.value : ''; }
+    function firstFilledConfigVal(a, b) {
+        const va = String(getConfigVal(a) || '').trim();
+        return va !== '' ? va : String(getConfigVal(b) || '').trim();
+    }
+    function normalizeTickerList(raw) {
+        return String(raw || '').toUpperCase().split(',').map(s => s.trim()).filter(Boolean).slice(0, 5).join(',');
+    }
+    function setAiSelects(val) {
+        if (!val) return;
+        document.querySelectorAll('.config-selected-ai').forEach(sel => {
+            const has = Array.prototype.some.call(sel.options, o => o.value === val);
+            if (has) sel.value = val;
+        });
+    }
+    function applyConfigToForm(cfg) {
+        if (!cfg) return;
+        setCommonConfigVal(['configOplabKeyCrypto', 'configOplabKeyOpcoes'], cfg.oplabKey);
+        setCommonConfigVal(['configMetaCrypto', 'configMetaOpcoes'], cfg.meta);
+        setConfigVal('configBinanceKey', cfg.binanceKey);
+        setConfigVal('configBinanceSecret', cfg.binanceSecret);
+        setConfigVal('configSaldoCrypto', cfg.saldoCrypto);
+        setConfigVal('configNavbarAtivos', cfg.navbarAtivos);
+        setConfigVal('configSaldoAcoes', cfg.saldoAcoes);
+        setConfigVal('configNavbarAtivosAcoes', cfg.navbarAtivosAcoes);
+        setAiSelects(cfg.selected_ai);
+    }
+
     // Load config from localStorage
     const savedConfig = JSON.parse(localStorage.getItem('appConfig') || '{}');
-    if (savedConfig.oplabKey) document.getElementById('configOplabKey').value = savedConfig.oplabKey;
-    if (savedConfig.binanceKey) document.getElementById('configBinanceKey').value = savedConfig.binanceKey;
-    if (savedConfig.binanceSecret) document.getElementById('configBinanceSecret').value = savedConfig.binanceSecret;
-    if (savedConfig.meta) document.getElementById('configMeta').value = savedConfig.meta;
-    if (savedConfig.saldoAcoes) document.getElementById('configSaldoAcoes').value = savedConfig.saldoAcoes;
-    if (savedConfig.saldoCrypto) document.getElementById('configSaldoCrypto').value = savedConfig.saldoCrypto;
-    if (savedConfig.navbarAtivos) document.getElementById('configNavbarAtivos').value = savedConfig.navbarAtivos;
+    applyConfigToForm(savedConfig);
     
     // Carregar IAs disponíveis
     loadAvailableAIsInOffcanvas();
@@ -205,16 +284,7 @@ document.addEventListener('libsLoaded', function() {
     fetch(API_BASE + '/api/config')
         .then(r => r.json())
         .then(config => {
-            if (config.oplabKey) document.getElementById('configOplabKey').value = config.oplabKey;
-            if (config.binanceKey) document.getElementById('configBinanceKey').value = config.binanceKey;
-            if (config.binanceSecret) document.getElementById('configBinanceSecret').value = config.binanceSecret;
-            if (config.meta) document.getElementById('configMeta').value = config.meta;
-            if (config.saldoAcoes) document.getElementById('configSaldoAcoes').value = config.saldoAcoes;
-            if (config.saldoCrypto) document.getElementById('configSaldoCrypto').value = config.saldoCrypto;
-            if (config.navbarAtivos) document.getElementById('configNavbarAtivos').value = config.navbarAtivos;
-            if (config.selected_ai && document.getElementById('configSelectedAI').options.length > 1) {
-                document.getElementById('configSelectedAI').value = config.selected_ai;
-            }
+            applyConfigToForm(config);
             
             // Update localStorage
             const newConfig = {...savedConfig, ...config};
@@ -225,13 +295,17 @@ document.addEventListener('libsLoaded', function() {
     // Save config
     document.getElementById('btnSaveConfig').addEventListener('click', async function() {
         const config = {
-            oplabKey: document.getElementById('configOplabKey').value,
-            binanceKey: document.getElementById('configBinanceKey').value,
-            binanceSecret: document.getElementById('configBinanceSecret').value,
-            meta: document.getElementById('configMeta').value,
-            saldoAcoes: document.getElementById('configSaldoAcoes').value,
-            saldoCrypto: document.getElementById('configSaldoCrypto').value,
-            navbarAtivos: (document.getElementById('configNavbarAtivos').value || '').toUpperCase().split(',').map(function(s){return s.trim();}).filter(Boolean).slice(0,5).join(',')
+            // Campos comuns às abas (usa o valor preenchido em qualquer uma delas)
+            oplabKey: firstFilledConfigVal('configOplabKeyCrypto', 'configOplabKeyOpcoes'),
+            meta: firstFilledConfigVal('configMetaCrypto', 'configMetaOpcoes'),
+            // Crypto
+            binanceKey: getConfigVal('configBinanceKey'),
+            binanceSecret: getConfigVal('configBinanceSecret'),
+            saldoCrypto: getConfigVal('configSaldoCrypto'),
+            navbarAtivos: normalizeTickerList(getConfigVal('configNavbarAtivos')),
+            // Opções
+            saldoAcoes: getConfigVal('configSaldoAcoes'),
+            navbarAtivosAcoes: normalizeTickerList(getConfigVal('configNavbarAtivosAcoes'))
         };
         localStorage.setItem('appConfig', JSON.stringify(config));
 
@@ -240,13 +314,18 @@ document.addEventListener('libsLoaded', function() {
             const cryptoCfg = JSON.parse(localStorage.getItem('cryptoConfig') || '{}');
             if (config.saldoCrypto) cryptoCfg.saldoCrypto = config.saldoCrypto;
             if (config.navbarAtivos) cryptoCfg.navbarAtivos = config.navbarAtivos;
+            if (config.navbarAtivosAcoes) cryptoCfg.navbarAtivosAcoes = config.navbarAtivosAcoes;
             localStorage.setItem('cryptoConfig', JSON.stringify(cryptoCfg));
         } catch (_) {}
-        // Notifica a página crypto para atualizar UI instantaneamente
+        // Notifica as páginas crypto/opções para atualizar UI instantaneamente
         window.dispatchEvent(new CustomEvent('cryptoConfigUpdated', { detail: config }));
+        window.dispatchEvent(new CustomEvent('opcoesConfigUpdated', { detail: config }));
         // Atualiza navbar com novos ativos
         if (window.CryptoNavbar && typeof window.CryptoNavbar.refresh === 'function') {
             window.CryptoNavbar.refresh();
+        }
+        if (window.AcoesNavbar && typeof window.AcoesNavbar.refresh === 'function') {
+            window.AcoesNavbar.refresh();
         }
         
         try {
@@ -258,7 +337,7 @@ document.addEventListener('libsLoaded', function() {
             });
             
             // Salvar IA selecionada
-            const selectedAI = document.getElementById('configSelectedAI').value;
+            const selectedAI = getConfigVal('configSelectedAICrypto') || getConfigVal('configSelectedAIOpcoes');
             if (selectedAI) {
                 await fetch(API_BASE + '/api/config-ia', {
                     method: 'POST',
@@ -307,25 +386,26 @@ document.addEventListener('libsLoaded', function() {
             const res = await fetch(API_BASE + '/api/available-ais');
             const data = await res.json();
             
-            const select = document.getElementById('configSelectedAI');
-            select.innerHTML = '';
-            
-            if (data.available && data.available.length > 0) {
-                data.available.forEach(ai => {
-                    const option = document.createElement('option');
-                    option.value = ai.key;
-                    option.textContent = ai.name;
-                    if (ai.key === data.current) {
-                        option.selected = true;
-                    }
-                    select.appendChild(option);
-                });
-            } else {
-                select.innerHTML = '<option value="">Nenhuma IA configurada</option>';
-            }
+            const selects = document.querySelectorAll('.config-selected-ai');
+            if (!selects.length) return;
+            const optionsHtml = (data.available && data.available.length > 0)
+                ? data.available.map(ai => `<option value="${ai.key}" ${ai.key === data.current ? 'selected' : ''}>${ai.name}</option>`).join('')
+                : '<option value="">Nenhuma IA configurada</option>';
+            selects.forEach(select => {
+                select.innerHTML = optionsHtml;
+                // Mantém as duas abas sincronizadas ao trocar a IA
+                if (!select._aiBound) {
+                    select._aiBound = true;
+                    select.addEventListener('change', function () {
+                        setAiSelects(this.value);
+                    });
+                }
+            });
         } catch (e) {
             console.error('Erro ao carregar IAs disponíveis:', e);
-            document.getElementById('configSelectedAI').innerHTML = '<option value="">Erro ao carregar</option>';
+            document.querySelectorAll('.config-selected-ai').forEach(select => {
+                select.innerHTML = '<option value="">Erro ao carregar</option>';
+            });
         }
     }
     

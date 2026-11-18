@@ -1,0 +1,98 @@
+<div class="pm-modal-overlay" id="pmModalOverlay" style="display: none;">
+    <div class="pm-modal-content">
+        <!-- Header -->
+        <div class="pm-modal-head">
+            <h2 id="pmModalTitle">OPÇÕES</h2>
+            <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                <button type="button" class="pm-modal-close" id="pmModalRefresh" title="Atualizar">↻</button>
+                <button type="button" class="pm-modal-close" id="pmModalClose" title="Fechar">✕</button>
+            </div>
+        </div>
+
+        <!-- KPI Row -->
+        <div class="pm-kpi-row">
+            <div class="pm-kpi">
+                <div class="pm-kpi-label" id="pmKpiPeriodLabel">Prêmio do Período</div>
+                <div class="pm-kpi-value" id="pmKpiPnl">R$ 0,00</div>
+                <div class="pm-kpi-desc">Soma dos prêmios no período.</div>
+            </div>
+            <div class="pm-kpi pm-kpi-center">
+                <div class="pm-kpi-label">Qt Operações</div>
+                <div class="pm-kpi-value" id="pmKpiOps" style="color: var(--pm-text);">0</div>
+            </div>
+            <div class="pm-kpi pm-kpi-center">
+                <div class="pm-kpi-label">Média Diária de Prêmios</div>
+                <div class="pm-kpi-value" id="pmKpiAveragePremium" style="color: var(--pm-green);">R$ 0,00</div>
+            </div>
+            <div class="pm-kpi pm-kpi-center pm-kpi-price">
+                <div class="pm-kpi-label">Preço Médio</div>
+                <div class="pm-kpi-value">
+                    <span class="pm-price-link" id="pmPriceMedioLink">R$ 0,00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Legend Box -->
+        <div class="pm-legend-box">
+            <div class="pm-legend-row">
+                <span class="pm-legend-title">Prêmio (cor de fundo)</span>
+                <div class="pm-legend-item">
+                    <div class="pm-legend-grad"></div>
+                </div>
+                <span>Custo forte → Custo leve → sem operação → Receita leve → Receita forte</span>
+            </div>
+            <div class="pm-legend-row">
+                <span class="pm-legend-title">Tipo (anel)</span>
+                <div class="pm-legend-item">
+                    <div class="pm-legend-ring" style="border-color: var(--pm-put);"></div>
+                    PUT exercida
+                </div>
+                <div class="pm-legend-item">
+                    <div class="pm-legend-ring" style="border-color: var(--pm-call);"></div>
+                    CALL exercida
+                </div>
+                <div class="pm-legend-item">
+                    <div class="pm-legend-swatch" style="background: #166534;"></div>
+                    Sem anel = não exercida
+                </div>
+            </div>
+            <div class="pm-legend-row">
+                <span class="pm-legend-title">Outros</span>
+                <div class="pm-legend-item">
+                    <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--pm-orange); display: inline-block; border: 1px solid var(--pm-bg);"></span>
+                    Múltiplas operações no dia
+                </div>
+            </div>
+        </div>
+
+        <div class="pm-heat-filters" role="group" aria-label="Filtros do mapa de calor">
+            <div class="pm-filter-group pm-period-group" role="group" aria-label="Filtrar por período">
+                <div class="pm-filter-options">
+                    <button type="button" class="pm-period-reset" id="pmResetMonth" title="Remover o filtro mensal">↺ Todos os meses</button>
+                </div>
+            </div>
+            <div class="pm-filter-group" role="group" aria-label="Filtrar por tipo">
+                <div class="pm-filter-options">
+                    <button type="button" class="pm-filter-button pm-filter-active" data-filter-group="tipo" data-filter-value="ALL" aria-pressed="true">Todas</button>
+                    <button type="button" class="pm-filter-button" data-filter-group="tipo" data-filter-value="PUT" aria-pressed="false">PUT</button>
+                    <button type="button" class="pm-filter-button" data-filter-group="tipo" data-filter-value="CALL" aria-pressed="false">CALL</button>
+                </div>
+            </div>
+            <div class="pm-filter-group" role="group" aria-label="Filtrar por status de exercício">
+                <div class="pm-filter-options">
+                    <button type="button" class="pm-filter-button pm-filter-active" data-filter-group="exercida" data-filter-value="ALL" aria-pressed="true">Todas</button>
+                    <button type="button" class="pm-filter-button" data-filter-group="exercida" data-filter-value="EXERCISED" aria-pressed="false">Exercida</button>
+                    <button type="button" class="pm-filter-button" data-filter-group="exercida" data-filter-value="NOT_EXERCISED" aria-pressed="false">Não exercida</button>
+                </div>
+            </div>
+        </div>
+        <div class="pm-heat-wrap" id="pmHeatWrap"></div>
+
+    </div>
+</div>
+
+<!-- Custom Tooltip -->
+<div id="pm-tooltip">
+    <div class="pm-tt-head" id="pmTtHead"></div>
+    <div class="pm-tt-body" id="pmTtBody"></div>
+</div>

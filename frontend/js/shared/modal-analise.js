@@ -900,7 +900,9 @@
                 onRefresh: async () => {
                     await refresh();
                 },
-                showTotals: true  // ✅ IMPORTANTE: Habilitar badges de totalização
+                showTotals: true,  // ✅ IMPORTANTE: Habilitar badges de totalização
+                showCorretora: isCrypto,  // Opções não possui corretora
+                showMoeda: isCrypto       // Opções opera em BRL
             });
             
             state.headerInitialized = true;  // ✅ Marcar como inicializado

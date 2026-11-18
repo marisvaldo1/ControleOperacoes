@@ -41,6 +41,11 @@
             onRefresh: null,
             onAction: null,
             showTotals: true,
+            showPeriods: true,
+            showStatus: true,
+            showTipo: true,
+            showMoeda: true,
+            showCorretora: true,
         }, config || {});
 
         if (global.CryptoFilterBar) global.CryptoFilterBar.injectCSS();
@@ -93,11 +98,11 @@
                 state: state,
                 openAssets: openAssetsCache,
                 allAssets: allAssetsCache,
-                showPeriods: true,
-                showStatus: true,
-                showTipo: true,
-                showMoeda: true,
-                showCorretora: true,
+                showPeriods: cfg.showPeriods !== false,
+                showStatus: cfg.showStatus !== false,
+                showTipo: cfg.showTipo !== false,
+                showMoeda: cfg.showMoeda !== false,
+                showCorretora: cfg.showCorretora !== false,
             });
 
             const barEl = document.getElementById(idBar);

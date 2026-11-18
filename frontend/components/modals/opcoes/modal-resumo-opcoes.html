@@ -1,0 +1,14 @@
+<div class="modal modal-blur fade" id="modalResumoOpcoes" tabindex="-1" aria-labelledby="modalResumoOpcoesTitle" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable modal-resumo-dialog">
+        <div class="modal-content modal-resumo-content">
+            <!-- Header padrão — filtros (período/status/tipo) renderizados via CryptoFilterBar -->
+            <div id="resumoOpcoesHeader" style="flex-shrink:0;"></div>
+            <div class="modal-body modal-resumo-body">
+                <div id="resumoOpcoesLoading" class="resumo-loading"><div class="spinner-border text-warning" role="status"></div><span>Calculando resumo...</span></div>
+                <div id="resumoOpcoesEmpty" class="resumo-empty d-none">Nenhuma operação encontrada para este período.</div>
+                <div id="resumoOpcoesView" class="d-none"></div>
+            </div>
+            <div class="modal-footer modal-resumo-footer"><span id="resumoOpcoesUpdatedAt" class="text-muted small"></span><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button></div>
+        </div>
+    </div>
+</div>

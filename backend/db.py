@@ -85,10 +85,14 @@ def init_db():
     )''')
 
     _safe_add_columns(c, 'operacoes_opcoes', {
-        'saldo_abertura': 'REAL',
-        'tipo_operacao':  'TEXT DEFAULT "VENDA"',
-        'observacoes':    'TEXT',
-        'is_test_data':   'INTEGER DEFAULT 0',
+        'saldo_abertura':    'REAL',
+        'tipo_operacao':     'TEXT DEFAULT "VENDA"',
+        'observacoes':       'TEXT',
+        'is_test_data':      'INTEGER DEFAULT 0',
+        'preco_saida':       'REAL',
+        'qtd_fechada':       'INTEGER DEFAULT 0',
+        'op_fechamento':     'INTEGER DEFAULT 0',
+        'data_fechamento':   'TEXT',
     })
     # Garante que tipo_operacao nunca é NULL
     c.execute('UPDATE operacoes_opcoes SET tipo_operacao = "VENDA" WHERE tipo_operacao IS NULL')

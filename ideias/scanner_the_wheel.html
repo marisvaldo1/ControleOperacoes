@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scanner de Ativos — The Wheel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.min.css">
+<style>
+:root{--bg:#0b1222;--panel:#131e34;--panel2:#0d172b;--border:#263957;--text:#e8eefb;--muted:#8299c2;--blue:#3b82f6;--green:#16b364;--orange:#f59e0b;--red:#f87171}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,Arial,sans-serif;font-size:13px}
+.wrap{max-width:1500px;margin:24px auto;padding:0 18px}.top{background:var(--panel);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 12px 35px #0003}
+.header{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid var(--border)}h1{font-size:17px;margin:0;font-weight:800}.sub{color:var(--muted);font-size:11px}
+.controls{display:grid;grid-template-columns:1.1fr 2fr 1fr;gap:22px;padding:18px 22px;border-bottom:1px solid var(--border);align-items:center}
+.control label{display:flex;justify-content:space-between;color:var(--muted);margin-bottom:10px}.control strong{color:#fff}
+input[type=range]{width:100%;accent-color:var(--blue);cursor:pointer}
+.content{padding:18px 22px;display:grid;grid-template-columns: minmax(0,1.7fr) minmax(280px,.8fr);gap:16px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:16px;min-width:0}
+.card h2{font-size:13px;margin:0 0 14px;font-weight:700}.hint{color:var(--muted);font-size:11px;line-height:1.55}
+.metric-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:15px}
+.metric{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:12px}.metric span{display:block;color:var(--muted);font-size:10px}.metric b{display:block;font-size:19px;margin-top:7px}
+.table-wrap{overflow-x:auto}
+table.dataTable{width:100%!important;border-collapse:collapse!important;color:var(--text)!important}
+table.dataTable thead th{color:var(--muted)!important;background:#111d33!important;border-bottom:1px solid var(--border)!important;font-size:11px;white-space:nowrap}
+table.dataTable tbody td{border-bottom:1px solid #24344f!important;padding:11px 9px!important;white-space:nowrap;font-size:11px}
+table.dataTable tbody tr{background:transparent!important}table.dataTable tbody tr:hover{background:#1a2a46!important}
+.dataTables_wrapper .dt-search input,.dt-search input,.dt-length select{background:#0c172b!important;color:var(--text)!important;border:1px solid var(--border)!important;border-radius:7px;padding:7px}
+.dataTables_wrapper .dt-info,.dataTables_wrapper .dt-paging,.dataTables_wrapper .dt-length,.dataTables_wrapper .dt-search{color:var(--muted)!important;font-size:11px;margin:8px 0}
+.dt-paging-button{color:var(--muted)!important;border-radius:6px!important}.dt-paging-button.current{background:var(--blue)!important;color:#fff!important;border:0!important}
+.pill{display:inline-block;padding:4px 7px;border-radius:6px;font-size:10px;font-weight:700}.yes{color:#8be4b3;background:#103b2b}.no{color:#ffc4a3;background:#49291d}.unknown{color:#f8d58a;background:#47391b}
+.green{color:#39d98a}.blue{color:#8bb8ff}.muted{color:var(--muted)}
+.chartbox{height:215px;position:relative}.chain{display:grid;gap:8px}.chainrow{display:grid;grid-template-columns:54px 1fr 1fr 1fr;gap:8px;padding:9px;background:var(--panel2);border:1px solid var(--border);border-radius:8px;font-size:10px}.chainrow.head{color:var(--muted);background:transparent;border:0;padding-bottom:0}
+.tag{font-size:9px;border-radius:5px;padding:3px 5px}.itm{background:#4a252b;color:#ff9da8}.atm{background:#3c3217;color:#ffdb83}.otm{background:#123a30;color:#8be4b3}
+footer{padding:0 22px 18px;color:var(--muted);font-size:10px;line-height:1.6}
+@media(max-width:950px){.controls{grid-template-columns:1fr}.content{grid-template-columns:1fr}}@media(max-width:560px){.metric-grid{grid-template-columns:1fr}.header{align-items:flex-start;gap:10px;flex-direction:column}.wrap{padding:0 8px;margin:8px auto}.content,.controls{padding:12px}}
+</style>
+</head>
+<body>
+<div class="wrap"><main class="top">
+  <header class="header"><div><h1>▦ Scanner — Ativos para The Wheel</h1><div class="sub">Ações e ETFs americanos com preço dentro do limite selecionado</div></div><div class="sub">Painel demonstrativo · dados editáveis</div></header>
+  <section class="controls">
+    <div class="control"><label>💵 Preço máximo por ação <strong id="priceLabel">US$ 20,00</strong></label><input id="priceSlider" type="range" min="1" max="100" step="1" value="20"><div class="hint">Arraste para alterar o limite. A tabela e os indicadores serão filtrados automaticamente.</div></div>
+    <div class="control"><label>📦 Capital estimado para 1 lote (100 ações) <strong id="capitalLabel">—</strong></label><input id="capitalSlider" type="range" min="100" max="10000" step="100" value="10000"><div class="hint">Filtro adicional opcional por capital estimado, calculado como preço × 100. Para PUT cash-secured, o correto é strike × 100.</div></div>
+    <div class="control"><label>⏱️ Universo <strong id="countLabel">— ativos</strong></label><div class="hint">Opções diárias: status precisa ser confirmado na cadeia da corretora. Não confundir opções semanais com vencimentos diários.</div></div>
+  </section>
+  <section class="content">
+    <div>
+      <div class="metric-grid">
+        <div class="metric"><span>Ativos dentro do limite</span><b id="metricCount">—</b></div>
+        <div class="metric"><span>Menor preço disponível</span><b id="metricMin">—</b></div>
+        <div class="metric"><span>Capital estimado mínimo</span><b id="metricCapital">—</b></div>
+      </div>
+      <div class="card">
+        <h2>📋 Ativos candidatos · clique no cabeçalho para ordenar</h2>
+        <div class="table-wrap"><table id="assetsTable" class="display">
+          <thead><tr><th>Ticker</th><th>Empresa</th><th>Setor / Atividade</th><th>Perfil</th><th>Preço (US$)</th><th>Capital / lote (US$)</th><th>Opções diárias</th></tr></thead><tbody></tbody>
+        </table></div>
+      </div>
+    </div>
+    <aside class="card">
+      <h2>📊 Preço e capital estimado</h2><div class="chartbox"><canvas id="priceChart"></canvas></div>
+      <h2 style="margin-top:18px">🔎 Cadeia de opções — estrutura</h2>
+      <div id="selectedTitle" class="hint" style="margin-bottom:9px">Selecione um ativo na tabela para visualizar a estrutura.</div>
+      <div class="chain">
+        <div class="chainrow head"><b>Tipo</b><b>Faixa</b><b>Strike</b><b>Dados</b></div>
+        <div class="chainrow"><b><span class="tag itm">ITM</span></b><span>3 strikes abaixo/acima do ATM*</span><span>—</span><span>Não conectado</span></div>
+        <div class="chainrow"><b><span class="tag atm">ATM</span></b><span>3 strikes próximos ao preço*</span><span>—</span><span>Não conectado</span></div>
+        <div class="chainrow"><b><span class="tag otm">OTM</span></b><span>3 strikes fora do dinheiro*</span><span>—</span><span>Não conectado</span></div>
+      </div>
+      <p class="hint" style="margin-top:12px">* A cadeia real depende do vencimento, tipo (PUT/CALL), strikes listados e cotação Bid/Ask. Este HTML não consulta a corretora nem inventa prêmios/deltas. A estrutura está preparada para receber esses dados quando houver uma API/fonte de opções.</p>
+    </aside>
+  </section>
+  <footer>
+    <b>Importante:</b> preços abaixo são referências informadas anteriormente na conversa, não cotações ao vivo. O status de opções diárias está como “A confirmar” porque precisa ser validado por ticker e data de vencimento. Capital/lote é uma estimativa por preço à vista × 100, não o colateral exato de uma PUT. PBR foi incluída sem preço, pois não havia cotação validada.
+  </footer>
+</main></div>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/2.1.8/js/dataTables.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script>
+const assets = [
+ {ticker:"F",company:"Ford Motor",sector:"Automóveis",profile:"Empresa consolidada; opções líquidas",price:11.56,daily:"A confirmar"},
+ {ticker:"AAL",company:"American Airlines",sector:"Aviação comercial",profile:"Opções bastante negociadas",price:13.17,daily:"A confirmar"},
+ {ticker:"SOFI",company:"SoFi Technologies",sector:"Fintech / Serviços financeiros",profile:"Opções líquidas; volatilidade elevada",price:15.42,daily:"A confirmar"},
+ {ticker:"SNAP",company:"Snap Inc.",sector:"Tecnologia / Redes sociais",profile:"Alta liquidez em opções",price:5.10,daily:"A confirmar"},
+ {ticker:"ONDS",company:"Ondas Holdings",sector:"Drones / Comunicação sem fio",profile:"Especulativa; opções ativas",price:5.16,daily:"A confirmar"},
+ {ticker:"PLUG",company:"Plug Power",sector:"Energia / Hidrogênio",profile:"Especulativa; preço muito baixo",price:1.07,daily:"A confirmar"},
+ {ticker:"RIG",company:"Transocean",sector:"Petróleo / Perfuração offshore",profile:"Setor de petróleo; opções ativas",price:5.22,daily:"A confirmar"},
+ {ticker:"OPEN",company:"Opendoor",sector:"Mercado imobiliário / Tecnologia",profile:"Especulativa; alta volatilidade",price:1.13,daily:"A confirmar"},
+ {ticker:"MARA",company:"MARA Holdings",sector:"Bitcoin / Mineração",profile:"Exposição ao mercado de Bitcoin",price:6.99,daily:"A confirmar"},
+ {ticker:"WULF",company:"TeraWulf",sector:"Bitcoin / Infraestrutura de energia",profile:"Mineração de Bitcoin",price:12.62,daily:"A confirmar"},
+ {ticker:"IREN",company:"IREN",sector:"Bitcoin / Infraestrutura de dados",profile:"Mineração de Bitcoin",price:18.17,daily:"A confirmar"},
+ {ticker:"NIO",company:"NIO Inc.",sector:"Automóveis elétricos",profile:"Setor de veículos elétricos",price:2.89,daily:"A confirmar"},
+ {ticker:"CIFR",company:"Cipher Mining",sector:"Bitcoin / Mineração",profile:"Mineração de Bitcoin",price:6.86,daily:"A confirmar"},
+ {ticker:"RKT",company:"Rocket Companies",sector:"Crédito imobiliário / Finanças",profile:"Serviços financeiros",price:13.58,daily:"A confirmar"},
+ {ticker:"NU",company:"Nu Holdings",sector:"Banco digital / Fintech",profile:"Serviços financeiros",price:13.21,daily:"A confirmar"},
+ {ticker:"PBR",company:"Petrobras",sector:"Petróleo e gás",profile:"Petróleo; preço pendente de validação",price:null,daily:"A confirmar"}
+];
+const money = n => n==null ? "—" : n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+let table, chart;
+function filtered(){const max=+document.getElementById("priceSlider").value, cap=+document.getElementById("capitalSlider").value;return assets.filter(a=>a.price!==null&&a.price<=max&&a.price*100<=cap)}
+function draw(){
+ const rows=filtered();
+ document.getElementById("priceLabel").textContent="US$ "+money(+priceSlider.value);
+ document.getElementById("capitalLabel").textContent="US$ "+(+capitalSlider.value).toLocaleString("en-US");
+ document.getElementById("countLabel").textContent=rows.length+" ativos";
+ document.getElementById("metricCount").textContent=rows.length;
+ const min=rows.length?Math.min(...rows.map(a=>a.price)):null;
+ document.getElementById("metricMin").textContent=min==null?"—":"US$ "+money(min);
+ document.getElementById("metricCapital").textContent=min==null?"—":"US$ "+money(min*100);
+ if(table){table.clear();table.rows.add(rows.map(a=>[a.ticker,a.company,a.sector,a.profile,a.price, a.price*100, '<span class="pill unknown">A confirmar</span>']));table.draw();}
+ if(chart){chart.data.labels=rows.slice().sort((a,b)=>a.price-b.price).map(a=>a.ticker);chart.data.datasets[0].data=rows.slice().sort((a,b)=>a.price-b.price).map(a=>a.price);chart.data.datasets[1].data=rows.slice().sort((a,b)=>a.price-b.price).map(a=>a.price*100);chart.update();}
+}
+$(function(){
+ table=new DataTable("#assetsTable",{data:[],pageLength:10,order:[[4,"asc"]],columns:[
+ {title:"Ticker"},{title:"Empresa"},{title:"Setor / Atividade"},{title:"Perfil"},
+ {title:"Preço (US$)",render:(d,t)=>t==="sort"||t==="type"?d:"US$ "+money(d),type:"num"},
+ {title:"Capital / lote (US$)",render:(d,t)=>t==="sort"||t==="type"?d:"US$ "+money(d),type:"num"},
+ {title:"Opções diárias",orderable:false}
+ ],language:{search:"Buscar:",lengthMenu:"Mostrar _MENU_",info:"Exibindo _START_ a _END_ de _TOTAL_",infoEmpty:"Sem ativos",zeroRecords:"Nenhum ativo encontrado",paginate:{first:"Primeira",last:"Última",next:"Próxima",previous:"Anterior"},emptyTable:"Nenhum ativo para os filtros selecionados"}});
+ chart=new Chart(document.getElementById("priceChart"),{type:"bar",data:{labels:[],datasets:[{label:"Preço por ação (US$)",data:[],backgroundColor:"#3478df",borderRadius:5},{label:"Capital por lote (US$)",data:[],backgroundColor:"#18a861",borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:"#a9bbd9",font:{family:"Inter",size:10}}}},scales:{x:{ticks:{color:"#91a5c9"},grid:{color:"#20314e"}},y:{ticks:{color:"#91a5c9"},grid:{color:"#20314e"}}}}});
+ draw();
+ $("#priceSlider,#capitalSlider").on("input",draw);
+ $("#assetsTable tbody").on("click","tr",function(){const d=table.row(this).data();if(!d)return;document.getElementById("selectedTitle").innerHTML="<b>"+d[0]+" — "+d[1]+"</b><br>Preço de referência: "+d[4]+" · Capital estimado: "+d[5]+"<br>Selecione vencimento e carregue a cadeia real para preencher strikes, Bid/Ask e delta.";});
+});
+</script>
+</body></html>

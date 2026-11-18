@@ -8,7 +8,12 @@
                     <span id="modalOperacaoAtivoInfo" class="badge bg-primary ms-2" style="display: none;"></span>
                     <span id="modalOperacaoMarketStatus" class="ms-2" style="cursor: help; font-size: 1.2rem;"></span>
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <div class="d-flex align-items-center gap-2 ms-auto flex-shrink-0">
+                    <button class="btn btn-icon btn-outline-secondary" type="button" id="btnAtualizarDados" title="Atualizar dados da API">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3"/></svg>
+                    </button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
             </div>
             <div class="modal-body">
                 <form id="formOperacao">
@@ -26,12 +31,7 @@
                         </div>
                         <div class="col-md-3 mb-3">
                             <label class="form-label">Ativo <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <input type="text" class="form-control text-uppercase" id="inputAtivo" required placeholder="Ex: PETRM346" style="text-transform: uppercase;">
-                                <button class="btn btn-outline-secondary" type="button" id="btnAtualizarDados" title="Atualizar dados da API">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3"/></svg>
-                                </button>
-                            </div>
+                            <input type="text" class="form-control text-uppercase" id="inputAtivo" required placeholder="Ex: PETRM346" style="text-transform: uppercase;">
                         </div>
                         <div class="col-md-3 mb-3">
                             <label class="form-label">Tipo</label>

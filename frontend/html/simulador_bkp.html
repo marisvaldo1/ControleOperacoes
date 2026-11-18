@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Investimentos - Simulador</title>
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <link rel="stylesheet" href="../css/shared/style.css?v=1.2.0">
+    <link rel="stylesheet" href="../css/simulador/simulador.css?v=1.3.0">
+</head>
+
+<body data-bs-theme="dark">
+    <div class="page-wrapper">
+        <div class="page-body">
+            <div class="container-fluid">
+
+                <!-- ═══ Cabeçalho (comum às duas views) ═══ -->
+                <div class="page-header d-print-none mb-3">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <h2 class="page-title">Simulador - The Wheel</h2>
+                            <div class="text-muted" id="simSubtitulo">Selecione um ativo para simular a abertura de operação</div>
+                        </div>
+                        <div class="col-auto ms-auto d-flex align-items-center gap-2 flex-wrap">
+                            <div class="sim-status" id="simStatus">
+                                <span class="badge bg-secondary" id="simStatusBadge">verificando...</span>
+                                <span id="simStatusDetalhe"></span>
+                            </div>
+                            <span class="sim-loading" id="simLoading">
+                                <span class="spinner-border spinner-border-sm" role="status"></span>
+                                consultando tastytrade...
+                            </span>
+                            <button class="btn btn-primary" id="btnSimular" type="button">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+                                <span id="btnSimularTexto">Atualizar lista</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══ Aviso de configuração ═══ -->
+                <div class="alert alert-warning d-none" id="simAvisoConfig" role="alert">
+                    <strong>Integração tastytrade incompleta.</strong>
+                    <span id="simAvisoConfigTexto"></span>
+                </div>
+
+                <!-- ═══════════════ VIEW 1 — LISTA DE ATIVOS ═══════════════ -->
+                <div id="viewLista" class="sim-scanner">
+
+                    <main class="sim-panel">
+
+                        <!-- Filtros -->
+                        <section class="sim-controls">
+                            <div class="sim-control">
+                                <label for="sliderMaxAcao">💵 Preço máximo por ação <strong id="lblMaxAcao">36,00</strong></label>
+                                <input type="range" id="sliderMaxAcao" min="1" max="100" step="0.5" value="36">
+                                <div class="sim-hint">Arraste para alterar o limite por ação aplicado ao universo consultado.</div>
+                            </div>
+                            <div class="sim-control">
+                                <label>📅 Periodicidade das opções <strong id="lblPeriodicidade">Todas</strong></label>
+                                <div class="sim-seg" id="segPeriodicidade">
+                                    <button type="button" data-per="todas" class="active">Todas</button>
+                                    <button type="button" data-per="diario">Diárias</button>
+                                    <button type="button" data-per="semanal">Semanais</button>
+                                    <button type="button" data-per="mensal">Mensais</button>
+                                </div>
+                                <div class="sim-hint">Mostra somente ativos que possuem opções da periodicidade escolhida.</div>
+                            </div>
+                            <div class="sim-control">
+                                <label for="inpBusca">🔎 Buscar ativo <strong id="countLabel">— ativos</strong></label>
+                                <input type="search" class="form-control sim-busca" id="inpBusca" placeholder="Digite o ticker (ex.: SOFI)">
+                                <div class="sim-hint">Filtro local por ticker — não refaz a consulta.</div>
+                            </div>
+                        </section>
+
+                        <div class="sim-content">
+                            <!-- Coluna principal: métricas + tabela -->
+                            <div>
+                                <div class="sim-metric-grid">
+                                    <div class="sim-metric-card"><span>Ativos dentro do limite</span><b id="mtrAtivos">—</b></div>
+                                    <div class="sim-metric-card"><span>Menor preço disponível</span><b id="mtrMenorPreco">—</b></div>
+                                    <div class="sim-metric-card"><span>Capital estimado mínimo</span><b id="mtrCapitalMin">—</b></div>
+                                </div>
+
+                                <div class="sim-card">
+                                    <h2>📋 Ativos candidatos — clique em <strong>Simular</strong> para abrir a operação</h2>
+                                    <div class="sim-table-wrap">
+                                        <table class="sim-table" id="tblLista">
+                                            <thead>
+                                                <tr>
+                                                    <th>Ticker</th>
+                                                    <th class="num">Preço (US$)</th>
+                                                    <th class="num">Capital / lote</th>
+                                                    <th class="num">Var. dia (%)</th>
+                                                    <th>Dividendos</th>
+                                                    <th class="num">Prêmio sem. CALL</th>
+                                                    <th class="num">Prêmio sem. PUT</th>
+                                                    <th>Venc. semanal</th>
+                                                    <th class="num">Dias</th>
+                                                    <th class="num">Rentab. diária</th>
+                                                    <th></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="tblListaBody">
+                                                <tr><td colspan="11" class="text-muted">Carregando...</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="sim-hint" id="txtUniverso"></div>
+                                </div>
+                            </div>
+
+                            <!-- Coluna lateral: gráfico + cadeia de opções -->
+                            <aside class="sim-side">
+                                <div class="sim-card">
+                                    <h2>📊 Preço por ação × capital por lote</h2>
+                                    <div class="sim-chartbox"><canvas id="chartUniverso"></canvas></div>
+                                </div>
+
+                                <div class="sim-card">
+                                    <h2>🔎 Cadeia de opções</h2>
+                                    <div id="simSelAtivo" class="sim-seltitulo">Clique numa linha para ver a cadeia.</div>
+                                    <div id="simCadeia" class="sim-chain">
+                                        <div class="sim-empty">Nenhum ativo selecionado.</div>
+                                    </div>
+                                </div>
+                            </aside>
+                        </div>
+
+                    </main>
+
+                </div>
+
+                <!-- ═══════════════ VIEW 2 — SIMULAÇÃO DE STRIKES ═══════════════ -->
+                <div id="viewSimulacao" class="d-none">
+
+                    <!-- Ativo selecionado -->
+                    <div class="sim-card sim-selecao-card mb-3">
+                        <div class="sim-selecao">
+                            <div class="sim-selecao-info">
+                                <span class="sim-selecao-label">Ativo selecionado</span>
+                                <div class="sim-selecao-linha">
+                                    <b class="sim-selecao-ticker" id="selTicker">—</b>
+                                    <span class="sim-selecao-preco" id="selPreco">—</span>
+                                    <span class="sim-selecao-meta" id="selCapital">—</span>
+                                    <span class="sim-selecao-meta" id="selVariacao">—</span>
+                                    <span id="selDividendos"></span>
+                                    <span class="sim-selecao-meta" id="selSaldo"></span>
+                                </div>
+                            </div>
+                            <button class="btn btn-outline-secondary" id="btnOutraOpcao" type="button">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><path d="m15 18-6-6 6-6"/></svg>
+                                Selecionar outra operação
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="sim-scanner" id="simStrikes">
+                        <main class="sim-panel">
+
+                            <!-- Filtros principais: prazo / distância / delta / preset -->
+                            <section class="sim-controls sim-controls-strikes">
+                                <div class="sim-control">
+                                    <label for="rngVenc">📅 Prazo até o vencimento <strong id="lblVenc">—</strong></label>
+                                    <input type="range" id="rngVenc" min="0" max="0" step="1" value="0">
+                                    <div class="sim-hint">Vencimentos reais listados pela cadeia da tastytrade.</div>
+                                </div>
+                                <div class="sim-control">
+                                    <label for="rngDistMin">📉 Distância mínima do strike <strong id="lblDistMin">2,0%</strong></label>
+                                    <input type="range" id="rngDistMin" min="0" max="25" step="0.5" value="2">
+                                    <label for="rngDistMax" class="sim-label-gap">📈 Distância máxima do strike <strong id="lblDistMax">8,0%</strong></label>
+                                    <input type="range" id="rngDistMax" min="1" max="40" step="0.5" value="8">
+                                </div>
+                                <div class="sim-control">
+                                    <label for="rngDelta">🎯 Delta máximo <strong id="lblDelta">0,30</strong></label>
+                                    <input type="range" id="rngDelta" min="0.05" max="0.95" step="0.05" value="0.30">
+                                    <div class="sim-hint">Exibe apenas strikes com delta igual ou menor que o limite.</div>
+                                </div>
+                                <div class="sim-control">
+                                    <label>🎛️ Perfil de risco <strong id="lblPreset">Equilibrado</strong></label>
+                                    <div class="sim-seg sim-seg-wrap" id="segPreset">
+                                        <button type="button" data-preset="conservador">Conservador</button>
+                                        <button type="button" data-preset="equilibrado" class="active">Equilibrado</button>
+                                        <button type="button" data-preset="agressivo">Agressivo</button>
+                                    </div>
+                                    <div class="sim-hint">Ajusta distância e delta de uma vez.</div>
+                                </div>
+                            </section>
+
+                            <!-- Controles de execução -->
+                            <section class="sim-strike-tools">
+                                <div class="sim-tool">
+                                    <label for="selTipo">Tipo de opção</label>
+                                    <select class="form-select sim-select" id="selTipo">
+                                        <option value="PUT" selected>PUT</option>
+                                        <option value="CALL">CALL</option>
+                                    </select>
+                                </div>
+                                <div class="sim-tool">
+                                    <label>Preço de venda</label>
+                                    <div class="sim-seg" id="segFill">
+                                        <button type="button" data-fill="mid" class="active">Mid</button>
+                                        <button type="button" data-fill="bid">Bid</button>
+                                    </div>
+                                </div>
+                                <div class="sim-tool">
+                                    <label for="inpContratos">Contratos (lotes de 100)</label>
+                                    <input type="number" class="form-control sim-input" id="inpContratos" min="1" step="1" value="1">
+                                </div>
+                                <div class="sim-tool">
+                                    <label for="inpComissao">Comissão / contrato (US$)</label>
+                                    <input type="number" class="form-control sim-input" id="inpComissao" min="0" step="0.5" value="1">
+                                </div>
+                                <div class="sim-tool">
+                                    <label for="inpHv">Vol. realizada (HV) esperada (%)</label>
+                                    <input type="number" class="form-control sim-input" id="inpHv" min="1" max="300" step="1" value="50">
+                                </div>
+                                <div class="sim-tool sim-tool-saldo">
+                                    <label>Saldo da corretora</label>
+                                    <b id="txtSaldo">—</b>
+                                </div>
+                            </section>
+
+                            <!-- KPIs da opção selecionada -->
+                            <div class="wkpi sim-kpis">
+                                <div><span>Prêmio</span><b id="kpiPremio">—</b></div>
+                                <div><span>% sobre saldo</span><b id="kpiSaldoPct">—</b></div>
+                                <div><span>Anualizado</span><b id="kpiAnual">—</b></div>
+                                <div><span>Prob. de exercício (PoP)</span><b id="kpiPop">—</b></div>
+                                <div><span>Break-even</span><b id="kpiBreakeven">—</b></div>
+                            </div>
+                            <div class="sim-hint" id="txtSelStrike">Clique numa linha da tabela para ver os dados da opção.</div>
+
+                            <!-- Tabela de strikes -->
+                            <div class="sim-card sim-card-table">
+                                <h2>📋 Strikes candidatos <span class="sim-count" id="lblStrikesCount"></span></h2>
+                                <div class="sim-table-wrap">
+                                    <table class="sim-table" id="tblStrikes">
+                                        <thead>
+                                            <tr>
+                                                <th>Strike</th>
+                                                <th class="num">Dist.</th>
+                                                <th class="num">Bid/Ask</th>
+                                                <th class="num">Prêmio</th>
+                                                <th class="num">IV</th>
+                                                <th class="num">Delta</th>
+                                                <th class="num">PoP</th>
+                                                <th class="num">Break-even</th>
+                                                <th class="num">Capital</th>
+                                                <th class="num">ROC</th>
+                                                <th class="num">Anualizado</th>
+                                                <th class="num">EV (HV)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tblStrikesBody">
+                                            <tr><td colspan="12" class="text-muted">Carregando strikes...</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="sim-hint" id="txtStrikes"></div>
+                            </div>
+
+                        </main>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/core/libs.js?v=1.2.1"></script>
+    <script src="../js/core/global.js?v=1.2.2"></script>
+    <script src="../js/core/layout.js?v=1.3.0"></script>
+    <script src="../js/simulador/simulador.js?v=2.0.0"></script>
+</body>
+</html>

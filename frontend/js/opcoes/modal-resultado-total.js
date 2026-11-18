@@ -6,6 +6,27 @@
         updating: false
     };
 
+    // Cache da disponibilidade de IA (evita chamar /api/analyze sem chave configurada)
+    let aiDisponivelCache = null;
+
+    document.addEventListener('opcoesConfigUpdated', function () { aiDisponivelCache = null; });
+    document.addEventListener('cryptoConfigUpdated', function () { aiDisponivelCache = null; });
+
+    /** Verifica se existe alguma IA com chave configurada (banco ou .env). */
+    async function iaDisponivel() {
+        if (aiDisponivelCache !== null) return aiDisponivelCache;
+        try {
+            const apiBase = typeof API_BASE !== 'undefined' ? API_BASE : (window.API_BASE || '');
+            const res = await fetch(`${apiBase}/api/available-ais`, { cache: 'no-store' });
+            if (!res.ok) { aiDisponivelCache = false; return aiDisponivelCache; }
+            const data = await res.json();
+            aiDisponivelCache = Array.isArray(data.available) && data.available.length > 0;
+        } catch (e) {
+            aiDisponivelCache = false;
+        }
+        return aiDisponivelCache;
+    }
+
     // ── Configuração (pode ser sobrescrita por ModalResultadoTotal.configure) ──
     const cfg = {
         currency: 'BRL',
@@ -981,6 +1002,14 @@
         statusEl.textContent = 'Consultando IA...';
         container.innerHTML = '';
 
+        // Sem IA configurada não há insights — evita erro 400 em /api/analyze
+        if (!await iaDisponivel()) {
+            if (requestId !== state.aiRequestId) return;
+            statusEl.textContent = 'Nenhuma IA configurada — insights indisponíveis.';
+            container.innerHTML = '';
+            return;
+        }
+
         try {
             const bestDay = [...summary.dailyMap.entries()].reduce((acc, item) => {
                 if (!acc || item[1] > acc[1]) return item;
@@ -1084,7 +1113,7 @@ Resumo do período:
         if (!container || state.loading) return false;
         state.loading = true;
         try {
-            const response = await fetch(cfg.templatePath);
+            const response = await fetch(cfg.templatePath + '?v=1.0.1');
             const html = await response.text();
             container.innerHTML = html;
             return true;
@@ -1145,7 +1174,8 @@ Resumo do período:
 
     function setupTriggers() {
         const card = document.getElementById(cfg.triggerCard);
-        if (card) {
+        if (card && card.dataset.bound !== 'true') {
+            card.dataset.bound = 'true';
             card.addEventListener('click', openResultadoTotalModal);
             card.addEventListener('keydown', event => {
                 if (event.key === 'Enter' || event.key === ' ') {

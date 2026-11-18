@@ -254,6 +254,30 @@
                 this.disabled = false;
             }
         });
+
+        // Botão "Análise completa" → abre o Modal de Análise Completa da Operação
+        document.getElementById('mdoBtnAnalise')?.addEventListener('click', function () {
+            const id = _currentOpId;
+            if (!id) return;
+            if (window.ModalAnaliseDetalheOpcoes && typeof window.ModalAnaliseDetalheOpcoes.open === 'function') {
+                window.ModalAnaliseDetalheOpcoes.open(id);
+            }
+        });
+
+        // Botão "Fechar antecipadamente" (operações ABERTA)
+        document.getElementById('mdoBtnFechar')?.addEventListener('click', async function () {
+            const id = _currentOpId;
+            if (!id) return;
+            if (typeof fecharAntecipadoOpcao !== 'function') return;
+            await fecharAntecipadoOpcao(id);
+            // Re-renderiza com o status/resultado atualizados (se ainda aberta, mantém)
+            const ops = window.allOperacoes || [];
+            const opAtualizada = ops.find(o => String(o.id) === String(id));
+            if (opAtualizada && document.getElementById(MODAL_ID)?.classList.contains('show')) {
+                _renderContent(opAtualizada);
+                _updateModalTs();
+            }
+        });
     }
 
     // ─── Template loader ─────────────────────────────────────────────────────
@@ -268,7 +292,7 @@
                 return false;
             }
             try {
-                const r = await fetch(TEMPLATE_PATH + '?v=1.0.0', { cache: 'no-store' });
+                const r = await fetch(TEMPLATE_PATH + '?v=1.0.1', { cache: 'no-store' });
                 if (!r.ok) throw new Error('HTTP ' + r.status);
                 container.innerHTML = await r.text();
                 return !!document.getElementById(MODAL_ID);
@@ -301,6 +325,10 @@
             || (!op.tipo_operacao && parseInt(op.quantidade) < 0);
 
         const risk = getRisk(distNum);
+
+        // Botão Fechar antecipadamente: somente para operações em aberto
+        const btnFecharMdo = document.getElementById('mdoBtnFechar');
+        if (btnFecharMdo) btnFecharMdo.classList.toggle('d-none', isClosed);
 
         const timePct       = calcTimePct(op.data_operacao, op.vencimento) || 0;
         const vcEnd         = getVencEnd(op.vencimento);

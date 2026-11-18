@@ -1,6 +1,6 @@
 """
 server.py — Entry Point do Sistema de Controle de Operações
-Versão: 2.0.0
+Versão: 2.6.0
 
 Responsabilidades únicas deste arquivo:
   - Criar a aplicação Flask
@@ -11,6 +11,7 @@ Responsabilidades únicas deste arquivo:
 Rotas de cada módulo:
   /api/crypto     → routes/crypto.py     (crypto_bp)
   /api/opcoes     → routes/opcoes.py     (opcoes_bp)
+  /api/simulador  → routes/simulador.py  (simulador_bp)
   /api/*config*   → routes/config.py     (config_bp)
   /api/analyze    → routes/ai.py         (ai_bp)
   /api/proxy/*    → routes/market.py     (market_bp)
@@ -35,25 +36,33 @@ app = Flask(
 )
 CORS(app)
 
-VERSION = '2.0.5'
+VERSION = '2.9.0'
 
 # ─── Blueprints ───────────────────────────────────────────────────────────────
-from routes.crypto  import crypto_bp
-from routes.opcoes  import opcoes_bp
-from routes.config  import config_bp
-from routes.ai      import ai_bp
-from routes.market  import market_bp
+from routes.crypto    import crypto_bp
+from routes.opcoes    import opcoes_bp
+from routes.simulador import simulador_bp
+from routes.config    import config_bp
+from routes.ai        import ai_bp
+from routes.market    import market_bp
 
-app.register_blueprint(crypto_bp,  url_prefix='/api/crypto')
-app.register_blueprint(opcoes_bp,  url_prefix='/api/opcoes')
-app.register_blueprint(config_bp,  url_prefix='/api')
-app.register_blueprint(ai_bp,      url_prefix='/api')
-app.register_blueprint(market_bp,  url_prefix='/api')
+app.register_blueprint(crypto_bp,    url_prefix='/api/crypto')
+app.register_blueprint(opcoes_bp,    url_prefix='/api/opcoes')
+app.register_blueprint(simulador_bp, url_prefix='/api/simulador')
+app.register_blueprint(config_bp,    url_prefix='/api')
+app.register_blueprint(ai_bp,        url_prefix='/api')
+app.register_blueprint(market_bp,    url_prefix='/api')
 
 # ─── Rotas utilitárias ────────────────────────────────────────────────────────
 @app.route('/')
 def index():
     return send_from_directory(app.static_folder, 'index.html')
+
+
+@app.route('/favicon.ico')
+def favicon():
+    """Ícone do sistema — evita 404 nas páginas que não declaram <link rel=icon>."""
+    return send_from_directory(app.static_folder, 'favicon.svg', mimetype='image/svg+xml')
 
 
 @app.route('/api/version')

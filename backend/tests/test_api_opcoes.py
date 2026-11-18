@@ -1,5 +1,5 @@
-"""
-Testes de CRUD - /api/opcoes (operações de opções) sem mocks de banco.
+﻿"""
+Testes de CRUD - /api/opcoes (operaÃ§Ãµes de opÃ§Ãµes) sem mocks de banco.
 """
 
 
@@ -226,3 +226,151 @@ class TestFecharOpcao:
         resp = client.post(f'/api/opcoes/{op_id}/fechar', json={'status': 'VENCIDA'})
         assert resp.status_code == 200
         assert resp.get_json().get('success') is True
+
+
+class TestFecharAntecipado:
+    """Fechamento antecipado: POST /api/opcoes/<id>/fechar-antecipado."""
+
+    def _get(self, db_conn, op_id):
+        row = db_conn.execute('SELECT * FROM operacoes_opcoes WHERE id=?', (op_id,)).fetchone()
+        return dict(row) if row else None
+
+    # â”€â”€ ValidaÃ§Ãµes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    def test_operacao_inexistente_retorna_404(self, client):
+        resp = client.post('/api/opcoes/999999/fechar-antecipado', json={'valor': 1.0, 'quantidade': 1})
+        assert resp.status_code == 404
+
+    def test_operacao_fechada_retorna_400(self, client, db_conn):
+        op_id = _insert_opcao(db_conn, status='FECHADA')
+        resp = client.post(f'/api/opcoes/{op_id}/fechar-antecipado', json={'valor': 1.0, 'quantidade': 1})
+        assert resp.status_code == 400
+        assert 'ABERTA' in resp.get_json()['error']
+
+    def test_valor_invalido_retorna_400(self, client, db_conn):
+        op_id = _insert_opcao(db_conn, status='ABERTA')
+        resp = client.post(f'/api/opcoes/{op_id}/fechar-antecipado', json={'valor': 0, 'quantidade': 10})
+        assert resp.status_code == 400
+
+    def test_quantidade_zero_retorna_400(self, client, db_conn):
+        op_id = _insert_opcao(db_conn, status='ABERTA')
+        resp = client.post(f'/api/opcoes/{op_id}/fechar-antecipado', json={'valor': 1.0, 'quantidade': 0})
+        assert resp.status_code == 400
+
+    def test_quantidade_maior_que_aberta_retorna_400(self, client, db_conn):
+        op_id = _insert_opcao(db_conn, status='ABERTA', quantidade=100)
+        resp = client.post(f'/api/opcoes/{op_id}/fechar-antecipado', json={'valor': 1.0, 'quantidade': 101})
+        assert resp.status_code == 400
+
+    # â”€â”€ Fechamento total (VENDA) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    def test_fechamento_total_venda_retorna_sucesso(self, client, db_conn):
+        op_id = _insert_opcao(db_conn, status='ABERTA', quantidade=100,
+                              preco_entrada=0.50, premio=0.50, tipo_operacao='VENDA')
+        resp = client.post(f'/api/opcoes/{op_id}/fechar-antecipado',
+                           json={'valor': 0.20, 'quantidade': 100})
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data['success'] is True
+        assert data['parcial'] is False
+        assert data['tipo_operacao'] == 'COMPRA'
+        # (0.50 âˆ’ 0.20) Ã— 100 = +30
+        assert round(data['resultado'], 2) == 30.0
+
+    def test_fechamento_total_atualiza_banco(self, client, db_conn):
+        op_id = _insert_opcao(db_conn, status='ABERTA', quantidade=100,
+                              preco_entrada=0.50, premio=0.50, tipo_operacao='VENDA')
+        client.post(f'/api/opcoes/{op_id}/fechar-antecipado',
+                    json={'valor': 0.20, 'quantidade': 100})
+        op = self._get(db_conn, op_id)
+        assert op['status'] == 'FECHADA'
+        assert op['preco_saida'] == 0.20
+        assert op['preco_atual'] == 0.20
+        assert op['data_fechamento'] is not None
+        assert round(op['resultado'], 2) == 30.0
+        assert 'Fechamento antecipado total' in op['observacoes']
+        # Total: quantidade preservada, nenhum espelho criado
+        assert op['quantidade'] == 100
+        espelhos = db_conn.execute(
+            'SELECT COUNT(*) FROM operacoes_opcoes WHERE op_fechamento=?', (op_id,)
+        ).fetchone()[0]
+        assert espelhos == 0
+
+    def test_fechamento_total_compra_lucro(self, client, db_conn):
+        # COMPRA a 0.50 vendida a 0.80 â†’ (0.80 âˆ’ 0.50) Ã— 100 = +30
+        op_id = _insert_opcao(db_conn, status='ABERTA', quantidade=100,
+                              preco_entrada=0.50, premio=0.50, tipo_operacao='COMPRA')
+        resp = client.post(f'/api/opcoes/{op_id}/fechar-antecipado',
+                           json={'valor': 0.80, 'quantidade': 100})
+        data = resp.get_json()
+        assert data['tipo_operacao'] == 'VENDA'
+        assert round(data['resultado'], 2) == 30.0
+
+    def test_fechamento_total_prejuizo_venda(self, client, db_conn):
+        # VENDA a 0.50 recomprada a 0.80 â†’ (0.50 âˆ’ 0.80) Ã— 100 = âˆ’30
+        op_id = _insert_opcao(db_conn, status='ABERTA', quantidade=100,
+                              preco_entrada=0.50, premio=0.50, tipo_operacao='VENDA')
+        resp = client.post(f'/api/opcoes/{op_id}/fechar-antecipado',
+                           json={'valor': 0.80, 'quantidade': 100})
+        assert resp.get_json()['resultado'] == -30.0
+
+    # â”€â”€ Fechamento parcial (espelho) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    def test_fechamento_parcial_mantem_aberta(self, client, db_conn):
+        op_id = _insert_opcao(db_conn, status='ABERTA', quantidade=100,
+                              preco_entrada=0.50, premio=0.50, tipo_operacao='VENDA')
+        resp = client.post(f'/api/opcoes/{op_id}/fechar-antecipado',
+                           json={'valor': 0.20, 'quantidade': 40})
+        data = resp.get_json()
+        assert data['parcial'] is True
+        assert data['quantidade_restante'] == 60
+
+        op = self._get(db_conn, op_id)
+        assert op['status'] == 'ABERTA'
+        assert op['quantidade'] == 60
+        assert op['qtd_fechada'] == 40
+        assert op['preco_saida'] is None
+
+    def test_fechamento_parcial_cria_espelho(self, client, db_conn):
+        op_id = _insert_opcao(db_conn, status='ABERTA', quantidade=100,
+                              preco_entrada=0.50, premio=0.50, tipo_operacao='VENDA')
+        resp = client.post(f'/api/opcoes/{op_id}/fechar-antecipado',
+                           json={'valor': 0.20, 'quantidade': 40})
+        espelho_id = resp.get_json()['espelho_id']
+        assert espelho_id
+
+        esp = self._get(db_conn, espelho_id)
+        assert esp['status'] == 'FECHADA'
+        assert esp['tipo_operacao'] == 'COMPRA'      # lado oposto
+        assert esp['quantidade'] == 40
+        assert esp['preco_entrada'] == 0.20
+        assert esp['op_fechamento'] == op_id
+        # (0.50 âˆ’ 0.20) Ã— 40 = +12
+        assert round(esp['resultado'], 2) == 12.0
+        assert esp['data_fechamento'] is not None
+
+    def test_fechamento_parcial_compra_cria_espelho_venda(self, client, db_conn):
+        op_id = _insert_opcao(db_conn, status='ABERTA', quantidade=100,
+                              preco_entrada=0.50, premio=0.50, tipo_operacao='COMPRA')
+        resp = client.post(f'/api/opcoes/{op_id}/fechar-antecipado',
+                           json={'valor': 0.70, 'quantidade': 30})
+        esp = self._get(db_conn, resp.get_json()['espelho_id'])
+        assert esp['tipo_operacao'] == 'VENDA'
+        # (0.70 âˆ’ 0.50) Ã— 30 = +6
+        assert round(esp['resultado'], 2) == 6.0
+
+    def test_fechamento_parcial_atualiza_resultado_esperado(self, client, db_conn):
+        # VENDA ABERTA: resultado esperado = qtd_rest Ã— prÃªmio (convenÃ§Ã£o do form)
+        op_id = _insert_opcao(db_conn, status='ABERTA', quantidade=100,
+                              preco_entrada=0.50, premio=0.50, tipo_operacao='VENDA')
+        client.post(f'/api/opcoes/{op_id}/fechar-antecipado',
+                    json={'valor': 0.20, 'quantidade': 40})
+        op = self._get(db_conn, op_id)
+        assert op['resultado'] == 60 * 0.50  # 30.0
+
+    def test_fechamento_parcial_soma_qtd_fechada(self, client, db_conn):
+        op_id = _insert_opcao(db_conn, status='ABERTA', quantidade=100,
+                              preco_entrada=0.50, premio=0.50, tipo_operacao='VENDA')
+        client.post(f'/api/opcoes/{op_id}/fechar-antecipado', json={'valor': 0.20, 'quantidade': 30})
+        client.post(f'/api/opcoes/{op_id}/fechar-antecipado', json={'valor': 0.30, 'quantidade': 20})
+        op = self._get(db_conn, op_id)
+        assert op['quantidade'] == 50
+        assert op['qtd_fechada'] == 50
+        assert op['status'] == 'ABERTA'

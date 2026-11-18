@@ -1,0 +1,358 @@
+:root {
+  --pm-bg: #0d1117;
+  --pm-panel: #161c28;
+  --pm-panel2: #1c2438;
+  --pm-line: rgba(255,255,255,.08);
+  --pm-txt: #e6edf3;
+  --pm-mut: #7890b0;
+  --pm-mut2: #94a3b8;
+  --pm-blue: #60a5fa;
+  --pm-green: #22c55e;
+  --pm-amber: #f59e0b;
+  --pm-red: #ef4444;
+  --pm-cyan: #06b6d4;
+  --pm-mono: 'SFMono-Regular', ui-monospace, 'Cascadia Code', Consolas, monospace;
+  --pm-sans: 'Syne', 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
+
+.pm-overlay {
+  position: fixed; inset: 0;
+  background: rgba(3,6,12,.72);
+  backdrop-filter: blur(4px);
+  display: none;
+  align-items: flex-start;
+  justify-content: center;
+  z-index: 1060;
+  padding: 32px 16px;
+  overflow: auto;
+}
+.pm-overlay.open { display: flex; }
+
+.pm-modal {
+  width: min(960px, 100%);
+  background: var(--pm-panel);
+  border: 1px solid var(--pm-line);
+  border-radius: 16px;
+  box-shadow: 0 30px 80px rgba(0,0,0,.6);
+  animation: pm-pop .22s cubic-bezier(.2,.8,.2,1);
+}
+@keyframes pm-pop {
+  from { transform: translateY(14px) scale(.98); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+.pm-head {
+  display: flex; align-items: center; gap: 12px;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--pm-line);
+}
+.pm-head h2 { margin: 0; font-size: 1rem; font-weight: 800; letter-spacing: .3px; }
+.pm-head .sub { font-size: .66rem; color: var(--pm-mut); margin-top: 2px; }
+.pm-head .ico { font-size: 1.2rem; }
+.pm-x {
+  margin-left: auto;
+  background: var(--pm-panel2);
+  border: 1px solid var(--pm-line);
+  color: var(--pm-mut2);
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem; line-height: 1;
+}
+.pm-x:hover { color: #fff; border-color: rgba(255,255,255,.25); }
+
+.pm-body {
+  padding: 0;
+  display: flex; flex-direction: column;
+}
+
+/* ── Summary row ── */
+.pm-summary-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin: 0 24px 18px;
+}
+.pm-summary-row:first-of-type {
+  margin-top: 18px;
+  grid-template-columns: repeat(3, 1fr);
+}
+$1576px) {
+  .pm-summary-row { grid-template-columns: repeat(2, 1fr); }
+  .pm-summary-row:first-of-type { grid-template-columns: repeat(2, 1fr); }
+}
+.pm-stat-box {
+  background: var(--pm-panel2);
+  border: 1px solid var(--pm-line);
+  border-radius: 12px;
+  padding: 12px 14px;
+  cursor: pointer;
+  position: relative;
+}
+.pm-stat-box .lbl {
+  font-size: .6rem;
+  color: var(--pm-mut);
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+  text-align: center;
+}
+.pm-stat-box .val {
+  font-family: var(--pm-mono);
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--pm-mut2);
+  text-align: right;
+}
+.pm-stat-box.g .val { color: var(--pm-green); }
+$1576px) { .pm-summary-row { grid-template-columns: repeat(2, 1fr); } }
+
+/* ── Panel ── */
+.pm-panel {
+  margin: 0 24px 20px;
+  background: var(--pm-panel2);
+  border: 1px solid var(--pm-line);
+  border-radius: 14px;
+  padding: 16px 18px;
+}
+.pm-panel-title {
+  font-size: .72rem;
+  font-weight: 800;
+  color: var(--pm-mut);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  margin: 0 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* ── Chart + ledger grid ── */
+.pm-chart-ledger-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 16px;
+  align-items: start;
+}
+$1768px) { .pm-chart-ledger-grid { grid-template-columns: 1fr; } }
+
+.pm-chart-wrap {
+  height: 275px;
+  min-width: 0;
+}
+
+/* ── Ledger table ── */
+.pm-ledger-scroll {
+  max-height: 320px;
+  overflow-y: auto;
+  border: 1px solid var(--pm-line);
+  border-radius: 10px;
+}
+.pm-ledger {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .72rem;
+}
+.pm-ledger th {
+  text-align: left;
+  font-size: .58rem;
+  color: var(--pm-mut);
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 7px 8px;
+  border-bottom: 1px solid var(--pm-line);
+  position: sticky;
+  top: 0;
+  background: var(--pm-panel2);
+  z-index: 1;
+}
+.pm-ledger td {
+  padding: 6px 8px;
+  border-bottom: 1px solid rgba(255,255,255,.03);
+  font-family: var(--pm-mono);
+  font-size: .68rem;
+}
+.pm-ledger td:nth-child(1) { text-align: right; }
+.pm-ledger td:nth-child(2) {
+  font-family: var(--pm-sans);
+  font-size: .7rem;
+  white-space: nowrap;
+}
+.pm-ledger td:nth-child(3) {
+  text-align: right;
+  font-weight: 700;
+}
+.pm-ledger td:nth-child(4) {
+  text-align: right;
+  font-weight: 700;
+}
+.pm-valor { font-weight: 600; color: var(--pm-green); }
+.pm-badge {
+  font-size: .55rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+.pm-badge.call { background: rgba(59,130,246,.14); color: var(--pm-blue); }
+.pm-badge.put { background: rgba(167,139,250,.14); color: #a78bfa; }
+.pm-badge.final { background: rgba(245,158,11,.16); color: var(--pm-amber); }
+.pm-badge.aberta { background: rgba(245,158,11,.14); color: var(--pm-amber); }
+.pm-badge.fechada { background: rgba(34,197,94,.14); color: var(--pm-green); }
+.pm-badge.exercida { background: rgba(239,68,68,.18); color: #f87171; }
+.pm-badge-sm { font-size: .5rem; padding: 1px 5px; }
+.pm-op-asset { font-weight: 600; color: var(--pm-txt); }
+.pm-saldo { font-weight: 700; text-align: right; }
+.pm-final-row td {
+  background: rgba(245,158,11,.06);
+  font-weight: 800;
+}
+.pm-final-row td:last-child { color: var(--pm-amber); }
+.pm-exercida-row td {
+  background: rgba(239,68,68,.04);
+}
+
+/* ═════════════════════════════════════════════════════════════════════════════
+   LIGHT THEME OVERRIDES
+   ═════════════════════════════════════════════════════════════════════════════ */
+
+[data-bs-theme="light"] :root {
+  --pm-bg: #f8fafc;
+  --pm-panel: #ffffff;
+  --pm-panel2: #f1f5f9;
+  --pm-line: rgba(0, 0, 0, 0.08);
+  --pm-txt: #1e293b;
+  --pm-mut: #64748b;
+  --pm-mut2: #475569;
+  --pm-blue: #2563eb;
+  --pm-green: #16a34a;
+  --pm-amber: #d97706;
+  --pm-red: #dc2626;
+  --pm-cyan: #0891b2;
+}
+
+[data-bs-theme="light"] .pm-overlay {
+  background: rgba(0, 0, 0, 0.32);
+}
+
+[data-bs-theme="light"] .pm-modal {
+  background: #fff;
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.15);
+}
+
+[data-bs-theme="light"] .pm-head {
+  background: #fff;
+  border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-bs-theme="light"] .pm-head h2 {
+  color: #1e293b;
+}
+
+[data-bs-theme="light"] .pm-head .sub {
+  color: #64748b;
+}
+
+[data-bs-theme="light"] .pm-x {
+  background: #f1f5f9;
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #64748b;
+}
+
+[data-bs-theme="light"] .pm-x:hover {
+  color: #1e293b;
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
+[data-bs-theme="light"] .pm-stat-box {
+  background: #f8fafc;
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-bs-theme="light"] .pm-stat-box .lbl {
+  color: #64748b;
+}
+
+[data-bs-theme="light"] .pm-stat-box .val {
+  color: #1e293b;
+}
+
+[data-bs-theme="light"] .pm-panel {
+  background: #f8fafc;
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-bs-theme="light"] .pm-panel-title {
+  color: #1e293b;
+  border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-bs-theme="light"] .pm-badge.call {
+  background: rgba(59, 130, 246, 0.12);
+  color: #2563eb;
+}
+
+[data-bs-theme="light"] .pm-badge.put {
+  background: rgba(167, 139, 250, 0.12);
+  color: #7c3aed;
+}
+
+[data-bs-theme="light"] .pm-badge.final {
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+}
+
+[data-bs-theme="light"] .pm-badge.aberta {
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+}
+
+[data-bs-theme="light"] .pm-badge.fechada {
+  background: rgba(34, 197, 94, 0.12);
+  color: #16a34a;
+}
+
+[data-bs-theme="light"] .pm-badge.exercida {
+  background: rgba(239, 68, 68, 0.12);
+  color: #dc2626;
+}
+
+[data-bs-theme="light"] .pm-op-asset {
+  color: #1e293b;
+}
+
+[data-bs-theme="light"] .pm-saldo {
+  color: #1e293b;
+}
+
+[data-bs-theme="light"] .pm-valor {
+  color: #16a34a;
+}
+
+[data-bs-theme="light"] .pm-final-row td {
+  background: rgba(245, 158, 11, 0.08);
+}
+
+[data-bs-theme="light"] .pm-final-row td:last-child {
+  color: #d97706;
+}
+
+[data-bs-theme="light"] .pm-exercida-row td {
+  background: rgba(239, 68, 68, 0.06);
+}
+
+[data-bs-theme="light"] .pm-ledger-scroll {
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-bs-theme="light"] .pm-ledger td {
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+[data-bs-theme="light"] .pm-chart-wrap {
+  background: #fff;
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+

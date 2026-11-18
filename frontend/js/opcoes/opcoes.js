@@ -82,6 +82,26 @@ function parseFloatSafe(value) {
     }
 }
 
+/**
+ * Extrai o prêmio (preço unitário da opção) do payload do OpLab.
+ * O campo `close` (último negócio) costuma vir 0 em opções pouco negociadas;
+ * nesse caso usa o meio da booktitle (ask/bid) ou o melhor preço disponível.
+ */
+function extrairPremioOpcao(op) {
+    if (!op) return 0;
+    const diretos = ['premio', 'price', 'preco', 'last', 'last_price', 'close'];
+    for (const chave of diretos) {
+        const v = parseFloatSafe(op[chave]);
+        if (Number.isFinite(v) && v > 0) return v;
+    }
+    const ask = parseFloatSafe(op.ask);
+    const bid = parseFloatSafe(op.bid);
+    if (ask > 0 && bid > 0) return (ask + bid) / 2;
+    if (ask > 0) return ask;
+    if (bid > 0) return bid;
+    return 0;
+}
+
 function normalizeResultadoOperacao(op) {
     if (!op) return op;
     const status = String(op.status || '').toUpperCase();
@@ -126,8 +146,14 @@ document.addEventListener('layoutReady', function() {
     document.getElementById('btnSalvarConfigIA').addEventListener('click', salvarConfigIA);
     document.getElementById('btnTestarIA').addEventListener('click', testarConexaoIA);
     
+    // Saldo em US$ para as operações de opções (tela do Simulador)
+    document.getElementById('btnSalvarSaldoOpcoes').addEventListener('click', salvarSaldoOpcoes);
+    
     // Buscar opções ao clicar no botão
     document.getElementById('btnBuscarOpcoes').addEventListener('click', buscarOpcoesAPI);
+
+    // Atualizar (recarregar) a lista do modal "Selecionar Opção"
+    document.getElementById('btnRefreshSelecionarOpcao')?.addEventListener('click', buscarOpcoesAPI);
     
     // Enter no campo ativo base também busca
     document.getElementById('inputAtivoBase').addEventListener('keypress', function(e) {
@@ -405,6 +431,9 @@ async function loadConfig() {
         const newConfig = {...currentConfig, ...config};
         localStorage.setItem('appConfig', JSON.stringify(newConfig));
         
+        // Campo de saldo em US$ da aba Configurações (Simulador)
+        preencherSaldoOpcoes(newConfig);
+        
         return newConfig;
     } catch (e) {
         console.error('Erro ao carregar configurações:', e);
@@ -428,6 +457,8 @@ async function loadOperacoes() {
         const data = await res.json();
         allOperacoes = Array.isArray(data) ? data.map(op => normalizeResultadoOperacao(op)) : [];
         window.allOperacoes = allOperacoes; // Make available globally
+        window.opcoesOperacoes = allOperacoes; // Alias usado pelos módulos de relatórios (paridade com crypto)
+        document.dispatchEvent(new CustomEvent('opcoesDataUpdated', { detail: { operacoes: allOperacoes } }));
         
         // Verificação de Status Automática (Fechada/Exercida)
         const today = new Date();
@@ -523,13 +554,13 @@ function setupOpcoesDynamicEventListeners() {
         }
     });
 
-    document.querySelectorAll('.finalizar-op-btn').forEach(btn => {
+    document.querySelectorAll('.fechar-op-btn').forEach(btn => {
         if (!btn.dataset.listenerBound) {
             btn.addEventListener('click', function(e) {
                 e.preventDefault();
                 const opId = this.getAttribute('data-op-id');
-                if (typeof finalizarOpcao === 'function') {
-                    finalizarOpcao(opId);
+                if (typeof fecharAntecipadoOpcao === 'function') {
+                    fecharAntecipadoOpcao(opId);
                 }
             });
             btn.dataset.listenerBound = 'true';
@@ -564,31 +595,29 @@ function setupOpcoesDynamicEventListeners() {
     });
 
     // Spans para selecionar e mostrar detalhes de opções
-    document.querySelectorAll('.selecionar-opcao-span').forEach(span => {
-        if (!span.dataset.listenerBound) {
-            span.addEventListener('click', function(e) {
+    // (delegação no document — os spans são recriados a cada render da tabela)
+    if (!document.documentElement.dataset.opcoesSpanDelegation) {
+        document.documentElement.dataset.opcoesSpanDelegation = 'true';
+        document.addEventListener('click', function(e) {
+            const selSpan = e.target.closest ? e.target.closest('.selecionar-opcao-span') : null;
+            if (selSpan) {
                 e.preventDefault();
-                const ativo = this.getAttribute('data-ativo');
-                if (typeof selecionarOpcao === 'function') {
-                    selecionarOpcao(ativo);
+                const ativo = selSpan.getAttribute('data-ativo');
+                if (ativo && typeof window.selecionarOpcao === 'function') {
+                    window.selecionarOpcao(ativo);
                 }
-            });
-            span.dataset.listenerBound = 'true';
-        }
-    });
-
-    document.querySelectorAll('.mostrar-detalhes-opcao-span').forEach(span => {
-        if (!span.dataset.listenerBound) {
-            span.addEventListener('click', function(e) {
+                return;
+            }
+            const detSpan = e.target.closest ? e.target.closest('.mostrar-detalhes-opcao-span') : null;
+            if (detSpan) {
                 e.preventDefault();
-                const ativo = this.getAttribute('data-ativo');
-                if (typeof mostrarDetalhesOpcao === 'function') {
-                    mostrarDetalhesOpcao(ativo);
+                const ativo = detSpan.getAttribute('data-ativo');
+                if (ativo && typeof window.mostrarDetalhesOpcao === 'function') {
+                    window.mostrarDetalhesOpcao(ativo);
                 }
-            });
-            span.dataset.listenerBound = 'true';
-        }
-    });
+            }
+        });
+    }
 
     // Card de simulação de preço
     document.querySelectorAll('.update-sim-price-card').forEach(card => {
@@ -627,31 +656,15 @@ async function updateUI() {
     document.getElementById('cardResultadoTotal').textContent = formatCurrency(totals.resultadoTotal, 'BRL');
     document.getElementById('cardResultadoMedio').textContent = formatROIPct(totals.resultadoMedio);
     
-    // Mes Atual Header
+    // Mes Atual: toolbar + gadgets (KPIs) — módulo mes-atual-opcoes.js (paridade com crypto)
     const mesTotals = calcTotalsOpcoes(mesAtualData);
-    document.getElementById('mesAtualHeader').innerHTML = `
-        <div class="col-12 mb-2">
-            <h4>${getMonthName(currentMonth)}</h4>
-            <span class="float-end text-primary">Mês Atual</span>
-        </div>
-        <div class="col-md-3">
-            <div class="text-muted">Total Operações</div>
-            <div class="text-success">${mesTotals.totalOperacoes}</div>
-        </div>
-        <div class="col-md-3">
-            <div class="text-muted">Total Premios</div>
-            <div>${formatCurrency(mesTotals.totalPremios, 'BRL')}</div>
-        </div>
-        <div class="col-md-3">
-            <div class="text-muted">Resultado</div>
-            <div class="text-success">${formatCurrency(mesTotals.resultadoTotal, 'BRL')}</div>
-        </div>
-        <div class="col-md-3">
-            <div class="text-muted">Média</div>
-            <div>${formatROIPct(mesTotals.resultadoMedio)}</div>
-        </div>
-    `;
-    document.getElementById('mesAtualTitle').textContent = `Operacoes - ${getMonthName(currentMonth).replace('-', ' 20')}`;
+    const mesMonthEl = document.getElementById('mesAtualMonth');
+    if (mesMonthEl) mesMonthEl.textContent = getMonthName(currentMonth);
+    if (window.MesAtualOpcoes && typeof window.MesAtualOpcoes.render === 'function') {
+        window.MesAtualOpcoes.render(mesAtualData, allOperacoes);
+    }
+    const mesTitleEl = document.getElementById('mesAtualTitle');
+    if (mesTitleEl) mesTitleEl.textContent = `Operacoes - ${getMonthName(currentMonth).replace('-', ' 20')}`;
     
     // Tables (agora são assíncronas)
     await populateTable(tableMesAtual, mesAtualData, true, true, false);
@@ -747,37 +760,24 @@ async function populateTable(dt, data, showActions = true, updatePrices = false,
         
         let actionsHtml = '';
         if (showActions) {
-            if (isHistorico) {
-                // Histórico: apenas botão de detalhar
-                actionsHtml = `<div class="btn-list flex-nowrap">
-                    <button class="btn btn-sm btn-info btn-icon" onclick="openDetalheOperacao('${op.id}')" title="Detalhes">
-                        <button class="btn btn-sm btn-info btn-icon detalhe-op-btn" data-op-id="${op.id}" title="Detalhes">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-                    </button>
-                 </div>`;
-            } else {
-                // Mês atual: todos os botões, mas ocultar exclusão se operação fechada
-                const isFechada = op.status && (op.status.toUpperCase() === 'FECHADA' || op.status.toUpperCase() === 'EXERCIDA' || op.status.toUpperCase() === 'VENCIDA');
-                actionsHtml = `<div class="btn-list flex-nowrap">
-                    <button class="btn btn-sm btn-info btn-icon" onclick="openDetalheOperacao('${op.id}')" title="Detalhes">
-                        <button class="btn btn-sm btn-info btn-icon detalhe-op-btn" data-op-id="${op.id}" title="Detalhes">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-                    </button>
-                    <button class="btn btn-sm btn-primary btn-icon" onclick="editOperacao('${op.id}')" title="Editar">
-                        <button class="btn btn-sm btn-primary btn-icon edit-op-btn" data-op-id="${op.id}" title="Editar">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                    </button>
-                    ${!isFechada ? `
-                    <button class="btn btn-sm btn-warning btn-icon" onclick="finalizarOpcao('${op.id}')" title="Finalizar operação">
-                        <button class="btn btn-sm btn-warning btn-icon finalizar-op-btn" data-op-id="${op.id}" title="Finalizar operação">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                    </button>
-                    <button class="btn btn-sm btn-danger btn-icon" onclick="deleteOperacao('${op.id}')" title="Excluir">
-                        <button class="btn btn-sm btn-danger btn-icon delete-op-btn" data-op-id="${op.id}" title="Excluir">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
-                    </button>` : ''}
-                 </div>`;
-            }
+            // Ações do DataTable — mesmas do crypto (Detalhes, Editar,
+            // Fechar antecipadamente e Excluir; últimos só para em aberto).
+            const isFechada = op.status && (op.status.toUpperCase() === 'FECHADA' || op.status.toUpperCase() === 'EXERCIDA' || op.status.toUpperCase() === 'VENCIDA');
+            actionsHtml = `<div class="btn-list flex-nowrap">
+                <button class="btn btn-sm btn-info btn-icon detalhe-op-btn" data-op-id="${op.id}" title="Detalhes">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                </button>
+                <button class="btn btn-sm btn-primary btn-icon edit-op-btn" data-op-id="${op.id}" title="Editar">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                ${!isFechada ? `
+                <button class="btn btn-sm btn-warning btn-icon fechar-op-btn" data-op-id="${op.id}" title="Fechar antecipadamente">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+                <button class="btn btn-sm btn-danger btn-icon delete-op-btn" data-op-id="${op.id}" title="Excluir">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                </button>` : ''}
+            </div>`;
         }
 
         // Usar tipo_operacao do banco se disponível, senão inferir da quantidade
@@ -808,8 +808,7 @@ async function populateTable(dt, data, showActions = true, updatePrices = false,
         }
         
         const rowNode = dt.row.add([
-            op.ativo_base ? `<span class="badge bg-azure text-azure-fg" stylever="cursor:pointer" title="Ver detalhes" onclick="window.ModalDetalhesOpcoes&&window.ModalDetalhesOpcoes.show('${op.id}')">${op.ativo_base}</span>` : '-',
-                op.ativo_base ? `<span class="badge bg-azure text-azure-fg show-detalhe-modal" style="cursor:pointer" title="Ver detalhes" data-op-id="${op.id}">${op.ativo_base}</span>` : '-',
+            op.ativo_base ? `<span class="badge bg-azure text-azure-fg show-detalhe-modal" style="cursor:pointer" title="Ver detalhes" data-op-id="${op.id}">${op.ativo_base}</span>` : '-',
             op.ativo,
             `<span class="badge ${op.tipo === 'CALL' ? 'bg-green text-green-fg' : 'bg-red text-red-fg'}">${op.tipo}</span>`,
             priceCell,
@@ -881,33 +880,32 @@ async function populateTable(dt, data, showActions = true, updatePrices = false,
                 popCell = `${popValue.toFixed(1)}%`;
             }
         }
-        
+        // Lógica de Exercício (mesma do ramo com cotação):
+        // fechadas/exercidas vêm do status do banco; abertas calculam por ITM/OTM.
+        const exercicio = op.status !== 'ABERTA'
+            ? (op.status === 'EXERCIDA')
+            : calcularExercicio(op.tipo, precoAtualValue, parseFloatSafe(op.strike));
+
         let actionsHtml = '';
         if (showActions) {
-            if (isHistorico) {
-                actionsHtml = `<div class="btn-list flex-nowrap">
-                    <button class="btn btn-sm btn-info btn-icon" onclick="openDetalheOperacao('${op.id}')" title="Detalhes">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-                    </button>
-                 </div>`;
-            } else {
-                const isFechada = op.status && (op.status.toUpperCase() === 'FECHADA' || op.status.toUpperCase() === 'EXERCIDA' || op.status.toUpperCase() === 'VENCIDA');
-                actionsHtml = `<div class="btn-list flex-nowrap">
-                    <button class="btn btn-sm btn-info btn-icon" onclick="openDetalheOperacao('${op.id}')" title="Detalhes">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-                    </button>
-                    <button class="btn btn-sm btn-primary btn-icon" onclick="editOperacao('${op.id}')" title="Editar">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                    </button>
-                    ${!isFechada ? `
-                    <button class="btn btn-sm btn-warning btn-icon" onclick="finalizarOpcao('${op.id}')" title="Finalizar operação">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                    </button>
-                    <button class="btn btn-sm btn-danger btn-icon" onclick="deleteOperacao('${op.id}')" title="Excluir">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
-                    </button>` : ''}
-                 </div>`;
-            }
+            // Ações do DataTable — mesmas do crypto (Detalhes, Editar,
+            // Fechar antecipadamente e Excluir; últimos só para em aberto).
+            const isFechada = op.status && (op.status.toUpperCase() === 'FECHADA' || op.status.toUpperCase() === 'EXERCIDA' || op.status.toUpperCase() === 'VENCIDA');
+            actionsHtml = `<div class="btn-list flex-nowrap">
+                <button class="btn btn-sm btn-info btn-icon detalhe-op-btn" data-op-id="${op.id}" title="Detalhes">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                </button>
+                <button class="btn btn-sm btn-primary btn-icon edit-op-btn" data-op-id="${op.id}" title="Editar">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                ${!isFechada ? `
+                <button class="btn btn-sm btn-warning btn-icon fechar-op-btn" data-op-id="${op.id}" title="Fechar antecipadamente">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+                <button class="btn btn-sm btn-danger btn-icon delete-op-btn" data-op-id="${op.id}" title="Excluir">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                </button>` : ''}
+            </div>`;
         }
         
         const isVenda = op.tipo_operacao === 'VENDA' || (op.tipo_operacao === undefined && qtd < 0);
@@ -915,7 +913,7 @@ async function populateTable(dt, data, showActions = true, updatePrices = false,
         const premioValue = premioAbs * qtdAbs;
         
         dt.row.add([
-            op.ativo_base ? `<span class="badge bg-azure text-azure-fg" style="cursor:pointer" title="Ver detalhes" onclick="window.ModalDetalhesOpcoes&&window.ModalDetalhesOpcoes.show('${op.id}')">${op.ativo_base}</span>` : '-',
+            op.ativo_base ? `<span class="badge bg-azure text-azure-fg show-detalhe-modal" style="cursor:pointer" title="Ver detalhes" data-op-id="${op.id}">${op.ativo_base}</span>` : '-',
             op.ativo,
             `<span class="badge ${op.tipo === 'CALL' ? 'bg-green text-green-fg' : 'bg-red text-red-fg'}">${op.tipo}</span>`,
             precoAtual && !isNaN(parseFloatSafe(precoAtual)) ? `<span class="${parseFloatSafe(precoAtual) >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(parseFloatSafe(precoAtual))}</span>` : '-',
@@ -1255,6 +1253,124 @@ async function finalizarOpcao(id) {
 }
 
 // Modal detalhes functions moved to detalhe-opcoes.js
+
+// ====================
+// FECHAMENTO ANTECIPADO (lado oposto com valor e quantidade)
+// ====================
+async function fecharAntecipadoOpcao(id) {
+    const op = allOperacoes.find(o => String(o.id) === String(id));
+    if (!op) return;
+
+    const status = String(op.status || '').toUpperCase();
+    if (status !== 'ABERTA') {
+        iziToast.warning({ title: 'Atenção', message: 'Só é possível fechar antecipadamente operações ABERTA' });
+        return;
+    }
+
+    // Lado oposto: quem está VENDIDO compra; quem está COMPRADO vende
+    const tipoOrig = String(
+        op.tipo_operacao || (parseFloatSafe(op.quantidade) < 0 ? 'VENDA' : 'COMPRA')
+    ).toUpperCase();
+    const ladoFech   = tipoOrig === 'VENDA' ? 'COMPRA' : 'VENDA';
+    const qtdAberta  = Math.abs(parseInt(op.quantidade, 10)) || 0;
+    const precoEnt   = parseFloatSafe(op.preco_entrada) || parseFloatSafe(op.premio) || 0;
+    const precoRef   = parseFloatSafe(op.preco_atual) > 0 ? parseFloatSafe(op.preco_atual) : precoEnt;
+    const ativoLabel = `${op.ativo || ''} ${op.tipo || ''} (${op.ativo_base || ''})`.trim();
+
+    if (qtdAberta <= 0) {
+        iziToast.warning({ title: 'Atenção', message: 'Operação sem quantidade em aberto' });
+        return;
+    }
+
+    const { value: formValues, isConfirmed } = await Swal.fire({
+        title: 'Fechar operação antecipadamente',
+        html: `
+            <p class="mb-2 text-muted small text-start">Operação: <strong>${ativoLabel}</strong><br>
+            Lado original: <strong>${tipoOrig}</strong> → lançamento oposto: <strong>${ladoFech}</strong></p>
+            <div class="mb-3 text-start">
+                <label class="form-label small">Valor da opção (R$)</label>
+                <input id="swalFechValor" type="number" step="0.01" min="0.01" class="form-control form-control-sm"
+                       value="${precoRef > 0 ? precoRef : ''}" placeholder="Ex: 0.85">
+            </div>
+            <div class="mb-3 text-start">
+                <label class="form-label small">Quantidade <span class="text-muted">(máx. ${qtdAberta})</span></label>
+                <input id="swalFechQtd" type="number" step="1" min="1" max="${qtdAberta}" class="form-control form-control-sm"
+                       value="${qtdAberta}">
+            </div>
+            <div class="mb-1 small text-start" id="swalFechPreview"></div>`,
+        showCancelButton: true,
+        confirmButtonColor: '#f59f00',
+        cancelButtonColor: '#626976',
+        confirmButtonText: 'Fechar',
+        cancelButtonText: 'Cancelar',
+        background: '#1f2937',
+        color: '#f8f9fa',
+        didOpen: () => {
+            const inputValor = document.getElementById('swalFechValor');
+            const inputQtd   = document.getElementById('swalFechQtd');
+            const preview    = document.getElementById('swalFechPreview');
+            const atualizarPreview = () => {
+                const valor = parseFloat(inputValor.value);
+                const qtd   = parseInt(inputQtd.value, 10);
+                if (!(valor > 0) || !(qtd > 0)) { preview.innerHTML = ''; return; }
+                // P&L realizado: VENDA → (entrada − valor) × qtd; COMPRA → (valor − entrada) × qtd
+                const res     = tipoOrig === 'VENDA' ? (precoEnt - valor) * qtd : (valor - precoEnt) * qtd;
+                const parcial = qtd < qtdAberta;
+                preview.innerHTML =
+                    'Resultado estimado: <strong class="' + (res >= 0 ? 'text-success' : 'text-danger') + '">' +
+                    formatCurrency(res) + '</strong> · ' +
+                    (parcial ? 'fechamento parcial — restam ' + (qtdAberta - qtd) + ' contrato(s)'
+                             : 'fechamento total da operação');
+            };
+            inputValor.addEventListener('input', atualizarPreview);
+            inputQtd.addEventListener('input', atualizarPreview);
+            atualizarPreview();
+        },
+        preConfirm: () => {
+            const valor = parseFloat(document.getElementById('swalFechValor').value);
+            const qtd   = parseInt(document.getElementById('swalFechQtd').value, 10);
+            if (!(valor > 0)) {
+                Swal.showValidationMessage('Informe um valor de fechamento maior que zero');
+                return false;
+            }
+            if (!(qtd > 0) || qtd > qtdAberta) {
+                Swal.showValidationMessage(`Quantidade deve estar entre 1 e ${qtdAberta}`);
+                return false;
+            }
+            return { valor: valor, quantidade: qtd };
+        }
+    });
+
+    if (!isConfirmed) return;
+
+    try {
+        const res  = await fetch(`${API_BASE}/api/opcoes/${id}/fechar-antecipado`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify(formValues)
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || data.error) {
+            iziToast.error({ title: 'Erro', message: data.error || 'Erro ao fechar operação' });
+            return;
+        }
+        iziToast.success({
+            title: 'Sucesso',
+            message: (data.parcial
+                ? `Fechamento parcial de ${data.quantidade_fechada} contrato(s) a ${formatCurrency(data.valor)}`
+                : `Operação fechada a ${formatCurrency(data.valor)}`) +
+                ` — resultado ${formatCurrency(data.resultado)}`
+        });
+        await loadOperacoes();
+        // Atualiza modal de detalhes, se aberto
+        const modal = document.getElementById('modalDetalheOpcao');
+        if (modal && modal.classList.contains('show') && typeof refreshDetalheOperacao === 'function') {
+            await refreshDetalheOperacao();
+        }
+    } catch (e) {
+        iziToast.error({ title: 'Erro', message: 'Erro ao fechar operação' });
+    }
+}
 
 // ====================
 // COTAÇÕES E API
@@ -1793,11 +1909,63 @@ async function refreshQuotes() {
     }
 }
 
+// ====================
+// RESOLUÇÃO DO ATIVO BASE (código de opção → ativo base)
+// ====================
+/**
+ * Se foi digitado o código de uma opção (ex.: PETRK258W2) no campo de ativo
+ * base, resolve o ativo real (ex.: PETR4). Fontes, em ordem:
+ *   1. /api/cotacao/opcoes (campo parent_symbol) — opções com dados na B3;
+ *   2. operações lançadas em window.allOperacoes (ativo → ativo_base);
+ *   3. mantém o código informado (ticker de ação ou opção sem dados).
+ * Ticker de ação (PETR4, VALE3, BOVA11) volta como está.
+ */
+async function resolverAtivoBaseOpcoes(codigo) {
+    const cod = String(codigo || '').toUpperCase().trim();
+    if (!cod) return cod;
+    // Ação/fundo: 4-5 letras + 1-2 dígitos — não precisa resolver
+    if (/^[A-Z]{4,5}\d{1,2}$/.test(cod)) return cod;
+    try {
+        const res = await fetch(`${API_BASE}/api/cotacao/opcoes/${cod}`);
+        if (res.ok) {
+            const d = await res.json();
+            const base = d && (d.parent_symbol || d.underlying || d.underlying_symbol || d.ativo_base);
+            if (base) return String(base).toUpperCase();
+        }
+    } catch (e) { /* tenta a próxima fonte */ }
+    // Fallback: opção já lançada no banco (coluna ativo → ativo_base)
+    try {
+        const ops = window.allOperacoes || [];
+        const found = ops.find(o => String(o.ativo || '').toUpperCase() === cod && o.ativo_base);
+        if (found) return String(found.ativo_base).toUpperCase();
+    } catch (e) { /* tenta a próxima fonte */ }
+    // Último recurso: prefixo alfabético do código casa com um ativo base
+    // conhecido (ex.: PETRK258W2 começa com PETR → PETR4)
+    try {
+        const ops = window.allOperacoes || [];
+        const candidatos = [...new Set(
+            ops.map(o => String(o.ativo_base || '').toUpperCase()).filter(Boolean)
+        )];
+        const prefixoCod = cod.replace(/[^A-Z].*$/, ''); // letras iniciais
+        const alvo = candidatos
+            .filter(a => a.replace(/\d+$/, '') && cod.startsWith(a.replace(/\d+$/, '')))
+            .sort((a, b) => b.length - a.length)[0];
+        if (alvo && prefixoCod.length >= 4) return alvo;
+    } catch (e) { /* mantém o código informado */ }
+    return cod;
+}
+
 async function buscarOpcoesAPI() {
-    const ativoBase = document.getElementById('inputAtivoBase').value.toUpperCase();
-    if (!ativoBase) {
+    const codigoDigitado = document.getElementById('inputAtivoBase').value.toUpperCase();
+    if (!codigoDigitado) {
         iziToast.warning({title: 'Atenção', message: 'Digite o código do ativo base'});
         return;
+    }
+    // Código de opção informado no lugar do ativo base? Resolve para a ação (ex.: PETR4)
+    const ativoBase = await resolverAtivoBaseOpcoes(codigoDigitado);
+    if (ativoBase !== codigoDigitado) {
+        document.getElementById('inputAtivoBase').value = ativoBase;
+        iziToast.info({title: 'Ativo base', message: `${codigoDigitado} é código de opção — usando o ativo base ${ativoBase}`});
     }
     
     const modal = new bootstrap.Modal(document.getElementById('modalSelecionarOpcao'));
@@ -1833,7 +2001,7 @@ async function buscarOpcoesAPI() {
             } catch (e) { console.log(e); }
         }
         
-        if (!data) throw new Error('Não foi possível buscar opções');
+        if (!data) throw new Error('Cadeia de opções indisponível. Confirme o ativo base (ex.: PETR4) e se a fonte de dados (OpLab) está acessível.');
         
         opcoesDisponiveis = data.opcoes || data.options || data || [];
         if (!Array.isArray(opcoesDisponiveis)) {
@@ -1854,7 +2022,7 @@ async function buscarOpcoesAPI() {
             tipo: op.tipo || op.type || op.category || '',
             strike: parseFloat(op.strike || op.strike_price || 0),
             vencimento: op.vencimento || op.expiration || op.due_date || '',
-            premio: parseFloat(op.premio || op.price || op.close || 0),
+            premio: extrairPremioOpcao(op),
             delta: parseFloat(op.delta || (op.greeks && op.greeks.delta) || 0),
             theta: parseFloat(op.theta || (op.greeks && op.greeks.theta) || 0),
             gamma: parseFloat(op.gamma || (op.greeks && op.greeks.gamma) || 0),
@@ -2019,14 +2187,12 @@ function renderModalSelecionarOpcoesList() {
              }
              
              tr.innerHTML += `
-                <td style="${cellStyle}" class="text-start"><span class="text-nowrap fw-bold text-primary" style="cursor:pointer" onclick="selecionarOpcao('${call.ativo}')">${call.ativo}</span></td>
-                    <td style="${cellStyle}" class="text-start"><span class="text-nowrap fw-bold text-primary selecionar-opcao-span" style="cursor:pointer" data-ativo="${call.ativo}">${call.ativo}</span></td>
+                <td style="${cellStyle}" class="text-start"><span class="text-nowrap fw-bold text-primary selecionar-opcao-span" style="cursor:pointer" data-ativo="${call.ativo}">${call.ativo}</span></td>
                 <td style="${cellStyle}" class="text-end">${call.premio.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})}</td>
                 <td style="${cellStyle}" class="text-center">${diasCall.corridos}/${diasCall.uteis}</td>
                 <td style="${cellStyle}" class="text-center">
                     ${(callDelta*100).toFixed(1)} 
-                    <span style="cursor:pointer" onclick="mostrarDetalhesOpcao('${call.ativo}')">📋</span>
-                        <span style="cursor:pointer" class="mostrar-detalhes-opcao-span" data-ativo="${call.ativo}">📋</span>
+                    <span style="cursor:pointer" class="mostrar-detalhes-opcao-span" data-ativo="${call.ativo}">📋</span>
                 </td>
              `;
         } else {
@@ -2054,13 +2220,11 @@ function renderModalSelecionarOpcoesList() {
              tr.innerHTML += `
                 <td style="${cellStyle}" class="text-center">
                     ${(putDelta*100).toFixed(1)} 
-                    <span style="cursor:pointer" onclick="mostrarDetalhesOpcao('${put.ativo}')">📋</span>
-                        <span style="cursor:pointer" class="mostrar-detalhes-opcao-span" data-ativo="${put.ativo}">📋</span>
+                    <span style="cursor:pointer" class="mostrar-detalhes-opcao-span" data-ativo="${put.ativo}">📋</span>
                 </td>
                 <td style="${cellStyle}" class="text-center">${diasPut.corridos}/${diasPut.uteis}</td>
                 <td style="${cellStyle}" class="text-end">${put.premio.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})}</td>
-                <td style="${cellStyle}" class="text-end"><span class="text-nowrap fw-bold text-primary" style="cursor:pointer" onclick="selecionarOpcao('${put.ativo}')">${put.ativo}</span></td>
-                    <td style="${cellStyle}" class="text-end"><span class="text-nowrap fw-bold text-primary selecionar-opcao-span" style="cursor:pointer" data-ativo="${put.ativo}">${put.ativo}</span></td>
+                <td style="${cellStyle}" class="text-end"><span class="text-nowrap fw-bold text-primary selecionar-opcao-span" style="cursor:pointer" data-ativo="${put.ativo}">${put.ativo}</span></td>
              `;
         } else {
              tr.innerHTML += `<td colspan="4"></td>`;
@@ -2116,8 +2280,10 @@ function selecionarOpcao(ativoOrOp) {
 window.selecionarOpcao = selecionarOpcao;
 
 function renderHistoricoMensal() {
-    const groups = groupByMonth(allOperacoes);
-    // Render logic
+    // Layout mestre-detalhes (paridade com crypto), implementado em historico-opcoes.js
+    if (window.HistoricoOpcoes && typeof window.HistoricoOpcoes.render === 'function') {
+        window.HistoricoOpcoes.render();
+    }
 }
 
 function renderChartAnual(data, year) {
@@ -3620,13 +3786,6 @@ function updateSaldoInsights(ops) {
     const winRate = totalOps > 0 ? (wins / totalOps) * 100 : 0;
     const mediaDias = countDias > 0 ? Math.round(totalDias / countDias) : null;
 
-    console.log('[Insights] Cálculos:', {
-        totalOps, wins, losses,
-        sumPos, sumNeg, avgWin, avgLoss,
-        payoff, profitFactor,
-        totalResultado, totalSaldo
-    });
-
     let maxDrawdown = 0;
     let maxDrawdownPct = 0;
     if (ops.length > 0) {
@@ -4326,15 +4485,49 @@ let simOpcoesDisponiveis = [];
 let simSelectedOption = null;
 let chartSimEvolucaoInstance = null;
 let chartSimLucroInstance = null;
+let simUltimoAtivoBuscado = null;   // ativo já carregado na simulação
+let simAtivoBuscaAtual = null;      // ativo da busca em andamento
+let simBuscaEmAndamento = false;
+let simBlurTimer = null;            // debounce do blur do ativo base
 
 function initSimulacaoEvents() {
     // Search Button - Usando sistema híbrido (yfinance + OpLab)
-    document.getElementById('btnSimBuscar').addEventListener('click', buscarOpcoesSimulacaoHibrida);
-    document.getElementById('simAtivoBase').addEventListener('keypress', function(e) {
+    document.getElementById('btnSimBuscar').addEventListener('click', function() {
+        cancelarBuscaSimulacaoAgendada();
+        buscarOpcoesSimulacaoHibrida();
+    });
+
+    const simAtivoBaseEl = document.getElementById('simAtivoBase');
+    simAtivoBaseEl.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             e.preventDefault();
+            cancelarBuscaSimulacaoAgendada();
             buscarOpcoesSimulacaoHibrida();
         }
+    });
+
+    // Carga automática ao sair do campo (blur) ou ao alterar o ativo digitado.
+    // O clique na lupa cancela o agendamento do blur para não duplicar a busca.
+    const modalSimAberto = function () {
+        const m = document.getElementById('modalSimulacao');
+        return !!m && m.classList.contains('show');
+    };
+    simAtivoBaseEl.addEventListener('blur', function() {
+        const valor = (this.value || '').trim().toUpperCase();
+        if (!valor || valor === simUltimoAtivoBuscado || !modalSimAberto()) return;
+        cancelarBuscaSimulacaoAgendada();
+        simBlurTimer = setTimeout(function() {
+            simBlurTimer = null;
+            const atual = (document.getElementById('simAtivoBase').value || '').trim().toUpperCase();
+            if (!atual || atual === simUltimoAtivoBuscado || !modalSimAberto()) return;
+            buscarOpcoesSimulacaoHibrida();
+        }, 250);
+    });
+    simAtivoBaseEl.addEventListener('change', function() {
+        const valor = (this.value || '').trim().toUpperCase();
+        if (!valor || valor === simUltimoAtivoBuscado || !modalSimAberto()) return;
+        cancelarBuscaSimulacaoAgendada();
+        buscarOpcoesSimulacaoHibrida();
     });
 
     // Filters - Removed simEstrategia as it's no longer used
@@ -4350,6 +4543,14 @@ function initSimulacaoEvents() {
     });
     document.getElementById('simVencimento').addEventListener('change', renderSimOpcoesList);
     document.getElementById('simBusca').addEventListener('input', renderSimOpcoesList);
+
+    // Posição (COMPRA/VENDA) — recalcula o PoP da lista
+    document.querySelectorAll('input[name="simPosicao"]').forEach(el => {
+        el.addEventListener('change', () => {
+            renderSimOpcoesList();
+            if (simSelectedOption) selectSimOption(simSelectedOption);
+        });
+    });
     
     // Validação da Quantidade (Múltiplo de 100, Min 100)
     const inputSimQtd = document.getElementById('simQuantidade');
@@ -4412,17 +4613,36 @@ function openSimularModal() {
     }
 }
 
+/** Cancela a busca agendada pelo blur do ativo base (usado pela lupa/Enter). */
+function cancelarBuscaSimulacaoAgendada() {
+    if (simBlurTimer) {
+        clearTimeout(simBlurTimer);
+        simBlurTimer = null;
+    }
+}
+
 /**
  * Busca cotações usando sistema híbrido (yfinance + OpLab)
  * Ativo base: tempo real (5-10 min delay)
  * Opções: OpLab (15-20 min delay)
  */
 async function buscarOpcoesSimulacaoHibrida() {
-    const ativoBase = document.getElementById('simAtivoBase').value.toUpperCase();
-    if (!ativoBase) {
+    const codigoDigitado = document.getElementById('simAtivoBase').value.toUpperCase();
+    if (!codigoDigitado) {
         iziToast.warning({title: 'Atenção', message: 'Digite o código do ativo base'});
         return;
     }
+    // Código de opção informado no lugar do ativo base? Resolve para a ação (ex.: PETR4)
+    const ativoBase = await resolverAtivoBaseOpcoes(codigoDigitado);
+    if (ativoBase !== codigoDigitado) {
+        document.getElementById('simAtivoBase').value = ativoBase;
+        iziToast.info({title: 'Ativo base', message: `${codigoDigitado} é código de opção — usando o ativo base ${ativoBase}`});
+    }
+
+    // Evita buscas duplicadas do mesmo ativo (blur + lupa)
+    if (simBuscaEmAndamento && simAtivoBuscaAtual === ativoBase) return;
+    simBuscaEmAndamento = true;
+    simAtivoBuscaAtual = ativoBase;
 
     // Capturar estado para preservar contexto
     const prevSelectedAtivo = simSelectedOption ? simSelectedOption.ativo : null;
@@ -4506,7 +4726,7 @@ async function buscarOpcoesSimulacaoHibrida() {
             tipo: op.tipo || op.type || op.category || '',
             strike: parseFloat(op.strike || op.strike_price || 0),
             vencimento: op.vencimento || op.expiration || op.due_date || '',
-            premio: parseFloat(op.premio || op.price || op.close || 0),
+            premio: extrairPremioOpcao(op),
             // Usar spot_price_realtime se disponível (híbrido)
             spot_price: op.spot_price_realtime || cotacaoAtivoBase,
             delta: parseFloat(op.delta || (op.greeks && op.greeks.delta) || 0),
@@ -4600,6 +4820,8 @@ async function buscarOpcoesSimulacaoHibrida() {
         
     } finally {
         document.getElementById('simLoading').style.display = 'none';
+        simBuscaEmAndamento = false;
+        simUltimoAtivoBuscado = ativoBase;
         
         // Limpar apenas spinners residuais (caso o try tenha sido interrompido antes do reset)
         // Não restaurar dataset.originalContent para não sobrescrever valores setados por selectSimOption
@@ -4627,10 +4849,16 @@ async function buscarOpcoesSimulacaoHibrida() {
 }
 
 async function buscarOpcoesSimulacao() {
-    const ativoBase = document.getElementById('simAtivoBase').value.toUpperCase();
-    if (!ativoBase) {
+    const codigoDigitado = document.getElementById('simAtivoBase').value.toUpperCase();
+    if (!codigoDigitado) {
         iziToast.warning({title: 'Atenção', message: 'Digite o código do ativo base'});
         return;
+    }
+    // Código de opção informado no lugar do ativo base? Resolve para a ação (ex.: PETR4)
+    const ativoBase = await resolverAtivoBaseOpcoes(codigoDigitado);
+    if (ativoBase !== codigoDigitado) {
+        document.getElementById('simAtivoBase').value = ativoBase;
+        iziToast.info({title: 'Ativo base', message: `${codigoDigitado} é código de opção — usando o ativo base ${ativoBase}`});
     }
 
     // Capture state to preserve context
@@ -4676,7 +4904,7 @@ async function buscarOpcoesSimulacao() {
         if (!data) {
              // Fallback: Check if we can get it from the generic operations list (unlikely but worth a try if it's a mock)
              // or throw error
-             throw new Error('Não foi possível buscar os dados de opções. Verifique se o backend está rodando e a rota existe.');
+             throw new Error('Cadeia de opções indisponível. Confirme o ativo base (ex.: PETR4) e se a fonte de dados (OpLab) está acessível.');
         }
         
         simOpcoesDisponiveis = data.opcoes || data.options || data || [];
@@ -4695,7 +4923,7 @@ async function buscarOpcoesSimulacao() {
             tipo: op.tipo || op.type || op.category || '',
             strike: parseFloat(op.strike || op.strike_price || 0),
             vencimento: op.vencimento || op.expiration || op.due_date || '',
-            premio: parseFloat(op.premio || op.price || op.close || 0),
+            premio: extrairPremioOpcao(op),
             delta: parseFloat(op.delta || (op.greeks && op.greeks.delta) || 0),
             theta: parseFloat(op.theta || (op.greeks && op.greeks.theta) || 0),
             gamma: parseFloat(op.gamma || (op.greeks && op.greeks.gamma) || 0),
@@ -4943,8 +5171,11 @@ function renderSimOpcoesList() {
                 else if (isVenda && op.tipo === 'PUT') pop = 1;
                 else pop = 0;
             } else if (T <= 0.001) {
-                if (op.tipo === 'CALL') pop = (cotacaoAtivoBase > breakeven) ? 1 : 0;
-                else pop = (cotacaoAtivoBase < breakeven) ? 1 : 0;
+                if (op.tipo === 'CALL') {
+                    pop = isVenda ? (cotacaoAtivoBase < breakeven ? 1 : 0) : (cotacaoAtivoBase > breakeven ? 1 : 0);
+                } else {
+                    pop = isVenda ? (cotacaoAtivoBase > breakeven ? 1 : 0) : (cotacaoAtivoBase < breakeven ? 1 : 0);
+                }
             } else {
                 const d1_be = (Math.log(cotacaoAtivoBase / breakeven) + (r + sigma * sigma / 2) * T) / (sigma * Math.sqrt(T));
                 const d2_be = d1_be - sigma * Math.sqrt(T);
@@ -6087,6 +6318,58 @@ async function salvarConfigIA() {
     } catch (e) {
         const statusDiv = document.getElementById('iaStatus');
         statusDiv.className = 'alert alert-danger';
+        statusDiv.textContent = `❌ Erro de conexão: ${e.message}`;
+        statusDiv.classList.remove('d-none');
+    }
+}
+
+// ─── Saldo em US$ para opções (usado pelo Simulador) ───────────────────────
+function preencherSaldoOpcoes(config) {
+    const campo = document.getElementById('inpSaldoOpcoesUsd');
+    if (!campo) return;
+    const valor = config && config.saldoOpcoesUsd;
+    if (valor !== undefined && valor !== null && valor !== '' && document.activeElement !== campo) {
+        campo.value = valor;
+    }
+}
+
+async function salvarSaldoOpcoes() {
+    const campo = document.getElementById('inpSaldoOpcoesUsd');
+    const statusDiv = document.getElementById('saldoOpcoesStatus');
+    const valor = parseFloat(campo.value);
+
+    if (isNaN(valor) || valor < 0) {
+        statusDiv.className = 'alert alert-danger mt-2 mb-0';
+        statusDiv.textContent = '❌ Informe um saldo válido em US$ (ex.: 5000.00).';
+        statusDiv.classList.remove('d-none');
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_BASE}/api/config`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ saldoOpcoesUsd: String(valor) })
+        });
+
+        if (res.ok) {
+            // mantém o localStorage coerente com o banco
+            const currentConfig = JSON.parse(localStorage.getItem('appConfig') || '{}');
+            currentConfig.saldoOpcoesUsd = String(valor);
+            localStorage.setItem('appConfig', JSON.stringify(currentConfig));
+
+            statusDiv.className = 'alert alert-success mt-2 mb-0';
+            statusDiv.textContent = `✅ Saldo salvo: US$ ${valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            statusDiv.classList.remove('d-none');
+            setTimeout(() => statusDiv.classList.add('d-none'), 5000);
+        } else {
+            const data = await res.json().catch(() => ({}));
+            statusDiv.className = 'alert alert-danger mt-2 mb-0';
+            statusDiv.textContent = `❌ Erro: ${data.error || 'Falha ao salvar'}`;
+            statusDiv.classList.remove('d-none');
+        }
+    } catch (e) {
+        statusDiv.className = 'alert alert-danger mt-2 mb-0';
         statusDiv.textContent = `❌ Erro de conexão: ${e.message}`;
         statusDiv.classList.remove('d-none');
     }

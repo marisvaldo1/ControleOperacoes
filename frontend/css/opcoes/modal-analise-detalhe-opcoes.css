@@ -1,0 +1,602 @@
+/* ============================================================
+   modal-analise-detalhe-opcoes.css  v1.0.0
+   Estilos do Modal de Análise Completa — Opções (BRL)
+
+   Estrutura visual idêntica ao equivalente de Crypto
+   (frontend/css/crypto/modal-analise-detalhe-crypto.css),
+   adaptada para o domínio de opções de ações/ETFs em BRL.
+   ============================================================ */
+
+/* ── KPI Cards superiores ─────────────────────────────────── */
+.mac-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+
+.mac-kpi-card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-left: 3px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    padding: 12px 12px 10px;
+    transition: border-left-color 0.25s, background 0.25s;
+    position: relative;
+    overflow: hidden;
+    min-height: 112px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.mac-kpi-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: var(--mac-kpi-color, rgba(255,255,255,.08));
+    opacity: 0.4;
+}
+
+.mac-kpi-label {
+    font-size: 0.67rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: rgba(255, 255, 255, 0.45);
+    margin-bottom: 4px;
+    white-space: nowrap;
+    text-align: center;
+}
+
+.mac-kpi-val {
+    font-size: 1.38rem;
+    font-weight: 700;
+    font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+    line-height: 1.1;
+    color: var(--mac-kpi-color, rgba(255, 255, 255, 0.85));
+    transition: color 0.25s;
+    text-align: right;
+}
+
+.mac-kpi-sub {
+    font-size: 0.6rem;
+    opacity: 0.5;
+    margin-top: 2px;
+    white-space: nowrap;
+}
+
+/* ── Seções do painel direito ────────────────────────────── */
+.mac-section {
+    background: rgba(255,255,255,.03);
+    border: 1px solid rgba(255,255,255,.09);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.mac-section-title {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: rgba(255,255,255,.75);
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+    background: rgba(255,255,255,.02);
+}
+
+.mac-section-body {
+    padding: 10px 12px;
+}
+
+#macAnaliseCol {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    height: 100%;
+}
+
+.mac-section-grow {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.mac-section-grow .row {
+    flex: 1;
+}
+
+#macBodyContent > .row {
+    align-items: stretch;
+}
+
+#macDetalhesPanel {
+    height: 100%;
+}
+
+/* inner cards (PM + Risco) */
+.mac-inner-card {
+    background: rgba(255,255,255,.025);
+    border: 1px solid rgba(255,255,255,.07);
+    border-radius: 6px;
+    padding: 9px 10px;
+    height: 100%;
+}
+
+.mac-inner-title {
+    font-size: 0.67rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: rgba(255,255,255,.45);
+    margin-bottom: 7px;
+    font-weight: 600;
+}
+
+/* ── Skeleton ────────────────────────────────────────────── */
+.mac-skel-kpi {
+    height: 62px;
+    border-radius: 8px;
+}
+
+/* ── Card Retorno ao Vencimento ──────────────────────────── */
+.mac-ret-card {
+    --mac-ret-accent: #4da6ff;
+    --mac-ret-prob-bg: rgba(255,255,255,.03);
+    --mac-ret-prob-border: rgba(255,255,255,.09);
+    background:
+        linear-gradient(165deg, var(--mac-ret-prob-bg) 0%, rgba(255,255,255,.015) 100%),
+        radial-gradient(circle at 85% 12%, var(--mac-ret-prob-bg) 0%, transparent 42%);
+    border: 1px solid var(--mac-ret-prob-border);
+    border-radius: 10px;
+    padding: 10px;
+}
+
+.mac-ret-card-open {
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.03);
+}
+
+.mac-ret-card-closed {
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.09), 0 0 0 1px rgba(255,255,255,.05);
+}
+
+.mac-ret-tone-risk .mac-ret-pct {
+    text-shadow: 0 0 18px rgba(232,93,74,.28);
+}
+
+.mac-ret-tone-safe .mac-ret-pct {
+    text-shadow: 0 0 18px rgba(71,185,108,.24);
+}
+
+.mac-ret-tone-neutral .mac-ret-pct {
+    text-shadow: 0 0 16px rgba(245,159,0,.22);
+}
+
+.mac-ret-mode {
+    margin-bottom: 8px;
+    padding: 5px 9px;
+    border-radius: 6px;
+    font-size: .64rem;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    border: 1px dashed rgba(255,255,255,.2);
+    color: rgba(255,255,255,.72);
+}
+
+.mac-ret-mode.is-open {
+    background: rgba(77,166,255,.08);
+    border-color: rgba(77,166,255,.35);
+}
+
+.mac-ret-mode.is-closed {
+    background: rgba(255,255,255,.1);
+    border-color: rgba(255,255,255,.35);
+    color: rgba(255,255,255,.84);
+}
+
+.mac-status-banner {
+    margin: 8px 0 12px;
+    border-radius: 8px;
+    padding: 9px 10px;
+    border: 1px solid rgba(255,255,255,.16);
+    background: rgba(255,255,255,.04);
+}
+
+.mac-status-banner-title {
+    font-size: .74rem;
+    font-weight: 700;
+    letter-spacing: .02em;
+    color: rgba(255,255,255,.9);
+}
+
+.mac-status-banner-sub {
+    margin-top: 2px;
+    font-size: .64rem;
+    color: rgba(255,255,255,.62);
+}
+
+.mac-status-banner-chip {
+    margin-top: 7px;
+    display: inline-flex;
+    align-items: center;
+    font-size: .62rem;
+    font-weight: 700;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    border-radius: 999px;
+    padding: 3px 8px;
+    border: 1px solid currentColor;
+}
+
+.mac-status-banner.is-open {
+    border-style: dashed;
+}
+
+.mac-status-banner.is-closed {
+    border-style: solid;
+    background: rgba(255,255,255,.07);
+}
+
+.mac-status-banner.status-exercida {
+    border-color: rgba(232,93,74,.45);
+}
+
+.mac-status-banner.status-exercida .mac-status-banner-chip {
+    color: #e85d4a;
+    background: rgba(232,93,74,.15);
+}
+
+.mac-status-banner.status-nao-exercida {
+    border-color: rgba(71,185,108,.45);
+}
+
+.mac-status-banner.status-nao-exercida .mac-status-banner-chip {
+    color: #47b96c;
+    background: rgba(71,185,108,.14);
+}
+
+.mac-ret-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.mac-ret-ticker {
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: .02em;
+    color: rgba(255,255,255,.95);
+    line-height: 1.1;
+}
+
+.mac-ret-sub {
+    font-size: .66rem;
+    color: rgba(255,255,255,.5);
+    margin-top: 2px;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+
+.mac-ret-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--mac-ret-accent);
+    background: rgba(255,255,255,.06);
+    color: var(--mac-ret-accent);
+    font-size: .63rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.mac-ret-led {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--mac-ret-accent);
+    box-shadow: 0 0 8px var(--mac-ret-accent);
+}
+
+.mac-ret-segments {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 5px;
+    margin-bottom: 10px;
+}
+
+.mac-ret-seg {
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.08);
+}
+
+.mac-ret-seg.active {
+    background: var(--mac-ret-accent);
+    box-shadow: 0 0 10px var(--mac-ret-accent);
+}
+
+.mac-ret-pct-block {
+    text-align: center;
+    margin-bottom: 8px;
+}
+
+.mac-ret-pct {
+    font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+    font-size: 2.2rem;
+    font-weight: 800;
+    letter-spacing: -.03em;
+    color: var(--mac-ret-accent);
+    line-height: 1;
+}
+
+.mac-ret-pct-lbl {
+    margin-top: 3px;
+    font-size: .64rem;
+    color: rgba(255,255,255,.5);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+
+.mac-ret-divider {
+    height: 1px;
+    background: rgba(255,255,255,.07);
+    margin: 6px 0 8px;
+}
+
+.mac-ret-risk {
+    border-radius: 8px;
+    border: 1px solid var(--mac-ret-accent);
+    background: rgba(255,255,255,.05);
+    padding: 8px 10px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.mac-ret-metrics-lines {
+    margin-bottom: 10px;
+    border-top: 1px solid rgba(255,255,255,.06);
+    border-bottom: 1px solid rgba(255,255,255,.06);
+    padding: 8px 0;
+}
+
+.mac-ret-metric-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: .73rem;
+    padding: 2px 0;
+}
+
+.mac-ret-metric-line span {
+    color: rgba(255,255,255,.62);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.mac-ret-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.mac-ret-dot-cot { background: #4da6ff; }
+.mac-ret-dot-strike { background: #f59f00; }
+.mac-ret-dot-premio { background: #3fb950; }
+.mac-ret-dot-diff { background: #a5b4fc; }
+
+.mac-ret-metric-cot { color: #4da6ff; }
+.mac-ret-metric-strike { color: #f59f00; }
+.mac-ret-metric-premio { color: #3fb950; }
+.mac-ret-metric-diff { color: #a5b4fc; }
+
+.mac-ret-risk-bars {
+    display: flex;
+    align-items: end;
+    gap: 3px;
+}
+
+.mac-ret-risk-bar {
+    width: 4px;
+    border-radius: 2px;
+    background: rgba(255,255,255,.16);
+}
+
+.mac-ret-risk-bar:nth-child(1) { height: 9px; }
+.mac-ret-risk-bar:nth-child(2) { height: 12px; }
+.mac-ret-risk-bar:nth-child(3) { height: 15px; }
+.mac-ret-risk-bar:nth-child(4) { height: 18px; }
+
+.mac-ret-risk-bar.active {
+    background: var(--mac-ret-accent);
+}
+
+.mac-ret-risk-title {
+    color: var(--mac-ret-accent);
+    font-size: .72rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.mac-ret-risk-desc {
+    margin-top: 3px;
+    color: rgba(255,255,255,.6);
+    font-size: .64rem;
+    line-height: 1.35;
+}
+
+@media (max-width: 768px) {
+    .mac-kpi-card {
+        min-height: 86px;
+    }
+
+    .mac-kpi-val {
+        font-size: 1.12rem;
+    }
+
+    .mac-ret-pct {
+        font-size: 1.9rem;
+    }
+
+    .mac-ret-pill {
+        font-size: .6rem;
+        padding: 3px 8px;
+    }
+
+    .mac-ret-mode {
+        font-size: .58rem;
+    }
+}
+
+/* ── Badges HIGH (CALL) / LOW (PUT) ─────────────────────────
+   No Crypto vêm de frontend/css/crypto/crypto-shared.css, que NÃO é carregado
+   na página de Opções. Escopadas aqui ao modal para não afetar outros módulos. */
+#modalAnaliseCompleta .crypto-badge-high {
+    background-color: var(--bs-success-bg-subtle, #d1e7dd);
+    color: var(--bs-success-text-emphasis, #0a3622);
+    border: 1px solid var(--bs-success-border-subtle, #a3cfbb);
+    font-size: 0.78rem;
+    padding: 3px 8px;
+    font-weight: 700;
+}
+#modalAnaliseCompleta .crypto-badge-low {
+    background-color: var(--bs-danger-bg-subtle, #f8d7da);
+    color: var(--bs-danger-text-emphasis, #842029);
+    border: 1px solid var(--bs-danger-border-subtle, #f1aeb5);
+    font-size: 0.78rem;
+    padding: 3px 8px;
+    font-weight: 700;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Classes .sim-* (usadas pelos cards de POP / Preço Médio / Risco).
+
+   No Crypto estas classes vêm de frontend/css/crypto/crypto.css, que NÃO é
+   carregado na página de Opções. Foram trazidas para cá (mesmas regras) a fim
+   de manter o visual idêntico sem depender do CSS de Crypto.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Preço Médio */
+.sim-pm-val { font-family: 'JetBrains Mono', monospace; font-size: 1.4rem; font-weight: 700;
+              margin-bottom: 6px; }
+.sim-pm-row { display: flex; justify-content: space-between; align-items: center;
+              font-size: .7rem; margin-bottom: 3px; }
+.sim-pm-key { color: var(--tblr-secondary); }
+.sim-pm-v   { font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+
+/* Zona de risco */
+.sim-zone   { display: flex; align-items: center; gap: 7px; padding: 5px 8px;
+              border-radius: 6px; margin-bottom: 5px; font-size: .72rem; font-weight: 600; }
+.sim-zone.danger { background: rgba(200,35,51,.12); border:1px solid rgba(200,35,51,.25); }
+.sim-zone.warn   { background: rgba(245,159,0,.10); border:1px solid rgba(245,159,0,.22); }
+.sim-zone.safe   { background: rgba(47,179,68,.10); border:1px solid rgba(47,179,68,.22); }
+.sim-zone.danger .sz-range { color: #f85149; font-family: monospace; }
+.sim-zone.warn   .sz-range { color: #f59f00; font-family: monospace; }
+.sim-zone.safe   .sz-range { color: #3fb950; font-family: monospace; }
+
+/* Empty state */
+.sim-empty-state { display: flex; align-items: center; justify-content: center;
+                   height: 100%; color: var(--tblr-secondary); font-size: .8rem;
+                   flex-direction: column; gap: 6px; }
+
+/* Previsão / POP card */
+.sim-pop-wrap { position: relative; width: 82px; height: 82px; flex-shrink: 0; }
+.sim-pop-center { position: absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; }
+.sim-pop-pct { font-family: 'JetBrains Mono', monospace; font-size: 1.25rem; font-weight: 700; line-height: 1.1; }
+.sim-pop-lbl { font-size: .58rem; text-transform: uppercase; color: var(--tblr-secondary); letter-spacing: .6px; }
+.sim-prev-item { display: flex; align-items: center; gap: 6px; font-size: .7rem; margin-bottom: 4px; }
+.sim-prev-item-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.sim-prev-item-lbl { color: var(--tblr-secondary); flex: 1; }
+.sim-prev-item-val { font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: .7rem; }
+.sim-prev-bar-track { height: 7px; background: rgba(255,255,255,.07); border-radius: 4px; position: relative;
+                      margin-top: 8px; margin-bottom: 3px; overflow: visible; }
+.sim-prev-bar-fill { height: 100%; border-radius: 4px; }
+.sim-prev-bar-marker { position: absolute; top: -3px; width: 13px; height: 13px; border-radius: 50%;
+                       border: 2px solid #fff; background: #4da6ff; transform: translateX(-50%); }
+.sim-prev-bar-lbl { display: flex; justify-content: space-between; }
+.sim-prev-bar-lbl span { font-size: .59rem; color: var(--tblr-secondary); font-family: monospace; }
+.sim-prev-msg { margin-top: 7px; padding: 5px 9px; border-radius: 6px; font-size: .7rem; font-weight: 600; }
+
+/* ═══ LIGHT THEME OVERRIDES ════════════════════════════════════════════════ */
+/* KPI cards */
+[data-bs-theme="light"] .mac-kpi-card {
+    background: rgba(0,0,0,0.02);
+    border: 1px solid rgba(0,0,0,0.10);
+    border-left: 3px solid rgba(0,0,0,0.15);
+}
+[data-bs-theme="light"] .mac-kpi-card::after {
+    background: var(--mac-kpi-color, rgba(0,0,0,.08));
+}
+[data-bs-theme="light"] .mac-kpi-label {
+    color: rgba(0,0,0,0.50);
+}
+[data-bs-theme="light"] .mac-kpi-val {
+    color: var(--mac-kpi-color, rgba(0,0,0,0.85));
+}
+/* Seções */
+[data-bs-theme="light"] .mac-section {
+    background: rgba(0,0,0,.02);
+    border: 1px solid rgba(0,0,0,.09);
+}
+[data-bs-theme="light"] .mac-section-title {
+    color: rgba(0,0,0,.70);
+    border-bottom: 1px solid rgba(0,0,0,.07);
+    background: rgba(0,0,0,.02);
+}
+/* Inner cards */
+[data-bs-theme="light"] .mac-inner-card {
+    background: rgba(0,0,0,.02);
+    border: 1px solid rgba(0,0,0,.08);
+}
+[data-bs-theme="light"] .mac-inner-title {
+    color: rgba(0,0,0,.50);
+}
+/* Card retorno */
+[data-bs-theme="light"] .mac-ret-card {
+    background: linear-gradient(165deg, rgba(0,0,0,.018) 0%, rgba(0,0,0,.008) 100%);
+    border: 1px solid rgba(0,0,0,.10);
+}
+[data-bs-theme="light"] .mac-ret-card-open  { box-shadow: inset 0 0 0 1px rgba(0,0,0,.03); }
+[data-bs-theme="light"] .mac-ret-card-closed { box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); }
+[data-bs-theme="light"] .mac-ret-ticker { color: rgba(0,0,0,.90); }
+[data-bs-theme="light"] .mac-ret-sub    { color: rgba(0,0,0,.50); }
+[data-bs-theme="light"] .mac-ret-pill   { background: rgba(0,0,0,.04); }
+[data-bs-theme="light"] .mac-ret-mode {
+    border: 1px dashed rgba(0,0,0,.20);
+    color: rgba(0,0,0,.65);
+}
+[data-bs-theme="light"] .mac-ret-mode.is-open {
+    background: rgba(32,107,196,.07);
+    border-color: rgba(32,107,196,.28);
+}
+[data-bs-theme="light"] .mac-ret-mode.is-closed {
+    background: rgba(0,0,0,.05);
+    border-color: rgba(0,0,0,.22);
+    color: rgba(0,0,0,.72);
+}
+[data-bs-theme="light"] .mac-ret-metrics-lines {
+    border-top: 1px solid rgba(0,0,0,.07);
+    border-bottom: 1px solid rgba(0,0,0,.07);
+}
+[data-bs-theme="light"] .mac-ret-metric-line span { color: rgba(0,0,0,.55); }
+/* Status banner */
+[data-bs-theme="light"] .mac-status-banner {
+    border: 1px solid rgba(0,0,0,.14);
+    background: rgba(0,0,0,.03);
+}
+[data-bs-theme="light"] .mac-status-banner-title { color: rgba(0,0,0,.85); }
+[data-bs-theme="light"] .mac-status-banner-sub   { color: rgba(0,0,0,.55); }
+[data-bs-theme="light"] .mac-status-banner.is-closed { background: rgba(0,0,0,.05); }
+
+/* Elementos adicionais não cobertos anteriormente */
+[data-bs-theme="light"] .mac-ret-pct-lbl   { color: rgba(0,0,0,.50); }
+[data-bs-theme="light"] .mac-ret-risk-desc  { color: rgba(0,0,0,.55); }
+[data-bs-theme="light"] .mac-ret-divider    { background: rgba(0,0,0,.07); }
+[data-bs-theme="light"] .mac-ret-risk {
+    background: rgba(0,0,0,.02);
+    border: 1px solid var(--mac-ret-accent);
+}
+[data-bs-theme="light"] .mac-ret-seg        { background: rgba(0,0,0,.09); }
+[data-bs-theme="light"] .mac-ret-risk-bar   { background: rgba(0,0,0,.14); }

@@ -9,6 +9,7 @@ Rotas registradas (prefixo /api/opcoes no server.py):
   PUT    /api/opcoes/<id>         — atualizar
   DELETE /api/opcoes/<id>         — excluir
   POST   /api/opcoes/refresh      — atualizar cotações das abertas
+  POST   /api/opcoes/<id>/fechar-antecipado — fechamento antecipado (valor + qtd)
 """
 from flask    import Blueprint, request, jsonify
 from datetime import datetime
@@ -193,6 +194,140 @@ def fechar_opcao(id):
     conn.commit()
     conn.close()
     return jsonify({'success': True})
+
+
+# ─── Fechamento antecipado (lado oposto com valor e quantidade) ──────────────
+@opcoes_bp.route('/<int:id>/fechar-antecipado', methods=['POST'])
+def fechar_antecipado_opcao(id):
+    """Fecha antecipadamente uma operação ABERTA informando valor e quantidade.
+
+    Regras de negócio (mercado de opções):
+      - Quem está VENDIDO compra; quem está COMPRADO vende (lado oposto).
+      - P&L realizado: VENDA original → (preco_entrada − valor) × qtd
+                       COMPRA original → (valor − preco_entrada) × qtd
+      - Fechamento TOTAL: status=FECHADA, preco_saida/preco_atual=valor,
+        data_fechamento, resultado realizado e nota em observacoes.
+      - Fechamento PARCIAL: reduz a quantidade (mantém ABERTA), soma
+        qtd_fechada e cria uma operação-espelho FECHADA com o lado oposto
+        (op_fechamento = id original) para o P&L entrar nos relatórios.
+    """
+    data = request.json or {}
+
+    def _to_float(v):
+        try:
+            return float(v)
+        except (TypeError, ValueError):
+            return 0.0
+
+    def _to_int(v):
+        try:
+            return int(float(v))
+        except (TypeError, ValueError):
+            return 0
+
+    valor    = _to_float(data.get('valor'))
+    qtd_fech = _to_int(data.get('quantidade'))
+
+    if valor <= 0:
+        return jsonify({'error': 'Informe um valor de fechamento maior que zero'}), 400
+
+    conn = db.get_db()
+    row  = conn.execute('SELECT * FROM operacoes_opcoes WHERE id=?', (id,)).fetchone()
+    if not row:
+        conn.close()
+        return jsonify({'error': 'Operação não encontrada'}), 404
+    op = dict(row)
+
+    if str(op.get('status') or '').upper() != 'ABERTA':
+        conn.close()
+        return jsonify({'error': 'Somente operações ABERTA podem ser fechadas antecipadamente'}), 400
+
+    qtd_aberta = abs(_to_int(op.get('quantidade')))
+    if qtd_aberta <= 0:
+        conn.close()
+        return jsonify({'error': 'Operação sem quantidade em aberto'}), 400
+    if qtd_fech <= 0 or qtd_fech > qtd_aberta:
+        conn.close()
+        return jsonify({'error': f'Quantidade deve estar entre 1 e {qtd_aberta}'}), 400
+
+    # Lado oposto: VENDA → COMPRA, COMPRA → VENDA
+    tipo_orig = str(op.get('tipo_operacao') or '').upper()
+    if not tipo_orig:
+        tipo_orig = 'VENDA' if _to_int(op.get('quantidade')) < 0 else 'COMPRA'
+    tipo_fech = 'COMPRA' if tipo_orig == 'VENDA' else 'VENDA'
+
+    preco_ent = _to_float(op.get('preco_entrada')) or _to_float(op.get('premio'))
+    if tipo_orig == 'VENDA':
+        resultado = (preco_ent - valor) * qtd_fech
+    else:
+        resultado = (valor - preco_ent) * qtd_fech
+
+    hoje    = datetime.now().strftime('%Y-%m-%d')
+    parcial = qtd_fech < qtd_aberta
+    nota    = (
+        f'Fechamento antecipado {"parcial" if parcial else "total"} em {hoje}: '
+        f'{qtd_fech} de {qtd_aberta} contrato(s) a R$ {valor:.2f} '
+        f'(lado {tipo_fech}, P&L R$ {resultado:.2f})'
+    )
+    obs_ant      = str(op.get('observacoes') or '').strip()
+    observacoes  = f'{obs_ant} | {nota}' if obs_ant else nota
+
+    try:
+        c = conn.cursor()
+        if parcial:
+            # Reduz a quantidade em aberto (mantém ABERTA) e soma qtd_fechada
+            qtd_restante = qtd_aberta - qtd_fech
+            sinal        = -1 if _to_int(op.get('quantidade')) < 0 else 1
+            premio       = abs(_to_float(op.get('premio')))
+            # "Resultado esperado" da posição restante (mesma convenção do formulário)
+            novo_resultado = qtd_restante * premio * (1 if tipo_orig == 'VENDA' else -1)
+            c.execute(
+                '''UPDATE operacoes_opcoes
+                   SET quantidade=?, qtd_fechada=?, resultado=?, observacoes=?
+                   WHERE id=?''',
+                (sinal * qtd_restante,
+                 _to_int(op.get('qtd_fechada')) + qtd_fech,
+                 novo_resultado, observacoes, id)
+            )
+            # Espelho: operação oposta já realizada (entra nos relatórios)
+            c.execute(
+                '''INSERT INTO operacoes_opcoes
+                       (ativo_base, ativo, tipo, tipo_operacao, quantidade,
+                        preco_entrada, preco_atual, strike, vencimento, premio,
+                        resultado, saldo_abertura, status, data_operacao,
+                        observacoes, is_test_data, preco_saida, qtd_fechada,
+                        op_fechamento, data_fechamento)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
+                (op.get('ativo_base'), op.get('ativo'), op.get('tipo'), tipo_fech,
+                 qtd_fech, valor, valor, op.get('strike'), op.get('vencimento'),
+                 0, resultado, 0, 'FECHADA', hoje, nota,
+                 1 if op.get('is_test_data') else 0,
+                 valor, 0, id, hoje)
+            )
+            espelho_id = c.lastrowid
+        else:
+            c.execute(
+                '''UPDATE operacoes_opcoes
+                   SET status='FECHADA', preco_saida=?, preco_atual=?,
+                       data_fechamento=?, resultado=?, observacoes=?
+                   WHERE id=?''',
+                (valor, valor, hoje, resultado, observacoes, id)
+            )
+            espelho_id = None
+        conn.commit()
+    finally:
+        conn.close()
+
+    return jsonify({
+        'success':            True,
+        'parcial':            parcial,
+        'quantidade_fechada': qtd_fech,
+        'quantidade_restante': (qtd_aberta - qtd_fech) if parcial else 0,
+        'tipo_operacao':      tipo_fech,
+        'valor':              valor,
+        'resultado':          round(resultado, 2),
+        'espelho_id':         espelho_id,
+    })
 
 
 # ─── Excluir ──────────────────────────────────────────────────────────────────

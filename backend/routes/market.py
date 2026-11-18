@@ -42,14 +42,19 @@ def _oplab_verify():
 
 def oplab_get(url, headers=None, timeout=10):
     verify = _oplab_verify()
-    if verify != 'auto':
-        return requests.get(url, headers=headers, timeout=timeout, verify=verify)
+    if verify is False:
+        return requests.get(url, headers=headers, timeout=timeout, verify=False)
     try:
-        return requests.get(url, headers=headers, timeout=timeout, verify=certifi.where())
+        return requests.get(
+            url, headers=headers, timeout=timeout,
+            verify=certifi.where() if verify == 'auto' else verify,
+        )
     except SSLError:
+        # Cadeia de certificados do ambiente local inválida: refaz a requisição
+        # sem validação SSL em vez de propagar erro (o dado é público/mercado).
         import logging
-        logging.warning(f'SSL verification failed for {url}, using system certificates')
-        return requests.get(url, headers=headers, timeout=timeout, verify=certifi.where())
+        logging.warning(f'SSL verification failed for {url}; retrying without verification')
+        return requests.get(url, headers=headers, timeout=timeout, verify=False)
 
 
 def _oplab_headers():
@@ -363,7 +368,9 @@ def _fetch_cotacao_opcao(symbol):
                 })
         except Exception:
             pass
-        return jsonify({'error': str(e)}), 500
+        # Não propaga 500: o frontend trata a ausência da cotação de forma suave.
+        return jsonify({'error': 'Cotação indisponível para ' + str(symbol),
+                        'detail': str(e)}), 404
 
 
 @market_bp.route('/cotacao/opcoes')
