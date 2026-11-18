@@ -158,13 +158,15 @@
         ct:   (v) => v + (v === 1 ? ' contrato' : ' contratos'),
     };
     function sl(k, label, min, max, step, f) {
-        return '<div class="sc-sl"><div class="sc-sl__t"><label>' + label +
+        const chk = k + 'On';
+        return '<div class="sc-sl"><div class="sc-sl__t"><label><input type="checkbox" data-chk="' + chk + '" checked> ' + label +
             '</label><b data-vk="' + k + '"></b></div>' +
             '<input type="range" data-k="' + k + '" data-f="' + f + '" min="' + min +
             '" max="' + max + '" step="' + step + '"></div>';
     }
     function dual(label, k1, k2, min, max, step, f) {
-        return '<div class="sc-sl"><div class="sc-sl__t"><label>' + label +
+        const chk = k1 + 'On'; // usa o mesmo checkbox para min e max
+        return '<div class="sc-sl"><div class="sc-sl__t"><label><input type="checkbox" data-chk="' + chk + '" checked> ' + label +
             '</label><b data-dv="' + k1 + '"></b></div>' +
             '<div class="sc-dual" data-f="' + f + '"><div class="sc-tr"></div><div class="sc-fl"></div>' +
             '<input type="range" data-dual="lo" data-k="' + k1 + '" min="' + min + '" max="' + max + '" step="' + step + '">' +
@@ -244,6 +246,14 @@
                 cb(k);
             });
         });
+        // Checkboxes para habilitar/desabilitar filtros
+        qa('[data-chk]', root).forEach(function (chk) {
+            chk.addEventListener('change', function () {
+                const k = this.dataset.chk;
+                st[k] = this.checked;
+                cb(k);
+            });
+        });
     }
     function tween(el, to, f) {
         const from = el._v == null ? 0 : el._v; el._v = to;
@@ -292,9 +302,11 @@
 
     // ─── Regras de filtro / zonas / melhor strike ───────────────────────────
     function noFiltro(r, f) {
-        return (r.dist || 0) >= f.dMin - EPS && (r.dist || 0) <= f.dMax + EPS &&
-            r.delta !== null && r.delta !== undefined &&
-            Math.abs(r.delta) <= f.dlt + EPS && (r.premio || 0) >= 0.01;
+        const distOn = f.distOn !== false;
+        const deltaOn = f.deltaOn !== false;
+        return (!distOn || ((r.dist || 0) >= f.dMin - EPS && (r.dist || 0) <= f.dMax + EPS)) &&
+            (!deltaOn || (r.delta !== null && r.delta !== undefined && Math.abs(r.delta) <= f.dlt + EPS)) &&
+            (r.premio || 0) >= 0.01;
     }
     function cabe(r, f) { return (r.capital || 0) <= f.saldo; }
     function okFiltro(r, f) { return noFiltro(r, f) && cabe(r, f); }
@@ -394,7 +406,7 @@
         },
 
         aoMudar: function (k) {
-            if (k === 'dMin' || k === 'dMax' || k === 'dlt' || k === 'sort' || k === 'radarView') {
+            if (k === 'dMin' || k === 'dMax' || k === 'dlt' || k === 'sort' || k === 'radarView' || k === 'dteOn' || k === 'distOn' || k === 'deltaOn') {
                 this.update();
             } else if (k === 'saldo') {
                 this.update();
@@ -565,7 +577,10 @@
                 root: d,
                 st: {
                     sym: simbolo,
-                    dte: G.dte, dMin: G.dMin, dMax: G.dMax, dlt: G.dlt, strikeLimit: 50,
+                    dte: G.dte, dteOn: true,
+                    dMin: G.dMin, dMax: G.dMax, distOn: true,
+                    dlt: G.dlt, deltaOn: true,
+                    strikeLimit: 50,
                     view: 'tbl', K: null, n: 1, showAll: 0, sort: 'K', dir: -1,
                     strikes: null, preco: null, iv: null, carregando: false,
                     vencimentos: [], vencSelecionado: null,
@@ -648,7 +663,7 @@
 
             wire(el, st, () => this.onMudou(t));
             q('[data-showall]', el).addEventListener('change', (e) => { st.showAll = e.target.checked ? 1 : 0; this.update(t); });
-            q('[data-reset]', el).addEventListener('click', () => { Object.assign(st, { dte: G.dte, dMin: G.dMin, dMax: G.dMax, dlt: G.dlt, strikeLimit: 50 }); sync(el, st); this.onMudou(t); });
+            q('[data-reset]', el).addEventListener('click', () => { Object.assign(st, { dte: G.dte, dteOn: true, dMin: G.dMin, dMax: G.dMax, distOn: true, dlt: G.dlt, deltaOn: true, strikeLimit: 50 }); sync(el, st); this.onMudou(t); });
             el.addEventListener('click', (e) => {
                 const r = e.target.closest('[data-pk]');
                 if (r) { st.K = parseFloat(r.dataset.pk); this.update(t); return; }
