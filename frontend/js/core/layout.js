@@ -147,6 +147,35 @@ document.addEventListener('libsLoaded', function() {
                 </div>
                 <!-- ═══ Aba Opções ═══ -->
                 <div class="tab-pane fade" id="configTabOpcoes" role="tabpanel">
+                    <p class="text-muted small mb-3" style="line-height:1.6">
+                        Parâmetros do módulo de opções. A meta mensal é usada no veredito
+                        <b>“Devo operar?”</b>, na escala de qualidade do prêmio e na projeção
+                        por semanas restantes do mês.
+                    </p>
+
+                    <!-- ═══ Meta mensal de retorno (%) ═══ -->
+                    <div class="card mb-3" id="cfgMetaCard" style="border-color:var(--bs-border-color,#26365a);">
+                        <div class="card-body">
+                            <label class="form-label fw-semibold" for="configMetaMensalOpcoes">
+                                <span style="color:#ef4444">◉</span> Meta mensal de retorno (%)
+                            </label>
+                            <div class="d-flex align-items-center gap-3 flex-wrap">
+                                <input type="text" inputmode="decimal" class="form-control" id="configMetaMensalOpcoes"
+                                       maxlength="5" value="1,8"
+                                       style="width:100px;font-size:1.35rem;font-weight:700;text-align:center;">
+                                <span class="fw-bold text-muted">% ao mês</span>
+                                <input type="range" class="form-range flex-grow-1" id="configMetaMensalOpcoesRange"
+                                       min="0.5" max="5" step="0.1" value="1.8" style="min-width:110px;flex:1 1 110px;">
+                            </div>
+                            <div class="form-text mt-2">
+                                Exemplo: <b>1,8</b> = 1,8% ao mês sobre o capital empregado.
+                                Salvo como <code>metaMensalOpcoes</code>.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2 mb-3" id="configMetaMensalDerivados"></div>
+
+                    <hr class="my-3">
                     <div class="mb-3">
                         <label class="form-label">API Oplab Key</label>
                         <input type="text" class="form-control config-common" id="configOplabKeyOpcoes" placeholder="Sua chave API Oplab">
@@ -270,8 +299,58 @@ document.addEventListener('libsLoaded', function() {
         setConfigVal('configNavbarAtivos', cfg.navbarAtivos);
         setConfigVal('configSaldoAcoes', cfg.saldoAcoes);
         setConfigVal('configNavbarAtivosAcoes', cfg.navbarAtivosAcoes);
+        if (cfg.metaMensalOpcoes !== undefined && cfg.metaMensalOpcoes !== null && cfg.metaMensalOpcoes !== '') {
+            const v = parseMeta(cfg.metaMensalOpcoes);
+            setConfigVal('configMetaMensalOpcoes', formatMeta(v));
+            const rg = document.getElementById('configMetaMensalOpcoesRange');
+            if (rg) rg.value = v;
+            renderMetaDerivados(v);
+        }
         setAiSelects(cfg.selected_ai);
     }
+
+    // ── Meta mensal de retorno (%) — aba Opções ──────────────────────────────
+    const META_PADRAO = 1.8;
+    /** Aceita "1,8" ou "1.8" e devolve o número. */
+    function parseMeta(v) {
+        const n = parseFloat(String(v === null || v === undefined ? '' : v).replace(',', '.'));
+        return (isNaN(n) || n <= 0) ? META_PADRAO : n;
+    }
+    /** Exibe no padrão pt-BR: 1,8 */
+    function formatMeta(v) {
+        return String(parseMeta(v)).replace('.', ',');
+    }
+    function metaMensalAtual() {
+        const el = document.getElementById('configMetaMensalOpcoes');
+        return parseMeta(el ? el.value : '');
+    }
+    function renderMetaDerivados(v) {
+        const box = document.getElementById('configMetaMensalDerivados');
+        if (!box) return;
+        const valor = parseMeta(v);
+        const chip = (rot, val) =>
+            '<span class="badge rounded-pill text-bg-secondary px-3 py-2" style="font-size:11px;letter-spacing:.02em">' +
+            rot + ' <b class="ms-1" style="font-family:\'JetBrains Mono\',monospace">' + val + '</b></span>';
+        box.innerHTML =
+            chip('por dia (30d)', (valor / 30).toFixed(3).replace('.', ',') + '%') +
+            chip('por semana', (valor * 7 / 30).toFixed(2).replace('.', ',') + '%') +
+            chip('por ano (simples)', (valor * 12).toFixed(1).replace('.', ',') + '%') +
+            chip('ex.: US$ 3.000 de capital', 'US$ ' + (3000 * valor / 100).toFixed(0) + '/mês');
+    }
+    (function initMetaMensal() {
+        const inp = document.getElementById('configMetaMensalOpcoes');
+        const rg = document.getElementById('configMetaMensalOpcoesRange');
+        if (!inp || !rg) return;
+        const sync = (valor, digitando) => {
+            const v = parseMeta(valor);
+            if (!digitando) inp.value = formatMeta(v);
+            rg.value = v; renderMetaDerivados(v);
+        };
+        inp.addEventListener('input', () => sync(inp.value, true));
+        inp.addEventListener('change', () => sync(inp.value, false));
+        rg.addEventListener('input', () => sync(rg.value, false));
+        renderMetaDerivados(metaMensalAtual());
+    })();
 
     // Load config from localStorage
     const savedConfig = JSON.parse(localStorage.getItem('appConfig') || '{}');
@@ -305,7 +384,8 @@ document.addEventListener('libsLoaded', function() {
             navbarAtivos: normalizeTickerList(getConfigVal('configNavbarAtivos')),
             // Opções
             saldoAcoes: getConfigVal('configSaldoAcoes'),
-            navbarAtivosAcoes: normalizeTickerList(getConfigVal('configNavbarAtivosAcoes'))
+            navbarAtivosAcoes: normalizeTickerList(getConfigVal('configNavbarAtivosAcoes')),
+            metaMensalOpcoes: String(metaMensalAtual())
         };
         localStorage.setItem('appConfig', JSON.stringify(config));
 

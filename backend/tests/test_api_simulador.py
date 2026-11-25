@@ -364,6 +364,22 @@ class TestPremios:
             assert item['premio_semanal_put'] == pytest.approx(1.10), item['simbolo']
             assert item['vencimento_semanal'], item['simbolo']
 
+    def test_rodada_unica_de_20_ativos_em_uma_chamada(self, client, monkeypatch):
+        """1 leitura do scanner: a rodada inteira cabe em 1 chamada /premios."""
+        simbolos = ['SPY', 'QQQ', 'TLT', 'AAPL'] + ['T%02d' % i for i in range(16)]
+        assert len(simbolos) == sim.LIMITE_CANDIDATOS == 20
+
+        monkeypatch.setattr(sim, '_tt_get', _fake_tt_get)
+        data = client.get(
+            '/api/simulador/premios?simbolos=' + ','.join(simbolos) +
+            '&com_strikes=1&dte=5').get_json()
+
+        assert data['success'] is True
+        assert data['limite'] == 20
+        assert [i['simbolo'] for i in data['itens']] == simbolos
+        for item in data['itens']:
+            assert isinstance(item['strikes'], list), item['simbolo']
+
 
 class TestCompararRota:
     def test_calcula_cenarios(self, client):
@@ -698,9 +714,16 @@ class TestCalculoFinanceiro:
         linhas = [{'strike': 105.0,
                    'call': {'bid': 2.0, 'ask': 2.2, 'premio': 2.1},
                    'put':  {'bid': 0.1, 'ask': 0.2, 'premio': 0.15}}]
+        # Default = 'bid' (preço de execução da venda) → prêmio 2.0
         call = sim.calcular_strikes(100.0, linhas, 'CALL', 30, 50.0)[0]
         assert call['otm'] is True            # strike acima do spot
-        assert call['breakeven'] == pytest.approx(107.1)   # K + prêmio
+        assert call['premio'] == pytest.approx(2.0)
+        assert call['breakeven'] == pytest.approx(107.0)   # K + prêmio (bid)
+
+        # Com 'mid' explícito o prêmio volta a ser a média (2.1)
+        call_mid = sim.calcular_strikes(100.0, linhas, 'CALL', 30, 50.0,
+                                        fill='mid')[0]
+        assert call_mid['breakeven'] == pytest.approx(107.1)
 
         # O mesmo strike é ITM para PUT → não é candidato à venda OTM
         put = sim.calcular_strikes(100.0, linhas, 'PUT', 30, 50.0)[0]
@@ -929,6 +952,110 @@ class TestPremiosComStrikes:
         assert len(data['itens']) == 2
         for item in data['itens']:
             assert isinstance(item['strikes'], list)
+
+
+class TestRotaCadeiaCompleta:
+    """Cadeia completa (calls à esquerda, puts à direita) — tipo=ALL."""
+
+    def test_tipo_all_devolve_os_dois_lados_com_delta_e_theta(self, client,
+                                                             monkeypatch):
+        monkeypatch.setattr(sim, '_tt_get', _fake_tt_get)
+        data = client.get(
+            '/api/simulador/strikes?simbolo=SPY&tipo=ALL'
+            '&dist_min=0&dist_max=100').get_json()
+        assert data['success'] is True
+        assert data['tipo'] == 'ALL'
+        assert data['strikes'], 'a cadeia deve devolver os strikes'
+        for linha in data['strikes']:
+            assert linha['call'] is not None
+            assert linha['put'] is not None
+            for lado in ('call', 'put'):
+                assert 'bid' in linha[lado]
+                assert 'ask' in linha[lado]
+                assert 'delta' in linha[lado]
+                assert 'theta' in linha[lado]
+        # strikes ordenados do menor para o maior
+        strikes = [s['strike'] for s in data['strikes']]
+        assert strikes == sorted(strikes)
+
+    def test_tipo_all_devolve_a_iv_atm_do_vencimento(self, client, monkeypatch):
+        monkeypatch.setattr(sim, '_tt_get', _fake_tt_get)
+        data = client.get(
+            '/api/simulador/strikes?simbolo=SPY&tipo=ALL'
+            '&dist_min=0&dist_max=100').get_json()
+        assert data['iv_atm'] is not None
+        assert 0 < data['iv_atm'] < 5
+
+    def test_tipo_invalido_continua_rejeitado(self, client, monkeypatch):
+        monkeypatch.setattr(sim, '_tt_get', _fake_tt_get)
+        resp = client.get('/api/simulador/strikes?simbolo=SPY&tipo=XYZ')
+        assert resp.status_code == 400
+
+    def test_theta_do_modelo_e_negativo_em_put_e_call(self):
+        for tipo in ('PUT', 'CALL'):
+            modelo = sim._black_scholes(tipo, 100.0, 95.0, 30, 0.30)
+            assert modelo['theta'] is not None
+            assert modelo['theta'] < 0
+
+    def test_cadeia_traz_a_iv_de_cada_vencimento(self, client, monkeypatch):
+        monkeypatch.setattr(sim, '_tt_get', _fake_tt_get)
+        data = client.get('/api/simulador/cadeia?simbolo=SPY').get_json()
+        assert data['expiracoes']
+        for exp in data['expiracoes']:
+            assert 'iv_atm' in exp
+            if exp['iv_atm'] is not None:
+                assert 0 < exp['iv_atm'] < 5
+
+
+class TestPrecoExecucao:
+    """Preço de execução (Bid / Mid) — numa venda de opção o que entra é o bid."""
+
+    def test_fill_bid_usa_o_bid_no_premio_roc_e_break_even(self, client,
+                                                            monkeypatch):
+        monkeypatch.setattr(sim, '_tt_get', _fake_tt_get)
+        data = client.get('/api/simulador/strikes?simbolo=SPY&tipo=ALL'
+                          '&dist_min=0&dist_max=100&fill=bid').get_json()
+        assert data['parametros']['fill'] == 'bid'
+        linha = data['strikes'][0]
+        # a fake cotaria 1.00 x 1.20 → mid 1.10, bid 1.00
+        assert linha['premio'] == 1.00
+        assert linha['premio_liquido'] == 100.00
+        assert abs(linha['breakeven'] - (linha['strike'] - 1.00)) < 1e-6
+        assert abs(linha['roc'] - (100.00 / linha['capital'])) < 1e-6
+
+    def test_fill_mid_usa_a_media_entre_bid_e_ask(self, client, monkeypatch):
+        monkeypatch.setattr(sim, '_tt_get', _fake_tt_get)
+        data = client.get('/api/simulador/strikes?simbolo=SPY&tipo=ALL'
+                          '&dist_min=0&dist_max=100&fill=mid').get_json()
+        assert data['parametros']['fill'] == 'mid'
+        linha = data['strikes'][0]
+        assert abs(linha['premio'] - 1.10) < 1e-6
+        assert abs(linha['premio_liquido'] - 110.00) < 1e-6
+
+    def test_cadeia_e_card_usam_o_mesmo_preco_de_execucao(self, client,
+                                                          monkeypatch):
+        """O delta/theta do lado PUT da cadeia é o mesmo do card (mesmo fill)."""
+        monkeypatch.setattr(sim, '_tt_get', _fake_tt_get)
+        for fill in ('bid', 'mid'):
+            data = client.get('/api/simulador/strikes?simbolo=SPY&tipo=ALL'
+                              '&dist_min=0&dist_max=100&fill=' + fill).get_json()
+            for linha in data['strikes']:
+                assert linha['put']['delta'] == linha['delta'], fill
+                assert linha['put']['iv'] == linha['iv'], fill
+
+    def test_premissas_mentionam_o_preco_de_execucao(self):
+        assert any('EXECUÇÃO' in p or 'execução' in p for p in sim.PREMISSAS)
+
+    def test_default_das_rotas_e_o_bid(self, client, monkeypatch):
+        """Sem o parâmetro `fill`, a API calcula pelo BID (preço de venda)."""
+        monkeypatch.setattr(sim, '_tt_get', _fake_tt_get)
+        data = client.get('/api/simulador/strikes?simbolo=SPY&tipo=ALL'
+                          '&dist_min=0&dist_max=100').get_json()
+        assert data['parametros']['fill'] == 'bid'
+        linha = data['strikes'][0]
+        # a fake cotaria 1.00 x 1.20 → bid 1.00 (mid seria 1.10)
+        assert linha['premio'] == 1.00
+        assert linha['premio_liquido'] == 100.00
 
 
 class TestRotaUniversoPerfis:

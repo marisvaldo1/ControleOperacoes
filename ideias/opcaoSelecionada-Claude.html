@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Opção selecionada — 6 telas e meta mensal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{ --bg:#0a0f1c; --panel:#131d33; --panel2:#17233d; --panel3:#0d1526; --border:#26365a; --text:#e8edf7; --muted:#8190ad; --blue:#3b82f6; --green:#22c55e; --red:#ef4444; --amber:#f59e0b; --cyan:#22d3ee;
+  --l0:#ef4444; --l1:#fb923c; --l2:#eab308; --l3:#22c55e; --l4:#2dd4bf; }
+*,*::before,*::after{ box-sizing:border-box; }
+body{ margin:0; background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased; }
+button{ font-family:inherit; cursor:pointer; }
+.mono{ font-family:'JetBrains Mono',monospace; }
+.up{ color:var(--green); } .down{ color:var(--red); } .dim{ color:var(--muted); }
+.topbar{ display:flex; align-items:center; gap:22px; padding:0 22px; height:58px; background:#0f1829; border-bottom:1px solid var(--border); }
+.brand{ display:flex; align-items:center; gap:10px; font-weight:700; font-size:17px; } .brand svg{ width:24px; height:24px; }
+.nav{ display:flex; height:100%; } .nav span{ display:flex; align-items:center; padding:0 14px; font-size:13px; color:var(--muted); border-bottom:2px solid transparent; } .nav span.on{ color:var(--text); border-bottom-color:var(--blue); background:rgba(59,130,246,.06); }
+.pills{ margin-left:auto; display:flex; gap:10px; align-items:center; }
+.tp{ font-size:11.5px; font-weight:700; padding:5px 10px; border-radius:6px; border:1px solid #7a5212; color:#f59e0b; background:rgba(245,158,11,.10); font-family:'JetBrains Mono',monospace; }
+.ico{ color:#3b82f6; font-size:19px; background:none; border:none; padding:4px 8px; border-radius:8px; } .ico:hover{ background:rgba(59,130,246,.15); }
+.page{ max-width:1280px; margin:0 auto; padding:20px 18px 70px; }
+.pagehead{ display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; margin-bottom:14px; }
+.pagehead h1{ margin:0; font-size:20px; }
+.metachip{ display:flex; align-items:center; gap:8px; background:rgba(34,197,94,.12); border:1px solid rgba(34,197,94,.45); color:#86efac; border-radius:20px; padding:6px 14px; font-size:12px; font-weight:600; cursor:pointer; }
+.metachip b{ font-family:'JetBrains Mono',monospace; color:#fff; }
+.toolbar{ display:flex; flex-wrap:wrap; gap:18px; align-items:flex-end; background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:12px 16px; margin-bottom:14px; }
+.toolbar label{ display:block; font-size:10.5px; color:var(--muted); margin-bottom:5px; }
+.toolbar input[type=date],.toolbar input[type=number]{ background:var(--panel3); border:1px solid var(--border); color:#fff; border-radius:8px; padding:7px 10px; font-family:'JetBrains Mono',monospace; font-size:12px; color-scheme:dark; }
+.seg{ display:flex; gap:3px; background:var(--panel3); border:1px solid var(--border); border-radius:9px; padding:3px; }
+.seg button{ border:none; background:transparent; color:var(--muted); font-size:12px; padding:6px 11px; border-radius:6px; font-family:'JetBrains Mono',monospace; }
+.seg button.on{ background:var(--blue); color:#fff; }
+.itabs{ display:flex; gap:8px; overflow-x:auto; margin-bottom:14px; padding-bottom:4px; }
+.itab{ background:var(--panel); border:1px solid var(--border); color:#b4bed2; border-radius:9px; padding:9px 15px; font-size:12.5px; font-weight:600; white-space:nowrap; } .itab small{ display:block; font-weight:400; font-size:10.5px; color:var(--muted); margin-top:2px; }
+.itab.on{ background:var(--blue); border-color:var(--blue); color:#fff; } .itab.on small{ color:#dbe7ff; }
+
+/* cartao do detalhe (como a tela atual) */
+.detail{ background:linear-gradient(135deg,#15244a,#101a30); border:1px solid #2d4a8a; border-radius:16px; padding:20px 22px; }
+.dh{ display:flex; align-items:flex-start; justify-content:space-between; gap:20px; flex-wrap:wrap; margin-bottom:16px; }
+.dh h3{ margin:0; font-size:17px; } .dh h3 span{ color:var(--cyan); font-weight:700; margin-left:8px; }
+.dh .sub{ font-size:11.5px; color:var(--muted); margin-top:5px; }
+.badge{ font-size:10px; font-weight:700; padding:2px 8px; border-radius:20px; background:rgba(245,158,11,.18); color:#fbbf24; margin-right:6px; }
+.ctr{ width:260px; font-size:11.5px; color:var(--muted); } .ctr .t{ display:flex; justify-content:space-between; margin-bottom:7px; } .ctr b{ color:#fff; font-family:'JetBrains Mono',monospace; }
+input[type=range]{ -webkit-appearance:none; appearance:none; width:100%; height:6px; border-radius:4px; outline:none; background:linear-gradient(90deg,var(--blue) var(--p,50%),#1f2d4d var(--p,50%)); }
+input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; width:17px; height:17px; border-radius:50%; background:#fff; border:3px solid var(--blue); box-shadow:0 2px 6px rgba(0,0,0,.4); }
+input[type=range]::-moz-range-thumb{ width:13px; height:13px; border-radius:50%; background:#fff; border:3px solid var(--blue); }
+.netbox{ background:rgba(0,0,0,.2); border-radius:14px; padding:16px 18px; }
+.netbox .l{ font-size:11.5px; color:var(--muted); } .netbox .v{ font-family:'JetBrains Mono',monospace; font-size:40px; font-weight:800; line-height:1.15; margin:3px 0; } .netbox .s{ font-size:11.5px; color:var(--muted); }
+.ins{ font-size:12.5px; color:#c3cbdb; line-height:1.7; background:rgba(0,0,0,.22); border-left:3px solid var(--cyan); border-radius:8px; padding:11px 15px; margin-top:16px; } .ins b{ color:#fff; }
+.vd{ display:inline-block; font-weight:800; font-size:13px; padding:5px 13px; border-radius:20px; }
+.v-0{ background:rgba(239,68,68,.18); color:#fca5a5; } .v-1{ background:rgba(251,146,60,.18); color:#fdba74; } .v-2{ background:rgba(234,179,8,.18); color:#fde047; } .v-3{ background:rgba(34,197,94,.18); color:#86efac; } .v-4{ background:rgba(45,212,191,.18); color:#5eead4; }
+.hint{ margin-top:14px; padding:14px 16px; background:var(--panel2); border:1px solid var(--border); border-radius:10px; font-size:12.5px; color:var(--muted); line-height:1.65; } .hint b{ color:var(--text); }
+details.alld{ margin-top:14px; background:rgba(0,0,0,.18); border:1px solid var(--border); border-radius:12px; padding:10px 16px; } details.alld summary{ cursor:pointer; font-size:12.5px; font-weight:700; }
+.kg{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:8px; margin-top:12px; } .kg div{ background:rgba(0,0,0,.2); border-radius:9px; padding:8px 11px; font-size:10.5px; color:var(--muted); } .kg b{ display:block; font-family:'JetBrains Mono',monospace; font-size:13px; color:#fff; margin-top:3px; font-weight:600; }
+details.notes{ background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:12px 18px; margin-top:14px; font-size:12px; line-height:1.7; color:#c3cbdb; } details.notes summary{ cursor:pointer; font-weight:700; color:#fff; font-size:13px; } details.notes b{ color:#fff; } details.notes pre{ background:var(--panel3); border:1px solid var(--border); border-radius:8px; padding:12px; overflow-x:auto; font-size:11px; color:#b9c6e4; }
+
+/* tiles Capital / ROC / Dias */
+.tiles{ display:grid; gap:10px; } .tiles.row{ grid-template-columns:repeat(3,1fr); } .tiles.col{ grid-template-columns:1fr; }
+.tile{ background:rgba(0,0,0,.22); border:1px solid rgba(255,255,255,.06); border-radius:13px; padding:12px 14px; }
+.tile .h{ display:flex; align-items:center; gap:7px; font-size:11px; color:var(--muted); margin-bottom:6px; }
+.tile .n{ font-family:'JetBrains Mono',monospace; font-size:26px; font-weight:800; line-height:1.1; } .tile .n small{ font-size:13px; color:var(--muted); font-weight:600; }
+.tile .c{ font-size:10.5px; color:var(--muted); margin-top:6px; line-height:1.5; }
+.mb{ position:relative; height:7px; border-radius:4px; background:#1f2d4d; margin-top:9px; } .mb i{ position:absolute; left:0; top:0; bottom:0; border-radius:4px; background:linear-gradient(90deg,#22c55e,#22d3ee); } .mb u{ position:absolute; top:-4px; bottom:-4px; width:2px; background:#fff; }
+.dots{ display:flex; flex-wrap:wrap; gap:3px; margin-top:9px; } .dots i{ width:9px; height:9px; border-radius:3px; background:#2a3a5f; } .dots i.m{ background:var(--cyan); } .dots i.w{ margin-right:6px; }
+
+/* v1 */
+.v1{ display:grid; grid-template-columns:380px 1fr; gap:18px; } .v1l{ display:flex; flex-direction:column; gap:12px; }
+.v1 .tiles.row{ grid-template-columns:1fr; }
+.scalehd{ display:flex; align-items:center; gap:12px; margin-bottom:10px; } .scalehd .q{ font-size:14px; font-weight:800; } .scalehd b.sc{ margin-left:auto; font-family:'JetBrains Mono',monospace; font-size:22px; }
+.scale{ position:relative; margin:22px 0 34px; } .scale .z{ display:flex; height:16px; border-radius:8px; overflow:hidden; } .scale .z i{ display:block; }
+.scale .nd{ position:absolute; top:-12px; transform:translateX(-50%); transition:left .5s; text-align:center; } .scale .nd::before{ content:'▼'; display:block; font-size:16px; color:#fff; line-height:1; } .scale .nd b{ position:absolute; top:-20px; left:50%; transform:translateX(-50%); font-family:'JetBrains Mono',monospace; font-size:11px; background:#fff; color:#111; padding:1px 6px; border-radius:5px; }
+.scale .lb{ display:flex; margin-top:6px; font-size:10px; color:var(--muted); } .scale .lb span{ text-align:center; }
+.qg{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.qc{ background:rgba(0,0,0,.22); border:1px solid rgba(255,255,255,.06); border-left:4px solid var(--muted); border-radius:12px; padding:11px 14px; }
+.qc.ok{ border-left-color:var(--green); } .qc.warn{ border-left-color:var(--amber); } .qc.bad{ border-left-color:var(--red); }
+.qc h5{ margin:0 0 6px; font-size:12px; display:flex; gap:7px; align-items:flex-start; } .qc .ans{ margin-left:auto; font-size:10.5px; font-weight:800; padding:2px 8px; border-radius:10px; white-space:nowrap; }
+.qc.ok .ans{ background:rgba(34,197,94,.18); color:#86efac; } .qc.warn .ans{ background:rgba(245,158,11,.18); color:#fcd34d; } .qc.bad .ans{ background:rgba(239,68,68,.18); color:#fca5a5; }
+.qc p{ margin:0; font-size:11px; color:#aab5cf; line-height:1.6; } .qc p b{ color:#fff; font-family:'JetBrains Mono',monospace; font-weight:600; }
+.flags{ margin-top:12px; display:flex; flex-direction:column; gap:6px; } .fl{ font-size:11.5px; color:#c3cbdb; background:rgba(0,0,0,.2); border-radius:8px; padding:7px 11px; } .fl b{ color:#fff; }
+
+/* v2 */
+.v2{ display:grid; grid-template-columns:330px 1fr 330px; gap:18px; align-items:center; }
+.dimrow{ margin-bottom:11px; } .dimrow .t{ display:flex; justify-content:space-between; font-size:11.5px; margin-bottom:5px; } .dimrow .t b{ font-family:'JetBrains Mono',monospace; } .dimrow small{ display:block; color:var(--muted); font-size:10.5px; margin-top:4px; line-height:1.5; }
+.bar{ height:8px; border-radius:4px; background:#1f2d4d; overflow:hidden; } .bar i{ display:block; height:100%; border-radius:4px; }
+
+/* v3 */
+.v3k{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:14px; }
+.goal{ background:rgba(0,0,0,.22); border-radius:13px; padding:14px 16px; margin-top:14px; }
+.stack{ position:relative; display:flex; height:30px; border-radius:8px; overflow:hidden; background:#1a2646; margin:26px 0 8px; } .stack i{ display:block; height:100%; transition:width .4s; }
+.stackt{ position:absolute; top:-18px; width:2px; height:56px; background:#fff; } .stackt span{ position:absolute; top:-2px; left:5px; font-size:10px; white-space:nowrap; font-weight:700; }
+.formula{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; font-size:12px; margin-top:12px; } .formula span{ background:rgba(0,0,0,.3); border:1px solid var(--border); border-radius:8px; padding:6px 10px; font-family:'JetBrains Mono',monospace; } .formula em{ color:var(--muted); font-style:normal; }
+
+/* v4 */
+.v4h{ display:flex; align-items:center; gap:14px; margin-bottom:14px; flex-wrap:wrap; } .cnt{ display:flex; gap:8px; margin-left:auto; } .cnt span{ font-size:11.5px; font-weight:700; padding:4px 11px; border-radius:20px; }
+.bl{ display:grid; grid-template-columns:190px 1fr 210px; gap:16px; align-items:center; padding:11px 0; border-top:1px solid rgba(255,255,255,.06); }
+.bl .nm{ font-size:12px; font-weight:600; } .bl .nm small{ display:block; font-weight:400; color:var(--muted); font-size:10.5px; margin-top:2px; }
+.bt{ position:relative; height:22px; border-radius:6px; overflow:hidden; display:flex; } .bt i{ display:block; height:100%; opacity:.5; }
+.bw{ position:relative; height:22px; } .bv{ position:absolute; top:7px; height:8px; background:#fff; border-radius:4px; left:0; } .bk{ position:absolute; top:-3px; bottom:-3px; width:3px; background:#0a0f1c; box-shadow:0 0 0 1px #fff; } .bk span{ position:absolute; top:-14px; left:50%; transform:translateX(-50%); font-size:9.5px; color:#cbd5e1; white-space:nowrap; }
+.bl .rs{ font-size:11px; color:#aab5cf; line-height:1.55; } .bl .rs b{ font-family:'JetBrains Mono',monospace; color:#fff; } .st{ font-size:10.5px; font-weight:800; padding:2px 9px; border-radius:10px; margin-right:6px; } .st.ok{ background:rgba(34,197,94,.18); color:#86efac; } .st.warn{ background:rgba(245,158,11,.18); color:#fcd34d; } .st.bad{ background:rgba(239,68,68,.18); color:#fca5a5; }
+
+/* v5 */
+.v5{ display:grid; grid-template-columns:1.25fr 1fr; gap:18px; } .rkc{ background:rgba(0,0,0,.22); border:1px solid rgba(255,255,255,.07); border-radius:12px; padding:11px 14px; margin-bottom:9px; cursor:pointer; } .rkc.sel{ border-color:var(--blue); box-shadow:0 0 0 2px rgba(59,130,246,.3); } .rkc:hover{ border-color:#4262a8; }
+.rkc .t{ display:flex; align-items:center; gap:9px; font-size:13px; font-weight:800; } .rkc .t b.sc{ margin-left:auto; font-family:'JetBrains Mono',monospace; font-size:19px; }
+.rkc .m{ display:flex; flex-wrap:wrap; gap:4px 16px; font-size:10.5px; color:var(--muted); margin-top:7px; } .rkc .m b{ color:#fff; font-family:'JetBrains Mono',monospace; font-weight:600; }
+.plot{ width:100%; height:auto; display:block; } .plot .ax{ fill:#7f8dab; font-size:10.5px; } .plot .gl{ stroke:#223052; stroke-dasharray:2 5; }
+
+/* v6 */
+.v6k{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:14px 0; }
+.strip{ display:flex; height:26px; border-radius:7px; overflow:hidden; } .strip i{ display:block; flex:1; }
+.stripw{ position:relative; margin:34px 0 30px; } .pin{ position:absolute; top:-30px; transform:translateX(-50%); text-align:center; font-size:10px; white-space:nowrap; } .pin::after{ content:''; display:block; width:2px; height:20px; background:currentColor; margin:2px auto 0; } .pin.b{ top:28px; } .pin.b::after{ position:absolute; top:-12px; left:50%; height:12px; margin:0; } .pin b{ font-family:'JetBrains Mono',monospace; }
+table.sc{ width:100%; border-collapse:collapse; font-size:12px; } table.sc th{ text-align:right; font-size:10.5px; color:var(--muted); font-weight:500; padding:7px 10px; border-bottom:1px solid var(--border); } table.sc td{ text-align:right; padding:9px 10px; border-bottom:1px solid #1d2a47; font-family:'JetBrains Mono',monospace; } table.sc th:first-child,table.sc td:first-child{ text-align:left; }
+
+/* modal configuracoes */
+.ov{ position:fixed; inset:0; background:rgba(3,6,12,.75); display:none; align-items:center; justify-content:center; z-index:100; padding:20px; } .ov.on{ display:flex; }
+.cfg{ width:min(780px,100%); background:linear-gradient(180deg,#121c32,#0e1627); border:1px solid var(--border); border-radius:16px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,.5); }
+.cfg__h{ display:flex; align-items:center; justify-content:space-between; padding:15px 22px; border-bottom:1px solid var(--border); font-weight:700; font-size:16px; }
+.cfg__b{ display:grid; grid-template-columns:190px 1fr; min-height:340px; } .cfg__m{ background:var(--panel3); border-right:1px solid var(--border); padding:12px; }
+.cfg__m button{ display:block; width:100%; text-align:left; background:transparent; border:none; color:var(--muted); font-size:13px; padding:10px 12px; border-radius:8px; margin-bottom:3px; } .cfg__m button.on{ background:rgba(59,130,246,.18); color:#fff; font-weight:600; }
+.cfg__c{ padding:20px 24px; } .cfg__c h4{ margin:0 0 4px; font-size:15px; } .cfg__c p.d{ margin:0 0 18px; font-size:12px; color:var(--muted); line-height:1.6; }
+.fld{ background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:16px 18px; } .fld label{ font-size:12.5px; font-weight:600; display:block; margin-bottom:10px; } .fld .row{ display:flex; align-items:center; gap:14px; }
+.fld input[type=number]{ width:110px; background:var(--panel3); border:1px solid var(--blue); border-radius:9px; color:#fff; font-family:'JetBrains Mono',monospace; font-size:20px; font-weight:700; padding:8px 12px; } .fld .u{ font-size:18px; color:var(--muted); font-weight:700; } .fld small{ display:block; margin-top:10px; font-size:11px; color:var(--muted); line-height:1.6; }
+.der{ display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; } .der span{ background:var(--panel3); border:1px solid var(--border); border-radius:9px; padding:7px 12px; font-size:11px; color:var(--muted); } .der b{ color:#fff; font-family:'JetBrains Mono',monospace; margin-left:4px; }
+.cfg__f{ display:flex; justify-content:flex-end; gap:10px; padding:14px 22px; border-top:1px solid var(--border); background:#0f1829; }
+.btn{ border:none; border-radius:7px; padding:9px 18px; font-size:13px; font-weight:600; color:#fff; } .btn.g{ background:#64748b; } .btn.b{ background:#3b9ae1; }
+#toast{ position:fixed; bottom:22px; left:50%; transform:translateX(-50%); background:#0f1829; border:1px solid var(--blue); color:#fff; padding:9px 16px; border-radius:9px; font-size:12.5px; display:none; z-index:120; }
+@media (max-width:1000px){ .v1,.v2,.v5{ grid-template-columns:1fr; } .v3k,.v6k{ grid-template-columns:1fr 1fr; } .bl{ grid-template-columns:1fr; } .tiles.row{ grid-template-columns:1fr; } .qg{ grid-template-columns:1fr; } .cfg__b{ grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand"><svg viewBox="0 0 24 24" fill="none" stroke="#e8edf7" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Controle de Investimentos</div>
+  <div class="nav"><span>❔ Cryptos</span><span class="on">📈 Opções</span></div>
+  <div class="pills"><span class="tp">BB US$8.13</span><button class="ico" id="gear" title="Configurações">⚙</button></div>
+</header>
+
+<div class="page">
+  <div class="pagehead"><h1>Opções · detalhe da opção selecionada</h1><button class="metachip" id="metachip">🎯 Meta mensal <b id="metaTxt">1,8%</b> <span class="dim">(Configurações › Opções)</span></button></div>
+
+  <div class="toolbar">
+    <div><label>📌 Opção selecionada na cadeia (11/12/2026)</label><div class="seg" id="sgK"></div></div>
+    <div><label>📅 Hoje (simular outra data)</label><input type="date" id="today" value="2026-11-25"></div>
+    <div><label>🏁 Já realizado no mês (%) · vem do histórico</label><input type="number" id="done" step="0.1" min="0" value="0.9" style="width:110px"></div>
+    <div class="dim" style="font-size:11px;max-width:330px;line-height:1.5">Dados da opção = sua cadeia (BB, cotação US$ 8,13). Os campos acima só existem nesta demo, para você testar como o veredito muda com o strike, a data e o que já foi realizado no mês.</div>
+  </div>
+
+  <div class="itabs" id="itabs">
+    <button class="itab on" data-n="1">1. Termômetro<small>escala + 4 perguntas</small></button>
+    <button class="itab" data-n="2">2. Radar de qualidade<small>5 dimensões</small></button>
+    <button class="itab" data-n="3">3. Meta do mês<small>projeção por semanas</small></button>
+    <button class="itab" data-n="4">4. Scorecard<small>réguas por critério</small></button>
+    <button class="itab" data-n="5">5. Comparar strikes<small>risco × retorno</small></button>
+    <button class="itab" data-n="6">6. Preço de execução<small>bid ↔ ask ao vivo</small></button>
+  </div>
+
+  <div class="detail">
+    <div class="dh">
+      <div><h3>PUT BB <span id="hT"></span></h3><div class="sub" id="hS"></div></div>
+      <div class="ctr"><div class="t"><label><input type="checkbox" checked disabled> Contratos (máx. 10)</label><b id="nV">1 contrato</b></div><input type="range" id="n" min="1" max="10" step="1" value="1"></div>
+    </div>
+    <div id="body"></div>
+    <div class="ins" id="ins"></div>
+    <details class="alld"><summary>📊 Todos os dados da opção (como na tela atual)</summary><div class="kg" id="kg"></div></details>
+  </div>
+
+  <div class="hint" id="hint"></div>
+
+  <details class="notes"><summary>🧩 Como levar para o sistema (motor do veredito e configuração da meta)</summary>
+    <p><b>Configuração (item 3):</b> nova chave <code>opcoes.metaMensal</code> (percentual, padrão 1,8) na janela de Configurações › aba Opções. Tudo abaixo lê esse valor; ao salvar, as telas recalculam.</p>
+    <p><b>Motor:</b> a função pura <code>avaliarOpcao(op, ctx)</code> (no começo do script desta página) recebe os dados que o seu detalhe já tem (cotação, strike, bid/ask, IV, valor justo HV, dias) mais <code>{contratos, preçoRelativo, hoje, metaMensal, realizadoNoMês}</code> e devolve score 0–100, nível, dimensões, projeções por semana e alertas. As 6 telas só desenham o resultado dela.</p>
+    <p><b>Convenções que adotei (confira com o seu sistema):</b> (1) <b>dias</b> = dias corridos até o vencimento (a sua cadeia mostra 27/11 = 2d, 04/12 = 9d, 11/12 = 16d); (2) probabilidades usam T = dias/252, que é o que reproduz os seus números (exercício 28,6%, PoP 77%, delta −0,24); (3) o ritmo mensal usa 30 dias corridos. Atenção: o "% Anual (lote)" de 34,7% da tela atual equivale a ROC × 252 ÷ 16; com 16 dias corridos, a anualização pelo calendário (365) seria ≈ 50%. Aqui mostro o <b>ritmo mensal equivalente</b> (ROC × 30 ÷ dias), que é o que se compara com a meta mensal.</p>
+    <p><b>Dimensões do score:</b> Retorno vs meta 30% · Segurança (folga em desvios-padrão + PoP) 30% · Prêmio vs justo (HV) 15% · Execução (spread bid/ask) 15% · Tempo exposto 10%. Travas: ritmo abaixo da meta limita a "Marginal"; PoP &lt; 65% é "Evitar"; spread &gt; 50% limita a "Cautela". Os pesos e limiares são constantes no topo do motor, fáceis de ajustar. É um indicador de apoio à decisão, não recomendação de investimento.</p>
+  </details>
+</div>
+
+<div class="ov" id="cfg">
+  <div class="cfg">
+    <div class="cfg__h"><span>⚙ Configurações</span><button class="ico" id="cfgX">✕</button></div>
+    <div class="cfg__b">
+      <div class="cfg__m"><button data-ct="geral">Geral</button><button data-ct="crypto">Cryptos</button><button data-ct="opcoes" class="on">Opções</button><button data-ct="alertas">Alertas</button></div>
+      <div class="cfg__c" id="cfgC"></div>
+    </div>
+    <div class="cfg__f"><button class="btn g" id="cfgCancel">Cancelar</button><button class="btn b" id="cfgSave">Salvar</button></div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+(function(){
+'use strict';
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const fmt=(v,d=2)=>Number(v).toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});
+const usd=(v,d=2)=>(v<0?'−':'')+'US$ '+fmt(Math.abs(v),d);
+const sg=(v,d=2)=>(v>1e-9?'+':v<-1e-9?'−':'')+'US$ '+fmt(Math.abs(v),d);
+const pc=(v,d=1)=>fmt(v,d)+'%';
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+
+/* =====================================================================
+   CONFIGURAÇÃO (item 3): meta mensal em %, aba Opções
+   ===================================================================== */
+const Config={ key:'opcoes.metaMensal', val:1.8,
+  load(){ try{ const v=parseFloat(localStorage.getItem(this.key)); if(v>0) this.val=v; }catch(e){} },
+  set(v){ this.val=v; try{ localStorage.setItem(this.key,String(v)); }catch(e){} } };
+Config.load();
+
+/* =====================================================================
+   MOTOR PORTÁVEL: avaliarOpcao(op, ctx)  → score, nível, dimensões, projeções
+   ===================================================================== */
+const NIVEIS=[{n:'⛔ Evitar',c:'var(--l0)'},{n:'🟠 Marginal',c:'var(--l1)'},{n:'🟡 Operar com cautela',c:'var(--l2)'},{n:'🟢 Vale operar',c:'var(--l3)'},{n:'💎 Excelente',c:'var(--l4)'}];
+const CORTES=[40,55,70,85];                       // limites entre níveis
+const PESOS={ret:0.30,seg:0.30,edge:0.15,exec:0.15,tempo:0.10};
+function N(x){ const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911; const s=x<0?-1:1,z=Math.abs(x)/Math.SQRT2,t=1/(1+p*z); return 0.5*(1+s*(1-(((((a5*t+a4)*t)+a3)*t+a2)*t+a1)*t*Math.exp(-z*z))); }
+const RF=0.04;
+function bsPut(S,K,T,iv){ const sd=iv*Math.sqrt(T), d1=(Math.log(S/K)+(RF+iv*iv/2)*T)/sd, d2=d1-sd; return {price:K*Math.exp(-RF*T)*N(-d2)-S*N(-d1),delta:N(d1)-1,pITM:N(-d2)}; }
+function solve(f,target,lo,hi){ for(let i=0;i<70;i++){ const m=(lo+hi)/2; if(f(m)>target) hi=m; else lo=m; } return (lo+hi)/2; }
+const dayMs=864e5, parseD=s=>{ const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); };
+const daysBetween=(a,b)=>Math.round((b-a)/dayMs);
+function nivelDe(score){ let l=0; CORTES.forEach(c=>{ if(score>=c) l++; }); return l; }
+
+function avaliarOpcao(op,ctx){
+  const n=ctx.contratos, p=op.bid+(op.ask-op.bid)*ctx.t, dias=Math.max(1,daysBetween(ctx.hoje,op.venc)), T=dias/252;
+  const cap=op.K*100*n, prem=p*100*n, roc=prem/cap*100, meta=ctx.meta;
+  const g=bsPut(op.S,op.K,T,op.iv), be=op.K-p, pop=1-bsPut(op.S,be,T,op.iv).pITM;
+  const margem=(op.S-be)/op.S*100, mov=op.iv*Math.sqrt(T)*100, z=margem/mov;
+  const fair=bsPut(op.S,op.K,T,op.hv).price, edge=fair>0?(p-fair)/fair:0, spread=(op.ask-op.bid)/op.ask;
+  const semanal=roc*7/dias, mensal=roc*30/dias, ritmo=mensal/meta;
+  const lastDay=new Date(ctx.hoje.getFullYear(),ctx.hoje.getMonth()+1,0).getDate(), diasMes=Math.max(0,lastDay-ctx.hoje.getDate()), semMes=diasMes/7;
+  const projRest=semanal*semMes, falta=Math.max(0,meta-ctx.realizado);
+  const venceOutroMes=op.venc.getMonth()!==ctx.hoje.getMonth()||op.venc.getFullYear()!==ctx.hoje.getFullYear();
+  const dim={ ret:clamp(ritmo/2), seg:0.5*clamp((z-0.3)/1.2)+0.5*clamp((pop-0.6)/0.3), edge:clamp(0.5+edge/0.4), exec:clamp(1-(spread-0.10)/0.50), tempo:clamp(1-(dias-7)/23) };
+  const score=100*Object.keys(PESOS).reduce((s,k)=>s+PESOS[k]*dim[k],0);
+  let nivel=nivelDe(score); const alertas=[];
+  if(ritmo<1){ nivel=Math.min(nivel,1); alertas.push(['bad','Ritmo abaixo da meta',`o ritmo mensal equivalente (${pc(mensal,2)}) não alcança a meta de ${pc(meta,1)}.`]); }
+  if(pop<0.65){ nivel=0; alertas.push(['bad','PoP baixo',`chance de lucro de ${pc(pop*100,0)} (mínimo adotado: 65%).`]); }
+  if(spread>0.5){ nivel=Math.min(nivel,2); alertas.push(['warn','Spread largo',`bid ${fmt(op.bid)} × ask ${fmt(op.ask)} = ${pc(spread*100,0)} de spread: use ordem limite e não conte com o mid. No bid o ROC seria ${pc(op.bid*100*n/cap*100,2)}.`]); }
+  if(z<0.5) alertas.push(['warn','Folga curta até o break-even',`só ${fmt(z,2)} desvio-padrão (${pc(margem,1)}) separa a cotação do break-even.`]);
+  if(venceOutroMes) alertas.push(['info','Vence no mês seguinte',`o resultado cai em ${op.venc.toLocaleDateString('pt-BR',{month:'long'})}; no mês atual restam ${fmt(semMes,1)} sem.`]);
+  const rocMin=meta*dias/30, pMin=rocMin/100*op.K;   // prêmio mínimo por ação p/ ritmo = meta
+  return {op,n,p,dias,cap,prem,roc,meta,delta:g.delta,pITM:g.pITM,be,pop,margem,mov,z,fair,edge,spread,semanal,mensal,ritmo,semMes,diasMes,projRest,falta,realizado:ctx.realizado,venceOutroMes,dim,score,nivel,alertas,pMin,rocMin,hoje:ctx.hoje};
+}
+
+/* ---------- dados da cadeia (extraídos da sua tela de opções, 11/12/2026) ---------- */
+const MKT={S:8.13,venc:parseD('2026-12-11'),dias0:16};
+const ROWS=[{K:7,bid:0.02,ask:0.12},{K:7.5,bid:0.09,ask:0.24},{K:8,bid:0.12,ask:0.40},{K:8.5,bid:0.41,ask:0.63}];
+ROWS.forEach(r=>{ r.S=MKT.S; r.venc=MKT.venc; r.mid=(r.bid+r.ask)/2; r.iv=solve(v=>bsPut(MKT.S,r.K,MKT.dias0/252,v).price,r.mid,0.02,4); });
+const HV=solve(v=>bsPut(MKT.S,7.5,MKT.dias0/252,v).price,0.15,0.02,4);   // calibra HV para o "valor justo" de 0,15 da sua tela
+ROWS.forEach(r=>{ r.hv=HV; });
+
+/* =====================================================================
+   ESTADO E UTILIDADES DE UI
+   ===================================================================== */
+const St={ k:1, n:1, t:0.5, lens:'rest', cur:1 };
+function ctx(){ return {contratos:St.n,t:St.t,hoje:parseD($('#today').value||'2026-11-25'),meta:Config.val,realizado:parseFloat($('#done').value)||0}; }
+function E(i){ return avaliarOpcao(ROWS[i==null?St.k:i],ctx()); }
+const kf=K=>fmt(K,K%1?1:0);
+const vd=l=>`<span class="vd v-${l}">${NIVEIS[l].n}</span>`;
+function toast(t){ const el=$('#toast'); el.textContent=t; el.style.display='block'; clearTimeout(toast._t); toast._t=setTimeout(()=>el.style.display='none',1900); }
+function paint(inp){ inp.style.setProperty('--p',((inp.value-inp.min)/(inp.max-inp.min)*100)+'%'); }
+
+/* tiles Capital / ROC / Dias — versões grandes */
+function tiles(e,mode){
+  const mesDias=Math.min(e.dias,e.diasMes);
+  let dots=''; for(let i=1;i<=Math.min(e.dias,45);i++) dots+=`<i class="${i<=mesDias?'m':''} ${i%7===0?'w':''}"></i>`;
+  const barW=clamp(e.roc/(e.meta*2))*100;
+  return `<div class="tiles ${mode}">
+   <div class="tile"><div class="h">💰 Capital reservado</div><div class="n">${usd(e.cap,0)}</div><div class="c">${e.n*100} ações × US$ ${kf(e.op.K)} (strike) · custo efetivo se exercido <b class="mono" style="color:#fff">${usd(e.be)}</b></div></div>
+   <div class="tile"><div class="h">📈 ROC · retorno sobre o capital</div><div class="n up">${pc(e.roc,2)}</div><div class="c">${pc(e.roc/e.meta*100,0)} da meta mensal (${pc(e.meta,1)}) em uma única operação</div><div class="mb"><i style="width:${barW}%"></i><u style="left:50%"></u></div></div>
+   <div class="tile"><div class="h">⏳ Dias até o vencimento</div><div class="n">${e.dias}<small> dias</small></div><div class="c">${e.op.venc.toLocaleDateString('pt-BR')} · ${fmt(e.dias/7,1)} semanas · <span style="color:var(--cyan)">${mesDias} no mês atual</span>${e.dias>mesDias?` · ${e.dias-mesDias} no seguinte`:''}</div><div class="dots">${dots}</div></div></div>`;
+}
+const netbox=e=>`<div class="netbox"><div class="l">Prêmio líquido</div><div class="v ${e.prem>=0?'up':'down'}">${sg(e.prem)}</div><div class="s">${e.n} contrato(s) · preço ${e.p.toFixed(3).replace('.',',')} (${e.t===0.5?'mid':e.t===0?'bid':e.t===1?'ask':fmt(e.t*100,0)+'% entre bid e ask'})</div></div>`;
+
+/* ---------- 1. Termômetro ---------- */
+function v1(e){
+  const zs=[[0,CORTES[0]],[CORTES[0],CORTES[1]],[CORTES[1],CORTES[2]],[CORTES[2],CORTES[3]],[CORTES[3],100]];
+  const st=(c)=>c==='ok'?['ok','SIM']:c==='warn'?['warn','EM TERMOS']:['bad','NÃO'];
+  const q1=e.pop>=0.75&&e.z>=1?'ok':e.pop>=0.65?'warn':'bad', q2=e.edge>=0.05?'ok':e.edge>=-0.05?'warn':'bad', paceDia=e.roc/e.dias, metaDia=e.meta/30, q3=paceDia/metaDia>=1.5?'ok':paceDia/metaDia>=1?'warn':'bad', q4=e.roc>=e.meta?'ok':e.ritmo>=1?'warn':'bad';
+  const qs=[
+   [q1,'🛡️ Vale o risco de ser exercido (comprar a ação)?',`Chance de exercício <b>${pc(e.pITM*100,1)}</b> · PoP <b>${pc(e.pop*100,0)}</b> · folga até o break-even <b>${pc(e.margem,1)}</b> (${fmt(e.z,2)}σ). Se exercido: custo efetivo <b>${usd(e.be)}</b> contra cotação <b>${usd(e.op.S)}</b>.`],
+   [q2,'⚖️ Vale em relação ao valor da ação?',`Prêmio <b>${fmt(e.p,3)}</b> × valor justo (HV) <b>${fmt(e.fair,3)}</b>: <b>${e.edge>=0?'+':''}${pc(e.edge*100,0)}</b>. Execução: spread de <b>${pc(e.spread*100,0)}</b>${e.spread>0.5?' (ruim)':''}.`],
+   [q3,'⏳ Vale em relação aos dias de operação?',`<b>${fmt(paceDia,3)}%</b> ao dia contra meta de <b>${fmt(metaDia,3)}%</b> ao dia = <b>${fmt(paceDia/metaDia,1)}×</b> a meta, com o capital preso por <b>${e.dias} dias</b>.`],
+   [q4,'🎯 Ajuda a bater a meta mensal?',`ROC de <b>${pc(e.roc,2)}</b> = <b>${pc(e.roc/e.meta*100,0)}</b> da meta (${pc(e.meta,1)}). No ritmo desta operação: <b>${pc(e.semanal,2)}</b>/sem × ${fmt(e.semMes,1)} sem restantes = <b>${pc(e.projRest,2)}</b> neste mês.`]];
+  return `<div class="v1"><div class="v1l">${netbox(e)}${tiles(e,'row')}</div><div>
+   <div class="scalehd"><span class="q">Devo operar?</span>${vd(e.nivel)}<b class="sc">${fmt(e.score,0)}<small class="dim" style="font-size:12px">/100</small></b></div>
+   <div class="scale"><div class="z">${zs.map((z,i)=>`<i style="width:${z[1]-z[0]}%;background:var(--l${i});opacity:${i===e.nivel?1:.45}"></i>`).join('')}</div><div class="nd" style="left:${clamp(e.score/100)*100}%"><b>${fmt(e.score,0)}</b></div>
+    <div class="lb">${zs.map((z,i)=>`<span style="width:${z[1]-z[0]}%">${NIVEIS[i].n.slice(2)}</span>`).join('')}</div></div>
+   <div class="qg">${qs.map(q=>{ const s=st(q[0]); return `<div class="qc ${q[0]}"><h5>${q[1]}<span class="ans">${s[1]}</span></h5><p>${q[2]}</p></div>`; }).join('')}</div>
+   <div class="flags">${e.alertas.map(a=>`<div class="fl"><b>${a[0]==='bad'?'⛔':a[0]==='warn'?'⚠️':'ℹ️'} ${a[1]}:</b> ${a[2]}</div>`).join('')||'<div class="fl">Sem alertas.</div>'}</div></div></div>`;
+}
+
+/* ---------- 2. Radar ---------- */
+const DIMS=[['ret','Retorno vs meta'],['seg','Segurança'],['edge','Prêmio vs justo'],['exec','Execução'],['tempo','Tempo exposto']];
+function v2(e){
+  const cx=160,cy=150,R=105, ang=i=>-Math.PI/2+i*2*Math.PI/5, pt=(i,r)=>[cx+Math.cos(ang(i))*R*r,cy+Math.sin(ang(i))*R*r];
+  const poly=(f)=>DIMS.map((d,i)=>pt(i,f(d,i)).join(',')).join(' ');
+  let s=`<svg viewBox="0 0 320 310" class="plot">`;
+  [0.25,0.5,0.75,1].forEach(r=>{ s+=`<polygon points="${poly(()=>r)}" fill="none" stroke="#26365a" ${r===0.5?'stroke-dasharray="4 4" stroke="#6b7fb0"':''}/>`; });
+  DIMS.forEach((d,i)=>{ const a=pt(i,1), l=pt(i,1.2); s+=`<line x1="${cx}" y1="${cy}" x2="${a[0]}" y2="${a[1]}" stroke="#26365a"/><text x="${l[0]}" y="${l[1]}" text-anchor="middle" class="ax" style="font-size:10.5px;fill:#c3cbdb">${d[1]}</text><text x="${l[0]}" y="${l[1]+13}" text-anchor="middle" style="font-size:11px;font-weight:800;fill:${e.dim[d[0]]>=0.5?'#86efac':'#fca5a5'};font-family:'JetBrains Mono',monospace">${fmt(e.dim[d[0]]*100,0)}</text>`; });
+  s+=`<polygon points="${poly(d=>Math.max(0.03,e.dim[d[0]]))}" fill="${NIVEIS[e.nivel].c}" fill-opacity=".3" stroke="${NIVEIS[e.nivel].c}" stroke-width="2.5"/>`;
+  DIMS.forEach((d,i)=>{ const p=pt(i,Math.max(0.03,e.dim[d[0]])); s+=`<circle cx="${p[0]}" cy="${p[1]}" r="4.5" fill="#fff"/>`; });
+  s+=`<text x="${cx}" y="${cy-2}" text-anchor="middle" style="font-size:26px;font-weight:800;fill:#fff;font-family:'JetBrains Mono',monospace">${fmt(e.score,0)}</text><text x="${cx}" y="${cy+14}" text-anchor="middle" class="ax">score</text></svg>`;
+  const notes={ret:`ritmo mensal ${pc(e.mensal,2)} = ${fmt(e.ritmo,1)}× a meta`,seg:`${pc(e.pop*100,0)} de PoP · folga de ${fmt(e.z,2)}σ até o break-even`,edge:`prêmio ${e.edge>=0?'+':''}${pc(e.edge*100,0)} vs valor justo (HV)`,exec:`spread bid/ask de ${pc(e.spread*100,0)}`,tempo:`${e.dias} dias com o capital preso`};
+  return `<div class="v2"><div>${netbox(e)}<div style="height:10px"></div>${tiles(e,'col')}</div><div>${s}<div style="text-align:center;margin-top:4px">${vd(e.nivel)}</div></div>
+   <div>${DIMS.map(d=>{ const v=e.dim[d[0]]; return `<div class="dimrow"><div class="t"><span>${d[1]} <span class="dim">· peso ${PESOS[d[0]]*100}%</span></span><b style="color:${v>=0.5?'#86efac':v>=0.25?'#fcd34d':'#fca5a5'}">${fmt(v*100,0)}</b></div><div class="bar"><i style="width:${v*100}%;background:${v>=0.5?'var(--green)':v>=0.25?'var(--amber)':'var(--red)'}"></i></div><small>${notes[d[0]]}</small></div>`; }).join('')}<div class="dim" style="font-size:10.5px;line-height:1.5">A linha tracejada do radar é o mínimo aceitável (50). Quanto mais o polígono preenche, melhor a "qualidade" do prêmio.</div></div></div>`;
+}
+
+/* ---------- 3. Meta do mês ---------- */
+function v3(e){
+  const lens=St.lens, add=lens==='rest'?e.projRest:lens==='venc'?e.roc:e.mensal, done=e.realizado, falta=Math.max(0,e.meta-done), max=Math.max(e.meta,done+add)*1.12, w=v=>clamp(v/max)*100;
+  const covered=add/(falta||e.meta)*100, ok=done+add>=e.meta;
+  // linha do tempo
+  const h=e.hoje, m0=new Date(h.getFullYear(),h.getMonth(),1), mEnd=new Date(h.getFullYear(),h.getMonth()+1,0), end=new Date(Math.max(mEnd,e.op.venc).getTime()+2*dayMs), span=daysBetween(m0,end)+1, W=820, X=d=>20+daysBetween(m0,d)/span*(W-40);
+  let tl=`<svg viewBox="0 0 ${W} 150" class="plot">`;
+  for(let d=new Date(m0);d<=end;d=new Date(d.getTime()+7*dayMs)) tl+=`<rect x="${X(d)}" y="26" width="${7/span*(W-40)}" height="80" fill="${Math.floor(daysBetween(m0,d)/7)%2?'#16213a':'#121b31'}"/><text x="${X(d)+3}" y="20" class="ax" style="font-size:9.5px">${d.getDate()}/${d.getMonth()+1}</text>`;
+  const xEnd=X(new Date(mEnd.getTime()+dayMs)), xH=X(h), xV=X(e.op.venc);
+  tl+=`<rect x="${xH}" y="56" width="${Math.max(0,Math.min(xEnd,xV)-xH)}" height="22" rx="5" fill="var(--cyan)" opacity=".85"/><text x="${xH+8}" y="71" style="font-size:11px;font-weight:700;fill:#06222a">no mês: ${Math.min(e.dias,e.diasMes)}d → ${pc(e.projRest,2)}</text>`;
+  if(xV>xEnd) tl+=`<rect x="${xEnd}" y="56" width="${xV-xEnd}" height="22" rx="5" fill="#64748b" opacity=".85"/><text x="${xEnd+8}" y="71" style="font-size:11px;font-weight:700;fill:#fff">mês seguinte: ${e.dias-e.diasMes}d → ${pc(e.roc-e.projRest,2)}</text>`;
+  tl+=`<line x1="${xEnd}" x2="${xEnd}" y1="26" y2="118" stroke="#fff" stroke-dasharray="4 3"/><text x="${xEnd}" y="132" text-anchor="middle" class="ax" style="fill:#fff">fim do mês</text><line x1="${xH}" x2="${xH}" y1="26" y2="106" stroke="#22d3ee" stroke-width="2"/><text x="${xH}" y="120" text-anchor="middle" class="ax" style="fill:#22d3ee;font-weight:700">hoje</text><line x1="${xV}" x2="${xV}" y1="26" y2="106" stroke="#eab308" stroke-width="2"/><text x="${xV}" y="120" text-anchor="middle" class="ax" style="fill:#eab308;font-weight:700">vence ${e.op.venc.getDate()}/${e.op.venc.getMonth()+1}</text></svg>`;
+  return `<div class="v3k"><div class="tile"><div class="h">🎯 Meta do mês (Configurações)</div><div class="n">${pc(e.meta,1)}</div><div class="c">${pc(e.meta/30,3)} ao dia · ${pc(e.meta*7/30,2)} por semana</div></div>
+    <div class="tile"><div class="h">🏁 Já realizado</div><div class="n">${pc(done,2)}</div><div class="c">${pc(done/e.meta*100,0)} da meta · faltam <b class="mono" style="color:#fff">${pc(falta,2)}</b></div></div>
+    <div class="tile"><div class="h">📆 Semanas restantes no mês</div><div class="n">${fmt(e.semMes,1)}<small> sem</small></div><div class="c">${e.diasMes} dias até o fim do mês</div></div>
+    <div class="tile"><div class="h">💰 ${usd(e.cap,0)} · ROC ${pc(e.roc,2)} · ${e.dias}d</div><div class="n up">${sg(e.prem)}</div><div class="c">prêmio líquido (${e.n} contrato(s))</div></div></div>
+   <div class="goal"><div class="seg" id="lens" style="display:inline-flex;margin-bottom:6px"><button data-l="rest" class="${lens==='rest'?'on':''}">Semanas restantes do mês</button><button data-l="venc" class="${lens==='venc'?'on':''}">No vencimento</button><button data-l="cheio" class="${lens==='cheio'?'on':''}">Mês cheio no mesmo ritmo</button></div>
+    <div class="stack"><i style="width:${w(done)}%;background:#64748b"></i><i style="width:${w(add)}%;background:linear-gradient(90deg,#22c55e,#22d3ee)"></i><div class="stackt" style="left:${w(e.meta)}%"><span>meta ${pc(e.meta,1)}</span></div></div>
+    <div style="display:flex;gap:16px;font-size:11px;color:var(--muted);flex-wrap:wrap"><span><i style="display:inline-block;width:10px;height:10px;background:#64748b;border-radius:3px;margin-right:5px"></i>realizado ${pc(done,2)}</span><span><i style="display:inline-block;width:10px;height:10px;background:var(--green);border-radius:3px;margin-right:5px"></i>esta operação ${pc(add,2)}</span><span>${ok?'<b class="up">atinge a meta ✔</b>':`<b class="amb" style="color:var(--amber)">fica ${pc(e.meta-done-add,2)} abaixo da meta</b>`}</span></div>
+    <div class="formula"><span>ROC ${pc(e.roc,2)}</span><em>÷</em><span>${fmt(e.dias/7,1)} sem</span><em>=</em><span>${pc(e.semanal,2)}/sem</span><em>×</em><span>${fmt(e.semMes,1)} sem restantes</span><em>=</em><span style="border-color:var(--green)"><b>${pc(e.projRest,2)}</b> no mês</span><em>→</em><span>cobre ${pc(e.projRest/(falta||e.meta)*100,0)} do que falta</span></div>
+    <div style="margin-top:12px">${tl}</div></div>
+   <div style="margin-top:12px">${vd(e.nivel)} <span class="dim" style="font-size:12px;margin-left:8px">score ${fmt(e.score,0)}/100 · ${e.venceOutroMes?'vence no mês seguinte: o resultado cheio entra em '+e.op.venc.toLocaleDateString('pt-BR',{month:'long'}):'vence dentro do mês'}</span></div>`;
+}
+
+/* ---------- 4. Scorecard (bullet charts) ---------- */
+function bullet(o){
+  const P=v=>clamp((v-o.min)/(o.max-o.min))*100, zs=o.zones.map(z=>`<i style="width:${(z[1]-z[0])/(o.max-o.min)*100}%;background:${z[2]}"></i>`).join('');
+  return `<div class="bl"><div class="nm">${o.label}<small>${o.sub}</small></div><div class="bw"><div class="bt">${zs}</div><div class="bv" style="width:${P(o.val)}%"></div><div class="bk" style="left:${P(o.tick)}%"><span>${o.tickL}</span></div></div><div class="rs"><span class="st ${o.st}">${o.st==='ok'?'OK':o.st==='warn'?'ATENÇÃO':'RUIM'}</span><b>${o.vl}</b><br>${o.note}</div></div>`;
+}
+function v4(e){
+  const G='#22c55e',A='#f59e0b',R='#ef4444', paceDia=e.roc/e.dias, metaDia=e.meta/30, rd=paceDia/metaDia;
+  const rows=[
+   {label:'Ritmo vs meta',sub:'ROC × 30 ÷ dias ÷ meta',min:0,max:4,val:Math.min(4,e.ritmo),tick:1,tickL:'meta',zones:[[0,1,R],[1,1.5,A],[1.5,4,G]],st:e.ritmo>=1.5?'ok':e.ritmo>=1?'warn':'bad',vl:fmt(e.ritmo,2)+'× a meta',note:`ritmo mensal equivalente ${pc(e.mensal,2)}`},
+   {label:'Retorno por dia',sub:'ROC ÷ dias vs meta ÷ 30',min:0,max:metaDia*4,val:Math.min(metaDia*4,paceDia),tick:metaDia,tickL:'meta/dia',zones:[[0,metaDia,R],[metaDia,metaDia*1.5,A],[metaDia*1.5,metaDia*4,G]],st:rd>=1.5?'ok':rd>=1?'warn':'bad',vl:fmt(paceDia,3)+'%/dia',note:`meta ${fmt(metaDia,3)}%/dia · ${e.dias} dias de capital preso`},
+   {label:'PoP (chance de lucro)',sub:'preço final acima do break-even',min:50,max:100,val:e.pop*100,tick:70,tickL:'mín. 70%',zones:[[50,65,R],[65,75,A],[75,100,G]],st:e.pop>=0.75?'ok':e.pop>=0.65?'warn':'bad',vl:pc(e.pop*100,0),note:`chance de exercício ${pc(e.pITM*100,1)}`},
+   {label:'Folga até o break-even',sub:'em desvios-padrão do preço',min:0,max:2,val:Math.min(2,e.z),tick:1,tickL:'1σ',zones:[[0,0.5,R],[0.5,1,A],[1,2,G]],st:e.z>=1?'ok':e.z>=0.5?'warn':'bad',vl:fmt(e.z,2)+'σ',note:`cotação pode cair ${pc(e.margem,1)} (${usd(e.op.S-e.be)}) até o break-even de ${usd(e.be)}`},
+   {label:'Prêmio vs valor justo (HV)',sub:'quanto o mercado paga a mais que o risco realizado',min:-50,max:50,val:clamp(e.edge*100,-50,50),tick:0,tickL:'justo',zones:[[-50,-5,R],[-5,5,A],[5,50,G]],st:e.edge>=0.05?'ok':e.edge>=-0.05?'warn':'bad',vl:(e.edge>=0?'+':'')+pc(e.edge*100,0),note:`prêmio ${fmt(e.p,3)} × justo ${fmt(e.fair,3)}`},
+   {label:'Spread bid/ask',sub:'custo para entrar e sair',min:0,max:100,val:Math.min(100,e.spread*100),tick:30,tickL:'máx. 30%',zones:[[0,15,G],[15,40,A],[40,100,R]],st:e.spread<=0.15?'ok':e.spread<=0.4?'warn':'bad',vl:pc(e.spread*100,0),note:`no bid o ROC cai para ${pc(e.op.bid*100*e.n/e.cap*100,2)}`}];
+  const c={ok:0,warn:0,bad:0}; rows.forEach(r=>c[r.st]++);
+  return `<div class="v4h">${netbox(e).replace('class="netbox"','class="netbox" style="min-width:260px"')}<div style="flex:1;min-width:340px">${tiles(e,'row')}</div></div>
+   <div class="v4h" style="margin-bottom:6px"><b style="font-size:14px">Scorecard</b>${vd(e.nivel)}<b class="mono" style="font-size:18px">${fmt(e.score,0)}/100</b><div class="cnt"><span class="st ok">${c.ok} OK</span><span class="st warn">${c.warn} atenção</span><span class="st bad">${c.bad} ruim</span></div></div>${rows.map(bullet).join('')}`;
+}
+
+/* ---------- 5. Comparar strikes ---------- */
+function v5(e){
+  const all=ROWS.map((r,i)=>({i,e:E(i)})), W=600,H=330,l=52,r=18,t=16,b=36, xmin=50,xmax=100, ymax=Math.max(e.meta*3,...all.map(a=>a.e.mensal))*1.12;
+  const X=v=>l+(v-xmin)/(xmax-xmin)*(W-l-r), Y=v=>t+(ymax-v)/ymax*(H-t-b), maxP=Math.max(...all.map(a=>a.e.prem));
+  let s=`<svg viewBox="0 0 ${W} ${H}" class="plot"><rect x="${X(70)}" y="${t}" width="${X(100)-X(70)}" height="${Y(e.meta)-t}" fill="#22c55e" opacity=".08"/>`;
+  [0,1,2,3,4].forEach(k=>{ const v=ymax*k/4; s+=`<line x1="${l}" x2="${W-r}" y1="${Y(v)}" y2="${Y(v)}" class="gl"/><text x="${l-6}" y="${Y(v)+3.5}" text-anchor="end" class="ax">${fmt(v,1)}%</text>`; });
+  [50,60,70,80,90,100].forEach(v=>{ s+=`<text x="${X(v)}" y="${H-18}" text-anchor="middle" class="ax">${v}%</text>`; });
+  s+=`<line x1="${l}" x2="${W-r}" y1="${Y(e.meta)}" y2="${Y(e.meta)}" stroke="#22c55e" stroke-width="1.5" stroke-dasharray="5 4"/><text x="${W-r-4}" y="${Y(e.meta)-6}" text-anchor="end" style="font-size:10.5px;fill:#86efac;font-weight:700">meta ${pc(e.meta,1)}/mês</text><line x1="${X(70)}" x2="${X(70)}" y1="${t}" y2="${H-b}" stroke="#94a3b8" stroke-dasharray="5 4"/><text x="${X(70)+5}" y="${t+11}" style="font-size:10.5px;fill:#cbd5e1">PoP 70%</text><text x="${(l+W-r)/2}" y="${H-3}" text-anchor="middle" class="ax">PoP (chance de lucro) →</text><text x="${X(100)-4}" y="${t+24}" text-anchor="end" style="font-size:10px;fill:#4ade80">zona ideal</text>`;
+  all.forEach(a=>{ const c=NIVEIS[a.e.nivel].c, rr=8+Math.sqrt(a.e.prem/maxP)*20, sel=a.i===St.k; s+=`<circle data-i="${a.i}" cx="${X(a.e.pop*100)}" cy="${Y(Math.min(ymax,a.e.mensal))}" r="${rr}" fill="${c}" fill-opacity=".75" stroke="${sel?'#fff':'#0a0f1c'}" stroke-width="${sel?3:1.5}" style="cursor:pointer"/><text x="${X(a.e.pop*100)}" y="${Y(Math.min(ymax,a.e.mensal))+4}" text-anchor="middle" style="font-size:10.5px;font-weight:800;fill:#0a0f1c;pointer-events:none">${kf(ROWS[a.i].K)}</text>`; });
+  s+='</svg>';
+  const rk=all.slice().sort((x,y)=>y.e.score-x.e.score), best=rk[0].i;
+  return `<div class="v5"><div><div style="font-size:12.5px;font-weight:700;margin-bottom:6px">Risco × retorno de cada strike da cadeia <span class="dim" style="font-weight:400">· bolha = prêmio US$ · cor = veredito · clique para selecionar</span></div>${s}</div>
+   <div><div style="font-size:12.5px;font-weight:700;margin-bottom:8px">Ranking das opções (mesmo vencimento)</div>${rk.map((a,j)=>`<div class="rkc ${a.i===St.k?'sel':''}" data-i="${a.i}"><div class="t">${j===0?'⭐':''}<span>PUT ${kf(ROWS[a.i].K)}</span>${vd(a.e.nivel)}<b class="sc" style="color:${NIVEIS[a.e.nivel].c}">${fmt(a.e.score,0)}</b></div><div class="m"><span>prêmio <b>${sg(a.e.prem)}</b></span><span>ROC <b>${pc(a.e.roc,2)}</b></span><span>ritmo <b>${fmt(a.e.ritmo,1)}×</b></span><span>PoP <b>${pc(a.e.pop*100,0)}</b></span><span>spread <b>${pc(a.e.spread*100,0)}</b></span></div></div>`).join('')}<div class="dim" style="font-size:11px;line-height:1.6;margin-top:4px">Melhor combinação do momento: <b style="color:#fff">PUT ${kf(ROWS[best].K)}</b> (score ${fmt(rk[0].e.score,0)}). Strikes dentro do dinheiro rendem muito, mas têm PoP baixo.</div></div></div>`;
+}
+
+/* ---------- 6. Preço de execução ---------- */
+function v6(e){
+  const steps=50, cs=[]; for(let i=0;i<=steps;i++){ cs.push(avaliarOpcao(ROWS[St.k],Object.assign(ctx(),{t:i/steps}))); }
+  const tPace=(e.pMin-e.op.bid)/(e.op.ask-e.op.bid), good=cs.find(c=>c.nivel>=3);
+  const pin=(t,txt,col,cls)=>`<div class="pin ${cls||''}" style="left:${clamp(t)*100}%;color:${col}">${cls==='b'?'':'<b>'+txt[0]+'</b><br>'}${cls==='b'?'<b>'+txt[0]+'</b><br>':''}<span>${txt[1]}</span></div>`;
+  const sc=[['Bid',0],['Mid',0.5],['Ask',1]].map(x=>({n:x[0],e:avaliarOpcao(e.op,Object.assign(ctx(),{t:x[1]}))}));
+  return `<div class="v1" style="grid-template-columns:380px 1fr"><div class="v1l"><div id="v6net">${netbox(e)}</div><div id="v6tiles">${tiles(e,'row')}</div></div><div>
+   <div style="font-size:14px;font-weight:800;margin-bottom:6px">A que preço vale a pena vender? <span class="dim" style="font-weight:400;font-size:12px">arraste e veja o veredito mudar</span></div>
+   <div class="stripw"><div class="strip">${cs.map(c=>`<i style="background:${NIVEIS[c.nivel].c}"></i>`).join('')}</div>
+     ${pin(0,['bid '+fmt(e.op.bid),'pior preço'],'#cbd5e1')}${pin(1,['ask '+fmt(e.op.ask),'melhor preço'],'#cbd5e1')}${pin(tPace,['mín. p/ meta '+fmt(e.pMin,3),'ritmo = 1×'],'#fff','b')}${good?pin((good.p-e.op.bid)/(e.op.ask-e.op.bid),['"Vale operar" a partir de '+fmt(good.p,3),''],'#86efac','b'):''}</div>
+   <input type="range" id="fillR" min="0" max="1" step="0.01" value="${St.t}">
+   <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:6px"><span>Bid ${fmt(e.op.bid)}</span><span id="fillL" class="mono" style="color:#fff">preço ${fmt(e.p,3)}</span><span>Ask ${fmt(e.op.ask)}</span></div>
+   <div class="v6k" id="v6k"></div>
+   <table class="sc"><thead><tr><th>Se executar no…</th><th>Preço</th><th>Prêmio</th><th>ROC</th><th>Ritmo vs meta</th><th>Score</th><th style="text-align:left;padding-left:18px">Veredito</th></tr></thead><tbody>${sc.map(x=>`<tr><td>${x.n}</td><td>${fmt(x.e.p,3)}</td><td class="up">${sg(x.e.prem)}</td><td>${pc(x.e.roc,2)}</td><td>${fmt(x.e.ritmo,2)}×</td><td>${fmt(x.e.score,0)}</td><td style="text-align:left;padding-left:18px;font-family:Inter">${vd(x.e.nivel)}</td></tr>`).join('')}</tbody></table>
+   <div class="fl" style="margin-top:10px"><b>💡 Prêmio mínimo para bater a meta:</b> ${fmt(e.pMin,3)} por ação (ROC mínimo ${pc(e.rocMin,2)} em ${e.dias} dias). ${e.pMin<=e.op.bid?'Mesmo no <b>bid</b> a operação já bate a meta.':e.pMin<=e.op.ask?'Só bate a meta se o preço ficar acima de '+fmt(e.pMin,3)+': use ordem limite.':'Nem no ask a operação bate a meta.'}</div></div></div>`;
+}
+function v6kpis(){ const e=E(); $('#v6k').innerHTML=`<div class="tile"><div class="h">Prêmio líquido</div><div class="n up" style="font-size:22px">${sg(e.prem)}</div></div><div class="tile"><div class="h">ROC</div><div class="n" style="font-size:22px">${pc(e.roc,2)}</div></div><div class="tile"><div class="h">Ritmo vs meta</div><div class="n" style="font-size:22px">${fmt(e.ritmo,2)}×</div></div><div class="tile"><div class="h">Veredito</div><div style="margin-top:6px">${vd(e.nivel)}</div><div class="c">score ${fmt(e.score,0)}/100</div></div>`; }
+
+/* ---------- dados completos e insight ---------- */
+function allData(e){
+  return [['Prêmio total',sg(e.prem)],['Capital total',usd(e.cap,0)],['% Anual (365)',pc(e.roc*365/e.dias,1)],['Prob. exercício',pc(e.pITM*100,1)],['Break-even',usd(e.be)],['Delta',fmt(e.delta,2)],['IV implícita',pc(e.op.iv*100,1)],['Valor justo (HV)',usd(e.fair,3)],['Cotação',usd(e.op.S)],['Strike',usd(e.op.K)],['Dist. ao strike',pc((e.op.S-e.op.K)/e.op.S*100,2)],['Queda até BE',pc(e.margem,2)],['Bid / Ask',fmt(e.op.bid)+' / '+fmt(e.op.ask)],['Prob. lucro (PoP)',pc(e.pop*100,0)],['Spread bid/ask',pc(e.spread*100,1)],['EV (HV)',sg((e.p-e.fair)*100*e.n)]].map(x=>`<div>${x[0]}<b>${x[1]}</b></div>`).join('');
+}
+function insight(e){
+  const q=e.nivel>=3?'vale a pena':e.nivel===2?'é aceitável, com ressalvas':e.nivel===1?'é marginal':'não compensa';
+  return `💡 <b>${NIVEIS[e.nivel].n.slice(3)}.</b> Com meta de ${pc(e.meta,1)} ao mês, esta PUT ${q}: rende <b>${sg(e.prem)}</b> (${pc(e.roc,2)} do capital) em ${e.dias} dias, ritmo de <b>${fmt(e.ritmo,1)}×</b> a meta. Chance de lucro <b>${pc(e.pop*100,0)}</b>; se exercido, custo efetivo <b>${usd(e.be)}</b> e CALL de saída em strike ≥ <b>${usd(e.op.K)}</b>. ${e.alertas.filter(a=>a[0]!=='info').map(a=>'<b>'+a[1]+':</b> '+a[2]).join(' ')}`;
+}
+const HINTS={
+ 1:'<b>Termômetro:</b> Capital, ROC e Dias viram blocos grandes (o ROC mostra a meta como marcador e os dias mostram quantos caem no mês atual), e a escala 0–100 responde "devo operar?" com o ponteiro. As 4 perguntas que você fez (risco de exercício, valor da ação, dias, meta) têm cada uma sua resposta SIM / EM TERMOS / NÃO.',
+ 2:'<b>Radar de qualidade:</b> 5 dimensões em um polígono: quanto mais preenchido, melhor o prêmio. A linha tracejada é o mínimo aceitável. Bom para ver de relance que o ponto fraco é, por exemplo, a execução (spread) e não o retorno.',
+ 3:'<b>Meta do mês:</b> a conta que você descreveu, explícita: ROC ÷ semanas da operação × semanas restantes no mês, comparada ao que já foi realizado e ao que falta para a meta. A linha do tempo mostra quantos dias da operação caem neste mês e quantos no seguinte, e dá para alternar a leitura (restante do mês, no vencimento, mês cheio).',
+ 4:'<b>Scorecard:</b> seis réguas (estilo bullet chart) com zonas vermelha/âmbar/verde e a meta marcada em cada uma. É o jeito mais objetivo de ver qual critério puxa o veredito para baixo, em linguagem de checklist.',
+ 5:'<b>Comparar strikes:</b> pensada para escolher a melhor opção: cada strike da cadeia aparece em um mapa PoP × ritmo mensal, com a meta e o PoP mínimo como linhas. A zona ideal fica no canto superior direito; o ranking ao lado ordena pelo score. Clicar troca a opção selecionada em todas as telas.',
+ 6:'<b>Preço de execução:</b> como o spread do BB é grande, o preço real de venda decide se vale a pena. A faixa colorida mostra o veredito em cada preço entre bid e ask, com o preço mínimo para bater a meta; o slider recalcula tudo ao vivo.'
+};
+
+/* =====================================================================
+   RENDER
+   ===================================================================== */
+function render(){
+  const e=E();
+  $('#hT').textContent=kf(e.op.K)+' · '+e.op.venc.toLocaleDateString('pt-BR')+' ('+e.dias+'d · semanal)';
+  $('#hS').innerHTML=`<span class="badge">${e.op.K<e.op.S?'OTM':'ITM'}</span>${pc((e.op.S-e.op.K)/e.op.S*100,2)} ${e.op.K<e.op.S?'abaixo':'acima'} da cotação · Lote ${usd(e.op.K*100,0)} · Prêmio unitário ${usd(e.p)}`;
+  $('#nV').textContent=St.n+(St.n===1?' contrato':' contratos');
+  $('#body').innerHTML=({1:v1,2:v2,3:v3,4:v4,5:v5,6:v6}[St.cur])(e);
+  $('#ins').innerHTML=insight(e); $('#kg').innerHTML=allData(e); $('#hint').innerHTML=HINTS[St.cur]; $('#metaTxt').textContent=pc(Config.val,1);
+  $$('#sgK button').forEach(b=>b.classList.toggle('on',+b.dataset.i===St.k));
+  if(St.cur===3) $$('#lens button').forEach(b=>b.addEventListener('click',()=>{ St.lens=b.dataset.l; render(); }));
+  if(St.cur===5) $$('#body [data-i]').forEach(x=>x.addEventListener('click',()=>{ St.k=+x.dataset.i; render(); }));
+  if(St.cur===6){ const r=$('#fillR'); paint(r); v6kpis(); r.addEventListener('input',()=>{ St.t=parseFloat(r.value); paint(r); const e2=E(); $('#fillL').textContent='preço '+fmt(e2.p,3); $('#v6net').innerHTML=netbox(e2); $('#v6tiles').innerHTML=tiles(e2,'row'); v6kpis(); $('#ins').innerHTML=insight(e2); $('#kg').innerHTML=allData(e2); }); }
+}
+$('#sgK').innerHTML=ROWS.map((r,i)=>`<button data-i="${i}" class="${i===St.k?'on':''}">PUT ${kf(r.K)}</button>`).join('');
+$$('#sgK button').forEach(b=>b.addEventListener('click',()=>{ St.k=+b.dataset.i; render(); }));
+$$('#itabs .itab').forEach(b=>b.addEventListener('click',()=>{ St.cur=+b.dataset.n; $$('#itabs .itab').forEach(x=>x.classList.toggle('on',x===b)); render(); }));
+const nIn=$('#n'); paint(nIn); nIn.addEventListener('input',()=>{ St.n=parseInt(nIn.value,10); paint(nIn); render(); });
+['today','done'].forEach(id=>$('#'+id).addEventListener('input',render));
+
+/* ---------- janela de configurações: aba Opções › meta mensal ---------- */
+function cfgTab(t){
+  $$('.cfg__m button').forEach(b=>b.classList.toggle('on',b.dataset.ct===t));
+  const c=$('#cfgC');
+  if(t!=='opcoes'){ c.innerHTML=`<h4>${t[0].toUpperCase()+t.slice(1)}</h4><p class="d">Demais configurações do sistema (não alteradas nesta demonstração).</p>`; return; }
+  c.innerHTML=`<h4>Opções</h4><p class="d">Parâmetros do módulo de opções. A meta mensal é usada no veredito "Devo operar?", na escala de qualidade do prêmio e na projeção por semanas restantes do mês.</p>
+   <div class="fld"><label>🎯 Meta mensal de retorno (%)</label><div class="row"><input type="number" id="metaIn" min="0.1" max="20" step="0.1" value="${Config.val}"><span class="u">% ao mês</span><input type="range" id="metaR" min="0.5" max="5" step="0.1" value="${Config.val}" style="flex:1"></div>
+   <small>Exemplo: 1,8 = 1,8% ao mês sobre o capital empregado. Salvo como <code>opcoes.metaMensal</code>.</small></div>
+   <div class="der" id="der"></div>`;
+  const inp=$('#metaIn'), rg=$('#metaR');
+  const upd=v=>{ $('#der').innerHTML=`<span>por dia (30d)<b>${pc(v/30,3)}</b></span><span>por semana<b>${pc(v*7/30,2)}</b></span><span>por ano (simples)<b>${pc(v*12,1)}</b></span><span>ex.: US$ 3.000 de capital<b>${usd(3000*v/100,0)}/mês</b></span>`; paint(rg); };
+  inp.addEventListener('input',()=>{ const v=parseFloat(inp.value)||0; rg.value=v; upd(v); }); rg.addEventListener('input',()=>{ inp.value=rg.value; upd(parseFloat(rg.value)); }); upd(Config.val);
+}
+const openCfg=()=>{ cfgTab('opcoes'); $('#cfg').classList.add('on'); };
+$('#gear').addEventListener('click',openCfg); $('#metachip').addEventListener('click',openCfg);
+$$('.cfg__m button').forEach(b=>b.addEventListener('click',()=>cfgTab(b.dataset.ct)));
+$('#cfgX').addEventListener('click',()=>$('#cfg').classList.remove('on')); $('#cfgCancel').addEventListener('click',()=>$('#cfg').classList.remove('on'));
+$('#cfgSave').addEventListener('click',()=>{ const inp=$('#metaIn'); if(inp){ const v=parseFloat(inp.value); if(v>0){ Config.set(v); render(); toast('Meta mensal salva: '+pc(v,1)+' ao mês'); } } $('#cfg').classList.remove('on'); });
+$('#cfg').addEventListener('click',e=>{ if(e.target.id==='cfg') $('#cfg').classList.remove('on'); });
+
+render();
+window.__o={avaliarOpcao,ROWS,HV,Config,St,render,E,NIVEIS};
+})();
+</script>
+</body>
+</html>

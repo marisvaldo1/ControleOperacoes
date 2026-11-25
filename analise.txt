@@ -1,0 +1,42 @@
+Você é um analista sênior de mercado de opções, com experiência em renda com opções sobre ações americanas, especificamente na estratégia "The Wheel" (venda de puts cash-secured, eventual atribuição de ações e venda de covered calls).
+
+Preciso que você monte e analise uma lista ranqueada de ações americanas adequadas a esse perfil, e entregue o resultado em uma página HTML com CSS e JavaScript. A lista deve ser atualizada sempre que eu solicitá-la, levando em conta o momento atual do mercado.
+
+**Meu perfil e objetivo**
+
+- **Estratégia:** The Wheel, com foco no prêmio das opções. Meta média acima de 1% ao mês sobre o capital empregado.
+- **Vencimentos:** priorizar opções com vencimento diário (0 DTE) e também considerar vencimentos semanais, especialmente seg/qua/sex, quando disponíveis para o ativo.
+- **Dividendos:** pagar dividendos é um diferencial desejável, não obrigatório.
+- **Diversificação:** meu capital pode ser concentrado em um único ativo ou distribuído entre vários. Indique quais candidatos funcionam melhor para cada modelo.
+- **Desconsiderar meu limite de saldo na corretora.** O critério de capital é apenas o capital necessário para operar 1 lote.
+
+**Critérios de seleção**
+
+- Ativos com comportamento previsível e baixa oscilação relativa, para que eu fique tranquilo ao ser exercido e precise manter a posição.
+- Alta liquidez nas opções: spreads estreitos, volume e open interest consistentes, para facilitar entrada e saída.
+- Prêmios atrativos em relação ao risco assumido, com estimativa do retorno mensal sobre o capital necessário.
+
+**Regra inegociável:** vender calls apenas em strikes acima do preço de exercício da put que atribuiu a ação, ou acima do meu preço médio de custo. Toda recomendação de call deve respeitar essa regra e explicitar como ela foi aplicada.
+
+**O que a análise deve conter**
+
+Para cada ativo sugerido:
+- Preço aproximado e capital necessário para 1 lote (100 ações), ou seja, o custo de 100 ações.
+- Volatilidade implícita típica.
+- Liquidez das opções (spreads, volume, open interest).
+- Disponibilidade de vencimentos diários, seg/qua/sex e semanais.
+- Histórico de dividendos e calendário próximo, se houver.
+- Principais riscos de exercício e de queda abrupta.
+- Prêmio mensal aproximado de uma put e de uma call típicas, com o retorno mensal estimado sobre o capital necessário, deixando claro quando a meta de 1% é ou não alcançável com aquele ativo.
+
+**Fontes e transparência**
+
+- Use fontes públicas e recentes (cotações, cadeias de opções, calendário de dividendos, resultados trimestrais e notícias relevantes) e informe a data de referência dos dados.
+- Sinalize explicitamente o que não for possível verificar ou que possa estar desatualizado, em vez de apresentar estimativas como fatos.
+- Deixe claro que a análise é educacional, não constitui recomendação de investimento, e que o risco de perda de capital é real, especialmente em quedas abruptas do ativo.
+
+**Entrega**
+
+1. Uma lista ranqueada dos melhores candidatos para o meu perfil, com justificativa para cada um, indicando quais são mais adequados para operar com um único ativo e quais funcionam melhor em diversificação.
+2. Ordenar a tabela por capital necessário para 1 lote, em ordem crescente, e exibir essa coluna explicitamente.
+3. Ao final, gerar um arquivo HTML único com CSS e JavaScript que mostre uma tabela com as opções que atendem aos critérios, em ordem crescente de capital necessário, com colunas para ranking, ativo, preço, capital para 1 lote, vencimentos disponíveis, dividendos, retorno mensal estimado de put e call, data de referência dos dados e principais riscos. Inclua um recurso simples de ordenação por coluna em JavaScript.

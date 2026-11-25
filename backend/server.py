@@ -36,7 +36,7 @@ app = Flask(
 )
 CORS(app)
 
-VERSION = '2.9.0'
+VERSION = '2.13.0'
 
 # ─── Blueprints ───────────────────────────────────────────────────────────────
 from routes.crypto    import crypto_bp

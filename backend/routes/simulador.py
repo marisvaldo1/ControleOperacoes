@@ -6,7 +6,7 @@ Rotas registradas (prefixo /api/simulador no server.py):
   GET  /api/simulador/status    — status da integração + premissas (sem expor segredos)
   GET  /api/simulador/universo  — cotações reais do universo, filtradas por limite de ação/lote
   GET  /api/simulador/cadeia    — cadeia de opções de 1 ativo (prêmios reais)
-  GET  /api/simulador/premios   — resumo de prêmios diário/semanal para até 15 ativos
+  GET  /api/simulador/premios   — resumo de prêmios diário/semanal para até 20 ativos
   GET  /api/simulador/strikes   — strikes de 1 vencimento + delta, PoP, break-even, anualizado
   GET  /api/simulador/conta     — saldo da conta (tastytrade ou configuração manual)
   POST /api/simulador/comparar  — cálculo puro dos cenários (sem chamada externa)
@@ -88,7 +88,7 @@ simulador_bp = Blueprint('simulador', __name__)
 # ─── Constantes do módulo ─────────────────────────────────────────────────────
 MULTIPLICADOR          = 100      # 1 contrato de opção = 100 ações
 LIMITE_SIMBOLOS_COTACAO = 100      # limite da API /market-data/by-type por requisição
-LIMITE_CANDIDATOS       = 15       # ativos analisados por rodada de prêmios
+LIMITE_CANDIDATOS       = 20       # ativos analisados por rodada de prêmios
 TTL_COTACAO             = 60       # segundos
 TTL_CADEIA              = 300      # segundos
 LIMITE_ACAO_PADRAO      = 36.0     # US$ por ação  (regra da estratégia)
@@ -120,7 +120,7 @@ LIMITE_STRIKES_CARD     = 14
 CAMPOS_STRIKE_CARD = (
     'strike', 'zona', 'dist', 'bid', 'ask', 'premio', 'premio_liquido',
     'delta', 'pop', 'pop_lucro', 'breakeven', 'capital', 'roc', 'anualizado',
-    'iv', 'ev',
+    'iv', 'ev', 'fair',
 )
 
 # Universo padrão: ativos com opções semanais/diárias listadas na tastytrade.
@@ -142,10 +142,11 @@ UNIVERSO_PADRAO = [
 
 # Premissas dos cálculos — exibidas na tela e devolvidas pela API.
 PREMISSAS = [
-    'Prêmio da opção = preço médio entre bid e ask (mid); sem bid/ask, usa mark e, '
-    'em último caso, o último preço negociado.',
-    'Capital por lote = preço atual da ação × 100 (1 contrato). Para PUT cash-secured '
-    'o colateral exato seria strike × 100.',
+    'Prêmio da opção = BID (preço de execução da venda, o que a corretora paga). '
+    'Sem bid, cai para o mid (bid+ask)/2 e, em último caso, para mark ou o '
+    'último preço negociado.',
+    'Capital por lote = strike × 100 (1 contrato) na PUT cash-secured; o colateral '
+    'exato de uma PUT vendida é strike × 100.',
     'Prêmio diário equivalente = prêmio semanal ÷ número de dias (corridos até o '
     'vencimento semanal, editável).',
     'Ciclo dos vencimentos = campo expiration-type da tastytrade (Regular, Weekly, '
@@ -908,20 +909,26 @@ def _norm_cdf(x):
     return 0.5 * (1.0 + s * y)
 
 
+def _norm_pdf(x):
+    """Densidade da normal padrão (usada no theta do Black-Scholes)."""
+    return math.exp(-0.5 * x * x) / math.sqrt(2.0 * math.pi)
+
+
 def _black_scholes(tipo, spot, strike, dias, iv):
     """
-    Preço, delta e probabilidade de exercício (PoP) de uma opção europeia.
+    Preço, delta, theta e probabilidade de exercício (PoP) de uma opção europeia.
       tipo   — 'PUT' | 'CALL'
       spot   — preço atual da ação (US$)
       strike — preço de exercício (US$)
       dias   — dias corridos até o vencimento
       iv     — volatilidade implícita anual (0.35 = 35%)
     PoP = N(-d2) para PUT (prob. de fechar abaixo do strike) e N(d2) para CALL.
+    Theta é devolvido por pregão (o modelo usa anos de pregão: dias / 252).
     """
     tipo = (tipo or 'PUT').upper()
     spot, strike, dias, iv = _float(spot), _float(strike), _float(dias), _float(iv)
     if not spot or not strike:
-        return {'preco': None, 'delta': None, 'pop': None}
+        return {'preco': None, 'delta': None, 'pop': None, 'theta': None}
 
     if dias is None or dias <= 0 or iv is None or iv <= 0:
         # Vencendo hoje (ou sem vol): valor intrínseco e delta de limite
@@ -933,7 +940,7 @@ def _black_scholes(tipo, spot, strike, dias, iv):
             intrinseco = max(spot - strike, 0.0)
             delta = 1.0 if spot > strike else 0.0
             pop   = 1.0 if spot > strike else 0.0
-        return {'preco': intrinseco, 'delta': delta, 'pop': pop}
+        return {'preco': intrinseco, 'delta': delta, 'pop': pop, 'theta': None}
 
     t  = dias / DIAS_PREGAO_ANO
     df = math.exp(-TAXA_LIVRE_RISCO * t)
@@ -941,16 +948,22 @@ def _black_scholes(tipo, spot, strike, dias, iv):
     d1 = (math.log(spot / strike) + (TAXA_LIVRE_RISCO + iv * iv / 2.0) * t) / sd
     d2 = d1 - sd
 
+    # Theta anual (no tempo do modelo) → convertido para por pregão
+    theta_anual = -(spot * _norm_pdf(d1) * iv) / (2.0 * math.sqrt(t))
+
     if tipo == 'PUT':
         preco = strike * df * _norm_cdf(-d2) - spot * _norm_cdf(-d1)
         delta = _norm_cdf(d1) - 1.0
         pop   = _norm_cdf(-d2)
+        theta = theta_anual + TAXA_LIVRE_RISCO * strike * df * _norm_cdf(-d2)
     else:
         preco = spot * _norm_cdf(d1) - strike * df * _norm_cdf(d2)
         delta = _norm_cdf(d1)
         pop   = _norm_cdf(d2)
+        theta = theta_anual - TAXA_LIVRE_RISCO * strike * df * _norm_cdf(d2)
 
-    return {'preco': preco, 'delta': delta, 'pop': pop}
+    return {'preco': preco, 'delta': delta, 'pop': pop,
+            'theta': theta / DIAS_PREGAO_ANO}
 
 
 def _iv_implicita(tipo, spot, strike, dias, preco_alvo, tolerancia=1e-4, max_iter=60):
@@ -986,7 +999,7 @@ def _iv_implicita(tipo, spot, strike, dias, preco_alvo, tolerancia=1e-4, max_ite
     return (lo + hi) / 2.0
 
 
-def calcular_strikes(spot, linhas, tipo, dias, hv, fill='mid', contratos=1, comissao=1.0):
+def calcular_strikes(spot, linhas, tipo, dias, hv, fill='bid', contratos=1, comissao=1.0):
     """
     Calcula as métricas de cada strike cotado de 1 vencimento.
 
@@ -994,7 +1007,7 @@ def calcular_strikes(spot, linhas, tipo, dias, hv, fill='mid', contratos=1, comi
       tipo      — 'PUT' | 'CALL' (qual lado será analisado)
       dias      — dias corridos até o vencimento
       hv        — volatilidade realizada esperada em % (base do valor justo)
-      fill      — 'mid' ou 'bid' (preço de execução)
+      fill      — 'bid' (padrão, preço de execução da venda) ou 'mid'
       contratos — nº de contratos (lotes de 100)
       comissao  — US$ por contrato
 
@@ -1121,7 +1134,7 @@ def simbolos_do_vencimento(exp, preco, tipo='PUT', limite=None):
                         for st in _selecionar_strikes(exp, preco, limite)) if s]
 
 
-def cotar_vencimento(preco, exp, tipo='PUT', hv=50.0, fill='mid',
+def cotar_vencimento(preco, exp, tipo='PUT', hv=50.0, fill='bid',
                      contratos=1, comissao=0.0, limite=None, cotacoes=None):
     """
     Cota os strikes de 1 vencimento e devolve as métricas de `calcular_strikes`.
@@ -1149,6 +1162,80 @@ def cotar_vencimento(preco, exp, tipo='PUT', hv=50.0, fill='mid',
         })
     return calcular_strikes(preco, linhas, tipo, exp.get('dias') or 0,
                             hv, fill, contratos, comissao)
+
+
+def _lado_da_cadeia(tipo, spot, strike, dias, bloco, fill='bid'):
+    """Bid/ask + delta + theta diário de um lado da cadeia (CALL ou PUT).
+
+    O IV/delta/theta são calculados no PREÇO DE EXECUÇÃO (fill): numa venda
+    o prêmio efetivamente recebido é o bid, não o mid. Sem bid (opção sem
+    liquidez), cai para o mid.
+    """
+    if not bloco:
+        return None
+    bid = _float(bloco.get('bid'))
+    ask = _float(bloco.get('ask'))
+    mid = _float(bloco.get('premio'))
+    if fill == 'bid' and bid is not None:
+        premio = bid
+    else:
+        premio = mid if mid is not None else (
+            (bid + ask) / 2.0 if bid is not None and ask is not None else None)
+    iv = _iv_implicita(tipo, spot, strike, dias, premio) if premio else None
+    modelo = _black_scholes(tipo, spot, strike, dias, iv) if iv else None
+    return {
+        'simbolo': bloco.get('simbolo'),
+        'bid':     bid,
+        'ask':     ask,
+        'iv':      _round(iv, 4),
+        'delta':   _round(modelo['delta'], 4) if modelo else None,
+        'theta':   _round(modelo['theta'], 4) if modelo else None,
+    }
+
+
+def cotar_vencimento_cadeia(preco, exp, hv=50.0, fill='bid', contratos=1,
+                             comissao=0.0, limite=None, cotacoes=None):
+    """
+    Cadeia completa de 1 vencimento: CALLs à esquerda e PUTs à direita.
+
+    Devolve as mesmas métricas de `calcular_strikes` (lado PUT — é o que o
+    simulador vende) e anexa em `call`/`put` o bid/ask, delta e theta de cada
+    lado, para a visualização de cadeia (calls à esquerda, puts à direita).
+    """
+    strikes = _selecionar_strikes(exp, preco, limite)
+
+    if cotacoes is None:
+        simbolos = []
+        for st in strikes:
+            for lado in ('call', 'put'):
+                s = _simbolo_opcao(st.get(lado))
+                if s and s not in simbolos:
+                    simbolos.append(s)
+        cotacoes = _cotacoes(simbolos, instrumento='equity-option') if simbolos else {}
+
+    linhas = []
+    for st in strikes:
+        linha = {'strike': st['strike']}
+        for lado in ('call', 'put'):
+            s   = _simbolo_opcao(st.get(lado))
+            cot = cotacoes.get(s) or {}
+            linha[lado] = {'simbolo': s,
+                           'bid':     _float(cot.get('bid')),
+                           'ask':     _float(cot.get('ask')),
+                           'premio':  _premio_da_cotacao(cot)}
+        linhas.append(linha)
+
+    dias  = exp.get('dias') or 0
+    base  = calcular_strikes(preco, linhas, 'PUT', dias, hv, fill,
+                             contratos, comissao)
+    por_strike = {l.get('strike'): l for l in linhas}
+    for row in base:
+        linha = por_strike.get(row.get('strike')) or {}
+        row['call'] = _lado_da_cadeia('CALL', preco, row['strike'], dias,
+                                      linha.get('call'), fill)
+        row['put']  = _lado_da_cadeia('PUT', preco, row['strike'], dias,
+                                      linha.get('put'), fill)
+    return base
 
 
 def marcar_zonas(strikes, preco):
@@ -1506,6 +1593,17 @@ def cadeia():
 
         expiracoes = []
         for exp in analise['expiracoes']:
+            # IV implícita do vencimento (a partir do prêmio do alvo cotado):
+            # alimenta o "IVX" exibido na lista de vencimentos.
+            iv_atm = None
+            for tipo in ('PUT', 'CALL'):
+                alvo = exp.get(tipo.lower())
+                if not alvo or not alvo.get('premio') or not exp.get('dias'):
+                    continue
+                iv_atm = _iv_implicita(tipo, analise['preco'], alvo['strike'],
+                                       exp['dias'], alvo['premio'])
+                if iv_atm:
+                    break
             expiracoes.append({
                 'data':     exp['data'],
                 'dias':     exp['dias'],
@@ -1513,6 +1611,7 @@ def cadeia():
                 'tipo_api': exp.get('tipo_api'),
                 'call':     exp.get('call'),
                 'put':      exp.get('put'),
+                'iv_atm':   _round(iv_atm, 4) if iv_atm else None,
             })
 
         _, alvo_call = _strike_alvo(analise['expiracoes'][0]['strikes'],
@@ -1557,7 +1656,7 @@ def premios():
         distancia = _float(request.args.get('distancia_pct'), DISTANCIA_PADRAO)
         dte_alvo  = _float(request.args.get('dte'), 5.0)
         hv        = _float(request.args.get('hv'), 50.0)
-        fill      = (request.args.get('fill') or 'mid').lower()
+        fill      = (request.args.get('fill') or 'bid').lower()
         com_strikes = str(request.args.get('com_strikes') or '').lower() in (
             '1', 'true', 'sim', 'yes')
 
@@ -1743,10 +1842,14 @@ def strikes():
     IV implícita, delta, PoP (probabilidade de exercício), break-even,
     ROC, anualizado e EV (valor justo pela HV).
     Query: simbolo (obrigatório), vencimento (opcional) ou dte (dias até o
-           vencimento desejado), tipo (PUT|CALL), dist_min, dist_max,
+           vencimento desejado), tipo (PUT|CALL|ALL), dist_min, dist_max,
            delta_max, hv, fill, contratos, comissao,
            incluir_itm (1 = mantém também os strikes ITM, usados pela
-           visualização de "strikes fora do filtro")
+           visualização de "strikes fora do filtro"),
+           limite_strikes (só com tipo=ALL: nº de strikes mais próximos do
+           preço devolvidos — padrão 61)
+    tipo=ALL devolve a cadeia completa: nas linhas, `call` e `put` com
+    bid/ask/delta/theta de cada lado (calls à esquerda, puts à direita).
     """
     try:
         simbolo = (request.args.get('simbolo') or '').strip().upper()
@@ -1754,14 +1857,14 @@ def strikes():
             raise TastyError('parametro_ausente', 'Informe o parâmetro simbolo.', 400)
 
         tipo = (request.args.get('tipo') or 'PUT').upper()
-        if tipo not in ('PUT', 'CALL'):
-            raise TastyError('parametro_invalido', 'tipo deve ser PUT ou CALL.', 400)
+        if tipo not in ('PUT', 'CALL', 'ALL'):
+            raise TastyError('parametro_invalido', 'tipo deve ser PUT, CALL ou ALL.', 400)
 
         dist_min  = _float(request.args.get('dist_min'), 0.0) or 0.0
         dist_max  = _float(request.args.get('dist_max'), 15.0)
         delta_max = _float(request.args.get('delta_max'), 0.5)
         hv        = _float(request.args.get('hv'), 50.0)
-        fill      = (request.args.get('fill') or 'mid').lower()
+        fill      = (request.args.get('fill') or 'bid').lower()
         contratos = int(_float(request.args.get('contratos'), 1) or 1)
         comissao  = _float(request.args.get('comissao'), 0.0)
         dte_alvo  = _float(request.args.get('dte'))
@@ -1786,18 +1889,28 @@ def strikes():
         if dias <= 0:
             raise TastyError('vencido', 'Vencimento sem dias restantes.', 400)
 
-        calculadas = cotar_vencimento(preco, exp, tipo, hv, fill,
-                                      contratos, comissao)
-
-        filtradas = [
-            c for c in calculadas
-            if (c['otm'] or incluir_itm)
-            and dist_min <= (c['dist'] or 0) <= dist_max
-            and c['delta'] is not None and abs(c['delta']) <= delta_max
-            and (c['premio'] or 0) >= 0.01
-        ]
-        # PUT: strike decrescente (mais próximo do spot primeiro)
-        filtradas.sort(key=lambda c: c['strike'], reverse=(tipo == 'PUT'))
+        if tipo == 'ALL':
+            # Cadeia completa: filtra só pela distância e limita aos strikes
+            # mais próximos do preço (evita devolver a cadeia inteira).
+            limite_strikes = int(_float(request.args.get('limite_strikes'), 61) or 61)
+            calculadas = cotar_vencimento_cadeia(preco, exp, hv, fill,
+                                                 contratos, comissao,
+                                                 limite=limite_strikes)
+            filtradas = [c for c in calculadas
+                         if dist_min <= (c['dist'] or 0) <= dist_max]
+            filtradas.sort(key=lambda c: c['strike'])
+        else:
+            calculadas = cotar_vencimento(preco, exp, tipo, hv, fill,
+                                          contratos, comissao)
+            filtradas = [
+                c for c in calculadas
+                if (c['otm'] or incluir_itm)
+                and dist_min <= (c['dist'] or 0) <= dist_max
+                and c['delta'] is not None and abs(c['delta']) <= delta_max
+                and (c['premio'] or 0) >= 0.01
+            ]
+            # PUT: strike decrescente (mais próximo do spot primeiro)
+            filtradas.sort(key=lambda c: c['strike'], reverse=(tipo == 'PUT'))
 
         return jsonify({
             'success':      True,
@@ -1809,6 +1922,7 @@ def strikes():
                              for e in expiracoes],
             'strikes':      filtradas,
             'total_strikes': len(calculadas),
+            'iv_atm':       _round(_iv_atm(filtradas, preco), 4) if tipo == 'ALL' else None,
             'parametros': {
                 'dist_min': dist_min, 'dist_max': dist_max,
                 'delta_max': delta_max, 'hv': hv, 'fill': fill,

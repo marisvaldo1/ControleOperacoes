@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/shared/style.css?v=1.2.0">
-    <link rel="stylesheet" href="../css/simulador/simulador.css?v=2.0.0">
+    <link rel="stylesheet" href="../css/simulador/simulador.css?v=2.4.0">
 </head>
 
 <body data-bs-theme="dark">
@@ -22,7 +22,7 @@
                     <div class="row align-items-center">
                         <div class="col-auto">
                             <h2 class="page-title">Simulador - The Wheel</h2>
-                            <div class="text-muted" id="simSubtitulo">Scanner de ativos por saldo · dados reais da tastytrade</div>
+                            <div class="text-muted" id="simSubtitulo">Scanner The Wheel — ranqueado por capital/lote · dados reais da tastytrade</div>
                         </div>
                         <div class="col-auto ms-auto d-flex align-items-center gap-2 flex-wrap">
                             <div class="sim-status" id="simStatus">
@@ -68,12 +68,12 @@
 
                 <!-- ═══ Nota de uso ═══ -->
                 <div class="sc-hint" id="scHint">
-                    <b>Como usar:</b> informe o <b>saldo na corretora</b>. O scanner lista os ativos cujo lote
-                    (preço × 100) cabe no saldo e mostra, em cada um, os strikes <b>ITM, ATM e OTM</b> da cadeia
-                    real (a barrinha de cada strike indica o PoP; 🔒 = não cabe no saldo; esmaecido = fora do
-                    filtro). Clique num ativo ou strike e abre uma <b>aba própria</b> com a escada ou a tabela
-                    dos strikes, filtros de DTE, distância e delta. Preços, prêmios, IV e cotações vêm da
-                    <b>tastytrade</b> — o sistema é somente leitura e não envia ordens.
+                    <b>Como usar:</b> o scanner ranqueia ativos por <b>capital para 1 lote (crescente)</b> seguindo
+                    os critérios da análise (analise.txt). Filtros: DTE da PUT, distância do strike, delta máximo.
+                    A vista <b>Tabela</b> mostra ranking, ativo, preço, capital 1 lote, vencimentos, dividendos,
+                    retorno mensal estimado PUT/CALL e riscos — com paginação. A vista <b>Bolhas</b> plota
+                    capital do lote (eixo X) vs retorno anual (eixo Y). Clique num ativo para abrir a aba de
+                    strikes com escada/tabela, filtros e cartão do contrato. Dados da <b>tastytrade</b> — somente leitura.
                 </div>
 
             </div>
@@ -82,7 +82,7 @@
 
     <script src="../js/core/libs.js?v=1.2.1"></script>
     <script src="../js/core/global.js?v=1.2.2"></script>
-    <script src="../js/core/layout.js?v=1.3.0"></script>
-    <script src="../js/simulador/simulador.js?v=3.0.0"></script>
+    <script src="../js/core/layout.js?v=1.4.0"></script>
+    <script src="../js/simulador/simulador.js?v=3.6.0"></script>
 </body>
 </html>

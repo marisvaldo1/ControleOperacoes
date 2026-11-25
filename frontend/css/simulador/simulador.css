@@ -1,9 +1,14 @@
 /* ============================================================================
-   simulador.css — Tela Simulador (The Wheel)
+   simulador.css — Tela Simulador (The Wheel) · v2.4.0
    Reescrita igual ao protótipo ideias/scannerClaude2.html:
      · page-header do projeto (status / loading / botões) — estilos .sim-*;
      · bloco #scModal com abas (Scanner + ativo) escopado aqui;
      · nota "como usar" (.sc-hint).
+   Novidades v2.4.0:
+     · régua de break-even (.sc-ruler) removida;
+     · bandas ±1/±2 SD em linha tracejada, sem espaço extra, rótulo à esquerda;
+     · cadeia com barra de rolagem (max-height 520px);
+     · fronteira ITM com barra vermelha/verde na coluna central.
    Todas as classes do protótipo levam prefixo sc- e são aplicadas só dentro
    de #scModal — nada aqui colide com Bootstrap/Tabler das demais telas.
    ========================================================================== */
@@ -856,10 +861,84 @@
 
 #scModal .sc-cc__g {
     display: grid;
-    grid-template-columns: 1.25fr 120px 120px 1.6fr;
-    gap: 18px;
-    align-items: center;
+    grid-template-columns: minmax(290px, 340px) 158px minmax(0, 1fr);
+    gap: 14px;
+    align-items: stretch;
 }
+
+/* Linha 2 — métricas do contrato + contexto de decisão + preço de execução */
+#scModal .sc-cc__g2 {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
+    gap: 14px;
+    margin-top: 14px;
+}
+
+/* ─── Bloco "Preço de execução" (Bid / Mid / Ask) ─────────────────────────── */
+#scModal .sc-ex {
+    background: rgba(0, 0, 0, .18);
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+#scModal .sc-ex__r {
+    display: grid;
+    grid-template-columns: 42px 52px 1fr;
+    align-items: baseline;
+    gap: 8px;
+    font-size: 10.5px;
+    color: var(--sc-muted);
+    background: rgba(0, 0, 0, .18);
+    border-radius: 8px;
+    padding: 5px 9px;
+}
+
+#scModal .sc-ex__r.sc-ex__on {
+    background: rgba(59, 130, 246, .16);
+    box-shadow: inset 0 0 0 1px rgba(59, 130, 246, .45);
+}
+
+#scModal .sc-ex__r b {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 12.5px;
+    color: var(--sc-text);
+}
+
+#scModal .sc-ex__r i {
+    font-style: normal;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 10.5px;
+    color: var(--sc-text);
+    text-align: right;
+}
+
+#scModal .sc-ex__m {
+    font-size: 10px;
+    color: var(--sc-muted);
+    line-height: 1.5;
+    padding: 2px 4px;
+}
+
+#scModal .sc-ex__m b {
+    color: var(--sc-text);
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+#scModal .sc-ex__v {
+    font-size: 10.5px;
+    line-height: 1.5;
+    border-radius: 8px;
+    padding: 7px 9px;
+    margin-top: 2px;
+}
+
+#scModal .sc-ex__v b { color: #fff; }
+#scModal .sc-ex__v-ok { background: rgba(34, 197, 94, .14); color: #86efac; }
+#scModal .sc-ex__v-warn { background: rgba(245, 158, 11, .14); color: #fcd34d; }
+#scModal .sc-ex__v-bad { background: rgba(239, 68, 68, .14); color: #fca5a5; }
 
 #scModal .sc-cc__l { font-size: 11px; color: var(--sc-muted); margin-bottom: 4px; }
 
@@ -872,7 +951,124 @@
 
 #scModal .sc-cc__s { font-size: 11px; color: var(--sc-muted); margin-top: 5px; }
 
-#scModal .sc-cc__ring { position: relative; width: 120px; height: 120px; }
+/* Coluna 1 — herói do prêmio + tiles grandes de Capital / ROC / Dias */
+#scModal .sc-cc__hero {
+    background: rgba(0, 0, 0, .18);
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+/* ─── Tiles: Capital / ROC / Dias ────────────────────────────────────────── */
+#scModal .sc-tiles { display: grid; gap: 8px; margin-top: 12px; }
+
+#scModal .sc-tile {
+    background: rgba(0, 0, 0, .22);
+    border: 1px solid rgba(255, 255, 255, .06);
+    border-radius: 12px;
+    padding: 9px 12px;
+}
+
+#scModal .sc-tile__h {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10.5px;
+    color: var(--sc-muted);
+    margin-bottom: 3px;
+}
+
+#scModal .sc-tile__n {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 1.1;
+}
+
+#scModal .sc-tile__n small { font-size: 12px; color: var(--sc-muted); font-weight: 600; }
+
+#scModal .sc-tile__c {
+    font-size: 10px;
+    color: var(--sc-muted);
+    margin-top: 5px;
+    line-height: 1.5;
+}
+
+#scModal .sc-tile__c b {
+    color: #fff;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-weight: 600;
+}
+
+/* Barra do ROC com o marcador da meta mensal (50% = 1× meta) */
+#scModal .sc-tile__mb {
+    position: relative;
+    height: 7px;
+    border-radius: 4px;
+    background: #1f2d4d;
+    margin-top: 8px;
+}
+
+#scModal .sc-tile__mb i {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #22c55e, #22d3ee);
+}
+
+#scModal .sc-tile__mb u {
+    position: absolute;
+    top: -4px;
+    bottom: -4px;
+    width: 2px;
+    background: #fff;
+}
+
+/* Pontinhos: cada ponto = 1 dia (ciano = dia que cai no mês atual) */
+#scModal .sc-tile__dots { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 8px; }
+
+#scModal .sc-tile__dots i { width: 8px; height: 8px; border-radius: 3px; background: #2a3a5f; }
+#scModal .sc-tile__dots i.m { background: var(--sc-cyan); }
+#scModal .sc-tile__dots i.w { margin-right: 6px; }
+
+/* Coluna 2 — anel de PoP + veredito de decisão */
+#scModal .sc-cc__prob {
+    background: rgba(0, 0, 0, .18);
+    border-radius: 10px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+#scModal .sc-cc__ver { width: 100%; display: grid; gap: 5px; }
+
+#scModal .sc-ver__i {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 6px;
+    font-size: 9.5px;
+    color: var(--sc-muted);
+    background: rgba(255, 255, 255, .05);
+    border-radius: 7px;
+    padding: 4px 7px;
+}
+
+#scModal .sc-ver__i b {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11.5px;
+    color: var(--sc-text);
+    white-space: nowrap;
+}
+
+#scModal .sc-cc__ring { position: relative; width: 104px; height: 104px; }
 #scModal .sc-cc__ring svg { width: 100%; height: 100%; }
 
 #scModal .sc-rt {
@@ -887,7 +1083,8 @@
 #scModal .sc-rt b { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 19px; }
 #scModal .sc-rt span { font-size: 10px; color: var(--sc-muted); }
 
-#scModal .sc-cc__m { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; }
+/* Coluna 3 — métricas do contrato */
+#scModal .sc-cc__m { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; }
 
 #scModal .sc-cc__m div {
     font-size: 10.5px;
@@ -905,6 +1102,191 @@
     margin-top: 2px;
     font-weight: 600;
 }
+
+/* Coluna 4 — contexto de decisão (cotação, risco, liquidez) */
+#scModal .sc-cc__ctx { display: grid; gap: 6px; align-content: space-between; }
+
+#scModal .sc-ctx__i {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 10.5px;
+    color: var(--sc-muted);
+    background: rgba(0, 0, 0, .18);
+    border-radius: 8px;
+    padding: 6px 10px;
+}
+
+#scModal .sc-ctx__i b {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 12.5px;
+    color: var(--sc-text);
+    white-space: nowrap;
+}
+
+/* ─── Termômetro: "Devo operar?" (escala 0–100) ──────────────────────────── */
+#scModal .sc-cc__dec {
+    background: rgba(0, 0, 0, .18);
+    border-radius: 10px;
+    padding: 11px 13px;
+}
+
+#scModal .sc-dec__hd {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+
+#scModal .sc-dec__q { font-size: 13.5px; font-weight: 800; }
+
+#scModal .sc-dec__sc {
+    margin-left: auto;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 21px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+#scModal .sc-dec__sc small { font-size: 11px; color: var(--sc-muted); font-weight: 600; }
+
+#scModal .sc-lv {
+    font-size: 11px;
+    font-weight: 800;
+    padding: 4px 11px;
+    border-radius: 20px;
+    white-space: nowrap;
+}
+
+#scModal .sc-lv-0 { background: rgba(239, 68, 68, .18); color: #fca5a5; }
+#scModal .sc-lv-1 { background: rgba(251, 146, 60, .18); color: #fdba74; }
+#scModal .sc-lv-2 { background: rgba(234, 179, 8, .18); color: #fde047; }
+#scModal .sc-lv-3 { background: rgba(34, 197, 94, .18); color: #86efac; }
+#scModal .sc-lv-4 { background: rgba(45, 212, 191, .18); color: #5eead4; }
+
+#scModal .sc-scale { position: relative; margin: 20px 0 30px; }
+
+#scModal .sc-scale__z {
+    display: flex;
+    height: 15px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+#scModal .sc-scale__z i { display: block; }
+
+#scModal .sc-scale__nd {
+    position: absolute;
+    top: -11px;
+    transform: translateX(-50%);
+    transition: left .4s ease;
+    text-align: center;
+    z-index: 2;
+}
+
+#scModal .sc-scale__nd::before {
+    content: '▼';
+    display: block;
+    font-size: 15px;
+    color: #fff;
+    line-height: 1;
+}
+
+#scModal .sc-scale__nd b {
+    position: absolute;
+    top: -19px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11px;
+    background: #fff;
+    color: #111;
+    padding: 1px 6px;
+    border-radius: 5px;
+}
+
+#scModal .sc-scale__lb {
+    display: flex;
+    margin-top: 5px;
+    font-size: 9.5px;
+    color: var(--sc-muted);
+}
+
+#scModal .sc-scale__lb span { text-align: center; }
+
+/* ─── As 4 perguntas de decisão ──────────────────────────────────────────── */
+#scModal .sc-qg { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+
+#scModal .sc-qc {
+    background: rgba(0, 0, 0, .22);
+    border: 1px solid rgba(255, 255, 255, .06);
+    border-left: 4px solid var(--sc-muted);
+    border-radius: 11px;
+    padding: 9px 12px;
+}
+
+#scModal .sc-qc.ok { border-left-color: #22c55e; }
+#scModal .sc-qc.warn { border-left-color: #f59e0b; }
+#scModal .sc-qc.bad { border-left-color: #ef4444; }
+
+#scModal .sc-qc h5 {
+    margin: 0 0 5px;
+    font-size: 11.5px;
+    display: flex;
+    gap: 7px;
+    align-items: flex-start;
+    line-height: 1.4;
+}
+
+#scModal .sc-qc .ans {
+    margin-left: auto;
+    font-size: 9.5px;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 10px;
+    white-space: nowrap;
+}
+
+#scModal .sc-qc.ok .ans { background: rgba(34, 197, 94, .18); color: #86efac; }
+#scModal .sc-qc.warn .ans { background: rgba(245, 158, 11, .18); color: #fcd34d; }
+#scModal .sc-qc.bad .ans { background: rgba(239, 68, 68, .18); color: #fca5a5; }
+
+#scModal .sc-qc p { margin: 0; font-size: 10.5px; color: #aab5cf; line-height: 1.55; }
+
+#scModal .sc-qc p b {
+    color: #fff;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-weight: 600;
+}
+
+/* Alertas do motor de qualidade */
+#scModal .sc-al {
+    font-size: 11.5px;
+    color: #c3cbdb;
+    background: rgba(0, 0, 0, .2);
+    border-radius: 8px;
+    padding: 7px 11px;
+    margin-top: 7px;
+}
+
+#scModal .sc-al b { color: #fff; }
+#scModal .sc-al-bad { border-left: 3px solid #ef4444; }
+#scModal .sc-al-warn { border-left: 3px solid #f59e0b; }
+
+/* ─── Legenda das faixas ±1/±2 SD ────────────────────────────────────────── */
+#scModal .sc-ch-leg {
+    font-size: 10.5px;
+    color: var(--sc-muted);
+    line-height: 1.6;
+    background: rgba(0, 0, 0, .18);
+    border-left: 3px solid var(--sc-cyan);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-top: 8px;
+}
+
+#scModal .sc-ch-leg b { color: var(--sc-text); }
 
 /* ─── Régua do break-even ───────────────────────────────────────────────── */
 #scModal .sc-ruler { position: relative; height: 62px; margin: 26px 8px 6px; }
@@ -969,11 +1351,309 @@
 
 #scModal .sc-note { font-size: 11px; line-height: 1.6; color: var(--sc-muted); margin-top: 12px; }
 
+/* ─── Cadeia de opções (calls à esquerda, puts à direita) ─────────────────── */
+#scModal .sc-chain {
+    position: relative;
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 520px;
+    border: 1px solid var(--sc-border);
+    border-radius: 10px;
+    background: #0b1220;
+}
+
+/* Barra de rolagem da cadeia */
+#scModal .sc-chain::-webkit-scrollbar { width: 10px; height: 10px; }
+#scModal .sc-chain::-webkit-scrollbar-track { background: #0b1220; }
+#scModal .sc-chain::-webkit-scrollbar-thumb {
+    background: #2b3d5e;
+    border-radius: 6px;
+    border: 2px solid #0b1220;
+}
+#scModal .sc-chain::-webkit-scrollbar-thumb:hover { background: #3b537d; }
+
+#scModal .sc-chain__t {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+#scModal .sc-chain__t thead th {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    background: #17233b;
+    color: #cbd5e1;
+    font-size: 10.5px;
+    font-weight: 600;
+    text-align: right;
+    padding: 7px 9px;
+    border-bottom: 1px solid #24344f;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+}
+
+#scModal .sc-chain__t thead th:hover { background: #1d2c49; color: #fff; }
+#scModal .sc-chain__t thead th.sc-ch-l { text-align: left; }
+#scModal .sc-chain__t thead th.sc-ch-k { text-align: center; background: #1d2b47; color: #fff; }
+#scModal .sc-chain__t thead th.sc-ch-on { color: var(--sc-cyan); }
+#scModal .sc-chain__t thead th i { font-style: normal; opacity: .55; margin-left: 2px; }
+
+/* Divisória da coluna central (strike) */
+#scModal .sc-chain__t th.sc-ch-k,
+#scModal .sc-chain__t td.sc-ch-k {
+    border-left: 1px solid rgba(255, 255, 255, .09);
+    border-right: 1px solid rgba(255, 255, 255, .09);
+}
+
+#scModal .sc-chain__t tbody td {
+    padding: 4px 9px;
+    border-bottom: 1px solid rgba(255, 255, 255, .05);
+    text-align: right;
+    color: #e2e8f0;
+    white-space: nowrap;
+}
+
+/* Linha do vencimento (accordion) */
+#scModal .sc-ch-venc { cursor: pointer; }
+
+#scModal .sc-ch-venc td {
+    background: rgba(23, 40, 70, .55);
+    font-weight: 600;
+    color: #e8eefc;
+    border-bottom-color: rgba(255, 255, 255, .07);
+}
+
+#scModal .sc-ch-venc:hover td { background: rgba(35, 58, 96, .75); }
+#scModal .sc-ch-venc.sc-ch-open td { background: rgba(37, 74, 134, .85); }
+
+#scModal .sc-ch-dt { text-align: left !important; }
+#scModal .sc-ch-tg { color: #93c5fd; margin-right: 5px; }
+
+#scModal .sc-ch-badge {
+    font-size: 9px;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, .14);
+    color: #cbd5e1;
+    margin-left: 7px;
+}
+
+#scModal .sc-ch-b-diario { background: rgba(34, 197, 94, .28); color: #86efac; }
+#scModal .sc-ch-b-semanal { background: rgba(59, 130, 246, .28); color: #93c5fd; }
+#scModal .sc-ch-b-mensal { background: rgba(167, 139, 250, .28); color: #c4b5fd; }
+
+#scModal .sc-ch-lbl {
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    color: #93c5fd;
+}
+
+#scModal .sc-ch-ivx { color: #7dd3fc !important; font-size: 10.5px; }
+#scModal .sc-ch-dias { text-align: center !important; color: #cbd5e1 !important; }
+
+/* Faixa ITM (calls abaixo do spot, puts acima) */
+#scModal .sc-ch-itm { background: rgba(245, 158, 11, .10); }
+
+/* Fronteira ITM na coluna central: barra vermelha (calls ITM) e verde
+   (puts ITM) — mesmo desenho da imagem de referência. */
+#scModal .sc-ch-k.sc-ch-itm-c { box-shadow: inset 3px 0 0 rgba(239, 68, 68, .85); }
+#scModal .sc-ch-k.sc-ch-itm-p { box-shadow: inset -3px 0 0 rgba(34, 197, 94, .85); }
+
+#scModal .sc-ch-itmb {
+    font-size: 9px;
+    font-weight: 700;
+    color: #111827;
+    background: #facc15;
+    border-radius: 3px;
+    padding: 1px 4px;
+    margin-left: 5px;
+    white-space: nowrap;
+}
+
+/* Linha do strike no money (cotação) */
+#scModal .sc-ch-atm td {
+    background: rgba(249, 115, 22, .16);
+    border-top: 1px solid rgba(249, 115, 22, .7);
+    border-bottom: 1px solid rgba(249, 115, 22, .7);
+}
+
+#scModal .sc-ch-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #f97316;
+    margin-left: 6px;
+    vertical-align: middle;
+    box-shadow: 0 0 0 2px rgba(249, 115, 22, .35);
+}
+
+#scModal .sc-ch-strike { cursor: pointer; }
+#scModal .sc-ch-strike:hover td { background: rgba(255, 255, 255, .07); }
+#scModal .sc-ch-strike.sc-ch-sel td { background: rgba(59, 130, 246, .30); }
+
+/* Bandas de desvio-padrão — linha tracejada entre as opções, sem espaço
+   extra: o rótulo fica na borda esquerda (estilo da imagem de referência). */
+#scModal .sc-ch-sd {
+    height: 0;
+    line-height: 0;
+}
+
+#scModal .sc-ch-sd td {
+    position: relative;
+    height: 0;
+    padding: 0;
+    text-align: left !important;
+    background: transparent;
+    border-top: none;
+    border-bottom: 1px dashed rgba(96, 165, 250, .55);
+}
+
+#scModal .sc-ch-sd__b {
+    position: absolute;
+    left: 2px;
+    top: -8px;
+    z-index: 3;
+    font-family: 'Inter', sans-serif;
+    font-size: 8.5px;
+    font-weight: 700;
+    line-height: 15px;
+    color: #dbeafe;
+    background: rgba(37, 99, 235, .85);
+    border-radius: 3px;
+    padding: 0 5px;
+    white-space: nowrap;
+}
+
+#scModal .sc-ch-msg td {
+    text-align: center !important;
+    color: var(--sc-muted) !important;
+    padding: 14px 9px !important;
+}
+
+#scModal .sc-ch-k { text-align: center !important; color: #fbbf24 !important; font-weight: 700; }
+
+/* ─── Accordion (sim-accordion) ─────────────────────────────────────────── */
+#scModal .sim-accordion { background: transparent; border: none; }
+#scModal .sim-accordion .accordion-item { background: rgba(255,255,255,.02); border: 1px solid rgba(255,255,255,.07); border-radius: 10px; }
+#scModal .sim-accordion .accordion-item:not(:first-child) { border-top: 1px solid rgba(255,255,255,.07); }
+#scModal .sim-accordion .accordion-item + .accordion-item { margin-top: 0; }
+#scModal .sim-accordion .accordion-header { margin: 0; }
+#scModal .sim-accordion .accordion-button { background: transparent; color: var(--sc-text); font-weight: 600; font-size: 13px; padding: 12px 16px; }
+#scModal .sim-accordion .accordion-button:focus { box-shadow: none; border-color: var(--sc-border); }
+#scModal .sim-accordion .accordion-button:not(.collapsed) { background: transparent; color: var(--sc-text); }
+#scModal .sim-accordion .accordion-button:hover { background: rgba(255,255,255,.03); }
+#scModal .sim-accordion .accordion-button::after { width: 12px; height: 12px; flex-shrink: 0; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23fff'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e"); }
+#scModal .sim-accordion .accordion-button:not(.collapsed)::after { background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23fff'%3e%3cpath fill-rule='evenodd' d='M1.646 7.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e"); transform: rotate(-180deg); }
+#scModal .sim-accordion .accordion-body { padding: 0 16px 16px; }
+#scModal .sim-accordion-btn { width: 100%; text-align: left; }
+
+/* ─── DataTables customização para o scanner (estilo pm-ledger do raio-x preço médio) ────────────────────────────── */
+#scModal .dataTables_wrapper .dataTables_filter { display: none; } /* escondemos o filtro padrão, usamos o nosso */
+#scModal .dataTables_wrapper .dataTables_length select { background: var(--sc-panel3); border: 1px solid var(--sc-border); color: var(--sc-text); border-radius: 6px; padding: 3px 6px; font-size: 12px; }
+#scModal .dataTables_wrapper .dataTables_info { color: var(--sc-muted); font-size: 11.5px; }
+#scModal .dataTables_wrapper .dataTables_paginate .paginate_button { background: var(--sc-panel3); border: 1px solid var(--sc-border); color: var(--sc-text); border-radius: 6px; margin: 0 2px; }
+#scModal .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+#scModal .dataTables_wrapper .dataTables_paginate .paginate_button:hover { background: var(--sc-blue) !important; border-color: var(--sc-blue) !important; color: #fff !important; }
+#scModal .dataTables_wrapper .dataTables_paginate .paginate_button.disabled,
+#scModal .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover { background: transparent !important; color: var(--sc-muted) !important; border-color: var(--sc-border) !important; }
+
+/* Estilo da tabela (pm-ledger) para scanner e aba de ativo */
+#scModal table.dataTable {
+    border-collapse: collapse;
+    font-size: 11px;
+    width: 100%;
+}
+#scModal table.dataTable thead th {
+    text-align: left;
+    font-size: 10px;
+    color: var(--sc-muted);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--sc-border);
+    position: sticky;
+    top: 0;
+    background: var(--sc-panel2);
+    z-index: 1;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+}
+#scModal table.dataTable thead th.dt-type-numeric,
+#scModal table.dataTable thead th.dt-type-num-fmt {
+    text-align: right;
+}
+#scModal table.dataTable tbody td {
+    padding: 7px 10px;
+    border-bottom: 1px solid rgba(255,255,255,.03);
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 10.5px;
+    white-space: nowrap;
+}
+#scModal table.dataTable tbody td:first-child {
+    text-align: left;
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-weight: 600;
+}
+#scModal table.dataTable tbody tr {
+    cursor: pointer;
+}
+#scModal table.dataTable tbody tr:hover td {
+    background: #18274a;
+}
+#scModal table.dataTable tbody tr.selected td {
+    background: rgba(59, 130, 246, .16);
+}
+#scModal table.dataTable tbody tr.sc-out td {
+    opacity: .4;
+}
+#scModal table.dataTable tbody tr.sc-near td {
+    background: rgba(34, 211, 238, .13);
+}
+#scModal table.dataTable tbody tr.sc-near.selected td {
+    background: rgba(59, 130, 246, .20);
+}
+
+/* Badges de zona na tabela */
+#scModal table.dataTable .sc-badge {
+    font-size: 9px;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 6px;
+    white-space: nowrap;
+    display: inline-block;
+}
+#scModal table.dataTable .sc-z-ITM { background: rgba(167, 139, 250, .18); color: #c4b5fd; }
+#scModal table.dataTable .sc-z-ATM { background: rgba(245, 158, 11, .18); color: #fbbf24; }
+#scModal table.dataTable .sc-z-OTM { background: rgba(34, 197, 94, .16); color: #4ade80; }
+
+/* Scroll container para DataTables com header fixo */
+#scModal .dataTables_scrollBody {
+    border: 1px solid var(--sc-border);
+    border-radius: 10px;
+    background: var(--sc-panel3);
+}
+#scModal .dataTables_scrollHead {
+    background: var(--sc-panel2);
+}
+#scModal .dataTables_scrollHeadInner {
+    background: var(--sc-panel2);
+}
+
 /* ─── Responsivo ────────────────────────────────────────────────────────── */
 @media (max-width: 900px) {
     #scModal .sc-split,
     #scModal .sc-agrid { grid-template-columns: 1fr; }
-    #scModal .sc-cc__g { grid-template-columns: 1fr 1fr; }
+    #scModal .sc-cc__g,
+    #scModal .sc-cc__g2 { grid-template-columns: 1fr; }
+    #scModal .sc-qg { grid-template-columns: 1fr; }
     #scModal .sc-lad__r { grid-template-columns: 70px 1fr 50px 52px 22px; }
     #scModal .sc-lad__r > :nth-child(5) { display: none; }
 }
